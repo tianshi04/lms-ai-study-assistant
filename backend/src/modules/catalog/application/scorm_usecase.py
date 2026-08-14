@@ -299,7 +299,7 @@ class ScormUseCase:
         )
 
     async def parse_scorm_package(
-        self, scorm_object_key: str, target_course_id: str
+        self, scorm_object_key: str
     ) -> tuple[Course | None, bool, LearningItem | None]:
         """Parse uploaded SCORM ZIP to determine capability levels (Level 1: Native Course, Level 2: SCORM Item)."""
 

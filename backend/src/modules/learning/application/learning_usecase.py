@@ -78,7 +78,7 @@ class LearningUseCase:
             return await repo.delete_personal_note(note_id, user_id)
 
     async def mark_item_complete(
-        self, user_id: str, course_id: str, item_id: str, total_course_items: int
+        self, user_id: str, course_id: str, item_id: str
     ) -> tuple[bool, LearningProgress]:
 
         async with async_session_scope() as session:

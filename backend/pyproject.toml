@@ -57,10 +57,12 @@ extend-select = [
     "PT",    # flake8-pytest-style (pytest standards)
     "SLF",   # flake8-self (private member access)
     "A",     # flake8-builtins (built-in shadowing protection)
+    "ARG",   # flake8-unused-arguments (unused argument elimination)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["SLF001"]
+"tests/**" = ["SLF001", "ARG001", "ARG002", "ARG005"]
+"src/modules/*/presentation/**" = ["ARG002"]
 "src/modules/*/domain/**" = ["A002"]
 "src/shared/domain/**" = ["A002"]
 

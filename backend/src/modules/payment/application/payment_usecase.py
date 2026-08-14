@@ -127,7 +127,7 @@ class PaymentUseCase:
             return True, "Thanh toán mua khóa học thành công!", saved
 
     async def subscribe_coursera_plus(
-        self, user_id: str, plan_type: PlanType, payment_method: str = "MOCK"
+        self, user_id: str, plan_type: PlanType
     ) -> tuple[bool, str, UserSubscription | None]:
         if not user_id:
             return False, "Yêu cầu đăng nhập để đăng ký gói thuê bao.", None
@@ -507,7 +507,6 @@ class PaymentUseCase:
                     order.user_id,
                     order.target_type,
                     order.target_id,
-                    order.plan_type,
                     order.amount,
                 )
 
@@ -619,7 +618,6 @@ class PaymentUseCase:
                     order.user_id,
                     order.target_type,
                     order.target_id,
-                    order.plan_type,
                     order.amount,
                 )
                 logger.info(
@@ -642,7 +640,6 @@ class PaymentUseCase:
         user_id: str,
         target_type: PaymentTargetType,
         target_id: str,
-        plan_type: PlanType,
         amount: float,
     ) -> tuple[
         CoursePurchase | None,
@@ -793,7 +790,6 @@ class PaymentUseCase:
                                     o.user_id,
                                     o.target_type,
                                     o.target_id,
-                                    o.plan_type,
                                     o.amount,
                                 )
                                 logger.info(

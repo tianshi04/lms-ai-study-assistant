@@ -41,10 +41,9 @@ class NotificationUseCase:
         if not title:
             raise ValueError("title is required")
 
-        if self._notif_repo and self._pref_repo:
+        if self._notif_repo:
             return await self._send_notif(
                 self._notif_repo,
-                self._pref_repo,
                 recipient_id,
                 category,
                 title,
@@ -55,10 +54,8 @@ class NotificationUseCase:
 
         async with async_session_scope() as session:
             notif_repo = PostgresNotificationRepository(session)
-            pref_repo = PostgresNotificationPreferenceRepository(session)
             return await self._send_notif(
                 notif_repo,
-                pref_repo,
                 recipient_id,
                 category,
                 title,
@@ -70,7 +67,6 @@ class NotificationUseCase:
     async def _send_notif(
         self,
         notif_repo: NotificationRepository,
-        pref_repo: NotificationPreferenceRepository,
         recipient_id: str,
         category: NotificationCategory,
         title: str,

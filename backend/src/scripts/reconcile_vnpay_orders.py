@@ -77,7 +77,6 @@ async def reconcile_pending_orders() -> int:
                     order.user_id,
                     order.target_type,
                     order.target_id,
-                    order.plan_type,
                     order.amount,
                 )
                 reconciled_count += 1

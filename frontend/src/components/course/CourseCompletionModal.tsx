@@ -176,7 +176,6 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
       const client = getRpcClient(IdentityService);
       const res = await client.verifyIdentity({
         userId: authUserId,
-        idCardNumber: "012345678999",
       });
       if (res.success) {
         toast.success("Xác minh danh tính KYC thành công!");

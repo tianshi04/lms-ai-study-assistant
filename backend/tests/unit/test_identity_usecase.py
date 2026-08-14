@@ -491,14 +491,14 @@ async def test_verify_identity(mock_session_scope, mock_identity_repo):
     mock_repo_instance.get_by_id.return_value = user
 
     usecase = IdentityUseCase()
-    ok, msg = await usecase.verify_identity("u1", "123456789")
+    ok, msg = await usecase.verify_identity("u1")
     assert ok is True
     assert user.is_identity_verified is True
     mock_repo_instance.save.assert_called_once()
 
     # User not found case
     mock_repo_instance.get_by_id.return_value = None
-    ok, msg = await usecase.verify_identity("u2", "123456789")
+    ok, msg = await usecase.verify_identity("u2")
     assert ok is False
     assert "Không tìm thấy" in msg
 

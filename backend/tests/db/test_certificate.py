@@ -43,7 +43,7 @@ async def test_get_verified_certificate():
         # 2. Mark item complete to reach 100% progress
         learning_uc = LearningUseCase()
         await learning_uc.mark_item_complete(
-            "user_cert_test", "course_python", "item_1", total_course_items=1
+            "user_cert_test", "course_python", "item_1"
         )
 
         # 2b. Without KYC identity verification, cert issuance is rejected (BR_CERT_003)
@@ -158,9 +158,7 @@ async def test_get_verified_certificate_failed_quiz_rejection():
 
         # Mark 100% progress
         learning_uc = LearningUseCase()
-        await learning_uc.mark_item_complete(
-            user_id, course_id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete(user_id, course_id, "item_1")
 
         # Save a failed quiz submission (<80%)
         async with async_session_scope() as session:
@@ -206,9 +204,7 @@ async def test_get_verified_certificate_custom_quiz_threshold_pass():
 
         # Mark 100% progress
         learning_uc = LearningUseCase()
-        await learning_uc.mark_item_complete(
-            user_id, course_id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete(user_id, course_id, "item_1")
 
         # Save a custom matrix threshold (e.g. 60.0%) and submission with score 70% (passed)
         async with async_session_scope() as session:
@@ -270,9 +266,7 @@ async def test_get_verified_certificate_with_slug():
 
         # Verify user identity & mark 100% progress
         await id_uc.verify_identity("user_slug_cert")
-        await learning_uc.mark_item_complete(
-            "user_slug_cert", course.id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete("user_slug_cert", course.id, "item_1")
 
         # Query certificate using SLUG
         cert, err = await cert_uc.get_verified_certificate(

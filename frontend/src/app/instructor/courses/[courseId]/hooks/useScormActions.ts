@@ -79,7 +79,6 @@ export function useScormActions(courseId: string) {
       toast.info("Đang phân tích cấu trúc gói SCORM…");
       const parseRes = await client.parseScormPackage({
         scormObjectKey: uploadedKey,
-        targetCourseId: courseId,
       });
 
       setScormObjectKey(uploadedKey);

@@ -257,11 +257,15 @@ class GradeAppeal(Entity):
 
     def approve(self, reviewer_id: str = "", final_score: float = 0.0) -> None:
         self.status = "APPROVED"
+        self.reviewer_id = reviewer_id
+        self.final_score = final_score
 
     def reject(self, reviewer_id: str = "", reason: str = "") -> None:
         if not reason or not reason.strip():
             raise ValueError("Lý do từ chối không được để trống.")
         self.status = "REJECTED"
+        self.reviewer_id = reviewer_id
+        self.rejection_reason = reason.strip()
 
 
 @dataclass(frozen=True)

@@ -34,9 +34,7 @@ class UserProfileUseCase:
             repo = repo_module.IdentityRepository(session)
             return await repo.get_by_id(user_id)
 
-    async def verify_identity(
-        self, user_id: str, id_card_number: str = ""
-    ) -> tuple[bool, str]:
+    async def verify_identity(self, user_id: str) -> tuple[bool, str]:
         """Completes biometric / ID card verification for learner (BR_CERT_003)."""
         async with database.async_session_scope() as session:
             repo = repo_module.IdentityRepository(session)

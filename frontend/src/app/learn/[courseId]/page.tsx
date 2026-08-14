@@ -305,7 +305,6 @@ function CoursePlayerContent() {
         const res = await learningClient.markItemComplete({
           courseId,
           itemId,
-          totalCourseItems,
         });
         if (res.updatedProgress) {
           setProgress(res.updatedProgress);

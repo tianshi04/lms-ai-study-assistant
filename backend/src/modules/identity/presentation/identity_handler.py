@@ -408,7 +408,6 @@ class IdentityHandler(IdentityService):
         target_user_id = request.user_id or current_user.id
         success, msg = await self._use_case.verify_identity(
             user_id=target_user_id,
-            id_card_number=request.id_card_number,
         )
         return pb.VerifyIdentityResponse(success=success, message=msg)
 

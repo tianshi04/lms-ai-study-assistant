@@ -67,7 +67,6 @@ export default function AccountSettingsPage() {
       const client = getRpcClient(IdentityService);
       const res = await client.verifyIdentity({
         userId: user.id,
-        idCardNumber: "012345678999",
       });
       if (res.success) {
         toast.success(res.message || "Giả lập xác minh danh tính KYC thành công!");

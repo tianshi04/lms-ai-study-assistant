@@ -169,14 +169,12 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.UpdateThreadRequest, pb.UpdateThreadResponse],
     ) -> pb.UpdateThreadResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff
         try:
             thread = await self.use_case.update_thread(
                 thread_id=request.thread_id,
                 title=request.title,
                 content=request.content,
                 current_user_id=current_user.id,
-                is_staff=is_staff,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
@@ -210,13 +208,11 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.UpdateReplyRequest, pb.UpdateReplyResponse],
     ) -> pb.UpdateReplyResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff
         try:
             reply = await self.use_case.update_reply(
                 reply_id=request.reply_id,
                 content=request.content,
                 current_user_id=current_user.id,
-                is_staff=is_staff,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))

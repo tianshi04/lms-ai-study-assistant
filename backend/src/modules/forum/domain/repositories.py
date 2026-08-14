@@ -30,7 +30,7 @@ class IForumRepository(ABC):
         """Vote on a thread or reply by post_id. Toggles vote per user and returns updated upvote count."""
 
     @abstractmethod
-    async def pin_staff_answer(self, reply_id: str, ta_user_id: str) -> bool:
+    async def pin_staff_answer(self, reply_id: str, _ta_user_id: str = "") -> bool:
         """Pin a reply as staff answer."""
 
     @abstractmethod

@@ -199,6 +199,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         status_filter: str | CourseStatus = "",
         organization_id: str | None = None,
     ) -> tuple[list[Course], str]:
+        _ = page_token
         stmt = select(CourseModel).options(
             selectinload(CourseModel.week_modules)
             .selectinload(WeekModuleModel.lessons)
@@ -254,6 +255,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         page_token: str = "",
         status_filter: str | CourseStatus | None = None,
     ) -> tuple[list[Course], str]:
+        _ = page_token
 
         stmt = select(CourseModel).options(
             selectinload(CourseModel.week_modules)
@@ -346,7 +348,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         description: str,
         partner_name: str,
         partner_logo_url: str,
-        instructor_names: list[str],
+        instructor_names: list[str] | None = None,
         subject: str = "",
         level: str = "",
         owner_id: str = "",
@@ -354,6 +356,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         financial_aid_enabled: bool = True,
         organization_id: str = "partner_community",
     ) -> Course:
+        _ = instructor_names
         import re
 
         safe_slug = (
@@ -436,11 +439,12 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         description: str,
         partner_name: str,
         partner_logo_url: str,
-        instructor_names: list[str],
+        instructor_names: list[str] | None = None,
         subject: str = "",
         level: str = "",
         financial_aid_enabled: bool = True,
     ) -> Course | None:
+        _ = instructor_names
         stmt = select(CourseModel).where(CourseModel.id == course_id)
         res = await self.session.execute(stmt)
         model = res.scalar_one_or_none()
@@ -510,6 +514,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def create_lesson(
         self, course_id: str, week_module_id: str, title: str, estimated_minutes: int
     ) -> Lesson:
+        _ = course_id
         l_id = f"lesson-{uuid.uuid4().hex[:8]}"
         l_model = LessonModel(
             id=l_id,
@@ -544,6 +549,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
     ) -> LearningItem:
+        _ = course_id
         item_id = f"item-{uuid.uuid4().hex[:8]}"
         type_mapping = {
             0: ItemType.UNSPECIFIED,
@@ -762,6 +768,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def list_course_reviews(
         self, course_id: str, page_size: int = 10, page_token: str = ""
     ) -> tuple[list[CourseReview], float, int, str]:
+        _ = page_token
         stmt = (
             select(CourseReviewModel)
             .where(CourseReviewModel.course_id == course_id)
@@ -852,7 +859,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def update_week_module(
         self, module_id: str, course_id: str, title: str, summary: str
     ) -> WeekModule | None:
-        stmt = select(WeekModuleModel).where(WeekModuleModel.id == module_id)
+        stmt = select(WeekModuleModel).where(
+            WeekModuleModel.id == module_id, WeekModuleModel.course_id == course_id
+        )
         res = await self.session.execute(stmt)
         wm = res.scalar_one_or_none()
         if not wm:
@@ -870,7 +879,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
 
     async def delete_week_module(self, module_id: str, course_id: str) -> bool:
-        stmt = select(WeekModuleModel).where(WeekModuleModel.id == module_id)
+        stmt = select(WeekModuleModel).where(
+            WeekModuleModel.id == module_id, WeekModuleModel.course_id == course_id
+        )
         res = await self.session.execute(stmt)
         wm = res.scalar_one_or_none()
         if not wm:
@@ -887,6 +898,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         title: str,
         estimated_minutes: int,
     ) -> Lesson | None:
+        _ = course_id
         stmt = select(LessonModel).where(LessonModel.id == lesson_id)
         res = await self.session.execute(stmt)
         lesson = res.scalar_one_or_none()
@@ -906,6 +918,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
 
     async def delete_lesson(self, lesson_id: str, course_id: str) -> bool:
+        _ = course_id
         stmt = select(LessonModel).where(LessonModel.id == lesson_id)
         res = await self.session.execute(stmt)
         lesson = res.scalar_one_or_none()
@@ -934,10 +947,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
     ) -> LearningItem | None:
+        _ = course_id
         stmt = (
             select(LearningItemModel)
             .options(selectinload(LearningItemModel.in_video_quizzes))
-            .where(LearningItemModel.id == id)
+            .where(LearningItemModel.id == item_id)
         )
         res = await self.session.execute(stmt)
         item = res.scalar_one_or_none()
@@ -1020,6 +1034,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
 
     async def delete_learning_item(self, item_id: str, course_id: str) -> bool:
+        _ = course_id
         stmt = select(LearningItemModel).where(LearningItemModel.id == item_id)
         res = await self.session.execute(stmt)
         item = res.scalar_one_or_none()
@@ -1159,11 +1174,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def reorder_lessons(
         self, course_id: str, week_module_id: str, ordered_lesson_ids: list[str]
     ) -> bool:
+        _ = course_id
         for idx, lesson_id in enumerate(ordered_lesson_ids):
-            stmt = (
-                select(LessonModel)
-                .where(LessonModel.id == lesson_id)
-                .where(LessonModel.week_module_id == week_module_id)
+            stmt = select(LessonModel).where(
+                LessonModel.id == lesson_id,
+                LessonModel.week_module_id == week_module_id,
             )
             res = await self.session.execute(stmt)
             lesson = res.scalar_one_or_none()
@@ -1175,6 +1190,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def reorder_learning_items(
         self, course_id: str, lesson_id: str, ordered_item_ids: list[str]
     ) -> bool:
+        _ = course_id
         for idx, item_id in enumerate(ordered_item_ids):
             stmt = (
                 select(LearningItemModel)

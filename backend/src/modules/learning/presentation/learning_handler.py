@@ -143,7 +143,6 @@ class LearningHandler(LearningService):
             user_id=current_user.id,
             course_id=request.course_id,
             item_id=request.item_id,
-            total_course_items=request.total_course_items,
         )
         return pb.MarkItemCompleteResponse(
             success=success, updated_progress=_to_pb_progress(progress)

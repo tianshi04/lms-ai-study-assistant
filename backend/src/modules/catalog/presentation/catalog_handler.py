@@ -857,7 +857,6 @@ class CatalogHandler(CatalogService):
             single_item_preview,
         ) = await self.use_case.parse_scorm_package(
             scorm_object_key=request.scorm_object_key,
-            target_course_id=request.target_course_id,
         )
 
         # We need to map Course and LearningItem entities to protobuf messages

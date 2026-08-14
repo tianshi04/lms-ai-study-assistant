@@ -605,7 +605,6 @@ async def test_subscribe_coursera_plus_creates_completed_order(mock_scope):
     success, _msg, sub = await use_case.subscribe_coursera_plus(
         user_id="user_direct_sub",
         plan_type=PlanType.MONTHLY,
-        payment_method="MOCK_DIRECT",
     )
 
     assert success is True

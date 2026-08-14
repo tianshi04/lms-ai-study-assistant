@@ -83,7 +83,7 @@ async def run_auto_migrations() -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: Starlette):
+async def lifespan(_app: Starlette):
     """Lifespan context manager for AuthPolicy pre-initialization, database migrations and initial seeding."""
     try:
         from src.modules.notification.application.event_handlers import (
@@ -252,7 +252,7 @@ async def proxy_media(request):
     return StreamingResponse(generate(), status_code=status_code, headers=headers)
 
 
-async def health_check(request):
+async def health_check(_request):
     return JSONResponse({"status": "ok"})
 
 

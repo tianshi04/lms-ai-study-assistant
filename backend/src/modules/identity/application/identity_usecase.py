@@ -128,13 +128,8 @@ class IdentityUseCase:
             current_user=current_user,
         )
 
-    async def verify_identity(
-        self, user_id: str, id_card_number: str = ""
-    ) -> tuple[bool, str]:
-        return await self.user_profile.verify_identity(
-            user_id=user_id,
-            id_card_number=id_card_number,
-        )
+    async def verify_identity(self, user_id: str) -> tuple[bool, str]:
+        return await self.user_profile.verify_identity(user_id=user_id)
 
     async def update_instructor_profile(
         self, user_id: str, title: str, signature_image_url: str

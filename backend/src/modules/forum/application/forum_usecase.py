@@ -203,7 +203,6 @@ class ForumUseCase:
         title: str,
         content: str,
         current_user_id: str,
-        is_staff: bool = False,
     ) -> ForumThreadEntity | None:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
@@ -263,7 +262,6 @@ class ForumUseCase:
         reply_id: str,
         content: str,
         current_user_id: str,
-        is_staff: bool = False,
     ) -> ForumReplyEntity | None:
         async with async_session_scope() as session:
             repo = self._get_repo(session)

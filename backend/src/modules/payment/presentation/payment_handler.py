@@ -70,7 +70,6 @@ class PaymentHandler(PaymentService):
         ) = await self._use_case.subscribe_coursera_plus(
             user_id=current_user.id,
             plan_type=domain_plan,
-            payment_method=request.payment_method,
         )
 
         pb_sub = (

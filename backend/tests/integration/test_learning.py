@@ -71,9 +71,7 @@ async def test_list_enrolled_courses():
     ) as mock_get:
         mock_get.return_value = mock_course_with_items
         # Mark 50% progress
-        await learning_uc.mark_item_complete(
-            user_id, course.id, "item_1", total_course_items=2
-        )
+        await learning_uc.mark_item_complete(user_id, course.id, "item_1")
 
         courses = await learning_uc.list_enrolled_courses(user_id)
         assert len(courses) == 1
@@ -83,9 +81,7 @@ async def test_list_enrolled_courses():
         assert courses[0].status == "IN_PROGRESS"
 
         # Mark 100% progress
-        await learning_uc.mark_item_complete(
-            user_id, course.id, "item_2", total_course_items=2
-        )
+        await learning_uc.mark_item_complete(user_id, course.id, "item_2")
 
         courses = await learning_uc.list_enrolled_courses(user_id)
         assert len(courses) == 1

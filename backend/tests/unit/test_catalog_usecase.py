@@ -296,7 +296,7 @@ async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
     mock_s3_service.return_value = mock_s3
 
     course_preview, is_single, item_preview = await catalog_usecase.parse_scorm_package(
-        scorm_object_key="some-key", target_course_id="target-id"
+        scorm_object_key="some-key"
     )
 
     assert course_preview is not None
@@ -332,9 +332,7 @@ async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
     mock_s3_service.return_value = mock_s3
 
     with pytest.raises(ValueError, match="Level 2"):
-        await catalog_usecase.parse_scorm_package(
-            scorm_object_key="some-key", target_course_id="target-id"
-        )
+        await catalog_usecase.parse_scorm_package(scorm_object_key="some-key")
 
 
 @pytest.mark.asyncio
