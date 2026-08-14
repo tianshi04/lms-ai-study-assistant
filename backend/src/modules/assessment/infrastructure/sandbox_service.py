@@ -6,7 +6,7 @@ import tempfile
 from dataclasses import dataclass
 from typing import Any
 
-from src.modules.assessment.domain.constants import (
+from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     DEFAULT_SANDBOX_TIMEOUT_SECONDS,
 )

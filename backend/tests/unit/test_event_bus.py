@@ -4,18 +4,18 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.modules.assessment.domain.events import (
+from src.modules.assessment.domain import (
     LabSubmittedDomainEvent,
     PeerReviewSubmittedDomainEvent,
     QuizSubmittedDomainEvent,
 )
-from src.modules.catalog.domain.events import CourseAnnouncementCreatedDomainEvent
-from src.modules.certificate.domain.events import (
+from src.modules.catalog.domain import CourseAnnouncementCreatedDomainEvent
+from src.modules.certificate.domain import (
     CertificateIssuedDomainEvent,
     FinancialAidReviewedDomainEvent,
 )
-from src.modules.forum.domain.events import ForumReplyCreatedDomainEvent
-from src.modules.identity.domain.events import (
+from src.modules.forum.domain import ForumReplyCreatedDomainEvent
+from src.modules.identity.domain import (
     EnterpriseSeatAssignedDomainEvent,
     InstructorApplicationReviewedDomainEvent,
     InvitationSentDomainEvent,
@@ -35,7 +35,7 @@ from src.modules.notification.application.event_handlers import (
     handle_user_registered,
     register_notification_event_handlers,
 )
-from src.modules.notification.domain.constants import NotificationCategory
+from src.modules.notification.domain import NotificationCategory
 from src.shared.domain.events import DomainEvent
 from src.shared.infrastructure.event_bus import EventBus
 

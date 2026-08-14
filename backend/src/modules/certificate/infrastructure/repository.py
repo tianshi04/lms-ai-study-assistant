@@ -1,17 +1,15 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.catalog.domain.entities import ItemType
+from src.modules.catalog.domain import ItemType
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
-from src.modules.certificate.domain.constants import (
+from src.modules.certificate.domain import (
     DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT,
-)
-from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     FinancialAidStatus,
+    ICertificateRepository,
     VerifiedCertificate,
 )
-from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,

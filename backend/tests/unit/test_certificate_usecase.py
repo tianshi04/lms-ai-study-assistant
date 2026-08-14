@@ -2,11 +2,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.modules.certificate.application.certificate_usecase import (
+from src.modules.certificate.application import (
     CertificateUseCase,
     count_words,
 )
-from src.modules.certificate.domain.entities import (
+from src.modules.certificate.domain import (
     FinancialAidApplication,
     FinancialAidStatus,
     VerifiedCertificate,

@@ -1,6 +1,6 @@
 import pytest
 
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+from src.modules.catalog.application import CatalogUseCase
 
 
 @pytest.mark.asyncio

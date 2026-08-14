@@ -1,12 +1,6 @@
 import logging
 
-from src.modules.identity.application.review_application_usecase import (
-    ReviewInstructorApplicationUseCase,
-)
-from src.modules.identity.application.submit_application_usecase import (
-    SubmitInstructorApplicationUseCase,
-)
-from src.modules.identity.domain.entities import (
+from src.modules.identity.domain import (
     InstructorApplication,
     User,
 )
@@ -15,6 +9,9 @@ from src.shared.auth import (
     CurrentUser,
 )
 from src.shared.infrastructure import database
+
+from .review_application_usecase import ReviewInstructorApplicationUseCase
+from .submit_application_usecase import SubmitInstructorApplicationUseCase
 
 logger = logging.getLogger(__name__)
 

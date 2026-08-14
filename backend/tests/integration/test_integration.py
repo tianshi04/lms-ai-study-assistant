@@ -2,7 +2,7 @@ import pytest
 
 from src.gen.catalog.v1.catalog_connect import CatalogServiceClient
 from src.gen.catalog.v1.catalog_pb import ListCoursesRequest
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+from src.modules.catalog.application import CatalogUseCase
 
 
 @pytest.mark.asyncio

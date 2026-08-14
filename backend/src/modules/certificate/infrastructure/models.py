@@ -4,7 +4,7 @@ from sqlalchemy import JSON, Boolean, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.modules.certificate.domain.constants import (
+from src.modules.certificate.domain import (
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
 )
 from src.shared.infrastructure.database import Base

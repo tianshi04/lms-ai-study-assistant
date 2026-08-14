@@ -3,8 +3,9 @@ from typing import Any
 
 import pytest
 
-from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
-from src.modules.assessment.domain.entities import (
+from src.modules.assessment.application import AssessmentUseCase
+from src.modules.assessment.domain import (
+    AssessmentRepositoryInterface,
     GradeAppeal,
     HonorCodeAgreement,
     LabSubmission,
@@ -14,7 +15,6 @@ from src.modules.assessment.domain.entities import (
     QuizSubmission,
     RubricCriteria,
 )
-from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
 from src.modules.assessment.infrastructure.sandbox_service import (
     PythonCodeSandboxExecutor,
 )
@@ -133,7 +133,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def create_question_bank(
         self, course_id: str, title: str, category: str, description: str
     ):
-        from src.modules.assessment.domain.entities import QuestionBank
+        from src.modules.assessment.domain import QuestionBank
 
         return QuestionBank(
             id="bank_test_1",
@@ -155,7 +155,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         explanation: str,
         options_data: list[dict],
     ):
-        from src.modules.assessment.domain.entities import Question
+        from src.modules.assessment.domain import Question
 
         return Question(
             id="q_test_1",
@@ -178,7 +178,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         explanation: str,
         options_data: list[dict],
     ):
-        from src.modules.assessment.domain.entities import Question, QuestionOption
+        from src.modules.assessment.domain import Question, QuestionOption
 
         opts = [
             QuestionOption(
@@ -213,7 +213,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         max_attempts: int = 3,
         cooldown_hours: int = 8,
     ):
-        from src.modules.assessment.domain.entities import QuizMatrix
+        from src.modules.assessment.domain import QuizMatrix
 
         matrix = QuizMatrix(
             item_id=item_id,
@@ -234,7 +234,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         return self.matrices.get(item_id)
 
     async def get_questions_by_bank(self, bank_id: str):
-        from src.modules.assessment.domain.entities import Question, QuestionOption
+        from src.modules.assessment.domain import Question, QuestionOption
 
         return [
             Question(
@@ -539,7 +539,7 @@ async def test_peer_regrade_fallback_queue():
 @pytest.mark.asyncio
 async def test_audit_mode_access_blocking():
     try:
-        from src.modules.identity.domain.entities import User, UserRole
+        from src.modules.identity.domain import User, UserRole
         from src.modules.identity.infrastructure.repository import IdentityRepository
         from src.shared.infrastructure.database import async_session_scope
 

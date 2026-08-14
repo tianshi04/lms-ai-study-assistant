@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.catalog.domain.entities import Course, Lesson, Specialization
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.catalog.domain import Course, Lesson, Specialization
 from src.shared.auth import CurrentUser
 
 
@@ -212,7 +212,7 @@ async def test_export_course_to_scorm(
     # 1. Setup mock storage service
     from unittest.mock import MagicMock
 
-    from src.modules.catalog.domain.entities import (
+    from src.modules.catalog.domain import (
         Course,
         ItemType,
         LearningItem,

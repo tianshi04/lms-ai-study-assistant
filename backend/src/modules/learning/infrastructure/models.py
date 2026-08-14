@@ -12,7 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.learning.domain.entities import DeadlineStatus
+from src.modules.learning.domain import DeadlineStatus
 from src.shared.infrastructure.database import Base
 
 

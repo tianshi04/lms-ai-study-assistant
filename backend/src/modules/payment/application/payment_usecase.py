@@ -7,8 +7,8 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from src.modules.catalog.domain.repositories import ICatalogRepository
-from src.modules.payment.domain.constants import (
+from src.modules.catalog.domain import ICatalogRepository
+from src.modules.payment.domain import (
     DEFAULT_CURRENCY,
     DEFAULT_MONTHLY_PLAN_DAYS,
     DEFAULT_SINGLE_COURSE_PRICE_VND,
@@ -16,9 +16,8 @@ from src.modules.payment.domain.constants import (
     DEFAULT_SYSTEM_SUBSCRIPTION_YEARLY_PRICE_VND,
     DEFAULT_YEARLY_PLAN_DAYS,
     PENDING_ORDER_REUSE_TTL_MINUTES,
-)
-from src.modules.payment.domain.entities import (
     CoursePurchase,
+    IPaymentRepository,
     PaymentOrder,
     PaymentOrderStatus,
     PaymentTargetType,
@@ -28,7 +27,6 @@ from src.modules.payment.domain.entities import (
     SubscriptionStatus,
     UserSubscription,
 )
-from src.modules.payment.domain.repositories import IPaymentRepository
 from src.modules.payment.infrastructure.repository import PaymentRepository
 from src.modules.payment.infrastructure.vnpay_service import VNPayService
 from src.shared.access_policy import AccessPolicyService

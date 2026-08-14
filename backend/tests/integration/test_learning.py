@@ -2,8 +2,8 @@ import uuid
 
 import pytest
 
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.learning.application.learning_usecase import LearningUseCase
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.learning.application import LearningUseCase
 
 
 @pytest.mark.asyncio
@@ -39,7 +39,7 @@ async def test_list_enrolled_courses():
 
     from unittest.mock import AsyncMock, patch
 
-    from src.modules.catalog.domain.entities import (
+    from src.modules.catalog.domain import (
         ItemType,
         LearningItem,
         Lesson,

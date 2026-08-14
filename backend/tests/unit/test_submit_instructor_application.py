@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.modules.identity.application.submit_application_usecase import (
+from src.modules.identity.application import (
     SubmitInstructorApplicationUseCase,
 )
-from src.modules.identity.domain.entities import (
+from src.modules.identity.domain import (
     ApplicationStatus,
     InstructorApplication,
 )
@@ -116,10 +116,10 @@ async def test_submit_instructor_application_rejected_cooldown_raises():
 
 @pytest.mark.asyncio
 async def test_review_instructor_application_approve():
-    from src.modules.identity.application.review_application_usecase import (
+    from src.modules.identity.application import (
         ReviewInstructorApplicationUseCase,
     )
-    from src.modules.identity.domain.entities import User, UserRole
+    from src.modules.identity.domain import User, UserRole
 
     app_repo = AsyncMock()
     identity_repo = AsyncMock()
@@ -156,7 +156,7 @@ async def test_review_instructor_application_approve():
 
 @pytest.mark.asyncio
 async def test_review_instructor_application_reject():
-    from src.modules.identity.application.review_application_usecase import (
+    from src.modules.identity.application import (
         ReviewInstructorApplicationUseCase,
     )
 

@@ -6,17 +6,15 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.modules.learning.domain.constants import (
+from src.modules.learning.domain import (
     DEFAULT_COHORT_EXTENSION_DAYS,
-)
-from src.modules.learning.domain.entities import (
     DeadlineStatus,
     EnrolledCourseSummary,
+    ILearningRepository,
     LearningProgress,
     PersonalNote,
     WeeklyDeadline,
 )
-from src.modules.learning.domain.repositories import ILearningRepository
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,

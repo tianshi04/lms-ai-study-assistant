@@ -5,14 +5,12 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from src.modules.assessment.application.base_usecase import BaseAssessmentUseCase
-from src.modules.assessment.domain.constants import (
+from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
     QUIZ_COOLDOWN_HOURS,
-)
-from src.modules.assessment.domain.entities import (
+    AssessmentRepositoryInterface,
     HonorCodeAgreement,
     Question,
     QuestionBank,
@@ -20,13 +18,14 @@ from src.modules.assessment.domain.entities import (
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
+    QuizSubmittedDomainEvent,
 )
-from src.modules.assessment.domain.events import QuizSubmittedDomainEvent
-from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
 from src.shared.access_policy import require_paid_access
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
+
+from .base_usecase import BaseAssessmentUseCase
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 import pytest
 
-from src.modules.certificate.application.certificate_usecase import (
+from src.modules.certificate.application import (
     CertificateUseCase,
     count_words,
 )
@@ -28,8 +28,8 @@ async def test_apply_financial_aid_validation():
 @pytest.mark.asyncio
 async def test_get_verified_certificate():
     try:
-        from src.modules.identity.application.identity_usecase import IdentityUseCase
-        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.modules.identity.application import IdentityUseCase
+        from src.modules.learning.application import LearningUseCase
 
         usecase = CertificateUseCase()
 
@@ -141,12 +141,12 @@ async def test_financial_aid_auto_approve_when_overdue():
 @pytest.mark.asyncio
 async def test_get_verified_certificate_failed_quiz_rejection():
     try:
-        from src.modules.assessment.domain.entities import QuizSubmission
+        from src.modules.assessment.domain import QuizSubmission
         from src.modules.assessment.infrastructure.repository import (
             SQLAlchemyAssessmentRepository,
         )
-        from src.modules.identity.application.identity_usecase import IdentityUseCase
-        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.modules.identity.application import IdentityUseCase
+        from src.modules.learning.application import LearningUseCase
         from src.shared.infrastructure.database import async_session_scope
 
         usecase = CertificateUseCase()
@@ -188,13 +188,13 @@ async def test_get_verified_certificate_failed_quiz_rejection():
 @pytest.mark.asyncio
 async def test_get_verified_certificate_custom_quiz_threshold_pass():
     try:
-        from src.modules.assessment.domain.entities import QuizSubmission
+        from src.modules.assessment.domain import QuizSubmission
         from src.modules.assessment.infrastructure.models import QuizMatrixModel
         from src.modules.assessment.infrastructure.repository import (
             SQLAlchemyAssessmentRepository,
         )
-        from src.modules.identity.application.identity_usecase import IdentityUseCase
-        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.modules.identity.application import IdentityUseCase
+        from src.modules.learning.application import LearningUseCase
         from src.shared.infrastructure.database import async_session_scope
 
         usecase = CertificateUseCase()
@@ -250,9 +250,9 @@ async def test_get_verified_certificate_custom_quiz_threshold_pass():
 @pytest.mark.asyncio
 async def test_get_verified_certificate_with_slug():
     try:
-        from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-        from src.modules.identity.application.identity_usecase import IdentityUseCase
-        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.modules.catalog.application import CatalogUseCase
+        from src.modules.identity.application import IdentityUseCase
+        from src.modules.learning.application import LearningUseCase
 
         cat_uc = CatalogUseCase()
         cert_uc = CertificateUseCase()

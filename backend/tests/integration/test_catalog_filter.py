@@ -4,8 +4,8 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import select
 
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.catalog.domain.entities import Course
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.catalog.domain import Course
 from src.modules.catalog.infrastructure.models import CourseModel
 from src.shared.infrastructure.database import async_session_scope
 

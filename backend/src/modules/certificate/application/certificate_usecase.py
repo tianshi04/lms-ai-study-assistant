@@ -5,21 +5,17 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from src.modules.certificate.domain.constants import (
+from src.modules.certificate.domain import (
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
     MIN_FINANCIAL_AID_ESSAY_WORDS,
-)
-from src.modules.certificate.domain.entities import (
+    CertificateIssuedDomainEvent,
     FinancialAidApplication,
+    FinancialAidReviewedDomainEvent,
     FinancialAidStatus,
+    ICertificateRepository,
     VerifiedCertificate,
     count_words,
 )
-from src.modules.certificate.domain.events import (
-    CertificateIssuedDomainEvent,
-    FinancialAidReviewedDomainEvent,
-)
-from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope

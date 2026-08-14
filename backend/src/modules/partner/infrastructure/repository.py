@@ -1,8 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.partner.domain.entities import Partner
-from src.modules.partner.domain.repositories import IPartnerRepository
+from src.modules.partner.domain import IPartnerRepository, Partner
 from src.modules.partner.infrastructure.models import PartnerModel
 
 

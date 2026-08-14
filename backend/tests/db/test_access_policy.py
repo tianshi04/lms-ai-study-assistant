@@ -1,11 +1,11 @@
 import pytest
 
-from src.modules.certificate.domain.entities import (
+from src.modules.certificate.domain import (
     FinancialAidApplication,
     FinancialAidStatus,
 )
 from src.modules.certificate.infrastructure.repository import CertificateRepository
-from src.modules.identity.domain.entities import User, UserRole
+from src.modules.identity.domain import User, UserRole
 from src.modules.identity.infrastructure.repository import IdentityRepository
 from src.shared.access_policy import AccessPolicyService
 from src.shared.infrastructure.database import async_session_scope

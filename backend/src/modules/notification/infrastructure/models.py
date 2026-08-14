@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.modules.notification.domain.constants import (
+from src.modules.notification.domain import (
     ACTION_URL_MAX_LENGTH,
     TITLE_MAX_LENGTH,
 )

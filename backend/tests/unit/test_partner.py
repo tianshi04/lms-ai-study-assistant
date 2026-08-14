@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.gen.partner.v1 import partner_pb as pb
-from src.modules.partner.application.partner_usecase import PartnerUseCase
-from src.modules.partner.domain.entities import Partner
+from src.modules.partner.application import PartnerUseCase
+from src.modules.partner.domain import Partner
 from src.modules.partner.presentation.partner_handler import (
     PartnerHandler,
     _to_pb_partner,

@@ -22,27 +22,27 @@ from src.gen.notification.v1.notification_connect import (
 )
 from src.gen.partner.v1.partner_connect import PartnerServiceASGIApplication
 from src.gen.payment.v1.payment_connect import PaymentServiceASGIApplication
-from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
+from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+from src.modules.catalog.application import CatalogUseCase
 from src.modules.catalog.presentation.catalog_handler import CatalogHandler
-from src.modules.certificate.application.certificate_usecase import CertificateUseCase
+from src.modules.certificate.application import CertificateUseCase
 from src.modules.certificate.presentation.certificate_handler import CertificateHandler
-from src.modules.forum.application.forum_usecase import ForumUseCase
+from src.modules.forum.application import ForumUseCase
 from src.modules.forum.presentation.forum_handler import ForumHandler
-from src.modules.identity.application.identity_usecase import IdentityUseCase
+from src.modules.identity.application import IdentityUseCase
 from src.modules.identity.presentation.identity_handler import IdentityHandler
-from src.modules.learning.application.learning_usecase import LearningUseCase
+from src.modules.learning.application import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
-from src.modules.notification.application.notification_usecase import (
+from src.modules.notification.application import (
     NotificationUseCase,
 )
 from src.modules.notification.presentation.notification_handler import (
     NotificationHandler,
 )
-from src.modules.partner.application.partner_usecase import PartnerUseCase
+from src.modules.partner.application import PartnerUseCase
 from src.modules.partner.presentation.partner_handler import PartnerHandler
-from src.modules.payment.application.payment_usecase import PaymentUseCase
+from src.modules.payment.application import PaymentUseCase
 from src.modules.payment.presentation.payment_handler import PaymentHandler
 from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor

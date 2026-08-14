@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.modules.identity.domain.entities import User, UserRole
+from src.modules.identity.domain import User, UserRole
 from src.modules.identity.infrastructure.models import UserModel
 from src.modules.identity.infrastructure.repository import IdentityRepository
 

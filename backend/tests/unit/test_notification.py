@@ -4,12 +4,12 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.gen.notification.v1 import notification_pb as pb
-from src.modules.notification.application.notification_usecase import (
+from src.modules.notification.application import (
     NotificationUseCase,
 )
-from src.modules.notification.domain.constants import NotificationCategory
-from src.modules.notification.domain.entities import (
+from src.modules.notification.domain import (
     Notification,
+    NotificationCategory,
     NotificationPreferences,
 )
 from src.modules.notification.presentation.notification_handler import (

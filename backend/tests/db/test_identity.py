@@ -1,12 +1,12 @@
 import pytest
 
 from src.gen.identity.v1 import identity_pb as pb
-from src.modules.identity.application.identity_usecase import (
+from src.modules.identity.application import (
     IdentityUseCase,
     hash_password,
     verify_password,
 )
-from src.modules.identity.domain.entities import UserRole
+from src.modules.identity.domain import UserRole
 from src.modules.identity.presentation.identity_handler import _pb_role_to_domain_str
 from src.shared.auth import decode_token
 

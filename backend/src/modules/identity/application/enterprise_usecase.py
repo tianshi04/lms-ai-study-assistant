@@ -4,20 +4,16 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from src.modules.identity.domain.constants import (
+from src.modules.identity.domain import (
     DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
     ENTERPRISE_REVOCATION_GRACE_PERIOD_DAYS,
     ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT,
-)
-from src.modules.identity.domain.entities import (
     EnterpriseLicense,
+    EnterpriseSeatAssignedDomainEvent,
     ScopeType,
 )
-from src.modules.identity.domain.events import (
-    EnterpriseSeatAssignedDomainEvent,
-)
 from src.modules.identity.infrastructure import repository as repo_module
-from src.modules.learning.domain.repositories import ILearningRepository
+from src.modules.learning.domain import ILearningRepository
 from src.shared.auth import (
     CurrentUser,
 )

@@ -5,10 +5,11 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from src.modules.assessment.application.base_usecase import BaseAssessmentUseCase
-from src.modules.assessment.domain.entities import LabSubmission
+from src.modules.assessment.domain import LabSubmission
 from src.shared.access_policy import require_paid_access
 from src.shared.infrastructure.database import async_session_scope
+
+from .base_usecase import BaseAssessmentUseCase
 
 logger = logging.getLogger(__name__)
 

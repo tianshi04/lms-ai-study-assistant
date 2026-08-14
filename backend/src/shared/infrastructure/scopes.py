@@ -2,7 +2,7 @@ from typing import Any
 
 from sqlalchemy import Select
 
-from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
+from src.modules.identity.domain import INTERNAL_SYSTEM_ORG_ID
 from src.shared.auth import CurrentUserContext
 
 

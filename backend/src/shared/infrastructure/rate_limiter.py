@@ -2,7 +2,7 @@
 
 import logging
 
-from src.modules.identity.domain.constants import (
+from src.modules.identity.domain import (
     LOGIN_LOCKOUT_SECONDS,
     LOGIN_MAX_ATTEMPTS,
 )

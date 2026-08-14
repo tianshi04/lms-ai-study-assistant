@@ -4,19 +4,15 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from src.modules.catalog.domain.repositories import ICatalogRepository
-from src.modules.identity.domain.constants import (
+from src.modules.catalog.domain import ICatalogRepository
+from src.modules.identity.domain import (
     DEFAULT_INVITATION_EXPIRATION_DAYS,
-)
-from src.modules.identity.domain.entities import (
     Invitation,
+    InvitationSentDomainEvent,
     InvitationStatus,
     InvitationType,
     UserRole,
     hash_invitation_token,
-)
-from src.modules.identity.domain.events import (
-    InvitationSentDomainEvent,
 )
 from src.modules.identity.infrastructure import repository as repo_module
 from src.shared import permissions

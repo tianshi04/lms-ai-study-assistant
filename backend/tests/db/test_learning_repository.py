@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.modules.learning.domain.entities import DeadlineStatus
+from src.modules.learning.domain import DeadlineStatus
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,

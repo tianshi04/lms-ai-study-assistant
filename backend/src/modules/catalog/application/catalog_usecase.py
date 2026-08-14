@@ -2,28 +2,23 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from src.modules.catalog.application.collaborator_usecase import (
+from src.modules.catalog.domain import ICatalogRepository
+from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
+from src.modules.learning.domain import ILearningRepository
+from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.s3_storage import get_s3_storage_service
+
+from .collaborator_usecase import (
     CourseCollaboratorUseCase,
     _default_identity_repo_factory,
 )
-from src.modules.catalog.application.course_review_usecase import (
+from .course_review_usecase import (
     CourseReviewUseCase,
     _default_learning_repo_factory,
 )
-from src.modules.catalog.application.course_usecase import (
-    CourseUseCase,
-)
-from src.modules.catalog.application.curriculum_usecase import (
-    CurriculumUseCase,
-)
-from src.modules.catalog.application.scorm_usecase import (
-    ScormUseCase,
-)
-from src.modules.catalog.domain.repositories import ICatalogRepository
-from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
-from src.modules.learning.domain.repositories import ILearningRepository
-from src.shared.infrastructure.database import async_session_scope
-from src.shared.infrastructure.s3_storage import get_s3_storage_service
+from .course_usecase import CourseUseCase
+from .curriculum_usecase import CurriculumUseCase
+from .scorm_usecase import ScormUseCase
 
 logger = logging.getLogger(__name__)
 

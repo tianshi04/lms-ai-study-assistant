@@ -3,13 +3,10 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from src.modules.assessment.application.base_usecase import BaseAssessmentUseCase
-from src.modules.assessment.domain.constants import (
+from src.modules.assessment.domain import (
     OUTLIER_SCORE_DELTA_THRESHOLD,
     PEER_REVIEW_COLD_START_HOURS,
     REQUIRED_PEER_REVIEWS_COUNT,
-)
-from src.modules.assessment.domain.entities import (
     GradeAppeal,
     PeerAssignmentSubmission,
     PeerReview,
@@ -18,6 +15,8 @@ from src.modules.assessment.domain.entities import (
 from src.shared.access_policy import require_paid_access
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+
+from .base_usecase import BaseAssessmentUseCase
 
 logger = logging.getLogger(__name__)
 

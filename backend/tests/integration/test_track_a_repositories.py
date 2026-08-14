@@ -1,7 +1,7 @@
 import pytest
 
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.learning.application.learning_usecase import LearningUseCase
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.learning.application import LearningUseCase
 from src.shared.infrastructure.database import Base, get_engine
 
 

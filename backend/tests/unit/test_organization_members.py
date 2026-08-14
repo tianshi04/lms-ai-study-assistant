@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.modules.identity.application.identity_usecase import IdentityUseCase
-from src.modules.identity.domain.entities import User, UserRole
+from src.modules.identity.application import IdentityUseCase
+from src.modules.identity.domain import User, UserRole
 from src.shared.auth import CurrentUserContext
 
 

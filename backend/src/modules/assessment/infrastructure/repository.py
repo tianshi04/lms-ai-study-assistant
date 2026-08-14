@@ -6,7 +6,8 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.modules.assessment.domain.entities import (
+from src.modules.assessment.domain import (
+    AssessmentRepositoryInterface,
     GradeAppeal,
     HonorCodeAgreement,
     LabSubmission,
@@ -21,7 +22,6 @@ from src.modules.assessment.domain.entities import (
     QuizSubmission,
     RubricCriteria,
 )
-from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     HonorCodeModel,

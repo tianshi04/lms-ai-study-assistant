@@ -3,9 +3,8 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from src.modules.identity.domain.entities import Organization
-from src.modules.partner.domain.entities import Partner
-from src.modules.partner.domain.repositories import IPartnerRepository
+from src.modules.identity.domain import Organization
+from src.modules.partner.domain import IPartnerRepository, Partner
 from src.modules.partner.infrastructure.repository import SQLAlchemyPartnerRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope

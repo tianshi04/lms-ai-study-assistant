@@ -2,9 +2,10 @@ import logging
 import uuid
 from datetime import UTC, datetime
 
-from src.modules.assessment.application.base_usecase import BaseAssessmentUseCase
-from src.modules.assessment.domain.entities import GradeAppeal
+from src.modules.assessment.domain import GradeAppeal
 from src.shared.infrastructure.database import async_session_scope
+
+from .base_usecase import BaseAssessmentUseCase
 
 logger = logging.getLogger(__name__)
 

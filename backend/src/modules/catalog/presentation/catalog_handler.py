@@ -6,8 +6,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.catalog.v1 import catalog_pb as pb
 from src.gen.catalog.v1.catalog_connect import CatalogService
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.catalog.domain.entities import (
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.catalog.domain import (
     Category,
     Course,
     CourseReview,

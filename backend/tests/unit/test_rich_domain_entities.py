@@ -4,29 +4,29 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from src.modules.assessment.domain.entities import (
+from src.modules.assessment.domain import (
     GradeAppeal,
     PeerAssignmentSubmission,
     QuizActiveSession,
     QuizCooldown,
 )
-from src.modules.forum.domain.entities import (
+from src.modules.forum.domain import (
     ForumReplyEntity,
     ForumThreadEntity,
 )
-from src.modules.identity.domain.entities import (
+from src.modules.identity.domain import (
     ApplicationStatus,
     EnterpriseLicense,
     InstructorApplication,
     OrganizationMember,
     ScopeType,
 )
-from src.modules.learning.domain.entities import (
+from src.modules.learning.domain import (
     DeadlineStatus,
     LearningProgress,
     WeeklyDeadline,
 )
-from src.modules.payment.domain.entities import (
+from src.modules.payment.domain import (
     PaymentOrder,
     PaymentOrderStatus,
     PaymentTargetType,

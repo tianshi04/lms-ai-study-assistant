@@ -2,17 +2,13 @@ import uuid
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-from src.modules.notification.domain.constants import (
+from src.modules.notification.domain import (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
-    NotificationCategory,
-)
-from src.modules.notification.domain.entities import (
     Notification,
-    NotificationPreferences,
-)
-from src.modules.notification.domain.repositories import (
+    NotificationCategory,
     NotificationPreferenceRepository,
+    NotificationPreferences,
     NotificationRepository,
 )
 from src.modules.notification.infrastructure.repository import (

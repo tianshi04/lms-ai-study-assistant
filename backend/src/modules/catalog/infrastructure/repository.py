@@ -7,13 +7,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.modules.catalog.domain.entities import (
+from src.modules.catalog.domain import (
     Category,
     Course,
     CourseAnnouncement,
     CourseReview,
     CourseStatus,
     EnrolledStudent,
+    ICatalogRepository,
     InstructorAnalytics,
     InteractiveTranscript,
     InVideoQuiz,
@@ -23,7 +24,6 @@ from src.modules.catalog.domain.entities import (
     Specialization,
     WeekModule,
 )
-from src.modules.catalog.domain.repositories import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,

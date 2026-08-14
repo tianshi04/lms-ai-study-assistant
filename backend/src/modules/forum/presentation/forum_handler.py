@@ -6,8 +6,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.forum.v1 import forum_pb as pb
 from src.gen.forum.v1.forum_connect import ForumService
-from src.modules.forum.application.forum_usecase import ForumUseCase
-from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
+from src.modules.forum.application import ForumUseCase
+from src.modules.forum.domain import ForumReplyEntity, ForumThreadEntity
 from src.shared.auth import require_current_user
 
 ROLE_MAP = {

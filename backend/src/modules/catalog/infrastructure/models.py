@@ -16,8 +16,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.catalog.domain.entities import CourseStatus, ItemType
-from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
+from src.modules.catalog.domain import CourseStatus, ItemType
+from src.modules.identity.domain import INTERNAL_SYSTEM_ORG_ID
 from src.shared.infrastructure.database import Base
 
 

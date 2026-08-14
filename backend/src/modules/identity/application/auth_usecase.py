@@ -9,16 +9,12 @@ import httpx
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-from src.modules.identity.domain.constants import (
+from src.modules.identity.domain import (
     DEFAULT_PBKDF2_ITERATIONS,
     PASSWORD_MIN_LENGTH,
-)
-from src.modules.identity.domain.entities import (
     User,
-    UserRole,
-)
-from src.modules.identity.domain.events import (
     UserRegisteredDomainEvent,
+    UserRole,
 )
 from src.modules.identity.infrastructure import repository as repo_module
 from src.shared import auth

@@ -2,13 +2,13 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from src.modules.catalog.domain.entities import (
+from src.modules.catalog.domain import (
     Category,
     Course,
     CourseStatus,
+    ICatalogRepository,
     Specialization,
 )
-from src.modules.catalog.domain.repositories import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope

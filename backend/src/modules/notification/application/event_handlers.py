@@ -1,27 +1,26 @@
 import logging
 
-from src.modules.assessment.domain.events import (
+from src.modules.assessment.domain import (
     LabSubmittedDomainEvent,
     PeerReviewSubmittedDomainEvent,
     QuizSubmittedDomainEvent,
 )
-from src.modules.catalog.domain.events import CourseAnnouncementCreatedDomainEvent
-from src.modules.certificate.domain.events import (
+from src.modules.catalog.domain import CourseAnnouncementCreatedDomainEvent
+from src.modules.certificate.domain import (
     CertificateIssuedDomainEvent,
     FinancialAidReviewedDomainEvent,
 )
-from src.modules.forum.domain.events import ForumReplyCreatedDomainEvent
-from src.modules.identity.domain.events import (
+from src.modules.forum.domain import ForumReplyCreatedDomainEvent
+from src.modules.identity.domain import (
     EnterpriseSeatAssignedDomainEvent,
     InstructorApplicationReviewedDomainEvent,
     InvitationSentDomainEvent,
     UserRegisteredDomainEvent,
 )
-from src.modules.notification.application.notification_usecase import (
-    NotificationUseCase,
-)
-from src.modules.notification.domain.constants import NotificationCategory
+from src.modules.notification.domain import NotificationCategory
 from src.shared.infrastructure.event_bus import EventBus
+
+from .notification_usecase import NotificationUseCase
 
 logger = logging.getLogger(__name__)
 

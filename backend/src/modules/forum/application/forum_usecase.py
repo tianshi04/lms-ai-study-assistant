@@ -4,11 +4,14 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from typing import Any
 
-from src.modules.catalog.domain.repositories import ICatalogRepository
-from src.modules.forum.domain.constants import DEFAULT_FORUM_AUTHOR_ROLE
-from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
-from src.modules.forum.domain.events import ForumReplyCreatedDomainEvent
-from src.modules.forum.domain.repositories import IForumRepository
+from src.modules.catalog.domain import ICatalogRepository
+from src.modules.forum.domain import (
+    DEFAULT_FORUM_AUTHOR_ROLE,
+    ForumReplyCreatedDomainEvent,
+    ForumReplyEntity,
+    ForumThreadEntity,
+    IForumRepository,
+)
 from src.modules.forum.infrastructure.repository import ForumRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope

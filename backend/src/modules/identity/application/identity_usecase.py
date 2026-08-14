@@ -1,32 +1,8 @@
 from collections.abc import Callable
 from typing import Any
 
-from src.modules.catalog.domain.repositories import ICatalogRepository
-from src.modules.identity.application.auth_usecase import (
-    AuthUseCase,
-    hash_password,
-    validate_password,
-    verify_password,
-)
-from src.modules.identity.application.enterprise_usecase import (
-    EnterpriseLicenseUseCase,
-)
-from src.modules.identity.application.invitation_usecase import (
-    InvitationUseCase,
-)
-from src.modules.identity.application.organization_usecase import (
-    OrganizationUseCase,
-)
-from src.modules.identity.application.review_application_usecase import (
-    ReviewInstructorApplicationUseCase,
-)
-from src.modules.identity.application.submit_application_usecase import (
-    SubmitInstructorApplicationUseCase,
-)
-from src.modules.identity.application.user_profile_usecase import (
-    UserProfileUseCase,
-)
-from src.modules.identity.domain.entities import (
+from src.modules.catalog.domain import ICatalogRepository
+from src.modules.identity.domain import (
     InstructorApplication,
     Invitation,
     User,
@@ -34,10 +10,18 @@ from src.modules.identity.domain.entities import (
 from src.modules.identity.infrastructure.repository import (
     OrganizationRepository,
 )
-from src.modules.learning.domain.repositories import ILearningRepository
+from src.modules.learning.domain import ILearningRepository
 from src.shared.auth import (
     CurrentUser,
 )
+
+from .auth_usecase import AuthUseCase, hash_password, validate_password, verify_password
+from .enterprise_usecase import EnterpriseLicenseUseCase
+from .invitation_usecase import InvitationUseCase
+from .organization_usecase import OrganizationUseCase
+from .review_application_usecase import ReviewInstructorApplicationUseCase
+from .submit_application_usecase import SubmitInstructorApplicationUseCase
+from .user_profile_usecase import UserProfileUseCase
 
 __all__ = [
     "AuthUseCase",

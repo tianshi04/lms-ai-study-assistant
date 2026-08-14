@@ -2,7 +2,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
+from src.modules.assessment.domain import AssessmentRepositoryInterface
 from src.modules.assessment.infrastructure.repository import (
     SQLAlchemyAssessmentRepository,
 )

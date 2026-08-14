@@ -4,8 +4,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.partner.v1 import partner_pb as pb
 from src.gen.partner.v1.partner_connect import PartnerService
-from src.modules.partner.application.partner_usecase import PartnerUseCase
-from src.modules.partner.domain.entities import Partner
+from src.modules.partner.application import PartnerUseCase
+from src.modules.partner.domain import Partner
 from src.shared.auth import require_current_user
 
 

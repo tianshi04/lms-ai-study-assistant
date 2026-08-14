@@ -1,7 +1,7 @@
 from sqlalchemy import ARRAY, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.modules.partner.domain.constants import (
+from src.modules.partner.domain import (
     MAX_PARTNER_NAME_LENGTH,
     MAX_PARTNER_SLUG_LENGTH,
 )

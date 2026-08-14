@@ -7,25 +7,23 @@ from unittest.mock import MagicMock
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.identity.domain.entities import (
+from src.modules.identity.domain import (
     ApplicationStatus,
     EnterpriseLicense,
+    IEnterpriseLicenseRepository,
+    IIdentityRepository,
+    IInstructorApplicationRepository,
+    IInvitationRepository,
     InstructorApplication,
     Invitation,
     InvitationStatus,
     InvitationType,
+    IOrganizationRepository,
     Organization,
     OrganizationMember,
     ScopeType,
     User,
     UserRole,
-)
-from src.modules.identity.domain.repositories import (
-    IEnterpriseLicenseRepository,
-    IIdentityRepository,
-    IInstructorApplicationRepository,
-    IInvitationRepository,
-    IOrganizationRepository,
 )
 from src.modules.identity.infrastructure.models import (
     EnterpriseLicenseModel,

@@ -14,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.assessment.domain.constants import (
+from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     DEFAULT_QUIZ_EASY_COUNT,
     DEFAULT_QUIZ_HARD_COUNT,

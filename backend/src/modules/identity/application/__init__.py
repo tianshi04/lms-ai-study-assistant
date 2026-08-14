@@ -1,4 +1,9 @@
-from .auth_usecase import AuthUseCase
+from .auth_usecase import (
+    AuthUseCase,
+    hash_password,
+    validate_password,
+    verify_password,
+)
 from .enterprise_usecase import EnterpriseLicenseUseCase
 from .identity_usecase import IdentityUseCase
 from .invitation_usecase import InvitationUseCase
@@ -16,4 +21,7 @@ __all__ = [
     "ReviewInstructorApplicationUseCase",
     "SubmitInstructorApplicationUseCase",
     "UserProfileUseCase",
+    "hash_password",
+    "validate_password",
+    "verify_password",
 ]

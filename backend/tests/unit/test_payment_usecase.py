@@ -5,9 +5,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.modules.payment.application.payment_usecase import PaymentUseCase
-from src.modules.payment.domain.entities import (
+from src.modules.payment.application import PaymentUseCase
+from src.modules.payment.domain import (
     CoursePurchase,
+    IPaymentRepository,
     PaymentOrder,
     PaymentOrderStatus,
     PaymentTargetType,
@@ -17,7 +18,6 @@ from src.modules.payment.domain.entities import (
     SubscriptionStatus,
     UserSubscription,
 )
-from src.modules.payment.domain.repositories import IPaymentRepository
 from src.shared.config import settings
 
 
@@ -208,7 +208,7 @@ async def test_create_vnpay_payment_url_success(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    from src.modules.payment.domain.entities import PaymentTargetType
+    from src.modules.payment.domain import PaymentTargetType
 
     (
         success,
@@ -245,7 +245,7 @@ async def test_verify_vnpay_payment_success(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    from src.modules.payment.domain.entities import PaymentTargetType
+    from src.modules.payment.domain import PaymentTargetType
     from src.modules.payment.infrastructure.vnpay_service import VNPayService
 
     (
@@ -324,7 +324,7 @@ async def test_process_vnpay_ipn_success(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    from src.modules.payment.domain.entities import PaymentTargetType
+    from src.modules.payment.domain import PaymentTargetType
     from src.modules.payment.infrastructure.vnpay_service import VNPayService
 
     _, _, _, _, txn_ref = await use_case.create_vnpay_payment_url(
@@ -566,7 +566,7 @@ async def test_list_user_purchases_auto_reconciles_missing_subscription(mock_sco
 
 @pytest.mark.asyncio
 async def test_safe_enum_parse_handles_none_and_legacy_strings():
-    from src.modules.payment.domain.entities import (
+    from src.modules.payment.domain import (
         PlanType,
         SubscriptionStatus,
         safe_enum_parse,

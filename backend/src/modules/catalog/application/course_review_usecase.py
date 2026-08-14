@@ -3,20 +3,18 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from src.modules.catalog.domain.constants import (
+from src.modules.catalog.domain import (
     MAX_RATING_STARS,
     MAX_REVIEW_COMMENT_LENGTH,
     MIN_PROGRESS_PERCENT_FOR_REVIEW,
     MIN_RATING_STARS,
     VERIFIED_COMPLETER_PROGRESS_PERCENT,
-)
-from src.modules.catalog.domain.entities import CourseStatus
-from src.modules.catalog.domain.events import (
     CourseAnnouncementCreatedDomainEvent,
+    CourseStatus,
+    ICatalogRepository,
 )
-from src.modules.catalog.domain.repositories import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
-from src.modules.learning.domain.repositories import ILearningRepository
+from src.modules.learning.domain import ILearningRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus

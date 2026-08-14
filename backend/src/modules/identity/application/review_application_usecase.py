@@ -1,13 +1,11 @@
 from datetime import UTC, datetime
 
-from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
-from src.modules.identity.domain.entities import (
+from src.modules.identity.domain import (
+    INTERNAL_SYSTEM_ORG_ID,
     ApplicationStatus,
     InstructorApplication,
-    UserRole,
-)
-from src.modules.identity.domain.events import (
     InstructorApplicationReviewedDomainEvent,
+    UserRole,
 )
 from src.modules.identity.infrastructure.repository import (
     IdentityRepository,

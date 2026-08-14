@@ -4,12 +4,12 @@ from connectrpc.request import RequestContext
 
 from src.gen.notification.v1 import notification_pb as pb
 from src.gen.notification.v1.notification_connect import NotificationService
-from src.modules.notification.application.notification_usecase import (
+from src.modules.notification.application import (
     NotificationUseCase,
 )
-from src.modules.notification.domain.constants import NotificationCategory
-from src.modules.notification.domain.entities import (
+from src.modules.notification.domain import (
     Notification,
+    NotificationCategory,
     NotificationPreferences,
 )
 from src.shared.auth import require_current_user

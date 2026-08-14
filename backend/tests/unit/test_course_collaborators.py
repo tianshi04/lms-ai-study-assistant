@@ -2,9 +2,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.catalog.domain.entities import Course, CourseStatus
-from src.modules.identity.domain.entities import User, UserRole
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.catalog.domain import Course, CourseStatus
+from src.modules.identity.domain import User, UserRole
 from src.shared.auth import CurrentUserContext
 
 

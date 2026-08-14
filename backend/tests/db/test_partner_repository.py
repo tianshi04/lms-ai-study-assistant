@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.modules.partner.domain.entities import Partner
+from src.modules.partner.domain import Partner
 from src.modules.partner.infrastructure.models import PartnerModel
 from src.modules.partner.infrastructure.repository import SQLAlchemyPartnerRepository
 

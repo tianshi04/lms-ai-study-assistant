@@ -7,13 +7,13 @@ import uuid
 
 import pytest
 
-from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
+from src.modules.assessment.application import AssessmentUseCase
 from src.modules.certificate.infrastructure.models import FinancialAidModel
-from src.modules.forum.application.forum_usecase import ForumUseCase
-from src.modules.identity.application.review_application_usecase import (
+from src.modules.forum.application import ForumUseCase
+from src.modules.identity.application import (
     ReviewInstructorApplicationUseCase,
 )
-from src.modules.identity.domain.entities import (
+from src.modules.identity.domain import (
     ApplicationStatus,
     InstructorApplication,
     User,
@@ -23,10 +23,10 @@ from src.modules.identity.infrastructure.repository import (
     IdentityRepository,
     InstructorApplicationRepository,
 )
-from src.modules.notification.application.notification_usecase import (
+from src.modules.notification.application import (
     NotificationUseCase,
 )
-from src.modules.notification.domain.constants import NotificationCategory
+from src.modules.notification.domain import NotificationCategory
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -171,7 +171,7 @@ async def test_live_quiz_submission_trigger():
 @pytest.mark.asyncio
 async def test_live_registration_trigger():
     """Verify that registering a new account automatically creates a welcome SYSTEM notification."""
-    from src.modules.identity.application.identity_usecase import IdentityUseCase
+    from src.modules.identity.application import IdentityUseCase
 
     new_email = f"newuser_{uuid.uuid4().hex[:6]}@coursera.org"
     identity_uc = IdentityUseCase()

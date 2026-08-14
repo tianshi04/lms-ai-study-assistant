@@ -6,9 +6,8 @@ from typing import Any
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 
-from src.modules.certificate.domain.entities import FinancialAidStatus
-from src.modules.certificate.domain.repositories import ICertificateRepository
-from src.modules.identity.domain.entities import UserRole
+from src.modules.certificate.domain import FinancialAidStatus, ICertificateRepository
+from src.modules.identity.domain import UserRole
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -41,7 +40,7 @@ class AccessPolicyService:
             clean_key = user_entity.enterprise_seat_key.strip().upper()
             from sqlalchemy import select
 
-            from src.modules.identity.domain.entities import (
+            from src.modules.identity.domain import (
                 EnterpriseLicense,
                 ScopeType,
             )

@@ -1,6 +1,6 @@
 import pytest
 
-from src.modules.catalog.domain.entities import (
+from src.modules.catalog.domain import (
     Course,
     CourseStatus,
     ItemType,

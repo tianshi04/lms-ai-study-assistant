@@ -60,15 +60,15 @@ from src.modules.forum.infrastructure.models import (
     ForumThreadORM,
     ForumVoteORM,
 )
-from src.modules.identity.application.identity_usecase import hash_password
-from src.modules.identity.domain.entities import UserRole
+from src.modules.identity.application import hash_password
+from src.modules.identity.domain import UserRole
 from src.modules.identity.infrastructure.models import (
     EnterpriseLicenseModel,
     OrganizationMemberModel,
     OrganizationModel,
     UserModel,
 )
-from src.modules.learning.domain.entities import DeadlineStatus
+from src.modules.learning.domain import DeadlineStatus
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,

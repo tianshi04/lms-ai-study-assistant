@@ -4,13 +4,11 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.notification.domain.constants import NotificationCategory
-from src.modules.notification.domain.entities import (
+from src.modules.notification.domain import (
     Notification,
-    NotificationPreferences,
-)
-from src.modules.notification.domain.repositories import (
+    NotificationCategory,
     NotificationPreferenceRepository,
+    NotificationPreferences,
     NotificationRepository,
 )
 from src.modules.notification.infrastructure.models import (

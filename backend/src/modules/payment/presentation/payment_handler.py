@@ -4,8 +4,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.payment.v1 import payment_pb as pb
 from src.gen.payment.v1.payment_connect import PaymentService
-from src.modules.payment.application.payment_usecase import PaymentUseCase
-from src.modules.payment.domain.entities import PaymentTargetType, PlanType
+from src.modules.payment.application import PaymentUseCase
+from src.modules.payment.domain import PaymentTargetType, PlanType
 from src.shared.auth import require_current_user
 
 

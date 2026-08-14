@@ -7,8 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.payment.domain.entities import (
+from src.modules.payment.domain import (
     CoursePurchase,
+    IPaymentRepository,
     PaymentOrder,
     PaymentOrderStatus,
     PaymentTargetType,
@@ -19,7 +20,6 @@ from src.modules.payment.domain.entities import (
     UserSubscription,
     safe_enum_parse,
 )
-from src.modules.payment.domain.repositories import IPaymentRepository
 from src.modules.payment.infrastructure.models import (
     CoursePurchaseModel,
     PaymentOrderModel,

@@ -2,8 +2,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.learning.v1 import learning_pb as pb
 from src.gen.learning.v1.learning_connect import LearningService
-from src.modules.learning.application.learning_usecase import LearningUseCase
-from src.modules.learning.domain.entities import (
+from src.modules.learning.application import LearningUseCase
+from src.modules.learning.domain import (
     DeadlineStatus,
     EnrolledCourseSummary,
     LearningProgress,

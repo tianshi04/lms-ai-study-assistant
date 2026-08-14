@@ -12,10 +12,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.modules.identity.domain.constants import (
+from src.modules.identity.domain import (
     DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
+    UserRole,
 )
-from src.modules.identity.domain.entities import UserRole
 from src.shared.infrastructure.database import Base
 
 

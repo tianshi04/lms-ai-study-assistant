@@ -3,12 +3,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.modules.identity.application.identity_usecase import (
+from src.modules.identity.application import (
     IdentityUseCase,
     hash_password,
     verify_password,
 )
-from src.modules.identity.domain.entities import User, UserRole
+from src.modules.identity.domain import User, UserRole
 from src.shared.auth import CurrentUser
 
 
@@ -22,7 +22,7 @@ def test_hash_and_verify_password():
 
 
 def test_enterprise_license_scope_filtering_domain():
-    from src.modules.identity.domain.entities import EnterpriseLicense, ScopeType
+    from src.modules.identity.domain import EnterpriseLicense, ScopeType
 
     # ALL_COURSES Scope
     lic_all = EnterpriseLicense(
@@ -609,7 +609,7 @@ async def test_revoke_enterprise_seat_progress_guard(
     )
     mock_repo_instance.get_by_id.return_value = user
 
-    from src.modules.learning.domain.entities import LearningProgress
+    from src.modules.learning.domain import LearningProgress
 
     progress = LearningProgress(
         user_id="u1", course_id="c1", overall_progress_percent=25.0
@@ -761,7 +761,7 @@ async def test_respond_to_invitation(mock_session_scope):
         mock_org_repo.return_value = mock_org_repo_instance
         mock_inv_repo_instance.save.side_effect = lambda inv: inv
 
-        from src.modules.identity.domain.entities import (
+        from src.modules.identity.domain import (
             Invitation,
             InvitationStatus,
             InvitationType,
@@ -818,7 +818,7 @@ async def test_cancel_invitation(mock_session_scope):
         mock_inv_repo.return_value = mock_inv_repo_instance
         mock_inv_repo_instance.save.side_effect = lambda inv: inv
 
-        from src.modules.identity.domain.entities import (
+        from src.modules.identity.domain import (
             Invitation,
             InvitationStatus,
             InvitationType,
@@ -877,7 +877,7 @@ async def test_remove_organization_member_audit_logging():
 
 
 def test_validate_password_policy():
-    from src.modules.identity.application.identity_usecase import validate_password
+    from src.modules.identity.application import validate_password
 
     # Empty / None
     assert validate_password("") == "Mật khẩu phải chứa ít nhất 6 ký tự."

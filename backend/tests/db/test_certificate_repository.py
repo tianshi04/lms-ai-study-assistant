@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.certificate.domain.entities import (
+from src.modules.certificate.domain import (
     FinancialAidApplication,
     FinancialAidStatus,
     VerifiedCertificate,

@@ -1,10 +1,8 @@
 import uuid
 from datetime import UTC, datetime
 
-from src.modules.identity.domain.constants import (
+from src.modules.identity.domain import (
     INSTRUCTOR_APPLICATION_REAPPLY_COOLDOWN_DAYS,
-)
-from src.modules.identity.domain.entities import (
     ApplicationStatus,
     InstructorApplication,
 )

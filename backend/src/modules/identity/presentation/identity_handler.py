@@ -6,8 +6,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.identity.v1 import identity_pb as pb
 from src.gen.identity.v1.identity_connect import IdentityService
-from src.modules.identity.application.identity_usecase import IdentityUseCase
-from src.modules.identity.domain.entities import (
+from src.modules.identity.application import IdentityUseCase
+from src.modules.identity.domain import (
     ApplicationStatus,
     InstructorApplication,
     User,

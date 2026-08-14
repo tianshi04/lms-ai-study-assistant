@@ -2,15 +2,15 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.modules.catalog.domain.entities import (
+from src.modules.catalog.domain import (
     Course,
     ItemType,
     LearningItem,
     Lesson,
     WeekModule,
 )
-from src.modules.learning.application.learning_usecase import LearningUseCase
-from src.modules.learning.domain.entities import (
+from src.modules.learning.application import LearningUseCase
+from src.modules.learning.domain import (
     LearningProgress,
     PersonalNote,
 )
