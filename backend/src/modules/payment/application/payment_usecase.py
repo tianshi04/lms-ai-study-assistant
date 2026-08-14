@@ -5,10 +5,11 @@ import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from src.modules.catalog.infrastructure.models import CourseModel
+from src.modules.catalog.infrastructure.repository import (
+    SQLAlchemyCatalogRepository,
+)
 from src.modules.payment.domain.constants import (
     DEFAULT_CURRENCY,
     DEFAULT_MONTHLY_PLAN_DAYS,
@@ -77,19 +78,23 @@ class PaymentUseCase:
                     None,
                 )
 
-            stmt = select(CourseModel).where(CourseModel.id == course_id)
-            res = await session.execute(stmt)
-            course = res.scalar_one_or_none()
+            catalog_repo = SQLAlchemyCatalogRepository(session)
+            course = await catalog_repo.get_course_detail(course_id)
 
-            amount = (
-                course.price
-                if (course and hasattr(course, "price") and course.price > 0)
+            raw_price = (
+                getattr(course, "price", DEFAULT_SINGLE_COURSE_PRICE_VND)
+                if course
                 else DEFAULT_SINGLE_COURSE_PRICE_VND
             )
-            currency = (
-                course.currency
-                if (course and hasattr(course, "currency") and course.currency)
-                else "VND"
+            amount: float = (
+                float(raw_price)
+                if isinstance(raw_price, (int, float)) and raw_price > 0
+                else float(DEFAULT_SINGLE_COURSE_PRICE_VND)
+            )
+            currency: str = (
+                str(getattr(course, "currency", DEFAULT_CURRENCY) or DEFAULT_CURRENCY)
+                if course
+                else DEFAULT_CURRENCY
             )
 
             purchase = CoursePurchase.create(
@@ -222,20 +227,26 @@ class PaymentUseCase:
                 already_purchased = await repo.has_active_purchase(user_id, target_id)
                 if already_purchased:
                     return False, "Bạn đã mua và sở hữu khóa học này.", "", "", ""
-                stmt = select(CourseModel).where(CourseModel.id == target_id)
-                res = await session.execute(stmt)
-                course = res.scalar_one_or_none()
-                if course and hasattr(course, "price") and course.price > 0:
-                    amount = course.price
-                else:
-                    amount = DEFAULT_SINGLE_COURSE_PRICE_VND
+                catalog_repo = SQLAlchemyCatalogRepository(session)
+                course = await catalog_repo.get_course_detail(target_id)
+                raw_course_price = (
+                    getattr(course, "price", DEFAULT_SINGLE_COURSE_PRICE_VND)
+                    if course
+                    else DEFAULT_SINGLE_COURSE_PRICE_VND
+                )
+                amount: float = (
+                    float(raw_course_price)
+                    if isinstance(raw_course_price, (int, float))
+                    and raw_course_price > 0
+                    else float(DEFAULT_SINGLE_COURSE_PRICE_VND)
+                )
                 course_title = (
                     getattr(course, "title", target_id) if course else target_id
                 )
                 order_info = f"Thanh toan khoa hoc {course_title[:30]}"
 
             elif target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION:
-                amount = (
+                amount = float(
                     DEFAULT_SYSTEM_SUBSCRIPTION_YEARLY_PRICE_VND
                     if plan_type == PlanType.YEARLY
                     else DEFAULT_SYSTEM_SUBSCRIPTION_MONTHLY_PRICE_VND

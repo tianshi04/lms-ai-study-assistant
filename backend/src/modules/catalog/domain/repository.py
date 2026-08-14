@@ -290,3 +290,15 @@ class ICatalogRepository(ABC):
     @abstractmethod
     async def list_audit_logs(self, course_id: str, limit: int = 100) -> list[dict]:
         pass
+
+    @abstractmethod
+    async def get_enrolled_user_ids(self, course_ids: list[str]) -> list[str]:
+        pass
+
+    @abstractmethod
+    async def clear_course_outline(self, course_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def get_quiz_questions_for_export(self, quiz_matrix_id: str) -> list[dict]:
+        pass

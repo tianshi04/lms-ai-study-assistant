@@ -259,6 +259,12 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             for i in range(5)
         ]
 
+    async def get_course_id_by_item_id(self, item_id: str) -> str | None:
+        return "course_test_1"
+
+    async def get_lab_test_cases_json(self, item_id: str) -> str | None:
+        return None
+
 
 @pytest.mark.asyncio
 async def test_honor_code_agreement():

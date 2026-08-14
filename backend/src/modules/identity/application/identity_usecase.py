@@ -11,7 +11,6 @@ from typing import Any
 import httpx
 from google.auth.transport import requests
 from google.oauth2 import id_token
-from sqlalchemy import select, update
 
 from src.modules.identity.application.review_application_usecase import (
     ReviewInstructorApplicationUseCase,
@@ -28,16 +27,18 @@ from src.modules.identity.domain.constants import (
     PASSWORD_MIN_LENGTH,
 )
 from src.modules.identity.domain.entities import (
+    EnterpriseLicense,
     InstructorApplication,
     Invitation,
     InvitationStatus,
     InvitationType,
+    ScopeType,
     User,
     UserRole,
     hash_invitation_token,
 )
-from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import (
+    EnterpriseLicenseRepository,
     IdentityRepository,
     InstructorApplicationRepository,
     InvitationRepository,
@@ -606,13 +607,10 @@ class IdentityUseCase:
                     "Bạn đã có suất học Enterprise khác đang kích hoạt. Vui lòng liên hệ Admin để đổi mã.",
                 )
 
-            stmt = select(EnterpriseLicenseModel).where(
-                EnterpriseLicenseModel.key == clean_key
-            )
-            res = await session.execute(stmt)
-            license_model = res.scalar_one_or_none()
+            license_repo = EnterpriseLicenseRepository(session)
+            license_entity = await license_repo.get_by_key(clean_key)
 
-            if not license_model or not license_model.is_active:
+            if not license_entity or not license_entity.is_active:
                 logger.warning(
                     "Enterprise seat assignment failed for user %s: Key %s is invalid or inactive",
                     user_id,
@@ -623,7 +621,7 @@ class IdentityUseCase:
                     f"Mã Enterprise Key '{clean_key}' không tồn tại hoặc đã bị vô hiệu hóa.",
                 )
 
-            if license_model.used_seats >= license_model.total_seats:
+            if license_entity.used_seats >= license_entity.total_seats:
                 logger.warning(
                     "Enterprise seat assignment failed for user %s: Key %s exhausted",
                     user_id,
@@ -631,20 +629,12 @@ class IdentityUseCase:
                 )
                 return (
                     False,
-                    f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats).",
+                    f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_entity.used_seats}/{license_entity.total_seats} seats).",
                 )
 
             # BR_ACCESS_002: Atomic DB update for activating enterprise seat with concurrency check
-            result = await session.execute(
-                update(EnterpriseLicenseModel)
-                .where(
-                    EnterpriseLicenseModel.key == clean_key,
-                    EnterpriseLicenseModel.used_seats
-                    < EnterpriseLicenseModel.total_seats,
-                )
-                .values(used_seats=EnterpriseLicenseModel.used_seats + 1)
-            )
-            if getattr(result, "rowcount", 0) == 0:
+            success = await license_repo.increment_enterprise_seat(clean_key)
+            if not success:
                 logger.warning(
                     "Race condition detected during seat assignment for user %s: Key %s exhausted",
                     user_id,
@@ -676,7 +666,7 @@ class IdentityUseCase:
                     recipient_id=user_id,
                     category=NotificationCategory.SYSTEM,
                     title="Kích hoạt Suất học Doanh nghiệp thành công",
-                    content=f"Tài khoản của bạn đã được liên kết với suất học đối tác {license_model.partner_name}.",
+                    content=f"Tài khoản của bạn đã được liên kết với suất học đối tác {license_entity.partner_name}.",
                     action_url="/courses",
                 )
             except Exception as e:  # noqa: BLE001
@@ -684,7 +674,7 @@ class IdentityUseCase:
 
             return (
                 True,
-                f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!",
+                f"Kích hoạt thành công suất học từ đối tác {license_entity.partner_name}!",
             )
 
     async def list_enterprise_seats(
@@ -694,13 +684,8 @@ class IdentityUseCase:
     ) -> list[dict]:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
-            stmt = select(EnterpriseLicenseModel)
-            if partner_name:
-                stmt = stmt.where(
-                    EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%")
-                )
-            res = await session.execute(stmt)
-            licenses = res.scalars().all()
+            license_repo = EnterpriseLicenseRepository(session)
+            licenses = await license_repo.list_licenses(partner_name)
 
             result = []
             for lic in licenses:
@@ -715,8 +700,12 @@ class IdentityUseCase:
                         else "Vô hiệu",
                         "status": "ACTIVE" if lic.is_active else "INACTIVE",
                         "created_at": datetime.now(UTC).isoformat(),
-                        "scope_type": getattr(lic, "scope_type", "ALL_COURSES"),
-                        "allowed_course_ids": getattr(lic, "allowed_course_ids", []),
+                        "scope_type": lic.scope_type.value
+                        if hasattr(lic.scope_type, "value")
+                        else str(lic.scope_type),
+                        "allowed_course_ids": list(lic.allowed_course_ids)
+                        if lic.allowed_course_ids
+                        else [],
                     }
                 )
             return result
@@ -733,22 +722,22 @@ class IdentityUseCase:
         async with async_session_scope() as session:
             clean_key = seat_key.strip() or f"KEY-{uuid.uuid4().hex[:8].upper()}"
             clean_scope = (
-                scope_type
-                if scope_type in ("ALL_COURSES", "CURATED_COURSES")
-                else "ALL_COURSES"
+                ScopeType(scope_type)
+                if scope_type in ScopeType._value2member_map_
+                else ScopeType.ALL_COURSES
             )
             courses_list = allowed_course_ids or []
-            lic = EnterpriseLicenseModel(
+            license_repo = EnterpriseLicenseRepository(session)
+            lic = EnterpriseLicense(
                 key=clean_key,
                 partner_name=partner_name or "Doanh nghiệp Đối tác",
                 total_seats=DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
                 used_seats=0,
                 is_active=True,
                 scope_type=clean_scope,
-                allowed_course_ids=courses_list,
+                allowed_course_ids=set(courses_list),
             )
-            session.add(lic)
-            await session.commit()
+            created = await license_repo.create_license(lic)
             return {
                 "id": clean_key,
                 "partner_name": partner_name,
@@ -757,8 +746,12 @@ class IdentityUseCase:
                 "assigned_user_email": "Hoạt động",
                 "status": "ACTIVE",
                 "created_at": datetime.now(UTC).isoformat(),
-                "scope_type": clean_scope,
-                "allowed_course_ids": courses_list,
+                "scope_type": created.scope_type.value
+                if hasattr(created.scope_type, "value")
+                else str(created.scope_type),
+                "allowed_course_ids": list(created.allowed_course_ids)
+                if created.allowed_course_ids
+                else [],
             }
 
     async def verify_identity(
@@ -836,8 +829,8 @@ class IdentityUseCase:
 
             # BR_ACCESS_003: Atomic DB update for recycling enterprise seats
             if seat_key:
-                await repo.recycle_enterprise_seat(seat_key)
-            await session.commit()
+                license_repo = EnterpriseLicenseRepository(session)
+                await license_repo.decrement_enterprise_seat(seat_key)
 
             logger.info(
                 "Successfully revoked enterprise seat %s from user %s",
@@ -1437,14 +1430,15 @@ class IdentityUseCase:
                 )
             elif "ENTERPRISE" in inv_type_str or "SEAT" in inv_type_str:
                 lic_key = inv.target_id
-                license_model = await session.get(EnterpriseLicenseModel, lic_key)
-                if not license_model or not license_model.is_active:
+                license_repo = EnterpriseLicenseRepository(session)
+                license_entity = await license_repo.get_by_key(lic_key)
+                if not license_entity or not license_entity.is_active:
                     return (
                         self._invitation_to_dict(inv),
                         False,
                         "Mã Suất học Doanh nghiệp không tồn tại hoặc đã bị vô hiệu hóa.",
                     )
-                if license_model.used_seats >= license_model.total_seats:
+                if license_entity.used_seats >= license_entity.total_seats:
                     return (
                         self._invitation_to_dict(inv),
                         False,
@@ -1454,7 +1448,13 @@ class IdentityUseCase:
                 user_repo = IdentityRepository(session)
                 user = await user_repo.get_by_id(current_user.id)
                 if user and user.enterprise_seat_key != lic_key:
-                    license_model.used_seats += 1
+                    success = await license_repo.increment_enterprise_seat(lic_key)
+                    if not success:
+                        return (
+                            self._invitation_to_dict(inv),
+                            False,
+                            "Mã Suất học Doanh nghiệp đã hết số lượng khả dụng.",
+                        )
                     user.enterprise_seat_key = lic_key
                     user.seat_assigned_at = now_str
                     await user_repo.save(user)

@@ -9,16 +9,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.identity.domain.entities import (
     ApplicationStatus,
+    EnterpriseLicense,
     InstructorApplication,
     Invitation,
     InvitationStatus,
     InvitationType,
     Organization,
     OrganizationMember,
+    ScopeType,
     User,
     UserRole,
 )
 from src.modules.identity.infrastructure.models import (
+    EnterpriseLicenseModel,
     InstructorApplicationModel,
     InvitationModel,
     OrganizationAuditLogModel,
@@ -90,18 +93,20 @@ class IdentityRepository:
     async def recycle_enterprise_seat(self, seat_key: str) -> None:
         if not seat_key:
             return
-        from sqlalchemy import update
+        repo = EnterpriseLicenseRepository(self._session)
+        await repo.decrement_enterprise_seat(seat_key)
 
-        from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
+    async def get_enterprise_license(self, key: str) -> EnterpriseLicense | None:
+        repo = EnterpriseLicenseRepository(self._session)
+        return await repo.get_by_key(key)
 
-        await self._session.execute(
-            update(EnterpriseLicenseModel)
-            .where(
-                EnterpriseLicenseModel.key == seat_key,
-                EnterpriseLicenseModel.used_seats > 0,
-            )
-            .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
-        )
+    async def increment_enterprise_seat(self, key: str) -> bool:
+        repo = EnterpriseLicenseRepository(self._session)
+        return await repo.increment_enterprise_seat(key)
+
+    async def decrement_enterprise_seat(self, key: str) -> bool:
+        repo = EnterpriseLicenseRepository(self._session)
+        return await repo.decrement_enterprise_seat(key)
 
     def _to_entity(self, model: UserModel) -> User:
         return User(
@@ -117,6 +122,96 @@ class IdentityRepository:
             signature_image_url=model.signature_image_url,
             title=model.title,
             google_id=model.google_id,
+        )
+
+
+class EnterpriseLicenseRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_key(self, key: str) -> EnterpriseLicense | None:
+        stmt = select(EnterpriseLicenseModel).where(EnterpriseLicenseModel.key == key)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
+    async def list_licenses(self, partner_name: str = "") -> list[EnterpriseLicense]:
+        stmt = select(EnterpriseLicenseModel)
+        if partner_name:
+            stmt = stmt.where(
+                EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%")
+            )
+        res = await self._session.execute(stmt)
+        return [self._to_entity(m) for m in res.scalars().all()]
+
+    async def create_license(
+        self, license_entity: EnterpriseLicense
+    ) -> EnterpriseLicense:
+        clean_scope = (
+            license_entity.scope_type.value
+            if hasattr(license_entity.scope_type, "value")
+            else str(license_entity.scope_type)
+        )
+        model = EnterpriseLicenseModel(
+            key=license_entity.key,
+            partner_name=license_entity.partner_name,
+            total_seats=license_entity.total_seats,
+            used_seats=license_entity.used_seats,
+            is_active=license_entity.is_active,
+            scope_type=clean_scope,
+            allowed_course_ids=list(license_entity.allowed_course_ids)
+            if license_entity.allowed_course_ids
+            else [],
+        )
+        self._session.add(model)
+        await self._session.flush()
+        return self._to_entity(model)
+
+    async def increment_enterprise_seat(self, key: str) -> bool:
+        from sqlalchemy import update
+
+        result = await self._session.execute(
+            update(EnterpriseLicenseModel)
+            .where(
+                EnterpriseLicenseModel.key == key,
+                EnterpriseLicenseModel.is_active.is_(True),
+                EnterpriseLicenseModel.used_seats < EnterpriseLicenseModel.total_seats,
+            )
+            .values(used_seats=EnterpriseLicenseModel.used_seats + 1)
+        )
+        await self._session.flush()
+        return getattr(result, "rowcount", -1) != 0
+
+    async def decrement_enterprise_seat(self, key: str) -> bool:
+        if not key:
+            return False
+        from sqlalchemy import update
+
+        result = await self._session.execute(
+            update(EnterpriseLicenseModel)
+            .where(
+                EnterpriseLicenseModel.key == key,
+                EnterpriseLicenseModel.used_seats > 0,
+            )
+            .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
+        )
+        await self._session.flush()
+        return getattr(result, "rowcount", -1) != 0
+
+    def _to_entity(self, model: EnterpriseLicenseModel) -> EnterpriseLicense:
+        scope = (
+            ScopeType(model.scope_type)
+            if model.scope_type in ScopeType._value2member_map_
+            else ScopeType.ALL_COURSES
+        )
+        return EnterpriseLicense(
+            key=model.key,
+            partner_name=model.partner_name,
+            total_seats=model.total_seats,
+            used_seats=model.used_seats,
+            is_active=model.is_active,
+            scope_type=scope,
+            allowed_course_ids=set(model.allowed_course_ids or []),
         )
 
 

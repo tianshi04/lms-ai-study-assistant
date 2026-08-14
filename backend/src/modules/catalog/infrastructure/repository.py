@@ -1316,3 +1316,48 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 }
             )
         return result
+
+    async def get_enrolled_user_ids(self, course_ids: list[str]) -> list[str]:
+        if not course_ids:
+            return []
+        from src.modules.learning.infrastructure.models import LearningProgressModel
+
+        stmt = select(LearningProgressModel.user_id).where(
+            LearningProgressModel.course_id.in_(course_ids)
+        )
+        res = await self.session.execute(stmt)
+        return list(res.scalars().all())
+
+    async def clear_course_outline(self, course_id: str) -> bool:
+        from src.modules.catalog.infrastructure.models import WeekModuleModel
+
+        stmt = select(WeekModuleModel).where(WeekModuleModel.course_id == course_id)
+        res = await self.session.execute(stmt)
+        for wm in res.scalars().all():
+            await self.session.delete(wm)
+        await self.session.commit()
+        return True
+
+    async def get_quiz_questions_for_export(self, quiz_matrix_id: str) -> list[dict]:
+        if not quiz_matrix_id:
+            return []
+        try:
+            from src.modules.assessment.infrastructure.models import QuestionModel
+
+            stmt = select(QuestionModel).where(QuestionModel.bank_id == quiz_matrix_id)
+            res = await self.session.execute(stmt)
+            questions = res.scalars().all()
+            return [
+                {
+                    "id": q.id,
+                    "question": q.text,
+                    "options": [opt.option_text for opt in q.options]
+                    if hasattr(q, "options") and q.options
+                    else [],
+                    "correctOptionIndex": 0,
+                    "explanation": q.explanation or "",
+                }
+                for q in questions
+            ]
+        except Exception:  # noqa: BLE001
+            return []

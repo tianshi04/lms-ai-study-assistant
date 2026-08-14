@@ -636,11 +636,6 @@ class CatalogUseCase:
 
             # Trigger batch notification to enrolled learners
             try:
-                from sqlalchemy import select
-
-                from src.modules.learning.infrastructure.models import (
-                    LearningProgressModel,
-                )
                 from src.modules.notification.application.use_cases import (
                     NotificationUseCase,
                 )
@@ -651,11 +646,7 @@ class CatalogUseCase:
                 real_id = await repo.get_course_id_by_slug_or_id(course_id)
                 target_ids = list({course_id, real_id})
 
-                enrolled_stmt = select(LearningProgressModel.user_id).where(
-                    LearningProgressModel.course_id.in_(target_ids)
-                )
-                enrolled_res = await session.execute(enrolled_stmt)
-                student_ids = list(enrolled_res.scalars().all())
+                student_ids = await repo.get_enrolled_user_ids(target_ids)
 
                 if student_ids:
                     notif_uc = NotificationUseCase()
@@ -790,8 +781,6 @@ class CatalogUseCase:
         import os
         import zipfile
 
-        from sqlalchemy import text
-
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             await self._verify_ownership(repo, course_id, current_user, "xuất SCORM")
@@ -871,32 +860,13 @@ class CatalogUseCase:
                             "quizzes": [],
                         }
 
-                        # Load Quiz questions directly via raw SQL if quiz_matrix_id exists
+                        # Load Quiz questions if quiz_matrix_id exists
                         if item.quiz_matrix_id:
-                            try:
-                                stmt = text(
-                                    "SELECT id, question_text, options, correct_option_index, explanation "
-                                    "FROM quizzes WHERE matrix_id = :matrix_id"
-                                )
-                                res = await session.execute(
-                                    stmt, {"matrix_id": item.quiz_matrix_id}
-                                )
-                                for row in res.fetchall():
-                                    item_dict["quizzes"].append(
-                                        {
-                                            "id": row[0],
-                                            "question": row[1],
-                                            "options": list(row[2]),
-                                            "correctOptionIndex": row[3],
-                                            "explanation": row[4],
-                                        }
-                                    )
-                            except Exception as e:  # noqa: BLE001
-                                logger.warning(
-                                    "Failed to fetch quizzes for item %s: %s",
-                                    item.id,
-                                    str(e),
-                                )
+                            item_dict[
+                                "quizzes"
+                            ] = await repo.get_quiz_questions_for_export(
+                                item.quiz_matrix_id
+                            )
 
                         lesson_dict["items"].append(item_dict)
                     wm_dict["lessons"].append(lesson_dict)
@@ -1118,8 +1088,6 @@ class CatalogUseCase:
         import json
         import zipfile
 
-        from sqlalchemy import text
-
         s3 = get_s3_storage_service()
         try:
             file_bytes = await s3.download_file(scorm_object_key)
@@ -1153,13 +1121,7 @@ class CatalogUseCase:
                         raise ValueError("Không tìm thấy khóa học đích để ghi đè.")
 
                     # 1. Truncate existing outline completely
-                    # Wait, repository has delete_course_outline_content or similar?
-                    # Let's delete outline manually using SQL to be absolutely robust and clean
-                    await session.execute(
-                        text("DELETE FROM week_modules WHERE course_id = :course_id"),
-                        {"course_id": course_id},
-                    )
-                    await session.commit()
+                    await repo.clear_course_outline(course_id)
 
                     # 2. Iterate and restore week modules, lessons, and items
                     for wm_dict in course_dict.get("weekModules", []):

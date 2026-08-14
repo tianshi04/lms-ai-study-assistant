@@ -578,28 +578,7 @@ class AssessmentUseCase:
                     )
                     target_course_id = ""
                     try:
-                        from sqlalchemy import select
-
-                        from src.modules.catalog.infrastructure.models import (
-                            LearningItemModel,
-                            LessonModel,
-                            WeekModuleModel,
-                        )
-
-                        cid_stmt = (
-                            select(WeekModuleModel.course_id)
-                            .join(
-                                LessonModel,
-                                LessonModel.week_module_id == WeekModuleModel.id,
-                            )
-                            .join(
-                                LearningItemModel,
-                                LearningItemModel.lesson_id == LessonModel.id,
-                            )
-                            .where(LearningItemModel.id == item_id)
-                        )
-                        cid_res = await session.execute(cid_stmt)
-                        found_cid = cid_res.scalar_one_or_none()
+                        found_cid = await repo.get_course_id_by_item_id(item_id)
                         if found_cid:
                             target_course_id = found_cid
                     except Exception:  # noqa: BLE001, S110
@@ -658,17 +637,8 @@ class AssessmentUseCase:
         if not test_cases:
             async with async_session_scope() as session:
                 try:
-                    catalog_models = __import__(
-                        "src.modules.catalog.infrastructure.models",
-                        fromlist=["LearningItemModel"],
-                    )
-                    from sqlalchemy import select
-
-                    stmt = select(
-                        catalog_models.LearningItemModel.test_cases_json
-                    ).where(catalog_models.LearningItemModel.id == item_id)
-                    res = await session.execute(stmt)
-                    test_cases_json = res.scalar_one_or_none()
+                    repo = self.repo_factory(session)
+                    test_cases_json = await repo.get_lab_test_cases_json(item_id)
                     if test_cases_json:
                         import json
 

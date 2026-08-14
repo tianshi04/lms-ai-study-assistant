@@ -80,23 +80,24 @@ class PartnerUseCase:
             )
             saved = await repo.create(partner)
 
-            from sqlalchemy import or_, select
-
-            from src.modules.identity.infrastructure.models import OrganizationModel
-
-            stmt_org = select(OrganizationModel).where(
-                or_(OrganizationModel.id == partner_id, OrganizationModel.slug == slug)
+            from src.modules.identity.domain.entities import Organization
+            from src.modules.identity.infrastructure.repository import (
+                OrganizationRepository,
             )
-            res_org = await session.execute(stmt_org)
-            existing_org = res_org.scalars().first()
+
+            org_repo = OrganizationRepository(session)
+            existing_org = await org_repo.get_organization_by_id(partner_id) or (
+                await org_repo.get_organization_by_id(slug) if slug else None
+            )
             if not existing_org:
-                org_model = OrganizationModel(
-                    id=partner_id,
-                    name=name,
-                    slug=slug,
-                    avatar_url=logo_url,
+                await org_repo.save_organization(
+                    Organization(
+                        id=partner_id,
+                        name=name,
+                        slug=slug,
+                        avatar_url=logo_url,
+                    )
                 )
-                session.add(org_model)
 
             logger.info(
                 "Created new partner and organization: %s (%s)", saved.name, saved.id

@@ -780,3 +780,34 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 )
             )
         return questions
+
+    async def get_course_id_by_item_id(self, item_id: str) -> str | None:
+        from src.modules.catalog.infrastructure.models import (
+            LearningItemModel,
+            LessonModel,
+            WeekModuleModel,
+        )
+
+        stmt = (
+            select(WeekModuleModel.course_id)
+            .join(
+                LessonModel,
+                LessonModel.week_module_id == WeekModuleModel.id,
+            )
+            .join(
+                LearningItemModel,
+                LearningItemModel.lesson_id == LessonModel.id,
+            )
+            .where(LearningItemModel.id == item_id)
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def get_lab_test_cases_json(self, item_id: str) -> str | None:
+        from src.modules.catalog.infrastructure.models import LearningItemModel
+
+        stmt = select(LearningItemModel.test_cases_json).where(
+            LearningItemModel.id == item_id
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
