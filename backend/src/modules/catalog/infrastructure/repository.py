@@ -850,9 +850,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return True
 
     async def update_week_module(
-        self, id: str, course_id: str, title: str, summary: str
+        self, module_id: str, course_id: str, title: str, summary: str
     ) -> WeekModule | None:
-        stmt = select(WeekModuleModel).where(WeekModuleModel.id == id)
+        stmt = select(WeekModuleModel).where(WeekModuleModel.id == module_id)
         res = await self.session.execute(stmt)
         wm = res.scalar_one_or_none()
         if not wm:
@@ -869,8 +869,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             lessons=[],
         )
 
-    async def delete_week_module(self, id: str, course_id: str) -> bool:
-        stmt = select(WeekModuleModel).where(WeekModuleModel.id == id)
+    async def delete_week_module(self, module_id: str, course_id: str) -> bool:
+        stmt = select(WeekModuleModel).where(WeekModuleModel.id == module_id)
         res = await self.session.execute(stmt)
         wm = res.scalar_one_or_none()
         if not wm:
@@ -881,13 +881,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
     async def update_lesson(
         self,
-        id: str,
+        lesson_id: str,
         course_id: str,
         week_module_id: str,
         title: str,
         estimated_minutes: int,
     ) -> Lesson | None:
-        stmt = select(LessonModel).where(LessonModel.id == id)
+        stmt = select(LessonModel).where(LessonModel.id == lesson_id)
         res = await self.session.execute(stmt)
         lesson = res.scalar_one_or_none()
         if not lesson:
@@ -905,8 +905,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             items=[],
         )
 
-    async def delete_lesson(self, id: str, course_id: str) -> bool:
-        stmt = select(LessonModel).where(LessonModel.id == id)
+    async def delete_lesson(self, lesson_id: str, course_id: str) -> bool:
+        stmt = select(LessonModel).where(LessonModel.id == lesson_id)
         res = await self.session.execute(stmt)
         lesson = res.scalar_one_or_none()
         if not lesson:
@@ -917,7 +917,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
     async def update_learning_item(
         self,
-        id: str,
+        item_id: str,
         course_id: str,
         lesson_id: str,
         title: str,
@@ -987,6 +987,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         await self.session.commit()
         await self.session.refresh(item)
 
+        transcripts = [
+            InteractiveTranscript(timestamp_seconds=t.timestamp_seconds, text=t.text)
+            for t in item.interactive_transcripts or []
+        ]
         quizzes = [
             InVideoQuiz(
                 timestamp_seconds=q.timestamp_seconds,
@@ -995,8 +999,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 correct_option_index=q.correct_option_index,
                 explanation=q.explanation,
             )
-            for q in item.in_video_quizzes
+            for q in item.in_video_quizzes or []
         ]
+
         return LearningItem(
             id=item.id,
             title=item.title,
@@ -1004,8 +1009,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             estimated_minutes=item.estimated_minutes,
             video_url=item.video_url,
             vtt_subtitle_url=item.vtt_subtitle_url,
-            auto_transcribe=item.auto_transcribe,
-            interactive_transcripts=[],
+            interactive_transcripts=transcripts,
             in_video_quizzes=quizzes,
             reading_markdown=item.reading_markdown,
             starter_code=item.starter_code,
@@ -1015,8 +1019,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             quiz_matrix_id=item.quiz_matrix_id,
         )
 
-    async def delete_learning_item(self, id: str, course_id: str) -> bool:
-        stmt = select(LearningItemModel).where(LearningItemModel.id == id)
+    async def delete_learning_item(self, item_id: str, course_id: str) -> bool:
+        stmt = select(LearningItemModel).where(LearningItemModel.id == item_id)
         res = await self.session.execute(stmt)
         item = res.scalar_one_or_none()
         if not item:

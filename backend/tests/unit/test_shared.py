@@ -10,8 +10,8 @@ class DummyValueObject(ValueObject):
 
 
 class DummyEntity(Entity):
-    def __init__(self, id: str, value: str) -> None:
-        super().__init__(id)
+    def __init__(self, entity_id: str, value: str) -> None:
+        super().__init__(entity_id)
         self.value = value
 
 

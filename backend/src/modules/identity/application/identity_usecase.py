@@ -303,7 +303,7 @@ class IdentityUseCase:
 
     async def create_invitation(
         self,
-        type: str,
+        invitation_type: str,
         invitee_email: str,
         target_id: str,
         target_name: str = "",
@@ -312,7 +312,7 @@ class IdentityUseCase:
         current_user: CurrentUser | None = None,
     ) -> dict:
         return await self.invitation.create_invitation(
-            type=type,
+            invitation_type=invitation_type,
             invitee_email=invitee_email,
             target_id=target_id,
             target_name=target_name,
@@ -323,12 +323,12 @@ class IdentityUseCase:
 
     async def list_sent_invitations(
         self,
-        type: str = "",
+        invitation_type: str = "",
         target_id: str = "",
         current_user: CurrentUser | None = None,
     ) -> list[dict]:
         return await self.invitation.list_sent_invitations(
-            type=type,
+            invitation_type=invitation_type,
             target_id=target_id,
             current_user=current_user,
         )

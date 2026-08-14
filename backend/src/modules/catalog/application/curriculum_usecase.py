@@ -83,7 +83,7 @@ class CurriculumUseCase:
 
     async def update_week_module(
         self,
-        id: str,
+        module_id: str,
         course_id: str,
         title: str,
         summary: str,
@@ -95,14 +95,14 @@ class CurriculumUseCase:
                 repo, course_id, current_user, "chỉnh sửa tuần học"
             )
             return await repo.update_week_module(
-                id=id,
+                module_id=module_id,
                 course_id=course_id,
                 title=title,
                 summary=summary,
             )
 
     async def delete_week_module(
-        self, id: str, course_id: str, current_user: CurrentUser | None = None
+        self, module_id: str, course_id: str, current_user: CurrentUser | None = None
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
@@ -113,7 +113,9 @@ class CurriculumUseCase:
                 "xóa tuần học",
                 disallow_published_mutation=True,
             )
-            return await repo.delete_week_module(id=id, course_id=course_id)
+            return await repo.delete_week_module(
+                module_id=module_id, course_id=course_id
+            )
 
     async def reorder_week_modules(
         self,
@@ -159,7 +161,7 @@ class CurriculumUseCase:
 
     async def update_lesson(
         self,
-        id: str,
+        lesson_id: str,
         course_id: str,
         week_module_id: str,
         title: str,
@@ -172,7 +174,7 @@ class CurriculumUseCase:
                 repo, course_id, current_user, "chỉnh sửa bài học"
             )
             return await repo.update_lesson(
-                id=id,
+                lesson_id=lesson_id,
                 course_id=course_id,
                 week_module_id=week_module_id,
                 title=title,
@@ -180,7 +182,7 @@ class CurriculumUseCase:
             )
 
     async def delete_lesson(
-        self, id: str, course_id: str, current_user: CurrentUser | None = None
+        self, lesson_id: str, course_id: str, current_user: CurrentUser | None = None
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
@@ -191,7 +193,7 @@ class CurriculumUseCase:
                 "xóa bài học",
                 disallow_published_mutation=True,
             )
-            return await repo.delete_lesson(id=id, course_id=course_id)
+            return await repo.delete_lesson(lesson_id=lesson_id, course_id=course_id)
 
     async def reorder_lessons(
         self,
@@ -263,7 +265,7 @@ class CurriculumUseCase:
 
     async def update_learning_item(
         self,
-        id: str,
+        item_id: str,
         course_id: str,
         lesson_id: str,
         title: str,
@@ -287,7 +289,7 @@ class CurriculumUseCase:
                 repo, course_id, current_user, "chỉnh sửa học liệu"
             )
             return await repo.update_learning_item(
-                id=id,
+                item_id=item_id,
                 course_id=course_id,
                 lesson_id=lesson_id,
                 title=title,
@@ -306,7 +308,7 @@ class CurriculumUseCase:
             )
 
     async def delete_learning_item(
-        self, id: str, course_id: str, current_user: CurrentUser | None = None
+        self, item_id: str, course_id: str, current_user: CurrentUser | None = None
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
@@ -317,7 +319,7 @@ class CurriculumUseCase:
                 "xóa học liệu",
                 disallow_published_mutation=True,
             )
-            return await repo.delete_learning_item(id=id, course_id=course_id)
+            return await repo.delete_learning_item(item_id=item_id, course_id=course_id)
 
     async def reorder_learning_items(
         self,

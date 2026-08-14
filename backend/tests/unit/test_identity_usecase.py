@@ -721,7 +721,7 @@ async def test_create_and_get_invitation(mock_session_scope):
 
         uc = IdentityUseCase()
         res = await uc.create_invitation(
-            type="INVITATION_TYPE_ORGANIZATION_MEMBER",
+            invitation_type="INVITATION_TYPE_ORGANIZATION_MEMBER",
             invitee_email="learner1@test.com",
             target_id="org_test_001",
             target_name="Test Organization",

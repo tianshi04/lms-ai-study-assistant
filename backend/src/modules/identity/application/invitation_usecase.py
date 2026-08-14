@@ -103,7 +103,7 @@ class InvitationUseCase:
 
     async def create_invitation(
         self,
-        type: str,
+        invitation_type: str,
         invitee_email: str,
         target_id: str,
         target_name: str = "",
@@ -128,7 +128,7 @@ class InvitationUseCase:
             inviter_name = inviter.full_name if inviter else current_user.full_name
             inviter_email = inviter.email if inviter else current_user.email
 
-            type_str = str(type).upper()
+            type_str = str(invitation_type).upper()
             if "ORGANIZATION" in type_str or type_str == "1":
                 clean_role = (role_id or "INSTRUCTOR").upper().strip()
                 valid_org_roles = [r.value for r in OrgRole]
@@ -261,7 +261,7 @@ class InvitationUseCase:
 
     async def list_sent_invitations(
         self,
-        type: str = "",
+        invitation_type: str = "",
         target_id: str = "",
         current_user: CurrentUser | None = None,
     ) -> list[dict]:
@@ -278,7 +278,7 @@ class InvitationUseCase:
                 clean_target_id = resolved_id or clean_target_id
             invs = await inv_repo.list_sent_invitations(
                 inviter_id=current_user.id,
-                inv_type=type,
+                inv_type=invitation_type,
                 target_id=clean_target_id,
             )
             return [self._invitation_to_dict(i) for i in invs]

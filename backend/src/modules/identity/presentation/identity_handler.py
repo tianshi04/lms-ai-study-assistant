@@ -667,7 +667,7 @@ class IdentityHandler(IdentityService):
         )
         try:
             res = await self._use_case.create_invitation(
-                type=type_str,
+                invitation_type=type_str,
                 invitee_email=request.invitee_email,
                 target_id=request.target_id,
                 target_name=request.target_name,
@@ -696,7 +696,7 @@ class IdentityHandler(IdentityService):
             else ""
         )
         invs = await self._use_case.list_sent_invitations(
-            type=type_str,
+            invitation_type=type_str,
             target_id=request.target_id,
             current_user=current_user,
         )

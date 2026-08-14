@@ -56,9 +56,12 @@ extend-select = [
     "PERF",  # perflint (performance optimizations)
     "PT",    # flake8-pytest-style (pytest standards)
     "SLF",   # flake8-self (private member access)
+    "A",     # flake8-builtins (built-in shadowing protection)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["SLF001"]
+"src/modules/*/domain/**" = ["A002"]
+"src/shared/domain/**" = ["A002"]
 
 

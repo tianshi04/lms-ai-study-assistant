@@ -156,18 +156,18 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def update_week_module(
-        self, id: str, course_id: str, title: str, summary: str
+        self, module_id: str, course_id: str, title: str, summary: str
     ):
         pass
 
     @abstractmethod
-    async def delete_week_module(self, id: str, course_id: str) -> bool:
+    async def delete_week_module(self, module_id: str, course_id: str) -> bool:
         pass
 
     @abstractmethod
     async def update_lesson(
         self,
-        id: str,
+        lesson_id: str,
         course_id: str,
         week_module_id: str,
         title: str,
@@ -176,7 +176,7 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_lesson(self, id: str, course_id: str) -> bool:
+    async def delete_lesson(self, lesson_id: str, course_id: str) -> bool:
         pass
 
     @abstractmethod
@@ -203,7 +203,7 @@ class ICatalogRepository(ABC):
     @abstractmethod
     async def update_learning_item(
         self,
-        id: str,
+        item_id: str,
         course_id: str,
         lesson_id: str,
         title: str,
@@ -223,7 +223,7 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_learning_item(self, id: str, course_id: str) -> bool:
+    async def delete_learning_item(self, item_id: str, course_id: str) -> bool:
         pass
 
     @abstractmethod

@@ -566,7 +566,7 @@ class CatalogHandler(CatalogService):
     ) -> pb.UpdateWeekModuleResponse:
         user = self._verify_instructor_permission()
         wm = await self.use_case.update_week_module(
-            id=request.id,
+            module_id=request.id,
             course_id=request.course_id,
             title=request.title,
             summary=request.summary,
@@ -583,7 +583,7 @@ class CatalogHandler(CatalogService):
     ) -> pb.DeleteWeekModuleResponse:
         user = self._verify_instructor_permission()
         success = await self.use_case.delete_week_module(
-            id=request.id, course_id=request.course_id, current_user=user
+            module_id=request.id, course_id=request.course_id, current_user=user
         )
         if not success:
             raise ConnectError(Code.NOT_FOUND, f"Module {request.id} không tồn tại.")
@@ -596,7 +596,7 @@ class CatalogHandler(CatalogService):
     ) -> pb.UpdateLessonResponse:
         user = self._verify_instructor_permission()
         lesson = await self.use_case.update_lesson(
-            id=request.id,
+            lesson_id=request.id,
             course_id=request.course_id,
             week_module_id=request.week_module_id,
             title=request.title,
@@ -614,7 +614,7 @@ class CatalogHandler(CatalogService):
     ) -> pb.DeleteLessonResponse:
         user = self._verify_instructor_permission()
         success = await self.use_case.delete_lesson(
-            id=request.id, course_id=request.course_id, current_user=user
+            lesson_id=request.id, course_id=request.course_id, current_user=user
         )
         if not success:
             raise ConnectError(Code.NOT_FOUND, f"Bài học {request.id} không tồn tại.")
@@ -629,7 +629,7 @@ class CatalogHandler(CatalogService):
     ) -> pb.UpdateLearningItemResponse:
         user = self._verify_instructor_permission()
         item = await self.use_case.update_learning_item(
-            id=request.id,
+            item_id=request.id,
             course_id=request.course_id,
             lesson_id=request.lesson_id,
             title=request.title,
@@ -662,7 +662,7 @@ class CatalogHandler(CatalogService):
     ) -> pb.DeleteLearningItemResponse:
         user = self._verify_instructor_permission()
         success = await self.use_case.delete_learning_item(
-            id=request.id, course_id=request.course_id, current_user=user
+            item_id=request.id, course_id=request.course_id, current_user=user
         )
         if not success:
             raise ConnectError(
