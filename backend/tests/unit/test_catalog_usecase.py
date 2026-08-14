@@ -70,7 +70,7 @@ def catalog_usecase(repo_factory):
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_list_courses(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -88,7 +88,7 @@ async def test_list_courses(mock_scope, catalog_usecase, mock_repo, mock_session
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_get_course_detail(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -103,7 +103,7 @@ async def test_get_course_detail(mock_scope, catalog_usecase, mock_repo, mock_se
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.curriculum_usecase.async_session_scope")
 async def test_get_lesson_detail(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -118,7 +118,7 @@ async def test_get_lesson_detail(mock_scope, catalog_usecase, mock_repo, mock_se
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_get_specialization(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -134,13 +134,11 @@ async def test_get_specialization(mock_scope, catalog_usecase, mock_repo, mock_s
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_without_repo_factory(mock_scope, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
-
-    usecase = CatalogUseCase()
 
     with patch(
         "src.modules.catalog.application.catalog_usecase.SQLAlchemyCatalogRepository"
@@ -152,6 +150,7 @@ async def test_without_repo_factory(mock_scope, mock_session):
 
         mock_repo_class.return_value = mock_repo_instance
 
+        usecase = CatalogUseCase()
         courses, _token = await usecase.list_courses()
 
         mock_repo_class.assert_called_once_with(mock_session)
@@ -160,7 +159,7 @@ async def test_without_repo_factory(mock_scope, mock_session):
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_create_and_update_course_financial_aid_toggle(
     mock_scope, catalog_usecase, mock_repo, mock_session
 ):
@@ -205,8 +204,8 @@ async def test_create_and_update_course_financial_aid_toggle(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.async_session_scope")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_export_course_to_scorm(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
@@ -277,7 +276,7 @@ async def test_export_course_to_scorm(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
     import io
     import json
@@ -307,7 +306,7 @@ async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
     import io
     import zipfile
@@ -340,8 +339,8 @@ async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.async_session_scope")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_import_course_from_scorm_native(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
@@ -419,8 +418,8 @@ async def test_import_course_from_scorm_native(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.async_session_scope")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_import_course_from_scorm_standard(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
@@ -463,7 +462,7 @@ async def test_import_course_from_scorm_standard(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.collaborator_usecase.async_session_scope")
 async def test_remove_course_collaborator_audit_log(
     mock_scope, catalog_usecase, mock_repo, mock_session
 ):
