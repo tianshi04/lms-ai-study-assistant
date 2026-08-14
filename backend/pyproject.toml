@@ -58,11 +58,30 @@ extend-select = [
     "SLF",   # flake8-self (private member access)
     "A",     # flake8-builtins (built-in shadowing protection)
     "ARG",   # flake8-unused-arguments (unused argument elimination)
+    "TID",   # flake8-tidy-imports (clean import structure & banned APIs)
 ]
 
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"sqlalchemy".msg = "Domain/Application layers must remain pure & independent of SQLAlchemy ORM. Use Repository interfaces."
+"connectrpc".msg = "Domain layer cannot depend on ConnectRPC transport."
+"starlette".msg = "Domain layer cannot depend on Starlette web framework."
+
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["SLF001", "ARG001", "ARG002", "ARG005"]
-"src/modules/*/presentation/**" = ["ARG002"]
+"tests/**" = ["SLF001", "ARG001", "ARG002", "ARG005", "TID251"]
+"src/modules/*/presentation/**" = ["ARG002", "TID251"]
+"src/modules/*/infrastructure/**" = ["TID251"]
+"src/shared/infrastructure/**" = ["TID251"]
+"src/shared/auth_policy.py" = ["TID251"]
+"src/shared/auth.py" = ["TID251"]
+"src/shared/permissions.py" = ["TID251"]
+"src/shared/access_policy.py" = ["TID251"]
+"alembic/**" = ["TID251"]
+"src/main.py" = ["TID251"]
+"src/seed.py" = ["TID251"]
+"src/scripts/**" = ["TID251"]
 "src/modules/*/domain/**" = ["A002"]
 "src/shared/domain/**" = ["A002"]
 

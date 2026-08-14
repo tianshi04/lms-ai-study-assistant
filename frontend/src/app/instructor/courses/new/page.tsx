@@ -115,7 +115,18 @@ export default function NewCoursePage() {
       toast.error("Vui lòng nhập Tiêu đề khóa học.");
       return;
     }
-    if (!slug.trim()) {
+    const computedSlug =
+      slug.trim() ||
+      title
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-");
+
+    if (!computedSlug) {
       toast.error("Vui lòng nhập Slug khóa học.");
       return;
     }
@@ -125,7 +136,7 @@ export default function NewCoursePage() {
       const catalogClient = getRpcClient(CatalogService);
       const res = await catalogClient.createCourse({
         title: title.trim(),
-        slug: slug.trim(),
+        slug: computedSlug,
         description: description.trim(),
         partnerName: partnerDisplayName,
         partnerLogoUrl: selectedPartner?.logoUrl || "",

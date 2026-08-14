@@ -35,7 +35,7 @@ export class NewCoursePage {
     await expect(this.page).toHaveURL(/\/instructor\/courses\/new/);
     await expect(this.titleInput).toBeVisible({ timeout: 20000 });
     await expect(this.submitButton).toBeVisible({ timeout: 20000 });
-    await this.page.waitForTimeout(500);
+    await expect(this.partnerSelect).toBeVisible({ timeout: 20000 });
   }
 
   async fillAndSubmitCourse(title: string, description: string, partnerOrgId?: string) {
@@ -44,6 +44,21 @@ export class NewCoursePage {
     await this.titleInput.click();
     await this.titleInput.fill(title);
     await expect(this.titleInput).toHaveValue(title, { timeout: 5000 });
+
+    // Verify or ensure slug is populated
+    await expect(this.slugInput).toBeVisible({ timeout: 5000 });
+    const currentSlug = await this.slugInput.inputValue();
+    if (!currentSlug) {
+      const generatedSlug = title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-');
+      await this.slugInput.fill(generatedSlug);
+    }
 
     if (partnerOrgId) {
       const selectCount = await this.page.locator('select').count();
@@ -64,7 +79,10 @@ export class NewCoursePage {
     await this.descriptionTextarea.click();
     await this.descriptionTextarea.fill(description);
     await expect(this.descriptionTextarea).toHaveValue(description, { timeout: 5000 });
-    await this.page.waitForTimeout(300);
+
+    // Ensure title and slug remain filled before submission
+    await expect(this.titleInput).toHaveValue(title, { timeout: 5000 });
+    await expect(this.slugInput).not.toHaveValue('', { timeout: 5000 });
 
     await expect(this.submitButton).toBeVisible({ timeout: 10000 });
     await expect(this.submitButton).toBeEnabled({ timeout: 5000 });
