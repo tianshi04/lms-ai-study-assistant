@@ -817,6 +817,31 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         )
         await session.merge(prog1)
 
+        prog_student_phong = LearningProgressModel(
+            id="demo_student_ptit:course-python-ai",
+            user_id="demo_student_ptit",
+            course_id="course-python-ai",
+            overall_progress_percent=85.0,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+            ],
+        )
+        prog_user_phong_2 = LearningProgressModel(
+            id="demo_user_phong_2:course-python-ai",
+            user_id="demo_user_phong_2",
+            course_id="course-python-ai",
+            overall_progress_percent=50.0,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+            ],
+        )
+        await session.merge(prog_student_phong)
+        await session.merge(prog_user_phong_2)
+
         deadline1 = WeeklyDeadlineModel(
             id=1,
             progress_id="user_learner_demo:course-python-ai",
