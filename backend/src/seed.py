@@ -715,7 +715,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         student_phong = UserModel(
             id="demo_student_ptit",
             email="n22dccn158@student.ptithcm.edu.vn",
-            full_name="D22CQCN158-N NGUYEN THANH PHONG",
+            full_name="D22CQCN02-N NGUYEN THANH PHONG",
             role=UserRole.LEARNER,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=active@demo.com",
             enterprise_seat_key="",
