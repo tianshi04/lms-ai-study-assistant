@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any
 
-from src.modules.catalog.domain.repository import ICatalogRepository
+from src.modules.catalog.domain.repositories import ICatalogRepository
 from src.modules.identity.application.auth_usecase import (
     AuthUseCase,
     hash_password,
@@ -34,7 +34,7 @@ from src.modules.identity.domain.entities import (
 from src.modules.identity.infrastructure.repository import (
     OrganizationRepository,
 )
-from src.modules.learning.domain.repository import ILearningRepository
+from src.modules.learning.domain.repositories import ILearningRepository
 from src.shared.auth import (
     CurrentUser,
 )

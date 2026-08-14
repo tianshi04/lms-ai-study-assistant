@@ -17,7 +17,7 @@ from src.modules.identity.domain.events import (
     EnterpriseSeatAssignedDomainEvent,
 )
 from src.modules.identity.infrastructure import repository as repo_module
-from src.modules.learning.domain.repository import ILearningRepository
+from src.modules.learning.domain.repositories import ILearningRepository
 from src.shared.auth import (
     CurrentUser,
 )

@@ -16,7 +16,7 @@ from src.modules.learning.domain.entities import (
     PersonalNote,
     WeeklyDeadline,
 )
-from src.modules.learning.domain.repository import ILearningRepository
+from src.modules.learning.domain.repositories import ILearningRepository
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,

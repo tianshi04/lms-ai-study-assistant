@@ -20,6 +20,13 @@ from src.modules.identity.domain.entities import (
     User,
     UserRole,
 )
+from src.modules.identity.domain.repositories import (
+    IEnterpriseLicenseRepository,
+    IIdentityRepository,
+    IInstructorApplicationRepository,
+    IInvitationRepository,
+    IOrganizationRepository,
+)
 from src.modules.identity.infrastructure.models import (
     EnterpriseLicenseModel,
     InstructorApplicationModel,
@@ -31,7 +38,7 @@ from src.modules.identity.infrastructure.models import (
 )
 
 
-class IdentityRepository:
+class IdentityRepository(IIdentityRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -125,7 +132,7 @@ class IdentityRepository:
         )
 
 
-class EnterpriseLicenseRepository:
+class EnterpriseLicenseRepository(IEnterpriseLicenseRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -215,7 +222,7 @@ class EnterpriseLicenseRepository:
         )
 
 
-class OrganizationRepository:
+class OrganizationRepository(IOrganizationRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -526,7 +533,7 @@ class OrganizationRepository:
         return res
 
 
-class InstructorApplicationRepository:
+class InstructorApplicationRepository(IInstructorApplicationRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -610,7 +617,7 @@ class InstructorApplicationRepository:
         )
 
 
-class InvitationRepository:
+class InvitationRepository(IInvitationRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

@@ -19,9 +19,9 @@ from src.modules.catalog.application.curriculum_usecase import (
 from src.modules.catalog.application.scorm_usecase import (
     ScormUseCase,
 )
-from src.modules.catalog.domain.repository import ICatalogRepository
+from src.modules.catalog.domain.repositories import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
-from src.modules.learning.domain.repository import ILearningRepository
+from src.modules.learning.domain.repositories import ILearningRepository
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
 

@@ -23,7 +23,7 @@ from src.modules.catalog.domain.entities import (
     Specialization,
     WeekModule,
 )
-from src.modules.catalog.domain.repository import ICatalogRepository
+from src.modules.catalog.domain.repositories import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,

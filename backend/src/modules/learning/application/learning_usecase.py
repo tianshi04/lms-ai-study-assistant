@@ -3,13 +3,13 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from src.modules.catalog.domain.repository import ICatalogRepository
+from src.modules.catalog.domain.repositories import ICatalogRepository
 from src.modules.learning.domain.entities import (
     EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
 )
-from src.modules.learning.domain.repository import ILearningRepository
+from src.modules.learning.domain.repositories import ILearningRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.infrastructure.database import async_session_scope
 

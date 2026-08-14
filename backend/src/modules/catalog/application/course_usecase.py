@@ -8,7 +8,7 @@ from src.modules.catalog.domain.entities import (
     CourseStatus,
     Specialization,
 )
-from src.modules.catalog.domain.repository import ICatalogRepository
+from src.modules.catalog.domain.repositories import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope

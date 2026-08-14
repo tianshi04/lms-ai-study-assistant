@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
-from src.modules.forum.domain.repository import IForumRepository
+from src.modules.forum.domain.repositories import IForumRepository
 from src.modules.forum.infrastructure.models import (
     ForumReplyORM,
     ForumThreadORM,
