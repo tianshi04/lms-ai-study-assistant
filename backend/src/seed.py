@@ -701,42 +701,42 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             password_hash=default_pw_hash,
         )
 
-        admin_phong = UserModel(
-            id="demo_admin",
-            email="ttxeetb1110@gmail.com",
-            full_name="Thanh Phong Nguyễn",
-            role=UserRole.ADMIN,
-            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=admin@demo.com",
-            enterprise_seat_key="",
-            password_hash=default_pw_hash,
-            title="System Admin",
-        )
-
         student_phong = UserModel(
             id="demo_student_ptit",
             email="n22dccn158@student.ptithcm.edu.vn",
-            full_name="D22CQCN02-N NGUYEN THANH PHONG",
+            full_name="NGUYEN THANH PHONG D22CQCN02-N",
             role=UserRole.LEARNER,
-            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=active@demo.com",
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=n22dccn158@student.ptithcm.edu.vn",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
             title="Sinh viên Công nghệ",
         )
 
-        learner_demo_new = UserModel(
-            id="demo_prospective_learner",
-            email="new@demo.com",
-            full_name="Lê Văn C",
+        user_phong_2 = UserModel(
+            id="demo_user_phong_2",
+            email="phongnguyen.30604@gmail.com",
+            full_name="Nguyễn Phong",
             role=UserRole.LEARNER,
-            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=new@demo.com",
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=phongnguyen.30604@gmail.com",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
-            title="Người mới bắt đầu",
+            title="Học viên Cá nhân",
         )
 
-        await session.merge(admin_phong)
+        admin_phong = UserModel(
+            id="demo_admin_phong",
+            email="ttxmath1110@gmail.com",
+            full_name="Nguyễn Thanh Phong",
+            role=UserRole.ADMIN,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=ttxmath1110@gmail.com",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+            title="System Admin",
+        )
+
         await session.merge(student_phong)
-        await session.merge(learner_demo_new)
+        await session.merge(user_phong_2)
+        await session.merge(admin_phong)
 
         org_internal = OrganizationModel(
             id="org_system_internal",
