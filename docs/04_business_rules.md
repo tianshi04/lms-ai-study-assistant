@@ -312,11 +312,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Hệ thống áp dụng cơ chế phân trang dựa trên token (`page_token`, `page_size`, mặc định 20, tối đa 50) để tối ưu hiệu năng và tránh tải toàn bộ dữ liệu khi danh sách lớn.
 * **BR_NOTIF_011 (Chính sách Lưu trữ & Xóa tự động Retention Policy):**
   * Các thông báo cũ quá 90 ngày (đã đọc) hoặc 365 ngày (chưa đọc) sẽ được hệ thống định kỳ lưu trữ (archive) hoặc xóa sạch để giải phóng dung lượng cơ sở dữ liệu.
-* **BR_NOTIF_012 (Tính Nguyên tử Giao dịch Nguồn Atomic Event Transaction):**
-  * Thông báo CHỈ ĐƯỢC TẠO khi sự kiện nguồn (ví dụ: duyệt giảng viên, đăng thông báo khóa học, cấp chứng chỉ) đã thực hiện thành công và commit giao dịch cơ sở dữ liệu; nếu giao dịch nguồn rollback/thất bại thì tuyệt đối không sinh thông báo mồ côi.
-* **BR_NOTIF_013 (Tự động Phát Thông báo Lời mời In-App Invitation Dispatching):**
-  * Khi tạo lời mời gia nhập Organization, Course, hoặc Enterprise Seat (`SendInvitation`), nếu địa chỉ email người nhận khớp với tài khoản người dùng đã tồn tại trong hệ thống (`invitee_id`), hệ thống tự động phát bản ghi thông báo loại `SYSTEM` đến `recipient_id = invitee_id` với tiêu đề *"Lời mời tham gia {target_name}"* và `action_url = /invitations/{token}`.
-  * Thông báo lời mời được phát an toàn độc lập (với `try/except` guard), không làm gián đoạn hoặc rollback giao dịch tạo lời mời chính nếu hệ thống thông báo gặp sự cố tạm thời.
+* **BR_NOTIF_012 (Tính Nguyên tử & Điều phối Sự kiện Miền Atomic Domain Event Bus):**
+  * Thông báo CHỈ ĐƯỢC TẠO khi sự kiện nguồn (ví dụ: nộp bài thi, duyệt giảng viên, đăng thông báo khóa học, cấp chứng chỉ) đã thực hiện thành công và commit giao dịch cơ sở dữ liệu chính.
+  * Việc điều phối thông báo được thực hiện qua **In-Memory Domain Event Bus** (`EventBus` trong Shared Kernel). Các Domain Event được gắn mã định danh chuẩn **UUIDv7** (RFC 9562) có tính sắp xếp tuần tự theo thời gian (`event_id`) và thời điểm `occurred_at`.
+* **BR_NOTIF_013 (Tự động Phát Thông báo Lời mời & Cô lập Lỗi Fault Isolation):**
+  * Khi tạo lời mời gia nhập Organization, Course, hoặc Enterprise Seat (`SendInvitation`), nếu địa chỉ email người nhận khớp với tài khoản người dùng đã tồn tại trong hệ thống (`invitee_id`), hệ thống tự động phát bản ghi thông báo loại `SYSTEM` đến `recipient_id = invitee_id` với tiêu đề *"Lời mời tham gia {target_name}"* và `action_url = /invitations/{token}` thông qua sự kiện `InvitationSentDomainEvent`.
+  * Mọi Subscriber/Handler của `EventBus` được bọc trong cơ chế cách ly lỗi độc lập (`Fault Isolation`), ghi log chi tiết khi gặp sự cố và tuyệt đối không bao giờ làm gián đoạn hay rollback giao dịch nghiệp vụ chính.
 
 
 

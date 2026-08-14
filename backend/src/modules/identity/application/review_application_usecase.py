@@ -6,11 +6,15 @@ from src.modules.identity.domain.entities import (
     InstructorApplication,
     UserRole,
 )
+from src.modules.identity.domain.events import (
+    InstructorApplicationReviewedDomainEvent,
+)
 from src.modules.identity.infrastructure.repository import (
     IdentityRepository,
     InstructorApplicationRepository,
     OrganizationRepository,
 )
+from src.shared.infrastructure.event_bus import EventBus
 from src.shared.permissions import OrgRole
 
 
@@ -70,33 +74,15 @@ class ReviewInstructorApplicationUseCase:
 
         saved_app = await self._application_repo.save(application)
 
-        # Trigger notification
-        try:
-            from src.modules.notification.application.use_cases import (
-                NotificationUseCase,
+        # Trigger domain event
+        await EventBus.publish(
+            InstructorApplicationReviewedDomainEvent(
+                application_id=saved_app.id,
+                user_id=saved_app.user_id,
+                is_approved=approve,
+                status=saved_app.status.value,
+                reviewer_notes=saved_app.rejection_reason,
             )
-            from src.modules.notification.domain.constants import NotificationCategory
-
-            notif_uc = NotificationUseCase()
-            if approve:
-                await notif_uc.send_notification(
-                    recipient_id=application.user_id,
-                    category=NotificationCategory.SYSTEM,
-                    title="Đơn đăng ký Giảng viên đã được phê duyệt",
-                    content="Chúc mừng! Tài khoản của bạn đã được nâng cấp lên vai trò Giảng viên và gán vào Coursera Project Network.",
-                    action_url="/instructor/courses",
-                )
-            else:
-                await notif_uc.send_notification(
-                    recipient_id=application.user_id,
-                    category=NotificationCategory.SYSTEM,
-                    title="Đơn đăng ký Giảng viên chưa được chấp thuận",
-                    content=f"Lý do: {application.rejection_reason}",
-                    action_url="/become-an-instructor",
-                )
-        except Exception as e:  # noqa: BLE001
-            import logging
-
-            logging.getLogger(__name__).warning("Failed to send notification: %s", e)
+        )
 
         return saved_app

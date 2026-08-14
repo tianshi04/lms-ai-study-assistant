@@ -37,6 +37,11 @@ from src.modules.identity.domain.entities import (
     UserRole,
     hash_invitation_token,
 )
+from src.modules.identity.domain.events import (
+    EnterpriseSeatAssignedDomainEvent,
+    InvitationSentDomainEvent,
+    UserRegisteredDomainEvent,
+)
 from src.modules.identity.infrastructure.repository import (
     EnterpriseLicenseRepository,
     IdentityRepository,
@@ -53,6 +58,7 @@ from src.shared.auth import (
     decode_token,
 )
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.event_bus import EventBus
 from src.shared.infrastructure.rate_limiter import (
     check_login_rate_limit,
     clear_login_attempts,
@@ -540,27 +546,14 @@ class IdentityUseCase:
                 "Successfully registered new user %s with email %s", new_id, email
             )
 
-            # Trigger welcome SYSTEM notification
-            try:
-                from src.modules.notification.application.use_cases import (
-                    NotificationUseCase,
+            # Trigger domain event
+            await EventBus.publish(
+                UserRegisteredDomainEvent(
+                    user_id=new_id,
+                    email=email,
+                    full_name=full_name,
                 )
-                from src.modules.notification.domain.constants import (
-                    NotificationCategory,
-                )
-
-                notif_uc = NotificationUseCase()
-                await notif_uc.send_notification(
-                    recipient_id=new_id,
-                    category=NotificationCategory.SYSTEM,
-                    title="Chào mừng bạn đến với Hệ thống Đào tạo LMS!",
-                    content="Tài khoản của bạn đã được đăng ký thành công. Hãy khám phá danh mục khóa học ngay!",
-                    action_url="",
-                )
-            except Exception as e:  # noqa: BLE001
-                logger.warning(
-                    "Failed to send welcome notification to user %s: %s", new_id, e
-                )
+            )
 
             return saved_user, ""
 
@@ -652,25 +645,14 @@ class IdentityUseCase:
                 "User %s successfully assigned enterprise seat %s", user_id, clean_key
             )
 
-            # Trigger SYSTEM notification
-            try:
-                from src.modules.notification.application.use_cases import (
-                    NotificationUseCase,
+            # Trigger domain event
+            await EventBus.publish(
+                EnterpriseSeatAssignedDomainEvent(
+                    user_id=user_id,
+                    partner_name=license_entity.partner_name,
+                    seat_key=clean_key,
                 )
-                from src.modules.notification.domain.constants import (
-                    NotificationCategory,
-                )
-
-                notif_uc = NotificationUseCase()
-                await notif_uc.send_notification(
-                    recipient_id=user_id,
-                    category=NotificationCategory.SYSTEM,
-                    title="Kích hoạt Suất học Doanh nghiệp thành công",
-                    content=f"Tài khoản của bạn đã được liên kết với suất học đối tác {license_entity.partner_name}.",
-                    action_url="/courses",
-                )
-            except Exception as e:  # noqa: BLE001
-                logger.warning("Failed to send enterprise seat notification: %s", e)
+            )
 
             return (
                 True,
@@ -1232,27 +1214,20 @@ class IdentityUseCase:
             saved = await inv_repo.save(inv)
 
             if invitee_id:
-                try:
-                    from src.modules.notification.application.use_cases import (
-                        NotificationUseCase,
-                    )
-                    from src.modules.notification.domain.constants import (
-                        NotificationCategory,
-                    )
-
-                    notif_uc = NotificationUseCase()
-                    await notif_uc.send_notification(
-                        recipient_id=invitee_id,
-                        category=NotificationCategory.SYSTEM,
-                        title=f"Lời mời tham gia {target_name}",
-                        content=f"{inviter_name} đã mời bạn tham gia {target_name} với vai trò {role_id or 'MEMBER'}.",
-                        action_url=f"/invitations/{raw_token}",
+                await EventBus.publish(
+                    InvitationSentDomainEvent(
+                        invitation_id=saved.id,
+                        email=invitee_email_clean,
+                        organization_id=target_id,
+                        role=role_id,
+                        invited_by=current_user.id if current_user else "",
+                        invitee_id=invitee_id,
+                        target_name=target_name,
+                        inviter_name=inviter_name,
+                        raw_token=raw_token,
                         actor_avatar_url=getattr(current_user, "avatar_url", "") or "",
                     )
-                except Exception as exc:  # noqa: BLE001
-                    logger.warning(
-                        "Failed to dispatch workspace invitation notification: %s", exc
-                    )
+                )
 
             res_dict = self._invitation_to_dict(saved)
             res_dict["token"] = raw_token

@@ -15,10 +15,15 @@ from src.modules.certificate.domain.entities import (
     VerifiedCertificate,
     count_words,
 )
+from src.modules.certificate.domain.events import (
+    CertificateIssuedDomainEvent,
+    FinancialAidReviewedDomainEvent,
+)
 from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -164,26 +169,17 @@ class CertificateUseCase:
                 is_approved,
             )
 
-            # Trigger ACADEMIC notification to user
-            try:
-                from src.modules.notification.application.use_cases import (
-                    NotificationUseCase,
+            # Trigger domain event
+            await EventBus.publish(
+                FinancialAidReviewedDomainEvent(
+                    application_id=app.id,
+                    user_id=app.user_id,
+                    course_id=app.course_id,
+                    is_approved=is_approved,
+                    status="APPROVED" if is_approved else "REJECTED",
+                    notes="",
                 )
-                from src.modules.notification.domain.constants import (
-                    NotificationCategory,
-                )
-
-                status_str = "chấp thuận" if is_approved else "chưa được duyệt"
-                notif_uc = NotificationUseCase()
-                await notif_uc.send_notification(
-                    recipient_id=app.user_id,
-                    category=NotificationCategory.ACADEMIC,
-                    title=f"Đơn Hỗ trợ Tài chính đã được {status_str}",
-                    content="Đơn nộp học bổng cho khóa học của bạn đã được quản trị viên xem xét.",
-                    action_url=f"/learn/{app.course_id}",
-                )
-            except Exception as e:  # noqa: BLE001
-                logger.warning("Failed to send financial aid notification: %s", e)
+            )
 
             return updated_app, ""
 
@@ -317,25 +313,16 @@ class CertificateUseCase:
                 real_course_id,
             )
 
-            # Trigger CERTIFICATE notification
-            try:
-                from src.modules.notification.application.use_cases import (
-                    NotificationUseCase,
+            # Trigger domain event
+            await EventBus.publish(
+                CertificateIssuedDomainEvent(
+                    certificate_id=cert_id,
+                    user_id=user_id,
+                    course_id=real_course_id,
+                    certificate_code=cert_id,
+                    course_title=course_title,
                 )
-                from src.modules.notification.domain.constants import (
-                    NotificationCategory,
-                )
-
-                notif_uc = NotificationUseCase()
-                await notif_uc.send_notification(
-                    recipient_id=user_id,
-                    category=NotificationCategory.ACADEMIC,
-                    title="Chúc mừng! Chứng chỉ xác minh của bạn đã được cấp",
-                    content=f'Bạn đã hoàn thành 100% khóa học "{course_title}". Bấm để xem và chia sẻ chứng chỉ.',
-                    action_url=f"/verify/{cert_id}",
-                )
-            except Exception as e:  # noqa: BLE001
-                logger.warning("Failed to send certificate notification: %s", e)
+            )
 
             return saved_cert, ""
 

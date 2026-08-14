@@ -21,11 +21,15 @@ from src.modules.catalog.domain.entities import (
     Lesson,
     Specialization,
 )
+from src.modules.catalog.domain.events import (
+    CourseAnnouncementCreatedDomainEvent,
+)
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.event_bus import EventBus
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
 from src.shared.permissions import (
     CoursePermission,
@@ -634,35 +638,21 @@ class CatalogUseCase:
                 content=content,
             )
 
-            # Trigger batch notification to enrolled learners
-            try:
-                from src.modules.notification.application.use_cases import (
-                    NotificationUseCase,
+            # Trigger domain event for announcement dispatching
+            real_id = await repo.get_course_id_by_slug_or_id(course_id)
+            target_ids = list({course_id, real_id})
+            student_ids = await repo.get_enrolled_user_ids(target_ids)
+
+            await EventBus.publish(
+                CourseAnnouncementCreatedDomainEvent(
+                    course_id=course_id,
+                    announcement_id=ann.id,
+                    title=title,
+                    content=content,
+                    author_name=author_name,
+                    student_ids=student_ids,
                 )
-                from src.modules.notification.domain.constants import (
-                    NotificationCategory,
-                )
-
-                real_id = await repo.get_course_id_by_slug_or_id(course_id)
-                target_ids = list({course_id, real_id})
-
-                student_ids = await repo.get_enrolled_user_ids(target_ids)
-
-                if student_ids:
-                    notif_uc = NotificationUseCase()
-                    await notif_uc.send_batch_notifications(
-                        recipient_ids=student_ids,
-                        category=NotificationCategory.ANNOUNCEMENT,
-                        title=f"Thông báo mới từ Giảng viên {author_name}",
-                        content=f"{title}: {content[:100]}...",
-                        action_url=f"/learn/{course_id}",
-                    )
-            except Exception as e:  # noqa: BLE001
-                import logging
-
-                logging.getLogger(__name__).warning(
-                    "Failed to send course announcement notifications: %s", e
-                )
+            )
 
             return ann
 

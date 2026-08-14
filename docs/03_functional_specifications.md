@@ -260,6 +260,10 @@ flowchart TD
     * 🔔 `SYSTEM`: `/become-an-instructor` (Trang xem kết quả Phê duyệt Hồ sơ Giảng viên).
     * 📖 `ACADEMIC`: `/financial-aid` (Trang quản lý & xem Đơn xin Hỗ trợ Tài chính đã được chấp thuận).
   * *Xử lý liên kết hỏng (Broken Link Graceful Fallback):* Nếu nội dung gốc đã bị gỡ bỏ hoặc xóa khỏi hệ thống, Frontend tự động điều hướng về màn hình danh sách tổng tương ứng kèm thông báo cảnh báo Toast: *"Nội dung này không còn tồn tại hoặc đã bị gỡ bỏ."*
+* **Kiến trúc Kỹ thuật Điều phối Sự kiện (In-Memory Domain Event Bus & UUIDv7):**
+  * *Tách rời Bounded Context (DDD Decoupling):* Các module nghiệp vụ (`assessment`, `catalog`, `certificate`, `identity`, `forum`) tuyệt đối không import trực tiếp `NotificationUseCase`. Sau khi commit transaction chính thành công, Use Case chỉ phát sinh `DomainEvent` (`QuizSubmittedDomainEvent`, `CertificateIssuedDomainEvent`, `InvitationSentDomainEvent`...) ra `EventBus` chung.
+  * *Định danh Sự kiện Tuần tự (UUIDv7 RFC 9562):* Mọi Domain Event được gán `event_id` dạng **UUIDv7** (chứa 48-bit Unix timestamp mili-giây) đảm bảo khả năng tự sắp xếp theo thời gian (k-sortable) và tối ưu B-Tree indexing.
+  * *Cô lập Lỗi Toàn diện (Fault Isolation):* `EventBus` thực thi các notification subscriber độc lập trong khối `try...except` an toàn; mọi sự cố tại tầng thông báo được ghi log và tuyệt đối không bao giờ làm gián đoạn hoặc rollback luồng nghiệp vụ cốt lõi của người dùng.
 * **Chính sách Ưu tiên & Cài đặt Tùy chọn Nhận Thông báo (User Preferences):**
   * *Thông báo Bắt buộc (Mandatory):* Thông báo hệ thống `SYSTEM` (duyệt giảng viên) là BẮT BUỘC, luôn được phát tới người dùng mà không bị ảnh hưởng bởi tùy chọn cá nhân.
   * *Thông báo Tùy chọn (Configurable):* Người dùng có quyền bật/tắt nhận thông báo cho các danh mục `ANNOUNCEMENT`, `COMMUNITY`, `ACADEMIC` trên từng kênh (Nội sàn In-App, Email) thông qua Modal `NotificationPreferencesModal` (`BR_NOTIF_006`).

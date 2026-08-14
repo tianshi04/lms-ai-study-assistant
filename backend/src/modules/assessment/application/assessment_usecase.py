@@ -29,6 +29,7 @@ from src.modules.assessment.domain.entities import (
     QuizSubmission,
     RubricCriteria,
 )
+from src.modules.assessment.domain.events import QuizSubmittedDomainEvent
 from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
 from src.modules.assessment.infrastructure.repository import (
     SQLAlchemyAssessmentRepository,
@@ -39,6 +40,7 @@ from src.modules.assessment.infrastructure.sandbox_service import (
 from src.shared.access_policy import require_paid_access
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -562,38 +564,25 @@ class AssessmentUseCase:
                 )
                 await repo.save_quiz_submission(submission)
 
-                # Trigger ASSESSMENT notification
+                # Trigger domain event
+                target_course_id = ""
                 try:
-                    from src.modules.notification.application.use_cases import (
-                        NotificationUseCase,
-                    )
-                    from src.modules.notification.domain.constants import (
-                        NotificationCategory,
-                    )
+                    found_cid = await repo.get_course_id_by_item_id(item_id)
+                    if found_cid:
+                        target_course_id = found_cid
+                except Exception:  # noqa: BLE001, S110
+                    pass
 
-                    status_str = (
-                        "ĐẠT (PASSED)"
-                        if score_percent >= passing_threshold
-                        else "CHƯA ĐẠT"
+                await EventBus.publish(
+                    QuizSubmittedDomainEvent(
+                        user_id=user_id,
+                        course_id=target_course_id,
+                        item_id=item_id,
+                        score_percent=score_percent,
+                        passed=score_percent >= passing_threshold,
+                        attempt_number=attempt_number,
                     )
-                    target_course_id = ""
-                    try:
-                        found_cid = await repo.get_course_id_by_item_id(item_id)
-                        if found_cid:
-                            target_course_id = found_cid
-                    except Exception:  # noqa: BLE001, S110
-                        pass
-
-                    notif_uc = NotificationUseCase()
-                    await notif_uc.send_notification(
-                        recipient_id=user_id,
-                        category=NotificationCategory.ACADEMIC,
-                        title=f"Kết quả bài kiểm tra: {score_percent}% - {status_str}",
-                        content=f"Bạn đã hoàn thành bài thi lần {attempt_number} với số điểm {score_percent}%.",
-                        action_url=f"/learn/{target_course_id}?itemId={item_id}",
-                    )
-                except Exception as e:  # noqa: BLE001
-                    logger.warning("Failed to send quiz result notification: %s", e)
+                )
 
                 # Update Cooldown entity
                 new_cooldown = QuizCooldown(

@@ -84,10 +84,16 @@ async def run_auto_migrations() -> None:
 async def lifespan(app: Starlette):
     """Lifespan context manager for AuthPolicy pre-initialization, database migrations and initial seeding."""
     try:
+        from src.modules.notification.application.event_handlers import (
+            register_notification_event_handlers,
+        )
         from src.shared.auth_policy import AuthPolicyRegistry
 
+        register_notification_event_handlers()
         AuthPolicyRegistry._initialize()
-        logger.info("[STARTUP] Pre-initialized AuthPolicyRegistry successfully.")
+        logger.info(
+            "[STARTUP] Pre-initialized AuthPolicyRegistry and EventBus handlers successfully."
+        )
 
         await run_auto_migrations()
         from src.seed import seed_database

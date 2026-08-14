@@ -5,10 +5,12 @@ from datetime import UTC, datetime
 
 from src.modules.forum.domain.constants import DEFAULT_FORUM_AUTHOR_ROLE
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
+from src.modules.forum.domain.events import ForumReplyCreatedDomainEvent
 from src.modules.forum.domain.repository import IForumRepository
 from src.modules.forum.infrastructure.repository import ForumRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.event_bus import EventBus
 
 
 def utc_now_str() -> str:
@@ -135,34 +137,21 @@ class ForumUseCase:
                 thread_id,
             )
 
-            # Trigger COMMUNITY notification to thread author
-            try:
-                thread = await repo.get_thread_by_id(thread_id)
-                if thread and thread.author_user_id:
-                    recipient_id = thread.author_user_id
-                    if recipient_id != author_user_id:
-                        from src.modules.notification.application.use_cases import (
-                            NotificationUseCase,
-                        )
-                        from src.modules.notification.domain.constants import (
-                            NotificationCategory,
-                        )
-
-                        action_url = (
-                            f"/learn/{thread.course_id}?itemId={thread.item_id}&tab=forum&threadId={thread_id}"
-                            if thread.item_id
-                            else f"/forum?courseId={thread.course_id}&threadId={thread_id}"
-                        )
-                        notif_uc = NotificationUseCase()
-                        await notif_uc.send_notification(
-                            recipient_id=recipient_id,
-                            category=NotificationCategory.COMMUNITY,
-                            title=f"{author_name} đã phản hồi bài viết của bạn",
-                            content=f'"{content[:100]}..."',
-                            action_url=action_url,
-                        )
-            except Exception as e:  # noqa: BLE001
-                logger.warning("Failed to send forum reply notification: %s", e)
+            # Trigger domain event
+            thread = await repo.get_thread_by_id(thread_id)
+            if thread and thread.author_user_id:
+                await EventBus.publish(
+                    ForumReplyCreatedDomainEvent(
+                        thread_id=thread_id,
+                        reply_id=reply.id,
+                        author_id=author_user_id,
+                        author_name=author_name,
+                        thread_author_id=thread.author_user_id,
+                        content=content,
+                        course_id=thread.course_id,
+                        item_id=thread.item_id or "",
+                    )
+                )
 
             return reply
 
