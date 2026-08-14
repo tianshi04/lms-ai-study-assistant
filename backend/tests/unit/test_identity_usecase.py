@@ -64,16 +64,14 @@ def test_enterprise_license_scope_filtering_domain():
 
 @pytest.fixture
 def mock_session_scope():
-    with patch(
-        "src.modules.identity.application.identity_usecase.async_session_scope"
-    ) as mock:
+    with patch("src.shared.infrastructure.database.async_session_scope") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_identity_repo():
     with patch(
-        "src.modules.identity.application.identity_usecase.IdentityRepository"
+        "src.modules.identity.infrastructure.repository.IdentityRepository"
     ) as mock:
         yield mock
 
@@ -81,15 +79,9 @@ def mock_identity_repo():
 @pytest.fixture
 def mock_tokens():
     with (
-        patch(
-            "src.modules.identity.application.identity_usecase.create_access_token"
-        ) as mock_acc,
-        patch(
-            "src.modules.identity.application.identity_usecase.create_refresh_token"
-        ) as mock_ref,
-        patch(
-            "src.modules.identity.application.identity_usecase.decode_token"
-        ) as mock_dec,
+        patch("src.shared.auth.create_access_token") as mock_acc,
+        patch("src.shared.auth.create_refresh_token") as mock_ref,
+        patch("src.shared.auth.decode_token") as mock_dec,
     ):
         mock_acc.return_value = "access_token"
         mock_ref.return_value = "refresh_token"
@@ -706,10 +698,10 @@ async def test_create_and_get_invitation(mock_session_scope):
 
     with (
         patch(
-            "src.modules.identity.application.identity_usecase.InvitationRepository"
+            "src.modules.identity.infrastructure.repository.InvitationRepository"
         ) as mock_inv_repo,
         patch(
-            "src.modules.identity.application.identity_usecase.IdentityRepository"
+            "src.modules.identity.infrastructure.repository.IdentityRepository"
         ) as mock_user_repo,
     ):
         mock_inv_repo_instance = AsyncMock()
@@ -757,10 +749,10 @@ async def test_respond_to_invitation(mock_session_scope):
 
     with (
         patch(
-            "src.modules.identity.application.identity_usecase.InvitationRepository"
+            "src.modules.identity.infrastructure.repository.InvitationRepository"
         ) as mock_inv_repo,
         patch(
-            "src.modules.identity.application.identity_usecase.OrganizationRepository"
+            "src.modules.identity.infrastructure.repository.OrganizationRepository"
         ) as mock_org_repo,
     ):
         mock_inv_repo_instance = AsyncMock()
@@ -820,7 +812,7 @@ async def test_cancel_invitation(mock_session_scope):
     )
 
     with patch(
-        "src.modules.identity.application.identity_usecase.InvitationRepository"
+        "src.modules.identity.infrastructure.repository.InvitationRepository"
     ) as mock_inv_repo:
         mock_inv_repo_instance = AsyncMock()
         mock_inv_repo.return_value = mock_inv_repo_instance
@@ -860,7 +852,7 @@ async def test_cancel_invitation(mock_session_scope):
 @pytest.mark.asyncio
 async def test_remove_organization_member_audit_logging():
     with patch(
-        "src.modules.identity.application.identity_usecase.OrganizationRepository"
+        "src.modules.identity.infrastructure.repository.OrganizationRepository"
     ) as mock_org_repo:
         mock_repo = AsyncMock()
         mock_org_repo.return_value = mock_repo
@@ -938,7 +930,7 @@ async def test_register_weak_passwords(mock_session_scope, mock_identity_repo):
 @pytest.mark.asyncio
 async def test_login_rate_limit_blocking():
     with patch(
-        "src.modules.identity.application.identity_usecase.check_login_rate_limit"
+        "src.shared.infrastructure.rate_limiter.check_login_rate_limit"
     ) as mock_check:
         mock_check.return_value = (False, 900)  # Blocked, 900s remaining
 
