@@ -22,6 +22,7 @@ import {
   Play,
   Award,
   Target,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -176,6 +177,7 @@ export function GradedQuizRunner({
   useEffect(() => {
     let ignore = false;
     async function loadQuiz() {
+      setIsQuizActive(false);
       setLoading(true);
       setError(null);
       setSubmitError(null);
@@ -289,7 +291,7 @@ export function GradedQuizRunner({
     }
   };
 
-  const handleRetryQuiz = async () => {
+  const handleStartQuiz = async () => {
     setQuizResult(null);
     setSubmitError(null);
     setLoading(true);
@@ -308,6 +310,7 @@ export function GradedQuizRunner({
       if (res.maxAttempts) setMaxAttempts(res.maxAttempts);
       if (res.attemptsLeft !== undefined) setAttemptsLeft(res.attemptsLeft);
       setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => []));
+      setIsQuizActive(true);
     } catch (err: unknown) {
       const rawMsg = err instanceof Error ? err.message : "";
       const isDomainNotice =
@@ -318,12 +321,13 @@ export function GradedQuizRunner({
 
       if (isPractice && isDomainNotice) {
         setError(null);
+        setIsQuizActive(true);
       } else {
         if (!isDomainNotice) {
-          console.error("Failed to retry graded quiz session:", err);
+          console.error("Failed to start graded quiz session:", err);
         }
         const cleanMsg = rawMsg.replace(/^\[[a-z_]+\]\s*/i, "");
-        const errMsg = cleanMsg || "Không thể khởi động lại bài thi. Vui lòng thử lại sau.";
+        const errMsg = cleanMsg || "Không thể khởi động bài thi. Vui lòng thử lại sau.";
         setError(errMsg);
       }
     } finally {
@@ -595,15 +599,15 @@ export function GradedQuizRunner({
         <div className="pt-4 border-t border-border flex justify-end">
           <Button
             type="button"
-            onClick={async () => {
-              if (quizResult) {
-                await handleRetryQuiz();
-              }
-              setIsQuizActive(true);
-            }}
+            disabled={loading}
+            onClick={() => handleStartQuiz()}
             className="px-8 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md flex items-center gap-2"
           >
-            <Play className="w-4 h-4 fill-current" />
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+            )}
             {quizResult ? "Làm lại bài thi" : "Bắt đầu làm bài"}
           </Button>
         </div>
@@ -812,7 +816,7 @@ export function GradedQuizRunner({
                   type="button"
                   variant="outlined"
                   size="sm"
-                  onClick={handleRetryQuiz}
+                  onClick={handleStartQuiz}
                   className="rounded-full shadow-xs text-xs font-semibold bg-surface-container-lowest"
                 >
                   <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
