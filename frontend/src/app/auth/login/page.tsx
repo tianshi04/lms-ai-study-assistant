@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { loginAction, googleLoginAction } from "@/app/auth/actions";
 import { useToast } from "@/components/ui/Toast";
@@ -17,11 +17,8 @@ import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 function LoginFormContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get("redirect");
-  const redirectTarget =
-    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
 
   const toast = useToast();
   const { setAuth } = useAuth();
@@ -30,6 +27,13 @@ function LoginFormContent() {
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [quickLoggingInEmail, setQuickLoggingInEmail] = useState<string | null>(null);
+
+  const getDestinationUrl = () => {
+    if (rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")) {
+      return rawRedirect;
+    }
+    return "/";
+  };
 
   const form = useForm({
     defaultValues: {
@@ -51,10 +55,10 @@ function LoginFormContent() {
           });
 
           toast.success("Đăng nhập thành công!");
-          router.push(redirectTarget);
-          router.refresh();
+          window.location.href = getDestinationUrl();
         } else {
           toast.error(res.error || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
+          setSubmitting(false);
         }
       } catch (err: unknown) {
         const msg =
@@ -62,7 +66,6 @@ function LoginFormContent() {
             ? err.message
             : "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
         toast.error(msg);
-      } finally {
         setSubmitting(false);
       }
     },
@@ -84,15 +87,14 @@ function LoginFormContent() {
         });
 
         toast.success(`Đăng nhập nhanh với vai trò ${roleName}!`);
-        router.push(redirectTarget);
-        router.refresh();
+        window.location.href = getDestinationUrl();
       } else {
         toast.error(res.error || "Đăng nhập thất bại.");
+        setQuickLoggingInEmail(null);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Đăng nhập thất bại.";
       toast.error(msg);
-    } finally {
       setQuickLoggingInEmail(null);
     }
   };
@@ -111,16 +113,15 @@ function LoginFormContent() {
         });
 
         toast.success("Đăng nhập bằng Google thành công!");
-        router.push(redirectTarget);
-        router.refresh();
+        window.location.href = getDestinationUrl();
       } else {
         toast.error(res.error || "Đăng nhập bằng Google thất bại.");
+        setGoogleSubmitting(false);
       }
     } catch {
       toast.error(
         "Không thể kết nối với dịch vụ xác thực Google. Vui lòng đăng nhập bằng Mật khẩu bên dưới.",
       );
-    } finally {
       setGoogleSubmitting(false);
     }
   };
