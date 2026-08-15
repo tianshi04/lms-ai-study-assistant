@@ -592,7 +592,7 @@ function CoursePlayerContent() {
   return (
     <div className="h-screen h-dvh bg-surface-container-low text-on-surface flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized">
       {/* Top Player Navbar - Seamless Borderless Header */}
-      <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 relative z-sticky">
+      <header className="h-14 bg-surface-container-low px-4 sm:px-5 flex items-center justify-between flex-shrink-0 relative z-sticky">
         <div className="flex items-center gap-4 min-w-0">
           <BrandLogo size="sm" />
         </div>
@@ -661,14 +661,14 @@ function CoursePlayerContent() {
         {/* Left Sidebar - MD3 Collapsible Floating Surface Container Drawer */}
         {!isPreviewMode && (
           <aside
-            className={`relative bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden flex-shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
-              isSidebarOpen ? "w-full max-w-[calc(100vw-24px)] lg:w-80 xl:w-90" : "w-14"
+            className={`relative bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden shrink-0 flex flex-col transition-[width,max-width] duration-300 ease-m3-emphasized ${
+              isSidebarOpen ? "w-80 xl:w-90 max-w-[calc(100vw-24px)]" : "w-14"
             }`}
             aria-label="Lộ trình khóa học"
           >
             {/* Collapsed Icon Strip Trigger */}
             <div
-              className={`absolute top-2 left-2 transition-all duration-200 ease-m3-emphasized z-10 ${
+              className={`absolute top-2 left-2 transition-all duration-300 ease-m3-emphasized z-10 ${
                 isSidebarOpen
                   ? "opacity-0 pointer-events-none scale-90 invisible"
                   : "opacity-100 scale-100 visible"
@@ -689,15 +689,15 @@ function CoursePlayerContent() {
 
             {/* Expanded Full Drawer Content */}
             <div
-              className={`h-full flex flex-col w-80 xl:w-90 min-w-80 xl:min-w-90 shrink-0 transition-all ease-m3-emphasized ${
+              className={`h-full flex flex-col w-80 xl:w-90 min-w-80 xl:min-w-90 shrink-0 transition-all duration-300 ease-m3-emphasized ${
                 isSidebarOpen
-                  ? "opacity-100 translate-x-0 visible duration-300 delay-75"
-                  : "opacity-0 -translate-x-6 invisible pointer-events-none duration-150"
+                  ? "opacity-100 translate-x-0 visible"
+                  : "opacity-0 -translate-x-4 invisible pointer-events-none"
               }`}
             >
-              <div className="p-4 bg-surface-container-lowest flex items-start justify-between gap-2 shrink-0">
+              <div className="p-4 pb-2 bg-surface-container-lowest flex items-start justify-between gap-2 shrink-0 relative">
                 <h2
-                  className="font-bold text-xl text-on-surface leading-snug break-words"
+                  className="font-bold text-lg text-on-surface leading-snug break-words pr-8"
                   title={course.title}
                 >
                   {course.title}
@@ -707,15 +707,15 @@ function CoursePlayerContent() {
                   variant="text"
                   iconOnly
                   onClick={() => setIsSidebarOpen(false)}
-                  className="w-9 h-9 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full shrink-0"
+                  className="absolute top-2.5 right-2.5 w-7 h-7 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full shrink-0"
                   title="Ẩn Lộ trình Bài học"
                   aria-label="Ẩn Lộ trình Bài học"
                 >
-                  <X className="w-5 h-5" aria-hidden="true" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-6 scrollbar-thin">
                 {course.weekModules.map((week, weekIndex) => {
                   const isCollapsed = Boolean(collapsedWeeks[week.id]);
                   const unlocked = isWeekUnlocked(weekIndex);

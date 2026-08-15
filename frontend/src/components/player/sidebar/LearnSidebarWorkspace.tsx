@@ -67,7 +67,7 @@ export function LearnSidebarWorkspace({
 
   return (
     <div
-      className={`shrink-0 h-full relative overflow-hidden transition-[width,max-width,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+      className={`shrink-0 h-full relative overflow-hidden transition-[width,max-width,opacity] duration-300 ease-m3-emphasized ${
         !isPanelOpen
           ? "w-16 lg:w-20 opacity-100"
           : "w-[396px] lg:w-[412px] xl:w-[452px] max-w-[calc(100vw-24px)] opacity-100"
@@ -85,7 +85,7 @@ export function LearnSidebarWorkspace({
 
       {/* Morphing White Card - Locked to left: 0, Right Edge Expands to the Right */}
       <aside
-        className={`absolute top-0 bottom-0 left-0 z-10 flex flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+        className={`absolute top-0 bottom-0 left-0 z-10 flex flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden transition-all duration-300 ease-m3-emphasized ${
           !isPanelOpen
             ? "opacity-0 pointer-events-none invisible right-[76px] lg:right-[92px]"
             : isAiActive
@@ -104,7 +104,7 @@ export function LearnSidebarWorkspace({
         {/* Persistent AI Chatbot View with Smooth Dissolve Transition */}
         {isAiSupported && (
           <div
-            className={`absolute inset-0 h-full w-[412px] xl:w-[452px] max-w-none shrink-0 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+            className={`absolute inset-0 h-full w-[412px] xl:w-[452px] max-w-none shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
               isAiActive
                 ? "opacity-100 translate-x-0 pointer-events-auto visible"
                 : "opacity-0 -translate-x-2 pointer-events-none invisible"
@@ -133,7 +133,7 @@ export function LearnSidebarWorkspace({
 
         {/* Standard Non-AI Tabs View with Smooth Dissolve Transition */}
         <div
-          className={`absolute inset-0 h-full w-[320px] xl:w-[360px] max-w-none shrink-0 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+          className={`absolute inset-0 h-full w-[320px] xl:w-[360px] max-w-none shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
             !isAiActive
               ? "opacity-100 translate-x-0 pointer-events-auto visible"
               : "opacity-0 translate-x-2 pointer-events-none invisible"
