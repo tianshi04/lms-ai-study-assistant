@@ -167,6 +167,18 @@ function ForgotPasswordContent() {
           {/* STEP 2: Password Reset Form */}
           {step === 2 && (
             <form onSubmit={handleSubmitReset} className="space-y-4 pt-2">
+              {/* Hidden username field for browser password manager identity association */}
+              <input
+                type="email"
+                name="username"
+                value={userEmail}
+                autoComplete="username"
+                readOnly
+                tabIndex={-1}
+                aria-hidden="true"
+                className="sr-only"
+              />
+
               <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/15 text-xs text-foreground flex items-center gap-2.5">
                 <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-primary shrink-0" />
                 <div>

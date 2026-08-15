@@ -167,7 +167,7 @@ function LoginFormContent() {
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="learner@example.com"
-                      autoComplete="email"
+                      autoComplete="username"
                       spellCheck={false}
                       error={hasError ? String(field.state.meta.errors[0]) : undefined}
                       required

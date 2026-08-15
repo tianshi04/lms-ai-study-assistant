@@ -197,6 +197,18 @@ export default function RegisterPage() {
                 }}
                 className="space-y-5"
               >
+                {/* Hidden username field for browser password manager identity association */}
+                <input
+                  type="email"
+                  name="username"
+                  value={verifiedEmail}
+                  autoComplete="username"
+                  readOnly
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  className="sr-only"
+                />
+
                 {/* Verified Email Banner */}
                 <div className="p-3 rounded-xl bg-success/10 border border-success/20 flex items-center justify-between">
                   <div className="flex items-center gap-2 overflow-hidden pr-2">
