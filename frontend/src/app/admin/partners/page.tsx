@@ -438,15 +438,11 @@ export default function AdminPartnersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="partnerName"
-                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-                >
-                  Tên đối tác / Trường học <span className="text-destructive">*</span>
-                </label>
                 <Input
                   id="partnerName"
+                  label="Tên đối tác / Trường học *"
                   type="text"
+                  autoComplete="organization"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="VD: Đại học Bách Khoa TP.HCM"
@@ -454,14 +450,9 @@ export default function AdminPartnersPage() {
                 />
               </div>
               <div>
-                <label
-                  htmlFor="partnerSlug"
-                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-                >
-                  Slug URL định danh <span className="text-destructive">*</span>
-                </label>
                 <Input
                   id="partnerSlug"
+                  label="Slug URL định danh *"
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
@@ -473,14 +464,9 @@ export default function AdminPartnersPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="partnerDesc"
-                className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-              >
-                Mô tả giới thiệu
-              </label>
               <Textarea
                 id="partnerDesc"
+                label="Mô tả giới thiệu"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Giới thiệu sơ lược về tổ chức đối tác…"
@@ -490,45 +476,34 @@ export default function AdminPartnersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label
-                  htmlFor="partnerLogo"
-                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-                >
-                  URL Logo đối tác
-                </label>
                 <Input
                   id="partnerLogo"
-                  type="text"
+                  label="URL Logo đối tác"
+                  type="url"
+                  inputMode="url"
                   value={logoUrl}
                   onChange={(e) => setLogoUrl(e.target.value)}
                   placeholder="https://example.com/logo.png"
                 />
               </div>
               <div>
-                <label
-                  htmlFor="partnerBanner"
-                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-                >
-                  URL Banner bìa
-                </label>
                 <Input
                   id="partnerBanner"
-                  type="text"
+                  label="URL Banner bìa"
+                  type="url"
+                  inputMode="url"
                   value={bannerUrl}
                   onChange={(e) => setBannerUrl(e.target.value)}
                   placeholder="https://example.com/banner.jpg"
                 />
               </div>
               <div>
-                <label
-                  htmlFor="partnerWebsite"
-                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-                >
-                  Website chính thức
-                </label>
                 <Input
                   id="partnerWebsite"
-                  type="text"
+                  label="Website chính thức"
+                  type="url"
+                  inputMode="url"
+                  autoComplete="url"
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}
                   placeholder="https://hcmut.edu.vn"
@@ -537,14 +512,9 @@ export default function AdminPartnersPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="partnerDomains"
-                className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-              >
-                Tên miền được phép cấp chứng chỉ (Phân cách bởi dấu phẩy)
-              </label>
               <Input
                 id="partnerDomains"
+                label="Tên miền được phép cấp chứng chỉ (Phân cách bởi dấu phẩy)"
                 type="text"
                 value={allowedDomainsStr}
                 onChange={(e) => setAllowedDomainsStr(e.target.value)}

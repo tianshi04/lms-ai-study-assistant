@@ -204,8 +204,12 @@ export default function AccountSettingsPage() {
               value={enterpriseKey}
               onChange={(e) => setEnterpriseKey(e.target.value)}
               placeholder="Nhập mã Enterprise Key (ví dụ: ENT-UNI-2026-X99)"
+              autoCapitalize="characters"
+              inputMode="text"
+              enterKeyHint="done"
               autoComplete="off"
               spellCheck={false}
+              aria-label="Mã kích hoạt Enterprise License"
               className="flex-1 py-3 px-4 rounded-2xl text-sm font-mono bg-surface-container-lowest border border-outline-variant text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <Button

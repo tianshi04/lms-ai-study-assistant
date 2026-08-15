@@ -191,30 +191,26 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label
-                    htmlFor="orgNameInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    Tên Tổ chức / Partner
-                  </label>
+                <div className="sm:col-span-2">
                   <Input
                     id="orgNameInput"
+                    label="Tên Tổ chức / Partner"
                     type="text"
+                    autoComplete="organization"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="ví dụ: Đại học Bách Khoa TP.HCM"
+                    startAdornment={
+                      <Building2 className="w-4 h-4 text-primary" aria-hidden="true" />
+                    }
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="orgSlugInput" className="text-xs font-bold text-foreground">
-                    Slug định danh (URL)
-                  </label>
+                <div>
                   <Input
                     id="orgSlugInput"
+                    label="Slug định danh (URL)"
                     type="text"
                     disabled
                     value={slug}
@@ -222,71 +218,59 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="orgWebsiteInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <Globe className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    Website chính thức
-                  </label>
+                <div>
                   <Input
                     id="orgWebsiteInput"
+                    label="Website chính thức"
                     type="url"
+                    inputMode="url"
+                    autoComplete="url"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     placeholder="https://example.edu.vn"
+                    startAdornment={<Globe className="w-4 h-4 text-primary" aria-hidden="true" />}
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label
-                    htmlFor="orgLogoInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    URL Logo Tổ chức
-                  </label>
+                <div className="sm:col-span-2">
                   <Input
                     id="orgLogoInput"
+                    label="URL Logo Tổ chức"
                     type="url"
+                    inputMode="url"
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
+                    startAdornment={
+                      <ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" />
+                    }
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label
-                    htmlFor="orgBannerInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    URL Ảnh Banner Tổ chức
-                  </label>
+                <div className="sm:col-span-2">
                   <Input
                     id="orgBannerInput"
+                    label="URL Ảnh Banner Tổ chức"
                     type="url"
+                    inputMode="url"
                     value={bannerUrl}
                     onChange={(e) => setBannerUrl(e.target.value)}
                     placeholder="https://example.com/banner.png"
+                    startAdornment={
+                      <ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" />
+                    }
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label
-                    htmlFor="orgDomainsInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    Domain Email Bảo chứng (`allowed_domains`)
-                  </label>
+                <div className="sm:col-span-2">
                   <Input
                     id="orgDomainsInput"
+                    label="Domain Email Bảo chứng (allowed_domains)"
                     type="text"
                     value={allowedDomainsStr}
                     onChange={(e) => setAllowedDomainsStr(e.target.value)}
-                    placeholder="hcmut.edu.vn, stanford.edu (phân cách bằng dấu phẩy)"
+                    placeholder="ví dụ: hcmut.edu.vn, bku.edu.vn (cách nhau bởi dấu phẩy)"
+                    startAdornment={<Shield className="w-4 h-4 text-primary" aria-hidden="true" />}
                   />
                   <div className="flex flex-wrap gap-2 pt-2">
                     {allowedDomainsStr

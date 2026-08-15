@@ -310,6 +310,7 @@ function PartnerSettingsForm({
             <Input
               label="Tên Đối tác"
               type="text"
+              autoComplete="organization"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -335,7 +336,8 @@ function PartnerSettingsForm({
             <div>
               <Input
                 label="URL Logo Đối tác"
-                type="text"
+                type="url"
+                inputMode="url"
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
@@ -358,7 +360,8 @@ function PartnerSettingsForm({
             <div>
               <Input
                 label="URL Banner Bìa"
-                type="text"
+                type="url"
+                inputMode="url"
                 value={bannerUrl}
                 onChange={(e) => setBannerUrl(e.target.value)}
                 placeholder="https://example.com/banner.jpg"
@@ -380,7 +383,9 @@ function PartnerSettingsForm({
             <div>
               <Input
                 label="Website chính thức"
-                type="text"
+                type="url"
+                inputMode="url"
+                autoComplete="url"
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://hcmut.edu.vn"
