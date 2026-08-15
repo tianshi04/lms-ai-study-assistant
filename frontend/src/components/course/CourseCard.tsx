@@ -43,7 +43,7 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
 
       <div>
         {/* Instructors & Modules Count */}
-        <div className="pt-4 border-t border-outline-variant mb-6 flex items-center justify-between text-xs text-on-surface-variant font-medium">
+        <div className="pt-4 border-t border-outline-variant mb-5 flex items-center justify-between text-xs text-on-surface-variant font-medium">
           <span className="flex items-center gap-1.5 min-w-0 truncate max-w-[160px]">
             <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
             {course.instructorNames.join(", ") || "Giảng viên Coursera"}
