@@ -18,31 +18,15 @@ import {
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { VideoPlayer } from "@/components/player/VideoPlayer";
 import type { UniversalVideoRef } from "@/components/player/UniversalVideoPlayer";
-import { TranscriptPanel } from "@/components/player/TranscriptPanel";
-import { NotesPanel } from "@/components/player/NotesPanel";
-import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
-import { ForumTab } from "@/components/player/ForumTab";
+import { LearnSidebarWorkspace, type SidebarTab } from "@/components/player/sidebar";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
-import { LearnPageAIChatbot } from "@/components/player/ai/LearnPageAIChatbot";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { usePaymentAccessQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
-import {
-  X,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle2,
-  Lock,
-  Menu,
-  FileText,
-  MessageSquare,
-  Clock,
-  AlignLeft,
-  Sparkles,
-} from "lucide-react";
+import { X, ChevronDown, ChevronUp, CheckCircle2, Lock, Menu, Sparkles } from "lucide-react";
 
 function getItemTypeName(type: number): string {
   switch (type) {
@@ -206,13 +190,6 @@ function CoursePlayerContent() {
       setIsPanelOpen(true);
     }
   };
-
-  const activeModule = useMemo(() => {
-    if (!course || !activeItem) return null;
-    return course.weekModules.find((wm) =>
-      wm.lessons.some((l) => l.items.some((i) => i.id === activeItem.id)),
-    );
-  }, [course, activeItem]);
 
   // AI được hỗ trợ cho học viên đã đăng ký ở các bài học, NGOẠI TRỪ Bài kiểm tra tính điểm (type === 4)
   const isAiSupported = Boolean(activeItem && !isPreviewMode && activeItem.type !== 4);
@@ -932,7 +909,7 @@ function CoursePlayerContent() {
           )}
 
           {/* Center Video & Side Tool Panel Layout */}
-          <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0 gap-3">
+          <div className="flex-1 flex flex-row overflow-hidden relative min-h-0 gap-3">
             {/* Left/Center Video Media Viewer Canvas - MD3 Floating Surface Card */}
             <div className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-m3-short-4 ease-m3-emphasized min-h-0">
               <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto">
@@ -988,237 +965,44 @@ function CoursePlayerContent() {
               </div>
             </div>
 
-            {/* Standard Side Drawer Panel for non-AI Tabs (Transcript, Notes, Forum, Deadlines) */}
-            {isPanelOpen &&
-              activeTab !== "ai_assistant" &&
-              ((activeTab === "transcript" && isVideoItem) ||
-                ((activeTab === "notes" || activeTab === "forum") &&
-                  isLectureItem &&
-                  !isPreviewMode) ||
-                (activeTab === "deadlines" && !isPreviewMode)) && (
-                <aside className="w-full max-w-[calc(100vw-24px)] lg:w-80 xl:w-90 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs flex flex-col shrink-0 h-full overflow-hidden">
-                  {/* Drawer Header */}
-                  <div className="h-12 px-4 flex items-center justify-between bg-surface-container-lowest shrink-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-on-surface uppercase tracking-wider">
-                        {activeTab === "transcript" && "Phụ đề Tương tác"}
-                        {activeTab === "forum" && "Thảo luận Bài học"}
-                        {activeTab === "notes" && "Ghi chú Cá nhân"}
-                        {activeTab === "deadlines" && "Deadlines & Tiến độ"}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="text"
-                      iconOnly
-                      onClick={() => setIsPanelOpen(false)}
-                      className="w-7 h-7 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full"
-                      title="Đóng bảng công cụ"
-                      aria-label="Đóng bảng công cụ"
-                    >
-                      <X className="w-4 h-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-
-                  {/* Tab Body Content - Unified Background */}
-                  <div className="flex-1 overflow-y-auto p-4 bg-surface-container-lowest min-h-0 flex flex-col">
-                    {activeTab === "transcript" && isVideoItem && (
-                      <TranscriptPanel
-                        activeItem={activeItem}
-                        currentTime={currentTime}
-                        onSeekVideo={handleSeekVideo}
-                      />
-                    )}
-
-                    {!isPreviewMode && activeTab === "forum" && (
-                      <ForumTab
-                        courseId={courseId}
-                        itemId={activeItem?.id || ""}
-                        targetThreadId={urlThreadId || undefined}
-                      />
-                    )}
-
-                    {!isPreviewMode && activeTab === "notes" && isLectureItem && (
-                      <NotesPanel
-                        notes={notes}
-                        highlightText={highlightText}
-                        noteComment={noteComment}
-                        savingNote={savingNote}
-                        onHighlightTextChange={setHighlightText}
-                        onNoteCommentChange={setNoteComment}
-                        onSaveNote={handleSaveNote}
-                        onDeleteNote={handleDeleteNote}
-                      />
-                    )}
-
-                    {!isPreviewMode && activeTab === "deadlines" && (
-                      <DeadlinesPanel progress={progress} onResetDeadlines={handleResetDeadlines} />
-                    )}
-                  </div>
-                </aside>
-              )}
-
-            {/* Persistent AI Chatbot Instance (Keeps conversation history & state mounted continuously in DOM) */}
-            {isAiSupported && (
-              <div
-                className={
-                  isPanelOpen && activeTab === "ai_assistant"
-                    ? "w-full max-w-[calc(100vw-24px)] lg:w-[412px] xl:w-[452px] h-full shrink-0 flex flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden"
-                    : "hidden"
+            {/* Right Tool & AI Sidebar Workspace */}
+            <LearnSidebarWorkspace
+              courseId={courseId}
+              course={course}
+              activeItem={activeItem}
+              currentTime={currentTime}
+              progress={progress}
+              notes={notes}
+              highlightText={highlightText}
+              noteComment={noteComment}
+              savingNote={savingNote}
+              activeTab={activeTab as SidebarTab}
+              isPanelOpen={isPanelOpen}
+              isVideoItem={isVideoItem}
+              isLectureItem={isLectureItem}
+              isPreviewMode={isPreviewMode}
+              isAiSupported={isAiSupported}
+              externalAiPrompt={externalAiPrompt}
+              urlThreadId={urlThreadId}
+              nextItem={nextItem}
+              onTabClick={handleTabClick}
+              onCloseAiAssistant={handleCloseAiAssistant}
+              onClosePanel={() => setIsPanelOpen(false)}
+              onSeekVideo={handleSeekVideo}
+              onNextLesson={() => {
+                if (nextItem) {
+                  setActiveItem(nextItem);
+                  setActiveQuiz(null);
                 }
-              >
-                <LearnPageAIChatbot
-                  courseId={courseId}
-                  courseTitle={course?.title || "Khóa học"}
-                  moduleTitle={activeModule?.title || "Module bài học"}
-                  activeItem={activeItem}
-                  currentTime={currentTime}
-                  readingMarkdown={activeItem?.readingMarkdown}
-                  externalPrompt={externalAiPrompt}
-                  onPromptConsumed={() => setExternalAiPrompt(null)}
-                  onSeek={handleSeekVideo}
-                  onNextLesson={() => {
-                    if (nextItem) {
-                      setActiveItem(nextItem);
-                      setActiveQuiz(null);
-                    }
-                  }}
-                  onNoteCreated={(newNote) => setNotes((prev) => [newNote, ...prev])}
-                  onClose={handleCloseAiAssistant}
-                />
-              </div>
-            )}
-
-            {/* Vertical Icon Action Bar - Seamless MD3 Navigation Rail (Visible when AI Chatbot is inactive) */}
-            {(!isPanelOpen || activeTab !== "ai_assistant") && (
-              <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full select-none">
-                {/* Transcript Button: Only for Video Items */}
-                {isVideoItem && (
-                  <Button
-                    type="button"
-                    variant="text"
-                    onClick={() => handleTabClick("transcript")}
-                    className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
-                    title="Phụ đề"
-                    aria-label="Xem Phụ đề Tương tác"
-                  >
-                    <div
-                      className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
-                        isPanelOpen && activeTab === "transcript"
-                          ? "bg-primary-container text-on-primary-container font-bold"
-                          : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                      }`}
-                    >
-                      <AlignLeft className="w-4 h-4" aria-hidden="true" />
-                    </div>
-                    <span
-                      className={`text-xs tracking-tight leading-none ${
-                        isPanelOpen && activeTab === "transcript"
-                          ? "text-primary font-bold"
-                          : "text-on-surface-variant"
-                      }`}
-                    >
-                      Phụ đề
-                    </span>
-                  </Button>
-                )}
-
-                {!isPreviewMode && (
-                  <>
-                    {/* Notes Button: For Video & Reading Lecture Items */}
-                    {isLectureItem && (
-                      <Button
-                        type="button"
-                        variant="text"
-                        onClick={() => handleTabClick("notes")}
-                        className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
-                        title="Ghi chú"
-                        aria-label="Xem Ghi chú Cá nhân"
-                      >
-                        <div
-                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
-                            isPanelOpen && activeTab === "notes"
-                              ? "bg-primary-container text-on-primary-container font-bold"
-                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                          }`}
-                        >
-                          <FileText className="w-4 h-4" aria-hidden="true" />
-                        </div>
-                        <span
-                          className={`text-[10px] tracking-tight leading-none ${
-                            isPanelOpen && activeTab === "notes"
-                              ? "text-primary font-bold"
-                              : "text-on-surface-variant"
-                          }`}
-                        >
-                          Ghi chú
-                        </span>
-                      </Button>
-                    )}
-
-                    {/* Forum Button: For Video & Reading Lecture Items */}
-                    {isLectureItem && (
-                      <Button
-                        type="button"
-                        variant="text"
-                        onClick={() => handleTabClick("forum")}
-                        className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
-                        title="Thảo luận"
-                        aria-label="Mở Thảo luận Bài học"
-                      >
-                        <div
-                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
-                            isPanelOpen && activeTab === "forum"
-                              ? "bg-primary-container text-on-primary-container font-bold"
-                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                          }`}
-                        >
-                          <MessageSquare className="w-4 h-4" aria-hidden="true" />
-                        </div>
-                        <span
-                          className={`text-[10px] tracking-tight leading-none ${
-                            isPanelOpen && activeTab === "forum"
-                              ? "text-primary font-bold"
-                              : "text-on-surface-variant"
-                          }`}
-                        >
-                          Thảo luận
-                        </span>
-                      </Button>
-                    )}
-
-                    {/* Deadlines Button */}
-                    <Button
-                      type="button"
-                      variant="text"
-                      onClick={() => handleTabClick("deadlines")}
-                      className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
-                      title="Deadlines"
-                      aria-label="Xem Deadlines & Tiến độ"
-                    >
-                      <div
-                        className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
-                          isPanelOpen && activeTab === "deadlines"
-                            ? "bg-primary-container text-on-primary-container font-bold"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                        }`}
-                      >
-                        <Clock className="w-4 h-4" aria-hidden="true" />
-                      </div>
-                      <span
-                        className={`text-[10px] tracking-tight leading-none ${
-                          isPanelOpen && activeTab === "deadlines"
-                            ? "text-primary font-bold"
-                            : "text-on-surface-variant"
-                        }`}
-                      >
-                        Deadlines
-                      </span>
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
+              }}
+              onNoteCreated={(newNote) => setNotes((prev) => [newNote, ...prev])}
+              onHighlightTextChange={setHighlightText}
+              onNoteCommentChange={setNoteComment}
+              onSaveNote={handleSaveNote}
+              onDeleteNote={handleDeleteNote}
+              onResetDeadlines={handleResetDeadlines}
+              onExternalPromptConsumed={() => setExternalAiPrompt(null)}
+            />
           </div>
         </main>
 

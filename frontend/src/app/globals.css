@@ -730,3 +730,32 @@ input::-ms-clear {
   color: var(--primary) !important;
   border-color: var(--primary) !important;
 }
+
+/* ==========================================================================
+   View Transitions & Motion Specification for LMS Panels
+   ========================================================================== */
+
+/* Disable full-page root snapshot crossfade to eliminate whole-screen shaking/vibration */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+}
+::view-transition-group(root) {
+  animation-duration: 0s !important;
+}
+
+.learn-view-transition-panel {
+  view-transition-name: learn-side-panel;
+}
+
+::view-transition-group(learn-side-panel) {
+  animation-duration: var(--duration-m3-medium-2);
+  animation-timing-function: var(--ease-m3-emphasized);
+}
+
+::view-transition-old(learn-side-panel),
+::view-transition-new(learn-side-panel) {
+  animation-duration: var(--duration-m3-short-4);
+  animation-timing-function: var(--ease-m3-emphasized);
+}
