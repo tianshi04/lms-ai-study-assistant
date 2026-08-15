@@ -136,11 +136,38 @@ export function VideoPlayer({
           return `${h}:${m}:${s}`;
         };
 
+        const formattedText = (() => {
+          const trimmed = t.text.trim().replace(/\s+/g, " ");
+          if (trimmed.length <= 48) return trimmed;
+          const mid = Math.floor(trimmed.length / 2);
+          let breakIndex = -1;
+          for (let offset = 0; offset < 22; offset++) {
+            if (
+              trimmed[mid + offset] === " " ||
+              [".", ",", ";", "?", "!"].includes(trimmed[mid + offset])
+            ) {
+              breakIndex = mid + offset;
+              break;
+            }
+            if (
+              trimmed[mid - offset] === " " ||
+              [".", ",", ";", "?", "!"].includes(trimmed[mid - offset])
+            ) {
+              breakIndex = mid - offset;
+              break;
+            }
+          }
+          if (breakIndex !== -1) {
+            return `${trimmed.slice(0, breakIndex).trim()}\n${trimmed.slice(breakIndex).trim()}`;
+          }
+          return trimmed;
+        })();
+
         vttLines.push(`${idx + 1}`);
         vttLines.push(
-          `${formatTime(startSec)} --> ${formatTime(endSec)} line:92% position:50% align:center`,
+          `${formatTime(startSec)} --> ${formatTime(endSec)} line:90% position:50% align:center`,
         );
-        vttLines.push(t.text);
+        vttLines.push(formattedText);
         vttLines.push("");
       });
       const blob = new Blob([vttLines.join("\n")], { type: "text/vtt" });
