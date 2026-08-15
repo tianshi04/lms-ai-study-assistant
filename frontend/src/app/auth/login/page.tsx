@@ -15,6 +15,7 @@ import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { normalizeUserRole } from "@/lib/jwt";
 
 function LoginFormContent() {
   const searchParams = useSearchParams();
@@ -28,11 +29,18 @@ function LoginFormContent() {
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [quickLoggingInEmail, setQuickLoggingInEmail] = useState<string | null>(null);
 
-  const getDestinationUrl = () => {
+  const getDestinationUrl = (role?: string) => {
     if (rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")) {
       return rawRedirect;
     }
-    return "/";
+    const r = role ? normalizeUserRole(role) : "";
+    if (r === "USER_ROLE_ADMIN") {
+      return "/admin/dashboard";
+    }
+    if (r === "USER_ROLE_INSTRUCTOR") {
+      return "/instructor/dashboard";
+    }
+    return "/learner/dashboard";
   };
 
   const form = useForm({
@@ -55,7 +63,7 @@ function LoginFormContent() {
           });
 
           toast.success("Đăng nhập thành công!");
-          window.location.href = getDestinationUrl();
+          window.location.replace(getDestinationUrl(res.user.role));
         } else {
           toast.error(res.error || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
           setSubmitting(false);
@@ -87,7 +95,7 @@ function LoginFormContent() {
         });
 
         toast.success(`Đăng nhập nhanh với vai trò ${roleName}!`);
-        window.location.href = getDestinationUrl();
+        window.location.replace(getDestinationUrl(res.user.role));
       } else {
         toast.error(res.error || "Đăng nhập thất bại.");
         setQuickLoggingInEmail(null);
@@ -113,7 +121,7 @@ function LoginFormContent() {
         });
 
         toast.success("Đăng nhập bằng Google thành công!");
-        window.location.href = getDestinationUrl();
+        window.location.replace(getDestinationUrl(res.user.role));
       } else {
         toast.error(res.error || "Đăng nhập bằng Google thất bại.");
         setGoogleSubmitting(false);
