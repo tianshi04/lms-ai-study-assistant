@@ -167,14 +167,14 @@ function LoginFormContent() {
           </div>
         )}
 
-        <Surface.Header className="text-center p-0 mb-8 space-y-2">
+        <Surface.Header className="text-center p-0 mb-8 space-y-2 flex flex-col items-center">
           <div className="flex justify-center mb-4">
             <BrandLogo size="md" />
           </div>
-          <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
+          <Surface.Title className="text-2xl font-bold text-on-surface text-balance text-center w-full">
             {"Đăng nhập tài khoản"}
           </Surface.Title>
-          <Surface.Description className="text-sm text-on-surface-variant">
+          <Surface.Description className="text-sm text-on-surface-variant text-center max-w-sm mx-auto">
             {searchParams.get("redirect")
               ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
               : "Chào mừng bạn quay trở lại với hệ thống học tập LMS AI"}
