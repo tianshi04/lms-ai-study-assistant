@@ -681,205 +681,223 @@ function CoursePlayerContent() {
 
       {/* Main Workspace Layout */}
       <div className="flex-1 flex overflow-hidden p-3 gap-3">
-        {/* Left Sidebar Icon Strip when collapsed */}
-        {!isSidebarOpen && !isPreviewMode && (
-          <div className="w-14 bg-surface-container-lowest rounded-3xl shadow-xs flex flex-col items-center py-3 shrink-0 select-none">
-            <Button
-              type="button"
-              variant="text"
-              iconOnly
-              onClick={() => setIsSidebarOpen(true)}
-              className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-              title="Mở Lộ trình Bài học"
-              aria-label="Mở Lộ trình Bài học"
+        {/* Left Sidebar - MD3 Collapsible Floating Surface Container Drawer */}
+        {!isPreviewMode && (
+          <aside
+            className={`relative bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden flex-shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
+              isSidebarOpen ? "w-full max-w-[calc(100vw-24px)] lg:w-80 xl:w-90" : "w-14"
+            }`}
+            aria-label="Lộ trình khóa học"
+          >
+            {/* Collapsed Icon Strip Trigger */}
+            <div
+              className={`absolute top-2 left-2 transition-all duration-200 ease-m3-emphasized z-10 ${
+                isSidebarOpen
+                  ? "opacity-0 pointer-events-none scale-90 invisible"
+                  : "opacity-100 scale-100 visible"
+              }`}
             >
-              <Menu className="w-5 h-5" aria-hidden="true" />
-            </Button>
-          </div>
-        )}
-
-        {/* Left Sidebar - MD3 Floating Surface Container Drawer */}
-        {isSidebarOpen && !isPreviewMode && (
-          <aside className="w-full max-w-[calc(100vw-24px)] lg:w-80 xl:w-90 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden flex-shrink-0 flex flex-col transition-colors duration-m3-medium-2 ease-m3-emphasized">
-            <div className="p-4 bg-surface-container-lowest flex items-start justify-between gap-2 shrink-0">
-              <h2
-                className="font-bold text-xl text-on-surface leading-snug break-words"
-                title={course.title}
-              >
-                {course.title}
-              </h2>
               <Button
                 type="button"
                 variant="text"
                 iconOnly
-                onClick={() => setIsSidebarOpen(false)}
-                className="w-9 h-9 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full shrink-0"
-                title="Ẩn Lộ trình Bài học"
-                aria-label="Ẩn Lộ trình Bài học"
+                onClick={() => setIsSidebarOpen(true)}
+                className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                title="Mở Lộ trình Bài học"
+                aria-label="Mở Lộ trình Bài học"
               >
-                <X className="w-5 h-5" aria-hidden="true" />
+                <Menu className="w-5 h-5" aria-hidden="true" />
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-              {course.weekModules.map((week, weekIndex) => {
-                const isCollapsed = Boolean(collapsedWeeks[week.id]);
-                const unlocked = isWeekUnlocked(weekIndex);
-                const displayWeekTitle =
-                  week.title.startsWith("Tuần") || week.title.startsWith("Week")
-                    ? week.title
-                    : `Tuần ${week.weekNumber}: ${week.title}`;
+            {/* Expanded Full Drawer Content */}
+            <div
+              className={`h-full flex flex-col w-80 xl:w-90 min-w-80 xl:min-w-90 shrink-0 transition-all ease-m3-emphasized ${
+                isSidebarOpen
+                  ? "opacity-100 translate-x-0 visible duration-300 delay-75"
+                  : "opacity-0 -translate-x-6 invisible pointer-events-none duration-150"
+              }`}
+            >
+              <div className="p-4 bg-surface-container-lowest flex items-start justify-between gap-2 shrink-0">
+                <h2
+                  className="font-bold text-xl text-on-surface leading-snug break-words"
+                  title={course.title}
+                >
+                  {course.title}
+                </h2>
+                <Button
+                  type="button"
+                  variant="text"
+                  iconOnly
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="w-9 h-9 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full shrink-0"
+                  title="Ẩn Lộ trình Bài học"
+                  aria-label="Ẩn Lộ trình Bài học"
+                >
+                  <X className="w-5 h-5" aria-hidden="true" />
+                </Button>
+              </div>
 
-                return (
-                  <div key={week.id} className="space-y-3">
-                    {/* Module / Week Accordion Header */}
-                    <Button
-                      type="button"
-                      variant="text"
-                      onClick={() => toggleWeek(week.id)}
-                      className="w-full text-left justify-start items-start p-2.5 rounded-2xl hover:bg-surface-container-high/60 h-auto group"
-                    >
-                      <div className="flex-1 min-w-0 pr-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold tracking-wide text-on-surface-variant group-hover:text-primary transition-colors">
-                            {`Module ${week.weekNumber}`}
-                          </span>
-                          {!unlocked && (
-                            <span className="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
-                              <Lock aria-hidden="true" className="w-3 h-3" /> Bị khóa
+              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {course.weekModules.map((week, weekIndex) => {
+                  const isCollapsed = Boolean(collapsedWeeks[week.id]);
+                  const unlocked = isWeekUnlocked(weekIndex);
+                  const displayWeekTitle =
+                    week.title.startsWith("Tuần") || week.title.startsWith("Week")
+                      ? week.title
+                      : `Tuần ${week.weekNumber}: ${week.title}`;
+
+                  return (
+                    <div key={week.id} className="space-y-3">
+                      {/* Module / Week Accordion Header */}
+                      <Button
+                        type="button"
+                        variant="text"
+                        onClick={() => toggleWeek(week.id)}
+                        className="w-full text-left justify-start items-start p-2.5 rounded-2xl hover:bg-surface-container-high/60 h-auto group"
+                      >
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold tracking-wide text-on-surface-variant group-hover:text-primary transition-colors">
+                              {`Module ${week.weekNumber}`}
                             </span>
+                            {!unlocked && (
+                              <span className="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
+                                <Lock aria-hidden="true" className="w-3 h-3" /> Bị khóa
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm font-extrabold text-on-surface group-hover:text-primary transition-colors leading-snug break-words mt-0.5">
+                            {displayWeekTitle}
+                          </div>
+                        </div>
+                        <div className="text-on-surface-variant group-hover:text-on-surface transition-colors p-1 shrink-0 mt-0.5">
+                          {isCollapsed ? (
+                            <ChevronDown aria-hidden="true" className="w-4 h-4" />
+                          ) : (
+                            <ChevronUp aria-hidden="true" className="w-4 h-4" />
                           )}
                         </div>
-                        <div className="text-sm font-extrabold text-on-surface group-hover:text-primary transition-colors leading-snug break-words mt-0.5">
-                          {displayWeekTitle}
-                        </div>
-                      </div>
-                      <div className="text-on-surface-variant group-hover:text-on-surface transition-colors p-1 shrink-0 mt-0.5">
-                        {isCollapsed ? (
-                          <ChevronDown aria-hidden="true" className="w-4 h-4" />
-                        ) : (
-                          <ChevronUp aria-hidden="true" className="w-4 h-4" />
-                        )}
-                      </div>
-                    </Button>
+                      </Button>
 
-                    {/* Collapsible Lessons & Items List */}
-                    {!isCollapsed && (
-                      <div className="space-y-4 pl-1">
-                        {week.lessons.map((lesson, lessonIndex) => {
-                          const displayLessonTitle =
-                            lesson.title.startsWith("Bài") || lesson.title.startsWith("Lesson")
-                              ? lesson.title
-                              : `Bài ${lessonIndex + 1}: ${lesson.title}`;
+                      {/* Collapsible Lessons & Items List */}
+                      {!isCollapsed && (
+                        <div className="space-y-4 pl-1">
+                          {week.lessons.map((lesson, lessonIndex) => {
+                            const displayLessonTitle =
+                              lesson.title.startsWith("Bài") || lesson.title.startsWith("Lesson")
+                                ? lesson.title
+                                : `Bài ${lessonIndex + 1}: ${lesson.title}`;
 
-                          return (
-                            <div key={lesson.id} className="space-y-1.5">
-                              {/* Lesson Subheading */}
-                              <div className="text-xs font-bold text-on-surface-variant px-2 pt-1 break-words leading-snug">
-                                {displayLessonTitle}
-                              </div>
+                            return (
+                              <div key={lesson.id} className="space-y-1.5">
+                                {/* Lesson Subheading */}
+                                <div className="text-xs font-bold text-on-surface-variant px-2 pt-1 break-words leading-snug">
+                                  {displayLessonTitle}
+                                </div>
 
-                              {/* Learning Items */}
-                              <div className="space-y-1">
-                                {lesson.items.map((item) => {
-                                  const isActive = activeItem?.id === item.id;
-                                  const isDone = progress?.completedItemIds.includes(item.id);
-                                  const itemLocked = isItemLocked(item, weekIndex);
-                                  const isAuditLocked =
-                                    !isPreviewMode && !isPaidAccess && isGradedItem(item.type);
+                                {/* Learning Items */}
+                                <div className="space-y-1">
+                                  {lesson.items.map((item) => {
+                                    const isActive = activeItem?.id === item.id;
+                                    const isDone = progress?.completedItemIds.includes(item.id);
+                                    const itemLocked = isItemLocked(item, weekIndex);
+                                    const isAuditLocked =
+                                      !isPreviewMode && !isPaidAccess && isGradedItem(item.type);
 
-                                  return (
-                                    <Button
-                                      key={item.id}
-                                      type="button"
-                                      variant="text"
-                                      onClick={() => {
-                                        if (itemLocked) {
-                                          if (isAuditLocked) {
-                                            setLockNotice(
-                                              "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode hoặc sử dụng mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính điểm.",
-                                            );
-                                          } else if (!isPaidAccess && weekIndex > 0) {
-                                            setLockNotice(
-                                              "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
-                                            );
-                                          } else {
-                                            setLockNotice(
-                                              `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
-                                            );
+                                    return (
+                                      <Button
+                                        key={item.id}
+                                        type="button"
+                                        variant="text"
+                                        onClick={() => {
+                                          if (itemLocked) {
+                                            if (isAuditLocked) {
+                                              setLockNotice(
+                                                "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode hoặc sử dụng mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính điểm.",
+                                              );
+                                            } else if (!isPaidAccess && weekIndex > 0) {
+                                              setLockNotice(
+                                                "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+                                              );
+                                            } else {
+                                              setLockNotice(
+                                                `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
+                                              );
+                                            }
+                                            return;
                                           }
-                                          return;
-                                        }
-                                        setLockNotice("");
-                                        setActiveItem(item);
-                                        setActiveQuiz(null);
-                                      }}
-                                      className={`w-full text-left justify-start items-center gap-3 p-3 rounded-xl h-auto whitespace-normal ${
-                                        itemLocked
-                                          ? "opacity-60 cursor-not-allowed hover:bg-transparent"
-                                          : isActive
-                                            ? "bg-primary-container text-on-primary-container shadow-xs font-bold hover:bg-primary-container"
-                                            : "hover:bg-surface-container-high/60 text-on-surface"
-                                      }`}
-                                    >
-                                      {/* Status Icon */}
-                                      <div className="shrink-0 flex items-center justify-center">
-                                        {itemLocked ? (
-                                          <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0">
-                                            <Lock
+                                          setLockNotice("");
+                                          setActiveItem(item);
+                                          setActiveQuiz(null);
+                                        }}
+                                        className={`w-full text-left justify-start items-center gap-3 p-3 rounded-xl h-auto whitespace-normal ${
+                                          itemLocked
+                                            ? "opacity-60 cursor-not-allowed hover:bg-transparent"
+                                            : isActive
+                                              ? "bg-primary-container text-on-primary-container shadow-xs font-bold hover:bg-primary-container"
+                                              : "hover:bg-surface-container-high/60 text-on-surface"
+                                        }`}
+                                      >
+                                        {/* Status Icon */}
+                                        <div className="shrink-0 flex items-center justify-center">
+                                          {itemLocked ? (
+                                            <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+                                              <Lock
+                                                aria-hidden="true"
+                                                className="w-3 h-3 text-on-surface-variant"
+                                              />
+                                            </div>
+                                          ) : isDone ? (
+                                            <CheckCircle2
                                               aria-hidden="true"
-                                              className="w-3 h-3 text-on-surface-variant"
+                                              className="w-5 h-5 text-success fill-success/15 shrink-0"
                                             />
-                                          </div>
-                                        ) : isDone ? (
-                                          <CheckCircle2
-                                            aria-hidden="true"
-                                            className="w-5 h-5 text-success fill-success/15 shrink-0"
-                                          />
-                                        ) : (
-                                          <div className="w-5 h-5 rounded-full border-2 border-outline-variant/70 shrink-0" />
-                                        )}
-                                      </div>
+                                          ) : (
+                                            <div className="w-5 h-5 rounded-full border-2 border-outline-variant/70 shrink-0" />
+                                          )}
+                                        </div>
 
-                                      {/* Title & Sub-info */}
-                                      <div className="flex-1 min-w-0">
-                                        <div
-                                          className={`text-xs leading-snug break-words ${
-                                            isActive
-                                              ? "font-bold text-on-primary-container"
-                                              : isDone
-                                                ? "font-medium text-on-surface"
-                                                : "font-normal text-on-surface-variant"
-                                          }`}
-                                        >
-                                          {item.title}
+                                        {/* Title & Sub-info */}
+                                        <div className="flex-1 min-w-0">
+                                          <div
+                                            className={`text-xs leading-snug break-words ${
+                                              isActive
+                                                ? "font-bold text-on-primary-container"
+                                                : isDone
+                                                  ? "font-medium text-on-surface"
+                                                  : "font-normal text-on-surface-variant"
+                                            }`}
+                                          >
+                                            {item.title}
+                                          </div>
+                                          <div
+                                            className={`text-xs mt-0.5 font-normal ${
+                                              isActive
+                                                ? "text-on-primary-container/80"
+                                                : "text-on-surface-variant"
+                                            }`}
+                                          >
+                                            {itemLocked
+                                              ? isAuditLocked
+                                                ? "Bị khóa (Audit Mode) • Yêu cầu Paid Mode"
+                                                : `Bị khóa • Hoàn thành Tuần ${weekIndex}`
+                                              : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} phút`}
+                                          </div>
                                         </div>
-                                        <div
-                                          className={`text-xs mt-0.5 font-normal ${
-                                            isActive
-                                              ? "text-on-primary-container/80"
-                                              : "text-on-surface-variant"
-                                          }`}
-                                        >
-                                          {itemLocked
-                                            ? isAuditLocked
-                                              ? "Bị khóa (Audit Mode) • Yêu cầu Paid Mode"
-                                              : `Bị khóa • Hoàn thành Tuần ${weekIndex}`
-                                            : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} phút`}
-                                        </div>
-                                      </div>
-                                    </Button>
-                                  );
-                                })}
+                                      </Button>
+                                    );
+                                  })}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </aside>
         )}

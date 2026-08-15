@@ -523,6 +523,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
     }
 
     return (
+      /* oxlint-disable-next-line jsx-a11y/media-has-caption */
       <video
         ref={htmlVideoRef}
         src={videoUrl || undefined}
@@ -537,13 +538,9 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         aria-label={title}
         className={className}
       >
-        <track
-          kind="captions"
-          src={captionUrl || ""}
-          srcLang="vi"
-          label={captionUrl ? "Phụ đề" : "Không có phụ đề"}
-          default={Boolean(captionUrl)}
-        />
+        {captionUrl ? (
+          <track kind="captions" src={captionUrl} srcLang="vi" label="Phụ đề" default />
+        ) : null}
       </video>
     );
   },
