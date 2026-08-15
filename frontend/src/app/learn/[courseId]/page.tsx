@@ -244,6 +244,7 @@ function CoursePlayerContent() {
   const [noteComment, setNoteComment] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [lockNotice, setLockNotice] = useState("");
+  const [externalAiPrompt, setExternalAiPrompt] = useState<string | null>(null);
   const isVideoItem = activeItem?.type === 1 || Boolean(activeItem?.videoUrl);
   const isLectureItem = isVideoItem || activeItem?.type === 2;
 
@@ -954,29 +955,7 @@ function CoursePlayerContent() {
                   onSelectAiPrompt={(promptText) => {
                     setActiveTab("ai_assistant");
                     setIsPanelOpen(true);
-                    setTimeout(() => {
-                      const inputEl = document.querySelector(
-                        'input[placeholder*="Hỏi tôi"], textarea[placeholder*="Hỏi tôi"]',
-                      ) as HTMLInputElement | HTMLTextAreaElement | null;
-                      if (inputEl) {
-                        const nativeSetter = Object.getOwnPropertyDescriptor(
-                          window.HTMLInputElement.prototype,
-                          "value",
-                        )?.set;
-                        if (nativeSetter) {
-                          nativeSetter.call(inputEl, promptText);
-                        } else {
-                          inputEl.value = promptText;
-                        }
-                        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-                        const formEl = inputEl.closest("form");
-                        if (formEl) {
-                          formEl.dispatchEvent(
-                            new Event("submit", { cancelable: true, bubbles: true }),
-                          );
-                        }
-                      }
-                    }, 100);
+                    setExternalAiPrompt(promptText);
                   }}
                   nextItem={nextItem}
                   onNextLesson={() => {
@@ -1094,6 +1073,8 @@ function CoursePlayerContent() {
                   activeItem={activeItem}
                   currentTime={currentTime}
                   readingMarkdown={activeItem?.readingMarkdown}
+                  externalPrompt={externalAiPrompt}
+                  onPromptConsumed={() => setExternalAiPrompt(null)}
                   onSeek={handleSeekVideo}
                   onNextLesson={() => {
                     if (nextItem) {

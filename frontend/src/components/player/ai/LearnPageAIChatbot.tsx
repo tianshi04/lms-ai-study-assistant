@@ -28,6 +28,8 @@ interface LearnPageAIChatbotProps {
   currentTime: number;
   transcriptText?: string;
   readingMarkdown?: string;
+  externalPrompt?: string | null;
+  onPromptConsumed?: () => void;
   onSeek: (seconds: number) => void;
   onNextLesson?: () => void;
   onNoteCreated?: (note: PersonalNote) => void;
@@ -42,6 +44,8 @@ export function LearnPageAIChatbot({
   currentTime,
   transcriptText = "",
   readingMarkdown = "",
+  externalPrompt = null,
+  onPromptConsumed,
   onSeek,
   onNextLesson,
   onNoteCreated,
@@ -128,6 +132,14 @@ export function LearnPageAIChatbot({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [displayMessages, agent?.isRunning]);
+
+  // Handle external AI prompt trigger (from VideoPlayer Prompt Chips or external actions)
+  useEffect(() => {
+    if (externalPrompt && externalPrompt.trim()) {
+      sendMessage(externalPrompt.trim());
+      onPromptConsumed?.();
+    }
+  }, [externalPrompt, onPromptConsumed, sendMessage]);
 
   // Compute active transcript segment
   const activeTranscriptSegment = useMemo(() => {
