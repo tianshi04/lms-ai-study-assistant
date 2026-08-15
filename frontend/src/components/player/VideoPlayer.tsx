@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject, useState } from "react";
+import { RefObject, useState, useMemo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
@@ -43,6 +43,7 @@ const PeerAssignmentWorkspace = dynamic(
     ),
   },
 );
+
 import {
   UniversalVideoPlayer,
   type UniversalVideoRef,
@@ -104,6 +105,74 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const centerScroll = useScrollEdgeFade<HTMLDivElement>();
+
+  // Compute dynamic HTML5 WebVTT caption URL for native <video controls> track subtitles
+  const computedCaptionUrl = useMemo(() => {
+    if (!activeItem) return "";
+    if (activeItem.vttSubtitleUrl) {
+      return activeItem.vttSubtitleUrl;
+    }
+    if ((activeItem as any).captionUrl) {
+      return (activeItem as any).captionUrl;
+    }
+    // Fallback: Convert interactiveTranscripts from proto/database to a dynamic WebVTT Blob URL
+    if (activeItem.interactiveTranscripts && activeItem.interactiveTranscripts.length > 0) {
+      const vttLines = ["WEBVTT\n"];
+      activeItem.interactiveTranscripts.forEach((t, idx) => {
+        const nextT = activeItem.interactiveTranscripts[idx + 1];
+        const startSec = t.timestampSeconds;
+        const endSec = nextT ? nextT.timestampSeconds : startSec + 5;
+
+        const formatTime = (sec: number) => {
+          const h = Math.floor(sec / 3600)
+            .toString()
+            .padStart(2, "0");
+          const m = Math.floor((sec % 3600) / 60)
+            .toString()
+            .padStart(2, "0");
+          const s = (sec % 60).toFixed(3).padStart(6, "0");
+          return `${h}:${m}:${s}`;
+        };
+
+        const formattedText = (() => {
+          const trimmed = t.text.trim().replace(/\s+/g, " ");
+          if (trimmed.length <= 48) return trimmed;
+          const mid = Math.floor(trimmed.length / 2);
+          let breakIndex = -1;
+          for (let offset = 0; offset < 22; offset++) {
+            if (
+              trimmed[mid + offset] === " " ||
+              [".", ",", ";", "?", "!"].includes(trimmed[mid + offset])
+            ) {
+              breakIndex = mid + offset;
+              break;
+            }
+            if (
+              trimmed[mid - offset] === " " ||
+              [".", ",", ";", "?", "!"].includes(trimmed[mid - offset])
+            ) {
+              breakIndex = mid - offset;
+              break;
+            }
+          }
+          if (breakIndex !== -1) {
+            return `${trimmed.slice(0, breakIndex).trim()}\n${trimmed.slice(breakIndex).trim()}`;
+          }
+          return trimmed;
+        })();
+
+        vttLines.push(`${idx + 1}`);
+        vttLines.push(
+          `${formatTime(startSec)} --> ${formatTime(endSec)} line:90% position:50% align:center`,
+        );
+        vttLines.push(formattedText);
+        vttLines.push("");
+      });
+      const blob = new Blob([vttLines.join("\n")], { type: "text/vtt" });
+      return URL.createObjectURL(blob);
+    }
+    return "";
+  }, [activeItem]);
 
   if (!activeItem) {
     return (
@@ -264,7 +333,7 @@ export function VideoPlayer({
             onSeeking={onSeeking}
             onEnded={() => onMarkComplete?.(activeItem.id)}
             title={activeItem.title || "Video bài giảng"}
-            captionUrl={(activeItem as any).captionUrl}
+            captionUrl={computedCaptionUrl}
             onNextLesson={onNextLesson}
             className="w-full h-full object-contain"
           />

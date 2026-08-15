@@ -765,3 +765,18 @@ input::-ms-clear {
   animation-duration: var(--duration-m3-short-4);
   animation-timing-function: var(--ease-m3-emphasized);
 }
+
+/* Custom Native HTML5 Video Subtitle / Track Cue Styling */
+video::cue {
+  background-color: rgba(15, 23, 42, 0.88);
+  color: #f8fafc;
+  font-size: clamp(10px, 1.15vw, 13.5px);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  max-width: 80%;
+  white-space: pre-line;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
