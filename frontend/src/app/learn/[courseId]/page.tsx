@@ -621,20 +621,6 @@ function CoursePlayerContent() {
         </div>
 
         <div className="flex items-center gap-4">
-          {!isPreviewMode && progress && (
-            <div className="flex items-center gap-3 bg-surface-container px-3.5 py-1.5 rounded-full">
-              <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-colors duration-m3-long-2 ease-m3-emphasized"
-                  style={{ width: `${progress.overallProgressPercent}%` }}
-                />
-              </div>
-              <span className="text-xs font-mono font-bold text-primary">
-                {progress.overallProgressPercent}%
-              </span>
-            </div>
-          )}
-
           {!isPreviewMode &&
             progress &&
             (progress.overallProgressPercent >= 100 ||
