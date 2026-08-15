@@ -242,7 +242,7 @@ export function VideoPlayer({
     // 4. Peer Review Item
     if (activeItem.type === 6) {
       return (
-        <div className="w-full p-2 sm:p-4 text-on-surface">
+        <div className="w-full flex-1 flex flex-col min-h-0 p-1 sm:p-2 text-on-surface">
           <PeerAssignmentWorkspace
             key={activeItem.id}
             itemId={activeItem.id}
