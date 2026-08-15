@@ -192,6 +192,13 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                 {block.cues.map((cue) => {
                   const isActive = cue.originalIndex === activeIndex;
 
+                  {
+                    /*
+                    Design Decision (Modern Web): Intentional inline <span> with role="button" & keyboard handlers (Enter/Space)
+                    to maintain natural continuous flowing paragraph typography ([box-decoration-break:clone])
+                    without breaking inline text wraps across lines like native button tags would.
+                  */
+                  }
                   return (
                     <span
                       key={cue.originalIndex}
