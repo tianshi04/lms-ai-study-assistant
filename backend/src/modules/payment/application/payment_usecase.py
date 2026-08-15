@@ -780,7 +780,7 @@ class PaymentUseCase:
                             resp_code = res.get("vnp_ResponseCode", "")
                             txn_status = res.get("vnp_TransactionStatus", "")
 
-                            if resp_code == "00" or txn_status == "00":
+                            if txn_status == "00":
                                 o.mark_completed(transaction_id=o.vnp_txn_ref)
                                 await repo.update_order_status(
                                     o.id, PaymentOrderStatus.COMPLETED
@@ -797,7 +797,11 @@ class PaymentUseCase:
                                     o.id,
                                     user_id,
                                 )
-                            elif resp_code == "24" or txn_status == "24":
+                            elif txn_status in ("24", "11", "02") or resp_code in (
+                                "24",
+                                "11",
+                                "02",
+                            ):
                                 o.mark_cancelled()
                                 await repo.update_order_status(
                                     o.id, PaymentOrderStatus.CANCELLED
@@ -807,14 +811,20 @@ class PaymentUseCase:
                                     o.id,
                                     user_id,
                                 )
-                            elif resp_code in ("01", "02") or txn_status in (
+                            elif txn_status in (
                                 "01",
-                                "02",
+                                "07",
+                                "09",
+                                "99",
+                            ) or resp_code in (
+                                "01",
+                                "07",
+                                "09",
                                 "99",
                             ):
                                 if age_minutes >= 15.0:
                                     o.mark_failed(
-                                        error_message=f"DR resp_code: {resp_code}"
+                                        error_message=f"DR txn_status: {txn_status}, resp_code: {resp_code}"
                                     )
                                     await repo.update_order_status(
                                         o.id, PaymentOrderStatus.FAILED

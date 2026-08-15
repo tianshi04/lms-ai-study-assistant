@@ -114,7 +114,12 @@ export function useCreateVNPayPaymentUrlMutation(
         vnpTxnRef: string;
       },
       Error,
-      { targetType: PaymentTargetType; targetId: string; planType?: PlanType }
+      {
+        targetType: PaymentTargetType;
+        targetId: string;
+        planType?: PlanType;
+        returnUrl?: string;
+      }
     >
   >,
 ) {
@@ -127,14 +132,25 @@ export function useCreateVNPayPaymentUrlMutation(
       vnpTxnRef: string;
     },
     Error,
-    { targetType: PaymentTargetType; targetId: string; planType?: PlanType }
+    {
+      targetType: PaymentTargetType;
+      targetId: string;
+      planType?: PlanType;
+      returnUrl?: string;
+    }
   >({
-    mutationFn: async ({ targetType, targetId, planType }) => {
+    mutationFn: async ({ targetType, targetId, planType, returnUrl }) => {
       const client = getRpcClient(PaymentService);
+      const computedReturnUrl =
+        returnUrl ||
+        (typeof window !== "undefined"
+          ? `${window.location.origin}/payment/vnpay-return`
+          : "");
       const res = await client.createVNPayPaymentUrl({
         targetType,
         targetId,
         planType: planType ?? PlanType.UNSPECIFIED,
+        returnUrl: computedReturnUrl,
       });
       return {
         success: res.success,

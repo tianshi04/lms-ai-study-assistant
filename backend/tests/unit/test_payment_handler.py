@@ -43,6 +43,7 @@ async def test_create_vn_pay_payment_url_handler():
         target_type=PaymentTargetType.COURSE,
         target_id="course_1",
         plan_type=PlanType.UNSPECIFIED,
+        return_url="",
     )
 
 
