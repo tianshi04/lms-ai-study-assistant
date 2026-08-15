@@ -758,32 +758,30 @@ function CoursePlayerContent() {
           <div className="flex-1 flex flex-row overflow-hidden relative min-h-0 gap-3">
             {/* Left/Center Video Media Viewer Canvas - MD3 Floating Surface Card */}
             <div className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden flex flex-col relative min-h-0">
-              <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto scrollbar-none">
-                <VideoPlayer
-                  videoRef={videoRef}
-                  activeItem={activeItem}
-                  userId={userId}
-                  activeQuiz={activeQuiz}
-                  selectedOption={selectedOption}
-                  quizSubmitted={quizSubmitted}
-                  completedItemIds={progress?.completedItemIds || []}
-                  currentTime={currentTime}
-                  onTimeUpdate={handleTimeUpdate}
-                  onSeeking={handleSeeking}
-                  onSelectOption={setSelectedOption}
-                  onSubmitQuiz={handleQuizSubmit}
-                  onContinueVideo={handleContinueVideo}
-                  onMarkComplete={handleMarkItemComplete}
-                  isPreviewMode={isPreviewMode}
-                  isPaidAccess={isPaidAccess}
-                  onSelectAiPrompt={(promptText) => {
-                    setActiveTab("ai_assistant");
-                    setIsPanelOpen(true);
-                    setExternalAiPrompt(promptText);
-                  }}
-                  onNextLesson={handleNextLesson}
-                />
-              </div>
+              <VideoPlayer
+                videoRef={videoRef}
+                activeItem={activeItem}
+                userId={userId}
+                activeQuiz={activeQuiz}
+                selectedOption={selectedOption}
+                quizSubmitted={quizSubmitted}
+                completedItemIds={progress?.completedItemIds || []}
+                currentTime={currentTime}
+                onTimeUpdate={handleTimeUpdate}
+                onSeeking={handleSeeking}
+                onSelectOption={setSelectedOption}
+                onSubmitQuiz={handleQuizSubmit}
+                onContinueVideo={handleContinueVideo}
+                onMarkComplete={handleMarkItemComplete}
+                isPreviewMode={isPreviewMode}
+                isPaidAccess={isPaidAccess}
+                onSelectAiPrompt={(promptText) => {
+                  setActiveTab("ai_assistant");
+                  setIsPanelOpen(true);
+                  setExternalAiPrompt(promptText);
+                }}
+                onNextLesson={handleNextLesson}
+              />
 
               {/* Fixed Bottom-Right Next Lesson Floating Action Button */}
               {nextItem && (

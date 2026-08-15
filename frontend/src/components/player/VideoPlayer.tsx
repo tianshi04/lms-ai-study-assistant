@@ -4,6 +4,7 @@ import { RefObject, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
+import { useScrollEdgeFade } from "@/hooks/useScrollEdgeFade";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 
 const GradedQuizRunner = dynamic(
@@ -103,6 +104,7 @@ export function VideoPlayer({
   onNextLesson,
 }: VideoPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const centerScroll = useScrollEdgeFade<HTMLDivElement>();
 
   if (!activeItem) {
     return (
@@ -416,8 +418,31 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0">
-      <div className="w-full flex-1 min-h-0">{renderLessonContent()}</div>
+    <div className="w-full h-full flex flex-col min-h-0 relative">
+      {/* Top Floating Gradient Fade Overlay (Dynamically appears when scrolling down) */}
+      <div
+        className={`absolute top-0 inset-x-0 h-8 bg-gradient-to-b from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none z-20 transition-opacity duration-200 ${
+          centerScroll.canScrollUp ? "opacity-100" : "opacity-0"
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Scrollable Content Container - Native Scrollbar Hidden */}
+      <div
+        ref={centerScroll.scrollRef}
+        onScroll={centerScroll.handleScroll}
+        className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto scrollbar-none"
+      >
+        {renderLessonContent()}
+      </div>
+
+      {/* Bottom Floating Gradient Fade Overlay (Dynamically appears when content extends below) */}
+      <div
+        className={`absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none z-20 transition-opacity duration-200 ${
+          centerScroll.canScrollDown ? "opacity-100" : "opacity-0"
+        }`}
+        aria-hidden="true"
+      />
     </div>
   );
 }
