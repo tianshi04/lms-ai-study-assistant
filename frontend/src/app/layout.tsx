@@ -28,8 +28,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Coursera LMS Platform",
-  description: "Coursera-style Online Learning Platform",
+  title: {
+    template: "%s | LMS AI Platform",
+    default: "LMS AI Platform - Nền tảng học trực tuyến thông minh",
+  },
+  description: "Nền tảng học tập trực tuyến thông minh tích hợp trợ lý AI học tập cá nhân hóa.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 async function AsyncAuthProvider({ children }: { children: React.ReactNode }) {

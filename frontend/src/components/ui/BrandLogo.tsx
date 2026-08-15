@@ -25,9 +25,9 @@ export const brandLogoBoxVariants = cva(
 export const brandLogoIconVariants = cva("", {
   variants: {
     size: {
-      sm: "w-4 h-4",
-      md: "w-5.5 h-5.5",
-      lg: "w-7 h-7",
+      sm: "w-5 h-5",
+      md: "w-6.5 h-6.5",
+      lg: "w-8 h-8",
     },
   },
   defaultVariants: {
