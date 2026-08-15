@@ -18,9 +18,9 @@ async function loginAndSave(
   await page.goto('/auth/login');
 
   // Fill credentials and submit
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(password);
-  await page.getByRole('button', { name: /đăng nhập ngay|sign in/i }).click();
+  await page.locator('input[type="email"]').first().fill(email);
+  await page.locator('input[type="password"]').first().fill(password);
+  await page.getByRole('button', { name: /đăng nhập ngay|sign in/i }).first().click();
 
   // Wait until the app redirects away from the login page (successful auth)
   await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 15000 });

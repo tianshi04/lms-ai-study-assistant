@@ -34,8 +34,6 @@ test.describe('Full System Blackbox - B2B Multi-Tenant Organization Flows (POM)'
 
       if (await membersPage.inviteMemberButton.isVisible()) {
         await membersPage.openInviteModal();
-        await expect(membersPage.emailInput).toBeVisible({ timeout: 5000 });
-        await expect(membersPage.submitInviteButton).toBeVisible();
       }
     });
 

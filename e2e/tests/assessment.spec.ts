@@ -17,7 +17,7 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
 
     // Switch to Auto-Graded Lab tab
     await assessmentPage.switchTab('lab');
-    await expect(assessmentPage.runLabButton).toBeVisible();
+    await expect(assessmentPage.runLabButton).toBeVisible({ timeout: 15000 });
 
     // Click run & submit code
     await assessmentPage.runLabButton.click();

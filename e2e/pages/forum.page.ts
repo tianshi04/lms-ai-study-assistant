@@ -12,8 +12,8 @@ export class ForumPage {
   constructor(page: Page) {
     this.page = page;
     this.openModalButton = page.getByRole('button', { name: /Tạo chủ đề thảo luận mới/i }).first();
-    this.modalTitleInput = page.getByPlaceholder(/Tiêu đề chủ đề|Tiêu đề/i).first();
-    this.modalContentInput = page.getByPlaceholder(/Nội dung thắc mắc|Nội dung/i).first();
+    this.modalTitleInput = page.locator('input[placeholder*="Tiêu đề"], input[name="title"]').first();
+    this.modalContentInput = page.locator('textarea[placeholder*="Nội dung"], textarea[name="content"]').first();
     this.modalSubmitButton = page.getByRole('button', { name: /^Đăng bài$/i }).first();
     this.replyInput = page
       .locator('textarea[placeholder*="Nội dung"], textarea[placeholder*="thảo luận"], input[placeholder*="Trả lời"]')
@@ -22,7 +22,7 @@ export class ForumPage {
   }
 
   async goto() {
-    await this.page.goto('/forum', { waitUntil: 'networkidle' });
+    await this.page.goto('/forum', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
@@ -32,10 +32,16 @@ export class ForumPage {
   }
 
   async createNewThread(title: string, content: string) {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await expect(this.openModalButton).toBeVisible({ timeout: 10000 });
     await expect(this.openModalButton).toBeEnabled({ timeout: 5000 });
     await this.openModalButton.click();
+    if (!(await this.modalTitleInput.isVisible())) {
+      await this.page.waitForTimeout(500);
+      if (!(await this.modalTitleInput.isVisible())) {
+        await this.openModalButton.click({ force: true });
+      }
+    }
 
     await expect(this.modalTitleInput).toBeVisible({ timeout: 15000 });
     await this.modalTitleInput.fill(title);

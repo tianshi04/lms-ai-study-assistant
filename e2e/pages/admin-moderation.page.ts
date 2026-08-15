@@ -38,7 +38,7 @@ export class AdminCourseReviewPage {
     else if (status === 'published') await this.publishedTab.click();
     else if (status === 'draft') await this.draftTab.click();
     else if (status === 'rejected') await this.rejectedTab.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 }
 

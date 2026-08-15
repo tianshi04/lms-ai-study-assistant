@@ -16,7 +16,7 @@ export class InstructorAnnouncementsPage {
   }
 
   async goto(courseId: string) {
-    await this.page.goto(`/instructor/courses/${courseId}/announcements`, { waitUntil: 'networkidle' });
+    await this.page.goto(`/instructor/courses/${courseId}/announcements`, { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
@@ -25,7 +25,7 @@ export class InstructorAnnouncementsPage {
   }
 
   async postAnnouncement(title: string, content: string) {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await expect(this.titleInput).toBeVisible({ timeout: 10000 });
     await expect(this.titleInput).toBeEnabled({ timeout: 5000 });
 

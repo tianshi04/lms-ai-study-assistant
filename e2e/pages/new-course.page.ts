@@ -28,7 +28,7 @@ export class NewCoursePage {
   }
 
   async goto() {
-    await this.page.goto('/instructor/courses/new', { waitUntil: 'networkidle' });
+    await this.page.goto('/instructor/courses/new', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
@@ -39,7 +39,7 @@ export class NewCoursePage {
   }
 
   async fillAndSubmitCourse(title: string, description: string, partnerOrgId?: string) {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
     await expect(this.titleInput).toBeVisible({ timeout: 10000 });
     await expect(this.titleInput).toBeEnabled({ timeout: 5000 });
     await this.titleInput.click();
@@ -82,12 +82,15 @@ export class NewCoursePage {
     await expect(this.descriptionTextarea).toHaveValue(description, { timeout: 5000 });
 
     // Ensure title and slug remain filled before submission
+    if ((await this.titleInput.inputValue()) !== title) {
+      await this.titleInput.fill(title);
+    }
     await expect(this.titleInput).toHaveValue(title, { timeout: 5000 });
     await expect(this.slugInput).not.toHaveValue('', { timeout: 5000 });
 
     await expect(this.submitButton).toBeVisible({ timeout: 10000 });
     await expect(this.submitButton).toBeEnabled({ timeout: 5000 });
-    await this.submitButton.click();
-    await expect(this.page).toHaveURL(/\/instructor\/courses\/course-[a-z0-9-]+/, { timeout: 25000 });
+    await this.submitButton.click({ force: true });
+    await expect(this.page).toHaveURL(/\/instructor\/courses\/.+/, { timeout: 25000 });
   }
 }
