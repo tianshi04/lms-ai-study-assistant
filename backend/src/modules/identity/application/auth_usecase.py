@@ -70,20 +70,38 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
         raise ValueError("GOOGLE_CLIENT_SECRET chưa được cấu hình trên server")
 
     # Exchange code via server-to-server HTTPS
-    async with httpx.AsyncClient(timeout=10.0) as http_client:
-        token_response = await http_client.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "code": code,
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "redirect_uri": "postmessage",
-                "grant_type": "authorization_code",
-            },
-        )
+    candidate_redirect_uris = [
+        "http://localhost:3000/auth/google/callback",
+        "postmessage",
+    ]
+    frontend_url = str(getattr(settings, "FRONTEND_URL", "") or "")
+    if frontend_url:
+        frontend_callback = f"{frontend_url.rstrip('/')}/auth/google/callback"
+        if frontend_callback not in candidate_redirect_uris:
+            candidate_redirect_uris.insert(0, frontend_callback)
 
-    if token_response.status_code != 200:
-        logger.error("Google token exchange failed: %s", token_response.text)
+    token_response = None
+    async with httpx.AsyncClient(timeout=10.0) as http_client:
+        for r_uri in candidate_redirect_uris:
+            resp = await http_client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "redirect_uri": r_uri,
+                    "grant_type": "authorization_code",
+                },
+            )
+            token_response = resp
+            if resp.status_code == 200:
+                break
+
+    if not token_response or token_response.status_code != 200:
+        logger.error(
+            "Google token exchange failed: %s",
+            token_response.text if token_response else "No response",
+        )
         raise ValueError("Đổi Authorization Code thất bại. Vui lòng thử lại.")
 
     token_data = token_response.json()
@@ -381,6 +399,8 @@ class AuthUseCase:
         claims = await _exchange_google_code(authorization_code, nonce)
         email = claims["email"]
         google_id = claims["google_id"]
+        full_name = claims.get("name", "") or email.split("@")[0]
+        avatar_url = claims.get("picture", "")
 
         async with database.async_session_scope() as session:
             repo = repo_module.IdentityRepository(session)
@@ -389,16 +409,28 @@ class AuthUseCase:
                 user = await repo.get_by_email(email)
 
             if not user:
-                return (
-                    None,
-                    "",
-                    "",
-                    "Tài khoản chưa được đăng ký trong hệ thống. Vui lòng Đăng ký bằng Google trước!",
+                # Auto-provision new user on first Google sign-in (JIT Provisioning)
+                user = User(
+                    id=f"user_{uuid7().hex[:12]}",
+                    email=email,
+                    full_name=full_name,
+                    role=UserRole.LEARNER,
+                    avatar_url=avatar_url,
+                    password_hash="",
+                    google_id=google_id,
+                    is_identity_verified=False,
                 )
-
-            if not user.google_id:
-                user.google_id = google_id
                 user = await repo.save(user)
+            else:
+                updated = False
+                if not user.google_id:
+                    user.google_id = google_id
+                    updated = True
+                if avatar_url and not user.avatar_url:
+                    user.avatar_url = avatar_url
+                    updated = True
+                if updated:
+                    user = await repo.save(user)
 
             access_token = auth.create_access_token(
                 user_id=user.id,

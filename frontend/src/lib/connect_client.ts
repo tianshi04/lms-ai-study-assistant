@@ -42,8 +42,12 @@ const refreshInterceptor: Interceptor = (next) => async (req) => {
         // Retry the failed request transparently — browser will auto-send the updated access_token cookie
         return await next(req);
       } else if (typeof window !== "undefined") {
-        // Refresh failed, redirect to login if on client
-        window.location.href = "/auth/login";
+        const path = window.location.pathname;
+        const isAuthOrPublic =
+          path.startsWith("/auth") || path === "/" || path.startsWith("/courses");
+        if (!isAuthOrPublic) {
+          window.location.href = `/auth/login?redirect=${encodeURIComponent(path)}`;
+        }
       }
     }
     throw err;
