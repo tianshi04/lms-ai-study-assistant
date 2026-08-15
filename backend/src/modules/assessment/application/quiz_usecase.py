@@ -107,10 +107,6 @@ class QuizUseCase(BaseAssessmentUseCase):
         """Enforces BR_QUIZ_002: Samples N questions from a Pool of M and shuffles options reproducibly."""
         # 1. Fetch Quiz Matrix
         matrix = await self._get_quiz_matrix(repo, item_id)
-        if not matrix:
-            raise ValueError(
-                "Bài kiểm tra này chưa được Giảng viên cấu hình ma trận đề (Quiz Matrix)."
-            )
 
         bank_questions = (
             await repo.get_questions_by_bank(matrix.bank_id) if matrix else []
