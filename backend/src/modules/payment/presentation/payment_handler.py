@@ -123,6 +123,7 @@ class PaymentHandler(PaymentService):
             target_type=domain_target,
             target_id=request.target_id,
             plan_type=domain_plan,
+            return_url=request.return_url,
         )
 
         return pb.CreateVNPayPaymentUrlResponse(
