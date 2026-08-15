@@ -770,29 +770,41 @@ Output: 0.0
                           className="w-full text-xs font-semibold"
                         />
                       </div>
-                      <div>
-                        <Input
-                          label="Số lần làm tối đa"
-                          type="number"
-                          inputMode="numeric"
-                          enterKeyHint="next"
-                          value={quizMaxAttempts}
-                          onChange={(e) => setQuizMaxAttempts(e.target.value)}
-                          className="w-full text-xs font-semibold"
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          label="Thời gian chờ (Giờ)"
-                          type="number"
-                          inputMode="numeric"
-                          enterKeyHint="next"
-                          value={quizCooldownHours}
-                          onChange={(e) => setQuizCooldownHours(e.target.value)}
-                          className="w-full text-xs font-semibold"
-                        />
-                      </div>
+                      {itemType === ItemType.GRADED_QUIZ && (
+                        <>
+                          <div>
+                            <Input
+                              label="Số lần làm tối đa"
+                              type="number"
+                              inputMode="numeric"
+                              enterKeyHint="next"
+                              value={quizMaxAttempts}
+                              onChange={(e) => setQuizMaxAttempts(e.target.value)}
+                              className="w-full text-xs font-semibold"
+                            />
+                          </div>
+                          <div>
+                            <Input
+                              label="Thời gian chờ (Giờ)"
+                              type="number"
+                              inputMode="numeric"
+                              enterKeyHint="next"
+                              value={quizCooldownHours}
+                              onChange={(e) => setQuizCooldownHours(e.target.value)}
+                              className="w-full text-xs font-semibold"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
+                    {itemType === ItemType.PRACTICE_QUIZ && (
+                      <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Lượt làm bài & Cooldown:</span>
+                        <span className="font-bold text-success bg-success/15 border border-success/30 px-2.5 py-0.5 rounded-full text-[11px]">
+                          Không giới hạn
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Card 2: Question Distribution */}

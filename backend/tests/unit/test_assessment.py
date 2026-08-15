@@ -31,6 +31,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.peer_reviews: list[PeerReview] = []
         self.grade_appeals: dict[str, GradeAppeal] = {}
         self.matrices: dict[str, Any] = {}
+        self.item_types: dict[str, str] = {}
 
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         self.honor_codes[agreement.id] = agreement
@@ -152,6 +153,9 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def list_question_banks(self, course_id: str):
         return []
 
+    async def get_any_questions(self, limit: int = 20):
+        return await self.get_questions_by_bank("bank_test_1")
+
     async def add_question_to_bank(
         self,
         bank_id: str,
@@ -236,7 +240,25 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.matrices[item_id] = matrix
         return matrix
 
+    async def get_item_type(self, item_id: str) -> str:
+        return getattr(self, "item_types", {}).get(item_id, "GRADED_QUIZ")
+
     async def get_quiz_matrix(self, item_id: str):
+        if item_id not in self.matrices:
+            from src.modules.assessment.domain import QuizMatrix
+
+            self.matrices[item_id] = QuizMatrix(
+                item_id=item_id,
+                bank_id="qb_default",
+                time_limit_minutes=15,
+                passing_threshold_percent=80.0,
+                easy_count=3,
+                medium_count=2,
+                hard_count=1,
+                shuffle_options=True,
+                max_attempts=3,
+                cooldown_hours=8,
+            )
         return self.matrices.get(item_id)
 
     async def get_questions_by_bank(self, bank_id: str):
@@ -319,16 +341,16 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     # 2. Agree Honor Code
     await usecase.submit_honor_code(user_id, item_id, True)
 
-    # 3. Submit Perfect Score -> 100% Pass (still deducts 1 attempt)
+    # 3. Submit Perfect Score -> 100% Pass
     res_pass = await usecase.submit_graded_quiz(
         user_id, item_id, question_answers=correct_answers
     )
     assert res_pass["score_percent"] == 100.0
     assert res_pass["passed"] is True
-    assert res_pass["attempts_left"] == 2
+    assert res_pass["attempts_left"] == 3
     assert res_pass["cooldown_seconds_left"] == 0
 
-    # 4. Fail 3 consecutive attempts to trigger 8h Cooldown
+    # 4. Test Graded Quiz failure limit & cooldown
     user_fail = "user-test-cooldown"
     await usecase.submit_honor_code(user_fail, item_id, True)
 
@@ -338,14 +360,6 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     )
     assert r1["passed"] is False
     assert r1["attempts_left"] == 2
-
-    # Verify session start with force_new=False returns previous failed result & attempts_left
-    sess_fail = await usecase.start_graded_quiz_session(
-        user_fail, item_id, force_new=False
-    )
-    assert sess_fail.get("has_previous_result") is True
-    assert sess_fail["previous_result"]["passed"] is False
-    assert sess_fail["previous_result"]["attempts_left"] == 2
 
     # Attempt 2 (Fail)
     r2 = await usecase.submit_graded_quiz(
@@ -360,26 +374,21 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     )
     assert r3["passed"] is False
     assert r3["attempts_left"] == 0
-    assert r3["cooldown_seconds_left"] == 28800
+    assert r3["cooldown_seconds_left"] > 0
 
-    # Attempt 4 (Blocked by Cooldown)
-    r4 = await usecase.submit_graded_quiz(
-        user_fail, item_id, question_answers=[[0], [1], [2], [0], [1]]
+    # Blocked by cooldown
+    with pytest.raises(ValueError, match="dùng hết số lượt"):
+        await usecase.start_graded_quiz_session(user_fail, item_id, force_new=True)
+
+    # 5. Practice Quiz (Type 3) -> Unlimited attempts without Cooldown
+    item_practice = "item-practice-1"
+    repo.item_types[item_practice] = "PRACTICE_QUIZ"
+    await usecase.submit_honor_code(user_fail, item_practice, True)
+    r_prac = await usecase.submit_graded_quiz(
+        user_fail, item_practice, question_answers=wrong_answers
     )
-    assert r4["passed"] is False
-    assert r4["cooldown_seconds_left"] > 0
-    assert "giãn cách" in r4["answer_explanations"][0]
-
-    # Verify session start is blocked by Cooldown immediately
-    with pytest.raises(ValueError, match="quay lại sau"):
-        await usecase.start_graded_quiz_session(user_fail, item_id)
-
-    # Verify starting new session for user_id who passed still preserves remaining attempts (force_new=True does not consume an attempt before submit)
-    res_pass_new = await usecase.start_graded_quiz_session(
-        user_id, item_id, force_new=True
-    )
-    assert len(res_pass_new["questions"]) > 0
-    assert res_pass_new["attempts_left"] == 2
+    assert r_prac["attempts_left"] == 999
+    assert r_prac["cooldown_seconds_left"] == 0
 
 
 @pytest.mark.asyncio

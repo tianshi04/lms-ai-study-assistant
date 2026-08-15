@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import { useScrollEdgeFade } from "@/hooks/useScrollEdgeFade";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
+import { ItemType } from "@/gen/catalog/v1/catalog_pb";
 
 const GradedQuizRunner = dynamic(
   () => import("@/components/assessment/GradedQuizRunner").then((m) => m.GradedQuizRunner),
@@ -80,6 +81,7 @@ interface VideoPlayerProps {
   isPaidAccess?: boolean;
   onSelectAiPrompt?: (promptText: string) => void;
   onNextLesson?: () => void;
+  onQuizActiveChange?: (active: boolean) => void;
 }
 
 export function VideoPlayer({
@@ -101,6 +103,7 @@ export function VideoPlayer({
   isPaidAccess = true,
   onSelectAiPrompt,
   onNextLesson,
+  onQuizActiveChange,
 }: VideoPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const centerScroll = useScrollEdgeFade<HTMLDivElement>();
@@ -204,7 +207,13 @@ export function VideoPlayer({
     }
 
     // 2. Graded / Practice Quiz Item
-    if (activeItem.type === 3 || activeItem.type === 4) {
+    const isPracticeQuiz =
+      activeItem.type === ItemType.PRACTICE_QUIZ || String(activeItem.type).includes("PRACTICE");
+    const isGradedQuiz =
+      activeItem.type === ItemType.GRADED_QUIZ ||
+      (String(activeItem.type).includes("GRADED") && !String(activeItem.type).includes("AUTO"));
+
+    if (isPracticeQuiz || isGradedQuiz) {
       return (
         <div className="w-full p-2 sm:p-4 text-on-surface">
           <GradedQuizRunner
@@ -214,7 +223,8 @@ export function VideoPlayer({
             userId={userId}
             onComplete={() => onMarkComplete?.(activeItem.id)}
             isPreviewMode={isPreviewMode}
-            isPractice={activeItem.type === 3}
+            isPractice={isPracticeQuiz}
+            onQuizActiveChange={onQuizActiveChange}
           />
         </div>
       );

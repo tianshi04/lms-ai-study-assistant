@@ -139,6 +139,10 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_any_questions(self, limit: int = 20) -> list[Question]:
+        pass
+
+    @abstractmethod
     async def update_question(
         self,
         question_id: str,
@@ -168,6 +172,10 @@ class AssessmentRepositoryInterface(ABC):
 
     @abstractmethod
     async def get_quiz_matrix(self, item_id: str) -> QuizMatrix | None:
+        pass
+
+    @abstractmethod
+    async def get_item_type(self, item_id: str) -> str:
         pass
 
     @abstractmethod

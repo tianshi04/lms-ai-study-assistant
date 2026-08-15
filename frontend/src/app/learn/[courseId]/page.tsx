@@ -54,6 +54,7 @@ function CoursePlayerContent() {
         ? (urlTab as "transcript" | "notes" | "deadlines" | "ai_assistant")
         : "transcript",
   );
+  const [isQuizActive, setIsQuizActive] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [collapsedWeeks, setCollapsedWeeks] = useState<Record<string, boolean>>({});
@@ -674,7 +675,7 @@ function CoursePlayerContent() {
       {/* Main Workspace Layout */}
       <div className="flex-1 flex overflow-hidden p-3 gap-3">
         {/* Left Sidebar - MD3 Collapsible Floating Surface Container Drawer */}
-        {!isPreviewMode && (
+        {!isPreviewMode && !isQuizActive && (
           <aside
             className={`relative bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden shrink-0 flex flex-col transition-[width,max-width] duration-300 ease-m3-emphasized ${
               isSidebarOpen ? "w-80 xl:w-90 max-w-[calc(100vw-24px)]" : "w-14"
@@ -728,7 +729,7 @@ function CoursePlayerContent() {
         {/* Center Workspace & Bottom Panels */}
         <main className="flex-1 flex flex-col overflow-hidden relative text-on-surface min-w-0 h-full">
           {/* Lock Notice Banner */}
-          {lockNotice && (
+          {lockNotice && !isQuizActive && (
             <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate gap-3">
               <span>{lockNotice}</span>
               <div className="flex items-center gap-2 shrink-0">
@@ -781,6 +782,7 @@ function CoursePlayerContent() {
                   setExternalAiPrompt(promptText);
                 }}
                 onNextLesson={handleNextLesson}
+                onQuizActiveChange={setIsQuizActive}
               />
 
               {/* Fixed Bottom-Right Next Lesson Floating Action Button */}

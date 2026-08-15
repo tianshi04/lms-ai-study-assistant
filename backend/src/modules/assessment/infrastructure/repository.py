@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -754,12 +754,51 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             cooldown_hours=m.cooldown_hours,
         )
 
+    async def get_item_type(self, item_id: str) -> str:
+        stmt = text("SELECT type::text FROM learning_items WHERE id = :item_id")
+        res = await self.session.execute(stmt, {"item_id": item_id})
+        val = res.scalar_one_or_none()
+        return str(val) if val else ""
+
     async def get_questions_by_bank(self, bank_id: str) -> list[Question]:
         stmt = (
             select(QuestionModel)
             .options(selectinload(QuestionModel.options))
             .where(QuestionModel.bank_id == bank_id)
             .order_by(QuestionModel.id)
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+
+        return [
+            Question(
+                id=q.id,
+                bank_id=q.bank_id,
+                text=q.text,
+                question_type=q.question_type,
+                difficulty=q.difficulty,
+                explanation=q.explanation,
+                options=[
+                    QuestionOption(
+                        id=opt.id,
+                        question_id=opt.question_id,
+                        option_text=opt.option_text,
+                        is_correct=opt.is_correct,
+                        order_index=opt.order_index,
+                    )
+                    for opt in q.options
+                ],
+                created_at=q.created_at,
+            )
+            for q in models
+        ]
+
+    async def get_any_questions(self, limit: int = 20) -> list[Question]:
+        stmt = (
+            select(QuestionModel)
+            .options(selectinload(QuestionModel.options))
+            .order_by(QuestionModel.id)
+            .limit(limit)
         )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
