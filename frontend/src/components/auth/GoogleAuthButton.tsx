@@ -67,13 +67,15 @@ export function GoogleAuthButton({
       try {
         google.accounts.id.initialize({
           client_id: googleClientId,
-          callback: (response) => {
+          ux_mode: "redirect",
+          login_uri: `${window.location.origin}/auth/google/callback`,
+          callback: (response: google.accounts.id.CredentialResponse) => {
             setInternalLoading(false);
             if (response.credential) {
               onSuccess(response.credential, "");
             }
           },
-        });
+        } as unknown as google.accounts.id.IdConfiguration);
 
         google.accounts.id.renderButton(containerRef.current, {
           type: "standard",
@@ -138,18 +140,9 @@ export function GoogleAuthButton({
       const client = google.accounts.oauth2.initCodeClient({
         client_id: googleClientId,
         scope: "openid email profile",
-        ux_mode: "popup",
-        callback: (response) => {
-          setInternalLoading(false);
-          if (response.error) {
-            console.error("Google Auth Error:", response.error, response.error_description);
-            return;
-          }
-          if (response.code) {
-            onSuccess(response.code, "");
-          }
-        },
-      });
+        ux_mode: "redirect",
+        redirect_uri: `${window.location.origin}/auth/google/callback`,
+      } as unknown as google.accounts.oauth2.CodeClientConfig);
 
       client.requestCode();
     } catch (error) {
