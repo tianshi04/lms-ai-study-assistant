@@ -210,6 +210,7 @@ function LoginFormContent() {
                           type="button"
                           variant="standard"
                           size="xs"
+                          tabIndex={-1}
                           onClick={() => setShowPassword(!showPassword)}
                           aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
                           className="text-muted-foreground hover:text-foreground mr-1"
