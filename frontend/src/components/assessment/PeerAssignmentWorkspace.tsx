@@ -56,7 +56,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(`peer_submitted_${itemId}_${effectiveUserId}`);
       if (saved === "true") {
-        return "Assignment submitted successfully. Please grade 3 peer submissions to unlock your final score.";
+        return "Bài tập đã được nộp thành công! Vui lòng chấm 3 bài của bạn học để mở khóa điểm tổng kết.";
       }
     }
     return "";
@@ -65,7 +65,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
     "https://github.com/learner/supervised-ml-capstone",
   );
   const [textContent, setTextContent] = useState(
-    "Supervised Machine Learning Model Capstone Project. Built a Random Forest & Linear Regression model with 94.2% test accuracy.",
+    "Dự án Capstone Mô hình Học có giám sát. Xây dựng mô hình Random Forest & Hồi quy tuyến tính đạt độ chính xác 94.2% trên tập kiểm thử.",
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -150,8 +150,8 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
       }
       setHasSubmitted(true);
       setLockNotice("");
-      setSubmitStatus(res.statusMessage || "Assignment submitted successfully!");
-      toast.success("Assignment submitted successfully!");
+      setSubmitStatus(res.statusMessage || "Nộp bài tập chấm chéo thành công!");
+      toast.success("Nộp bài tập chấm chéo thành công!");
       setActiveTab("grade");
     } catch (err) {
       const msg = mapConnectError(err, "Nộp bài tập chấm chéo thất bại. Vui lòng thử lại.");
@@ -194,9 +194,9 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           feedback: c.feedback,
         })),
       });
-      toast.success(res.message || "Peer review grade submitted successfully!");
+      toast.success(res.message || "Nộp điểm đánh giá bạn học thành công!");
     } catch {
-      toast.success("Peer review grade submitted successfully!");
+      toast.success("Nộp điểm đánh giá bạn học thành công!");
     }
   };
 
@@ -208,12 +208,14 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         submissionId: "peer-sub-001",
         appealReason,
       });
-      const statusMsg = `Appeal status: ${res.appealStatus}. TA will review within 7 days.`;
+      const statusMsg = `Trạng thái khiếu nại: ${res.appealStatus || "Đang chờ duyệt"}. Giảng viên/Trợ giảng sẽ xem xét trong vòng 7 ngày.`;
       setAppealStatus(statusMsg);
-      toast.success("Grade appeal submitted successfully!");
+      toast.success("Đã gửi đơn khiếu nại điểm thành công!");
     } catch {
-      setAppealStatus("Appeal status: PENDING. TA will review within 7 days.");
-      toast.success("Grade appeal submitted successfully!");
+      setAppealStatus(
+        "Trạng thái khiếu nại: Đang chờ duyệt. Giảng viên/Trợ giảng sẽ xem xét trong vòng 7 ngày.",
+      );
+      toast.success("Đã gửi đơn khiếu nại điểm thành công!");
     }
   };
 

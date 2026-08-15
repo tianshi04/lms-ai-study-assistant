@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
-import { Check, X, Lock, Play, RotateCcw, FlaskConical, Eye, EyeOff, BookOpen } from "lucide-react";
+import { Check, X, Lock, Play, FlaskConical, Eye, EyeOff, BookOpen } from "lucide-react";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
@@ -210,7 +210,7 @@ export function AutoGradedLabRunner({
             ) : (
               <>
                 <Play className="w-3.5 h-3.5" />
-                Run & Submit Code
+                Chạy & Nộp bài làm
               </>
             )}
           </Button>
@@ -256,10 +256,9 @@ export function AutoGradedLabRunner({
                   variant="text"
                   size="xs"
                   onClick={() => setShowResults(false)}
-                  className="px-2 text-xs text-primary hover:underline gap-1"
+                  className="text-[11px] text-primary hover:underline"
                 >
-                  <RotateCcw className="w-3 h-3" />
-                  Xem Test Cases
+                  ← Xem test cases
                 </Button>
               </>
             ) : (
@@ -269,13 +268,13 @@ export function AutoGradedLabRunner({
                   {visibleCases.length > 0 && (
                     <>
                       <Eye className="w-3 h-3 inline mr-0.5" />
-                      {visibleCases.length} visible
+                      {visibleCases.length} công khai
                     </>
                   )}
                   {hiddenCount > 0 && (
                     <span className="ml-2">
                       <EyeOff className="w-3 h-3 inline mr-0.5" />
-                      {hiddenCount} hidden
+                      {hiddenCount} ẩn
                     </span>
                   )}
                 </span>
@@ -300,12 +299,12 @@ export function AutoGradedLabRunner({
                     {labResult.passed ? (
                       <>
                         <Check className="w-5 h-5 text-success" />
-                        <span className="text-success">PASSED</span>
+                        <span className="text-success">ĐẠT</span>
                       </>
                     ) : (
                       <>
                         <X className="w-5 h-5 text-destructive" />
-                        <span className="text-destructive">FAILED</span>
+                        <span className="text-destructive">CHƯA ĐẠT</span>
                       </>
                     )}
                   </span>
@@ -316,7 +315,7 @@ export function AutoGradedLabRunner({
                       {labResult.scorePercent}%
                     </span>
                     <p className="text-[11px] text-muted-foreground">
-                      {labResult.passedTestCases}/{labResult.totalTestCases} test cases
+                      {labResult.passedTestCases}/{labResult.totalTestCases} bài kiểm thử đạt
                     </p>
                   </div>
                 </div>

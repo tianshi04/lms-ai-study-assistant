@@ -47,19 +47,19 @@ import {
 function getItemTypeName(type: number): string {
   switch (type) {
     case 1:
-      return "Video";
+      return "Video bài giảng";
     case 2:
-      return "Reading";
+      return "Bài đọc";
     case 3:
-      return "Practice Quiz";
+      return "Trắc nghiệm luyện tập";
     case 4:
-      return "Graded Quiz";
+      return "Bài kiểm tra tính điểm";
     case 5:
-      return "Lab";
+      return "Bài thực hành Lab";
     case 6:
-      return "Peer Review";
+      return "Chấm điểm bạn học";
     default:
-      return "Item";
+      return "Học liệu";
   }
 }
 
@@ -879,7 +879,7 @@ function CoursePlayerContent() {
                                             ? isAuditLocked
                                               ? "Bị khóa (Audit Mode) • Yêu cầu Paid Mode"
                                               : `Bị khóa • Hoàn thành Tuần ${weekIndex}`
-                                            : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
+                                            : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} phút`}
                                         </div>
                                       </div>
                                     </Button>
