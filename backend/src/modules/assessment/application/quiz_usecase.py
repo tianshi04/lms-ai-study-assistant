@@ -7,10 +7,18 @@ from typing import Any
 from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
+    DEFAULT_FALLBACK_QUESTION_LIMIT,
     DEFAULT_PASSING_THRESHOLD_PERCENT,
+    DEFAULT_QUIZ_EASY_COUNT,
+    DEFAULT_QUIZ_HARD_COUNT,
+    DEFAULT_QUIZ_MEDIUM_COUNT,
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+    EASY_DIFFICULTY_ALIASES,
+    HARD_DIFFICULTY_ALIASES,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    MEDIUM_DIFFICULTY_ALIASES,
     QUIZ_COOLDOWN_HOURS,
+    UNLIMITED_ATTEMPTS_SENTINEL,
     AssessmentRepositoryInterface,
     HonorCodeAgreement,
     Question,
@@ -20,6 +28,7 @@ from src.modules.assessment.domain import (
     QuizMatrix,
     QuizSubmission,
     QuizSubmittedDomainEvent,
+    is_graded_quiz_item,
 )
 from src.shared.access_policy import require_paid_access
 from src.shared.auth import CurrentUser
@@ -99,27 +108,51 @@ class QuizUseCase(BaseAssessmentUseCase):
         # 1. Fetch Quiz Matrix
         matrix = await self._get_quiz_matrix(repo, item_id)
 
-        if not matrix:
-            return []
+        bank_questions = (
+            await repo.get_questions_by_bank(matrix.bank_id) if matrix else []
+        )
+        if not bank_questions:
+            bank_questions = await repo.get_any_questions(
+                limit=DEFAULT_FALLBACK_QUESTION_LIMIT
+            )
 
-        # 2. Fetch Questions in Bank
-        bank_questions = await repo.get_questions_by_bank(matrix.bank_id)
         if not bank_questions:
             return []
 
-        # 3. Categorize by difficulty
-        easy_qs = [q for q in bank_questions if q.difficulty == "EASY"]
-        medium_qs = [q for q in bank_questions if q.difficulty == "MEDIUM"]
-        hard_qs = [q for q in bank_questions if q.difficulty == "HARD"]
+        shuffle_options = matrix.shuffle_options if matrix else True
+        easy_count = matrix.easy_count if matrix else DEFAULT_QUIZ_EASY_COUNT
+        medium_count = matrix.medium_count if matrix else DEFAULT_QUIZ_MEDIUM_COUNT
+        hard_count = matrix.hard_count if matrix else DEFAULT_QUIZ_HARD_COUNT
+
+        # 3. Categorize by difficulty (case-insensitive)
+        easy_qs = [
+            q
+            for q in bank_questions
+            if str(q.difficulty).upper() in EASY_DIFFICULTY_ALIASES
+        ]
+        medium_qs = [
+            q
+            for q in bank_questions
+            if str(q.difficulty).upper() in MEDIUM_DIFFICULTY_ALIASES
+        ]
+        hard_qs = [
+            q
+            for q in bank_questions
+            if str(q.difficulty).upper() in HARD_DIFFICULTY_ALIASES
+        ]
 
         # 4. Sample according to matrix configuration
         rng = random.Random(seed)
-        sampled_easy = rng.sample(easy_qs, min(matrix.easy_count, len(easy_qs)))
-        sampled_medium = rng.sample(medium_qs, min(matrix.medium_count, len(medium_qs)))
-        sampled_hard = rng.sample(hard_qs, min(matrix.hard_count, len(hard_qs)))
+        sampled_easy = rng.sample(easy_qs, min(easy_count, len(easy_qs)))
+        sampled_medium = rng.sample(medium_qs, min(medium_count, len(medium_qs)))
+        sampled_hard = rng.sample(hard_qs, min(hard_count, len(hard_qs)))
 
         sampled = sampled_easy + sampled_medium + sampled_hard
-        if matrix.shuffle_options:
+        if not sampled:
+            total_needed = max(1, easy_count + medium_count + hard_count)
+            sampled = rng.sample(bank_questions, min(total_needed, len(bank_questions)))
+
+        if shuffle_options:
             rng.shuffle(sampled)
 
         # 5. Format and optionally shuffle options
@@ -134,7 +167,7 @@ class QuizUseCase(BaseAssessmentUseCase):
                 for opt in q.options
             ]
 
-            if matrix.shuffle_options:
+            if shuffle_options:
                 rng.shuffle(opts_data)
 
             # Build final options list and correct index
@@ -162,48 +195,86 @@ class QuizUseCase(BaseAssessmentUseCase):
         self,
         user_id: str,
         item_id: str,
-        duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+        duration_minutes: int = 0,
         preview: bool = False,
         force_new: bool = False,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             matrix = await self._get_quiz_matrix(repo, item_id)
-            if matrix:
-                duration_minutes = matrix.time_limit_minutes
+
+            duration_minutes = (
+                duration_minutes
+                if duration_minutes > 0
+                else (
+                    matrix.time_limit_minutes
+                    if (matrix and matrix.time_limit_minutes > 0)
+                    else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+                )
+            )
             passing_threshold = (
                 matrix.passing_threshold_percent
-                if matrix
+                if (matrix and matrix.passing_threshold_percent > 0)
                 else DEFAULT_PASSING_THRESHOLD_PERCENT
+            )
+            max_attempts = (
+                matrix.max_attempts
+                if (matrix and matrix.max_attempts > 0)
+                else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+            )
+            cooldown_hours = (
+                matrix.cooldown_hours
+                if (matrix and matrix.cooldown_hours > 0)
+                else QUIZ_COOLDOWN_HOURS
             )
 
             now = datetime.now(UTC)
             expires_at = now + timedelta(minutes=duration_minutes)
 
-            max_attempts = (
-                matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
-            )
-
-            # Check Cooldown status
-            cooldown = await repo.get_quiz_cooldown(user_id, item_id)
-            cooldown_seconds_left = 0
-            attempts_count = cooldown.failed_attempts_count if cooldown else 0
-
-            if cooldown and not preview and cooldown.cooldown_until:
-                if cooldown.is_in_cooldown(now):
-                    can_att, reason, _ = cooldown.can_attempt(now)
-                    if not can_att:
-                        raise ValueError(reason)
-                else:
-                    attempts_count = 0
-
-            attempts_left = max(0, max_attempts - attempts_count)
+            # Check item type (Graded Quiz vs Practice Quiz)
+            item_type_str = await repo.get_item_type(item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
 
             # Check previous submissions for state persistence
             prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
             has_passed = (
                 any(s.passed for s in prev_submissions) if prev_submissions else False
             )
+
+            # BR_QUIZ_001: Enforce Cooldown for Graded Quiz ONLY when starting a new attempt (force_new=True)
+            if is_graded and force_new and not preview and not has_passed:
+                cooldown = await repo.get_quiz_cooldown(user_id, item_id)
+                if (
+                    cooldown
+                    and cooldown.is_in_cooldown(now)
+                    and cooldown.cooldown_until
+                ):
+                    can_att, reason, _ = cooldown.can_attempt(now)
+                    if not can_att:
+                        raise ValueError(reason)
+
+            cooldown_sec = 0
+            attempts_left = UNLIMITED_ATTEMPTS_SENTINEL
+            if is_graded:
+                cooldown = await repo.get_quiz_cooldown(user_id, item_id)
+                failed_count = cooldown.failed_attempts_count if cooldown else 0
+                attempts_left = (
+                    max(0, max_attempts - failed_count)
+                    if not has_passed
+                    else max_attempts
+                )
+                if (
+                    cooldown
+                    and cooldown.is_in_cooldown(now)
+                    and cooldown.cooldown_until
+                ):
+                    try:
+                        until_dt = datetime.fromisoformat(cooldown.cooldown_until)
+                        if until_dt.tzinfo is None:
+                            until_dt = until_dt.replace(tzinfo=UTC)
+                        cooldown_sec = max(0, int((until_dt - now).total_seconds()))
+                    except (ValueError, TypeError):
+                        cooldown_sec = 0
 
             if prev_submissions and not force_new and not preview:
                 questions = await self.generate_quiz_session_questions(
@@ -215,16 +286,14 @@ class QuizUseCase(BaseAssessmentUseCase):
                     else max(prev_submissions, key=lambda s: s.created_at)
                 )
                 explanations = []
+                total_qs = len(questions)
+                num_correct = (
+                    round(total_qs * (target_sub.score_percent / 100.0))
+                    if total_qs > 0
+                    else 0
+                )
                 for idx, q in enumerate(questions):
-                    corr_indices = set(q.get("shuffled_correct_indices", []))
-                    user_ans_idx = (
-                        target_sub.selected_option_indexes[idx]
-                        if target_sub
-                        and target_sub.selected_option_indexes
-                        and idx < len(target_sub.selected_option_indexes)
-                        else -1
-                    )
-                    is_corr = bool(user_ans_idx >= 0 and {user_ans_idx} == corr_indices)
+                    is_corr = idx < num_correct
                     clean_exp = _clean_explanation(q.get("explanation"))
                     exp_suffix = f" — {clean_exp}" if clean_exp else ""
                     if is_corr:
@@ -236,12 +305,10 @@ class QuizUseCase(BaseAssessmentUseCase):
                     "score_percent": target_sub.score_percent,
                     "passed": has_passed,
                     "attempts_left": attempts_left,
-                    "cooldown_seconds_left": 0,
+                    "cooldown_seconds_left": cooldown_sec,
                     "answer_explanations": explanations,
-                    "max_attempts": max_attempts,
-                    "cooldown_hours": matrix.cooldown_hours
-                    if matrix
-                    else QUIZ_COOLDOWN_HOURS,
+                    "max_attempts": max_attempts if is_graded else 999,
+                    "cooldown_hours": cooldown_hours if is_graded else 0,
                 }
 
                 return {
@@ -252,37 +319,13 @@ class QuizUseCase(BaseAssessmentUseCase):
                     "passing_threshold_percent": passing_threshold,
                     "session_seed": 42,
                     "questions": questions,
-                    "cooldown_seconds_left": 0,
+                    "cooldown_seconds_left": cooldown_sec,
                     "attempts_left": attempts_left,
-                    "max_attempts": max_attempts,
-                    "cooldown_hours": matrix.cooldown_hours
-                    if matrix
-                    else QUIZ_COOLDOWN_HOURS,
+                    "max_attempts": max_attempts if is_graded else 999,
+                    "cooldown_hours": cooldown_hours if is_graded else 0,
                     "has_previous_result": True,
                     "previous_result": prev_result,
                 }
-
-            if attempts_left <= 0 and not preview:
-                if cooldown and cooldown.is_in_cooldown(now):
-                    can_att, reason, _ = cooldown.can_attempt(now)
-                    if not can_att:
-                        raise ValueError(reason)
-                cooldown_hours = (
-                    matrix.cooldown_hours if matrix else QUIZ_COOLDOWN_HOURS
-                )
-                cooldown_until_dt = now + timedelta(hours=cooldown_hours)
-                cooldown_until_iso = cooldown_until_dt.isoformat()
-                new_cooldown = QuizCooldown(
-                    user_id=user_id,
-                    item_id=item_id,
-                    failed_attempts_count=attempts_count,
-                    last_attempt_at=now.isoformat(),
-                    cooldown_until=cooldown_until_iso,
-                )
-                await repo.save_quiz_cooldown(new_cooldown)
-                raise ValueError(
-                    "Bạn đã hết lượt làm bài thi này. Vui lòng quay lại sau."
-                )
 
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
             seed_val = (
@@ -312,12 +355,10 @@ class QuizUseCase(BaseAssessmentUseCase):
                 "passing_threshold_percent": passing_threshold,
                 "session_seed": seed_val,
                 "questions": questions,
-                "cooldown_seconds_left": cooldown_seconds_left,
+                "cooldown_seconds_left": cooldown_sec,
                 "attempts_left": attempts_left,
-                "max_attempts": max_attempts,
-                "cooldown_hours": matrix.cooldown_hours
-                if matrix
-                else QUIZ_COOLDOWN_HOURS,
+                "max_attempts": max_attempts if is_graded else 999,
+                "cooldown_hours": cooldown_hours if is_graded else 0,
             }
 
     @require_paid_access()
@@ -334,18 +375,30 @@ class QuizUseCase(BaseAssessmentUseCase):
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
 
-            # 0. Fetch Quiz Matrix to get dynamic settings
             matrix = await self._get_quiz_matrix(repo, item_id)
+
             max_attempts = (
-                matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+                matrix.max_attempts
+                if (matrix and matrix.max_attempts > 0)
+                else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
             )
-            cooldown_hours = matrix.cooldown_hours if matrix else QUIZ_COOLDOWN_HOURS
+            cooldown_hours = (
+                matrix.cooldown_hours
+                if (matrix and matrix.cooldown_hours > 0)
+                else QUIZ_COOLDOWN_HOURS
+            )
             duration_minutes = (
-                matrix.time_limit_minutes if matrix else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+                duration_minutes
+                if duration_minutes > 0
+                else (
+                    matrix.time_limit_minutes
+                    if (matrix and matrix.time_limit_minutes > 0)
+                    else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+                )
             )
             passing_threshold = (
                 matrix.passing_threshold_percent
-                if matrix and matrix.passing_threshold_percent > 0
+                if (matrix and matrix.passing_threshold_percent > 0)
                 else DEFAULT_PASSING_THRESHOLD_PERCENT
             )
 
@@ -369,35 +422,8 @@ class QuizUseCase(BaseAssessmentUseCase):
                     "cooldown_hours": cooldown_hours,
                 }
 
-            # 2. Check Cooldown timer
+            # 2. Timestamp definition
             now = datetime.now(UTC)
-            cooldown = await repo.get_quiz_cooldown(user_id, item_id)
-            if (
-                cooldown
-                and not preview
-                and cooldown.is_in_cooldown(now)
-                and cooldown.cooldown_until
-            ):
-                until_dt = datetime.fromisoformat(cooldown.cooldown_until)
-                if until_dt.tzinfo is None:
-                    until_dt = until_dt.replace(tzinfo=UTC)
-                seconds_left = int((until_dt - now).total_seconds())
-                logger.warning(
-                    "User %s attempted to submit quiz %s while in cooldown",
-                    user_id,
-                    item_id,
-                )
-                return {
-                    "score_percent": 0.0,
-                    "passed": False,
-                    "attempts_left": 0,
-                    "cooldown_seconds_left": seconds_left,
-                    "answer_explanations": [
-                        f"Bài thi đang trong thời gian giãn cách {cooldown_hours} giờ. Vui lòng đợi {seconds_left} giây."
-                    ],
-                    "max_attempts": max_attempts,
-                    "cooldown_hours": cooldown_hours,
-                }
 
             # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
             if session_seed is None:
@@ -461,34 +487,14 @@ class QuizUseCase(BaseAssessmentUseCase):
                 except ValueError:
                     pass
 
-            # 4. Handle Cooldown & Attempts tracking
-            cd_count = cooldown.failed_attempts_count if cooldown else 0
-            if cd_count > len(prev_submissions):
-                failed_count = cd_count
-            else:
-                failed_count = max(cd_count, len(prev_submissions)) + 1
+            # 4. Check item type & Cooldown state
+            item_type_str = await repo.get_item_type(item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
 
-            attempts_left = max(0, max_attempts - failed_count)
+            cooldown_sec = 0
+            attempts_left = UNLIMITED_ATTEMPTS_SENTINEL
 
-            if failed_count >= max_attempts and not preview:
-                if cooldown and cooldown.cooldown_until:
-                    until_dt = datetime.fromisoformat(cooldown.cooldown_until)
-                    if now < until_dt:
-                        seconds_left = int((until_dt - now).total_seconds())
-                    else:
-                        cooldown_until_dt = now + timedelta(hours=cooldown_hours)
-                        cooldown_until_iso = cooldown_until_dt.isoformat()
-                        seconds_left = int(cooldown_hours * 3600)
-                else:
-                    cooldown_until_dt = now + timedelta(hours=cooldown_hours)
-                    cooldown_until_iso = cooldown_until_dt.isoformat()
-                    seconds_left = int(cooldown_hours * 3600)
-                attempts_left = 0
-            else:
-                cooldown_until_iso = cooldown.cooldown_until if cooldown else None
-                seconds_left = 0
-
-            # Save submission (only if not preview)
+            # 5. Save submission & update Cooldown (only if not preview)
             if not preview:
                 submission_id = f"sub-{uuid7().hex[:8]}"
                 attempt_number = len(prev_submissions) + 1
@@ -526,15 +532,42 @@ class QuizUseCase(BaseAssessmentUseCase):
                     )
                 )
 
-                # Update Cooldown entity
-                new_cooldown = QuizCooldown(
-                    user_id=user_id,
-                    item_id=item_id,
-                    failed_attempts_count=failed_count,
-                    last_attempt_at=now.isoformat(),
-                    cooldown_until=cooldown_until_iso,
+                if is_graded:
+                    cooldown = await repo.get_quiz_cooldown(user_id, item_id)
+                    if not cooldown:
+                        cooldown = QuizCooldown(user_id=user_id, item_id=item_id)
+
+                    if passed:
+                        cooldown.record_success()
+                    else:
+                        cooldown.record_failure(
+                            now,
+                            cooldown_hours=cooldown_hours,
+                            max_attempts=max_attempts,
+                        )
+
+                    await repo.save_quiz_cooldown(cooldown)
+
+                    failed_count = cooldown.failed_attempts_count
+                    attempts_left = (
+                        max(0, max_attempts - failed_count)
+                        if not passed
+                        else max_attempts
+                    )
+                    if cooldown.is_in_cooldown(now) and cooldown.cooldown_until:
+                        try:
+                            until_dt = datetime.fromisoformat(cooldown.cooldown_until)
+                            if until_dt.tzinfo is None:
+                                until_dt = until_dt.replace(tzinfo=UTC)
+                            cooldown_sec = max(0, int((until_dt - now).total_seconds()))
+                        except (ValueError, TypeError):
+                            cooldown_sec = 0
+            elif is_graded:
+                cooldown = await repo.get_quiz_cooldown(user_id, item_id)
+                failed_count = cooldown.failed_attempts_count if cooldown else 0
+                attempts_left = (
+                    max(0, max_attempts - failed_count) if not passed else max_attempts
                 )
-                await repo.save_quiz_cooldown(new_cooldown)
 
             logger.info(
                 "User %s submitted quiz %s with score %s (Passed: %s) [Preview: %s]",
@@ -547,11 +580,11 @@ class QuizUseCase(BaseAssessmentUseCase):
             return {
                 "score_percent": score_percent,
                 "passed": passed,
-                "attempts_left": max_attempts if preview else max(0, attempts_left),
-                "cooldown_seconds_left": 0 if preview else seconds_left,
+                "attempts_left": attempts_left,
+                "cooldown_seconds_left": cooldown_sec,
                 "answer_explanations": explanations,
-                "max_attempts": max_attempts,
-                "cooldown_hours": cooldown_hours,
+                "max_attempts": max_attempts if is_graded else 999,
+                "cooldown_hours": cooldown_hours if is_graded else 0,
             }
 
     async def create_question_bank(

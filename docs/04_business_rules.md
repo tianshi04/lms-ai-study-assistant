@@ -108,11 +108,13 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_HONOR_001 (Xác nhận Honor Code):**
   * Hệ thống bắt buộc học viên phải tích chọn xác nhận *"Academic Honor Code"* trước khi cho phép bấm nút mở làm bài Graded Quiz, nộp bài Auto-Graded Lab, hoặc nộp bài Peer Assignment.
   * Nếu chưa xác nhận Honor Code (`is_agreed = False`), hệ thống chặn làm bài và trả về điểm số `0.0`, `passed = False`, `attempts_left = 0` cùng thông điệp yêu cầu cam kết.
-* **BR_QUIZ_001 (Quy tắc Thi lại, Nguyên tắc Điểm cao nhất & Cooldown bài Graded Quiz):**
-  * Mỗi bài Graded Quiz bắt buộc đạt tối thiểu điểm Pass (>= 80.0%) mới tính là hoàn thành.
-  * *Nguyên tắc Điểm cao nhất (Highest Score Wins):* Điểm số chính thức của bài thi luôn ghi nhận kết quả cao nhất giữa các lần thi. Học viên đã đạt điểm Pass vẫn được quyền thi lại để cải thiện điểm số mà không bị kích hoạt Cooldown 8 tiếng.
-  * *Giới hạn lượt thi & Cooldown:* Học viên được làm bài tối đa 3 lần liên tiếp khi chưa đạt điểm Pass. Nếu thi trượt cả 3 lần (`failed_attempts_count >= 3`), hệ thống kích hoạt **thời gian chờ (Cooldown) 8 tiếng** (`cooldown_until = now + 8h`, `cooldown_seconds_left = 28800`) trước khi cho phép làm lại.
-  * *Khôi phục lượt thi:* Ngay khi học viên đạt điểm Pass (>= 80.0%) hoặc hết thời gian 8 tiếng Cooldown, bộ đếm trượt `failed_attempts_count` tự động reset về `0` và khôi phục lại đủ 3 lượt thi (`attempts_left = 3`).
+* **BR_QUIZ_001 (Quy tắc Phân biệt Quiz Luyện tập & Quiz Tính điểm, Thi lại & Cooldown):**
+  * **Quiz Luyện tập (Practice Quiz - Type 3):** Phục vụ củng cố kiến thức bài học, không ảnh hưởng đến tỷ lệ hoàn thành cấp chứng chỉ. Học viên được làm lại tự do **không giới hạn số lần** và **không áp dụng Cooldown**.
+  * **Quiz Tính điểm (Graded Quiz - Type 4):** Đánh giá năng lực bài học, bắt buộc đạt tối thiểu điểm Pass (>= 80.0%) để tính vào điều kiện phát hành Chứng chỉ (Verified Certificate).
+    * *Cấu hình Giới hạn & Cooldown:* Giảng viên thiết lập số lần làm bài tối đa (`max_attempts`, mặc định 3 lần) và thời gian chờ Cooldown (`cooldown_hours`, mặc định 8 giờ).
+    * *Kích hoạt Cooldown:* Học viên làm trượt cả `max_attempts` lần liên tiếp (`failed_attempts_count >= max_attempts`), hệ thống kích hoạt Cooldown thời gian chờ (mặc định 8 tiếng) trước khi cho phép làm lại.
+    * *Nguyên tắc Điểm cao nhất (Highest Score Wins):* Điểm chính thức luôn ghi nhận kết quả cao nhất giữa các lần thi. Ngay khi học viên đạt điểm Pass (>= 80%) hoặc hết thời gian Cooldown, bộ đếm trượt reset và khôi phục lại đủ lượt thi.
+  * *Giao diện 2 bước (Overview & Full-Focus Mode):* Khi bấm chọn bài Quiz, hệ thống hiển thị trang Tổng quan bài thi (Thời gian, điểm đạt, số câu hỏi, kết quả cao nhất đã làm) trước khi bấm "Bắt đầu làm bài" để vào Chế độ Làm bài Tập trung.
 * **BR_QUIZ_002 (Quy tắc Ngân hàng Câu hỏi, Ma trận Đề thi & Xáo trộn Đáp án):**
   * Đề thi Graded Quiz được sinh tự động thông qua Ma trận đề thi (`QuizMatrix`) liên kết với Kho ngân hàng câu hỏi (`QuestionBank`).
   * *Cấu hình Ma trận:* Giảng viên/Admin thiết lập số lượng câu hỏi rút ngẫu nhiên theo từng bậc độ khó (`easy_count`, `medium_count`, `hard_count`), thời gian làm bài (`time_limit_minutes`), ngưỡng điểm đạt tùy chỉnh (`passing_threshold_percent`), và chế độ xáo trộn tùy chọn đáp án (`shuffle_options`).

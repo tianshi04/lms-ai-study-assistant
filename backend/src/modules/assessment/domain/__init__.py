@@ -1,4 +1,5 @@
 from .constants import (
+    DEFAULT_FALLBACK_QUESTION_LIMIT,
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     DEFAULT_QUIZ_EASY_COUNT,
     DEFAULT_QUIZ_HARD_COUNT,
@@ -6,12 +7,18 @@ from .constants import (
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
     DEFAULT_SANDBOX_MEMORY_LIMIT_MB,
     DEFAULT_SANDBOX_TIMEOUT_SECONDS,
+    EASY_DIFFICULTY_ALIASES,
+    HARD_DIFFICULTY_ALIASES,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
     MAX_SANDBOX_TIMEOUT_SECONDS,
+    MEDIUM_DIFFICULTY_ALIASES,
     OUTLIER_SCORE_DELTA_THRESHOLD,
     PEER_REVIEW_COLD_START_HOURS,
     QUIZ_COOLDOWN_HOURS,
     REQUIRED_PEER_REVIEWS_COUNT,
+    UNLIMITED_ATTEMPTS_SENTINEL,
+    is_graded_quiz_item,
+    is_practice_quiz_item,
 )
 from .entities import (
     GradeAppeal,
@@ -36,6 +43,7 @@ from .events import (
 from .repositories import AssessmentRepositoryInterface
 
 __all__ = [
+    "DEFAULT_FALLBACK_QUESTION_LIMIT",
     "DEFAULT_PASSING_THRESHOLD_PERCENT",
     "DEFAULT_QUIZ_EASY_COUNT",
     "DEFAULT_QUIZ_HARD_COUNT",
@@ -43,12 +51,16 @@ __all__ = [
     "DEFAULT_QUIZ_TIME_LIMIT_MINUTES",
     "DEFAULT_SANDBOX_MEMORY_LIMIT_MB",
     "DEFAULT_SANDBOX_TIMEOUT_SECONDS",
+    "EASY_DIFFICULTY_ALIASES",
+    "HARD_DIFFICULTY_ALIASES",
     "MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN",
     "MAX_SANDBOX_TIMEOUT_SECONDS",
+    "MEDIUM_DIFFICULTY_ALIASES",
     "OUTLIER_SCORE_DELTA_THRESHOLD",
     "PEER_REVIEW_COLD_START_HOURS",
     "QUIZ_COOLDOWN_HOURS",
     "REQUIRED_PEER_REVIEWS_COUNT",
+    "UNLIMITED_ATTEMPTS_SENTINEL",
     "AssessmentRepositoryInterface",
     "GradeAppeal",
     "HonorCodeAgreement",
@@ -66,4 +78,6 @@ __all__ = [
     "QuizSubmission",
     "QuizSubmittedDomainEvent",
     "RubricCriteria",
+    "is_graded_quiz_item",
+    "is_practice_quiz_item",
 ]
