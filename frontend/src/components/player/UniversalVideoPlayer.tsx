@@ -12,6 +12,7 @@ export interface UniversalVideoRef {
   currentTime: number;
   duration: number;
   togglePictureInPicture?: () => Promise<void>;
+  setPlaybackRate?: (rate: number) => void;
 }
 
 interface UniversalVideoPlayerProps {
@@ -216,6 +217,19 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         releaseWakeLock();
       };
     }, [isYouTube]);
+
+    // Keep HTML5 native caption track disabled (Off) by default
+    useEffect(() => {
+      if (
+        htmlVideoRef.current &&
+        htmlVideoRef.current.textTracks &&
+        htmlVideoRef.current.textTracks.length > 0
+      ) {
+        for (let i = 0; i < htmlVideoRef.current.textTracks.length; i++) {
+          htmlVideoRef.current.textTracks[i].mode = "disabled";
+        }
+      }
+    }, [captionUrl]);
 
     // Cleanup YouTube player on unmount
     useEffect(() => {
@@ -505,6 +519,13 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
             } catch {}
           }
         },
+        setPlaybackRate: (rate: number) => {
+          if (isYouTube) {
+            ytPlayerRef.current?.setPlaybackRate?.(rate);
+          } else if (htmlVideoRef.current) {
+            htmlVideoRef.current.playbackRate = rate;
+          }
+        },
       }),
       [isYouTube],
     );
@@ -538,9 +559,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         aria-label={title}
         className={className}
       >
-        {captionUrl ? (
-          <track kind="captions" src={captionUrl} srcLang="vi" label="Phụ đề" default />
-        ) : null}
+        {captionUrl ? <track kind="captions" src={captionUrl} srcLang="vi" label="On" /> : null}
       </video>
     );
   },
