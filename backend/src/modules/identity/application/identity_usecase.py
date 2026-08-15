@@ -492,6 +492,8 @@ class IdentityUseCase:
         claims = await _exchange_google_code(authorization_code, nonce)
         email = claims["email"]
         google_id = claims["google_id"]
+        full_name = claims.get("name", "") or email.split("@")[0]
+        avatar_url = claims.get("picture", "")
 
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
@@ -500,16 +502,28 @@ class IdentityUseCase:
                 user = await repo.get_by_email(email)
 
             if not user:
-                return (
-                    None,
-                    "",
-                    "",
-                    "Tài khoản chưa được đăng ký trong hệ thống. Vui lòng Đăng ký bằng Google trước!",
+                # Auto-provision new user on first Google sign-in (JIT Provisioning)
+                user = User(
+                    id=str(uuid.uuid4()),
+                    email=email,
+                    full_name=full_name,
+                    role=UserRole.LEARNER,
+                    avatar_url=avatar_url,
+                    password_hash="",
+                    google_id=google_id,
+                    is_identity_verified=False,
                 )
-
-            if not user.google_id:
-                user.google_id = google_id
                 user = await repo.save(user)
+            else:
+                updated = False
+                if not user.google_id:
+                    user.google_id = google_id
+                    updated = True
+                if avatar_url and not user.avatar_url:
+                    user.avatar_url = avatar_url
+                    updated = True
+                if updated:
+                    user = await repo.save(user)
 
             access_token = create_access_token(
                 user_id=user.id,
