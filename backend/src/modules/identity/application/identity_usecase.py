@@ -33,6 +33,7 @@ from src.modules.identity.domain.entities import (
     Invitation,
     InvitationStatus,
     InvitationType,
+    RefreshToken,
     ScopeType,
     User,
     UserRole,
@@ -57,6 +58,7 @@ from src.shared.auth import (
     create_google_temp_token,
     create_refresh_token,
     decode_token,
+    hash_token,
 )
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
@@ -240,6 +242,32 @@ class IdentityUseCase:
                 "Yêu cầu quyền Quản trị viên (Admin) để thực hiện thao tác này."
             )
 
+    async def _create_and_persist_refresh_token(
+        self, repo: IdentityRepository, user_id: str
+    ) -> str:
+        token_str = create_refresh_token(user_id)
+        payload = decode_token(token_str)
+        jti = (
+            str(payload.get("jti"))
+            if (payload and payload.get("jti"))
+            else str(uuid.uuid4())
+        )
+        exp_ts = payload.get("exp") if payload else None
+        if exp_ts:
+            expires_at = datetime.fromtimestamp(exp_ts, tz=UTC).isoformat()
+        else:
+            expires_at = (datetime.now(UTC) + timedelta(days=7)).isoformat()
+        token_entity = RefreshToken(
+            id=jti,
+            user_id=user_id,
+            token_hash=hash_token(token_str),
+            expires_at=expires_at,
+            is_revoked=False,
+            created_at=datetime.now(UTC).isoformat(),
+        )
+        await repo.save_refresh_token(token_entity)
+        return token_str
+
     async def login(
         self, email: str, password: str
     ) -> tuple[User | None, str, str, str]:
@@ -276,7 +304,7 @@ class IdentityUseCase:
                 role=str(user.role),
                 avatar_url=user.avatar_url,
             )
-            refresh_token = create_refresh_token(user.id)
+            refresh_token = await self._create_and_persist_refresh_token(repo, user.id)
             return user, access_token, refresh_token, ""
 
     async def refresh_token(self, refresh_token_str: str) -> tuple[str, str, str]:
@@ -286,11 +314,29 @@ class IdentityUseCase:
             return "", "", "Refresh Token không hợp lệ hoặc đã hết hạn"
 
         user_id = payload.get("sub")
+        jti = payload.get("jti")
         if not user_id:
             return "", "", "Refresh Token chứa thông tin không hợp lệ"
 
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
+            db_token = None
+            if jti:
+                db_token = await repo.get_refresh_token_by_id(jti)
+            if not db_token:
+                token_h = hash_token(refresh_token_str)
+                db_token = await repo.get_refresh_token_by_hash(token_h)
+
+            if not db_token or db_token.is_revoked:
+                if db_token and db_token.is_revoked:
+                    logger.warning(
+                        "Replay attack detected on revoked refresh token %s for user %s. Revoking all sessions.",
+                        jti,
+                        user_id,
+                    )
+                    await repo.revoke_all_user_refresh_tokens(user_id)
+                return "", "", "Refresh Token không hợp lệ hoặc đã bị thu hồi"
+
             user = await repo.get_by_id(user_id)
             if not user:
                 return "", "", "Không tìm thấy người dùng sở hữu token"
@@ -302,8 +348,36 @@ class IdentityUseCase:
                 role=str(user.role),
                 avatar_url=user.avatar_url,
             )
-            new_refresh_token = create_refresh_token(user.id)
+            new_refresh_token = await self._create_and_persist_refresh_token(
+                repo, user.id
+            )
+            new_payload = decode_token(new_refresh_token)
+            new_jti = new_payload.get("jti") if new_payload else None
+
+            # Mark old refresh token as revoked with rotation lineage
+            if jti:
+                await repo.revoke_refresh_token(jti, replaced_by_jti=new_jti)
+            elif db_token:
+                await repo.revoke_refresh_token(db_token.id, replaced_by_jti=new_jti)
+
             return new_access_token, new_refresh_token, ""
+
+    async def logout(self, refresh_token_str: str) -> tuple[bool, str]:
+        """Revokes a refresh token session."""
+        if not refresh_token_str:
+            return True, ""
+        payload = decode_token(refresh_token_str)
+        jti = payload.get("jti") if payload else None
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            if jti:
+                await repo.revoke_refresh_token(jti)
+            else:
+                token_h = hash_token(refresh_token_str)
+                db_token = await repo.get_refresh_token_by_hash(token_h)
+                if db_token:
+                    await repo.revoke_refresh_token(db_token.id)
+        return True, ""
 
     async def google_register_verify(
         self, authorization_code: str, nonce: str = ""
@@ -403,7 +477,9 @@ class IdentityUseCase:
                 role=str(saved_user.role),
                 avatar_url=saved_user.avatar_url,
             )
-            refresh_token = create_refresh_token(saved_user.id)
+            refresh_token = await self._create_and_persist_refresh_token(
+                repo, saved_user.id
+            )
             return saved_user, access_token, refresh_token, ""
 
     async def google_login(
@@ -442,7 +518,7 @@ class IdentityUseCase:
                 role=str(user.role),
                 avatar_url=user.avatar_url,
             )
-            refresh_token = create_refresh_token(user.id)
+            refresh_token = await self._create_and_persist_refresh_token(repo, user.id)
             return user, access_token, refresh_token, ""
 
     async def google_reset_password_verify(
@@ -511,6 +587,9 @@ class IdentityUseCase:
 
             saved_user = await repo.save(user)
 
+            # Invalidate all prior sessions on password reset
+            await repo.revoke_all_user_refresh_tokens(saved_user.id)
+
             access_token = create_access_token(
                 user_id=saved_user.id,
                 email=saved_user.email,
@@ -518,7 +597,9 @@ class IdentityUseCase:
                 role=str(saved_user.role),
                 avatar_url=saved_user.avatar_url,
             )
-            refresh_token = create_refresh_token(saved_user.id)
+            refresh_token = await self._create_and_persist_refresh_token(
+                repo, saved_user.id
+            )
             return saved_user, access_token, refresh_token, ""
 
     async def register(

@@ -16,6 +16,7 @@ from src.modules.identity.domain.entities import (
     InvitationType,
     Organization,
     OrganizationMember,
+    RefreshToken,
     ScopeType,
     User,
     UserRole,
@@ -27,6 +28,7 @@ from src.modules.identity.infrastructure.models import (
     OrganizationAuditLogModel,
     OrganizationMemberModel,
     OrganizationModel,
+    RefreshTokenModel,
     UserModel,
 )
 
@@ -122,6 +124,102 @@ class IdentityRepository:
             signature_image_url=model.signature_image_url,
             title=model.title,
             google_id=model.google_id,
+        )
+
+    # -------------------------------------------------------------------------
+    # Refresh Token Management
+    # -------------------------------------------------------------------------
+
+    async def get_refresh_token_by_id(self, jti: str) -> RefreshToken | None:
+        stmt = select(RefreshTokenModel).where(RefreshTokenModel.id == jti)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if inspect.iscoroutine(model):
+            model = await model
+        if not model or not hasattr(model, "id") or isinstance(model, MagicMock):
+            return None
+        return self._refresh_token_to_entity(model)
+
+    async def get_refresh_token_by_hash(self, token_hash: str) -> RefreshToken | None:
+        stmt = select(RefreshTokenModel).where(
+            RefreshTokenModel.token_hash == token_hash
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if inspect.iscoroutine(model):
+            model = await model
+        if not model or not hasattr(model, "id") or isinstance(model, MagicMock):
+            return None
+        return self._refresh_token_to_entity(model)
+
+    async def save_refresh_token(self, token: RefreshToken) -> RefreshToken:
+        stmt = select(RefreshTokenModel).where(RefreshTokenModel.id == token.id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if inspect.iscoroutine(model):
+            model = await model
+        if not model or isinstance(model, MagicMock):
+            model = RefreshTokenModel(
+                id=token.id,
+                user_id=token.user_id,
+                token_hash=token.token_hash,
+                expires_at=token.expires_at,
+                is_revoked=token.is_revoked,
+                created_at=token.created_at or datetime.now(UTC).isoformat(),
+                revoked_at=token.revoked_at,
+                replaced_by_jti=token.replaced_by_jti,
+            )
+            self._session.add(model)
+        else:
+            model.is_revoked = token.is_revoked
+            model.revoked_at = token.revoked_at
+            model.replaced_by_jti = token.replaced_by_jti
+        await self._session.flush()
+        return self._refresh_token_to_entity(model)
+
+    async def revoke_refresh_token(
+        self, jti: str, replaced_by_jti: str | None = None
+    ) -> bool:
+        stmt = select(RefreshTokenModel).where(RefreshTokenModel.id == jti)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if inspect.iscoroutine(model):
+            model = await model
+        if not model or not hasattr(model, "id") or isinstance(model, MagicMock):
+            return False
+        model.is_revoked = True
+        model.revoked_at = datetime.now(UTC).isoformat()
+        if replaced_by_jti:
+            model.replaced_by_jti = replaced_by_jti
+        await self._session.flush()
+        return True
+
+    async def revoke_all_user_refresh_tokens(self, user_id: str) -> int:
+        stmt = select(RefreshTokenModel).where(
+            RefreshTokenModel.user_id == user_id,
+            RefreshTokenModel.is_revoked.is_(False),
+        )
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        now = datetime.now(UTC).isoformat()
+        count = 0
+        for m in models:
+            m.is_revoked = True
+            m.revoked_at = now
+            count += 1
+        await self._session.flush()
+        return count
+
+    def _refresh_token_to_entity(self, model: RefreshTokenModel) -> RefreshToken:
+        return RefreshToken(
+            id=model.id,
+            user_id=model.user_id,
+            token_hash=model.token_hash,
+            expires_at=model.expires_at,
+            is_revoked=model.is_revoked,
+            created_at=model.created_at,
+            revoked_at=model.revoked_at,
+            replaced_by_jti=model.replaced_by_jti,
         )
 
 

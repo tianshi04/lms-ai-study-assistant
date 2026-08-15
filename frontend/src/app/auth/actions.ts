@@ -232,6 +232,16 @@ export async function completeResetPasswordAction(tempToken: string, newPassword
 }
 
 export async function logoutAction() {
+  try {
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get("refresh_token")?.value;
+    if (refreshToken) {
+      const client = getUnauthenticatedBackendClient();
+      await client.logout({ refreshToken });
+    }
+  } catch {
+    // Best-effort server session revocation
+  }
   const cookieStore = await cookies();
   cookieStore.delete("access_token");
   cookieStore.delete("refresh_token");

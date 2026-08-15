@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -127,3 +128,10 @@ def decode_token(token: str) -> dict[str, Any] | None:
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[JWT_ALGORITHM])
     except (jwt.PyJWTError, ValueError, TypeError, AttributeError):
         return None
+
+
+def hash_token(token: str) -> str:
+    """Compute SHA-256 hash of a token for safe indexing / lookups."""
+    if not token:
+        return ""
+    return hashlib.sha256(token.strip().encode("utf-8")).hexdigest()

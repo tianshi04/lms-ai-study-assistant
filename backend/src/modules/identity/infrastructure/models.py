@@ -193,3 +193,25 @@ class InvitationModel(Base):
     )
     created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     responded_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+
+
+class RefreshTokenModel(Base):
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # JTI UUID
+    user_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    token_hash: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True, index=True
+    )
+    expires_at: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    is_revoked: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    revoked_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    replaced_by_jti: Mapped[str | None] = mapped_column(String(64), nullable=True)

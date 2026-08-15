@@ -8,7 +8,7 @@ from src.modules.identity.application.identity_usecase import (
     hash_password,
     verify_password,
 )
-from src.modules.identity.domain.entities import User, UserRole
+from src.modules.identity.domain.entities import RefreshToken, User, UserRole
 from src.shared.auth import CurrentUser
 
 
@@ -227,7 +227,7 @@ async def test_refresh_token_success(
     mock_session_scope, mock_identity_repo, mock_tokens
 ):
     _mock_acc, _mock_ref, mock_dec = mock_tokens
-    mock_dec.return_value = {"type": "refresh", "sub": "u1"}
+    mock_dec.return_value = {"type": "refresh", "sub": "u1", "jti": "jti-1"}
 
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
@@ -243,6 +243,13 @@ async def test_refresh_token_success(
         password_hash="",
     )
     mock_repo_instance.get_by_id.return_value = user
+    mock_repo_instance.get_refresh_token_by_id.return_value = RefreshToken(
+        id="jti-1",
+        user_id="u1",
+        token_hash="hash-1",
+        expires_at="2099-01-01T00:00:00Z",
+        is_revoked=False,
+    )
 
     usecase = IdentityUseCase()
     acc, ref, err = await usecase.refresh_token("valid_refresh_token")
@@ -250,6 +257,8 @@ async def test_refresh_token_success(
     assert err == ""
     assert acc == "access_token"
     assert ref == "refresh_token"
+    mock_repo_instance.revoke_refresh_token.assert_called_once()
+    mock_repo_instance.save_refresh_token.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -275,23 +284,78 @@ async def test_refresh_token_no_sub(mock_tokens):
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_user_not_found(
+async def test_refresh_token_revoked_reuse_attack(
     mock_session_scope, mock_identity_repo, mock_tokens
 ):
     _mock_acc, _mock_ref, mock_dec = mock_tokens
-    mock_dec.return_value = {"type": "refresh", "sub": "u1"}
+    mock_dec.return_value = {"type": "refresh", "sub": "u1", "jti": "jti-revoked"}
 
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
 
     mock_repo_instance = AsyncMock()
     mock_identity_repo.return_value = mock_repo_instance
+    mock_repo_instance.get_refresh_token_by_id.return_value = RefreshToken(
+        id="jti-revoked",
+        user_id="u1",
+        token_hash="hash-revoked",
+        expires_at="2099-01-01T00:00:00Z",
+        is_revoked=True,
+    )
+
+    usecase = IdentityUseCase()
+    _acc, _ref, err = await usecase.refresh_token("revoked_refresh_token")
+
+    assert err == "Refresh Token không hợp lệ hoặc đã bị thu hồi"
+    mock_repo_instance.revoke_all_user_refresh_tokens.assert_called_once_with("u1")
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_user_not_found(
+    mock_session_scope, mock_identity_repo, mock_tokens
+):
+    _mock_acc, _mock_ref, mock_dec = mock_tokens
+    mock_dec.return_value = {"type": "refresh", "sub": "u1", "jti": "jti-1"}
+
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+    mock_repo_instance.get_refresh_token_by_id.return_value = RefreshToken(
+        id="jti-1",
+        user_id="u1",
+        token_hash="hash-1",
+        expires_at="2099-01-01T00:00:00Z",
+        is_revoked=False,
+    )
     mock_repo_instance.get_by_id.return_value = None
 
     usecase = IdentityUseCase()
     _acc, _ref, err = await usecase.refresh_token("valid_refresh_token")
 
     assert err == "Không tìm thấy người dùng sở hữu token"
+
+
+@pytest.mark.asyncio
+async def test_logout_revokes_token(
+    mock_session_scope, mock_identity_repo, mock_tokens
+):
+    _mock_acc, _mock_ref, mock_dec = mock_tokens
+    mock_dec.return_value = {"type": "refresh", "sub": "u1", "jti": "jti-logout"}
+
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+
+    usecase = IdentityUseCase()
+    success, err = await usecase.logout("valid_refresh_token")
+
+    assert success is True
+    assert err == ""
+    mock_repo_instance.revoke_refresh_token.assert_called_once_with("jti-logout")
 
 
 @pytest.mark.asyncio

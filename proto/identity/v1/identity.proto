@@ -103,6 +103,15 @@ message RefreshTokenResponse {
   string refresh_token = 2;
 }
 
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 message RevokeEnterpriseSeatRequest {
   string user_id = 1;
   string course_id = 2;
@@ -369,6 +378,9 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc RevokeEnterpriseSeat(RevokeEnterpriseSeatRequest) returns (RevokeEnterpriseSeatResponse) {

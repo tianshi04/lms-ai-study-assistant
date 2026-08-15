@@ -122,6 +122,17 @@ class IdentityHandler(IdentityService):
             refresh_token=new_refresh,
         )
 
+    async def logout(
+        self,
+        request: pb.LogoutRequest,
+        ctx: RequestContext[pb.LogoutRequest, pb.LogoutResponse],
+    ) -> pb.LogoutResponse:
+        success, msg = await self._use_case.logout(request.refresh_token)
+        return pb.LogoutResponse(
+            success=success,
+            message=msg or "Đăng xuất thành công",
+        )
+
     async def register(
         self,
         request: pb.RegisterRequest,

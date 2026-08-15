@@ -205,3 +205,15 @@ class Invitation:
     expires_at: str = ""
     created_at: str = ""
     responded_at: str = ""
+
+
+@dataclass
+class RefreshToken:
+    id: str  # JTI UUID
+    user_id: str
+    token_hash: str
+    expires_at: str
+    is_revoked: bool = False
+    created_at: str = ""
+    revoked_at: str | None = None
+    replaced_by_jti: str | None = None
