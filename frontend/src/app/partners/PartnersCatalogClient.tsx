@@ -142,9 +142,12 @@ export function PartnersCatalogClient() {
               aria-hidden="true"
             />
             <Input
-              type="text"
+              type="search"
               name="search"
+              inputMode="search"
+              enterKeyHint="search"
               autoComplete="off"
+              spellCheck={false}
               aria-label="Tìm kiếm đối tác"
               placeholder="Tìm kiếm đối tác theo tên hoặc thông tin…"
               value={searchQuery}
