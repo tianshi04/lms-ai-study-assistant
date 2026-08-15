@@ -4,7 +4,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
-import { Button } from "@/components/ui/Button";
 
 interface TranscriptPanelProps {
   activeItem: LearningItem | null;
@@ -174,17 +173,22 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
           paragraphBlocks.map((block, blockIdx) => (
             <div key={blockIdx} className="space-y-1.5">
               {/* Aggregated Timestamp Header */}
-              <div className="flex items-center gap-2 pt-2 pb-0.5">
-                <Button
-                  type="button"
-                  variant="outlined"
-                  size="sm"
+              <div className="pt-2 pb-0.5">
+                <span
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onSeekVideo(block.startTime)}
-                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border-primary/20 px-2.5 py-0.5 rounded-lg h-auto"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSeekVideo(block.startTime);
+                    }
+                  }}
+                  className="font-mono text-xs font-semibold text-primary hover:underline cursor-pointer select-none"
                   title="Nhảy đến mốc thời gian này"
                 >
                   {formatTime(block.startTime)}
-                </Button>
+                </span>
               </div>
 
               {/* Continuous Flowing Paragraph Text */}
