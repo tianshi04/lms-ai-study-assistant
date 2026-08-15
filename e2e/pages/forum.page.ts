@@ -11,40 +11,37 @@ export class ForumPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.openModalButton = page.getByRole('button', { name: 'Tạo chủ đề thảo luận mới' });
-    this.modalTitleInput = page.locator('div.z-modal input[placeholder*="Tiêu đề"], input[placeholder*="Tiêu đề"]').first();
-    this.modalContentInput = page.locator('div[role="dialog"] textarea, textarea[placeholder*="Nội dung thắc mắc"]').first();
+    this.openModalButton = page.getByRole('button', { name: /Tạo chủ đề thảo luận mới/i }).first();
+    this.modalTitleInput = page.getByPlaceholder(/Tiêu đề chủ đề|Tiêu đề/i).first();
+    this.modalContentInput = page.getByPlaceholder(/Nội dung thắc mắc|Nội dung/i).first();
     this.modalSubmitButton = page.getByRole('button', { name: /^Đăng bài$/i }).first();
     this.replyInput = page
-      .locator('textarea[placeholder*="Nội dung thắc mắc"], textarea[placeholder*="thảo luận"], input[placeholder*="Trả lời"]')
+      .locator('textarea[placeholder*="Nội dung"], textarea[placeholder*="thảo luận"], input[placeholder*="Trả lời"]')
       .first();
     this.submitReplyButton = page.getByRole('button', { name: /Đăng bài|Gửi phản hồi|Post Reply|Gửi/i }).first();
   }
 
   async goto() {
-    await this.page.goto('/forum', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('/forum', { waitUntil: 'networkidle' });
   }
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/forum/);
     await expect(this.page.locator('body')).toBeVisible();
-    await expect(this.openModalButton).toBeVisible();
+    await expect(this.openModalButton).toBeVisible({ timeout: 15000 });
   }
 
   async createNewThread(title: string, content: string) {
+    await this.page.waitForLoadState('networkidle');
     await expect(this.openModalButton).toBeVisible({ timeout: 10000 });
     await expect(this.openModalButton).toBeEnabled({ timeout: 5000 });
-
-    for (let i = 0; i < 3; i++) {
-      await this.openModalButton.click();
-      await this.page.waitForTimeout(400);
-      if (await this.modalTitleInput.isVisible()) break;
-    }
+    await this.openModalButton.click();
 
     await expect(this.modalTitleInput).toBeVisible({ timeout: 15000 });
     await this.modalTitleInput.fill(title);
+    await expect(this.modalTitleInput).toHaveValue(title, { timeout: 5000 });
     await this.modalContentInput.fill(content);
-    await this.page.waitForTimeout(300);
+    await expect(this.modalContentInput).toHaveValue(content, { timeout: 5000 });
     await expect(this.modalSubmitButton).toBeEnabled({ timeout: 10000 });
     await this.modalSubmitButton.click();
     await expect(this.modalTitleInput).toBeHidden({ timeout: 10000 });

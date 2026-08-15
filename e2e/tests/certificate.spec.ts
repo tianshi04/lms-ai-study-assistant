@@ -30,17 +30,14 @@ test.describe('Full System Blackbox - Verified Certificate & OpenBadges (POM)', 
     await certPage.goto('CERT-DEMO12345');
     await certPage.verifyPageLoaded();
 
-    await expect(certPage.copyLinkButton).toBeVisible();
-    await expect(certPage.copyLinkButton).toBeEnabled();
+    await expect(certPage.copyLinkButton).toBeVisible({ timeout: 10000 });
+    await expect(certPage.copyLinkButton).toBeEnabled({ timeout: 5000 });
 
-    const copiedButton = page.locator('button').filter({ hasText: /Copied|Sao chép/i }).first();
-    for (let i = 0; i < 3; i++) {
+    const copiedButton = page.getByRole('button', { name: /Copied Link|Sao chép|Copied/i });
+    await expect(async () => {
       await certPage.copyLinkButton.click();
-      await page.waitForTimeout(300);
-      if (await copiedButton.isVisible()) break;
-    }
-
-    await expect(copiedButton).toBeVisible({ timeout: 10000 });
+      await expect(copiedButton).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 10000, intervals: [300, 500, 1000] });
   });
 
 

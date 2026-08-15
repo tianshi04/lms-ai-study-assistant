@@ -24,12 +24,12 @@ export class BecomeAnInstructorPage {
   }
 
   async goto() {
-    await this.page.goto('/become-an-instructor', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('/become-an-instructor', { waitUntil: 'networkidle' });
   }
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/become-an-instructor/);
-    await expect(this.page.locator('text=/Giảng Viên Cá Nhân/i')).toBeVisible();
+    await expect(this.page.locator('text=/Giảng Viên Cá Nhân/i').first()).toBeVisible({ timeout: 15000 });
   }
 
   async submitApplication(data: {

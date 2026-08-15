@@ -23,6 +23,19 @@ export { AdminApplicationsPage } from './admin-applications.page';
 export { NewCoursePage } from './new-course.page';
 export { TAGradingPage } from './ta-grading.page';
 export { MyLearningPage } from './my-learning.page';
-
-
+export {
+  MyOrganizationsPage,
+  OrganizationManagePage,
+  OrganizationMembersPage,
+  OrganizationInvitationsPage,
+  InvitationAcceptPage,
+} from './organization.page';
+export { AdminCourseReviewPage, AdminCategoriesPage } from './admin-moderation.page';
+export {
+  MyPurchasesPage,
+  NotificationCenterPage,
+  AccountSettingsPage,
+} from './purchases-notifications.page';
+export { CourseCompletionModalPage } from './course-completion.page';
+export { ForgotPasswordPage } from './forgot-password.page';
 

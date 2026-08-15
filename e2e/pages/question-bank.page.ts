@@ -38,7 +38,7 @@ export class QuestionBankPage {
   }
 
   async goto(courseId: string = 'course-python-ai') {
-    await this.page.goto(`/instructor/courses/${courseId}/question-bank`, { waitUntil: 'domcontentloaded' });
+    await this.page.goto(`/instructor/courses/${courseId}/question-bank`, { waitUntil: 'networkidle' });
   }
 
   async verifyPageLoaded() {

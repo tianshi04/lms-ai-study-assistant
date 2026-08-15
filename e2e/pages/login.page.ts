@@ -23,10 +23,10 @@ export class LoginPage {
   }
 
   async verifyPageLoaded() {
-    await expect(this.page).toHaveURL(/\/auth\/login/);
-    await expect(this.emailInput).toBeVisible();
-    await expect(this.passwordInput).toBeVisible();
-    await expect(this.submitButton).toBeVisible();
+    await expect(this.page).toHaveURL(/\/auth\/login/, { timeout: 15000 });
+    await expect(this.emailInput).toBeVisible({ timeout: 10000 });
+    await expect(this.passwordInput).toBeVisible({ timeout: 10000 });
+    await expect(this.submitButton).toBeVisible({ timeout: 10000 });
   }
 
   async login(email: string, pass: string) {

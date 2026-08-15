@@ -14,7 +14,7 @@ export class CertificatePage {
     this.searchInput = page.locator('input[placeholder*="CERT-"]');
     this.searchButton = page.getByRole('button', { name: /Tra Cứu & Xác Minh|Verify Certificate|Search/i });
     this.validBanner = page.locator('text=/Chứng chỉ Hợp lệ|Chứng chỉ Xác minh Chính thức|Valid Verified Certificate|Official Verified Certificate/i').first();
-    this.copyLinkButton = page.getByRole('button', { name: /Sao chép|Copy/i }).first();
+    this.copyLinkButton = page.getByRole('button', { name: /Copy Verification Link|Sao chép|Copy/i }).first();
     this.downloadBadgeButton = page.getByRole('button', { name: /Tải Hồ Sơ|Download/i });
     this.qrCodeImage = page.locator('img[alt="Certificate Verification QR Code"]');
   }
@@ -25,7 +25,7 @@ export class CertificatePage {
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/verify/);
-    await expect(this.page.locator('body')).toBeVisible();
+    await expect(this.validBanner).toBeVisible({ timeout: 15000 });
   }
 
   async searchCertificate(certId: string) {

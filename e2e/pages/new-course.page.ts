@@ -28,7 +28,7 @@ export class NewCoursePage {
   }
 
   async goto() {
-    await this.page.goto('/instructor/courses/new', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('/instructor/courses/new', { waitUntil: 'networkidle' });
   }
 
   async verifyPageLoaded() {
@@ -39,6 +39,7 @@ export class NewCoursePage {
   }
 
   async fillAndSubmitCourse(title: string, description: string, partnerOrgId?: string) {
+    await this.page.waitForLoadState('networkidle');
     await expect(this.titleInput).toBeVisible({ timeout: 10000 });
     await expect(this.titleInput).toBeEnabled({ timeout: 5000 });
     await this.titleInput.click();

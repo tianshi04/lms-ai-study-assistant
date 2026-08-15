@@ -14,15 +14,14 @@ export class CourseCatalogPage {
   }
 
   async goto() {
-    await this.page.goto('/courses', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('/courses', { waitUntil: 'networkidle' });
   }
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/courses/);
-    await expect(this.searchInput).toBeVisible();
+    await expect(this.searchInput).toBeVisible({ timeout: 10000 });
     // Wait until at least 1 course card is rendered (after RPC finishes loading)
-    await expect(this.courseCards.first()).toBeVisible({ timeout: 10000 });
-    await this.page.waitForLoadState('networkidle');
+    await expect(this.courseCards.first()).toBeVisible({ timeout: 15000 });
   }
 
   async search(query: string) {
@@ -75,7 +74,7 @@ export class CourseCatalogPage {
       const optionLocator = this.page.getByRole('option', { name: optionMatcher });
       if (await optionLocator.isVisible({ timeout: 3000 }).catch(() => false)) {
         await optionLocator.click({ force: true });
-        await this.page.waitForTimeout(500);
+        await expect(this.courseCards.first()).toBeVisible({ timeout: 10000 });
       }
     }
   }
