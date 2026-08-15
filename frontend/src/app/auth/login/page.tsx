@@ -51,11 +51,11 @@ function LoginFormContent() {
     },
     onSubmit: async ({ value }) => {
       setSubmitting(true);
+      setIsSuccessRedirecting(true);
       try {
         const res = await loginAction(value.email.trim(), value.password);
 
         if (res.success && res.user) {
-          setIsSuccessRedirecting(true);
           setAuth({
             userId: res.user.id,
             userName: res.user.fullName,
@@ -66,16 +66,18 @@ function LoginFormContent() {
 
           window.location.replace(getDestinationUrl(res.user.role));
         } else {
-          toast.error(res.error || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
+          setIsSuccessRedirecting(false);
           setSubmitting(false);
+          toast.error(res.error || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
         }
       } catch (err: unknown) {
+        setIsSuccessRedirecting(false);
+        setSubmitting(false);
         const msg =
           err instanceof Error
             ? err.message
             : "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
         toast.error(msg);
-        setSubmitting(false);
       }
     },
   });
@@ -84,10 +86,10 @@ function LoginFormContent() {
     form.setFieldValue("email", email);
     form.setFieldValue("password", "123456");
     setQuickLoggingInEmail(email);
+    setIsSuccessRedirecting(true);
     try {
       const res = await loginAction(email, "123456");
       if (res.success && res.user) {
-        setIsSuccessRedirecting(true);
         setAuth({
           userId: res.user.id,
           userName: res.user.fullName,
@@ -98,22 +100,24 @@ function LoginFormContent() {
 
         window.location.replace(getDestinationUrl(res.user.role));
       } else {
-        toast.error(res.error || "Đăng nhập thất bại.");
+        setIsSuccessRedirecting(false);
         setQuickLoggingInEmail(null);
+        toast.error(res.error || "Đăng nhập thất bại.");
       }
     } catch (err: unknown) {
+      setIsSuccessRedirecting(false);
+      setQuickLoggingInEmail(null);
       const msg = err instanceof Error ? err.message : "Đăng nhập thất bại.";
       toast.error(msg);
-      setQuickLoggingInEmail(null);
     }
   };
 
   const handleGoogleLogin = async (authCode: string, nonce: string) => {
     setGoogleSubmitting(true);
+    setIsSuccessRedirecting(true);
     try {
       const res = await googleLoginAction(authCode, nonce);
       if (res.success && res.user) {
-        setIsSuccessRedirecting(true);
         setAuth({
           userId: res.user.id,
           userName: res.user.fullName,
@@ -124,14 +128,16 @@ function LoginFormContent() {
 
         window.location.replace(getDestinationUrl(res.user.role));
       } else {
-        toast.error(res.error || "Đăng nhập bằng Google thất bại.");
+        setIsSuccessRedirecting(false);
         setGoogleSubmitting(false);
+        toast.error(res.error || "Đăng nhập bằng Google thất bại.");
       }
     } catch {
+      setIsSuccessRedirecting(false);
+      setGoogleSubmitting(false);
       toast.error(
         "Không thể kết nối với dịch vụ xác thực Google. Vui lòng đăng nhập bằng Mật khẩu bên dưới.",
       );
-      setGoogleSubmitting(false);
     }
   };
 
