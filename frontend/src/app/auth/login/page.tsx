@@ -28,6 +28,7 @@ function LoginFormContent() {
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [quickLoggingInEmail, setQuickLoggingInEmail] = useState<string | null>(null);
+  const [isSuccessRedirecting, setIsSuccessRedirecting] = useState(false);
 
   const getDestinationUrl = (role?: string) => {
     if (rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")) {
@@ -54,6 +55,7 @@ function LoginFormContent() {
         const res = await loginAction(value.email.trim(), value.password);
 
         if (res.success && res.user) {
+          setIsSuccessRedirecting(true);
           setAuth({
             userId: res.user.id,
             userName: res.user.fullName,
@@ -62,7 +64,6 @@ function LoginFormContent() {
             userAvatar: res.user.avatarUrl,
           });
 
-          toast.success("Đăng nhập thành công!");
           window.location.replace(getDestinationUrl(res.user.role));
         } else {
           toast.error(res.error || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
@@ -79,13 +80,14 @@ function LoginFormContent() {
     },
   });
 
-  const handleQuickLogin = async (email: string, roleName: string) => {
+  const handleQuickLogin = async (email: string, _roleName: string) => {
     form.setFieldValue("email", email);
     form.setFieldValue("password", "123456");
     setQuickLoggingInEmail(email);
     try {
       const res = await loginAction(email, "123456");
       if (res.success && res.user) {
+        setIsSuccessRedirecting(true);
         setAuth({
           userId: res.user.id,
           userName: res.user.fullName,
@@ -94,7 +96,6 @@ function LoginFormContent() {
           userAvatar: res.user.avatarUrl,
         });
 
-        toast.success(`Đăng nhập nhanh với vai trò ${roleName}!`);
         window.location.replace(getDestinationUrl(res.user.role));
       } else {
         toast.error(res.error || "Đăng nhập thất bại.");
@@ -112,6 +113,7 @@ function LoginFormContent() {
     try {
       const res = await googleLoginAction(authCode, nonce);
       if (res.success && res.user) {
+        setIsSuccessRedirecting(true);
         setAuth({
           userId: res.user.id,
           userName: res.user.fullName,
@@ -120,7 +122,6 @@ function LoginFormContent() {
           userAvatar: res.user.avatarUrl,
         });
 
-        toast.success("Đăng nhập bằng Google thành công!");
         window.location.replace(getDestinationUrl(res.user.role));
       } else {
         toast.error(res.error || "Đăng nhập bằng Google thất bại.");
@@ -134,11 +135,32 @@ function LoginFormContent() {
     }
   };
 
-  const isAnyLoading = submitting || googleSubmitting || !!quickLoggingInEmail;
+  const isAnyLoading =
+    submitting || googleSubmitting || !!quickLoggingInEmail || isSuccessRedirecting;
 
   return (
-    <div className="w-full max-w-md">
-      <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
+    <div className="w-full max-w-md relative">
+      <Surface
+        variant="bright"
+        shape="3xl"
+        padding="lg"
+        className="shadow-xl relative overflow-hidden"
+      >
+        {/* Instant smooth redirect transition overlay */}
+        {isSuccessRedirecting && (
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-md z-50 flex flex-col items-center justify-center space-y-4 p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-inner">
+              <Loader2 className="w-7 h-7 text-primary animate-spin" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-lg text-foreground">Đang vào hệ thống học tập…</h3>
+              <p className="text-xs text-muted-foreground">
+                Đang chuẩn bị không gian học tập của bạn
+              </p>
+            </div>
+          </div>
+        )}
+
         <Surface.Header className="text-center p-0 mb-8 space-y-2">
           <div className="flex justify-center mb-4">
             <BrandLogo size="md" />
