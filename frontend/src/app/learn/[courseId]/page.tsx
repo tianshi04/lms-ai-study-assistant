@@ -35,7 +35,6 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle2,
-  Check,
   Lock,
   Menu,
   FileText,
@@ -840,21 +839,19 @@ function CoursePlayerContent() {
                                       {/* Status Icon */}
                                       <div className="shrink-0 flex items-center justify-center">
                                         {itemLocked ? (
-                                          <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center">
+                                          <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center shrink-0">
                                             <Lock
                                               aria-hidden="true"
                                               className="w-3 h-3 text-on-surface-variant"
                                             />
                                           </div>
                                         ) : isDone ? (
-                                          <div className="w-5 h-5 rounded-full bg-success text-success-foreground flex items-center justify-center shadow-2xs">
-                                            <Check
-                                              aria-hidden="true"
-                                              className="w-3.5 h-3.5 text-success-foreground stroke-[3]"
-                                            />
-                                          </div>
+                                          <CheckCircle2
+                                            aria-hidden="true"
+                                            className="w-5 h-5 text-success fill-success/15 shrink-0"
+                                          />
                                         ) : (
-                                          <div className="w-5 h-5 rounded-full bg-surface-container" />
+                                          <div className="w-5 h-5 rounded-full border-2 border-outline-variant/70 shrink-0" />
                                         )}
                                       </div>
 
