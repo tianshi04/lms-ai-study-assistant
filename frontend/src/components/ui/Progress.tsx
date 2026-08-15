@@ -85,25 +85,22 @@ export function LinearProgress({
         ) : (
           <div className="h-full w-full flex items-center gap-1 rtl:flex-row-reverse relative">
             {/* Anatomy 1: Active indicator (Primary Color Roles: bg-primary) */}
-            {normalizedValue > 0 && (
-              <BaseProgress.Indicator
-                className={cn(
-                  "h-full transition-all duration-m3-medium-4 ease-m3-emphasized relative flex items-center shrink-0 rounded-full bg-primary",
-                  normalizedValue > 0 && "min-w-[8px]",
-                )}
-                style={{ width: `${normalizedValue}%` }}
-              />
-            )}
+            <BaseProgress.Indicator
+              className={cn(
+                "h-full transition-all duration-m3-medium-4 ease-m3-emphasized relative flex items-center shrink-0 rounded-full bg-primary",
+                normalizedValue > 0 ? "min-w-[8px] opacity-100" : "min-w-0 opacity-0",
+              )}
+              style={{ width: `${normalizedValue}%` }}
+            />
 
             {/* Anatomy 2: Inactive Track (Secondary Container Color Role: bg-secondary-container) */}
-            {normalizedValue < 100 && (
-              <div
-                className={cn(
-                  "flex-1 rounded-full bg-secondary-container relative transition-all duration-m3-medium-4",
-                  inactiveHeightClass,
-                )}
-              />
-            )}
+            <div
+              className={cn(
+                "flex-1 rounded-full bg-secondary-container relative transition-all duration-m3-medium-4",
+                inactiveHeightClass,
+                normalizedValue >= 100 && "hidden",
+              )}
+            />
 
             {/* Anatomy 3: Stop indicator dot (4dp circle dot, exact 2dp right offset, centered vertically) */}
             {showStopIndicator && normalizedValue < 100 && (

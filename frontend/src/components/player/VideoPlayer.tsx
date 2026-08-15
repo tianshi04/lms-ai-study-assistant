@@ -159,7 +159,7 @@ export function VideoPlayer({
     // 1. Reading Item
     if (activeItem.type === 2) {
       return (
-        <div className="w-full p-6 sm:p-8 bg-surface-container-lowest text-on-surface transition-colors duration-m3-short-4 ease-m3-emphasized rounded-2xl">
+        <div className="w-full p-4 sm:p-6 text-on-surface transition-colors duration-m3-short-4 ease-m3-emphasized">
           <div className="max-w-3xl mx-auto space-y-6">
             {/* Reading Header */}
             <div className="pb-4 border-b border-border">
@@ -201,7 +201,7 @@ export function VideoPlayer({
     // 2. Graded / Practice Quiz Item
     if (activeItem.type === 3 || activeItem.type === 4) {
       return (
-        <div className="w-full p-4 sm:p-6 bg-surface-container-low rounded-2xl">
+        <div className="w-full p-2 sm:p-4 text-on-surface">
           <GradedQuizRunner
             key={activeItem.id}
             itemId={activeItem.id}
@@ -209,6 +209,7 @@ export function VideoPlayer({
             userId={userId}
             onComplete={() => onMarkComplete?.(activeItem.id)}
             isPreviewMode={isPreviewMode}
+            isPractice={activeItem.type === 3}
           />
         </div>
       );
@@ -217,7 +218,7 @@ export function VideoPlayer({
     // 3. Auto-Graded Lab Item
     if (activeItem.type === 5) {
       return (
-        <div className="w-full p-4 sm:p-6 bg-surface-container-lowest rounded-2xl">
+        <div className="w-full p-2 sm:p-4 text-on-surface">
           <AutoGradedLabRunner
             key={activeItem.id}
             itemId={activeItem.id}
@@ -236,7 +237,7 @@ export function VideoPlayer({
     // 4. Peer Review Item
     if (activeItem.type === 6) {
       return (
-        <div className="w-full p-4 sm:p-6 bg-surface-container-lowest text-on-surface rounded-2xl">
+        <div className="w-full p-2 sm:p-4 text-on-surface">
           <PeerAssignmentWorkspace
             key={activeItem.id}
             itemId={activeItem.id}

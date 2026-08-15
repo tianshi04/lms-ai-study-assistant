@@ -23,8 +23,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { Badge } from "@/components/ui/Badge";
-import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { RadioGroup } from "@/components/ui/RadioGroup";
@@ -48,6 +46,7 @@ interface GradedQuizRunnerProps {
   userId?: string;
   onComplete?: () => void;
   isPreviewMode?: boolean;
+  isPractice?: boolean;
 }
 
 export function GradedQuizRunner({
@@ -56,6 +55,7 @@ export function GradedQuizRunner({
   userId,
   onComplete,
   isPreviewMode = false,
+  isPractice = false,
 }: GradedQuizRunnerProps) {
   const { userId: authUserId } = useAuth();
   const _effectiveUserId = userId || authUserId || "user-demo-1";
@@ -85,11 +85,42 @@ export function GradedQuizRunner({
   } | null>(null);
 
   const [cooldownCountdown, setCooldownCountdown] = useState<number>(0);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [isHeaderStuck, setIsHeaderStuck] = useState(false);
 
   const onCompleteRef = useRef(onComplete);
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
+
+  // Track when main header scrolls out of view in the scrollable player container
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const scrollParent = el.closest(".overflow-y-auto") as HTMLElement | null;
+    if (!scrollParent) return;
+
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const headerHeight = el.offsetHeight || 120;
+          setIsHeaderStuck(
+            scrollParent.scrollTop > 50 &&
+              scrollParent.scrollTop >= el.offsetTop + headerHeight - 60,
+          );
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    scrollParent.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => scrollParent.removeEventListener("scroll", handleScroll);
+  }, [questions.length]);
 
   // Fetch quiz session questions on load
   useEffect(() => {
@@ -430,48 +461,131 @@ export function GradedQuizRunner({
     );
   }
 
+  const answeredCount = selectedAnswers.filter((ans) => ans && ans.length > 0).length;
+
   return (
-    <Surface variant="low" shape="3xl" className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6">
-      {/* Header Info */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-5">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
+    <div className="space-y-6 max-w-4xl mx-auto p-2 sm:p-4">
+      {/* Sticky Compact Header - Only visible when scrolled past main header */}
+      <div
+        className={`sticky -top-2 sm:-top-4 z-30 w-full pt-3 pb-2.5 px-4 bg-surface-container-lowest/95 backdrop-blur-xl space-y-2 transition-all duration-300 ease-m3-emphasized ${
+          isHeaderStuck
+            ? "opacity-100 translate-y-0 blur-none pointer-events-auto visible"
+            : "opacity-0 -translate-y-6 blur-[1px] pointer-events-none invisible"
+        }`}
+        style={{
+          marginBottom: isHeaderStuck ? "0px" : "-56px",
+        }}
+        aria-hidden={!isHeaderStuck}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          {/* Left: Badge + Quiz Title */}
+          <div className="flex items-center gap-2 min-w-0">
             {isPreviewMode ? (
-              <Badge variant="primary">CHẾ ĐỘ XEM TRƯỚC (PREVIEW)</Badge>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/15 text-primary border border-primary/30 shrink-0">
+                XEM TRƯỚC
+              </span>
+            ) : isPractice ? (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-info/15 text-info border border-info/30 shrink-0">
+                LUYỆN TẬP
+              </span>
             ) : (
-              <Badge variant="warning">BÀI THI CÓ TÍNH ĐIỂM</Badge>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-warning/15 text-warning border border-warning/30 shrink-0">
+                CÓ TÍNH ĐIỂM
+              </span>
             )}
-            {!isPreviewMode && (
-              <Badge
-                variant={attemptsLeft <= 1 ? "error" : "outlined"}
-                className="text-xs font-semibold"
+            <h3 className="text-sm font-bold text-foreground truncate" title={title}>
+              {title || (isPractice ? "Trắc nghiệm luyện tập" : "Bài thi trắc nghiệm")}
+            </h3>
+          </div>
+
+          {/* Right: Metadata & Stats */}
+          <div className="flex items-center gap-2.5 text-xs text-muted-foreground shrink-0 flex-wrap">
+            {!isPreviewMode && !isPractice && (
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                  attemptsLeft <= 1
+                    ? "bg-destructive/10 text-destructive border-destructive/30"
+                    : "bg-surface-container-high text-on-surface-variant border-outline-variant"
+                }`}
               >
-                Lượt làm còn lại: {attemptsLeft}/{maxAttempts}
-              </Badge>
+                Lượt: {attemptsLeft}/{maxAttempts}
+              </span>
             )}
-            <span className="text-xs text-muted-foreground tabular-nums">
-              Điểm đạt: {passingThreshold}% • Thời gian: {timeLimit} phút • Thời gian chờ:{" "}
-              {cooldownHours} giờ
+            <span className="tabular-nums">
+              Đạt: {passingThreshold}% • {timeLimit}p{!isPractice && ` • Chờ: ${cooldownHours}h`}
+            </span>
+            <span className="font-semibold text-foreground tabular-nums">
+              {answeredCount}/{questions.length} câu (
+              {Math.round(questions.length > 0 ? (answeredCount / questions.length) * 100 : 0)}%)
             </span>
           </div>
-          <h2 className="text-xl font-bold text-foreground mt-1">
-            {title || "Bài thi trắc nghiệm"}
-          </h2>
+        </div>
+
+        {/* Full-width Smooth Progress Bar */}
+        <Progress.Linear
+          value={questions.length > 0 ? (answeredCount / questions.length) * 100 : 0}
+          showLabel={false}
+          className="w-full"
+        />
+
+        {/* Soft Floating Gradient Lip at bottom to eliminate visual friction */}
+        <div
+          className={`absolute -bottom-3 inset-x-0 h-3 bg-gradient-to-b from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none transition-opacity duration-300 ${
+            isHeaderStuck ? "opacity-100" : "opacity-0"
+          }`}
+          aria-hidden="true"
+        />
+      </div>
+
+      {/* Original Full Header (Normal view on initial load) */}
+      <div ref={headerRef} className="w-full border-b border-border pb-5 space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isPreviewMode ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/15 text-primary border border-primary/30">
+              CHẾ ĐỘ XEM TRƯỚC (PREVIEW)
+            </span>
+          ) : isPractice ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-info/15 text-info border border-info/30">
+              TRẮC NGHIỆM LUYỆN TẬP
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/15 text-warning border border-warning/30">
+              BÀI THI CÓ TÍNH ĐIỂM
+            </span>
+          )}
+          {!isPreviewMode && !isPractice && (
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                attemptsLeft <= 1
+                  ? "bg-destructive/10 text-destructive border-destructive/30"
+                  : "bg-surface-container-high text-on-surface-variant border-outline-variant"
+              }`}
+            >
+              Lượt làm còn lại: {attemptsLeft}/{maxAttempts}
+            </span>
+          )}
+          <span className="text-xs text-muted-foreground tabular-nums">
+            Điểm đạt: {passingThreshold}% • Thời gian: {timeLimit} phút
+            {!isPractice && ` • Thời gian chờ: ${cooldownHours} giờ`}
+          </span>
+        </div>
+
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+          {title || (isPractice ? "Trắc nghiệm luyện tập" : "Bài thi trắc nghiệm")}
+        </h2>
+
+        <div className="w-full pt-1">
           <Progress.Linear
-            value={
-              questions.length > 0
-                ? (Object.keys(selectedAnswers).length / questions.length) * 100
-                : 0
-            }
+            value={questions.length > 0 ? (answeredCount / questions.length) * 100 : 0}
             showLabel
-            label={`Tiến độ làm bài (${Object.keys(selectedAnswers).length}/${questions.length} câu)`}
-            className="mt-3"
+            label={`Tiến độ làm bài (${answeredCount}/${questions.length} câu)`}
+            className="w-full"
           />
         </div>
       </div>
 
       {/* Active Cooldown Banner */}
-      {cooldownCountdown > 0 && !isPreviewMode && (
+      {cooldownCountdown > 0 && !isPreviewMode && !isPractice && (
         <div className="p-5 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive space-y-2">
           <div className="flex items-center justify-between">
             <h4 className="font-bold text-sm flex items-center gap-2">
@@ -496,19 +610,19 @@ export function GradedQuizRunner({
           const currentAnswers = selectedAnswers[qIdx] || [];
 
           return (
-            <Surface key={q.questionId} variant="low" shape="2xl" className="p-5 space-y-3">
+            <div
+              key={q.questionId}
+              className="p-5 sm:p-6 rounded-2xl border border-border/80 bg-surface-container-low/40 space-y-3.5 transition-colors"
+            >
               <div className="flex items-center justify-between gap-3">
                 <h4 className="text-sm font-bold text-foreground">
                   Câu {qIdx + 1}. {q.text}
                 </h4>
                 {q.questionType === "MULTIPLE_CHOICE" ? (
-                  <Badge
-                    variant="warning"
-                    className="text-[10px] py-0.5 px-2.5 font-bold shrink-0 flex items-center gap-1"
-                  >
+                  <span className="inline-flex items-center gap-1 text-[11px] py-0.5 px-2.5 font-bold rounded-full bg-warning/15 text-warning border border-warning/30 shrink-0">
                     <CheckSquare aria-hidden="true" className="w-3 h-3" />
                     Chọn nhiều đáp án
-                  </Badge>
+                  </span>
                 ) : q.questionType === "TRUE_FALSE" ? (
                   <Chip
                     variant="assist"
@@ -520,13 +634,10 @@ export function GradedQuizRunner({
                     Đúng / Sai
                   </Chip>
                 ) : (
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] py-0.5 px-2.5 font-medium text-muted-foreground shrink-0 flex items-center gap-1"
-                  >
+                  <span className="inline-flex items-center gap-1 text-[11px] py-0.5 px-2.5 font-medium rounded-full bg-surface-container-high text-on-surface-variant border border-outline-variant/60 shrink-0">
                     <CircleDot aria-hidden="true" className="w-3 h-3" />
                     Chọn 1 đáp án
-                  </Badge>
+                  </span>
                 )}
               </div>
 
@@ -571,7 +682,7 @@ export function GradedQuizRunner({
                   ))}
                 </RadioGroup>
               )}
-            </Surface>
+            </div>
           );
         })}
       </div>
@@ -692,6 +803,6 @@ export function GradedQuizRunner({
         }}
         onClose={() => setIsHonorModalOpen(false)}
       />
-    </Surface>
+    </div>
   );
 }
