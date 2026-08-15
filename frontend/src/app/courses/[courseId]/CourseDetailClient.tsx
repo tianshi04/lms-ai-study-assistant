@@ -417,7 +417,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     className="font-bold text-primary hover:underline p-0 h-auto text-xs justify-start"
                   >
                     <span aria-live="polite">
-                      {checkingFinAidStatus ? "Đang kiểm tra…" : "Financial Aid available"}
+                      {checkingFinAidStatus ? "Đang kiểm tra…" : "Có chính sách Hỗ trợ Tài chính"}
                     </span>
                     <ArrowRight aria-hidden="true" className="w-3 h-3 ml-1" />
                   </Button>

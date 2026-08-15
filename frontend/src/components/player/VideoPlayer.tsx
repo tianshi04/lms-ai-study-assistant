@@ -258,6 +258,7 @@ export function VideoPlayer({
             onEnded={() => onMarkComplete?.(activeItem.id)}
             title={activeItem.title || "Video bài giảng"}
             captionUrl={(activeItem as any).captionUrl}
+            onNextLesson={onNextLesson}
           />
 
           {/* Floating Top Left Control Overlay for Video Preview Mode */}

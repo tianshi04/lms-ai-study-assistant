@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search, Check, X } from "lucide-react";
+import { Search, Check, X, Share2, Download } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { useToast } from "@/components/ui/Toast";
+import { shareContent } from "@/lib/share";
 
 interface VerifiedCertPayload {
   isValid: boolean;
@@ -34,9 +36,9 @@ export function VerifyDetailClient({
   initialData: VerifiedCertPayload;
 }) {
   const router = useRouter();
+  const toast = useToast();
 
   const [searchCertId, setSearchCertId] = useState(certId);
-  const [copied, setCopied] = useState(false);
 
   const cert = initialData.certificate;
   const isValid = initialData.isValid;
@@ -49,16 +51,25 @@ export function VerifyDetailClient({
     }
   };
 
-  const handleCopyLink = () => {
-    if (typeof window !== "undefined") {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      try {
-        navigator.clipboard?.writeText(window.location.href)?.catch(() => {});
-      } catch {
-        // Fallback for headless browser environment
-      }
+  const handleFallbackCopy = () => {
+    if (typeof window !== "undefined" && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => {
+          toast.success("Đã sao chép liên kết chứng chỉ vào bộ nhớ tạm!");
+        })
+        .catch(() => {});
     }
+  };
+
+  const handleShareCertificate = () => {
+    if (!cert) return;
+    shareContent({
+      title: `Chứng chỉ xác thực: ${cert.courseTitle}`,
+      text: `Chứng chỉ hoàn thành khóa học "${cert.courseTitle}" cấp bởi ${cert.partnerName} cho học viên ${cert.learnerName}.`,
+      url: typeof window !== "undefined" ? window.location.href : "",
+      onFallbackCopy: handleFallbackCopy,
+    });
   };
 
   const handleDownloadBadge = () => {
@@ -238,23 +249,20 @@ export function VerifyDetailClient({
                   <p className="font-semibold text-foreground">
                     {"Được xác thực bởi Coursera AI LMS Platform"}
                   </p>
-                  <p className="text-[11px]">Scan QR code to verify digital signature integrity.</p>
+                  <p className="text-[11px]">
+                    {"Quét mã QR để kiểm tra tính toàn vẹn của chữ ký số."}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <Button type="button" variant="outlined" size="sm" onClick={handleCopyLink}>
-                  {copied ? (
-                    <>
-                      <Check aria-hidden="true" className="w-4 h-4 text-success mr-1" />
-                      <span>Copied Link</span>
-                    </>
-                  ) : (
-                    <span>Copy Verification Link</span>
-                  )}
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="button" variant="outlined" size="sm" onClick={handleShareCertificate}>
+                  <Share2 aria-hidden="true" className="w-4 h-4 mr-1.5" />
+                  <span>{"Chia sẻ Chứng chỉ"}</span>
                 </Button>
                 <Button type="button" size="sm" onClick={handleDownloadBadge}>
-                  Download Badge (JSON)
+                  <Download aria-hidden="true" className="w-4 h-4 mr-1.5" />
+                  <span>{"Tải huy hiệu (JSON)"}</span>
                 </Button>
               </div>
             </div>

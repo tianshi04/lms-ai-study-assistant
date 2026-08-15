@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useMediaSession } from "@/hooks/useMediaSession";
 
 export interface UniversalVideoRef {
   getCurrentTime: () => number;
@@ -10,6 +11,7 @@ export interface UniversalVideoRef {
   pause: () => void;
   currentTime: number;
   duration: number;
+  togglePictureInPicture?: () => Promise<void>;
 }
 
 interface UniversalVideoPlayerProps {
@@ -18,6 +20,11 @@ interface UniversalVideoPlayerProps {
   onSeeking?: () => void;
   onEnded?: () => void;
   title?: string;
+  artist?: string;
+  album?: string;
+  artworkUrl?: string;
+  onNextLesson?: () => void;
+  onPreviousLesson?: () => void;
   captionUrl?: string;
   className?: string;
 }
@@ -102,13 +109,18 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
       onSeeking,
       onEnded,
       title = "Video bài giảng",
+      artist = "Coursera AI LMS",
+      album = "Khóa học trực tuyến",
+      artworkUrl,
+      onNextLesson,
+      onPreviousLesson,
       captionUrl,
       className = "w-full h-full object-contain rounded-2xl",
     },
     ref,
   ) {
     const videoId = extractYouTubeVideoId(videoUrl);
-    const isYouTube = !!videoId;
+    const isYouTube = !videoId ? false : Boolean(videoId);
     const htmlVideoRef = useRef<HTMLVideoElement | null>(null);
     const ytPlayerRef = useRef<any>(null);
     const mountPointRef = useRef<HTMLDivElement | null>(null);
@@ -128,6 +140,82 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
 
     const onEndedRef = useRef(onEnded);
     onEndedRef.current = onEnded;
+
+    // ─── Modern Web API: Media Session Integration ───
+    useMediaSession({
+      title,
+      artist,
+      album,
+      artworkUrl,
+      onPlay: () => {
+        if (isYouTube) {
+          ytPlayerRef.current?.playVideo?.();
+        } else {
+          htmlVideoRef.current?.play().catch(() => {});
+        }
+      },
+      onPause: () => {
+        if (isYouTube) {
+          ytPlayerRef.current?.pauseVideo?.();
+        } else {
+          htmlVideoRef.current?.pause();
+        }
+      },
+      onSeekBackward: () => {
+        if (isYouTube) {
+          const t = ytPlayerRef.current?.getCurrentTime?.() || 0;
+          ytPlayerRef.current?.seekTo?.(Math.max(0, t - 10), true);
+        } else if (htmlVideoRef.current) {
+          htmlVideoRef.current.currentTime = Math.max(0, htmlVideoRef.current.currentTime - 10);
+        }
+      },
+      onSeekForward: () => {
+        if (isYouTube) {
+          const t = ytPlayerRef.current?.getCurrentTime?.() || 0;
+          ytPlayerRef.current?.seekTo?.(t + 10, true);
+        } else if (htmlVideoRef.current) {
+          htmlVideoRef.current.currentTime += 10;
+        }
+      },
+      onNextLesson,
+      onPreviousLesson,
+    });
+
+    // ─── Modern Web API: Screen Wake Lock Integration ───
+    useEffect(() => {
+      let wakeLock: any = null;
+
+      const requestWakeLock = async () => {
+        if (typeof navigator !== "undefined" && "wakeLock" in navigator) {
+          try {
+            wakeLock = await (navigator as any).wakeLock.request("screen");
+          } catch {}
+        }
+      };
+
+      const releaseWakeLock = () => {
+        if (wakeLock) {
+          wakeLock.release().catch(() => {});
+          wakeLock = null;
+        }
+      };
+
+      const video = htmlVideoRef.current;
+      if (video) {
+        video.addEventListener("play", requestWakeLock);
+        video.addEventListener("pause", releaseWakeLock);
+        video.addEventListener("ended", releaseWakeLock);
+      }
+
+      return () => {
+        if (video) {
+          video.removeEventListener("play", requestWakeLock);
+          video.removeEventListener("pause", releaseWakeLock);
+          video.removeEventListener("ended", releaseWakeLock);
+        }
+        releaseWakeLock();
+      };
+    }, [isYouTube]);
 
     // Cleanup YouTube player on unmount
     useEffect(() => {
@@ -404,6 +492,18 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
             return 0;
           }
           return htmlVideoRef.current?.duration || 0;
+        },
+        togglePictureInPicture: async () => {
+          if (typeof document === "undefined") return;
+          if (htmlVideoRef.current && document.pictureInPictureEnabled) {
+            try {
+              if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+              } else {
+                await htmlVideoRef.current.requestPictureInPicture();
+              }
+            } catch {}
+          }
         },
       }),
       [isYouTube],
