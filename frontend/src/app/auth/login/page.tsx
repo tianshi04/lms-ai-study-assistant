@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { loginAction, googleLoginAction } from "@/app/auth/actions";
 import { useToast } from "@/components/ui/Toast";
@@ -13,15 +13,13 @@ import { Surface } from "@/components/ui/Surface";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
-import { Eye, EyeOff, Zap } from "lucide-react";
+import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { normalizeUserRole } from "@/lib/jwt";
 
 function LoginFormContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get("redirect");
-  const redirectTarget =
-    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
 
   const toast = useToast();
   const { setAuth } = useAuth();
@@ -29,6 +27,22 @@ function LoginFormContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [quickLoggingInEmail, setQuickLoggingInEmail] = useState<string | null>(null);
+  const [isSuccessRedirecting, setIsSuccessRedirecting] = useState(false);
+
+  const getDestinationUrl = (role?: string) => {
+    if (rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")) {
+      return rawRedirect;
+    }
+    const r = role ? normalizeUserRole(role) : "";
+    if (r === "USER_ROLE_ADMIN") {
+      return "/admin/dashboard";
+    }
+    if (r === "USER_ROLE_INSTRUCTOR") {
+      return "/instructor/dashboard";
+    }
+    return "/learner/dashboard";
+  };
 
   const form = useForm({
     defaultValues: {
@@ -37,6 +51,7 @@ function LoginFormContent() {
     },
     onSubmit: async ({ value }) => {
       setSubmitting(true);
+      setIsSuccessRedirecting(true);
       try {
         const res = await loginAction(value.email.trim(), value.password);
 
@@ -49,25 +64,57 @@ function LoginFormContent() {
             userAvatar: res.user.avatarUrl,
           });
 
-          router.push(redirectTarget);
-          router.refresh();
+          window.location.replace(getDestinationUrl(res.user.role));
         } else {
+          setIsSuccessRedirecting(false);
+          setSubmitting(false);
           toast.error(res.error || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
         }
       } catch (err: unknown) {
+        setIsSuccessRedirecting(false);
+        setSubmitting(false);
         const msg =
           err instanceof Error
             ? err.message
             : "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
         toast.error(msg);
-      } finally {
-        setSubmitting(false);
       }
     },
   });
 
+  const handleQuickLogin = async (email: string, _roleName: string) => {
+    form.setFieldValue("email", email);
+    form.setFieldValue("password", "123456");
+    setQuickLoggingInEmail(email);
+    setIsSuccessRedirecting(true);
+    try {
+      const res = await loginAction(email, "123456");
+      if (res.success && res.user) {
+        setAuth({
+          userId: res.user.id,
+          userName: res.user.fullName,
+          userEmail: res.user.email,
+          userRole: res.user.role,
+          userAvatar: res.user.avatarUrl,
+        });
+
+        window.location.replace(getDestinationUrl(res.user.role));
+      } else {
+        setIsSuccessRedirecting(false);
+        setQuickLoggingInEmail(null);
+        toast.error(res.error || "Đăng nhập thất bại.");
+      }
+    } catch (err: unknown) {
+      setIsSuccessRedirecting(false);
+      setQuickLoggingInEmail(null);
+      const msg = err instanceof Error ? err.message : "Đăng nhập thất bại.";
+      toast.error(msg);
+    }
+  };
+
   const handleGoogleLogin = async (authCode: string, nonce: string) => {
     setGoogleSubmitting(true);
+    setIsSuccessRedirecting(true);
     try {
       const res = await googleLoginAction(authCode, nonce);
       if (res.success && res.user) {
@@ -79,35 +126,58 @@ function LoginFormContent() {
           userAvatar: res.user.avatarUrl,
         });
 
-        toast.success("Đăng nhập bằng Google thành công!");
-        router.push(redirectTarget);
-        router.refresh();
+        window.location.replace(getDestinationUrl(res.user.role));
       } else {
+        setIsSuccessRedirecting(false);
+        setGoogleSubmitting(false);
         toast.error(res.error || "Đăng nhập bằng Google thất bại.");
       }
     } catch {
+      setIsSuccessRedirecting(false);
+      setGoogleSubmitting(false);
       toast.error(
         "Không thể kết nối với dịch vụ xác thực Google. Vui lòng đăng nhập bằng Mật khẩu bên dưới.",
       );
-    } finally {
-      setGoogleSubmitting(false);
     }
   };
 
+  const isAnyLoading =
+    submitting || googleSubmitting || !!quickLoggingInEmail || isSuccessRedirecting;
+
   return (
-    <div className="w-full max-w-md">
-      <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
-        <Surface.Header className="text-center p-0 mb-8 space-y-2">
+    <div className="w-full max-w-md relative">
+      <Surface
+        variant="bright"
+        shape="3xl"
+        padding="lg"
+        className="shadow-xl relative overflow-hidden"
+      >
+        {/* Instant smooth redirect transition overlay */}
+        {isSuccessRedirecting && (
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-md z-50 flex flex-col items-center justify-center space-y-4 p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-inner">
+              <Loader2 className="w-7 h-7 text-primary animate-spin" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-lg text-foreground">Đang vào hệ thống học tập…</h3>
+              <p className="text-xs text-muted-foreground">
+                Đang chuẩn bị không gian học tập của bạn
+              </p>
+            </div>
+          </div>
+        )}
+
+        <Surface.Header className="text-center p-0 mb-8 space-y-2 flex flex-col items-center">
           <div className="flex justify-center mb-4">
             <BrandLogo size="md" />
           </div>
-          <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
+          <Surface.Title className="text-2xl font-bold text-on-surface text-balance text-center w-full">
             {"Đăng nhập tài khoản"}
           </Surface.Title>
-          <Surface.Description className="text-sm text-on-surface-variant">
+          <Surface.Description className="text-sm text-on-surface-variant text-center text-pretty w-full">
             {searchParams.get("redirect")
-              ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
-              : "Chào mừng bạn quay trở lại với hệ thống học tập LMS AI"}
+              ? "Vui lòng đăng nhập để tiếp tục bài học"
+              : "Chào mừng bạn trở lại với nền tảng LMS AI"}
           </Surface.Description>
         </Surface.Header>
 
@@ -116,7 +186,7 @@ function LoginFormContent() {
           <div className="space-y-4 mb-6">
             <GoogleAuthButton
               onSuccess={handleGoogleLogin}
-              disabled={googleSubmitting}
+              disabled={isAnyLoading}
               text="Đăng nhập với Google"
               variant="outlined"
             />
@@ -162,13 +232,13 @@ function LoginFormContent() {
                       id={field.name}
                       name={field.name}
                       type="email"
-                      inputMode="email"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="learner@example.com"
                       autoComplete="email"
                       spellCheck={false}
+                      disabled={isAnyLoading}
                       error={hasError ? String(field.state.meta.errors[0]) : undefined}
                       required
                     />
@@ -203,6 +273,7 @@ function LoginFormContent() {
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="Nhập mật khẩu của bạn"
                       autoComplete="current-password"
+                      disabled={isAnyLoading}
                       error={hasError ? String(field.state.meta.errors[0]) : undefined}
                       required
                       endAdornment={
@@ -235,16 +306,22 @@ function LoginFormContent() {
               }}
             </form.Field>
 
-            {/* Submit Button */}
             <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
               {([canSubmit]) => (
                 <Button
                   type="submit"
-                  disabled={submitting || !canSubmit}
-                  size="lg"
-                  className="w-full shadow-lg"
+                  disabled={isAnyLoading || !canSubmit}
+                  size="sm"
+                  className="w-full h-11 rounded-xl font-semibold text-sm shadow-md shadow-primary/25 flex items-center justify-center gap-2"
                 >
-                  {"Đăng nhập ngay"}
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>{"Đang đăng nhập…"}</span>
+                    </>
+                  ) : (
+                    <span>{"Đăng nhập ngay"}</span>
+                  )}
                 </Button>
               )}
             </form.Subscribe>
@@ -252,60 +329,69 @@ function LoginFormContent() {
 
           {/* Quick Test Accounts Selector for Dev Mode */}
           {process.env.NEXT_PUBLIC_ENV !== "production" && (
-            <div className="mt-6 p-4 rounded-2xl bg-muted border border-border space-y-3">
+            <div className="mt-6 p-4 rounded-2xl bg-muted/60 border border-border/80 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                  <Zap aria-hidden="true" className="w-4 h-4" />
-                  {"Tài khoản Test sẵn (Dev Mode)"}
+                  <Zap aria-hidden="true" className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  {"1-Click Đăng nhập nhanh"}
                 </span>
                 <span className="text-[10px] font-mono text-muted-foreground">
                   {"Mật khẩu: 123456"}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {[
-                  { label: "Học viên Cá nhân", email: "learner@coursera.ai", roleTag: "Learner" },
                   {
-                    label: "Giảng viên Cá nhân",
+                    label: "NGUYEN THANH PHONG",
+                    email: "n22dccn158@student.ptithcm.edu.vn",
+                    roleTag: "Học viên PTIT",
+                  },
+                  {
+                    label: "Nguyễn Phong",
+                    email: "phongnguyen.30604@gmail.com",
+                    roleTag: "Giảng viên",
+                  },
+                  {
+                    label: "Nguyễn Thanh Phong",
+                    email: "ttxmath1110@gmail.com",
+                    roleTag: "Quản trị viên",
+                  },
+                  {
+                    label: "Prof. Andrew Ng",
                     email: "instructor@coursera.ai",
-                    roleTag: "Instructor",
+                    roleTag: "Giảng viên AI",
                   },
-                  { label: "Trợ giảng Tổ chức", email: "ta@coursera.ai", roleTag: "Org TA" },
-                  {
-                    label: "Quản trị viên Tổ chức",
-                    email: "partner@coursera.ai",
-                    roleTag: "Org Admin",
-                  },
-                  {
-                    label: "Super Admin toàn sàn",
-                    email: "admin@coursera.ai",
-                    roleTag: "Super Admin",
-                  },
-                ].map((acc) => (
-                  <Button
-                    key={acc.email}
-                    type="button"
-                    variant="outlined"
-                    onClick={() => {
-                      form.setFieldValue("email", acc.email);
-                      form.setFieldValue("password", "123456");
-                    }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary text-xs font-medium flex items-center justify-between group cursor-pointer"
-                  >
-                    <div className="min-w-0 truncate pr-1">
-                      <div className="font-semibold text-foreground group-hover:text-primary min-w-0 truncate">
-                        {acc.label}
+                ].map((acc) => {
+                  const isCurrentLoading = quickLoggingInEmail === acc.email;
+                  return (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      disabled={isAnyLoading}
+                      onClick={() => handleQuickLogin(acc.email, acc.roleTag)}
+                      className="w-full text-left p-2.5 rounded-xl bg-card border border-border hover:border-primary/80 hover:shadow-sm text-xs font-medium flex items-center justify-between group cursor-pointer transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <div className="min-w-0 flex-1 pr-1.5">
+                        <div className="font-semibold text-foreground group-hover:text-primary min-w-0 truncate text-[11px]">
+                          {acc.label}
+                        </div>
+                        <div className="text-[10px] font-mono text-muted-foreground min-w-0 truncate">
+                          {acc.email}
+                        </div>
                       </div>
-                      <div className="text-[10px] font-mono text-muted-foreground min-w-0 truncate">
-                        {acc.email}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {isCurrentLoading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                        ) : (
+                          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {acc.roleTag}
+                          </span>
+                        )}
                       </div>
-                    </div>
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
-                      {acc.roleTag}
-                    </span>
-                  </Button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

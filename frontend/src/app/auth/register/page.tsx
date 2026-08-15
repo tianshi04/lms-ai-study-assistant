@@ -144,10 +144,10 @@ export default function RegisterPage() {
               </span>
             </div>
 
-            <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
+            <Surface.Title className="text-2xl font-bold text-on-surface text-balance text-center w-full">
               {step === 1 ? "Đăng ký tài khoản" : "Tạo Mật khẩu Dự phòng"}
             </Surface.Title>
-            <Surface.Description className="text-sm text-on-surface-variant">
+            <Surface.Description className="text-sm text-on-surface-variant text-center max-w-sm mx-auto">
               {step === 1
                 ? "Xác minh email qua Google để bắt đầu đăng ký"
                 : "Thiết lập mật khẩu để đảm bảo luôn đăng nhập được"}
@@ -244,8 +244,6 @@ export default function RegisterPage() {
                         id={field.name}
                         name={field.name}
                         type="text"
-                        autoComplete="name"
-                        autoCapitalize="words"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
