@@ -174,10 +174,10 @@ function LoginFormContent() {
           <Surface.Title className="text-2xl font-bold text-on-surface text-balance text-center w-full">
             {"Đăng nhập tài khoản"}
           </Surface.Title>
-          <Surface.Description className="text-sm text-on-surface-variant text-center max-w-sm mx-auto">
+          <Surface.Description className="text-sm text-on-surface-variant text-center text-pretty w-full">
             {searchParams.get("redirect")
-              ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
-              : "Chào mừng bạn quay trở lại với hệ thống học tập LMS AI"}
+              ? "Vui lòng đăng nhập để tiếp tục bài học"
+              : "Chào mừng bạn trở lại với nền tảng LMS AI"}
           </Surface.Description>
         </Surface.Header>
 
