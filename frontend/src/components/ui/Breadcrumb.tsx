@@ -96,7 +96,7 @@ function BreadcrumbEllipsis({ className, ref, ...props }: React.ComponentProps<"
       {...props}
     >
       <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
-      <span className="sr-only">More</span>
+      <span className="sr-only">Xem thêm</span>
     </span>
   );
 }
