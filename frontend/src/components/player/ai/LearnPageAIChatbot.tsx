@@ -26,6 +26,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { SaveNoteCard, TimestampSeekCard } from "./AIChatToolCards";
 import { renderMessageItem } from "./AIChatMessageItem";
+import { useScrollEdgeFade } from "@/hooks/useScrollEdgeFade";
 import { Progress } from "@/components/ui/Progress";
 
 export interface LearnPageAIChatbotRef {
@@ -70,6 +71,12 @@ export const LearnPageAIChatbot = forwardRef<LearnPageAIChatbotRef, LearnPageAIC
     const [inputValue, setInputValue] = useState("");
     const [sessionStartIndex, setSessionStartIndex] = useState(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const {
+      scrollRef: messagesContainerRef,
+      canScrollUp,
+      canScrollDown,
+      handleScroll,
+    } = useScrollEdgeFade<HTMLDivElement>();
 
     const { agent } = useAgent({ agentId: "learnAgent" });
     const { copilotkit } = useCopilotKit();
@@ -294,24 +301,34 @@ export const LearnPageAIChatbot = forwardRef<LearnPageAIChatbotRef, LearnPageAIC
     return (
       <section
         aria-label="Trợ lý AI Học Tập"
-        className="flex flex-col h-full w-full bg-surface-container-lowest text-on-surface rounded-3xl overflow-hidden"
+        className="flex flex-col h-full w-full bg-surface-container-lowest text-on-surface rounded-3xl overflow-hidden relative"
       >
         {/* Drawer Header */}
-        <div className="h-12 px-4 bg-surface-container-lowest flex items-center justify-between shrink-0">
+        <div className="h-12 px-4 bg-surface-container-lowest flex items-center justify-between shrink-0 relative z-20">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
             <span className="font-bold text-xs text-on-surface uppercase tracking-wider">
               Trợ lý AI
             </span>
           </div>
+
+          {/* Top Floating Gradient Fade Overlay */}
+          <div
+            className={`absolute top-full inset-x-0 h-8 bg-gradient-to-b from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none z-20 transition-opacity duration-200 ${
+              canScrollUp ? "opacity-100" : "opacity-0"
+            }`}
+            aria-hidden="true"
+          />
         </div>
 
-        {/* Messages Area */}
+        {/* Messages Area with Dynamic Scroll Edge Fade */}
         <div
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
           role="log"
           aria-live="polite"
           aria-label="Nội dung cuộc trò chuyện với Trợ lý AI"
-          className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-container-lowest"
+          className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-container-lowest scrollbar-none"
         >
           {displayMessages && displayMessages.length > 0 ? (
             <>
@@ -377,8 +394,15 @@ export const LearnPageAIChatbot = forwardRef<LearnPageAIChatbotRef, LearnPageAIC
             sendMessage(inputValue);
           }}
           aria-label="Khung gửi tin nhắn cho Trợ lý AI"
-          className="p-3 bg-surface-container-lowest flex flex-col gap-2 shrink-0"
+          className="p-3 bg-surface-container-lowest flex flex-col gap-2 shrink-0 relative z-20"
         >
+          {/* Bottom Floating Gradient Fade Overlay */}
+          <div
+            className={`absolute bottom-full inset-x-0 h-10 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none z-20 transition-opacity duration-200 ${
+              canScrollDown ? "opacity-100" : "opacity-0"
+            }`}
+            aria-hidden="true"
+          />
           <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-2 pr-1.5 py-1 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors">
             <Input
               type="text"

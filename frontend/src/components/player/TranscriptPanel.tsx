@@ -163,7 +163,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
       {/* Coursera-style Paragraph-Based Transcript Container */}
       <div
         ref={containerRef}
-        className="space-y-4 overflow-y-auto flex-1 pr-1 scrollbar-thin min-h-0"
+        className="space-y-4 overflow-y-auto flex-1 pr-1 scrollbar-none min-h-0"
       >
         {paragraphBlocks.length === 0 ? (
           <p className="text-xs text-on-surface-variant text-center py-6">

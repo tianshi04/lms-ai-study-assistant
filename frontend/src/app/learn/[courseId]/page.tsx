@@ -25,6 +25,7 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { usePaymentAccessQuery } from "@/lib/query_hooks";
+import { useScrollEdgeFade } from "@/hooks/useScrollEdgeFade";
 import { Button } from "@/components/ui/Button";
 import { X, ChevronDown, ChevronUp, CheckCircle2, Lock, Menu, Sparkles } from "lucide-react";
 
@@ -76,6 +77,7 @@ function CoursePlayerContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [collapsedWeeks, setCollapsedWeeks] = useState<Record<string, boolean>>({});
   const prevActiveItemIdRef = useRef<string | null>(null);
+  const leftDrawerScroll = useScrollEdgeFade<HTMLDivElement>();
 
   // Auto-collapse sidebars on small screens (< 1024px) for optimal mobile responsiveness
   useEffect(() => {
@@ -689,13 +691,13 @@ function CoursePlayerContent() {
 
             {/* Expanded Full Drawer Content */}
             <div
-              className={`h-full flex flex-col w-80 xl:w-90 min-w-80 xl:min-w-90 shrink-0 transition-all duration-300 ease-m3-emphasized ${
+              className={`h-full flex flex-col w-80 xl:w-90 min-w-80 xl:min-w-90 shrink-0 transition-all duration-300 ease-m3-emphasized relative ${
                 isSidebarOpen
                   ? "opacity-100 translate-x-0 visible"
                   : "opacity-0 -translate-x-4 invisible pointer-events-none"
               }`}
             >
-              <div className="p-4 pb-2 bg-surface-container-lowest flex items-start justify-between gap-2 shrink-0 relative">
+              <div className="p-4 pb-2 bg-surface-container-lowest flex items-start justify-between gap-2 shrink-0 relative z-20">
                 <h2
                   className="font-bold text-lg text-on-surface leading-snug break-words pr-8"
                   title={course.title}
@@ -713,9 +715,21 @@ function CoursePlayerContent() {
                 >
                   <X className="w-4 h-4" aria-hidden="true" />
                 </Button>
+
+                {/* Top Floating Gradient Fade Overlay (Dynamically follows header height) */}
+                <div
+                  className={`absolute top-full inset-x-0 h-8 bg-gradient-to-b from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none z-20 transition-opacity duration-200 ${
+                    leftDrawerScroll.canScrollUp ? "opacity-100" : "opacity-0"
+                  }`}
+                  aria-hidden="true"
+                />
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 pt-2 space-y-6 scrollbar-thin">
+              <div
+                ref={leftDrawerScroll.scrollRef}
+                onScroll={leftDrawerScroll.handleScroll}
+                className="flex-1 overflow-y-auto p-4 pt-2 space-y-6 scrollbar-none"
+              >
                 {course.weekModules.map((week, weekIndex) => {
                   const isCollapsed = Boolean(collapsedWeeks[week.id]);
                   const unlocked = isWeekUnlocked(weekIndex);
@@ -875,6 +889,14 @@ function CoursePlayerContent() {
                   );
                 })}
               </div>
+
+              {/* Bottom Floating Gradient Fade Overlay */}
+              <div
+                className={`absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none z-10 transition-opacity duration-200 ${
+                  leftDrawerScroll.canScrollDown ? "opacity-100" : "opacity-0"
+                }`}
+                aria-hidden="true"
+              />
             </div>
           </aside>
         )}
@@ -912,7 +934,7 @@ function CoursePlayerContent() {
           <div className="flex-1 flex flex-row overflow-hidden relative min-h-0 gap-3">
             {/* Left/Center Video Media Viewer Canvas - MD3 Floating Surface Card */}
             <div className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden flex flex-col relative min-h-0">
-              <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto scrollbar-thin">
+              <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto scrollbar-none">
                 <VideoPlayer
                   videoRef={videoRef}
                   activeItem={activeItem}
