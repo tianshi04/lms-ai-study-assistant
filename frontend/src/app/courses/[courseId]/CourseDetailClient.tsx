@@ -652,11 +652,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {"Chọn số sao đánh giá:"}
               </label>
-              <div className="flex items-center gap-1.5 justify-center py-2">
+              <div
+                aria-label="Chọn số sao đánh giá"
+                className="flex items-center gap-1.5 justify-center py-2"
+              >
                 {[1, 2, 3, 4, 5].map((star) => (
                   <IconButton
                     key={star}
                     type="button"
+                    aria-pressed={rating === star}
                     variant="standard"
                     size="sm"
                     disabled={!canReview}

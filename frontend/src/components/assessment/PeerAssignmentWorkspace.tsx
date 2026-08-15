@@ -222,26 +222,38 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
-          <Badge variant="primary">PEER REVIEW ASSIGNMENT</Badge>
+          <Badge variant="primary">BÀI TẬP CHẤM CHÉO</Badge>
           <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài tập nộp chấm chéo"}
           </h2>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
+        <div
+          role="tablist"
+          aria-label="Các bước bài tập chấm chéo"
+          className="flex items-center gap-1 bg-muted p-1 rounded-xl"
+        >
           <Button
+            id="peer-tab-submit"
+            role="tab"
+            aria-selected={activeTab === "submit"}
+            aria-controls="peer-tabpanel-submit"
             type="button"
             variant={activeTab === "submit" ? "tonal" : "text"}
             size="sm"
             onClick={() => handleTabClick("submit")}
             className="flex items-center gap-1"
           >
-            <span>1. My Submission</span>
+            <span>1. Bài nộp của tôi</span>
             {hasSubmitted && <Check aria-hidden="true" className="w-3.5 h-3.5 text-success" />}
           </Button>
 
           <Button
+            id="peer-tab-grade"
+            role="tab"
+            aria-selected={activeTab === "grade"}
+            aria-controls="peer-tabpanel-grade"
             type="button"
             variant={activeTab === "grade" ? "tonal" : "text"}
             size="sm"
@@ -249,11 +261,15 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             onClick={() => handleTabClick("grade")}
             className="flex items-center gap-1"
           >
-            <span>2. Grade Peers (3/3)</span>
+            <span>2. Chấm bài bạn học (3/3)</span>
             {!hasSubmitted && <Lock aria-hidden="true" className="w-3 h-3 text-muted-foreground" />}
           </Button>
 
           <Button
+            id="peer-tab-appeal"
+            role="tab"
+            aria-selected={activeTab === "appeal"}
+            aria-controls="peer-tabpanel-appeal"
             type="button"
             variant={activeTab === "appeal" ? "tonal" : "text"}
             size="sm"
@@ -261,7 +277,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             onClick={() => handleTabClick("appeal")}
             className="flex items-center gap-1"
           >
-            <span>3. Grade Appeal</span>
+            <span>3. Khiếu nại điểm</span>
             {!hasSubmitted && <Lock aria-hidden="true" className="w-3 h-3 text-muted-foreground" />}
           </Button>
         </div>
@@ -277,32 +293,40 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
       {/* Tab 1: Submit My Assignment */}
       {activeTab === "submit" && (
-        <div className="space-y-4">
+        <div
+          id="peer-tabpanel-submit"
+          role="tabpanel"
+          aria-labelledby="peer-tab-submit"
+          className="space-y-4"
+        >
           <div className="p-4 rounded-xl bg-info/10 border border-info/20 text-xs text-info space-y-1">
             <h4 className="font-bold flex items-center gap-1.5">
               <Info aria-hidden="true" className="w-4 h-4 text-info" />
-              <span>Submission Requirements:</span>
+              <span>Yêu cầu Nộp bài:</span>
             </h4>
             <p>
-              Submit your GitHub repository URL and project summary. You must submit your assignment
-              first to unlock peer review grading.
+              Nộp đường dẫn kho lưu trữ mã nguồn (Repository URL) và bản tóm tắt nội dung bài làm.
+              Bạn phải nộp bài trước khi mở khóa chức năng chấm điểm bạn học.
             </p>
           </div>
 
           <div className="space-y-3">
             <Input
-              label="Project Repository / Submission URL"
-              type="text"
+              label="Đường dẫn Repository / Bài làm (URL)"
+              type="url"
+              inputMode="url"
               value={submissionUrl}
               onChange={(e) => setSubmissionUrl(e.target.value)}
               className="font-mono text-xs"
+              placeholder="https://github.com/username/project"
             />
 
             <Textarea
-              label="Project Executive Summary & Methodology"
+              label="Bản tóm tắt Dự án & Phương pháp thực hiện"
               value={textContent}
               onChange={(e) => setTextContent(e.target.value)}
               rows={4}
+              placeholder="Mô tả tóm tắt giải pháp, kiến trúc và kết quả đạt được…"
             />
 
             {submitStatus && (
@@ -318,7 +342,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
               disabled={isSubmitting}
               size="sm"
             >
-              {isSubmitting ? "Submitting…" : "Submit Peer Assignment"}
+              {isSubmitting ? "Đang nộp…" : "Nộp Bài tập Chấm chéo"}
               <Send aria-hidden="true" className="w-4 h-4 ml-1.5" />
             </Button>
           </div>
@@ -327,11 +351,16 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
       {/* Tab 2: Grade Peers */}
       {activeTab === "grade" && (
-        <div className="space-y-6">
+        <div
+          id="peer-tabpanel-grade"
+          role="tabpanel"
+          aria-labelledby="peer-tab-grade"
+          className="space-y-6"
+        >
           <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-xs text-warning">
             <p className="font-semibold">
-              Evaluate peer submissions objectively against the Rubric criteria below. Outlier flags
-              are automatically triggered if score variance exceeds 30%.
+              Đánh giá bài nộp của bạn học một cách khách quan dựa theo các tiêu chí Rubric bên
+              dưới. Cảnh báo bất thường sẽ tự động kích hoạt nếu độ lệch điểm vượt quá 30%.
             </p>
           </div>
 
@@ -339,7 +368,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             <Surface key={peer.reviewId} variant="low" shape="2xl" className="p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h4 className="font-bold text-sm text-foreground">
-                  Peer Submission #{pIdx + 1} ({peer.reviewId})
+                  Bài nộp của Bạn học #{pIdx + 1} ({peer.reviewId})
                 </h4>
                 <a
                   href={peer.submissionUrl}
@@ -348,7 +377,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                   className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                 >
                   <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
-                  <span>View Repository</span>
+                  <span>Xem Repository</span>
                 </a>
               </div>
 
@@ -359,7 +388,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
               {/* Rubric Criteria Controls */}
               <div className="space-y-3 pt-2">
                 <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Rubric Criteria Scoring:
+                  Chấm điểm theo Tiêu chí Rubric:
                 </h5>
                 {peer.rubricCriteria.map((crit, cIdx) => (
                   <div
@@ -400,7 +429,12 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
       {/* Tab 3: Grade Appeal */}
       {activeTab === "appeal" && (
-        <div className="space-y-4">
+        <div
+          id="peer-tabpanel-appeal"
+          role="tabpanel"
+          aria-labelledby="peer-tab-appeal"
+          className="space-y-4"
+        >
           <div className="p-4 rounded-xl bg-accent text-accent-foreground border border-border text-xs">
             <h4 className="font-bold mb-1 flex items-center gap-1.5">
               <Scale aria-hidden="true" className="w-4 h-4 text-primary" />

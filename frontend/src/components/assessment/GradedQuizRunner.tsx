@@ -523,26 +523,18 @@ export function GradedQuizRunner({
                   {q.options.map((opt, optIdx) => {
                     const isSelected = currentAnswers.includes(optIdx);
                     return (
-                      <Button
+                      <Checkbox
                         key={optIdx}
-                        type="button"
-                        variant="outlined"
+                        checked={isSelected}
+                        onCheckedChange={() => handleOptionSelect(qIdx, optIdx, true)}
                         disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
-                        onClick={() => handleOptionSelect(qIdx, optIdx, true)}
-                        className={`h-auto justify-start text-left p-3.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 cursor-pointer ${
+                        label={opt.optionText}
+                        containerClassName={`p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                           isSelected
-                            ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
-                            : "bg-card border-border hover:border-primary/50 text-foreground"
+                            ? "bg-primary/10 border-primary shadow-xs"
+                            : "bg-surface-container-lowest border-outline-variant hover:border-outline hover:bg-surface-container-low"
                         }`}
-                      >
-                        <Checkbox
-                          checked={isSelected}
-                          readOnly
-                          className="pointer-events-none"
-                          aria-hidden="true"
-                        />
-                        <span className="flex-1">{opt.optionText}</span>
-                      </Button>
+                      />
                     );
                   })}
                 </div>
