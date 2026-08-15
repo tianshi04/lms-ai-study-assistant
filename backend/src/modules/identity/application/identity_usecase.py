@@ -122,20 +122,38 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
         raise ValueError("GOOGLE_CLIENT_SECRET chưa được cấu hình trên server")
 
     # Exchange code via server-to-server HTTPS
-    async with httpx.AsyncClient(timeout=10.0) as http_client:
-        token_response = await http_client.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "code": code,
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "redirect_uri": "postmessage",
-                "grant_type": "authorization_code",
-            },
-        )
+    candidate_redirect_uris = [
+        "http://localhost:3000/auth/google/callback",
+        "postmessage",
+    ]
+    frontend_url = str(getattr(settings, "FRONTEND_URL", "") or "")
+    if frontend_url:
+        frontend_callback = f"{frontend_url.rstrip('/')}/auth/google/callback"
+        if frontend_callback not in candidate_redirect_uris:
+            candidate_redirect_uris.insert(0, frontend_callback)
 
-    if token_response.status_code != 200:
-        logger.error("Google token exchange failed: %s", token_response.text)
+    token_response = None
+    async with httpx.AsyncClient(timeout=10.0) as http_client:
+        for r_uri in candidate_redirect_uris:
+            resp = await http_client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "redirect_uri": r_uri,
+                    "grant_type": "authorization_code",
+                },
+            )
+            token_response = resp
+            if resp.status_code == 200:
+                break
+
+    if not token_response or token_response.status_code != 200:
+        logger.error(
+            "Google token exchange failed: %s",
+            token_response.text if token_response else "No response",
+        )
         raise ValueError("Đổi Authorization Code thất bại. Vui lòng thử lại.")
 
     token_data = token_response.json()
