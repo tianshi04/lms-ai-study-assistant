@@ -1,28 +1,9 @@
-import base64
-import json
-
 import pytest
 from uuid6 import uuid7
 
 from src.modules.identity.application import IdentityUseCase
 from src.modules.identity.domain import UserRole
 from src.shared.config import settings
-
-
-def _make_google_jwt(sub: str, email: str, name: str) -> str:
-    header = (
-        base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode())
-        .decode()
-        .rstrip("=")
-    )
-    payload = (
-        base64.urlsafe_b64encode(
-            json.dumps({"sub": sub, "email": email, "name": name}).encode()
-        )
-        .decode()
-        .rstrip("=")
-    )
-    return f"{header}.{payload}.signature"
 
 
 @pytest.mark.asyncio

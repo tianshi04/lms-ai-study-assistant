@@ -31,6 +31,7 @@ const refreshInterceptor: Interceptor = (next) => async (req) => {
         isRefreshing = true;
         refreshPromise = refreshSessionAction()
           .then((res) => res.success)
+          .catch(() => false)
           .finally(() => {
             isRefreshing = false;
             refreshPromise = null;

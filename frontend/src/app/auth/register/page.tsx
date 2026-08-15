@@ -358,7 +358,7 @@ export default function RegisterPage() {
                   {([canSubmit]) => (
                     <Button
                       type="submit"
-                      disabled={submitting || !canSubmit || submitting}
+                      disabled={submitting || !canSubmit}
                       variant="filled"
                       className="w-full py-3.5 rounded-xl font-semibold text-sm shadow-lg mt-2"
                     >

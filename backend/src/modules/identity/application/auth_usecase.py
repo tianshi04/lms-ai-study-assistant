@@ -347,8 +347,9 @@ class AuthUseCase:
         if not email or not google_id:
             return None, "", "", "Thông tin Google không hợp lệ."
 
-        if not password or len(password) < 6:
-            return None, "", "", "Mật khẩu phải chứa ít nhất 6 ký tự."
+        val_err = validate_password(password)
+        if val_err:
+            return None, "", "", val_err
 
         try:
             role = UserRole(role_str)
@@ -358,7 +359,7 @@ class AuthUseCase:
         final_name = (
             full_name or payload.get("full_name") or email.split("@")[0]
         ).strip()
-        user_id = f"usr_{uuid7().hex[:12]}"
+        user_id = f"user_{uuid7().hex[:12]}"
         password_hash = hash_password(password)
 
         new_user = User(
@@ -379,6 +380,15 @@ class AuthUseCase:
                 return None, "", "", "Tài khoản với email này đã tồn tại."
 
             saved_user = await repo.save(new_user)
+
+            await EventBus.publish(
+                UserRegisteredDomainEvent(
+                    user_id=user_id,
+                    email=email,
+                    full_name=final_name,
+                )
+            )
+
             access_token = auth.create_access_token(
                 user_id=saved_user.id,
                 email=saved_user.email,
@@ -421,6 +431,14 @@ class AuthUseCase:
                     is_identity_verified=False,
                 )
                 user = await repo.save(user)
+
+                await EventBus.publish(
+                    UserRegisteredDomainEvent(
+                        user_id=user.id,
+                        email=email,
+                        full_name=full_name,
+                    )
+                )
             else:
                 updated = False
                 if not user.google_id:

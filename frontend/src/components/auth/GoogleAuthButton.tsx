@@ -48,6 +48,7 @@ export function GoogleAuthButton({
   useEffect(() => {
     // Listen for mock auth success event (used by automated E2E tests)
     const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
         onSuccess(event.data.idToken, "mock");
       }
