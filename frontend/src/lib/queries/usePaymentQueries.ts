@@ -143,9 +143,7 @@ export function useCreateVNPayPaymentUrlMutation(
       const client = getRpcClient(PaymentService);
       const computedReturnUrl =
         returnUrl ||
-        (typeof window !== "undefined"
-          ? `${window.location.origin}/payment/vnpay-return`
-          : "");
+        (typeof window !== "undefined" ? `${window.location.origin}/payment/vnpay-return` : "");
       const res = await client.createVNPayPaymentUrl({
         targetType,
         targetId,
