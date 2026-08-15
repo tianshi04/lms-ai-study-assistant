@@ -107,11 +107,18 @@ function RadioGroupComponent({
   className,
   children,
   ref,
+  value,
+  onValueChange,
   ...props
 }: RadioGroupProps) {
+  // If consumer provides onValueChange (controlled mode), ensure value is never undefined to prevent React/Base-UI switching warnings
+  const controlledValue = onValueChange !== undefined && value === undefined ? "" : value;
+
   const radioGroupElement = (
     <BaseRadioGroup
       ref={ref}
+      value={controlledValue}
+      onValueChange={onValueChange}
       className={cn(
         "flex",
         orientation === "horizontal" ? "flex-row flex-wrap gap-4" : "flex-col gap-2",

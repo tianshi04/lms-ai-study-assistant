@@ -540,8 +540,12 @@ export function GradedQuizRunner({
                 </div>
               ) : (
                 <RadioGroup
-                  value={currentAnswers[0]?.toString()}
-                  onValueChange={(val) => handleOptionSelect(qIdx, Number(val), false)}
+                  value={currentAnswers[0]?.toString() ?? ""}
+                  onValueChange={(val) => {
+                    if (val !== undefined && val !== null && val !== "") {
+                      handleOptionSelect(qIdx, Number(val), false);
+                    }
+                  }}
                   className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
                 >
                   {q.options.map((opt, optIdx) => (
