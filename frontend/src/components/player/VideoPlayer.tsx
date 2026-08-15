@@ -59,7 +59,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { Badge } from "@/components/ui/Badge";
 import { Surface } from "@/components/ui/Surface";
 
 interface VideoPlayerProps {
@@ -132,7 +131,9 @@ export function VideoPlayer({
           </div>
 
           <div className="max-w-md space-y-2">
-            <Badge variant="warning">CHẾ ĐỘ AUDIT (MIỄN PHÍ)</Badge>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/15 text-warning border border-warning/30">
+              CHẾ ĐỘ AUDIT (MIỄN PHÍ)
+            </span>
             <h3 className="text-xl font-extrabold text-foreground tracking-tight">
               Bài kiểm tra tính điểm đã bị khóa
             </h3>
@@ -166,7 +167,11 @@ export function VideoPlayer({
               <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
                 <FileText className="w-7 h-7 text-success" aria-hidden="true" />
                 <span>{activeItem.title}</span>
-                {isPreviewMode && <Badge variant="warning">{"Xem trước"}</Badge>}
+                {isPreviewMode && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/15 text-warning border border-warning/30">
+                    {"Xem trước"}
+                  </span>
+                )}
               </h2>
             </div>
 

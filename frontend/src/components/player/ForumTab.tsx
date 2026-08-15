@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Pin, ChevronUp, MessageSquare, MessageSquarePlus } from "lucide-react";
+import { Pin, ChevronUp, MessageSquare, MessageSquarePlus, Trash2 } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -15,9 +15,7 @@ import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Dialog } from "@/components/ui/Dialog";
-import { Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
@@ -367,15 +365,15 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {isTarget && (
-                        <Badge variant="primary" className="text-[10px]">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
                           📌 Thảo luận từ thông báo
-                        </Badge>
+                        </span>
                       )}
                       {thread.isStaffPinned && (
-                        <Badge variant="warning" className="gap-1 text-[10px]">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-warning/15 text-warning border border-warning/30">
                           <Pin aria-hidden="true" className="w-3 h-3 text-warning" />
                           Staff Pinned
-                        </Badge>
+                        </span>
                       )}
                       <span className="font-bold text-on-surface">{thread.authorName}</span>
                       <span className="text-[10px] text-on-surface-variant">
