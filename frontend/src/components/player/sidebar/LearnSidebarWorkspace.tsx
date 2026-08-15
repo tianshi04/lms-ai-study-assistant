@@ -70,7 +70,7 @@ export function LearnSidebarWorkspace({
       className={`shrink-0 h-full relative overflow-hidden transition-[width,max-width,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
         !isPanelOpen
           ? "w-16 lg:w-20 opacity-100"
-          : "w-full max-w-[calc(100vw-24px)] lg:w-[412px] xl:w-[452px] opacity-100"
+          : "w-[396px] lg:w-[412px] xl:w-[452px] max-w-[calc(100vw-24px)] opacity-100"
       }`}
     >
       {/* Vertical Navigation Rail (Fixed at Right Edge - Always accessible) */}
