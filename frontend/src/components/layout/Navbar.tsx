@@ -155,9 +155,11 @@ export function Navbar() {
           <IconButton
             type="button"
             variant="standard"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden rounded-xl text-muted-foreground hover:bg-muted"
-            aria-label="Bật/tắt menu điều hướng"
+            aria-label={mobileMenuOpen ? "Đóng menu điều hướng" : "Mở menu điều hướng"}
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" aria-hidden="true" />
@@ -170,7 +172,10 @@ export function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-card/95 backdrop-blur-lg px-4 py-4 space-y-1.5 animate-fade-in">
+        <div
+          id="mobile-navigation-menu"
+          className="md:hidden border-t border-border bg-card/95 backdrop-blur-lg px-4 py-4 space-y-1.5 animate-fade-in"
+        >
           <Link
             href="/courses"
             onClick={() => setMobileMenuOpen(false)}
