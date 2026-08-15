@@ -10,7 +10,7 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
   return (
     <Card
       variant="outlined"
-      className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between"
+      className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between [content-visibility:auto] [contain-intrinsic-size:auto_320px]"
     >
       <div>
         {/* Partner Header */}

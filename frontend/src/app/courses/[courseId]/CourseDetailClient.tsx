@@ -718,7 +718,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 type="submit"
                 variant="filled"
                 size="sm"
-                disabled={submittingReview || !canReview || submittingReview}
+                disabled={submittingReview || !canReview}
                 className="text-xs shadow-sm"
               >
                 {"Gửi đánh giá"}

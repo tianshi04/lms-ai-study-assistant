@@ -513,7 +513,7 @@ function ForumPageContent() {
                   shape="2xl"
                   key={thread.id}
                   id={`thread-${thread.id}`}
-                  className={`p-6 transition-colors ${
+                  className={`p-6 transition-colors [content-visibility:auto] [contain-intrinsic-size:auto_240px] ${
                     isTargetThread
                       ? "border-primary ring-2 ring-primary/50 bg-primary/5"
                       : "hover:border-accent-hover"

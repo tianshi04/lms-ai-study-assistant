@@ -115,7 +115,7 @@ export function VerifyDetailClient({
               <Check aria-hidden="true" className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">{"Chứng chỉ Xác minh Chính thức"}</h3>
+              <div className="font-bold text-sm">{"Chứng chỉ Xác minh Chính thức"}</div>
               <p className="text-xs opacity-90">
                 {
                   "Chứng chỉ này hoàn toàn hợp lệ và được lưu trữ trên hệ thống cơ sở dữ liệu Coursera AI LMS."

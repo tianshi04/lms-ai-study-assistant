@@ -438,11 +438,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                             size="sm"
                             type="button"
                             onClick={() => handleUpdateThread(thread.id)}
-                            disabled={
-                              submittingEditThread ||
-                              !editThreadTitle.trim() ||
-                              submittingEditThread
-                            }
+                            disabled={submittingEditThread || !editThreadTitle.trim()}
                           >
                             {"Lưu thay đổi"}
                           </Button>

@@ -304,7 +304,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
             </Button>
             <Button
               variant="filled"
-              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              className="bg-error text-on-error hover:bg-error/90 active:bg-error/80"
               onClick={executeRemoveCollaborator}
               disabled={removeCollaboratorMutation.isPending}
             >
