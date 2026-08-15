@@ -245,10 +245,9 @@ export function VideoPlayer({
       );
     }
 
-    // 5. Video Item Default Fallback
     return (
       <div className="w-full flex flex-col gap-3 min-h-0">
-        <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-colors duration-m3-short-4 ease-m3-emphasized">
+        <div className="w-full aspect-video max-h-[min(54vh,calc(100vh-320px))] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-colors duration-m3-short-4 ease-m3-emphasized mx-auto">
           <UniversalVideoPlayer
             key={activeItem.id}
             ref={videoRef}
@@ -259,6 +258,7 @@ export function VideoPlayer({
             title={activeItem.title || "Video bài giảng"}
             captionUrl={(activeItem as any).captionUrl}
             onNextLesson={onNextLesson}
+            className="w-full h-full object-contain"
           />
 
           {/* Floating Top Left Control Overlay for Video Preview Mode */}
@@ -418,7 +418,7 @@ export function VideoPlayer({
   return (
     <div className="w-full h-full flex flex-col gap-3 min-h-0">
       {/* Top Lesson Content Area */}
-      <div className="w-full flex-1 min-h-0 overflow-y-auto">{renderLessonContent()}</div>
+      <div className="w-full flex-1 min-h-0">{renderLessonContent()}</div>
 
       {/* Next Lesson Action Button Container - Lifted up 1 layout level to be available on EVERY lesson item */}
       {nextItem && onNextLesson && (

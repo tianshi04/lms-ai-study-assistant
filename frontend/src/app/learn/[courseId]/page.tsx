@@ -911,8 +911,8 @@ function CoursePlayerContent() {
           {/* Center Video & Side Tool Panel Layout */}
           <div className="flex-1 flex flex-row overflow-hidden relative min-h-0 gap-3">
             {/* Left/Center Video Media Viewer Canvas - MD3 Floating Surface Card */}
-            <div className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-m3-short-4 ease-m3-emphasized min-h-0">
-              <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden flex flex-col relative min-h-0">
+              <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto scrollbar-thin">
                 <VideoPlayer
                   videoRef={videoRef}
                   activeItem={activeItem}
