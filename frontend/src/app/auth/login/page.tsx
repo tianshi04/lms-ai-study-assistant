@@ -306,14 +306,13 @@ function LoginFormContent() {
               }}
             </form.Field>
 
-            {/* Submit Button */}
             <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
               {([canSubmit]) => (
                 <Button
                   type="submit"
                   disabled={isAnyLoading || !canSubmit}
-                  size="lg"
-                  className="w-full shadow-lg flex items-center justify-center gap-2"
+                  size="sm"
+                  className="w-full h-11 rounded-xl font-semibold text-sm shadow-md shadow-primary/25 flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>
