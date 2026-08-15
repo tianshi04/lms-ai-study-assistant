@@ -67,13 +67,13 @@ export function LearnSidebarWorkspace({
 
   return (
     <div
-      className={`shrink-0 h-full relative overflow-hidden transition-[width,max-width,opacity,margin] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+      className={`shrink-0 h-full relative overflow-hidden transition-[width,max-width,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
         !isPanelOpen
-          ? "w-0 max-w-0 opacity-0 pointer-events-none -mr-3"
+          ? "w-16 lg:w-20 opacity-100"
           : "w-full max-w-[calc(100vw-24px)] lg:w-[412px] xl:w-[452px] opacity-100"
       }`}
     >
-      {/* Vertical Navigation Rail (Fixed at Right Edge) */}
+      {/* Vertical Navigation Rail (Fixed at Right Edge - Always accessible) */}
       <LearnSidebarRail
         activeTab={activeTab}
         isPanelOpen={isPanelOpen}
@@ -85,8 +85,12 @@ export function LearnSidebarWorkspace({
 
       {/* Morphing White Card - Locked to left: 0, Right Edge Expands to the Right */}
       <aside
-        className={`absolute top-0 bottom-0 left-0 z-10 flex flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden transition-[right,width,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
-          isAiActive ? "right-0" : "right-[76px] lg:right-[92px]"
+        className={`absolute top-0 bottom-0 left-0 z-10 flex flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${
+          !isPanelOpen
+            ? "opacity-0 pointer-events-none invisible right-[76px] lg:right-[92px]"
+            : isAiActive
+              ? "opacity-100 pointer-events-auto visible right-0"
+              : "opacity-100 pointer-events-auto visible right-[76px] lg:right-[92px]"
         }`}
       >
         {/* Floating Morphing Header Action Controls - Glides seamlessly with the right edge */}

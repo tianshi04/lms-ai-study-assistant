@@ -20,7 +20,7 @@ export function LearnSidebarHeader({
   const isAiActive = activeTab === "ai_assistant";
 
   return (
-    <div className="absolute top-2.5 right-4 z-30 flex items-center gap-1">
+    <div className="absolute top-2.5 right-2.5 z-30 flex items-center gap-1">
       {/* New Chat Button: Smoothly appears in AI mode */}
       {isAiSupported && isAiActive && (
         <Button
