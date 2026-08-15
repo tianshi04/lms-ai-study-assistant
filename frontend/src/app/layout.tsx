@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
@@ -57,7 +58,7 @@ export default function RootLayout({
       className={`${beVietnamPro.variable} ${jetbrainsMono.variable} font-sans antialiased`}
     >
       <head>
-        <script src="https://accounts.google.com/gsi/client" async defer />
+        <Script src="https://accounts.google.com/gsi/client" strategy="lazyOnload" />
       </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
         <QueryProvider>

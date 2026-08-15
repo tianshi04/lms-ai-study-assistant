@@ -2,11 +2,46 @@
 
 import { RefObject, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
-import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
-import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
-import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
+
+const GradedQuizRunner = dynamic(
+  () => import("@/components/assessment/GradedQuizRunner").then((m) => m.GradedQuizRunner),
+  {
+    loading: () => (
+      <div className="p-8 text-center text-muted-foreground animate-pulse text-sm">
+        Đang tải bài trắc nghiệm…
+      </div>
+    ),
+  },
+);
+
+const AutoGradedLabRunner = dynamic(
+  () => import("@/components/assessment/AutoGradedLabRunner").then((m) => m.AutoGradedLabRunner),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-8 text-center text-muted-foreground animate-pulse text-sm">
+        Đang tải môi trường thực hành…
+      </div>
+    ),
+  },
+);
+
+const PeerAssignmentWorkspace = dynamic(
+  () =>
+    import("@/components/assessment/PeerAssignmentWorkspace").then(
+      (m) => m.PeerAssignmentWorkspace,
+    ),
+  {
+    loading: () => (
+      <div className="p-8 text-center text-muted-foreground animate-pulse text-sm">
+        Đang tải không gian nộp bài…
+      </div>
+    ),
+  },
+);
 import {
   UniversalVideoPlayer,
   type UniversalVideoRef,
