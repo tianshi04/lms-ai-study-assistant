@@ -589,7 +589,10 @@ function CoursePlayerContent() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-background text-muted-foreground flex items-center justify-center">
+      <div
+        data-page="learn"
+        className="min-h-screen bg-surface-container-low text-muted-foreground flex items-center justify-center"
+      >
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <span>Đang mở Trình phát bài học…</span>
@@ -599,7 +602,10 @@ function CoursePlayerContent() {
   }
 
   return (
-    <div className="h-screen h-dvh bg-surface-container-low text-on-surface flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized">
+    <div
+      data-page="learn"
+      className="h-screen h-dvh bg-surface-container-low text-on-surface flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized"
+    >
       {/* Top Player Navbar - Seamless Borderless Header */}
       <header className="h-14 bg-surface-container-low px-4 sm:px-5 flex items-center justify-between flex-shrink-0 relative z-sticky">
         <div className="flex items-center gap-4 min-w-0">
@@ -857,7 +863,10 @@ export default function CoursePlayerPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
+        <div
+          data-page="learn"
+          className="min-h-screen bg-surface-container-low flex items-center justify-center text-muted-foreground"
+        >
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             <span aria-live="polite">Đang mở Trình phát bài học…</span>

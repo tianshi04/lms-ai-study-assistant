@@ -406,6 +406,12 @@ body {
     color var(--duration-m3-short-4) var(--ease-m3-emphasized);
 }
 
+/* Match scrollbar gutter and viewport background on Learn / Course Player page */
+html:has([data-page="learn"]),
+body:has([data-page="learn"]) {
+  background-color: var(--surface-container-low);
+}
+
 h1,
 h2,
 h3,
