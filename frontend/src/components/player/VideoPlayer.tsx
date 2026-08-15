@@ -223,7 +223,7 @@ export function VideoPlayer({
     // 3. Auto-Graded Lab Item
     if (activeItem.type === 5) {
       return (
-        <div className="w-full p-2 sm:p-4 text-on-surface">
+        <div className="w-full flex-1 flex flex-col min-h-0 p-1 sm:p-2 text-on-surface">
           <AutoGradedLabRunner
             key={activeItem.id}
             itemId={activeItem.id}
