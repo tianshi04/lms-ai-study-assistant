@@ -337,6 +337,8 @@ export function LearningItemFormModal({
                 <Input
                   label="Thời lượng (phút)"
                   type="number"
+                  inputMode="numeric"
+                  enterKeyHint="next"
                   min={1}
                   value={itemMinutes}
                   onChange={(e) => setItemMinutes(parseInt(e.target.value) || 1)}
@@ -750,6 +752,8 @@ Output: 0.0
                         <Input
                           label="Thời gian (phút)"
                           type="number"
+                          inputMode="numeric"
+                          enterKeyHint="next"
                           value={quizTimeLimit}
                           onChange={(e) => setQuizTimeLimit(e.target.value)}
                           className="w-full text-xs font-semibold"
@@ -759,6 +763,8 @@ Output: 0.0
                         <Input
                           label="Điểm đạt (%)"
                           type="number"
+                          inputMode="numeric"
+                          enterKeyHint="next"
                           value={quizPassingThreshold}
                           onChange={(e) => setQuizPassingThreshold(e.target.value)}
                           className="w-full text-xs font-semibold"
@@ -768,6 +774,8 @@ Output: 0.0
                         <Input
                           label="Số lần làm tối đa"
                           type="number"
+                          inputMode="numeric"
+                          enterKeyHint="next"
                           value={quizMaxAttempts}
                           onChange={(e) => setQuizMaxAttempts(e.target.value)}
                           className="w-full text-xs font-semibold"
@@ -777,6 +785,8 @@ Output: 0.0
                         <Input
                           label="Thời gian chờ (Giờ)"
                           type="number"
+                          inputMode="numeric"
+                          enterKeyHint="next"
                           value={quizCooldownHours}
                           onChange={(e) => setQuizCooldownHours(e.target.value)}
                           className="w-full text-xs font-semibold"
@@ -798,6 +808,8 @@ Output: 0.0
                         <Input
                           label="Số câu Dễ"
                           type="number"
+                          inputMode="numeric"
+                          enterKeyHint="next"
                           value={quizEasyCount}
                           onChange={(e) => setQuizEasyCount(e.target.value)}
                           className="w-full text-xs font-semibold"
@@ -807,6 +819,8 @@ Output: 0.0
                         <Input
                           label="Số câu Trung bình"
                           type="number"
+                          inputMode="numeric"
+                          enterKeyHint="next"
                           value={quizMediumCount}
                           onChange={(e) => setQuizMediumCount(e.target.value)}
                           className="w-full text-xs font-semibold"
@@ -816,6 +830,8 @@ Output: 0.0
                         <Input
                           label="Số câu Khó"
                           type="number"
+                          inputMode="numeric"
+                          enterKeyHint="done"
                           value={quizHardCount}
                           onChange={(e) => setQuizHardCount(e.target.value)}
                           className="w-full text-xs font-semibold"

@@ -80,9 +80,12 @@ export function CourseCatalogClient({
               aria-hidden="true"
             />
             <Input
-              type="text"
+              type="search"
               name="search"
+              inputMode="search"
+              enterKeyHint="search"
               autoComplete="off"
+              spellCheck={false}
               aria-label="Tìm kiếm khóa học"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

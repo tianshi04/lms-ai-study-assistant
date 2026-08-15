@@ -229,9 +229,13 @@ export function AutoGradedLabRunner({
             <span>UTF-8</span>
           </div>
           <Textarea
+            aria-label="Trình soạn thảo mã nguồn Lab"
             value={sourceCode}
             onChange={(e) => setSourceCode(e.target.value)}
             rows={18}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
             spellCheck={false}
             className="flex-1 font-mono text-[13px] leading-relaxed text-foreground bg-[var(--color-surface-container-lowest)] resize-none rounded-none border-0 focus:ring-0 p-4"
             style={{ tabSize: 4 }}

@@ -169,6 +169,10 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                     <Input
                       id="collaborator-email"
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      enterKeyHint="send"
+                      spellCheck={false}
                       placeholder="nhap.email@domain.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}

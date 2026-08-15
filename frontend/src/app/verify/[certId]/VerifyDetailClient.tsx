@@ -88,7 +88,10 @@ export function VerifyDetailClient({
         <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-end gap-3">
           <div className="flex-1 w-full">
             <Input
-              type="text"
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
+              aria-label="Nhập mã chứng chỉ"
               value={searchCertId}
               onChange={(e) => setSearchCertId(e.target.value)}
               placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"}
