@@ -201,6 +201,7 @@ export function VideoPlayer({
       return (
         <div className="w-full p-4 sm:p-6 bg-surface-container-low rounded-2xl">
           <GradedQuizRunner
+            key={activeItem.id}
             itemId={activeItem.id}
             title={activeItem.title}
             userId={userId}
@@ -216,6 +217,7 @@ export function VideoPlayer({
       return (
         <div className="w-full p-4 sm:p-6 bg-surface-container-lowest rounded-2xl">
           <AutoGradedLabRunner
+            key={activeItem.id}
             itemId={activeItem.id}
             title={activeItem.title}
             starterCode={activeItem.starterCode}
@@ -234,6 +236,7 @@ export function VideoPlayer({
       return (
         <div className="w-full p-4 sm:p-6 bg-surface-container-lowest text-on-surface rounded-2xl">
           <PeerAssignmentWorkspace
+            key={activeItem.id}
             itemId={activeItem.id}
             title={activeItem.title}
             userId={userId}

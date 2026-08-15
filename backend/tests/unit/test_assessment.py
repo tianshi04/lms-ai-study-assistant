@@ -368,12 +368,12 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     with pytest.raises(ValueError, match="quay lại sau"):
         await usecase.start_graded_quiz_session(user_fail, item_id)
 
-    # Verify starting new session for user_id who passed still allows remaining attempts (force_new=True)
+    # Verify starting new session for user_id who passed still preserves remaining attempts (force_new=True does not consume an attempt before submit)
     res_pass_new = await usecase.start_graded_quiz_session(
         user_id, item_id, force_new=True
     )
     assert len(res_pass_new["questions"]) > 0
-    assert res_pass_new["attempts_left"] == 1
+    assert res_pass_new["attempts_left"] == 2
 
 
 @pytest.mark.asyncio

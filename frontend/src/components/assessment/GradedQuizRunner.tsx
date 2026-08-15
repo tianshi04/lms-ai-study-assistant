@@ -97,6 +97,9 @@ export function GradedQuizRunner({
     async function loadQuiz() {
       setLoading(true);
       setError(null);
+      setSubmitError(null);
+      setQuizResult(null);
+      setSelectedAnswers([]);
       try {
         const client = getRpcClient(AssessmentService);
         const res = await client.startGradedQuizSession({
@@ -117,6 +120,8 @@ export function GradedQuizRunner({
 
           if ((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft) {
             setCooldownCountdown((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft!);
+          } else {
+            setCooldownCountdown(0);
           }
 
           // Restore previous result state if available
@@ -128,6 +133,8 @@ export function GradedQuizRunner({
               cooldownSecondsLeft: res.previousResult.cooldownSecondsLeft,
               explanations: res.previousResult.answerExplanations,
             });
+          } else {
+            setQuizResult(null);
           }
         }
       } catch (err: unknown) {

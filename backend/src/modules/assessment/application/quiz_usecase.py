@@ -262,6 +262,10 @@ class QuizUseCase(BaseAssessmentUseCase):
                 }
 
             if attempts_left <= 0 and not preview:
+                if cooldown and cooldown.is_in_cooldown(now):
+                    can_att, reason, _ = cooldown.can_attempt(now)
+                    if not can_att:
+                        raise ValueError(reason)
                 cooldown_hours = (
                     matrix.cooldown_hours if matrix else QUIZ_COOLDOWN_HOURS
                 )
@@ -275,28 +279,9 @@ class QuizUseCase(BaseAssessmentUseCase):
                     cooldown_until=cooldown_until_iso,
                 )
                 await repo.save_quiz_cooldown(new_cooldown)
-                raise ValueError("Bạn đã hết lượt làm bài thi này.")
-
-            # Deduct attempt upon starting a new session (whether pass or fail, reload or navigate away)
-            if not preview:
-                attempts_count += 1
-                attempts_left = max(0, max_attempts - attempts_count)
-                cooldown_until_iso = None
-                if attempts_count >= max_attempts:
-                    cooldown_hours = (
-                        matrix.cooldown_hours if matrix else QUIZ_COOLDOWN_HOURS
-                    )
-                    cooldown_until_dt = now + timedelta(hours=cooldown_hours)
-                    cooldown_until_iso = cooldown_until_dt.isoformat()
-
-                new_cooldown = QuizCooldown(
-                    user_id=user_id,
-                    item_id=item_id,
-                    failed_attempts_count=attempts_count,
-                    last_attempt_at=now.isoformat(),
-                    cooldown_until=cooldown_until_iso,
+                raise ValueError(
+                    "Bạn đã hết lượt làm bài thi này. Vui lòng quay lại sau."
                 )
-                await repo.save_quiz_cooldown(new_cooldown)
 
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
             seed_val = (
