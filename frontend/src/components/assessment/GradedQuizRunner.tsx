@@ -749,16 +749,8 @@ export function GradedQuizRunner({
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-surface-container-high text-on-surface-variant border-outline-variant">
             Lượt làm: Không giới hạn
           </span>
-          <span className="text-xs text-muted-foreground tabular-nums flex items-center gap-1">
-            <span>Điểm đạt: {passingThreshold}%</span>
-            <span>•</span>
-            <span
-              className={`font-mono font-semibold ${
-                remainingSeconds < 120 ? "text-destructive font-bold" : ""
-              }`}
-            >
-              Thời gian còn lại: {formatLiveTimer(remainingSeconds)}
-            </span>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            Điểm đạt: {passingThreshold}%
           </span>
         </div>
 
