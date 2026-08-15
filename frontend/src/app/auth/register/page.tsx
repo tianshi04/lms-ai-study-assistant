@@ -244,6 +244,8 @@ export default function RegisterPage() {
                         id={field.name}
                         name={field.name}
                         type="text"
+                        autoComplete="name"
+                        autoCapitalize="words"
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}

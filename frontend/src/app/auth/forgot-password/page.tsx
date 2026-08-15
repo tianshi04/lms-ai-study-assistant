@@ -179,6 +179,7 @@ function ForgotPasswordContent() {
                 id="newPassword"
                 label="Mật khẩu mới"
                 type="password"
+                autoComplete="new-password"
                 placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -191,6 +192,7 @@ function ForgotPasswordContent() {
                 id="confirmPassword"
                 label="Xác nhận mật khẩu mới"
                 type="password"
+                autoComplete="new-password"
                 placeholder="Nhập lại mật khẩu mới để xác nhận"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
