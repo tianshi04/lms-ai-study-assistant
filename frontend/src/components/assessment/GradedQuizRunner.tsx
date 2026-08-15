@@ -603,6 +603,89 @@ export function GradedQuizRunner({
         </div>
       )}
 
+      {/* Quiz Results Panel (Prominently rendered at TOP when previous results exist) */}
+      {quizResult && (
+        <div
+          className={`p-5 sm:p-6 rounded-2xl border ${
+            quizResult.passed
+              ? "bg-success/10 border-success/30 text-success"
+              : "bg-destructive/10 border-destructive/30 text-destructive"
+          } space-y-4 shadow-xs`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center bg-current/10 shrink-0">
+                {quizResult.passed ? (
+                  <Check aria-hidden="true" className="w-5 h-5 text-success" />
+                ) : (
+                  <X aria-hidden="true" className="w-5 h-5 text-destructive" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold">
+                  {quizResult.passed
+                    ? "Chúc mừng! Bạn đã vượt qua bài thi"
+                    : "Kết quả lần làm trước: Chưa đạt"}
+                </h3>
+                <p className="text-xs opacity-85">
+                  Điểm số: {quizResult.scorePercent}% (Yêu cầu: {passingThreshold}%){" "}
+                  {isPreviewMode
+                    ? "(Xem trước)"
+                    : `• Lượt làm bài còn lại: ${quizResult.attemptsLeft}/${maxAttempts}`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 self-end sm:self-center">
+              <span className="text-2xl sm:text-3xl font-extrabold tabular-nums">
+                {quizResult.scorePercent}%
+              </span>
+              {!isPreviewMode && cooldownCountdown === 0 && attemptsLeft > 0 && (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="sm"
+                  onClick={handleRetryQuiz}
+                  className="rounded-full shadow-xs text-xs font-semibold bg-surface-container-lowest"
+                >
+                  <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
+                  {"Làm lại bài thi"}
+                </Button>
+              )}
+              {isPreviewMode && (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="sm"
+                  onClick={handleResetPreview}
+                  className="rounded-full shadow-xs text-xs font-semibold bg-surface-container-lowest"
+                >
+                  <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
+                  {"Làm lại bản nháp"}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {quizResult.explanations.length > 0 && (
+            <div className="pt-3 border-t border-current/10 space-y-1.5 text-xs">
+              <h5 className="font-bold uppercase tracking-wider text-[10px] opacity-75">
+                Phản hồi & Giải thích đáp án:
+              </h5>
+              <ul className="list-disc list-inside space-y-1 opacity-90 leading-relaxed">
+                {quizResult.explanations.map((exp, idx) => {
+                  const formattedExp = exp
+                    .replace(/Đã đạt/g, "Đúng")
+                    .replace(/Chưa đạt/g, "Sai")
+                    .replace(/\s*\(\d+(\.\d+)?%\)\.?,?/g, "");
+                  return <li key={idx}>{formattedExp}</li>;
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Quiz Questions List */}
       <div className="space-y-6">
         {questions.map((q, qIdx) => {
@@ -687,60 +770,6 @@ export function GradedQuizRunner({
         })}
       </div>
 
-      {/* Quiz Results Panel */}
-      {quizResult && (
-        <div
-          className={`p-6 rounded-2xl border ${
-            quizResult.passed
-              ? "bg-success/10 border-success/30 text-success"
-              : "bg-destructive/10 border-destructive/30 text-destructive"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-current/10">
-                {quizResult.passed ? (
-                  <Check aria-hidden="true" className="w-5 h-5 text-success" />
-                ) : (
-                  <X aria-hidden="true" className="w-5 h-5 text-destructive" />
-                )}
-              </div>
-              <div>
-                <h3 className="text-lg font-bold">
-                  {quizResult.passed
-                    ? "Chúc mừng! Bạn đã vượt qua bài thi"
-                    : "Kết quả lần làm trước: Chưa đạt"}
-                </h3>
-                <p className="text-xs opacity-80">
-                  Điểm số: {quizResult.scorePercent}% (Yêu cầu: {passingThreshold}%){" "}
-                  {isPreviewMode
-                    ? "(Xem trước)"
-                    : `• Lượt làm bài còn lại: ${quizResult.attemptsLeft}/${maxAttempts}`}
-                </p>
-              </div>
-            </div>
-            <span className="text-2xl font-extrabold">{quizResult.scorePercent}%</span>
-          </div>
-
-          {quizResult.explanations.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-current/10 space-y-1 text-xs">
-              <h5 className="font-bold uppercase tracking-wider text-[10px] opacity-75">
-                Phản hồi & Giải thích đáp án:
-              </h5>
-              <ul className="list-disc list-inside space-y-1">
-                {quizResult.explanations.map((exp, idx) => {
-                  const formattedExp = exp
-                    .replace(/Đã đạt/g, "Đúng")
-                    .replace(/Chưa đạt/g, "Sai")
-                    .replace(/\s*\(\d+(\.\d+)?%\)\.?,?/g, "");
-                  return <li key={idx}>{formattedExp}</li>;
-                })}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Submission Error Banner */}
       {submitError && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-semibold flex items-center justify-between shadow-xs">
@@ -767,18 +796,6 @@ export function GradedQuizRunner({
         </p>
 
         <div className="flex items-center gap-3">
-          {isPreviewMode && quizResult && (
-            <Button type="button" variant="outlined" size="sm" onClick={handleResetPreview}>
-              <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
-              Làm lại bài thi (Reset)
-            </Button>
-          )}
-          {!isPreviewMode && quizResult && cooldownCountdown === 0 && attemptsLeft > 0 && (
-            <Button type="button" variant="outlined" size="sm" onClick={handleRetryQuiz}>
-              <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
-              Làm lại bài thi (Cải thiện điểm)
-            </Button>
-          )}
           {!quizResult && (
             <Button
               type="button"
