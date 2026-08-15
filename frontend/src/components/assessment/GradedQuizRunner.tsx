@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
@@ -86,6 +86,11 @@ export function GradedQuizRunner({
 
   const [cooldownCountdown, setCooldownCountdown] = useState<number>(0);
 
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   // Fetch quiz session questions on load
   useEffect(() => {
     let ignore = false;
@@ -151,7 +156,7 @@ export function GradedQuizRunner({
     return () => {
       ignore = true;
     };
-  }, [itemId, isPreviewMode, onComplete]);
+  }, [itemId, isPreviewMode]);
 
   useEffect(() => {
     if (cooldownCountdown <= 0) return;
@@ -296,8 +301,8 @@ export function GradedQuizRunner({
           setCooldownCountdown(res.result.cooldownSecondsLeft);
         }
 
-        if (res.result.passed && onComplete) {
-          onComplete();
+        if (res.result.passed && onCompleteRef.current) {
+          onCompleteRef.current();
         }
       }
     } catch (err: unknown) {

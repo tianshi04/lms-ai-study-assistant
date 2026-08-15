@@ -54,7 +54,6 @@ import {
   Sparkles,
   ChevronUp,
   ChevronDown,
-  ChevronRight,
   Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -80,7 +79,6 @@ interface VideoPlayerProps {
   isPreviewMode?: boolean;
   isPaidAccess?: boolean;
   onSelectAiPrompt?: (promptText: string) => void;
-  nextItem?: LearningItem | null;
   onNextLesson?: () => void;
 }
 
@@ -102,7 +100,6 @@ export function VideoPlayer({
   isPreviewMode = false,
   isPaidAccess = true,
   onSelectAiPrompt,
-  nextItem,
   onNextLesson,
 }: VideoPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -416,25 +413,8 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="w-full h-full flex flex-col gap-3 min-h-0">
-      {/* Top Lesson Content Area */}
+    <div className="w-full h-full flex flex-col min-h-0">
       <div className="w-full flex-1 min-h-0">{renderLessonContent()}</div>
-
-      {/* Next Lesson Action Button Container - Lifted up 1 layout level to be available on EVERY lesson item */}
-      {nextItem && onNextLesson && (
-        <div className="w-full flex items-center justify-end pt-1 pb-1 shrink-0">
-          <Button
-            type="button"
-            variant="text"
-            onClick={onNextLesson}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-colors shadow-2xs hover:scale-102 active:scale-98 shrink-0"
-            title="Chuyển sang bài học tiếp theo"
-          >
-            <span>{"Bài tiếp theo"}</span>
-            <ChevronRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
