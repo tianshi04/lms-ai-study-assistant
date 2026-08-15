@@ -1,6 +1,7 @@
-import uuid
 from collections.abc import Callable
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.shared.infrastructure.logging import reset_request_id, set_request_id
 
@@ -27,7 +28,7 @@ class RequestIDMiddleware:
         if request_id_bytes:
             request_id = request_id_bytes.decode("utf-8", errors="replace")
         else:
-            request_id = str(uuid.uuid4())
+            request_id = str(uuid7())
 
         # 2. Set request_id in contextvars
         token = set_request_id(request_id)

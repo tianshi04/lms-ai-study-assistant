@@ -1,11 +1,11 @@
 import inspect
-import uuid
 from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import MagicMock
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid6 import uuid7
 
 from src.modules.identity.domain import (
     ApplicationStatus,
@@ -401,7 +401,7 @@ class OrganizationRepository(IOrganizationRepository):
                 status=existing.status,
             )
 
-        member_id = f"member_{uuid.uuid4().hex[:12]}"
+        member_id = f"member_{uuid7().hex[:12]}"
         model = OrganizationMemberModel(
             id=member_id,
             user_id=user_id,
@@ -465,7 +465,7 @@ class OrganizationRepository(IOrganizationRepository):
         action: str,
         details: str = "",
     ) -> dict:
-        log_id = f"audit_{uuid.uuid4().hex[:12]}"
+        log_id = f"audit_{uuid7().hex[:12]}"
         now_str = datetime.now(UTC).isoformat()
         log_model = OrganizationAuditLogModel(
             id=log_id,

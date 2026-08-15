@@ -67,16 +67,16 @@ async def test_apply_financial_aid_existing(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.certificate.application.certificate_usecase.uuid")
+@patch("src.modules.certificate.application.certificate_usecase.uuid7")
 @patch("src.modules.certificate.application.certificate_usecase.CertificateRepository")
 @patch("src.modules.certificate.application.certificate_usecase.async_session_scope")
 async def test_apply_financial_aid_new(
-    mock_session_scope, mock_repo_class, mock_uuid, usecase
+    mock_session_scope, mock_repo_class, mock_uuid7, usecase
 ):
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
 
-    mock_uuid.uuid4.return_value.hex = "1234567890123456"
+    mock_uuid7.return_value.hex = "1234567890123456"
 
     mock_repo = mock_repo_class.return_value
     mock_repo.get_financial_aid = AsyncMock(return_value=None)

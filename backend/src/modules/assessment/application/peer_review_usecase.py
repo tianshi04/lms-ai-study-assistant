@@ -1,7 +1,8 @@
 import logging
-import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
     OUTLIER_SCORE_DELTA_THRESHOLD,
@@ -28,19 +29,26 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
     async def submit_peer_assignment(
         self, user_id: str, item_id: str, submission_url: str, text_content: str
     ) -> tuple[str, str]:
-        sub_id = f"peer-{uuid.uuid4().hex[:8]}"
         now_iso = datetime.now(UTC).isoformat()
-        submission = PeerAssignmentSubmission(
-            id=sub_id,
-            user_id=user_id,
-            item_id=item_id,
-            submission_url=submission_url,
-            text_content=text_content,
-            created_at=now_iso,
-        )
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
-            await repo.save_peer_submission(submission)
+            existing = await repo.get_user_peer_submission(user_id, item_id)
+            if existing:
+                existing.submission_url = submission_url
+                existing.text_content = text_content
+                await repo.save_peer_submission(existing)
+                sub_id = existing.id
+            else:
+                sub_id = f"peer-{uuid7().hex[:8]}"
+                submission = PeerAssignmentSubmission(
+                    id=sub_id,
+                    user_id=user_id,
+                    item_id=item_id,
+                    submission_url=submission_url,
+                    text_content=text_content,
+                    created_at=now_iso,
+                )
+                await repo.save_peer_submission(submission)
 
         logger.info("User %s submitted peer assignment for item %s", user_id, item_id)
         return (
@@ -233,7 +241,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 if review_id.startswith("rev-")
                 else review_id
             )
-            appeal_id = f"report-{uuid.uuid4().hex[:8]}"
+            appeal_id = f"report-{uuid7().hex[:8]}"
             now_iso = datetime.now(UTC).isoformat()
             appeal = GradeAppeal(
                 id=appeal_id,

@@ -1,10 +1,10 @@
-import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
     AssessmentRepositoryInterface,
@@ -246,6 +246,14 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def save_peer_submission(self, submission: PeerAssignmentSubmission) -> None:
         model = await self.session.get(PeerAssignmentSubmissionModel, submission.id)
+        if not model:
+            stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.user_id == submission.user_id,
+                PeerAssignmentSubmissionModel.item_id == submission.item_id,
+            )
+            res = await self.session.execute(stmt)
+            model = res.scalar_one_or_none()
+
         if model:
             model.submission_url = submission.submission_url
             model.text_content = submission.text_content
@@ -475,7 +483,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         self, course_id: str, title: str, category: str, description: str
     ) -> QuestionBank:
         now_str = datetime.now(UTC).isoformat()
-        bank_id = f"qbank-{uuid.uuid4().hex[:8]}"
+        bank_id = f"qbank-{uuid7().hex[:8]}"
         model = QuestionBankModel(
             id=bank_id,
             course_id=course_id,
@@ -556,7 +564,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         options_data: list[dict],
     ) -> Question:
         now_str = datetime.now(UTC).isoformat()
-        q_id = f"q-{uuid.uuid4().hex[:8]}"
+        q_id = f"q-{uuid7().hex[:8]}"
         q_model = QuestionModel(
             id=q_id,
             bank_id=bank_id,
@@ -571,7 +579,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
         domain_options = []
         for idx, opt in enumerate(options_data):
-            opt_id = f"opt-{uuid.uuid4().hex[:8]}"
+            opt_id = f"opt-{uuid7().hex[:8]}"
             opt_model = QuestionOptionModel(
                 id=opt_id,
                 question_id=q_id,
@@ -640,7 +648,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
         domain_options = []
         for idx, opt in enumerate(options_data):
-            opt_id = f"opt-{uuid.uuid4().hex[:8]}"
+            opt_id = f"opt-{uuid7().hex[:8]}"
             opt_model = QuestionOptionModel(
                 id=opt_id,
                 question_id=question_id,

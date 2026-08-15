@@ -1,8 +1,9 @@
 import logging
-import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.identity.domain import (
     DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
@@ -177,7 +178,7 @@ class EnterpriseLicenseUseCase:
     ) -> dict:
         self._verify_admin(current_user)
         async with database.async_session_scope() as session:
-            clean_key = seat_key.strip() or f"KEY-{uuid.uuid4().hex[:8].upper()}"
+            clean_key = seat_key.strip() or f"KEY-{uuid7().hex[:8].upper()}"
             clean_scope = (
                 ScopeType(scope_type)
                 if scope_type in ScopeType._value2member_map_

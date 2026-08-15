@@ -1,10 +1,9 @@
-"""Domain entities and value objects for Payment module (BR_ACCESS_004)."""
-
-import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
+
+from uuid6 import uuid7
 
 
 def safe_enum_parse[E: Enum](enum_cls: type[E], value: Any, default: E) -> E:
@@ -97,7 +96,7 @@ class CoursePurchase:
     ) -> "CoursePurchase":
         now = datetime.now(UTC).isoformat()
         return cls(
-            id=str(uuid.uuid4()),
+            id=str(uuid7()),
             user_id=user_id,
             course_id=course_id,
             amount=amount,

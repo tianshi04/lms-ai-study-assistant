@@ -1,6 +1,7 @@
 import logging
-import uuid
 from datetime import UTC, datetime
+
+from uuid6 import uuid7
 
 from src.modules.assessment.domain import GradeAppeal
 from src.shared.infrastructure.database import async_session_scope
@@ -16,7 +17,7 @@ class GradeAppealUseCase(BaseAssessmentUseCase):
     async def submit_grade_appeal(
         self, user_id: str, submission_id: str, appeal_reason: str
     ) -> tuple[bool, str]:
-        appeal_id = f"appeal-{uuid.uuid4().hex[:8]}"
+        appeal_id = f"appeal-{uuid7().hex[:8]}"
         now_iso = datetime.now(UTC).isoformat()
         appeal = GradeAppeal(
             id=appeal_id,

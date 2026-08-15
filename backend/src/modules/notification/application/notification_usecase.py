@@ -1,6 +1,7 @@
-import uuid
 from collections.abc import Sequence
 from datetime import UTC, datetime
+
+from uuid6 import uuid7
 
 from src.modules.notification.domain import (
     DEFAULT_PAGE_SIZE,
@@ -75,7 +76,7 @@ class NotificationUseCase:
         actor_avatar_url: str,
     ) -> Notification:
         notif = Notification(
-            id=f"notif_{uuid.uuid4().hex[:12]}",
+            id=f"notif_{uuid7().hex[:12]}",
             recipient_id=recipient_id,
             category=category,
             title=title,
@@ -134,7 +135,7 @@ class NotificationUseCase:
         now = datetime.now(UTC)
         notifs = [
             Notification(
-                id=f"notif_{uuid.uuid4().hex[:12]}",
+                id=f"notif_{uuid7().hex[:12]}",
                 recipient_id=rid,
                 category=category,
                 title=title,

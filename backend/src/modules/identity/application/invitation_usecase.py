@@ -1,8 +1,9 @@
 import logging
-import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.identity.domain import (
@@ -214,13 +215,13 @@ class InvitationUseCase:
                     f"Đã có một lời mời đang chờ phản hồi (PENDING) gửi tới '{invitee_email_clean}' cho Tổ chức này."
                 )
 
-            raw_token = f"inv_tok_{uuid.uuid4().hex}"
+            raw_token = f"inv_tok_{uuid7().hex}"
             token_hash = hash_invitation_token(raw_token)
             now_dt = datetime.now(UTC)
             expires_dt = now_dt + timedelta(days=DEFAULT_INVITATION_EXPIRATION_DAYS)
 
             inv = Invitation(
-                id=f"inv_{uuid.uuid4().hex[:12]}",
+                id=f"inv_{uuid7().hex[:12]}",
                 type=type_enum,
                 status=InvitationStatus.PENDING,
                 inviter_id=inviter_id,

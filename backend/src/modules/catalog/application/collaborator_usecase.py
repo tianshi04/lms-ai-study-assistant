@@ -1,8 +1,9 @@
 import logging
-import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.catalog.domain import Course, ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
@@ -102,7 +103,7 @@ class CourseCollaboratorUseCase:
 
             return {
                 "collaborator": {
-                    "collaborator_id": f"collab_{uuid.uuid4().hex[:12]}",
+                    "collaborator_id": f"collab_{uuid7().hex[:12]}",
                     "user_id": target_user.id,
                     "email": target_user.email,
                     "full_name": target_user.full_name,

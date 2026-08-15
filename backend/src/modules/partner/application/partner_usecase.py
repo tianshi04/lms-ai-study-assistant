@@ -1,7 +1,8 @@
 import logging
-import uuid
 from collections.abc import Callable
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.identity.domain import Organization
 from src.modules.partner.domain import IPartnerRepository, Partner
@@ -59,7 +60,7 @@ class PartnerUseCase:
         current_user: CurrentUser | None = None,
     ) -> Partner:
         self._verify_admin(current_user)
-        partner_id = f"partner-{uuid.uuid4().hex[:8]}"
+        partner_id = f"partner-{uuid7().hex[:8]}"
 
         async with async_session_scope() as session:
             repo = self._get_repo(session)

@@ -1,11 +1,10 @@
-"""Application Use Cases for Payment module."""
-
 import json
 import logging
-import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.payment.domain import (
@@ -152,7 +151,7 @@ class PaymentUseCase:
             if not existing_sub:
                 existing_sub = await repo.get_user_subscription(user_id)
 
-            sub_id = existing_sub.id if existing_sub else str(uuid.uuid4())
+            sub_id = existing_sub.id if existing_sub else str(uuid7())
 
             if existing_sub and existing_sub.is_currently_active():
                 try:
@@ -184,9 +183,9 @@ class PaymentUseCase:
 
             # Record completed order for audit & transaction history
             now_str = now_dt.isoformat()
-            vnp_txn_ref = f"SUB-{uuid.uuid4().hex[:12].upper()}"
+            vnp_txn_ref = f"SUB-{uuid7().hex[:12].upper()}"
             sub_order = PaymentOrder(
-                id=str(uuid.uuid4()),
+                id=str(uuid7()),
                 user_id=user_id,
                 target_type=PaymentTargetType.SYSTEM_SUBSCRIPTION,
                 target_id="plus_yearly"
@@ -298,9 +297,9 @@ class PaymentUseCase:
                     existing_order.vnp_txn_ref,
                 )
 
-            vnp_txn_ref = f"VNP-{uuid.uuid4().hex[:12].upper()}"
+            vnp_txn_ref = f"VNP-{uuid7().hex[:12].upper()}"
             now_str = datetime.now(UTC).isoformat()
-            order_id = str(uuid.uuid4())
+            order_id = str(uuid7())
 
             order = PaymentOrder(
                 id=order_id,
@@ -481,7 +480,7 @@ class PaymentUseCase:
 
             # Audit log transaction
             tx = PaymentTransaction(
-                id=str(uuid.uuid4()),
+                id=str(uuid7()),
                 order_id=order.id,
                 vnp_transaction_no=vnp_transaction_no,
                 vnp_response_code=vnp_response_code,
@@ -597,7 +596,7 @@ class PaymentUseCase:
                 return {"RspCode": "04", "Message": "Invalid Amount"}
 
             tx = PaymentTransaction(
-                id=str(uuid.uuid4()),
+                id=str(uuid7()),
                 order_id=order.id,
                 vnp_transaction_no=vnp_transaction_no,
                 vnp_response_code=vnp_response_code,
@@ -652,7 +651,7 @@ class PaymentUseCase:
             already = await repo.has_active_purchase(user_id, target_id)
             if not already:
                 purchase = CoursePurchase(
-                    id=str(uuid.uuid4()),
+                    id=str(uuid7()),
                     user_id=user_id,
                     course_id=target_id,
                     amount=amount,
@@ -724,7 +723,7 @@ class PaymentUseCase:
         existing_sub = await repo.get_active_subscription(user_id)
         if not existing_sub:
             existing_sub = await repo.get_user_subscription(user_id)
-        sub_id = existing_sub.id if existing_sub else str(uuid.uuid4())
+        sub_id = existing_sub.id if existing_sub else str(uuid7())
 
         sub = UserSubscription(
             id=sub_id,

@@ -1,5 +1,6 @@
-import uuid
 from datetime import UTC, datetime
+
+from uuid6 import uuid7
 
 from src.modules.identity.domain import (
     INSTRUCTOR_APPLICATION_REAPPLY_COOLDOWN_DAYS,
@@ -70,7 +71,7 @@ class SubmitInstructorApplicationUseCase:
 
         now_str = datetime.now(UTC).isoformat()
         application = InstructorApplication(
-            id=str(uuid.uuid4()),
+            id=str(uuid7()),
             user_id=user_id,
             title=clean_title,
             bio=clean_bio,

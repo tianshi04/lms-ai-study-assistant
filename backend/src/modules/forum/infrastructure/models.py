@@ -1,8 +1,8 @@
-import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from uuid6 import uuid7
 
 from src.shared.infrastructure.database import Base
 
@@ -15,7 +15,7 @@ class ForumThreadORM(Base):
     __tablename__ = "forum_threads"
 
     id: Mapped[str] = mapped_column(
-        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid7())
     )
     course_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     item_id: Mapped[str] = mapped_column(
@@ -50,7 +50,7 @@ class ForumReplyORM(Base):
     __tablename__ = "forum_replies"
 
     id: Mapped[str] = mapped_column(
-        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid7())
     )
     thread_id: Mapped[str] = mapped_column(
         String(64),
@@ -86,7 +86,7 @@ class ForumVoteORM(Base):
     )
 
     id: Mapped[str] = mapped_column(
-        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid7())
     )
     user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     post_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)

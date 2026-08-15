@@ -3,11 +3,11 @@ import hashlib
 import hmac
 import logging
 import os
-import uuid
 
 import httpx
 from google.auth.transport import requests
 from google.oauth2 import id_token
+from uuid6 import uuid7
 
 from src.modules.identity.domain import (
     DEFAULT_PBKDF2_ITERATIONS,
@@ -242,7 +242,7 @@ class AuthUseCase:
             except ValueError:
                 user_role = UserRole.LEARNER
 
-            new_id = f"user_{uuid.uuid4().hex[:12]}"
+            new_id = f"user_{uuid7().hex[:12]}"
             hashed_pw = hash_password(password)
 
             user = User(
@@ -340,7 +340,7 @@ class AuthUseCase:
         final_name = (
             full_name or payload.get("full_name") or email.split("@")[0]
         ).strip()
-        user_id = f"usr_{uuid.uuid4().hex[:12]}"
+        user_id = f"usr_{uuid7().hex[:12]}"
         password_hash = hash_password(password)
 
         new_user = User(

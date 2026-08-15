@@ -1,7 +1,8 @@
 import logging
-import uuid
 from collections.abc import Callable
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.catalog.domain import (
     CourseStatus,
@@ -352,7 +353,7 @@ class CurriculumUseCase:
         await s3.ensure_bucket_exists()
         ext = filename.split(".")[-1] if "." in filename else "bin"
         safe_folder = folder.strip("/") if folder else "videos"
-        object_key = f"{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
+        object_key = f"{safe_folder}/{uuid7().hex[:12]}.{ext}"
 
         upload_url = await s3.generate_presigned_upload_url(
             object_key, content_type=content_type or "application/octet-stream"
@@ -373,7 +374,7 @@ class CurriculumUseCase:
         await s3.ensure_bucket_exists()
         ext = filename.split(".")[-1] if "." in filename else "bin"
         safe_folder = folder.strip("/") if folder else "videos"
-        object_key = f"{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
+        object_key = f"{safe_folder}/{uuid7().hex[:12]}.{ext}"
 
         await s3.upload_file(
             file_bytes=file_bytes,

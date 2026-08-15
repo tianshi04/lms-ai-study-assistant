@@ -1,9 +1,10 @@
 import logging
 import random
 import re
-import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
@@ -244,7 +245,7 @@ class QuizUseCase(BaseAssessmentUseCase):
                 }
 
                 return {
-                    "session_id": f"qsess-prev-{uuid.uuid4().hex[:8]}",
+                    "session_id": f"qsess-prev-{uuid7().hex[:8]}",
                     "start_time_iso": now.isoformat(),
                     "expires_at_iso": expires_at.isoformat(),
                     "duration_minutes": duration_minutes,
@@ -285,7 +286,7 @@ class QuizUseCase(BaseAssessmentUseCase):
 
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
             seed_val = (
-                abs(hash(f"{user_id}:{item_id}:{now.isoformat()}:{uuid.uuid4().hex}"))
+                abs(hash(f"{user_id}:{item_id}:{now.isoformat()}:{uuid7().hex}"))
                 % (2**31 - 1)
                 + 1
             )
@@ -304,7 +305,7 @@ class QuizUseCase(BaseAssessmentUseCase):
             await repo.save_quiz_active_session(active_session)
 
             return {
-                "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
+                "session_id": f"qsess-{uuid7().hex[:8]}",
                 "start_time_iso": now.isoformat(),
                 "expires_at_iso": expires_at.isoformat(),
                 "duration_minutes": duration_minutes,
@@ -489,7 +490,7 @@ class QuizUseCase(BaseAssessmentUseCase):
 
             # Save submission (only if not preview)
             if not preview:
-                submission_id = f"sub-{uuid.uuid4().hex[:8]}"
+                submission_id = f"sub-{uuid7().hex[:8]}"
                 attempt_number = len(prev_submissions) + 1
 
                 first_selected = [ans[0] if ans else -1 for ans in answers]

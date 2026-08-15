@@ -79,6 +79,12 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         ]
 
     async def save_peer_submission(self, submission: PeerAssignmentSubmission) -> None:
+        for i, s in enumerate(self.peer_submissions):
+            if s.id == submission.id or (
+                s.user_id == submission.user_id and s.item_id == submission.item_id
+            ):
+                self.peer_submissions[i] = submission
+                return
         self.peer_submissions.append(submission)
 
     async def get_peer_submission(
@@ -741,3 +747,41 @@ async def test_anti_cheat_feedback_hidden_on_failure():
     for exp in res["answer_explanations"]:
         assert "đáp án đúng là" not in exp
     assert len(repo.quiz_submissions) == 1
+
+
+@pytest.mark.asyncio
+async def test_peer_assignment_resubmission_updates_existing():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user_learner_demo"
+    item_id = "item-ml-peer-1"
+
+    # 1. First submission
+    sub_id1, msg1 = await usecase.submit_peer_assignment(
+        user_id,
+        item_id,
+        "https://github.com/initial/repo",
+        "Initial submission text",
+    )
+    assert sub_id1.startswith("peer-")
+    assert "Assignment submitted successfully" in msg1
+    assert len(repo.peer_submissions) == 1
+
+    # 2. Resubmission / Update by same user on same item
+    sub_id2, msg2 = await usecase.submit_peer_assignment(
+        user_id,
+        item_id,
+        "https://github.com/updated/repo",
+        "Updated submission text",
+    )
+    # Must preserve the same submission ID
+    assert sub_id2 == sub_id1
+    assert "Assignment submitted successfully" in msg2
+    assert len(repo.peer_submissions) == 1
+
+    # 3. Verify repository data was updated
+    stored = await repo.get_user_peer_submission(user_id, item_id)
+    assert stored is not None
+    assert stored.id == sub_id1
+    assert stored.submission_url == "https://github.com/updated/repo"
+    assert stored.text_content == "Updated submission text"

@@ -1,9 +1,10 @@
 import ast
 import json
 import logging
-import uuid
 from datetime import UTC, datetime
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.assessment.domain import LabSubmission
 from src.shared.access_policy import require_paid_access
@@ -85,7 +86,7 @@ class CodingLabUseCase(BaseAssessmentUseCase):
 
         result = await self.sandbox_executor.execute_python(source_code, test_cases)
         now_iso = datetime.now(UTC).isoformat()
-        sub_id = f"lab-{uuid.uuid4().hex[:8]}"
+        sub_id = f"lab-{uuid7().hex[:8]}"
 
         submission = LabSubmission(
             id=sub_id,

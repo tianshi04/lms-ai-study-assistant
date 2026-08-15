@@ -1,8 +1,9 @@
 import logging
-import uuid
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from typing import Any
+
+from uuid6 import uuid7
 
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.forum.domain import (
@@ -66,7 +67,7 @@ class ForumUseCase:
         author_name: str = "Learner",
         author_role: str = DEFAULT_FORUM_AUTHOR_ROLE,
     ) -> ForumThreadEntity:
-        thread_id = str(uuid.uuid4())
+        thread_id = str(uuid7())
         created_at = utc_now_str()
 
         thread_entity = ForumThreadEntity(
@@ -97,7 +98,7 @@ class ForumUseCase:
             # If there is content, post it as the opening reply
             if content.strip():
                 reply_entity = ForumReplyEntity(
-                    id=str(uuid.uuid4()),
+                    id=str(uuid7()),
                     thread_id=thread_id,
                     author_name=author_name,
                     author_role=author_role,
@@ -123,7 +124,7 @@ class ForumUseCase:
         author_name: str = "Learner",
         author_role: str = DEFAULT_FORUM_AUTHOR_ROLE,
     ) -> ForumReplyEntity:
-        reply_id = str(uuid.uuid4())
+        reply_id = str(uuid7())
         created_at = utc_now_str()
 
         # Determine if author is Staff/TA

@@ -1,10 +1,10 @@
-import uuid
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from uuid6 import uuid7
 
 from src.modules.learning.domain import (
     DEFAULT_COHORT_EXTENSION_DAYS,
@@ -175,7 +175,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         note_comment: str,
     ) -> PersonalNote:
         note_model = PersonalNoteModel(
-            id=f"note-{uuid.uuid4().hex[:8]}",
+            id=f"note-{uuid7().hex[:8]}",
             user_id=user_id,
             course_id=course_id,
             item_id=item_id,

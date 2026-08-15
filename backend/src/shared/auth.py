@@ -1,4 +1,3 @@
-import uuid
 from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -7,6 +6,7 @@ from typing import Any
 import jwt
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
+from uuid6 import uuid7
 
 from src.shared.config import settings
 
@@ -94,7 +94,7 @@ def create_access_token(
 def create_refresh_token(user_id: str) -> str:
     now = datetime.now(UTC)
     payload: dict[str, Any] = {
-        "jti": str(uuid.uuid4()),
+        "jti": str(uuid7()),
         "sub": user_id,
         "type": "refresh",
         "iat": now,
