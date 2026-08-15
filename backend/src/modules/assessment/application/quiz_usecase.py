@@ -379,17 +379,32 @@ class QuizUseCase(BaseAssessmentUseCase):
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
 
-            # 0. Fetch Quiz Matrix to get dynamic settings
             matrix = await self._get_quiz_matrix(repo, item_id)
-            if not matrix:
-                raise ValueError(
-                    "Bài kiểm tra này chưa được Giảng viên cấu hình ma trận đề (Quiz Matrix). Vui lòng liên hệ Giảng viên."
-                )
 
-            max_attempts = matrix.max_attempts
-            cooldown_hours = matrix.cooldown_hours
-            duration_minutes = matrix.time_limit_minutes
-            passing_threshold = matrix.passing_threshold_percent
+            max_attempts = (
+                matrix.max_attempts
+                if (matrix and matrix.max_attempts > 0)
+                else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+            )
+            cooldown_hours = (
+                matrix.cooldown_hours
+                if (matrix and matrix.cooldown_hours > 0)
+                else QUIZ_COOLDOWN_HOURS
+            )
+            duration_minutes = (
+                duration_minutes
+                if duration_minutes > 0
+                else (
+                    matrix.time_limit_minutes
+                    if (matrix and matrix.time_limit_minutes > 0)
+                    else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+                )
+            )
+            passing_threshold = (
+                matrix.passing_threshold_percent
+                if (matrix and matrix.passing_threshold_percent > 0)
+                else DEFAULT_PASSING_THRESHOLD_PERCENT
+            )
 
             # 1. Verify Honor Code
             honor = await repo.get_honor_code(user_id, item_id)
