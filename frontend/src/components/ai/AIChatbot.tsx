@@ -313,6 +313,7 @@ export function AIChatbot() {
               e.preventDefault();
               sendMessage(inputValue);
             }}
+            autoComplete="off"
             aria-label="Khung gửi tin nhắn cho Trợ lý AI"
             className="p-3 bg-surface-container-lowest border-t border-outline-variant/20 flex flex-col gap-2 shrink-0"
           >
@@ -323,6 +324,11 @@ export function AIChatbot() {
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Hỏi tôi bất cứ điều gì…"
                 aria-label="Nhập câu hỏi cho Trợ lý AI"
+                autoComplete="off"
+                autoCorrect="off"
+                data-form-type="other"
+                data-1p-ignore
+                data-lpignore="true"
                 spellCheck={false}
                 className="flex-1 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 shadow-none text-xs text-on-surface placeholder:text-on-surface-variant/70 py-1"
               />
