@@ -35,6 +35,7 @@ class LearningProgressModel(Base):
         back_populates="progress",
         cascade="all, delete-orphan",
         order_by="WeeklyDeadlineModel.week_number",
+        lazy="selectin",
     )
 
 
