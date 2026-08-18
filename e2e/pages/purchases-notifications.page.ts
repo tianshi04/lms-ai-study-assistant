@@ -37,7 +37,7 @@ export class NotificationCenterPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageHeading = page.locator('h1', { hasText: /Trung tâm Thông báo/i });
+    this.pageHeading = page.locator('h1', { hasText: /Trung tâm Thông báo/i }).first();
     this.markAllAsReadButton = page.getByRole('button', { name: /Đánh dấu tất cả đã đọc/i });
     this.categoryFilterTabs = page.locator('button').filter({ hasText: /Tất cả|Hệ thống|Học tập|Diễn đàn|Thông báo/i });
     this.notificationItems = page.locator('[role="article"], .space-y-3 > div');
