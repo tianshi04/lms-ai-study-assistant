@@ -1382,8 +1382,26 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
                 "name": "Fullstack Web Development Verified Certificate",
             },
         )
+        demo_cert_phong = CertificateModel(
+            certificate_id="CERT-PTIT-2026-N158",
+            user_id="user_team_phong",
+            course_id="course-python-ai",
+            learner_name="Nguyễn Thanh Phong",
+            course_title="Supervised Machine Learning: Regression and Classification",
+            partner_name="Học viện Công nghệ Bưu chính Viễn thông (PTIT)",
+            partner_logo_url="https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+            issue_date="18/08/2026",
+            verification_url="/verify/CERT-PTIT-2026-N158",
+            qr_code_url="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CERT-PTIT-2026-N158",
+            open_badges_json_ld={
+                "@context": "https://w3id.org/openbadges/v2",
+                "type": "BadgeClass",
+                "name": "Supervised Machine Learning Verified Certificate - PTIT",
+            },
+        )
         await session.merge(demo_cert1)
         await session.merge(demo_cert2)
+        await session.merge(demo_cert_phong)
 
         # Seed Financial Aid Applications
         faid1 = FinancialAidModel(
