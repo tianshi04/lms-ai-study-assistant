@@ -283,11 +283,24 @@ routes = [
 ]
 
 
+def _build_cors_origins() -> list[str]:
+    origins = {"http://localhost:3000", "http://127.0.0.1:3000"}
+    if settings.FRONTEND_URL:
+        origins.add(settings.FRONTEND_URL.rstrip("/"))
+    if settings.CORS_ORIGINS:
+        for o in settings.CORS_ORIGINS.split(","):
+            cleaned = o.strip().rstrip("/")
+            if cleaned:
+                origins.add(cleaned)
+    return list(origins)
+
+
 middleware = [
     Middleware(RequestIDMiddleware),
     Middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origins=_build_cors_origins(),
+        allow_origin_regex=r"https://.*\.vercel\.app",
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=[

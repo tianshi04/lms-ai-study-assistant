@@ -24,6 +24,8 @@ backend_dir = Path(__file__).resolve().parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
+from datetime import UTC, datetime, timezone
+
 from sqlalchemy import delete, select, text
 
 from src.modules.assessment.infrastructure.models import (
@@ -41,6 +43,7 @@ from src.modules.assessment.infrastructure.models import (
 )
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
+    CourseAnnouncementModel,
     CourseModel,
     CourseReviewModel,
     InteractiveTranscriptModel,
@@ -74,7 +77,15 @@ from src.modules.learning.infrastructure.models import (
     PersonalNoteModel,
     WeeklyDeadlineModel,
 )
+from src.modules.notification.infrastructure.models import (
+    NotificationModel,
+    UserNotificationPreferenceModel,
+)
 from src.modules.partner.infrastructure.models import PartnerModel
+from src.modules.payment.infrastructure.models import (
+    CoursePurchaseModel,
+    PaymentOrderModel,
+)
 from src.shared.infrastructure.database import Base, async_session_scope
 from src.shared.infrastructure.logging import setup_logging
 
@@ -145,9 +156,9 @@ def build_categories() -> list[CategoryModel]:
 
 def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]]:
     """Construct rich domain seed data objects for the initial catalog."""
-    sample_url = (
-        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-    )
+    sample_url = "https://www.youtube.com/watch?v=aircAruvnKk"  # 3Blue1Brown - But what is a Neural Network? (19min)
+    sample_url_2 = "https://www.youtube.com/watch?v=IHZwWFHWa-w"  # 3Blue1Brown - Gradient Descent (10min)
+    sample_url_3 = "https://www.youtube.com/watch?v=rfscVS0vtbw"  # freeCodeCamp - Python for Beginners (short clip)
     deeplearning_logo = (
         "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg"
     )
@@ -193,37 +204,174 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         vtt_subtitle_url="",
     )
 
-    t1 = InteractiveTranscriptModel(
-        timestamp_seconds=0,
-        text="Welcome to Supervised Machine Learning! In this lesson, we will cover linear regression.",
-    )
-    t2 = InteractiveTranscriptModel(
-        timestamp_seconds=5,
-        text="Linear regression fits a straight line through dataset points to predict continuous numerical values.",
-    )
-    t3 = InteractiveTranscriptModel(
-        timestamp_seconds=10,
-        text="Let's look at the cost function, often represented as Mean Squared Error (MSE).",
-    )
-    t4 = InteractiveTranscriptModel(
-        timestamp_seconds=15,
-        text="Gradient descent updates model parameters iteratively until minimum cost is reached.",
-    )
+    raw_transcripts_ml1 = [
+        (
+            0,
+            "This is a 3. It's recognizably a three, even though it's drawn in a low-resolution grid of pixels.",
+        ),
+        (
+            8,
+            "When you look at it, your visual cortex immediately recognizes patterns of strokes, loops, and edges.",
+        ),
+        (
+            16,
+            "How can we write a computer program that takes this image and correctly identifies it as the number 3?",
+        ),
+        (
+            25,
+            "A classic approach in machine learning is to build an artificial neural network inspired by biological brains.",
+        ),
+        (
+            35,
+            "The network begins with an input layer consisting of 784 neurons, corresponding to 28 by 28 pixels.",
+        ),
+        (
+            46,
+            "Each neuron in this input layer holds a number between 0 and 1, representing the brightness of that pixel.",
+        ),
+        (
+            56,
+            "This number is called an activation. Bright pixels have activations near 1, while dark pixels have activations near 0.",
+        ),
+        (
+            68,
+            "These 784 activations are passed forward into the first hidden layer containing 16 neurons.",
+        ),
+        (
+            80,
+            "Why do we have hidden layers? They act as intermediate feature detectors that recognize subcomponents.",
+        ),
+        (
+            92,
+            "For example, specific neurons might detect horizontal strokes, loops, or diagonal boundaries of the digit.",
+        ),
+        (
+            105,
+            "The second hidden layer then combines these simple strokes into recognizable component parts of digits.",
+        ),
+        (
+            120,
+            "Finally, the output layer consists of 10 neurons, representing the probability of each digit from 0 to 9.",
+        ),
+        (
+            135,
+            "The output neuron with the highest activation corresponds to the network's final prediction.",
+        ),
+        (
+            150,
+            "Now, how does information actually flow between consecutive layers of neurons?",
+        ),
+        (
+            165,
+            "Each neuron in the next layer is connected to all neurons in the previous layer.",
+        ),
+        (
+            180,
+            "Every single connection has an associated number called a weight, representing connection strength.",
+        ),
+        (
+            195,
+            "A positive weight indicates that an active neuron encourages the receiving neuron to fire as well.",
+        ),
+        (
+            210,
+            "A negative weight means the connection is inhibitory, suppressing the activation of the receiving neuron.",
+        ),
+        (
+            225,
+            "To compute the incoming signal, we calculate the weighted sum of all incoming neuron activations.",
+        ),
+        (
+            245,
+            "However, we only want the neuron to fire when this weighted sum exceeds a meaningful threshold.",
+        ),
+        (
+            265,
+            "To achieve this, we add another adjustable parameter called a bias to shift the activation threshold.",
+        ),
+        (
+            285,
+            "To keep the final activation bounded between 0 and 1, we pass the sum through an activation function.",
+        ),
+        (
+            310,
+            "Historically, the Sigmoid function was used to squish the real line into values strictly between 0 and 1.",
+        ),
+        (
+            340,
+            "In modern deep learning architectures, ReLU (Rectified Linear Unit, max(0, x)) is widely preferred.",
+        ),
+        (
+            375,
+            "ReLU is computationally efficient and avoids vanishing gradient issues during backpropagation.",
+        ),
+        (
+            410,
+            "We can express this entire computation compactly using linear algebra: a^(1) = sigma(W * a^(0) + b).",
+        ),
+        (
+            450,
+            "With 784 inputs, two hidden layers of 16 neurons, and 10 outputs, there are over 13,000 adjustable parameters.",
+        ),
+        (
+            495,
+            "How do we find the exact combination of weights and biases that performs digit classification accurately?",
+        ),
+        (
+            545,
+            "This is where learning begins: we define a cost function (or loss function) to quantify prediction error.",
+        ),
+        (
+            600,
+            "For a single training image, the cost is the sum of squared differences between actual and desired output values.",
+        ),
+        (
+            660,
+            "The total cost of the network is the average error computed across all 60,000 training images in the MNIST dataset.",
+        ),
+        (
+            725,
+            "When the network is first initialized with random weights, the cost is very high and accuracy is roughly 10%.",
+        ),
+        (
+            795,
+            "To minimize this cost, we use Gradient Descent — calculating the direction in parameter space that reduces error most rapidly.",
+        ),
+        (
+            870,
+            "The gradient vector tells us how sensitive the cost function is to small changes in each individual weight and bias.",
+        ),
+        (
+            950,
+            "By taking repeated small steps in the negative gradient direction, the network continuously refines its internal weights.",
+        ),
+        (
+            1030,
+            "Backpropagation is the efficient algorithm used to calculate these gradient derivatives via the calculus chain rule.",
+        ),
+        (
+            1100,
+            "In the next lecture, we will explore the deep mathematics and geometric intuition behind Gradient Descent.",
+        ),
+    ]
+
+    for ts, txt in raw_transcripts_ml1:
+        item1.interactive_transcripts.append(
+            InteractiveTranscriptModel(timestamp_seconds=ts, text=txt)
+        )
 
     q1 = InVideoQuizModel(
-        timestamp_seconds=10,
-        question="What cost function is commonly used for Linear Regression?",
+        timestamp_seconds=120,
+        question="What determines how much influence one neuron has on another in a neural network?",
         options=[
-            "Cross-Entropy Loss",
-            "Mean Squared Error (MSE)",
-            "Hinge Loss",
-            "Kullback-Leibler Divergence",
+            "Activation function",
+            "Weights",
+            "Bias",
+            "Learning rate",
         ],
         correct_option_index=1,
-        explanation="Mean Squared Error (MSE) measures the average squared difference between estimated values and actual values.",
+        explanation="Weights are the parameters that determine the strength of connection between neurons. The network learns by adjusting these weights.",
     )
-
-    item1.interactive_transcripts.extend([t1, t2, t3, t4])
     item1.in_video_quizzes.append(q1)
 
     item2 = LearningItemModel(
@@ -337,20 +485,106 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
     item6 = LearningItemModel(
         id="item-ml-video-2",
         lesson_id=lesson2.id,
-        title="Lecture: Sigmoid Function & Decision Boundaries",
+        title="Lecture: Gradient Descent & Neural Network Training",
         type=ItemType.VIDEO,
-        estimated_minutes=18,
-        video_url=sample_url,
+        estimated_minutes=10,
+        video_url=sample_url_2,
     )
-    t5 = InteractiveTranscriptModel(
-        timestamp_seconds=0,
-        text="Classification maps input features to discrete category labels using the Sigmoid function.",
-    )
-    t6 = InteractiveTranscriptModel(
-        timestamp_seconds=8,
-        text="The Sigmoid activation outputs probability values strictly bounded between 0 and 1.",
-    )
-    item6.interactive_transcripts.extend([t5, t6])
+    raw_transcripts_ml2 = [
+        (
+            0,
+            "In this lecture, we examine Gradient Descent — the fundamental optimization algorithm powering deep learning.",
+        ),
+        (
+            15,
+            "Imagine yourself standing in a dense fog on a mountainous terrain, trying to find your way down to the lowest valley.",
+        ),
+        (
+            35,
+            "You cannot see the global map, but you can feel the local slope of the ground beneath your feet.",
+        ),
+        (
+            55,
+            "The intuitive strategy is to take a step in the direction of steepest downward descent.",
+        ),
+        (
+            80,
+            "In machine learning, this landscape is defined by the cost function C(w, b) across thousands of parameter dimensions.",
+        ),
+        (
+            110,
+            "The gradient vector nabla C points in the direction of steepest increase of the cost function.",
+        ),
+        (
+            145,
+            "Therefore, stepping in the opposite direction (-nabla C) ensures that cost decreases as quickly as possible.",
+        ),
+        (
+            185,
+            "The parameter update rule is simple: w := w - alpha * (partial C / partial w).",
+        ),
+        (
+            225,
+            "Here, alpha represents the learning rate, which controls how large of a step we take downhill on each iteration.",
+        ),
+        (
+            270,
+            "If alpha is set too small, convergence is agonizingly slow, requiring millions of steps to reach the minimum.",
+        ),
+        (
+            320,
+            "Conversely, if alpha is set too large, the optimizer can overshoot the valley entirely and diverge into infinity.",
+        ),
+        (
+            375,
+            "Standard batch gradient descent computes the exact gradient by averaging errors over every single training example.",
+        ),
+        (
+            435,
+            "When training sets contain millions of images, computing full batch gradients becomes prohibitively slow.",
+        ),
+        (
+            500,
+            "Stochastic Gradient Descent (SGD) solves this bottleneck by updating weights after each individual sample.",
+        ),
+        (
+            570,
+            "Mini-batch Gradient Descent provides the best of both worlds by computing gradients over small batches of 32 to 512 samples.",
+        ),
+        (
+            645,
+            "Mini-batches allow efficient vectorization on modern GPUs while providing noisy gradients that help escape local minima.",
+        ),
+        (
+            725,
+            "Advanced optimizers like Momentum add velocity terms to prevent oscillations across steep ravine walls.",
+        ),
+        (
+            810,
+            "The Adam optimizer dynamically adapts separate learning rates for each individual parameter based on running moments.",
+        ),
+        (
+            900,
+            "To prevent neural networks from overfitting training data, we incorporate L2 regularization (weight decay).",
+        ),
+        (
+            995,
+            "Monitoring both training loss and validation loss helps us detect when the network begins memorizing noise.",
+        ),
+        (
+            1090,
+            "Mastering gradient landscapes equips you with the intuition needed to diagnose training issues in production models.",
+        ),
+        (
+            1180,
+            "In the upcoming lab, you will implement gradient descent from scratch in Python with NumPy vectorization.",
+        ),
+    ]
+
+    for ts, txt in raw_transcripts_ml2:
+        item6.interactive_transcripts.append(
+            InteractiveTranscriptModel(timestamp_seconds=ts, text=txt)
+        )
 
     item7 = LearningItemModel(
         id="item-ml-quiz-2",
@@ -399,19 +633,89 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Lecture: Fullstack Web Architecture & ConnectRPC",
         type=ItemType.VIDEO,
         estimated_minutes=20,
-        video_url=sample_url,
+        video_url=sample_url_3,
         vtt_subtitle_url="",
     )
 
-    t_web1 = InteractiveTranscriptModel(
-        timestamp_seconds=0,
-        text="Welcome to Fullstack Web Development with Next.js 15 and ConnectRPC!",
-    )
-    t_web2 = InteractiveTranscriptModel(
-        timestamp_seconds=10,
-        text="We use Domain-Driven Design (DDD) to keep bounded contexts clean and scalable.",
-    )
-    item_web1.interactive_transcripts.extend([t_web1, t_web2])
+    raw_transcripts_web1 = [
+        (
+            0,
+            "Welcome to Modern Fullstack Web Architecture with Next.js 15, TypeScript, and ConnectRPC!",
+        ),
+        (
+            18,
+            "In this series, we build scalable production systems using contract-first RPC protocols and React Server Components.",
+        ),
+        (
+            40,
+            "React Server Components (RSC) execute exclusively on the server, streaming rendered UI without shipping JavaScript to the browser.",
+        ),
+        (
+            70,
+            "This architectural shift reduces bundle sizes dramatically and allows direct, secure access to backend microservices.",
+        ),
+        (
+            105,
+            "For communication between frontend and backend, we adopt ConnectRPC powered by Protocol Buffers.",
+        ),
+        (
+            145,
+            "Unlike traditional REST APIs, Protobuf schemas define strict, type-safe data contracts shared across Python and TypeScript.",
+        ),
+        (
+            190,
+            "ConnectRPC operates smoothly across HTTP/1.1, HTTP/2, and gRPC-Web without requiring complex Envoy proxy setups.",
+        ),
+        (
+            240,
+            "Our backend architecture follows Domain-Driven Design (DDD), dividing the monolith into clean, isolated bounded contexts.",
+        ),
+        (
+            295,
+            "Each domain module maintains strict boundary separation: Domain entities, Application use-cases, and Infrastructure adapters.",
+        ),
+        (
+            355,
+            "Next.js App Router provides parallel and intercepted routes for rich interactive modal workflows.",
+        ),
+        (
+            420,
+            "Tailwind CSS v4 brings zero-runtime utility styling with CSS variables and lightning-fast build compilation.",
+        ),
+        (
+            490,
+            "On the client, TanStack React Query manages caching, automatic refetching, and optimistic UI mutations.",
+        ),
+        (
+            565,
+            "Security is enforced using JWT token interceptors that authenticate every ConnectRPC header automatically.",
+        ),
+        (
+            645,
+            "For AI-assisted workflows, we integrate CopilotKit streaming copilot interactions over Server-Sent Events (SSE).",
+        ),
+        (
+            730,
+            "Automated CI/CD pipelines run Playwright blackbox tests and backend unit tests on every pull request.",
+        ),
+        (
+            820,
+            "This contract-driven design ensures that API contract mismatches are caught at compile time before reaching production.",
+        ),
+        (
+            915,
+            "In the hands-on lab following this video, you will set up your first ConnectRPC client and invoke live backend endpoints.",
+        ),
+        (
+            1010,
+            "Let's open our development environment and start building our modern fullstack application!",
+        ),
+    ]
+
+    for ts, txt in raw_transcripts_web1:
+        item_web1.interactive_transcripts.append(
+            InteractiveTranscriptModel(timestamp_seconds=ts, text=txt)
+        )
 
     item_web2 = LearningItemModel(
         id="item-web-reading-1",
@@ -422,7 +726,16 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         reading_markdown="# ConnectRPC Best Practices\n\nConnectRPC provides lightweight, type-safe gRPC web protocol stubs for TypeScript and Python.\n\n## Key Features\n- **Type Safety**: Proto stubs generated automatically.\n- **Fast Serialization**: Binary Protobuf & JSON support.",
     )
 
-    lesson_web1.items.extend([item_web1, item_web2])
+    item_web_quiz = LearningItemModel(
+        id="item-web-quiz-1",
+        lesson_id=lesson_web1.id,
+        title="Graded Quiz: Next.js 15 App Router & ConnectRPC Architecture",
+        type=ItemType.GRADED_QUIZ,
+        estimated_minutes=25,
+        quiz_matrix_id="qb-web-01",
+    )
+
+    lesson_web1.items.extend([item_web1, item_web2, item_web_quiz])
     week_web1.lessons.append(lesson_web1)
 
     week_web2 = WeekModuleModel(
@@ -481,9 +794,54 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Lecture: What is a Neural Network?",
         type=ItemType.VIDEO,
         estimated_minutes=15,
-        video_url=sample_url,
+        video_url=sample_url_2,
     )
-    lesson_dl1.items.append(item_dl1)
+    t_dl1 = InteractiveTranscriptModel(
+        timestamp_seconds=0,
+        text="Welcome to Deep Learning! In this course, we demystify how multi-layer deep networks extract hierarchical representations.",
+    )
+    t_dl2 = InteractiveTranscriptModel(
+        timestamp_seconds=90,
+        text="Deep learning succeeds because deeper layers learn compositional features: pixels -> edges -> shapes -> semantic objects.",
+    )
+    t_dl3 = InteractiveTranscriptModel(
+        timestamp_seconds=200,
+        text="Vectorized implementations in NumPy and PyTorch execute operations across entire batches simultaneously using SIMD / GPU acceleration.",
+    )
+    t_dl4 = InteractiveTranscriptModel(
+        timestamp_seconds=330,
+        text="Forward propagation calculates activations layer by layer: Z^[l] = W^[l] * A^[l-1] + b^[l], A^[l] = g^[l](Z^[l]).",
+    )
+    t_dl5 = InteractiveTranscriptModel(
+        timestamp_seconds=480,
+        text="Backpropagation applies the multivariate calculus chain rule to calculate dW and db efficiently from output to input.",
+    )
+    t_dl6 = InteractiveTranscriptModel(
+        timestamp_seconds=620,
+        text="Activation functions: Sigmoid and Tanh can suffer from vanishing gradients, while ReLU and Leaky ReLU maintain active propagation.",
+    )
+    t_dl7 = InteractiveTranscriptModel(
+        timestamp_seconds=760,
+        text="Weight initialization strategies (such as He and Xavier/Glorot initialization) prevent signal explosion or decay during deep passes.",
+    )
+    t_dl8 = InteractiveTranscriptModel(
+        timestamp_seconds=900,
+        text="Let us now dive into the implementation lab where you will code forward propagation from scratch in Python.",
+    )
+    item_dl1.interactive_transcripts.extend(
+        [t_dl1, t_dl2, t_dl3, t_dl4, t_dl5, t_dl6, t_dl7, t_dl8]
+    )
+
+    item_dl_quiz = LearningItemModel(
+        id="item-dl-quiz-1",
+        lesson_id=lesson_dl1.id,
+        title="Graded Quiz: Deep Learning Foundations & Vectorization",
+        type=ItemType.GRADED_QUIZ,
+        estimated_minutes=30,
+        quiz_matrix_id="qb-dl-01",
+    )
+
+    lesson_dl1.items.extend([item_dl1, item_dl_quiz])
     week_dl1.lessons.append(lesson_dl1)
     course3.week_modules.append(week_dl1)
 
@@ -749,9 +1107,45 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             status="ACTIVE",
         )
 
+        team_user_phong = UserModel(
+            id="user_team_phong",
+            email="n22dccn158@student.ptithcm.edu.vn",
+            full_name="Nguyễn Thanh Phong",
+            role=UserRole.LEARNER,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=n22dccn158",
+            enterprise_seat_key="ENT-DEMO-2026-X99",
+            password_hash=default_pw_hash,
+            is_identity_verified=False,
+        )
+
+        team_user_instructor = UserModel(
+            id="user_team_instructor",
+            email="phongnguyen.30604@gmail.com",
+            full_name="Phong Nguyễn",
+            role=UserRole.INSTRUCTOR,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=phongnguyen30604",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+            is_identity_verified=True,
+        )
+
+        team_user_admin = UserModel(
+            id="user_team_admin",
+            email="ttxmath1110@gmail.com",
+            full_name="Thanh Phong Nguyễn",
+            role=UserRole.ADMIN,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=ttxmath1110",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+            is_identity_verified=True,
+        )
+
         await session.merge(learner_user1)
         await session.merge(learner_user2)
         await session.merge(learner_user3)
+        await session.merge(team_user_phong)
+        await session.merge(team_user_instructor)
+        await session.merge(team_user_admin)
         await session.merge(instructor_user)
         await session.merge(ta_user)
         await session.merge(admin_user)
@@ -778,7 +1172,53 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
                 "item-ml-peer-1",
             ],
         )
+        prog2 = LearningProgressModel(
+            id="user_learner_demo:course-web-dev",
+            user_id="user_learner_demo",
+            course_id="course-web-dev",
+            overall_progress_percent=50.0,
+            completed_item_ids=["item-web-video-1", "item-web-reading-1"],
+        )
+        prog3 = LearningProgressModel(
+            id="user_learner_demo:course-deep-learning",
+            user_id="user_learner_demo",
+            course_id="course-deep-learning",
+            overall_progress_percent=33.3,
+            completed_item_ids=["item-dl-video-1"],
+        )
+        prog_team1 = LearningProgressModel(
+            id="user_team_phong:course-python-ai",
+            user_id="user_team_phong",
+            course_id="course-python-ai",
+            overall_progress_percent=71.4,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+                "item-ml-peer-1",
+            ],
+        )
+        prog_team2 = LearningProgressModel(
+            id="user_team_phong:course-web-dev",
+            user_id="user_team_phong",
+            course_id="course-web-dev",
+            overall_progress_percent=50.0,
+            completed_item_ids=["item-web-video-1", "item-web-reading-1"],
+        )
+        prog_team3 = LearningProgressModel(
+            id="user_team_phong:course-deep-learning",
+            user_id="user_team_phong",
+            course_id="course-deep-learning",
+            overall_progress_percent=33.3,
+            completed_item_ids=["item-dl-video-1"],
+        )
         await session.merge(prog1)
+        await session.merge(prog2)
+        await session.merge(prog3)
+        await session.merge(prog_team1)
+        await session.merge(prog_team2)
+        await session.merge(prog_team3)
 
         deadline1 = WeeklyDeadlineModel(
             id=1,
@@ -1346,7 +1786,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(opt5_3)
         await session.merge(opt5_4)
 
-        # Seed Quiz Matrix Models
+        # Seed Quiz Matrix Models for Course 1
         qm_ml = QuizMatrixModel(
             item_id="item-ml-quiz-1",
             bank_id="qb-ml-01",
@@ -1380,6 +1820,666 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(qm_ml)
         await session.merge(qm_practice)
         await session.merge(qm_ml2)
+
+        # Question Bank & Questions for Course 2 (Web Dev)
+        qb_web = QuestionBankModel(
+            id="qb-web-01",
+            course_id="course-web-dev",
+            title="Ngân hàng câu hỏi Lập trình Web Fullstack Next.js & ConnectRPC",
+            category="GRADED",
+            description="Tập hợp câu hỏi trắc nghiệm kiến trúc Next.js App Router, RSC, Tailwind v4 và ConnectRPC.",
+            created_at="2026-07-25T13:00:00Z",
+        )
+        await session.merge(qb_web)
+
+        q_w1 = QuestionModel(
+            id="q-web-01",
+            bank_id="qb-web-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text="Ưu điểm vượt trội nhất của React Server Components (RSC) trong Next.js là gì?",
+            explanation="RSC render trực tiếp trên máy chủ và không gửi mã JavaScript bundle thừa về trình duyệt của người dùng.",
+            created_at="2026-07-25T13:05:00Z",
+        )
+        await session.merge(q_w1)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw1-1",
+                question_id="q-web-01",
+                option_text="Giảm kích thước JavaScript bundle gửi xuống client về 0",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw1-2",
+                question_id="q-web-01",
+                option_text="Bắt buộc mọi component phải dùng useState",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw1-3",
+                question_id="q-web-01",
+                option_text="Chỉ chạy được trên trình duyệt Chrome",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw1-4",
+                question_id="q-web-01",
+                option_text="Thay thế hoàn toàn cơ sở dữ liệu SQL",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        q_w2 = QuestionModel(
+            id="q-web-02",
+            bank_id="qb-web-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text="Giao thức ConnectRPC sử dụng định dạng schema nào để đảm bảo type-safety hai đầu Frontend - Backend?",
+            explanation="ConnectRPC dùng Protocol Buffers (.proto) để tự động sinh ra client stubs type-safe cho TypeScript và Python.",
+            created_at="2026-07-25T13:10:00Z",
+        )
+        await session.merge(q_w2)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw2-1",
+                question_id="q-web-02",
+                option_text="Protocol Buffers (Protobuf v3)",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw2-2",
+                question_id="q-web-02",
+                option_text="XML DTD Schema",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw2-3",
+                question_id="q-web-02",
+                option_text="Raw CSV Tables",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw2-4",
+                question_id="q-web-02",
+                option_text="HTML5 Web Forms",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        q_w3 = QuestionModel(
+            id="q-web-03",
+            bank_id="qb-web-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="MEDIUM",
+            text="Trong Domain-Driven Design (DDD), tầng nào trực tiếp chứa nghiệp vụ cốt lõi không phụ thuộc framework?",
+            explanation="Tầng Domain Entity chứa các quy tắc nghiệp vụ bất biến, độc lập hoàn toàn với framework và database.",
+            created_at="2026-07-25T13:15:00Z",
+        )
+        await session.merge(q_w3)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw3-1",
+                question_id="q-web-03",
+                option_text="Domain Layer (Thực thể & Luật nghiệp vụ cốt lõi)",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw3-2",
+                question_id="q-web-03",
+                option_text="Infrastructure Layer (SQL queries)",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw3-3",
+                question_id="q-web-03",
+                option_text="Presentation Layer (React components)",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw3-4",
+                question_id="q-web-03",
+                option_text="Docker Compose config",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        q_w4 = QuestionModel(
+            id="q-web-04",
+            bank_id="qb-web-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="MEDIUM",
+            text="Lợi ích chính của việc sử dụng TanStack Query (React Query) trong ứng dụng Single Page là gì?",
+            explanation="React Query tự động quản lý bộ nhớ đệm, deduplication requests và đồng bộ trạng thái ngầm khi tab active.",
+            created_at="2026-07-25T13:20:00Z",
+        )
+        await session.merge(q_w4)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw4-1",
+                question_id="q-web-04",
+                option_text="Tự động quản lý Cache, Refetch ngầm và Optimistic UI",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw4-2",
+                question_id="q-web-04",
+                option_text="Biên dịch mã nguồn sang WebAssembly",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw4-3",
+                question_id="q-web-04",
+                option_text="Tự động mã hóa HTTPS cho server",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw4-4",
+                question_id="q-web-04",
+                option_text="Thay thế hoàn toàn Tailwind CSS",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        q_w5 = QuestionModel(
+            id="q-web-05",
+            bank_id="qb-web-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="HARD",
+            text="Khi giải mã JWT Token trên Edge Runtime (Next.js Middleware), phương pháp nào an toàn và không gây lỗi crash?",
+            explanation="Edge Runtime không hỗ trợ thư viện Node.js Buffer, bắt buộc phải dùng Web Standard atob + TextDecoder.",
+            created_at="2026-07-25T13:25:00Z",
+        )
+        await session.merge(q_w5)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw5-1",
+                question_id="q-web-05",
+                option_text="Sử dụng Web Standard atob và TextDecoder UTF-8",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw5-2",
+                question_id="q-web-05",
+                option_text="Import thư viện Node.js Buffer.from",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw5-3",
+                question_id="q-web-05",
+                option_text="Lưu private key trực tiếp vào LocalStorage",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qw5-4",
+                question_id="q-web-05",
+                option_text="Tắt hoàn toàn cơ chế xác thực JWT",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        qm_web = QuizMatrixModel(
+            item_id="item-web-quiz-1",
+            bank_id="qb-web-01",
+            time_limit_minutes=25,
+            passing_threshold_percent=80.0,
+            easy_count=2,
+            medium_count=2,
+            hard_count=1,
+            shuffle_options=True,
+        )
+        await session.merge(qm_web)
+
+        # Question Bank & Questions for Course 3 (Deep Learning)
+        qb_dl = QuestionBankModel(
+            id="qb-dl-01",
+            course_id="course-deep-learning",
+            title="Ngân hàng câu hỏi Deep Learning & Mạng Nơ-ron Sâu",
+            category="GRADED",
+            description="Tập hợp câu hỏi trắc nghiệm kiến thức Vectorization, He Initialization, Vanishing Gradient và Backpropagation.",
+            created_at="2026-07-25T14:00:00Z",
+        )
+        await session.merge(qb_dl)
+
+        q_d1 = QuestionModel(
+            id="q-dl-01",
+            bank_id="qb-dl-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text="Hàm kích hoạt nào được ưu tiên hàng đầu để khắc phục hiện tượng Triệt tiêu Đạo hàm (Vanishing Gradient) trong Deep Learning?",
+            explanation="ReLU (Rectified Linear Unit) có đạo hàm bằng 1 khi x > 0, giúp dòng đạo hàm truyền nguyên vẹn qua hàng chục tầng ẩn.",
+            created_at="2026-07-25T14:05:00Z",
+        )
+        await session.merge(q_d1)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd1-1",
+                question_id="q-dl-01",
+                option_text="ReLU (Rectified Linear Unit)",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd1-2",
+                question_id="q-dl-01",
+                option_text="Sigmoid",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd1-3",
+                question_id="q-dl-01",
+                option_text="Tanh",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd1-4",
+                question_id="q-dl-01",
+                option_text="Step Function",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        q_d2 = QuestionModel(
+            id="q-dl-02",
+            bank_id="qb-dl-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text="Lợi ích cốt lõi của kỹ thuật Vectorization trong lập trình Deep Learning là gì?",
+            explanation="Vectorization tận dụng các tập lệnh song song SIMD trên CPU/GPU để tính toán ma trận nhanh hơn hàng trăm lần so với vòng lặp.",
+            created_at="2026-07-25T14:10:00Z",
+        )
+        await session.merge(q_d2)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd2-1",
+                question_id="q-dl-02",
+                option_text="Tận dụng tính toán song song phần cứng (SIMD/GPU) với tốc độ vượt trội",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd2-2",
+                question_id="q-dl-02",
+                option_text="Tự động sửa lỗi cú pháp Python",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd2-3",
+                question_id="q-dl-02",
+                option_text="Giảm độ sâu của mạng nơ-ron về 1 tầng",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd2-4",
+                question_id="q-dl-02",
+                option_text="Không cần dữ liệu đầu vào",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        q_d3 = QuestionModel(
+            id="q-dl-03",
+            bank_id="qb-dl-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="MEDIUM",
+            text="Khi sử dụng hàm kích hoạt ReLU, kỹ thuật khởi tạo trọng số nào được khuyến nghị tốt nhất?",
+            explanation="He Initialization (khởi tạo He/Kaiming) với phương sai 2/n_in được thiết kế đặc thù cho các tầng phi tuyến ReLU.",
+            created_at="2026-07-25T14:15:00Z",
+        )
+        await session.merge(q_d3)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd3-1",
+                question_id="q-dl-03",
+                option_text="He Initialization (Kaiming Init)",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd3-1a",
+                question_id="q-dl-03",
+                option_text="Khởi tạo tất cả trọng số bằng 0",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd3-2",
+                question_id="q-dl-03",
+                option_text="Khởi tạo tất cả trọng số bằng 1",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd3-3",
+                question_id="q-dl-03",
+                option_text="Random Uniform trong khoảng [-1000, 1000]",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        q_d4 = QuestionModel(
+            id="q-dl-04",
+            bank_id="qb-dl-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="MEDIUM",
+            text="Quy tắc toán học nền tảng nào được áp dụng để tính toán Lan truyền ngược (Backpropagation)?",
+            explanation="Quy tắc chuỗi (Chain Rule) trong giải tích nhiều biến cho phép tính đạo hàm riêng của hàm mất mát qua từng tầng liên tiếp.",
+            created_at="2026-07-25T14:20:00Z",
+        )
+        await session.merge(q_d4)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd4-1",
+                question_id="q-dl-04",
+                option_text="Quy tắc chuỗi trong giải tích đạo hàm (Chain Rule)",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd4-2",
+                question_id="q-dl-04",
+                option_text="Định lý Pythagoras",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd4-3",
+                question_id="q-dl-04",
+                option_text="Quy tắc L'Hopital",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd4-4",
+                question_id="q-dl-04",
+                option_text="Công thức nhị thức Newton",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        q_d5 = QuestionModel(
+            id="q-dl-05",
+            bank_id="qb-dl-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="HARD",
+            text="Mục đích chính của kỹ thuật Chuẩn hóa theo lô (Batch Normalization) trong mạng nơ-ron sâu là gì?",
+            explanation="Batch Normalization ổn định phân phối đầu vào của các tầng ẩn (giảm Internal Covariate Shift), cho phép dùng Learning Rate cao hơn.",
+            created_at="2026-07-25T14:25:00Z",
+        )
+        await session.merge(q_d5)
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd5-1",
+                question_id="q-dl-05",
+                option_text="Giảm Internal Covariate Shift, ổn định và tăng tốc quá trình huấn luyện",
+                is_correct=True,
+                order_index=0,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd5-2",
+                question_id="q-dl-05",
+                option_text="Tăng kích thước file checkpoint mô hình",
+                is_correct=False,
+                order_index=1,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd5-3",
+                question_id="q-dl-05",
+                option_text="Loại bỏ hoàn toàn bước tính đạo hàm",
+                is_correct=False,
+                order_index=2,
+            )
+        )
+        await session.merge(
+            QuestionOptionModel(
+                id="opt-qd5-4",
+                question_id="q-dl-05",
+                option_text="Chỉ dùng được cho bài toán xử lý ảnh",
+                is_correct=False,
+                order_index=3,
+            )
+        )
+
+        qm_dl = QuizMatrixModel(
+            item_id="item-dl-quiz-1",
+            bank_id="qb-dl-01",
+            time_limit_minutes=30,
+            passing_threshold_percent=80.0,
+            easy_count=2,
+            medium_count=2,
+            hard_count=1,
+            shuffle_options=True,
+        )
+        await session.merge(qm_dl)
+
+        # Seed Course Announcements
+        ann1 = CourseAnnouncementModel(
+            id="ann-ml-01",
+            course_id="course-python-ai",
+            author_id="user_instructor_01",
+            author_name="Prof. Andrew Ng",
+            title="[Lịch học] Buổi thảo luận trực tuyến tuần 1 về Gradient Descent",
+            content="Chào các bạn học viên, tuần này chúng ta sẽ có buổi Office Hours trực tuyến vào lúc 20:00 thứ Sáu để giải đáp thắc mắc về thuật toán Lan truyền ngược. Mời các bạn tham gia!",
+            created_at="2026-07-25T08:00:00Z",
+        )
+        ann2 = CourseAnnouncementModel(
+            id="ann-web-01",
+            course_id="course-web-dev",
+            author_id="user_team_instructor",
+            author_name="Phong Nguyễn",
+            title="[Cập nhật] Tài liệu thực hành Next.js 15 App Router & ConnectRPC",
+            content="Kho tài liệu mã nguồn mẫu cho bài tập Lab đã được tải lên. Các bạn có thể clone repository để thực hành trực tiếp trên máy cục bộ.",
+            created_at="2026-07-25T09:30:00Z",
+        )
+        await session.merge(ann1)
+        await session.merge(ann2)
+
+        # Seed Course Purchases & Payment Orders for My Purchases & Transactions
+        pur1 = CoursePurchaseModel(
+            id="pur-demo-01",
+            user_id="user_learner_demo",
+            course_id="course-python-ai",
+            amount=1200000.0,
+            currency="VND",
+            status="COMPLETED",
+            payment_method="VNPAY",
+            created_at="2026-07-20T10:00:00Z",
+        )
+        pur2 = CoursePurchaseModel(
+            id="pur-demo-02",
+            user_id="user_learner_demo",
+            course_id="course-web-dev",
+            amount=990000.0,
+            currency="VND",
+            status="COMPLETED",
+            payment_method="VNPAY",
+            created_at="2026-07-21T14:30:00Z",
+        )
+        await session.merge(pur1)
+        await session.merge(pur2)
+
+        order1 = PaymentOrderModel(
+            id="order-demo-01",
+            user_id="user_learner_demo",
+            target_type="COURSE",
+            target_id="course-python-ai",
+            plan_type="NONE",
+            amount=1200000.0,
+            currency="VND",
+            status="COMPLETED",
+            vnp_txn_ref="VNPTXN-DEMO-001",
+            created_at="2026-07-20T09:55:00Z",
+            updated_at="2026-07-20T10:00:00Z",
+        )
+        order2 = PaymentOrderModel(
+            id="order-demo-02",
+            user_id="user_learner_demo",
+            target_type="COURSE",
+            target_id="course-web-dev",
+            plan_type="NONE",
+            amount=990000.0,
+            currency="VND",
+            status="COMPLETED",
+            vnp_txn_ref="VNPTXN-DEMO-002",
+            created_at="2026-07-21T14:25:00Z",
+            updated_at="2026-07-21T14:30:00Z",
+        )
+        order3 = PaymentOrderModel(
+            id="order-demo-03",
+            user_id="user_learner_demo",
+            target_type="COURSE",
+            target_id="course-deep-learning",
+            plan_type="NONE",
+            amount=1500000.0,
+            currency="VND",
+            status="PENDING",
+            vnp_txn_ref="VNPTXN-DEMO-003",
+            created_at="2026-07-26T16:00:00Z",
+            updated_at="2026-07-26T16:00:00Z",
+        )
+        await session.merge(order1)
+        await session.merge(order2)
+        await session.merge(order3)
+
+        # Seed In-App Notifications for Learner
+        now_utc = datetime.now(UTC)
+        noti1 = NotificationModel(
+            id="noti-demo-01",
+            recipient_id="user_learner_demo",
+            category="SYSTEM",
+            title="Chào mừng bạn đến với Nền tảng Học tập Coursera AI!",
+            content="Tài khoản của bạn đã được kích hoạt thành công với giấy phép Doanh nghiệp đối tác.",
+            action_url="/my-learning",
+            actor_avatar_url="https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+            is_read=True,
+            read_at=now_utc,
+            created_at=now_utc,
+        )
+        noti2 = NotificationModel(
+            id="noti-demo-02",
+            recipient_id="user_learner_demo",
+            category="ACADEMIC",
+            title="Nhắc nhở hạn nộp: Graded Quiz Tuần 1",
+            content="Hạn nộp bài kiểm tra Máy học cơ bản sẽ kết thúc sau 48 giờ tới. Hãy hoàn thành đúng hạn!",
+            action_url="/learn/course-python-ai",
+            actor_avatar_url="",
+            is_read=False,
+            read_at=None,
+            created_at=now_utc,
+        )
+        noti3 = NotificationModel(
+            id="noti-demo-03",
+            recipient_id="user_learner_demo",
+            category="COMMUNITY",
+            title="Phản hồi mới trên Diễn đàn thảo luận",
+            content="Giảng viên Nguyễn Hoàng Nam đã phản hồi thắc mắc về Learning Rate của bạn.",
+            action_url="/learn/course-python-ai",
+            actor_avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=ta@coursera.ai",
+            is_read=False,
+            read_at=None,
+            created_at=now_utc,
+        )
+        noti4 = NotificationModel(
+            id="noti-demo-04",
+            recipient_id="user_learner_demo",
+            category="SYSTEM",
+            title="Đơn xin Hỗ trợ Tài chính (Financial Aid) đã được tiếp nhận",
+            content="Hồ sơ xin hỗ trợ học phí cho khóa học Python & AI đang được Hội đồng xét duyệt.",
+            action_url="/financial-aid",
+            actor_avatar_url="",
+            is_read=False,
+            read_at=None,
+            created_at=now_utc,
+        )
+        await session.merge(noti1)
+        await session.merge(noti2)
+        await session.merge(noti3)
+        await session.merge(noti4)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")
