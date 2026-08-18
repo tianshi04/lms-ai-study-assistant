@@ -948,7 +948,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         _ = course_id
         stmt = (
             select(LearningItemModel)
-            .options(selectinload(LearningItemModel.in_video_quizzes))
+            .options(
+                selectinload(LearningItemModel.in_video_quizzes),
+                selectinload(LearningItemModel.interactive_transcripts),
+            )
             .where(LearningItemModel.id == item_id)
         )
         res = await self.session.execute(stmt)
@@ -1354,7 +1357,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         try:
             from src.modules.assessment.infrastructure.models import QuestionModel
 
-            stmt = select(QuestionModel).where(QuestionModel.bank_id == quiz_matrix_id)
+            stmt = (
+                select(QuestionModel)
+                .options(selectinload(QuestionModel.options))
+                .where(QuestionModel.bank_id == quiz_matrix_id)
+            )
             res = await self.session.execute(stmt)
             questions = res.scalars().all()
             return [

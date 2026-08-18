@@ -151,7 +151,10 @@ class QuestionBankModel(Base):
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
 
     questions: Mapped[list["QuestionModel"]] = relationship(
-        "QuestionModel", back_populates="bank", cascade="all, delete-orphan"
+        "QuestionModel",
+        back_populates="bank",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
@@ -177,7 +180,10 @@ class QuestionModel(Base):
         "QuestionBankModel", back_populates="questions"
     )
     options: Mapped[list["QuestionOptionModel"]] = relationship(
-        "QuestionOptionModel", back_populates="question", cascade="all, delete-orphan"
+        "QuestionOptionModel",
+        back_populates="question",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 

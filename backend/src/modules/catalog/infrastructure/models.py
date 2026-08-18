@@ -105,6 +105,7 @@ class CourseModel(Base):
         back_populates="course",
         cascade="all, delete-orphan",
         order_by="WeekModuleModel.week_number",
+        lazy="selectin",
     )
     collaborators: Mapped[list["CourseCollaboratorModel"]] = relationship(
         "CourseCollaboratorModel",
@@ -135,6 +136,7 @@ class WeekModuleModel(Base):
         back_populates="week_module",
         cascade="all, delete-orphan",
         order_by="LessonModel.order_index",
+        lazy="selectin",
     )
 
 
@@ -162,6 +164,7 @@ class LessonModel(Base):
         back_populates="lesson",
         cascade="all, delete-orphan",
         order_by="LearningItemModel.order_index",
+        lazy="selectin",
     )
 
 
@@ -207,12 +210,14 @@ class LearningItemModel(Base):
         back_populates="item",
         cascade="all, delete-orphan",
         order_by="InteractiveTranscriptModel.timestamp_seconds",
+        lazy="selectin",
     )
     in_video_quizzes: Mapped[list["InVideoQuizModel"]] = relationship(
         "InVideoQuizModel",
         back_populates="item",
         cascade="all, delete-orphan",
         order_by="InVideoQuizModel.timestamp_seconds",
+        lazy="selectin",
     )
 
 
