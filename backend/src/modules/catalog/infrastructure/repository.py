@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 from typing import Any
 
@@ -40,6 +41,8 @@ from src.modules.catalog.infrastructure.models import (
 from src.modules.identity.infrastructure.models import UserModel
 from src.shared.auth import get_current_user
 from src.shared.infrastructure.scopes import apply_organization_scope
+
+logger = logging.getLogger(__name__)
 
 
 def _model_to_domain_course(model: CourseModel) -> Course:
@@ -948,7 +951,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         _ = course_id
         stmt = (
             select(LearningItemModel)
-            .options(selectinload(LearningItemModel.in_video_quizzes))
+            .options(
+                selectinload(LearningItemModel.in_video_quizzes),
+                selectinload(LearningItemModel.interactive_transcripts),
+            )
             .where(LearningItemModel.id == item_id)
         )
         res = await self.session.execute(stmt)
@@ -1354,7 +1360,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         try:
             from src.modules.assessment.infrastructure.models import QuestionModel
 
-            stmt = select(QuestionModel).where(QuestionModel.bank_id == quiz_matrix_id)
+            stmt = (
+                select(QuestionModel)
+                .options(selectinload(QuestionModel.options))
+                .where(QuestionModel.bank_id == quiz_matrix_id)
+            )
             res = await self.session.execute(stmt)
             questions = res.scalars().all()
             return [
@@ -1369,5 +1379,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 }
                 for q in questions
             ]
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
+            logger.warning(
+                "Failed to export quiz questions for matrix %s: %s",
+                quiz_matrix_id,
+                e,
+            )
             return []

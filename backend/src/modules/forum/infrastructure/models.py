@@ -43,6 +43,7 @@ class ForumThreadORM(Base):
         back_populates="thread",
         cascade="all, delete-orphan",
         order_by="ForumReplyORM.created_at.asc()",
+        lazy="selectin",
     )
 
 
