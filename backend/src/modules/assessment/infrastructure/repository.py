@@ -483,7 +483,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         self, course_id: str, title: str, category: str, description: str
     ) -> QuestionBank:
         now_str = datetime.now(UTC).isoformat()
-        bank_id = f"qbank-{uuid7().hex[:8]}"
+        bank_id = f"qbank-{uuid7().hex}"
         model = QuestionBankModel(
             id=bank_id,
             course_id=course_id,
@@ -564,7 +564,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         options_data: list[dict],
     ) -> Question:
         now_str = datetime.now(UTC).isoformat()
-        q_id = f"q-{uuid7().hex[:8]}"
+        q_id = f"q-{uuid7().hex}"
         q_model = QuestionModel(
             id=q_id,
             bank_id=bank_id,

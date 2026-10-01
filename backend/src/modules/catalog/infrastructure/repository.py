@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 from typing import Any
 
@@ -40,6 +41,8 @@ from src.modules.catalog.infrastructure.models import (
 from src.modules.identity.infrastructure.models import UserModel
 from src.shared.auth import get_current_user
 from src.shared.infrastructure.scopes import apply_organization_scope
+
+logger = logging.getLogger(__name__)
 
 
 def _model_to_domain_course(model: CourseModel) -> Course:
@@ -1376,5 +1379,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 }
                 for q in questions
             ]
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
+            logger.warning(
+                "Failed to export quiz questions for matrix %s: %s",
+                quiz_matrix_id,
+                e,
+            )
             return []
