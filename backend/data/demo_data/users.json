@@ -1,7 +1,7 @@
 [
   {
     "id": "demo_instructor",
-    "email": "phongnguyen.30604@gmail.com",
+    "email": "phong.instructor@coursera.ai",
     "full_name": "Phong Nguyễn",
     "role": "INSTRUCTOR",
     "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=instructor@demo.com",
@@ -11,7 +11,7 @@
   },
   {
     "id": "demo_active_learner",
-    "email": "n22dccn158@student.ptithcm.edu.vn",
+    "email": "phong.learner@coursera.ai",
     "full_name": "D22CQCN02-N NGUYEN THANH PHONG",
     "role": "LEARNER",
     "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=active@demo.com",
@@ -29,7 +29,7 @@
   },
   {
     "id": "demo_admin",
-    "email": "ttxmath1110@gmail.com",
+    "email": "phong.admin@coursera.ai",
     "full_name": "Thanh Phong Nguyễn",
     "role": "ADMIN",
     "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=admin@demo.com",

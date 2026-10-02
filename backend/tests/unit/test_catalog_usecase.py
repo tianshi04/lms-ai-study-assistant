@@ -118,6 +118,23 @@ async def test_get_lesson_detail(mock_scope, catalog_usecase, mock_repo, mock_se
 
 
 @pytest.mark.asyncio
+@patch("src.modules.catalog.application.curriculum_usecase.async_session_scope")
+async def test_get_lesson_detail_with_empty_course_id(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    lesson = await catalog_usecase.get_lesson_detail("", "l1")
+
+    mock_scope.assert_called_once()
+    mock_repo.get_lesson_detail.assert_awaited_once_with("", "l1")
+    assert lesson is not None
+    assert lesson.id == "l1"
+
+
+@pytest.mark.asyncio
 @patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_get_specialization(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
