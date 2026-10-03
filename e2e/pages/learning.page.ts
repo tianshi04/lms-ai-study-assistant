@@ -41,8 +41,7 @@ export class LearningPage {
 
     this.highlightInput = page.locator('input[placeholder*="trích dẫn"]').or(page.locator('input[placeholder*="ý chính"]')).first();
     this.commentInput = page.locator('input[placeholder*="bình luận"]').or(page.locator('input[placeholder*="suy nghĩ"]')).first();
-    this.saveNoteButton = page.locator('button:has-text("Lưu ghi chú"), form button[type="submit"]').first();
-
+    this.saveNoteButton = page.getByRole('button', { name: /Lưu ghi chú/i });
     this.deadlinesHeading = page.locator('text=/Lịch Nộp Bài Hàng Tuần|Upcoming Course Deadlines|Các mốc Deadline|Deadlines & Tiến độ/i').first();
     this.resetDeadlinesButton = page.getByRole('button', { name: /Reset My Deadlines/i });
     this.markCompleteButton = page.getByRole('button', { name: /Đánh dấu Hoàn thành|Mark Complete/i });

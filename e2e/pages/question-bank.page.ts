@@ -33,7 +33,7 @@ export class QuestionBankPage {
     this.optionTextInputs = page.locator('input[placeholder*="Phương án"], input[placeholder*="tùy chọn"], input[aria-label*="phương án"]');
     this.submitQuestionButton = page.getByRole('button', { name: /Lưu câu hỏi|Lưu thay đổi|Save Question/i });
 
-    this.bankCards = page.locator('div.space-y-3 > button, button:has-text("Ngân hàng"), button:has-text("Luyện tập"), button:has-text("Tuần"), button:has-text("câu hỏi")');
+    this.bankCards = page.locator('div.lg\\:col-span-4 div.space-y-3 > button');
     this.questionCards = page.locator('div.p-5.rounded-2xl');
   }
 

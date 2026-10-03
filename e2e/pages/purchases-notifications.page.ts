@@ -11,7 +11,7 @@ export class MyPurchasesPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageHeading = page.locator('h1, h2').filter({ hasText: /Mua hàng của tôi|Lịch sử giao dịch/i });
+    this.pageHeading = page.locator('h1, h2').filter({ hasText: /Mua hàng của tôi|Lịch sử giao dịch/i }).first();
     this.tabAll = page.locator('button, [role="button"]').filter({ hasText: /Tất cả đơn hàng/i });
     this.tabCompleted = page.locator('button, [role="button"]').filter({ hasText: /Đã mở khóa|Thành công/i });
     this.tabPending = page.locator('button, [role="button"]').filter({ hasText: /Đang chờ thanh toán|Chờ thanh toán/i });
