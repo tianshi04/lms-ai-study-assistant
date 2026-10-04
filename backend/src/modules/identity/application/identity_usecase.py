@@ -75,11 +75,12 @@ class IdentityUseCase:
         )
 
     async def google_register_verify(
-        self, authorization_code: str, nonce: str = ""
+        self, authorization_code: str, nonce: str = "", redirect_uri: str = ""
     ) -> tuple[str, str, str, str, bool, str]:
         return await self.auth.google_register_verify(
             authorization_code=authorization_code,
             nonce=nonce,
+            redirect_uri=redirect_uri,
         )
 
     async def complete_google_registration(
@@ -93,19 +94,21 @@ class IdentityUseCase:
         )
 
     async def google_login(
-        self, authorization_code: str, nonce: str = ""
+        self, authorization_code: str, nonce: str = "", redirect_uri: str = ""
     ) -> tuple[User | None, str, str, str]:
         return await self.auth.google_login(
             authorization_code=authorization_code,
             nonce=nonce,
+            redirect_uri=redirect_uri,
         )
 
     async def google_reset_password_verify(
-        self, authorization_code: str, nonce: str = ""
+        self, authorization_code: str, nonce: str = "", redirect_uri: str = ""
     ) -> tuple[str, str, str, str]:
         return await self.auth.google_reset_password_verify(
             authorization_code=authorization_code,
             nonce=nonce,
+            redirect_uri=redirect_uri,
         )
 
     async def complete_reset_password(

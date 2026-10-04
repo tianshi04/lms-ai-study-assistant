@@ -274,6 +274,7 @@ message ListOrganizationAuditLogsResponse {
 message GoogleRegisterVerifyRequest {
   string authorization_code = 1;
   string nonce = 2;
+  string redirect_uri = 3;
 }
 
 message GoogleRegisterVerifyResponse {
@@ -300,6 +301,7 @@ message CompleteGoogleRegistrationResponse {
 message GoogleLoginRequest {
   string authorization_code = 1;
   string nonce = 2;
+  string redirect_uri = 3;
 }
 
 message GoogleLoginResponse {
@@ -311,6 +313,7 @@ message GoogleLoginResponse {
 message GoogleResetPasswordVerifyRequest {
   string authorization_code = 1;
   string nonce = 2;
+  string redirect_uri = 3;
 }
 
 message GoogleResetPasswordVerifyResponse {

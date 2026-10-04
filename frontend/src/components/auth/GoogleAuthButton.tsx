@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
 export function GoogleIcon({ className = "w-5 h-5 flex-shrink-0" }: { className?: string }) {
@@ -44,73 +44,23 @@ export function GoogleAuthButton({
   children,
 }: GoogleAuthButtonProps) {
   const [internalLoading, setInternalLoading] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [useOfficialButton, setUseOfficialButton] = useState(false);
 
   useEffect(() => {
     // Listen for mock auth success event (used by automated E2E tests)
     const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
         onSuccess(event.data.idToken, "mock");
       }
     };
     window.addEventListener("message", handleMessage);
-
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!googleClientId) {
-      return () => window.removeEventListener("message", handleMessage);
-    }
-
-    const renderGsiButton = () => {
-      if (typeof google === "undefined" || !google.accounts?.id || !containerRef.current) return;
-
-      try {
-        google.accounts.id.initialize({
-          client_id: googleClientId,
-          callback: (response) => {
-            setInternalLoading(false);
-            if (response.credential) {
-              onSuccess(response.credential, "");
-            }
-          },
-        });
-
-        google.accounts.id.renderButton(containerRef.current, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          width: "360",
-          text: "continue_with",
-          locale: "vi",
-        });
-        setUseOfficialButton(true);
-      } catch (err) {
-        console.warn("Failed to render GIS official button:", err);
-      }
-    };
-
-    if (typeof google !== "undefined" && google.accounts?.id) {
-      renderGsiButton();
-    } else {
-      const timer = setInterval(() => {
-        if (typeof google !== "undefined" && google.accounts?.id) {
-          renderGsiButton();
-          clearInterval(timer);
-        }
-      }, 300);
-      return () => {
-        clearInterval(timer);
-        window.removeEventListener("message", handleMessage);
-      };
-    }
-
     return () => window.removeEventListener("message", handleMessage);
   }, [onSuccess]);
 
-  const handleClick = async () => {
+  const handleGoogleRedirect = () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-    if (!googleClientId || typeof google === "undefined" || !google.accounts?.oauth2) {
+    if (!googleClientId) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
         "user.test@gmail.com",
@@ -122,60 +72,44 @@ export function GoogleAuthButton({
       return;
     }
 
-    if (!googleClientId) {
-      console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID chưa được cấu hình");
-      return;
-    }
-
-    if (typeof google === "undefined" || !google.accounts?.oauth2) {
-      alert("Hệ thống xác thực Google đang khởi tạo. Vui lòng thử lại sau giây lát.");
-      return;
-    }
-
     setInternalLoading(true);
+    const origin = window.location.origin;
+    const redirectUri = encodeURIComponent(`${origin}/auth/google/callback`);
+    const scope = encodeURIComponent("openid email profile");
 
-    try {
-      const client = google.accounts.oauth2.initCodeClient({
-        client_id: googleClientId,
-        scope: "openid email profile",
-        ux_mode: "popup",
-        callback: (response) => {
-          setInternalLoading(false);
-          if (response.error) {
-            console.error("Google Auth Error:", response.error, response.error_description);
-            return;
-          }
-          if (response.code) {
-            onSuccess(response.code, "");
-          }
-        },
-      });
+    // Generate CSRF state token & preserve target redirect URL parameter
+    const searchParams = new URLSearchParams(window.location.search);
+    const redirectUrl = searchParams.get("redirect") || "";
 
-      client.requestCode();
-    } catch (error) {
-      console.error(error);
-      setInternalLoading(false);
-    }
+    const csrfToken =
+      typeof window.crypto?.randomUUID === "function"
+        ? window.crypto.randomUUID()
+        : Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+    // Save state token in cookie with SameSite=Lax
+    document.cookie = `g_oauth_state=${csrfToken}; Path=/; max-age=600; SameSite=Lax${
+      window.location.protocol === "https:" ? "; Secure" : ""
+    }`;
+
+    const stateObj = { csrfToken, redirectUrl };
+    const stateStr = encodeURIComponent(JSON.stringify(stateObj));
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${stateStr}&prompt=select_account`;
+    window.location.href = authUrl;
   };
 
   return (
     <div className="w-full flex justify-center">
-      <div
-        ref={containerRef}
-        className={`w-full flex justify-center ${useOfficialButton ? "block" : "hidden"}`}
-      />
-      {!useOfficialButton && (
-        <Button
-          type="button"
-          variant={variant}
-          onClick={handleClick}
-          disabled={disabled || internalLoading}
-          leadingIcon={<GoogleIcon />}
-          className={`w-full py-3 font-semibold text-sm shadow-sm ${className}`}
-        >
-          <span>{children ?? text}</span>
-        </Button>
-      )}
+      <Button
+        type="button"
+        variant={variant}
+        onClick={handleGoogleRedirect}
+        disabled={disabled || internalLoading}
+        leadingIcon={<GoogleIcon />}
+        className={`w-full py-3 font-semibold text-sm shadow-sm hover:border-primary/60 transition-colors ${className}`}
+      >
+        <span>{children ?? text}</span>
+      </Button>
     </div>
   );
 }
