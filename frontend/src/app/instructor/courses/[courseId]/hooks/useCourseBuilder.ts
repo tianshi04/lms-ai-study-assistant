@@ -5,6 +5,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { revalidateCourseCacheAction } from "@/app/actions/cache";
 import {
   CatalogService,
+  CourseStatus,
   ItemType,
   type Course,
   type LearningItem,
@@ -75,7 +76,8 @@ export function useCourseBuilder(courseId: string) {
     } finally {
       setLoading(false);
     }
-  }, [courseId, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
 
   useEffect(() => {
     let ignore = false;
@@ -108,7 +110,8 @@ export function useCourseBuilder(courseId: string) {
     return () => {
       ignore = true;
     };
-  }, [courseId, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
 
   const handleSubmitForLaunch = async () => {
     if (!course) return;
@@ -177,6 +180,12 @@ export function useCourseBuilder(courseId: string) {
   };
 
   const handleDeleteWeek = (weekId: string, weekTitle: string) => {
+    if (course?.status === CourseStatus.PUBLISHED) {
+      toast.error(
+        `Không thể xóa Tuần học "${weekTitle}" vì khóa học đã được xuất bản (PUBLISHED).`,
+      );
+      return;
+    }
     setConfirmDeleteTarget({ type: "week", id: weekId, title: weekTitle });
   };
 
@@ -231,6 +240,12 @@ export function useCourseBuilder(courseId: string) {
   };
 
   const handleDeleteLesson = (lessonId: string, lessonTitle: string) => {
+    if (course?.status === CourseStatus.PUBLISHED) {
+      toast.error(
+        `Không thể xóa Bài học "${lessonTitle}" vì khóa học đã được xuất bản (PUBLISHED).`,
+      );
+      return;
+    }
     setConfirmDeleteTarget({ type: "lesson", id: lessonId, title: lessonTitle });
   };
 
@@ -275,23 +290,19 @@ export function useCourseBuilder(courseId: string) {
         payload.quizBankId &&
         createdItem
       ) {
-        try {
-          const assessmentClient = getRpcClient(AssessmentService);
-          await assessmentClient.configureQuizMatrix({
-            itemId: createdItem.id,
-            bankId: payload.quizBankId,
-            timeLimitMinutes: parseInt(String(payload.quizTimeLimit)) || 45,
-            passingThresholdPercent: parseFloat(String(payload.quizPassingThreshold)) || 80,
-            easyCount: parseInt(String(payload.quizEasyCount)) || 0,
-            mediumCount: parseInt(String(payload.quizMediumCount)) || 0,
-            hardCount: parseInt(String(payload.quizHardCount)) || 0,
-            shuffleOptions: true,
-            maxAttempts: parseInt(String(payload.quizMaxAttempts)) || 3,
-            cooldownHours: parseInt(String(payload.quizCooldownHours)) || 8,
-          });
-        } catch (err) {
-          console.error("Failed to configure quiz matrix on creation:", err);
-        }
+        const assessmentClient = getRpcClient(AssessmentService);
+        await assessmentClient.configureQuizMatrix({
+          itemId: createdItem.id,
+          bankId: payload.quizBankId,
+          timeLimitMinutes: parseInt(String(payload.quizTimeLimit)) || 15,
+          passingThresholdPercent: parseFloat(String(payload.quizPassingThreshold)) || 80,
+          easyCount: parseInt(String(payload.quizEasyCount)) || 0,
+          mediumCount: parseInt(String(payload.quizMediumCount)) || 0,
+          hardCount: parseInt(String(payload.quizHardCount)) || 0,
+          shuffleOptions: true,
+          maxAttempts: parseInt(String(payload.quizMaxAttempts)) || 3,
+          cooldownHours: parseInt(String(payload.quizCooldownHours)) || 8,
+        });
       }
 
       toast.success(`Đã thêm Học liệu "${payload.title}" vào bài học thành công!`);
@@ -348,23 +359,19 @@ export function useCourseBuilder(courseId: string) {
         (payload.type === ItemType.PRACTICE_QUIZ || payload.type === ItemType.GRADED_QUIZ) &&
         bankIdToUse
       ) {
-        try {
-          const assessmentClient = getRpcClient(AssessmentService);
-          await assessmentClient.configureQuizMatrix({
-            itemId: payload.id,
-            bankId: bankIdToUse,
-            timeLimitMinutes: parseInt(String(payload.quizTimeLimit)) || 45,
-            passingThresholdPercent: parseFloat(String(payload.quizPassingThreshold)) || 80,
-            easyCount: parseInt(String(payload.quizEasyCount)) || 0,
-            mediumCount: parseInt(String(payload.quizMediumCount)) || 0,
-            hardCount: parseInt(String(payload.quizHardCount)) || 0,
-            shuffleOptions: true,
-            maxAttempts: parseInt(String(payload.quizMaxAttempts)) || 3,
-            cooldownHours: parseInt(String(payload.quizCooldownHours)) || 8,
-          });
-        } catch (err) {
-          console.error("Failed to configure quiz matrix on update:", err);
-        }
+        const assessmentClient = getRpcClient(AssessmentService);
+        await assessmentClient.configureQuizMatrix({
+          itemId: payload.id,
+          bankId: bankIdToUse,
+          timeLimitMinutes: parseInt(String(payload.quizTimeLimit)) || 15,
+          passingThresholdPercent: parseFloat(String(payload.quizPassingThreshold)) || 80,
+          easyCount: parseInt(String(payload.quizEasyCount)) || 0,
+          mediumCount: parseInt(String(payload.quizMediumCount)) || 0,
+          hardCount: parseInt(String(payload.quizHardCount)) || 0,
+          shuffleOptions: true,
+          maxAttempts: parseInt(String(payload.quizMaxAttempts)) || 3,
+          cooldownHours: parseInt(String(payload.quizCooldownHours)) || 8,
+        });
       }
 
       toast.success("Đã cập nhật nội dung Học liệu thành công!");
@@ -380,6 +387,12 @@ export function useCourseBuilder(courseId: string) {
   };
 
   const handleDeleteItem = (itemId: string, itemTitle: string) => {
+    if (course?.status === CourseStatus.PUBLISHED) {
+      toast.error(
+        `Không thể xóa Học liệu "${itemTitle}" vì khóa học đã được xuất bản (PUBLISHED).`,
+      );
+      return;
+    }
     setConfirmDeleteTarget({ type: "item", id: itemId, title: itemTitle });
   };
 

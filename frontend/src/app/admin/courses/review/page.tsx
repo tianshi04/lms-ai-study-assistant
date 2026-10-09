@@ -14,7 +14,7 @@ import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
 import { Progress } from "@/components/ui/Progress";
@@ -197,17 +197,18 @@ export default function CourseReviewerPortalPage() {
             <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
           </div>
         ) : courses.length === 0 ? (
-          <Card variant="outlined" className="text-center py-16">
+          <Surface variant="low" shape="2xl" className="text-center py-16">
             <p className="text-muted-foreground text-sm">
               {"Không tìm thấy khóa học nào trong danh mục này."}
             </p>
-          </Card>
+          </Surface>
         ) : (
           <div className="space-y-4">
             {courses.map((course) => (
-              <Card
+              <Surface
                 key={course.id}
-                variant="outlined"
+                variant="low"
+                shape="2xl"
                 className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
               >
                 <div className="space-y-2 max-w-2xl">
@@ -266,7 +267,7 @@ export default function CourseReviewerPortalPage() {
                     </>
                   )}
                 </div>
-              </Card>
+              </Surface>
             ))}
           </div>
         )}

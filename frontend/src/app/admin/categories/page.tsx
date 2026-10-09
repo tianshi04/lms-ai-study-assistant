@@ -11,24 +11,13 @@ import {
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
-import {
-  PageHeader,
-  PageHeaderTitle,
-  PageHeaderDescription,
-  PageHeaderActions,
-} from "@/components/ui/LayoutPrimitives";
+import { PageHeader } from "@/components/ui/LayoutPrimitives";
 
 const CategoryList = ({
   title,
@@ -45,7 +34,7 @@ const CategoryList = ({
   noCategoriesText: string;
   deleteText: string;
 }) => (
-  <Card variant="outlined" className="p-6 flex-1">
+  <Surface variant="low" shape="2xl" className="p-6 flex-1">
     <h3 className="text-xl font-bold mb-4 text-foreground">
       {title} ({items.length})
     </h3>
@@ -75,7 +64,7 @@ const CategoryList = ({
         ))}
       </ul>
     )}
-  </Card>
+  </Surface>
 );
 
 export default function AdminCategoriesPage() {
@@ -135,17 +124,17 @@ export default function AdminCategoriesPage() {
     <main className="max-w-5xl mx-auto px-6 py-12 flex-1">
       <PageHeader>
         <div>
-          <PageHeaderTitle>Danh mục quản trị</PageHeaderTitle>
-          <PageHeaderDescription>Quản lý danh mục khóa học</PageHeaderDescription>
+          <PageHeader.Title>Danh mục quản trị</PageHeader.Title>
+          <PageHeader.Description>Quản lý danh mục khóa học</PageHeader.Description>
         </div>
-        <PageHeaderActions>
+        <PageHeader.Actions>
           <Button variant="text" size="sm" onClick={() => router.push("/admin/dashboard")}>
             &larr; {"Về trang quản trị"}
           </Button>
-        </PageHeaderActions>
+        </PageHeader.Actions>
       </PageHeader>
 
-      <Card variant="filled" className="p-6 mb-8">
+      <Surface variant="container" shape="2xl" className="p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4 text-foreground">{"Thêm danh mục mới"}</h2>
         <form onSubmit={handleCreate} className="flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1 w-full">
@@ -168,15 +157,15 @@ export default function AdminCategoriesPage() {
                 if (val) setNewType(val as "SUBJECT" | "LEVEL");
               }}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Loại danh mục">
+              <Select.Trigger className="w-full">
+                <Select.Value placeholder="Loại danh mục">
                   {newType === "SUBJECT" ? "Chủ đề" : "Cấp độ"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SUBJECT">{"Chủ đề"}</SelectItem>
-                <SelectItem value="LEVEL">{"Cấp độ"}</SelectItem>
-              </SelectContent>
+                </Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="SUBJECT">{"Chủ đề"}</Select.Item>
+                <Select.Item value="LEVEL">{"Cấp độ"}</Select.Item>
+              </Select.Content>
             </Select>
           </div>
           <Button
@@ -187,7 +176,7 @@ export default function AdminCategoriesPage() {
             Thêm danh mục
           </Button>
         </form>
-      </Card>
+      </Surface>
 
       <div className="flex flex-col md:flex-row gap-6">
         <CategoryList

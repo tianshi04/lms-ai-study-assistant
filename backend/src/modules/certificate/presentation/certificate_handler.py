@@ -6,8 +6,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.certificate.v1 import certificate_pb as pb
 from src.gen.certificate.v1.certificate_connect import CertificateService
-from src.modules.certificate.application.certificate_usecase import CertificateUseCase
-from src.modules.certificate.domain.entities import (
+from src.modules.certificate.application import CertificateUseCase
+from src.modules.certificate.domain import (
     FinancialAidApplication,
     VerifiedCertificate,
 )

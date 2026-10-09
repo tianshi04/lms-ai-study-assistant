@@ -2,6 +2,8 @@ import { test } from '@playwright/test';
 import { HomePage, CourseCatalogPage } from '../pages';
 
 test.describe('Full System Blackbox - Health Check & Home Page (POM)', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('should load landing page successfully with title and navigation', async ({ page }) => {
     const homePage = new HomePage(page);
     await homePage.goto();

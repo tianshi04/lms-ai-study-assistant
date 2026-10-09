@@ -12,7 +12,7 @@ import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Progress } from "@/components/ui/Progress";
@@ -61,7 +61,11 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             activeTab="settings"
             isOwnerOrAdmin={false}
           />
-          <Card variant="outlined" className="p-12 text-center space-y-4 max-w-xl mx-auto">
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="p-12 text-center space-y-4 max-w-xl mx-auto"
+          >
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -76,7 +80,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             >
               Quay lại Tổng quan
             </Link>
-          </Card>
+          </Surface>
         </main>
       </div>
     );
@@ -155,7 +159,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
         />
 
         {/* Settings Form Container */}
-        <Card variant="filled" className="p-6 sm:p-8 max-w-3xl">
+        <Surface variant="container" shape="2xl" className="p-6 sm:p-8 max-w-3xl">
           <div className="flex items-center space-x-3 pb-6 border-b border-border">
             <Settings className="w-6 h-6 text-primary" aria-hidden="true" />
             <div>
@@ -170,7 +174,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
           {isLoading ? (
             <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
               <Progress.Circular size="md" />
-              <p className="text-sm">Đang tải thông tin cài đặt...</p>
+              <p className="text-sm">Đang tải thông tin cài đặt…</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6 pt-6">
@@ -187,30 +191,26 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label
-                    htmlFor="orgNameInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    Tên Tổ chức / Partner
-                  </label>
+                <div className="sm:col-span-2">
                   <Input
                     id="orgNameInput"
+                    label="Tên Tổ chức / Partner"
                     type="text"
+                    autoComplete="organization"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="ví dụ: Đại học Bách Khoa TP.HCM"
+                    startAdornment={
+                      <Building2 className="w-4 h-4 text-primary" aria-hidden="true" />
+                    }
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="orgSlugInput" className="text-xs font-bold text-foreground">
-                    Slug định danh (URL)
-                  </label>
+                <div>
                   <Input
                     id="orgSlugInput"
+                    label="Slug định danh (URL)"
                     type="text"
                     disabled
                     value={slug}
@@ -218,71 +218,59 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="orgWebsiteInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <Globe className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    Website chính thức
-                  </label>
+                <div>
                   <Input
                     id="orgWebsiteInput"
+                    label="Website chính thức"
                     type="url"
+                    inputMode="url"
+                    autoComplete="url"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     placeholder="https://example.edu.vn"
+                    startAdornment={<Globe className="w-4 h-4 text-primary" aria-hidden="true" />}
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label
-                    htmlFor="orgLogoInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    URL Logo Tổ chức
-                  </label>
+                <div className="sm:col-span-2">
                   <Input
                     id="orgLogoInput"
+                    label="URL Logo Tổ chức"
                     type="url"
+                    inputMode="url"
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
+                    startAdornment={
+                      <ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" />
+                    }
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label
-                    htmlFor="orgBannerInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    URL Ảnh Banner Tổ chức
-                  </label>
+                <div className="sm:col-span-2">
                   <Input
                     id="orgBannerInput"
+                    label="URL Ảnh Banner Tổ chức"
                     type="url"
+                    inputMode="url"
                     value={bannerUrl}
                     onChange={(e) => setBannerUrl(e.target.value)}
                     placeholder="https://example.com/banner.png"
+                    startAdornment={
+                      <ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" />
+                    }
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label
-                    htmlFor="orgDomainsInput"
-                    className="text-xs font-bold text-foreground flex items-center gap-1.5"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                    Domain Email Bảo chứng (`allowed_domains`)
-                  </label>
+                <div className="sm:col-span-2">
                   <Input
                     id="orgDomainsInput"
+                    label="Domain Email Bảo chứng (allowed_domains)"
                     type="text"
                     value={allowedDomainsStr}
                     onChange={(e) => setAllowedDomainsStr(e.target.value)}
-                    placeholder="hcmut.edu.vn, stanford.edu (phân cách bằng dấu phẩy)"
+                    placeholder="ví dụ: hcmut.edu.vn, bku.edu.vn (cách nhau bởi dấu phẩy)"
+                    startAdornment={<Shield className="w-4 h-4 text-primary" aria-hidden="true" />}
                   />
                   <div className="flex flex-wrap gap-2 pt-2">
                     {allowedDomainsStr
@@ -321,7 +309,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Giới thiệu về trường đại học hoặc tổ chức đối tác..."
+                    placeholder="Giới thiệu về trường đại học hoặc tổ chức đối tác…"
                   />
                 </div>
               </div>
@@ -334,7 +322,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
             </form>
           )}
-        </Card>
+        </Surface>
       </main>
     </div>
   );
@@ -346,7 +334,7 @@ export default function OrgSettingsPage({ params }: { params: Promise<{ slug: st
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
           <Progress.Circular size="sm" />
-          <span className="text-sm">Đang tải cài đặt tổ chức...</span>
+          <span className="text-sm">Đang tải cài đặt tổ chức…</span>
         </div>
       }
     >

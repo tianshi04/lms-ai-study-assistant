@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy import text
+
 from src.shared.infrastructure.database import (
     async_session_scope,
     get_session_factory,
@@ -33,7 +34,7 @@ async def test_postgres_connection_and_pgvector():
             assert str(vec_val) == "[5,7,9]", (
                 f"Vector addition operation failed: {vec_val}"
             )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         pytest.skip(f"PostgreSQL container offline for vector test: {exc}")
 
 
@@ -44,5 +45,5 @@ async def test_async_session_scope_context_manager():
         async with async_session_scope() as session:
             res = await session.execute(text("SELECT 1;"))
             assert res.scalar() == 1
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         pytest.skip(f"PostgreSQL container offline for async_session_scope test: {exc}")

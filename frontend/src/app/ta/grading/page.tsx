@@ -10,14 +10,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
+import { Table } from "@/components/ui/Table";
 
 interface DemoSubmission {
   id: string;
@@ -190,50 +183,46 @@ export default function TAGradingPage() {
             </div>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Học viên</TableHead>
-                  <TableHead>Bài tập / Khóa học</TableHead>
-                  <TableHead>Thời gian nộp</TableHead>
-                  <TableHead>Điểm Peer</TableHead>
-                  <TableHead>Điểm TA</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Học viên</Table.Head>
+                  <Table.Head>Bài tập / Khóa học</Table.Head>
+                  <Table.Head>Thời gian nộp</Table.Head>
+                  <Table.Head>Điểm Peer</Table.Head>
+                  <Table.Head>Điểm TA</Table.Head>
+                  <Table.Head>Trạng thái</Table.Head>
+                  <Table.Head className="text-right">Thao tác</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
                 {filteredSubmissions.map((sub) => (
-                  <TableRow key={sub.id}>
-                    <TableCell>
+                  <Table.Row key={sub.id}>
+                    <Table.Cell>
                       <div className="font-bold text-foreground">{sub.studentName}</div>
                       <div className="text-[10px] text-muted-foreground font-mono">
                         {sub.studentEmail}
                       </div>
-                    </TableCell>
-                    <TableCell className="max-w-xs">
+                    </Table.Cell>
+                    <Table.Cell className="max-w-xs">
                       <div className="font-bold text-foreground min-w-0 truncate">
                         {sub.itemTitle}
                       </div>
-                      <div className="text-[10px] text-muted-foreground min-w-0 truncate">
+                      <div className="text-xs text-muted-foreground truncate font-medium">
                         {sub.courseTitle}
                       </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-muted-foreground">
+                    </Table.Cell>
+                    <Table.Cell className="text-xs font-mono text-muted-foreground">
                       {sub.submittedAt}
-                    </TableCell>
-                    <TableCell className="font-mono font-bold text-foreground">
-                      {sub.peerScore}%
-                    </TableCell>
-                    <TableCell className="font-mono font-bold">
-                      {sub.taScore !== null ? (
-                        <span className="text-primary">{sub.taScore}%</span>
-                      ) : (
-                        <span className="text-muted-foreground font-normal">Chưa chấm</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
+                    </Table.Cell>
+                    <Table.Cell className="font-mono text-xs font-bold text-foreground">
+                      {sub.peerScore}/100
+                    </Table.Cell>
+                    <Table.Cell className="font-mono text-xs font-bold text-primary">
+                      {sub.taScore !== null ? `${sub.taScore}/100` : "--"}
+                    </Table.Cell>
+                    <Table.Cell>
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           sub.status === "GRADED"
                             ? "bg-success/10 text-success"
                             : sub.status === "APPEALED"
@@ -247,15 +236,15 @@ export default function TAGradingPage() {
                             ? "Có kháng nghị"
                             : "Chờ trợ giảng"}
                       </span>
-                    </TableCell>
-                    <TableCell className="text-right">
+                    </Table.Cell>
+                    <Table.Cell className="text-right">
                       <Button size="sm" variant="tonal" onClick={() => handleOpenGradeModal(sub)}>
                         {sub.status === "GRADED" ? "Xem & Sửa điểm" : "Chấm điểm ngay"}
                       </Button>
-                    </TableCell>
-                  </TableRow>
+                    </Table.Cell>
+                  </Table.Row>
                 ))}
-              </TableBody>
+              </Table.Body>
             </Table>
           )}
         </div>

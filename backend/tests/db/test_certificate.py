@@ -1,5 +1,6 @@
 import pytest
-from src.modules.certificate.application.certificate_usecase import (
+
+from src.modules.certificate.application import (
     CertificateUseCase,
     count_words,
 )
@@ -27,8 +28,8 @@ async def test_apply_financial_aid_validation():
 @pytest.mark.asyncio
 async def test_get_verified_certificate():
     try:
-        from src.modules.identity.application.identity_usecase import IdentityUseCase
-        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.modules.identity.application import IdentityUseCase
+        from src.modules.learning.application import LearningUseCase
 
         usecase = CertificateUseCase()
 
@@ -42,7 +43,7 @@ async def test_get_verified_certificate():
         # 2. Mark item complete to reach 100% progress
         learning_uc = LearningUseCase()
         await learning_uc.mark_item_complete(
-            "user_cert_test", "course_python", "item_1", total_course_items=1
+            "user_cert_test", "course_python", "item_1"
         )
 
         # 2b. Without KYC identity verification, cert issuance is rejected (BR_CERT_003)
@@ -65,13 +66,13 @@ async def test_get_verified_certificate():
         assert cert.certificate_id.startswith("CERT-")
         assert cert.open_badges_json_ld != ""
 
-        is_valid, verified_cert, status_msg = await usecase.verify_certificate_public(
+        is_valid, verified_cert, _status_msg = await usecase.verify_certificate_public(
             cert.certificate_id
         )
         assert is_valid
         assert verified_cert is not None
         assert verified_cert.certificate_id == cert.certificate_id
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping certificate db test: DB not reachable ({e})")
 
 
@@ -98,7 +99,7 @@ async def test_financial_aid_review_flow():
         assert r_err == ""
         assert reviewed is not None
         assert reviewed.status == "APPROVED"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping financial aid review db test: DB not reachable ({e})")
 
 
@@ -131,7 +132,7 @@ async def test_financial_aid_auto_approve_when_overdue():
         assert status_app is not None
         assert status_app.status == "APPROVED"
         assert status_app.review_deadline_days_left == 0
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(
             f"Skipping financial aid auto-approve db test: DB not reachable ({e})"
         )
@@ -140,12 +141,12 @@ async def test_financial_aid_auto_approve_when_overdue():
 @pytest.mark.asyncio
 async def test_get_verified_certificate_failed_quiz_rejection():
     try:
-        from src.modules.assessment.domain.entities import QuizSubmission
+        from src.modules.assessment.domain import QuizSubmission
         from src.modules.assessment.infrastructure.repository import (
             SQLAlchemyAssessmentRepository,
         )
-        from src.modules.identity.application.identity_usecase import IdentityUseCase
-        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.modules.identity.application import IdentityUseCase
+        from src.modules.learning.application import LearningUseCase
         from src.shared.infrastructure.database import async_session_scope
 
         usecase = CertificateUseCase()
@@ -157,9 +158,7 @@ async def test_get_verified_certificate_failed_quiz_rejection():
 
         # Mark 100% progress
         learning_uc = LearningUseCase()
-        await learning_uc.mark_item_complete(
-            user_id, course_id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete(user_id, course_id, "item_1")
 
         # Save a failed quiz submission (<80%)
         async with async_session_scope() as session:
@@ -180,20 +179,20 @@ async def test_get_verified_certificate_failed_quiz_rejection():
         cert, err = await usecase.get_verified_certificate(user_id, course_id)
         assert cert is None
         assert "chưa đạt điểm tối thiểu >= 80%" in err
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping cert failed quiz db test: DB not reachable ({e})")
 
 
 @pytest.mark.asyncio
 async def test_get_verified_certificate_custom_quiz_threshold_pass():
     try:
-        from src.modules.assessment.domain.entities import QuizSubmission
+        from src.modules.assessment.domain import QuizSubmission
         from src.modules.assessment.infrastructure.models import QuizMatrixModel
         from src.modules.assessment.infrastructure.repository import (
             SQLAlchemyAssessmentRepository,
         )
-        from src.modules.identity.application.identity_usecase import IdentityUseCase
-        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.modules.identity.application import IdentityUseCase
+        from src.modules.learning.application import LearningUseCase
         from src.shared.infrastructure.database import async_session_scope
 
         usecase = CertificateUseCase()
@@ -205,9 +204,7 @@ async def test_get_verified_certificate_custom_quiz_threshold_pass():
 
         # Mark 100% progress
         learning_uc = LearningUseCase()
-        await learning_uc.mark_item_complete(
-            user_id, course_id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete(user_id, course_id, "item_1")
 
         # Save a custom matrix threshold (e.g. 60.0%) and submission with score 70% (passed)
         async with async_session_scope() as session:
@@ -242,16 +239,16 @@ async def test_get_verified_certificate_custom_quiz_threshold_pass():
         cert, err = await usecase.get_verified_certificate(user_id, course_id)
         assert err == ""
         assert cert is not None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping cert custom threshold db test: DB not reachable ({e})")
 
 
 @pytest.mark.asyncio
 async def test_get_verified_certificate_with_slug():
     try:
-        from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-        from src.modules.identity.application.identity_usecase import IdentityUseCase
-        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.modules.catalog.application import CatalogUseCase
+        from src.modules.identity.application import IdentityUseCase
+        from src.modules.learning.application import LearningUseCase
 
         cat_uc = CatalogUseCase()
         cert_uc = CertificateUseCase()
@@ -269,9 +266,7 @@ async def test_get_verified_certificate_with_slug():
 
         # Verify user identity & mark 100% progress
         await id_uc.verify_identity("user_slug_cert")
-        await learning_uc.mark_item_complete(
-            "user_slug_cert", course.id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete("user_slug_cert", course.id, "item_1")
 
         # Query certificate using SLUG
         cert, err = await cert_uc.get_verified_certificate(
@@ -285,5 +280,5 @@ async def test_get_verified_certificate_with_slug():
         user_certs = await cert_uc.list_my_certificates("user_slug_cert")
         assert len(user_certs) >= 1
         assert any(c.certificate_id == cert.certificate_id for c in user_certs)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping cert slug & list test: DB not reachable ({e})")

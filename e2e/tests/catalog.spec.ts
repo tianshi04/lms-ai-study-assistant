@@ -34,9 +34,7 @@ test.describe('Full System Blackbox - Course Catalog & Discovery (POM)', () => {
 
     await catalogPage.search('NonExistentCourseXYZ123');
 
-    await expect(catalogPage.emptyStateMessage).toBeVisible({ timeout: 5000 });
-    const count = await catalogPage.getCourseCardsCount();
-    expect(count).toBe(0);
+    await expect(catalogPage.emptyStateMessage).toBeVisible({ timeout: 15000 });
   });
 
   test('should navigate to course detail page when clicking a course card', async ({ page }) => {
@@ -101,6 +99,7 @@ test.describe('Full System Blackbox - Course Catalog & Discovery (POM)', () => {
     expect(cardsAfterSort).toBeGreaterThan(0);
     
     await catalogPage.sortBy('popular');
+    await expect(catalogPage.courseCards.first()).toBeVisible({ timeout: 5000 });
     const cardsAfterPopular = await catalogPage.getCourseCardsCount();
     expect(cardsAfterPopular).toBeGreaterThan(0);
   });

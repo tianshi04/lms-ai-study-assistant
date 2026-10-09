@@ -1,11 +1,12 @@
 import json
 import logging
+
 import pytest
+from httpx import ASGITransport, AsyncClient
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.responses import JSONResponse
 from starlette.routing import Route
-from httpx import ASGITransport, AsyncClient
 
 from src.shared.infrastructure.logging.config import (
     ContextAwareFormatter,

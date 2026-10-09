@@ -30,7 +30,7 @@ export class InstructorCoursesPage {
   }
 
   async goto() {
-    await this.page.goto('/instructor/courses');
+    await this.page.goto('/instructor/courses', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

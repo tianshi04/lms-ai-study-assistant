@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { NavigationMenu } from "@/components/ui/NavigationMenu";
+import { GoogleOneTapPrompt } from "@/components/auth/GoogleOneTapPrompt";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -65,6 +66,7 @@ export function Navbar() {
           : "bg-surface border-b border-transparent shadow-none",
       )}
     >
+      <GoogleOneTapPrompt />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Left Section: Brand Logo & Navigation Links */}
         <div className="flex items-center gap-6">
@@ -74,17 +76,13 @@ export function Navbar() {
           <NavigationMenu.Root className="hidden md:flex items-center">
             <NavigationMenu.List className="gap-2">
               <NavigationMenu.Item>
-                <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
+                <Link href="/courses" className={getLinkClasses("/courses")}>
                   {"Khóa học"}
                 </Link>
               </NavigationMenu.Item>
               {userName && (
                 <NavigationMenu.Item>
-                  <Link
-                    href="/my-learning"
-                    prefetch={true}
-                    className={getLinkClasses("/my-learning")}
-                  >
+                  <Link href="/my-learning" className={getLinkClasses("/my-learning")}>
                     {"Việc học của tôi"}
                   </Link>
                 </NavigationMenu.Item>
@@ -95,7 +93,7 @@ export function Navbar() {
                 <NavigationMenu.Item>
                   <Link
                     href="/instructor/courses"
-                    className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}
+                    className={`${getLinkClasses("/instructor/courses")} flex items-center gap-1.5`}
                   >
                     <span>{"Giảng Viên"}</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
@@ -110,7 +108,7 @@ export function Navbar() {
                 <NavigationMenu.Item>
                   <Link
                     href="/admin/dashboard"
-                    className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
+                    className={`${getLinkClasses("/admin/dashboard")} flex items-center gap-1.5`}
                   >
                     <span>Admin</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
@@ -157,9 +155,11 @@ export function Navbar() {
           <IconButton
             type="button"
             variant="standard"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden rounded-xl text-muted-foreground hover:bg-muted"
-            aria-label="Bật/tắt menu điều hướng"
+            aria-label={mobileMenuOpen ? "Đóng menu điều hướng" : "Mở menu điều hướng"}
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" aria-hidden="true" />
@@ -172,7 +172,10 @@ export function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-card/95 backdrop-blur-lg px-4 py-4 space-y-1.5 animate-fade-in">
+        <div
+          id="mobile-navigation-menu"
+          className="md:hidden border-t border-border bg-card/95 backdrop-blur-lg px-4 py-4 space-y-1.5 animate-fade-in"
+        >
           <Link
             href="/courses"
             onClick={() => setMobileMenuOpen(false)}
@@ -194,7 +197,7 @@ export function Navbar() {
               href="/instructor/courses"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                getMobileLinkClasses("/instructor"),
+                getMobileLinkClasses("/instructor/courses"),
                 "flex items-center justify-between",
               )}
             >
@@ -208,7 +211,10 @@ export function Navbar() {
             <Link
               href="/admin/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className={cn(getMobileLinkClasses("/admin"), "flex items-center justify-between")}
+              className={cn(
+                getMobileLinkClasses("/admin/dashboard"),
+                "flex items-center justify-between",
+              )}
             >
               <span>Admin</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">

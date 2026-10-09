@@ -3,10 +3,16 @@ import { Accordion as BaseAccordion } from "@base-ui/react/accordion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Accordion = BaseAccordion.Root;
-export const AccordionItem = BaseAccordion.Item;
+export const Accordion = Object.assign(BaseAccordion.Root, {
+  Root: BaseAccordion.Root,
+  Item: BaseAccordion.Item,
+  Header: BaseAccordion.Header,
+  Trigger: AccordionTrigger,
+  Panel: AccordionContent,
+  Content: AccordionContent,
+});
 
-export function AccordionTrigger({
+function AccordionTrigger({
   className,
   children,
   ref,
@@ -32,7 +38,7 @@ export function AccordionTrigger({
   );
 }
 
-export function AccordionContent({
+function AccordionContent({
   className,
   children,
   ref,

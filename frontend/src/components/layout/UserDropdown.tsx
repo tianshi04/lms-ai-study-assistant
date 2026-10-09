@@ -22,12 +22,7 @@ import {
 } from "lucide-react";
 import { useListUserPurchasesQuery } from "@/lib/query_hooks";
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/Menu";
+import { Menu } from "@/components/ui/Menu";
 import { Chip } from "@/components/ui/Chip";
 
 const itemClasses =
@@ -147,8 +142,8 @@ export function UserDropdown() {
   }, [userRole, isSuperAdmin]);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
+    <Menu>
+      <Menu.Trigger
         className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer group p-0.5 border border-outline-variant hover:border-primary shrink-0"
         aria-label={displayUserName || "Tài khoản người dùng"}
       >
@@ -160,15 +155,15 @@ export function UserDropdown() {
           unoptimized
           className="w-9 h-9 rounded-full bg-primary-container object-cover pointer-events-none"
         />
-      </DropdownMenuTrigger>
+      </Menu.Trigger>
 
-      <DropdownMenuContent
+      <Menu.Content
         sideOffset={14}
         align="end"
         className="w-68 p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
       >
         {/* User Info Header with Avatar and Stacked Role Badge */}
-        <div className="flex items-center gap-3.5 px-3.5 py-3 border-b border-outline-variant mb-1.5">
+        <div className="flex items-center gap-3.5 px-3.5 py-3 mb-1.5">
           <Image
             src={avatarSrc}
             alt={displayUserName}
@@ -250,73 +245,71 @@ export function UserDropdown() {
         )}
 
         {/* Menu Items */}
-        <DropdownMenuItem render={<Link href="/my-learning" />} className={itemClasses}>
+        <Menu.Item render={<Link href="/my-learning" />} className={itemClasses}>
           <BookOpen aria-hidden="true" className={iconClasses} />
           <span>{"Việc học của tôi"}</span>
-        </DropdownMenuItem>
+        </Menu.Item>
 
-        <DropdownMenuItem render={<Link href="/my-purchases" />} className={itemClasses}>
+        <Menu.Item render={<Link href="/my-purchases" />} className={itemClasses}>
           <ShoppingBag aria-hidden="true" className={iconClasses} />
           <span>{"Mua hàng của tôi"}</span>
-        </DropdownMenuItem>
+        </Menu.Item>
 
-        <DropdownMenuItem render={<Link href="/my-organizations" />} className={itemClasses}>
+        <Menu.Item render={<Link href="/my-organizations" />} className={itemClasses}>
           <Building2 aria-hidden="true" className={iconClasses} />
           <span>{"Tổ chức của tôi"}</span>
-        </DropdownMenuItem>
+        </Menu.Item>
 
-        <DropdownMenuItem render={<Link href="/account-settings" />} className={itemClasses}>
+        <Menu.Item render={<Link href="/account-settings" />} className={itemClasses}>
           <Settings aria-hidden="true" className={iconClasses} />
           <span>{"Cài đặt"}</span>
-        </DropdownMenuItem>
+        </Menu.Item>
 
         {isInstructorOrAdmin && (
           <>
-            <DropdownMenuItem render={<Link href="/instructor/courses" />} className={itemClasses}>
+            <Menu.Item render={<Link href="/instructor/courses" />} className={itemClasses}>
               <Layers aria-hidden="true" className={iconClasses} />
               <span>{"Giảng Viên"}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/instructor/profile" />} className={itemClasses}>
+            </Menu.Item>
+            <Menu.Item render={<Link href="/instructor/profile" />} className={itemClasses}>
               <Edit aria-hidden="true" className={iconClasses} />
               <span>{"Hồ sơ & Chữ ký Giảng viên"}</span>
-            </DropdownMenuItem>
+            </Menu.Item>
           </>
         )}
 
         {isSuperAdmin && (
-          <DropdownMenuItem render={<Link href="/partner/settings" />} className={itemClasses}>
+          <Menu.Item render={<Link href="/partner/settings" />} className={itemClasses}>
             <Settings aria-hidden="true" className={iconClasses} />
             <span>{"Cấu hình Đối tác"}</span>
-          </DropdownMenuItem>
+          </Menu.Item>
         )}
 
         {isSuperAdmin && (
           <>
-            <DropdownMenuItem render={<Link href="/admin/dashboard" />} className={itemClasses}>
+            <Menu.Item render={<Link href="/admin/dashboard" />} className={itemClasses}>
               <LayoutDashboard aria-hidden="true" className={iconClasses} />
               <span>{"Trang quản trị"}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/admin/applications" />} className={itemClasses}>
+            </Menu.Item>
+            <Menu.Item render={<Link href="/admin/applications" />} className={itemClasses}>
               <CheckCircle2 aria-hidden="true" className={iconClasses} />
               <span>{"Duyệt đơn Giảng viên"}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/admin/partners" />} className={itemClasses}>
+            </Menu.Item>
+            <Menu.Item render={<Link href="/admin/partners" />} className={itemClasses}>
               <Building2 aria-hidden="true" className={iconClasses} />
               <span>{"Quản trị Đối tác"}</span>
-            </DropdownMenuItem>
+            </Menu.Item>
           </>
         )}
 
-        <div className="border-t border-outline-variant my-1.5" />
-
-        <DropdownMenuItem
+        <Menu.Item
           onClick={handleLogout}
           className="text-error hover:bg-error-container/40 cursor-pointer px-3.5 py-2.5 text-sm font-medium justify-start gap-3 w-full rounded-xl my-0.5 transition-colors"
         >
           <LogOut aria-hidden="true" className="w-4.5 h-4.5 text-error" />
           <span>{"Thoát"}</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Menu.Item>
+      </Menu.Content>
+    </Menu>
   );
 }

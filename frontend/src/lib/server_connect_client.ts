@@ -29,16 +29,6 @@ const serverAuthInterceptor: Interceptor = (next) => async (req) => {
 export function getPublicRpcServerClient<T extends DescService>(service: T): Client<T> {
   const transport = createConnectTransport({
     baseUrl: API_BASE_URL,
-    fetch: (input, init) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      return fetch(input, {
-        ...init,
-        signal: init?.signal
-          ? AbortSignal.any([init.signal, controller.signal])
-          : controller.signal,
-      }).finally(() => clearTimeout(timeoutId));
-    },
   });
   return createClient(service, transport);
 }

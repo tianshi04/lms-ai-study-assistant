@@ -1,11 +1,12 @@
 import pytest
+
 from src.gen.identity.v1 import identity_pb as pb
-from src.modules.identity.application.identity_usecase import (
+from src.modules.identity.application import (
     IdentityUseCase,
     hash_password,
     verify_password,
 )
-from src.modules.identity.domain.entities import UserRole
+from src.modules.identity.domain import UserRole
 from src.modules.identity.presentation.identity_handler import _pb_role_to_domain_str
 from src.shared.auth import decode_token
 
@@ -44,7 +45,7 @@ async def test_identity_register_and_login():
             assert user.role == UserRole.INSTRUCTOR
 
         # Login
-        logged_user, access_token, refresh_token, login_err = await usecase.login(
+        logged_user, access_token, _refresh_token, login_err = await usecase.login(
             email, password
         )
         assert login_err == ""
@@ -56,5 +57,5 @@ async def test_identity_register_and_login():
         payload = decode_token(access_token)
         assert payload is not None
         assert payload.get("role") == "USER_ROLE_INSTRUCTOR"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping identity db test: DB not reachable ({e})")

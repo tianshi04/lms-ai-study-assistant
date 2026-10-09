@@ -1,10 +1,12 @@
-import pytest
+from datetime import UTC
 from unittest.mock import AsyncMock
 
-from src.modules.identity.application.submit_application_usecase import (
+import pytest
+
+from src.modules.identity.application import (
     SubmitInstructorApplicationUseCase,
 )
-from src.modules.identity.domain.entities import (
+from src.modules.identity.domain import (
     ApplicationStatus,
     InstructorApplication,
 )
@@ -87,10 +89,10 @@ async def test_submit_instructor_application_duplicate_pending_raises():
 
 @pytest.mark.asyncio
 async def test_submit_instructor_application_rejected_cooldown_raises():
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     repo = AsyncMock()
-    now_str = datetime.now(timezone.utc).isoformat()
+    now_str = datetime.now(UTC).isoformat()
     repo.get_latest_by_user_id.return_value = InstructorApplication(
         id="app_rejected",
         user_id="user_123",
@@ -114,10 +116,10 @@ async def test_submit_instructor_application_rejected_cooldown_raises():
 
 @pytest.mark.asyncio
 async def test_review_instructor_application_approve():
-    from src.modules.identity.application.review_application_usecase import (
+    from src.modules.identity.application import (
         ReviewInstructorApplicationUseCase,
     )
-    from src.modules.identity.domain.entities import User, UserRole
+    from src.modules.identity.domain import User, UserRole
 
     app_repo = AsyncMock()
     identity_repo = AsyncMock()
@@ -154,7 +156,7 @@ async def test_review_instructor_application_approve():
 
 @pytest.mark.asyncio
 async def test_review_instructor_application_reject():
-    from src.modules.identity.application.review_application_usecase import (
+    from src.modules.identity.application import (
         ReviewInstructorApplicationUseCase,
     )
 

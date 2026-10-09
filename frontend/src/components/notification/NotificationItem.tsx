@@ -7,7 +7,7 @@ import { NotificationCategory } from "@/gen/notification/v1/notification_pb";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Chip } from "@/components/ui/Chip";
 
 interface NotificationItemProps {
@@ -70,10 +70,11 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
   };
 
   return (
-    <Card
-      variant="filled"
+    <Surface
+      variant="container"
+      shape="2xl"
       className={cn(
-        "relative p-3.5 rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized",
+        "relative p-3.5 transition-colors duration-m3-short-4 ease-m3-emphasized",
         item.isRead
           ? "bg-surface-container-low/60 hover:bg-surface-container-low border border-transparent"
           : "bg-primary-container/25 hover:bg-primary-container/40 border border-primary/20 shadow-2xs",
@@ -183,6 +184,6 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
           )}
         </div>
       </div>
-    </Card>
+    </Surface>
   );
 }

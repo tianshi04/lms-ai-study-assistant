@@ -1,19 +1,35 @@
 import logging
-import uuid
-from typing import Any, Optional
+from collections.abc import Callable
+from typing import Any
 
-from src.modules.partner.domain.entities import Partner
-from src.modules.partner.domain.repository import IPartnerRepository
+from uuid6 import uuid7
+
+from src.modules.identity.domain import Organization
+from src.modules.partner.domain import IPartnerRepository, Partner
 from src.modules.partner.infrastructure.repository import SQLAlchemyPartnerRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+
+
+def _default_org_repo_factory(session: Any) -> Any:
+    from src.modules.identity.infrastructure.repository import (
+        OrganizationRepository,
+    )
+
+    return OrganizationRepository(session)
+
 
 logger = logging.getLogger(__name__)
 
 
 class PartnerUseCase:
-    def __init__(self, repo: Optional[IPartnerRepository] = None) -> None:
+    def __init__(
+        self,
+        repo: IPartnerRepository | None = None,
+        org_repo_factory: Callable[[Any], Any] | None = None,
+    ) -> None:
         self._repo = repo
+        self._org_repo_factory = org_repo_factory or _default_org_repo_factory
 
     def _get_repo(self, session: Any) -> IPartnerRepository:
         return (
@@ -22,7 +38,7 @@ class PartnerUseCase:
             else SQLAlchemyPartnerRepository(session)
         )
 
-    def _verify_admin(self, current_user: Optional[CurrentUser]) -> None:
+    def _verify_admin(self, current_user: CurrentUser | None) -> None:
         if not current_user or not current_user.is_admin:
             raise PermissionError(
                 "Yêu cầu quyền Quản trị viên (Admin) để thực hiện thao tác này"
@@ -36,15 +52,15 @@ class PartnerUseCase:
         logo_url: str = "",
         banner_url: str = "",
         website_url: str = "",
-        allowed_domains: Optional[list[str]] = None,
+        allowed_domains: list[str] | None = None,
         signature_image_url: str = "",
         signer_name: str = "",
         signer_title: str = "",
         public_key_pem: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> Partner:
         self._verify_admin(current_user)
-        partner_id = f"partner-{uuid.uuid4().hex[:8]}"
+        partner_id = f"partner-{uuid7().hex[:8]}"
 
         async with async_session_scope() as session:
             repo = self._get_repo(session)
@@ -80,22 +96,19 @@ class PartnerUseCase:
             )
             saved = await repo.create(partner)
 
-            from sqlalchemy import or_, select
-            from src.modules.identity.infrastructure.models import OrganizationModel
-
-            stmt_org = select(OrganizationModel).where(
-                or_(OrganizationModel.id == partner_id, OrganizationModel.slug == slug)
+            org_repo = self._org_repo_factory(session)
+            existing_org = await org_repo.get_organization_by_id(partner_id) or (
+                await org_repo.get_organization_by_id(slug) if slug else None
             )
-            res_org = await session.execute(stmt_org)
-            existing_org = res_org.scalars().first()
             if not existing_org:
-                org_model = OrganizationModel(
-                    id=partner_id,
-                    name=name,
-                    slug=slug,
-                    avatar_url=logo_url,
+                await org_repo.save_organization(
+                    Organization(
+                        id=partner_id,
+                        name=name,
+                        slug=slug,
+                        avatar_url=logo_url,
+                    )
                 )
-                session.add(org_model)
 
             logger.info(
                 "Created new partner and organization: %s (%s)", saved.name, saved.id
@@ -105,18 +118,18 @@ class PartnerUseCase:
     async def update_partner(
         self,
         partner_id: str,
-        name: Optional[str] = None,
-        slug: Optional[str] = None,
-        description: Optional[str] = None,
-        logo_url: Optional[str] = None,
-        banner_url: Optional[str] = None,
-        website_url: Optional[str] = None,
-        allowed_domains: Optional[list[str]] = None,
-        signature_image_url: Optional[str] = None,
-        signer_name: Optional[str] = None,
-        signer_title: Optional[str] = None,
-        public_key_pem: Optional[str] = None,
-        current_user: Optional[CurrentUser] = None,
+        name: str | None = None,
+        slug: str | None = None,
+        description: str | None = None,
+        logo_url: str | None = None,
+        banner_url: str | None = None,
+        website_url: str | None = None,
+        allowed_domains: list[str] | None = None,
+        signature_image_url: str | None = None,
+        signer_name: str | None = None,
+        signer_title: str | None = None,
+        public_key_pem: str | None = None,
+        current_user: CurrentUser | None = None,
     ) -> Partner:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
@@ -163,7 +176,7 @@ class PartnerUseCase:
             return await repo.list_all()
 
     async def delete_partner(
-        self, partner_id: str, current_user: Optional[CurrentUser] = None
+        self, partner_id: str, current_user: CurrentUser | None = None
     ) -> bool:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
@@ -175,7 +188,7 @@ class PartnerUseCase:
             return True
 
     async def rotate_key_pair(
-        self, partner_id: str = "", current_user: Optional[CurrentUser] = None
+        self, partner_id: str = "", current_user: CurrentUser | None = None
     ) -> str:
         self._verify_admin(current_user)
 

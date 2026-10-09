@@ -1,14 +1,15 @@
-from typing import Any, Optional
+from typing import Any
+
 from sqlalchemy import Select
 
-from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
+from src.modules.identity.domain import INTERNAL_SYSTEM_ORG_ID
 from src.shared.auth import CurrentUserContext
 
 
 def apply_organization_scope(
     stmt: Select[Any],
     model_cls: Any,
-    ctx: Optional[CurrentUserContext],
+    ctx: CurrentUserContext | None,
 ) -> Select[Any]:
     """Applies SQL Scope Pushdown filtering for Organization-scoped models.
 

@@ -1,13 +1,15 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from src.gen.notification.v1 import notification_pb as pb
-from src.modules.notification.application.use_cases import NotificationUseCase
-from src.modules.notification.domain.constants import NotificationCategory
-from src.modules.notification.domain.entities import (
+from src.modules.notification.application import (
+    NotificationUseCase,
+)
+from src.modules.notification.domain import (
     Notification,
+    NotificationCategory,
     NotificationPreferences,
 )
 from src.modules.notification.presentation.notification_handler import (
@@ -27,7 +29,7 @@ def test_notification_entity_mark_as_read():
     assert not notif.is_read
     assert notif.read_at is None
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     notif.mark_as_read(now)
     assert notif.is_read
     assert notif.read_at == now

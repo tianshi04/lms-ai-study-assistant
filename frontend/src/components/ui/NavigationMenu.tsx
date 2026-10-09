@@ -2,9 +2,7 @@ import * as React from "react";
 import { NavigationMenu as BaseNavigationMenu } from "@base-ui/react/navigation-menu";
 import { cn } from "@/lib/utils";
 
-export const NavigationMenuRoot = BaseNavigationMenu.Root;
-
-export function NavigationMenuList({
+function NavigationMenuList({
   className,
   ref,
   ...props
@@ -18,7 +16,7 @@ export function NavigationMenuList({
   );
 }
 
-export function NavigationMenuItem({
+function NavigationMenuItem({
   className,
   ref,
   ...props
@@ -26,7 +24,7 @@ export function NavigationMenuItem({
   return <BaseNavigationMenu.Item ref={ref} className={cn("relative", className)} {...props} />;
 }
 
-export function NavigationMenuTrigger({
+function NavigationMenuTrigger({
   className,
   ref,
   ...props
@@ -43,7 +41,7 @@ export function NavigationMenuTrigger({
   );
 }
 
-export function NavigationMenuContent({
+function NavigationMenuContent({
   className,
   ref,
   ...props
@@ -60,7 +58,7 @@ export function NavigationMenuContent({
   );
 }
 
-export function NavigationMenuLink({
+function NavigationMenuLink({
   className,
   ref,
   ...props
@@ -77,7 +75,7 @@ export function NavigationMenuLink({
   );
 }
 
-export const NavigationMenu = {
+export const NavigationMenu = Object.assign(BaseNavigationMenu.Root, {
   Root: BaseNavigationMenu.Root,
   List: NavigationMenuList,
   Item: NavigationMenuItem,
@@ -86,4 +84,4 @@ export const NavigationMenu = {
   Link: NavigationMenuLink,
   Portal: BaseNavigationMenu.Portal,
   Viewport: BaseNavigationMenu.Viewport,
-};
+});

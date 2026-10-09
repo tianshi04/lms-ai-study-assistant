@@ -1,23 +1,32 @@
-from datetime import datetime, timezone
 import inspect
+from datetime import UTC, datetime
+from typing import Any
 from unittest.mock import MagicMock
-from typing import Optional, Any
-import uuid
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.identity.domain.entities import (
-    User,
-    UserRole,
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid6 import uuid7
+
+from src.modules.identity.domain import (
+    ApplicationStatus,
+    EnterpriseLicense,
+    IEnterpriseLicenseRepository,
+    IIdentityRepository,
+    IInstructorApplicationRepository,
+    IInvitationRepository,
+    InstructorApplication,
+    Invitation,
+    InvitationStatus,
+    InvitationType,
+    IOrganizationRepository,
     Organization,
     OrganizationMember,
-    InstructorApplication,
-    ApplicationStatus,
-    Invitation,
-    InvitationType,
-    InvitationStatus,
+    ScopeType,
+    User,
+    UserRole,
 )
 from src.modules.identity.infrastructure.models import (
+    EnterpriseLicenseModel,
     InstructorApplicationModel,
     InvitationModel,
     OrganizationAuditLogModel,
@@ -27,23 +36,23 @@ from src.modules.identity.infrastructure.models import (
 )
 
 
-class IdentityRepository:
+class IdentityRepository(IIdentityRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_by_id(self, user_id: str) -> Optional[User]:
+    async def get_by_id(self, user_id: str) -> User | None:
         stmt = select(UserModel).where(UserModel.id == user_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         stmt = select(UserModel).where(UserModel.email == email)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_by_google_id(self, google_id: str) -> Optional[User]:
+    async def get_by_google_id(self, google_id: str) -> User | None:
         stmt = select(UserModel).where(UserModel.google_id == google_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -89,17 +98,20 @@ class IdentityRepository:
     async def recycle_enterprise_seat(self, seat_key: str) -> None:
         if not seat_key:
             return
-        from sqlalchemy import update
-        from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
+        repo = EnterpriseLicenseRepository(self._session)
+        await repo.decrement_enterprise_seat(seat_key)
 
-        await self._session.execute(
-            update(EnterpriseLicenseModel)
-            .where(
-                EnterpriseLicenseModel.key == seat_key,
-                EnterpriseLicenseModel.used_seats > 0,
-            )
-            .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
-        )
+    async def get_enterprise_license(self, key: str) -> EnterpriseLicense | None:
+        repo = EnterpriseLicenseRepository(self._session)
+        return await repo.get_by_key(key)
+
+    async def increment_enterprise_seat(self, key: str) -> bool:
+        repo = EnterpriseLicenseRepository(self._session)
+        return await repo.increment_enterprise_seat(key)
+
+    async def decrement_enterprise_seat(self, key: str) -> bool:
+        repo = EnterpriseLicenseRepository(self._session)
+        return await repo.decrement_enterprise_seat(key)
 
     def _to_entity(self, model: UserModel) -> User:
         return User(
@@ -118,7 +130,97 @@ class IdentityRepository:
         )
 
 
-class OrganizationRepository:
+class EnterpriseLicenseRepository(IEnterpriseLicenseRepository):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_key(self, key: str) -> EnterpriseLicense | None:
+        stmt = select(EnterpriseLicenseModel).where(EnterpriseLicenseModel.key == key)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
+    async def list_licenses(self, partner_name: str = "") -> list[EnterpriseLicense]:
+        stmt = select(EnterpriseLicenseModel)
+        if partner_name:
+            stmt = stmt.where(
+                EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%")
+            )
+        res = await self._session.execute(stmt)
+        return [self._to_entity(m) for m in res.scalars().all()]
+
+    async def create_license(
+        self, license_entity: EnterpriseLicense
+    ) -> EnterpriseLicense:
+        clean_scope = (
+            license_entity.scope_type.value
+            if hasattr(license_entity.scope_type, "value")
+            else str(license_entity.scope_type)
+        )
+        model = EnterpriseLicenseModel(
+            key=license_entity.key,
+            partner_name=license_entity.partner_name,
+            total_seats=license_entity.total_seats,
+            used_seats=license_entity.used_seats,
+            is_active=license_entity.is_active,
+            scope_type=clean_scope,
+            allowed_course_ids=list(license_entity.allowed_course_ids)
+            if license_entity.allowed_course_ids
+            else [],
+        )
+        self._session.add(model)
+        await self._session.flush()
+        return self._to_entity(model)
+
+    async def increment_enterprise_seat(self, key: str) -> bool:
+        from sqlalchemy import update
+
+        result = await self._session.execute(
+            update(EnterpriseLicenseModel)
+            .where(
+                EnterpriseLicenseModel.key == key,
+                EnterpriseLicenseModel.is_active.is_(True),
+                EnterpriseLicenseModel.used_seats < EnterpriseLicenseModel.total_seats,
+            )
+            .values(used_seats=EnterpriseLicenseModel.used_seats + 1)
+        )
+        await self._session.flush()
+        return getattr(result, "rowcount", -1) != 0
+
+    async def decrement_enterprise_seat(self, key: str) -> bool:
+        if not key:
+            return False
+        from sqlalchemy import update
+
+        result = await self._session.execute(
+            update(EnterpriseLicenseModel)
+            .where(
+                EnterpriseLicenseModel.key == key,
+                EnterpriseLicenseModel.used_seats > 0,
+            )
+            .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
+        )
+        await self._session.flush()
+        return getattr(result, "rowcount", -1) != 0
+
+    def _to_entity(self, model: EnterpriseLicenseModel) -> EnterpriseLicense:
+        scope = (
+            ScopeType(model.scope_type)
+            if model.scope_type in ScopeType._value2member_map_
+            else ScopeType.ALL_COURSES
+        )
+        return EnterpriseLicense(
+            key=model.key,
+            partner_name=model.partner_name,
+            total_seats=model.total_seats,
+            used_seats=model.used_seats,
+            is_active=model.is_active,
+            scope_type=scope,
+            allowed_course_ids=set(model.allowed_course_ids or []),
+        )
+
+
+class OrganizationRepository(IOrganizationRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -150,7 +252,7 @@ class OrganizationRepository:
             created_at=model.created_at,
         )
 
-    async def get_organization_by_id(self, org_id: str) -> Optional[Organization]:
+    async def get_organization_by_id(self, org_id: str) -> Organization | None:
         stmt = select(OrganizationModel).where(
             or_(OrganizationModel.id == org_id, OrganizationModel.slug == org_id)
         )
@@ -224,7 +326,7 @@ class OrganizationRepository:
 
     async def get_effective_permissions(
         self, user_id: str, org_id: str
-    ) -> tuple[Optional[str], set[str]]:
+    ) -> tuple[str | None, set[str]]:
         """Resolves member's role and calculates effective permission set from code-hardcoded matrix."""
         stmt = select(OrganizationMemberModel).where(
             OrganizationMemberModel.user_id == user_id,
@@ -249,9 +351,7 @@ class OrganizationRepository:
 
         return member.role_id, perms
 
-    async def get_member(
-        self, user_id: str, org_id: str
-    ) -> Optional[OrganizationMember]:
+    async def get_member(self, user_id: str, org_id: str) -> OrganizationMember | None:
         stmt = select(OrganizationMemberModel).where(
             OrganizationMemberModel.user_id == user_id,
             OrganizationMemberModel.organization_id == org_id,
@@ -301,7 +401,7 @@ class OrganizationRepository:
                 status=existing.status,
             )
 
-        member_id = f"member_{uuid.uuid4().hex[:12]}"
+        member_id = f"member_{uuid7().hex[:12]}"
         model = OrganizationMemberModel(
             id=member_id,
             user_id=user_id,
@@ -365,8 +465,8 @@ class OrganizationRepository:
         action: str,
         details: str = "",
     ) -> dict:
-        log_id = f"audit_{uuid.uuid4().hex[:12]}"
-        now_str = datetime.now(timezone.utc).isoformat()
+        log_id = f"audit_{uuid7().hex[:12]}"
+        now_str = datetime.now(UTC).isoformat()
         log_model = OrganizationAuditLogModel(
             id=log_id,
             organization_id=org_id,
@@ -408,34 +508,31 @@ class OrganizationRepository:
         if user_ids:
             user_stmt = select(UserModel).where(UserModel.id.in_(user_ids))
             user_res = await self._session.execute(user_stmt)
-            for u in user_res.scalars().all():
-                user_map[u.id] = u.full_name or u.email
+            user_map = {
+                u.id: (u.full_name or u.email) for u in user_res.scalars().all()
+            }
 
-        res = []
-        for entry in logs:
-            res.append(
-                {
-                    "id": entry.id,
-                    "organization_id": entry.organization_id,
-                    "actor_id": entry.actor_id,
-                    "actor_name": user_map.get(entry.actor_id, "Hệ thống"),
-                    "target_user_id": entry.target_user_id,
-                    "target_user_name": user_map.get(
-                        entry.target_user_id, "Thành viên"
-                    ),
-                    "action": entry.action,
-                    "details": entry.details or "",
-                    "created_at": entry.created_at,
-                }
-            )
-        return res
+        return [
+            {
+                "id": entry.id,
+                "organization_id": entry.organization_id,
+                "actor_id": entry.actor_id,
+                "actor_name": user_map.get(entry.actor_id, "Hệ thống"),
+                "target_user_id": entry.target_user_id,
+                "target_user_name": user_map.get(entry.target_user_id, "Thành viên"),
+                "action": entry.action,
+                "details": entry.details or "",
+                "created_at": entry.created_at,
+            }
+            for entry in logs
+        ]
 
 
-class InstructorApplicationRepository:
+class InstructorApplicationRepository(IInstructorApplicationRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_by_id(self, application_id: str) -> Optional[InstructorApplication]:
+    async def get_by_id(self, application_id: str) -> InstructorApplication | None:
         stmt = select(InstructorApplicationModel).where(
             InstructorApplicationModel.id == application_id
         )
@@ -443,9 +540,7 @@ class InstructorApplicationRepository:
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_latest_by_user_id(
-        self, user_id: str
-    ) -> Optional[InstructorApplication]:
+    async def get_latest_by_user_id(self, user_id: str) -> InstructorApplication | None:
         stmt = (
             select(InstructorApplicationModel)
             .where(InstructorApplicationModel.user_id == user_id)
@@ -517,7 +612,7 @@ class InstructorApplicationRepository:
         )
 
 
-class InvitationRepository:
+class InvitationRepository(IInvitationRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -565,13 +660,13 @@ class InvitationRepository:
         await self._session.flush()
         return self._to_entity(model)
 
-    async def get_by_id(self, invitation_id: str) -> Optional[Invitation]:
+    async def get_by_id(self, invitation_id: str) -> Invitation | None:
         stmt = select(InvitationModel).where(InvitationModel.id == invitation_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_by_token_hash(self, token_hash: str) -> Optional[Invitation]:
+    async def get_by_token_hash(self, token_hash: str) -> Invitation | None:
         stmt = select(InvitationModel).where(InvitationModel.token_hash == token_hash)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -580,8 +675,8 @@ class InvitationRepository:
     async def list_sent_invitations(
         self,
         inviter_id: str,
-        inv_type: Optional[str] = None,
-        target_id: Optional[str] = None,
+        inv_type: str | None = None,
+        target_id: str | None = None,
     ) -> list[Invitation]:
         stmt = select(InvitationModel).where(InvitationModel.inviter_id == inviter_id)
         if inv_type and inv_type != "INVITATION_TYPE_UNSPECIFIED":
@@ -596,8 +691,8 @@ class InvitationRepository:
     async def list_my_invitations(
         self,
         email: str,
-        user_id: Optional[str] = None,
-        status_filter: Optional[str] = None,
+        user_id: str | None = None,
+        status_filter: str | None = None,
     ) -> list[Invitation]:
         from sqlalchemy import or_
 
@@ -625,7 +720,7 @@ class InvitationRepository:
 
     async def find_pending_invitation(
         self, email: str, target_id: str, inv_type: str
-    ) -> Optional[Invitation]:
+    ) -> Invitation | None:
         stmt = select(InvitationModel).where(
             InvitationModel.invitee_email == email,
             InvitationModel.target_id == target_id,

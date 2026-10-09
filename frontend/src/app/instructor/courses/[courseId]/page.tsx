@@ -350,7 +350,7 @@ export default function InstructorCourseBuilderPage({
     <Suspense
       fallback={
         <div className="p-8 text-center animate-pulse text-muted-foreground">
-          Đang tải cấu trúc khóa học...
+          Đang tải cấu trúc khóa học…
         </div>
       }
     >

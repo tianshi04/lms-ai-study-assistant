@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.catalog.domain import Course, Lesson, Specialization
 from src.shared.auth import CurrentUser
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.catalog.domain.entities import Course, Lesson, Specialization
 
 
 @pytest.fixture
@@ -69,7 +70,7 @@ def catalog_usecase(repo_factory):
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_list_courses(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -87,7 +88,7 @@ async def test_list_courses(mock_scope, catalog_usecase, mock_repo, mock_session
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_get_course_detail(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -102,7 +103,7 @@ async def test_get_course_detail(mock_scope, catalog_usecase, mock_repo, mock_se
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.curriculum_usecase.async_session_scope")
 async def test_get_lesson_detail(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -117,7 +118,24 @@ async def test_get_lesson_detail(mock_scope, catalog_usecase, mock_repo, mock_se
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.curriculum_usecase.async_session_scope")
+async def test_get_lesson_detail_with_empty_course_id(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    lesson = await catalog_usecase.get_lesson_detail("", "l1")
+
+    mock_scope.assert_called_once()
+    mock_repo.get_lesson_detail.assert_awaited_once_with("", "l1")
+    assert lesson is not None
+    assert lesson.id == "l1"
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_get_specialization(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -133,13 +151,11 @@ async def test_get_specialization(mock_scope, catalog_usecase, mock_repo, mock_s
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_without_repo_factory(mock_scope, mock_session):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
-
-    usecase = CatalogUseCase()
 
     with patch(
         "src.modules.catalog.application.catalog_usecase.SQLAlchemyCatalogRepository"
@@ -151,7 +167,8 @@ async def test_without_repo_factory(mock_scope, mock_session):
 
         mock_repo_class.return_value = mock_repo_instance
 
-        courses, token = await usecase.list_courses()
+        usecase = CatalogUseCase()
+        courses, _token = await usecase.list_courses()
 
         mock_repo_class.assert_called_once_with(mock_session)
         mock_repo_instance.list_courses.assert_awaited_once()
@@ -159,7 +176,7 @@ async def test_without_repo_factory(mock_scope, mock_session):
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
 async def test_create_and_update_course_financial_aid_toggle(
     mock_scope, catalog_usecase, mock_repo, mock_session
 ):
@@ -204,26 +221,26 @@ async def test_create_and_update_course_financial_aid_toggle(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.async_session_scope")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_export_course_to_scorm(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
-    from src.modules.catalog.domain.entities import (
-        Course,
-        WeekModule,
-        Lesson,
-        LearningItem,
-        ItemType,
-    )
-
     # 1. Setup mock storage service
     from unittest.mock import MagicMock
+
+    from src.modules.catalog.domain import (
+        Course,
+        ItemType,
+        LearningItem,
+        Lesson,
+        WeekModule,
+    )
 
     mock_s3 = MagicMock()
     mock_s3.endpoint_url = "http://localhost:9000"
     mock_s3.bucket_name = "lms-bucket"
-    mock_s3._to_public_url.return_value = "http://public-url/file.zip"
+    mock_s3.to_public_url.return_value = "http://public-url/file.zip"
     mock_s3.ensure_bucket_exists = AsyncMock()
     mock_s3.upload_file = AsyncMock()
     mock_s3.generate_presigned_download_url = AsyncMock(
@@ -276,11 +293,11 @@ async def test_export_course_to_scorm(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
-    import zipfile
     import io
     import json
+    import zipfile
 
     # Create mock zip with openlms-course.json
     zip_buffer = io.BytesIO()
@@ -296,7 +313,7 @@ async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
     mock_s3_service.return_value = mock_s3
 
     course_preview, is_single, item_preview = await catalog_usecase.parse_scorm_package(
-        scorm_object_key="some-key", target_course_id="target-id"
+        scorm_object_key="some-key"
     )
 
     assert course_preview is not None
@@ -306,10 +323,10 @@ async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
-    import zipfile
     import io
+    import zipfile
 
     # Create mock zip with imsmanifest.xml
     zip_buffer = io.BytesIO()
@@ -331,22 +348,19 @@ async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
     mock_s3.download_file.return_value = zip_buffer.getvalue()
     mock_s3_service.return_value = mock_s3
 
-    with pytest.raises(ValueError) as exc:
-        await catalog_usecase.parse_scorm_package(
-            scorm_object_key="some-key", target_course_id="target-id"
-        )
-    assert "Level 2" in str(exc.value)
+    with pytest.raises(ValueError, match="Level 2"):
+        await catalog_usecase.parse_scorm_package(scorm_object_key="some-key")
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.async_session_scope")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_import_course_from_scorm_native(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
-    import zipfile
     import io
     import json
+    import zipfile
 
     # Create mock zip with openlms-course.json
     zip_buffer = io.BytesIO()
@@ -418,13 +432,13 @@ async def test_import_course_from_scorm_native(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
-@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+@patch("src.modules.catalog.application.scorm_usecase.async_session_scope")
+@patch("src.modules.catalog.application.scorm_usecase.get_s3_storage_service")
 async def test_import_course_from_scorm_standard(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
-    import zipfile
     import io
+    import zipfile
 
     # Create mock zip with imsmanifest.xml
     zip_buffer = io.BytesIO()
@@ -447,22 +461,21 @@ async def test_import_course_from_scorm_standard(
     mock_s3.download_file.return_value = zip_buffer.getvalue()
     mock_s3.endpoint_url = "http://localhost:9000"
     mock_s3.bucket_name = "lms-media"
-    mock_s3._to_public_url = lambda url: url
+    mock_s3.to_public_url = lambda url: url
     mock_s3_service.return_value = mock_s3
 
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match="Level 2"):
         await catalog_usecase.import_course_from_scorm(
             scorm_object_key="some-key", course_id="c1", current_user=None
         )
-    assert "Level 2" in str(exc.value)
 
 
 @pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.collaborator_usecase.async_session_scope")
 async def test_remove_course_collaborator_audit_log(
     mock_scope, catalog_usecase, mock_repo, mock_session
 ):

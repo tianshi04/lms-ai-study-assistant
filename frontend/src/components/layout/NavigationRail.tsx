@@ -14,7 +14,7 @@ export interface NavRailItem {
 
 const defaultNavItems: NavRailItem[] = [
   { href: "/", label: "Trang chủ", icon: Home },
-  { href: "/catalog", label: "Khám phá", icon: Compass },
+  { href: "/courses", label: "Khám phá", icon: Compass },
   { href: "/my-learning", label: "Việc học của tôi", icon: BookOpen },
   { href: "/assessments", label: "Bài kiểm tra", icon: GraduationCap },
   { href: "/my-learning?tab=certificates", label: "Chứng chỉ", icon: Award },

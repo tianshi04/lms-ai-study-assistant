@@ -1,11 +1,15 @@
-from typing import Sequence
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
-from src.modules.forum.domain.repository import IForumRepository
+from src.modules.forum.domain import (
+    ForumReplyEntity,
+    ForumThreadEntity,
+    IForumRepository,
+)
 from src.modules.forum.infrastructure.models import (
     ForumReplyORM,
     ForumThreadORM,
@@ -271,7 +275,7 @@ class ForumRepository(IForumRepository):
 
         return 0
 
-    async def pin_staff_answer(self, reply_id: str, ta_user_id: str) -> bool:
+    async def pin_staff_answer(self, reply_id: str, _ta_user_id: str = "") -> bool:
         stmt = select(ForumReplyORM).where(ForumReplyORM.id == reply_id)
         res = await self.session.execute(stmt)
         reply_orm = res.scalar_one_or_none()

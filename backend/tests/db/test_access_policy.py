@@ -1,10 +1,11 @@
 import pytest
-from src.modules.certificate.domain.entities import (
+
+from src.modules.certificate.domain import (
     FinancialAidApplication,
     FinancialAidStatus,
 )
 from src.modules.certificate.infrastructure.repository import CertificateRepository
-from src.modules.identity.domain.entities import User, UserRole
+from src.modules.identity.domain import User, UserRole
 from src.modules.identity.infrastructure.repository import IdentityRepository
 from src.shared.access_policy import AccessPolicyService
 from src.shared.infrastructure.database import async_session_scope
@@ -31,7 +32,7 @@ async def test_access_policy_audit_mode():
             )
             assert is_paid is False
             assert "Audit Mode" in err
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping DB test for access policy: DB not reachable ({e})")
 
 
@@ -56,7 +57,7 @@ async def test_access_policy_enterprise_seat():
             )
             assert is_paid is True
             assert err == ""
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping DB test for access policy: DB not reachable ({e})")
 
 
@@ -92,5 +93,5 @@ async def test_access_policy_financial_aid_approved():
             )
             assert is_paid is True
             assert err == ""
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping DB test for access policy: DB not reachable ({e})")

@@ -25,9 +25,9 @@ export const brandLogoBoxVariants = cva(
 export const brandLogoIconVariants = cva("", {
   variants: {
     size: {
-      sm: "w-4 h-4",
-      md: "w-5.5 h-5.5",
-      lg: "w-7 h-7",
+      sm: "w-5 h-5",
+      md: "w-6.5 h-6.5",
+      lg: "w-8 h-8",
     },
   },
   defaultVariants: {
@@ -48,7 +48,7 @@ export const brandLogoTextVariants = cva("tracking-tight text-foreground", {
   },
 });
 
-export function BrandLogoIcon({
+function BrandLogoIcon({
   size = "md",
   className,
 }: {
@@ -62,7 +62,7 @@ export function BrandLogoIcon({
   );
 }
 
-export function BrandLogoText({
+function BrandLogoText({
   size = "md",
   className,
   children = "LMS AI Platform",
@@ -80,7 +80,7 @@ export interface BrandLogoProps
   href?: string;
 }
 
-export function BrandLogo({
+function BrandLogoComponent({
   size = "md",
   showText = true,
   className = "",
@@ -111,7 +111,6 @@ export function BrandLogo({
     return (
       <Link
         href={href}
-        prefetch={true}
         aria-label="LMS AI Platform - Trang chủ"
         className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl inline-block"
       >
@@ -122,3 +121,8 @@ export function BrandLogo({
 
   return logoContent;
 }
+
+export const BrandLogo = Object.assign(BrandLogoComponent, {
+  Icon: BrandLogoIcon,
+  Text: BrandLogoText,
+});

@@ -13,14 +13,9 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { Card } from "@/components/ui/Card";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { RadioGroup } from "@/components/ui/RadioGroup";
+import { Surface } from "@/components/ui/Surface";
+import { Select } from "@/components/ui/Select";
 
 import {
   useQuestionBanksQuery,
@@ -263,8 +258,9 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
         </div>
 
         {/* Page Header */}
-        <Card
-          variant="elevated"
+        <Surface
+          variant="low"
+          shape="2xl"
           className="p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
         >
           <div>
@@ -288,7 +284,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             <Plus aria-hidden="true" className="w-4 h-4" />
             <span>{"Tạo Kho Ngân hàng Đề"}</span>
           </Button>
-        </Card>
+        </Surface>
 
         {isLoading ? (
           <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center">
@@ -333,9 +329,6 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                                 ? "Cuối khóa"
                                 : "Luyện tập"}
                           </span>
-                          <span className="text-[11px] text-muted-foreground font-mono">
-                            ID: {bank.id}
-                          </span>
                         </div>
                         <h3 className="font-extrabold text-sm text-foreground mt-1">
                           {bank.title}
@@ -377,16 +370,14 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               ) : (
                 <div className="space-y-6">
                   {/* Selected Bank Banner */}
-                  <Card
-                    variant="outlined"
+                  <Surface
+                    variant="low"
+                    shape="2xl"
                     className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-black text-foreground">{selectedBank.title}</h2>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-surface-container-high text-on-surface-variant border border-outline-variant">
-                          ID: {selectedBank.id}
-                        </span>
                       </div>
                       {selectedBank.description && (
                         <p className="text-xs text-muted-foreground">{selectedBank.description}</p>
@@ -416,7 +407,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                       <Plus aria-hidden="true" className="w-4 h-4" />
                       <span>{"Thêm Câu hỏi vào Kho"}</span>
                     </Button>
-                  </Card>
+                  </Surface>
 
                   {/* Questions List */}
                   {!selectedBank.questions || selectedBank.questions.length === 0 ? (
@@ -433,11 +424,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     <div className="space-y-4">
                       {selectedBank.questions.map((q, idx) => {
                         return (
-                          <Card
-                            key={q.id}
-                            variant="outlined"
-                            className="p-5 space-y-3 hover:border-muted-foreground/30 transition-colors"
-                          >
+                          <Surface key={q.id} variant="low" shape="2xl" className="p-5 space-y-3">
                             {/* Question Meta */}
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-extrabold text-muted-foreground">
@@ -534,7 +521,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                                 </div>
                               </div>
                             )}
-                          </Card>
+                          </Surface>
                         );
                       })}
                     </div>
@@ -553,20 +540,16 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             <Dialog.Title>{"Tạo Kho Ngân hàng Đề mới"}</Dialog.Title>
           </Dialog.Header>
           <form onSubmit={handleCreateBank} className="space-y-4 pt-2">
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                {"Tên Kho Ngân hàng Đề"} *
-              </label>
-              <Input
-                required
-                value={newBankTitle}
-                onChange={(e) => setNewBankTitle(e.target.value)}
-                placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
-                aria-label="Tên Kho Ngân hàng Đề"
-                spellCheck={false}
-                className="font-semibold"
-              />
-            </div>
+            <Input
+              label="Tên Kho Ngân hàng Đề *"
+              required
+              value={newBankTitle}
+              onChange={(e) => setNewBankTitle(e.target.value)}
+              placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
+              aria-label="Tên Kho Ngân hàng Đề"
+              spellCheck={false}
+              className="font-semibold"
+            />
 
             <div>
               <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
@@ -578,8 +561,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                   if (val) setNewBankCategory(val as string);
                 }}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn phân loại Kho">
+                <Select.Trigger className="w-full">
+                  <Select.Value placeholder="Chọn phân loại Kho">
                     {newBankCategory === "PRACTICE"
                       ? "Luyện tập (PRACTICE)"
                       : newBankCategory === "MODULE_EXAM"
@@ -587,28 +570,24 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                         : newBankCategory === "FINAL_EXAM"
                           ? "Bài thi Cuối khóa (FINAL_EXAM)"
                           : newBankCategory}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRACTICE">{"Luyện tập (PRACTICE)"}</SelectItem>
-                  <SelectItem value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</SelectItem>
-                  <SelectItem value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</SelectItem>
-                </SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="PRACTICE">{"Luyện tập (PRACTICE)"}</Select.Item>
+                  <Select.Item value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</Select.Item>
+                  <Select.Item value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</Select.Item>
+                </Select.Content>
               </Select>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                {"Mô tả"}
-              </label>
-              <Textarea
-                rows={3}
-                value={newBankDesc}
-                onChange={(e) => setNewBankDesc(e.target.value)}
-                placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này…"
-                className="p-2.5 rounded-xl bg-card text-sm"
-              />
-            </div>
+            <Textarea
+              label="Mô tả"
+              rows={3}
+              value={newBankDesc}
+              onChange={(e) => setNewBankDesc(e.target.value)}
+              placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này…"
+              className="p-2.5 rounded-xl bg-card text-sm"
+            />
 
             <Dialog.Footer className="pt-4 border-t border-border">
               <Button
@@ -644,7 +623,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
           </Dialog.Header>
           <form
             onSubmit={handleAddQuestion}
-            className="space-y-4 max-h-[75vh] overflow-y-auto pr-1 pt-2"
+            className="space-y-4 max-h-[75vh] overflow-y-auto px-3 pt-2 pb-1"
           >
             <div>
               <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
@@ -694,8 +673,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Chọn dạng câu hỏi">
+                  <Select.Trigger className="w-full">
+                    <Select.Value placeholder="Chọn dạng câu hỏi">
                       {qType === "SINGLE_CHOICE"
                         ? "Trắc nghiệm 1 đáp án (Single Choice)"
                         : qType === "MULTIPLE_CHOICE"
@@ -703,37 +682,48 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                           : qType === "TRUE_FALSE"
                             ? "Chọn Đúng/Sai (True/False)"
                             : qType}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SINGLE_CHOICE">
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="SINGLE_CHOICE">
                       {"Trắc nghiệm 1 đáp án (Single Choice)"}
-                    </SelectItem>
-                    <SelectItem value="MULTIPLE_CHOICE">
+                    </Select.Item>
+                    <Select.Item value="MULTIPLE_CHOICE">
                       {"Trắc nghiệm nhiều đáp án (Multiple Choice)"}
-                    </SelectItem>
-                    <SelectItem value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</SelectItem>
-                  </SelectContent>
+                    </Select.Item>
+                    <Select.Item value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</Select.Item>
+                  </Select.Content>
                 </Select>
               </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="qText"
-                className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1"
-              >
-                {"Nội dung Cốt lõi của Câu hỏi *"}
-              </label>
-              <Textarea
-                id="qText"
-                rows={3}
-                required
-                value={qText}
-                onChange={(e) => setQText(e.target.value)}
-                placeholder="Nhập nội dung đề bài câu hỏi…"
-                className="p-2 rounded-xl bg-card text-xs"
-              />
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                  {"Độ khó câu hỏi"}
+                </label>
+                <Select
+                  value={qDifficulty}
+                  onValueChange={(val) => {
+                    if (val) setQDifficulty(val);
+                  }}
+                >
+                  <Select.Trigger className="w-full">
+                    <Select.Value placeholder="Chọn độ khó">
+                      {qDifficulty === "EASY"
+                        ? "Dễ (Easy)"
+                        : qDifficulty === "MEDIUM"
+                          ? "Trung bình (Medium)"
+                          : qDifficulty === "HARD"
+                            ? "Khó (Hard)"
+                            : qDifficulty}
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="EASY">{"Dễ (Easy)"}</Select.Item>
+                    <Select.Item value="MEDIUM">{"Trung bình (Medium)"}</Select.Item>
+                    <Select.Item value="HARD">{"Khó (Hard)"}</Select.Item>
+                  </Select.Content>
+                </Select>
+              </div>
             </div>
 
             {/* Options */}
@@ -752,42 +742,92 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                   {"+ Thêm Phương án"}
                 </Button>
               </div>
-              <div className="space-y-2">
-                {qOptions.map((opt, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`opt-correct-${idx}`}
-                      checked={opt.isCorrect}
-                      onCheckedChange={(checked) =>
-                        handleOptionCorrectChange(idx, Boolean(checked))
+              <div>
+                {qType === "SINGLE_CHOICE" || qType === "TRUE_FALSE" ? (
+                  <RadioGroup
+                    value={(() => {
+                      const foundIdx = qOptions.findIndex((opt) => opt.isCorrect);
+                      return foundIdx >= 0 ? foundIdx.toString() : "";
+                    })()}
+                    onValueChange={(val) => {
+                      if (val !== undefined && val !== null && val !== "") {
+                        const selectedIdx = Number(val);
+                        handleOptionCorrectChange(selectedIdx, true);
                       }
-                      aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
-                      title="Đánh dấu phương án đúng"
-                    />
-                    <Input
-                      type="text"
-                      required
-                      value={opt.optionText}
-                      onChange={(e) => handleOptionChange(idx, e.target.value)}
-                      placeholder={`Phương án ${idx + 1}…`}
-                      aria-label={`Nội dung phương án ${idx + 1}`}
-                      spellCheck={false}
-                      className="flex-1 py-1.5 rounded-lg bg-card text-xs"
-                    />
-                    {qOptions.length > 2 && (
-                      <IconButton
-                        type="button"
-                        variant="standard"
-                        size="xs"
-                        onClick={() => handleRemoveOption(idx)}
-                        className="text-muted-foreground hover:text-destructive"
-                        aria-label={`Xóa phương án ${idx + 1}`}
-                      >
-                        ✕
-                      </IconButton>
-                    )}
+                    }}
+                    className="p-3 pl-4 rounded-2xl bg-surface-container-low/40 border border-outline-variant/40 space-y-2.5"
+                  >
+                    {qOptions.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2.5">
+                        <RadioGroup.Item
+                          value={idx.toString()}
+                          aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
+                          title="Đánh dấu phương án đúng"
+                        />
+                        <Input
+                          type="text"
+                          required
+                          value={opt.optionText}
+                          onChange={(e) => handleOptionChange(idx, e.target.value)}
+                          placeholder={`Phương án ${idx + 1}…`}
+                          aria-label={`Nội dung phương án ${idx + 1}`}
+                          spellCheck={false}
+                          className="flex-1 py-1.5 rounded-xl bg-surface-container-lowest text-xs border-outline-variant/40"
+                        />
+                        {qOptions.length > 2 && (
+                          <IconButton
+                            type="button"
+                            variant="standard"
+                            size="xs"
+                            onClick={() => handleRemoveOption(idx)}
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                            aria-label={`Xóa phương án ${idx + 1}`}
+                          >
+                            <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
+                          </IconButton>
+                        )}
+                      </div>
+                    ))}
+                  </RadioGroup>
+                ) : (
+                  <div className="p-3 pl-4 rounded-2xl bg-surface-container-low/40 border border-outline-variant/40 space-y-2.5">
+                    {qOptions.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2.5">
+                        <Checkbox
+                          id={`opt-correct-${idx}`}
+                          checked={opt.isCorrect}
+                          onCheckedChange={(checked) =>
+                            handleOptionCorrectChange(idx, Boolean(checked))
+                          }
+                          aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
+                          title="Đánh dấu phương án đúng"
+                        />
+                        <Input
+                          type="text"
+                          required
+                          value={opt.optionText}
+                          onChange={(e) => handleOptionChange(idx, e.target.value)}
+                          placeholder={`Phương án ${idx + 1}…`}
+                          aria-label={`Nội dung phương án ${idx + 1}`}
+                          spellCheck={false}
+                          className="flex-1 py-1.5 rounded-xl bg-surface-container-lowest text-xs border-outline-variant/40"
+                        />
+                        {qOptions.length > 2 && (
+                          <IconButton
+                            type="button"
+                            variant="standard"
+                            size="xs"
+                            onClick={() => handleRemoveOption(idx)}
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                            aria-label={`Xóa phương án ${idx + 1}`}
+                          >
+                            <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
+                          </IconButton>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -876,7 +916,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
     <Suspense
       fallback={
         <div className="p-8 text-center text-muted-foreground animate-pulse">
-          Đang tải ngân hàng câu hỏi...
+          Đang tải ngân hàng câu hỏi…
         </div>
       }
     >

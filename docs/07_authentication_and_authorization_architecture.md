@@ -131,8 +131,9 @@ sequenceDiagram
 - **Backend Stack**:
   - `FastAPI` 0.115+ (Async I/O cho mọi tác vụ).
   - `ConnectRPC / gRPC` Service (`IdentityService`).
-  - `Mã hóa Mật khẩu`: PBKDF2 HMAC SHA-256 (`hash_password` / `verify_password`).
+  - `Mã hóa Mật khẩu & Validation`: PBKDF2 HMAC SHA-256 (`hash_password` / `verify_password`). Thẩm định trung tâm `validate_password` (tối thiểu 6 ký tự, 1 hoa, 1 số).
   - `Mã hóa Session`: PyJWT mã hóa JWT Access Token (TTL 60m) & Refresh Token (TTL 7d) có chứa custom claim `avatar_url`.
+  - `Login Rate Limiter`: Khóa đăng nhập tạm thời 15 phút khi sai quá 5 lần qua Redis sliding window counter (`check_login_rate_limit`).
 - **Cơ sở dữ liệu (Database Stack)**:
   - `PostgreSQL` + `SQLAlchemy 2.0 Async`.
   - `Alembic Migration`: `f89a1029c001_add_google_id_to_users.py` quản lý cột `google_id` (Unique, Indexed).

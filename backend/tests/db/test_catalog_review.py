@@ -1,6 +1,7 @@
 import pytest
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.learning.application.learning_usecase import LearningUseCase
+
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.learning.application import LearningUseCase
 
 
 @pytest.mark.asyncio
@@ -31,9 +32,7 @@ async def test_submit_and_list_course_review():
             )
 
         # 1c. Check BR_REVIEW_004: Instructor self-review fails
-        await learning_uc.mark_item_complete(
-            "inst_01", course.id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete("inst_01", course.id, "item_1")
         with pytest.raises(ValueError, match="Giảng viên không được phép"):
             await usecase.submit_course_review(
                 user_id="inst_01",
@@ -44,9 +43,7 @@ async def test_submit_and_list_course_review():
             )
 
         # 1d. Check BR_REVIEW_004: Another instructor (not owner) CAN review this course
-        await learning_uc.mark_item_complete(
-            "inst_other", course.id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete("inst_other", course.id, "item_1")
         inst_review = await usecase.submit_course_review(
             user_id="inst_other",
             user_name="Dr. Smith",
@@ -58,13 +55,9 @@ async def test_submit_and_list_course_review():
         assert inst_review.comment_text == "Khóa học này từ đồng nghiệp rất tuyệt vời!"
 
         # Mark 100% progress for user_test_01
-        await learning_uc.mark_item_complete(
-            "user_test_01", course.id, "item_1", total_course_items=1
-        )
-        # Mark 50% progress for user_test_02
-        await learning_uc.mark_item_complete(
-            "user_test_02", course.id, "item_1", total_course_items=2
-        )
+        await learning_uc.mark_item_complete("user_test_01", course.id, "item_1")
+        # Mark progress for user_test_02
+        await learning_uc.mark_item_complete("user_test_02", course.id, "item_1")
 
         # 2. Submit Review 1 (5 stars)
         review1 = await usecase.submit_course_review(
@@ -105,7 +98,7 @@ async def test_submit_and_list_course_review():
         assert detail.average_rating == 4.5
         assert detail.review_count >= 2
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping course review test: DB not reachable ({e})")
 
 
@@ -152,9 +145,7 @@ async def test_list_course_reviews_with_slug():
             instructor_names=["Test Instructor"],
         )
 
-        await learning_uc.mark_item_complete(
-            "learner_slug_01", course.id, "item_1", total_course_items=1
-        )
+        await learning_uc.mark_item_complete("learner_slug_01", course.id, "item_1")
         await usecase.submit_course_review(
             user_id="learner_slug_01",
             user_name="Learner One",
@@ -170,5 +161,5 @@ async def test_list_course_reviews_with_slug():
         assert len(reviews) >= 1
         assert total_count >= 1
         assert avg_rating == 5.0
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping slug review test: DB not reachable ({e})")

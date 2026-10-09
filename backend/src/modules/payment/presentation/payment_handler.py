@@ -4,8 +4,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.payment.v1 import payment_pb as pb
 from src.gen.payment.v1.payment_connect import PaymentService
-from src.modules.payment.application.payment_usecase import PaymentUseCase
-from src.modules.payment.domain.entities import PaymentTargetType, PlanType
+from src.modules.payment.application import PaymentUseCase
+from src.modules.payment.domain import PaymentTargetType, PlanType
 from src.shared.auth import require_current_user
 
 
@@ -70,7 +70,6 @@ class PaymentHandler(PaymentService):
         ) = await self._use_case.subscribe_coursera_plus(
             user_id=current_user.id,
             plan_type=domain_plan,
-            payment_method=request.payment_method,
         )
 
         pb_sub = (
@@ -124,6 +123,7 @@ class PaymentHandler(PaymentService):
             target_type=domain_target,
             target_id=request.target_id,
             plan_type=domain_plan,
+            return_url=request.return_url,
         )
 
         return pb.CreateVNPayPaymentUrlResponse(

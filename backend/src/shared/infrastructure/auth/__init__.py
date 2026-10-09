@@ -6,8 +6,8 @@ from src.shared.infrastructure.auth.token_resolvers import (
 )
 
 __all__ = [
-    "TokenResolver",
     "BearerTokenResolver",
     "CookieTokenResolver",
+    "TokenResolver",
     "TokenResolverChain",
 ]

@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -244,6 +244,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </p>
           <Link
             href="/courses"
+            prefetch={true}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
           >
             ← {"Trở lại Catalog"}
@@ -315,9 +316,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </div>
 
           {/* Enrollment Card (M3 Elevated & Glassmorphism Container Item 1.3) */}
-          <Card
-            variant="elevated"
-            className="relative overflow-hidden border border-primary/20 backdrop-blur-xl p-6 rounded-3xl space-y-6 transition-colors hover:border-primary/30"
+          <Surface
+            variant="bright"
+            shape="3xl"
+            className="relative overflow-hidden border border-primary/20 p-6 space-y-6 shadow-lg"
           >
             {/* M3 Top Gradient Accent Bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-primary/80 to-accent" />
@@ -355,6 +357,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </Link>
                 <Link
                   href={`/learn/${course.id}`}
+                  prefetch={true}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold transition-colors cursor-pointer"
                 >
                   <span>{"Vào Học Lại"}</span>
@@ -364,6 +367,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/learn/${course.id}`}
+                  prefetch={true}
                   className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Paid Mode)"}</span>
@@ -374,6 +378,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/learn/${course.id}`}
+                  prefetch={true}
                   className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Audit Mode)"}</span>
@@ -412,14 +417,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     className="font-bold text-primary hover:underline p-0 h-auto text-xs justify-start"
                   >
                     <span aria-live="polite">
-                      {checkingFinAidStatus ? "Đang kiểm tra…" : "Financial Aid available"}
+                      {checkingFinAidStatus ? "Đang kiểm tra…" : "Có chính sách Hỗ trợ Tài chính"}
                     </span>
                     <ArrowRight aria-hidden="true" className="w-3 h-3 ml-1" />
                   </Button>
                 </li>
               )}
             </ul>
-          </Card>
+          </Surface>
         </div>
       </div>
 
@@ -448,7 +453,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <h3 className="text-xl font-bold text-foreground mb-2">{week.title}</h3>
                 <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{week.summary}</p>
 
-                <div className="space-y-3 border-t border-border pt-4">
+                <div className="space-y-3">
                   {week.lessons.map((lesson) => (
                     <div
                       key={lesson.id}
@@ -586,7 +591,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {reviews.map((rev) => (
-                <Card key={rev.id} variant="outlined" className="rounded-2xl space-y-3 p-6">
+                <Surface key={rev.id} variant="low" shape="2xl" className="space-y-3 p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar name={rev.userName || "Học viên LMS"} size="md" />
@@ -623,7 +628,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                       &ldquo;{rev.commentText}&rdquo;
                     </p>
                   )}
-                </Card>
+                </Surface>
               ))}
             </div>
           )}
@@ -647,11 +652,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <label className="block text-xs font-semibold text-foreground mb-2">
                 {"Chọn số sao đánh giá:"}
               </label>
-              <div className="flex items-center gap-1.5 justify-center py-2">
+              <div
+                aria-label="Chọn số sao đánh giá"
+                className="flex items-center gap-1.5 justify-center py-2"
+              >
                 {[1, 2, 3, 4, 5].map((star) => (
                   <IconButton
                     key={star}
                     type="button"
+                    aria-pressed={rating === star}
                     variant="standard"
                     size="sm"
                     disabled={!canReview}
@@ -709,7 +718,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 type="submit"
                 variant="filled"
                 size="sm"
-                disabled={submittingReview || !canReview || submittingReview}
+                disabled={submittingReview || !canReview}
                 className="text-xs shadow-sm"
               >
                 {"Gửi đánh giá"}
@@ -828,11 +837,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   className="p-4 rounded-2xl bg-card text-sm leading-relaxed"
                   required
                 />
-                <Progress.Linear
-                  value={(finAidWordCount / 150) * 100}
-                  wavy={isFinAidEnoughWords}
-                  className="mt-3"
-                />
+                <Progress.Linear value={(finAidWordCount / 150) * 100} className="mt-3" />
               </div>
 
               <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">

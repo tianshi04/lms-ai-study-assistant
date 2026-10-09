@@ -1,17 +1,12 @@
-"""Domain entities and value objects for Payment module (BR_ACCESS_004)."""
-
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-import uuid
+from typing import Any
+
+from uuid6 import uuid7
 
 
-from typing import Any, Type, TypeVar
-
-E = TypeVar("E", bound=Enum)
-
-
-def safe_enum_parse(enum_cls: Type[E], value: Any, default: E) -> E:
+def safe_enum_parse[E: Enum](enum_cls: type[E], value: Any, default: E) -> E:
     """Safely parse arbitrary DB string/int/enum representation into domain Enum without raising ValueError."""
     if value is None:
         return default
@@ -99,9 +94,9 @@ class CoursePurchase:
         currency: str = "VND",
         payment_method: str = "MOCK",
     ) -> "CoursePurchase":
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         return cls(
-            id=str(uuid.uuid4()),
+            id=str(uuid7()),
             user_id=user_id,
             course_id=course_id,
             amount=amount,
@@ -121,6 +116,7 @@ class UserSubscription:
     starts_at: str
     expires_at: str
     created_at: str
+    cancelled_at: str | None = None
 
     def is_currently_active(self) -> bool:
         if self.status != SubscriptionStatus.ACTIVE:
@@ -129,11 +125,18 @@ class UserSubscription:
             exp_str = str(self.expires_at).replace("Z", "+00:00")
             exp_time = datetime.fromisoformat(exp_str)
             if exp_time.tzinfo is None:
-                exp_time = exp_time.replace(tzinfo=timezone.utc)
-            now = datetime.now(timezone.utc)
+                exp_time = exp_time.replace(tzinfo=UTC)
+            now = datetime.now(UTC)
             return exp_time > now
-        except Exception:
+        except (ValueError, TypeError, AttributeError):
             return False
+
+    def cancel(self, cancelled_at: str = "") -> None:
+        self.status = SubscriptionStatus.CANCELLED
+        self.cancelled_at = cancelled_at or datetime.now(UTC).isoformat()
+
+
+Subscription = UserSubscription
 
 
 @dataclass
@@ -149,6 +152,28 @@ class PaymentOrder:
     vnp_txn_ref: str
     created_at: str
     updated_at: str
+    transaction_id: str = ""
+    paid_at: str = ""
+    error_message: str = ""
+
+    def mark_completed(self, transaction_id: str = "", paid_at: str = "") -> None:
+        self.status = PaymentOrderStatus.COMPLETED
+        self.transaction_id = transaction_id
+        self.paid_at = paid_at
+        self.updated_at = paid_at or datetime.now(UTC).isoformat()
+
+    def mark_failed(self, error_message: str = "") -> None:
+        self.status = PaymentOrderStatus.FAILED
+        self.error_message = error_message
+        self.updated_at = datetime.now(UTC).isoformat()
+
+    def mark_cancelled(self) -> None:
+        self.status = PaymentOrderStatus.CANCELLED
+        self.updated_at = datetime.now(UTC).isoformat()
+
+    def mark_expired(self) -> None:
+        self.status = PaymentOrderStatus.EXPIRED
+        self.updated_at = datetime.now(UTC).isoformat()
 
 
 @dataclass

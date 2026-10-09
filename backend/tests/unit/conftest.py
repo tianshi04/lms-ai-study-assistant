@@ -1,6 +1,7 @@
 """Pytest configuration and cleanup fixtures for unit tests."""
 
 import pytest_asyncio
+
 import src.shared.infrastructure.database as db_module
 
 

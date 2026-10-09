@@ -30,7 +30,9 @@ export const chipVariants = cva(
 );
 
 export interface ChipProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof chipVariants> {
+  extends
+    Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick">,
+    VariantProps<typeof chipVariants> {
   leadingIcon?: React.ReactNode;
   avatar?: React.ReactNode;
   trailingIcon?: React.ReactNode;
@@ -38,6 +40,7 @@ export interface ChipProps
   onRemove?: (e: React.MouseEvent) => void;
   removeAriaLabel?: string;
   render?: React.ReactElement<React.HTMLAttributes<HTMLElement>>;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }
 
 export function Chip({
@@ -124,6 +127,15 @@ export function Chip({
       ...props,
       children: content,
     } as React.HTMLAttributes<HTMLElement>);
+  }
+
+  if (onRemove) {
+    const { type: _type, ...divProps } = props;
+    return (
+      <div className={combinedClassName} {...(divProps as React.HTMLAttributes<HTMLDivElement>)}>
+        {content}
+      </div>
+    );
   }
 
   return (

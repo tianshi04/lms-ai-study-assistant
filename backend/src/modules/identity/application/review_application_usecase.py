@@ -1,10 +1,10 @@
-from datetime import datetime, timezone
-from typing import Optional
-from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
-from src.shared.permissions import OrgRole
-from src.modules.identity.domain.entities import (
+from datetime import UTC, datetime
+
+from src.modules.identity.domain import (
+    INTERNAL_SYSTEM_ORG_ID,
     ApplicationStatus,
     InstructorApplication,
+    InstructorApplicationReviewedDomainEvent,
     UserRole,
 )
 from src.modules.identity.infrastructure.repository import (
@@ -12,6 +12,8 @@ from src.modules.identity.infrastructure.repository import (
     InstructorApplicationRepository,
     OrganizationRepository,
 )
+from src.shared.infrastructure.event_bus import EventBus
+from src.shared.permissions import OrgRole
 
 
 class ReviewInstructorApplicationUseCase:
@@ -19,7 +21,7 @@ class ReviewInstructorApplicationUseCase:
         self,
         application_repo: InstructorApplicationRepository,
         identity_repo: IdentityRepository,
-        org_repo: Optional[OrganizationRepository] = None,
+        org_repo: OrganizationRepository | None = None,
     ) -> None:
         self._application_repo = application_repo
         self._identity_repo = identity_repo
@@ -38,12 +40,10 @@ class ReviewInstructorApplicationUseCase:
         if application.status != ApplicationStatus.PENDING_REVIEW:
             raise ValueError("Đơn đăng ký này đã được xử lý trước đó.")
 
-        now_str = datetime.now(timezone.utc).isoformat()
-        application.reviewed_at = now_str
+        now_str = datetime.now(UTC).isoformat()
 
         if approve:
-            application.status = ApplicationStatus.APPROVED
-            application.rejection_reason = ""
+            application.approve(reviewed_at=now_str)
 
             # Promote applicant user role to INSTRUCTOR
             applicant = await self._identity_repo.get_by_id(application.user_id)
@@ -62,41 +62,23 @@ class ReviewInstructorApplicationUseCase:
                     status="ACTIVE",
                 )
         else:
-            application.status = ApplicationStatus.REJECTED
-            application.rejection_reason = (
+            reason = (
                 rejection_reason.strip()
                 or "Hồ sơ chưa đáp ứng tiêu chuẩn thẩm định năng lực giảng dạy."
             )
+            application.reject(reason=reason, reviewed_at=now_str)
 
         saved_app = await self._application_repo.save(application)
 
-        # Trigger notification
-        try:
-            from src.modules.notification.application.use_cases import (
-                NotificationUseCase,
+        # Trigger domain event
+        await EventBus.publish(
+            InstructorApplicationReviewedDomainEvent(
+                application_id=saved_app.id,
+                user_id=saved_app.user_id,
+                is_approved=approve,
+                status=saved_app.status.value,
+                reviewer_notes=saved_app.rejection_reason,
             )
-            from src.modules.notification.domain.constants import NotificationCategory
-
-            notif_uc = NotificationUseCase()
-            if approve:
-                await notif_uc.send_notification(
-                    recipient_id=application.user_id,
-                    category=NotificationCategory.SYSTEM,
-                    title="Đơn đăng ký Giảng viên đã được phê duyệt",
-                    content="Chúc mừng! Tài khoản của bạn đã được nâng cấp lên vai trò Giảng viên và gán vào Coursera Project Network.",
-                    action_url="/instructor/courses",
-                )
-            else:
-                await notif_uc.send_notification(
-                    recipient_id=application.user_id,
-                    category=NotificationCategory.SYSTEM,
-                    title="Đơn đăng ký Giảng viên chưa được chấp thuận",
-                    content=f"Lý do: {application.rejection_reason}",
-                    action_url="/become-an-instructor",
-                )
-        except Exception as e:
-            import logging
-
-            logging.getLogger(__name__).warning("Failed to send notification: %s", e)
+        )
 
         return saved_app

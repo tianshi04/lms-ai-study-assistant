@@ -3,27 +3,31 @@
 Executes real business use cases and verifies that Notifications are automatically created in PostgreSQL.
 """
 
-import pytest
 import uuid
-from src.shared.infrastructure.database import async_session_scope
-from src.modules.notification.application.use_cases import NotificationUseCase
-from src.modules.notification.domain.constants import NotificationCategory
-from src.modules.identity.application.review_application_usecase import (
+
+import pytest
+
+from src.modules.assessment.application import AssessmentUseCase
+from src.modules.certificate.infrastructure.models import FinancialAidModel
+from src.modules.forum.application import ForumUseCase
+from src.modules.identity.application import (
     ReviewInstructorApplicationUseCase,
 )
-from src.modules.identity.domain.entities import (
+from src.modules.identity.domain import (
+    ApplicationStatus,
+    InstructorApplication,
     User,
     UserRole,
-    InstructorApplication,
-    ApplicationStatus,
 )
 from src.modules.identity.infrastructure.repository import (
-    InstructorApplicationRepository,
     IdentityRepository,
+    InstructorApplicationRepository,
 )
-from src.modules.forum.application.forum_usecase import ForumUseCase
-from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
-from src.modules.certificate.infrastructure.models import FinancialAidModel
+from src.modules.notification.application import (
+    NotificationUseCase,
+)
+from src.modules.notification.domain import NotificationCategory
+from src.shared.infrastructure.database import async_session_scope
 
 
 @pytest.mark.asyncio
@@ -167,7 +171,7 @@ async def test_live_quiz_submission_trigger():
 @pytest.mark.asyncio
 async def test_live_registration_trigger():
     """Verify that registering a new account automatically creates a welcome SYSTEM notification."""
-    from src.modules.identity.application.identity_usecase import IdentityUseCase
+    from src.modules.identity.application import IdentityUseCase
 
     new_email = f"newuser_{uuid.uuid4().hex[:6]}@coursera.org"
     identity_uc = IdentityUseCase()

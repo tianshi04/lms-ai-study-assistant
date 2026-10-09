@@ -5,7 +5,7 @@ import { BookmarkPlus, Check, Sparkles, Play } from "lucide-react";
 import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { formatTime } from "./utils";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Chip } from "@/components/ui/Chip";
 
 export function SaveNoteCard({
@@ -47,9 +47,10 @@ export function SaveNoteCard({
   };
 
   return (
-    <Card
-      variant="elevated"
-      className="my-2 p-3 rounded-xl flex flex-col gap-2 border border-outline-variant/40"
+    <Surface
+      variant="low"
+      shape="xl"
+      className="my-2 p-3 flex flex-col gap-2 border border-outline-variant/40"
     >
       <div className="text-xs text-on-surface-variant font-medium flex items-center gap-1.5">
         <BookmarkPlus className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
@@ -81,7 +82,7 @@ export function SaveNoteCard({
             ? "Đang lưu…"
             : "Lưu vào Ghi chú cá nhân"}
       </Chip>
-    </Card>
+    </Surface>
   );
 }
 
@@ -98,9 +99,10 @@ export function TimestampSeekCard({
 }) {
   const displayLabel = label || formatTime(seconds);
   return (
-    <Card
-      variant="elevated"
-      className="my-2 p-3 rounded-xl flex flex-col gap-2 border border-outline-variant/40 w-full max-w-md"
+    <Surface
+      variant="low"
+      shape="xl"
+      className="my-2 p-3 flex flex-col gap-2 border border-outline-variant/40 w-full max-w-md"
     >
       <div className="text-xs text-on-surface-variant font-medium flex items-center gap-1.5">
         <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
@@ -118,6 +120,6 @@ export function TimestampSeekCard({
           Chuyển đến đoạn [{displayLabel}]
         </Chip>
       )}
-    </Card>
+    </Surface>
   );
 }

@@ -4,7 +4,7 @@ from typing import Any
 class ValueObject:
     """Base class for Value Objects in DDD."""
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return type(self) is type(other) and self.__dict__ == other.__dict__
 
     def __hash__(self) -> int:
@@ -17,7 +17,7 @@ class Entity:
     def __init__(self, id: Any) -> None:
         self.id = id
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
             return False
         return self.id == other.id

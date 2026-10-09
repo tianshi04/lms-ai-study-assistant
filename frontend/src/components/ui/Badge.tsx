@@ -57,6 +57,7 @@ export function Badge({
       ...element.props,
       ref,
       className: cn(compClasses, element.props.className),
+      children: children ?? element.props.children,
     });
   }
 

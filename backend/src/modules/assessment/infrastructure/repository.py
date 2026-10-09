@@ -1,12 +1,13 @@
-import uuid
-from datetime import datetime, timezone
-from typing import Optional
-from sqlalchemy import select
+from datetime import UTC, datetime
+
+from sqlalchemy import select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from uuid6 import uuid7
 
-from src.modules.assessment.domain.entities import (
+from src.modules.assessment.domain import (
+    AssessmentRepositoryInterface,
     GradeAppeal,
     HonorCodeAgreement,
     LabSubmission,
@@ -21,7 +22,6 @@ from src.modules.assessment.domain.entities import (
     QuizSubmission,
     RubricCriteria,
 )
-from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     HonorCodeModel,
@@ -61,7 +61,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_honor_code(
         self, user_id: str, item_id: str
-    ) -> Optional[HonorCodeAgreement]:
+    ) -> HonorCodeAgreement | None:
         stmt = select(HonorCodeModel).where(
             HonorCodeModel.user_id == user_id, HonorCodeModel.item_id == item_id
         )
@@ -119,7 +119,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_quiz_cooldown(
         self, user_id: str, item_id: str
-    ) -> Optional[QuizCooldown]:
+    ) -> QuizCooldown | None:
         stmt = select(QuizCooldownModel).where(
             QuizCooldownModel.user_id == user_id, QuizCooldownModel.item_id == item_id
         )
@@ -157,7 +157,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_quiz_active_session(
         self, user_id: str, item_id: str
-    ) -> Optional[QuizActiveSession]:
+    ) -> QuizActiveSession | None:
         stmt = select(QuizActiveSessionModel).where(
             QuizActiveSessionModel.user_id == user_id,
             QuizActiveSessionModel.item_id == item_id,
@@ -246,6 +246,14 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def save_peer_submission(self, submission: PeerAssignmentSubmission) -> None:
         model = await self.session.get(PeerAssignmentSubmissionModel, submission.id)
+        if not model:
+            stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.user_id == submission.user_id,
+                PeerAssignmentSubmissionModel.item_id == submission.item_id,
+            )
+            res = await self.session.execute(stmt)
+            model = res.scalar_one_or_none()
+
         if model:
             model.submission_url = submission.submission_url
             model.text_content = submission.text_content
@@ -267,7 +275,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_peer_submission(
         self, submission_id: str
-    ) -> Optional[PeerAssignmentSubmission]:
+    ) -> PeerAssignmentSubmission | None:
         model = await self.session.get(PeerAssignmentSubmissionModel, submission_id)
         if not model:
             return None
@@ -284,7 +292,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_user_peer_submission(
         self, user_id: str, item_id: str
-    ) -> Optional[PeerAssignmentSubmission]:
+    ) -> PeerAssignmentSubmission | None:
         stmt = select(PeerAssignmentSubmissionModel).where(
             PeerAssignmentSubmissionModel.user_id == user_id,
             PeerAssignmentSubmissionModel.item_id == item_id,
@@ -454,7 +462,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             self.session.add(model)
         await self.session.commit()
 
-    async def get_grade_appeal(self, submission_id: str) -> Optional[GradeAppeal]:
+    async def get_grade_appeal(self, submission_id: str) -> GradeAppeal | None:
         stmt = select(GradeAppealModel).where(
             GradeAppealModel.submission_id == submission_id
         )
@@ -474,8 +482,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
     async def create_question_bank(
         self, course_id: str, title: str, category: str, description: str
     ) -> QuestionBank:
-        now_str = datetime.now(timezone.utc).isoformat()
-        bank_id = f"qbank-{uuid.uuid4().hex[:8]}"
+        now_str = datetime.now(UTC).isoformat()
+        bank_id = f"qbank-{uuid7().hex}"
         model = QuestionBankModel(
             id=bank_id,
             course_id=course_id,
@@ -555,8 +563,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         explanation: str,
         options_data: list[dict],
     ) -> Question:
-        now_str = datetime.now(timezone.utc).isoformat()
-        q_id = f"q-{uuid.uuid4().hex[:8]}"
+        now_str = datetime.now(UTC).isoformat()
+        q_id = f"q-{uuid7().hex}"
         q_model = QuestionModel(
             id=q_id,
             bank_id=bank_id,
@@ -571,7 +579,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
         domain_options = []
         for idx, opt in enumerate(options_data):
-            opt_id = f"opt-{uuid.uuid4().hex[:8]}"
+            opt_id = f"opt-{uuid7().hex}"
             opt_model = QuestionOptionModel(
                 id=opt_id,
                 question_id=q_id,
@@ -640,7 +648,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
         domain_options = []
         for idx, opt in enumerate(options_data):
-            opt_id = f"opt-{uuid.uuid4().hex[:8]}"
+            opt_id = f"opt-{uuid7().hex}"
             opt_model = QuestionOptionModel(
                 id=opt_id,
                 question_id=question_id,
@@ -659,16 +667,20 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 )
             )
 
+        q_id = q_model.id
+        bank_id = q_model.bank_id
+        created_at = q_model.created_at or datetime.now(UTC).isoformat()
+
         await self.session.commit()
         return Question(
-            id=q_model.id,
-            bank_id=q_model.bank_id,
-            text=q_model.text,
-            question_type=q_model.question_type,
-            difficulty=q_model.difficulty,
-            explanation=q_model.explanation,
+            id=q_id,
+            bank_id=bank_id,
+            text=text,
+            question_type=question_type,
+            difficulty=difficulty,
+            explanation=explanation,
             options=domain_options,
-            created_at=q_model.created_at or datetime.now(timezone.utc).isoformat(),
+            created_at=created_at,
         )
 
     async def configure_quiz_matrix(
@@ -727,7 +739,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             cooldown_hours=existing.cooldown_hours,
         )
 
-    async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
+    async def get_quiz_matrix(self, item_id: str) -> QuizMatrix | None:
         stmt = select(QuizMatrixModel).where(QuizMatrixModel.item_id == item_id)
         res = await self.session.execute(stmt)
         m = res.scalar_one_or_none()
@@ -746,6 +758,12 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             cooldown_hours=m.cooldown_hours,
         )
 
+    async def get_item_type(self, item_id: str) -> str:
+        stmt = text("SELECT type::text FROM learning_items WHERE id = :item_id")
+        res = await self.session.execute(stmt, {"item_id": item_id})
+        val = res.scalar_one_or_none()
+        return str(val) if val else ""
+
     async def get_questions_by_bank(self, bank_id: str) -> list[Question]:
         stmt = (
             select(QuestionModel)
@@ -756,27 +774,89 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         res = await self.session.execute(stmt)
         models = res.scalars().all()
 
-        questions = []
-        for q in models:
-            questions.append(
-                Question(
-                    id=q.id,
-                    bank_id=q.bank_id,
-                    text=q.text,
-                    question_type=q.question_type,
-                    difficulty=q.difficulty,
-                    explanation=q.explanation,
-                    options=[
-                        QuestionOption(
-                            id=opt.id,
-                            question_id=opt.question_id,
-                            option_text=opt.option_text,
-                            is_correct=opt.is_correct,
-                            order_index=opt.order_index,
-                        )
-                        for opt in q.options
-                    ],
-                    created_at=q.created_at,
-                )
+        return [
+            Question(
+                id=q.id,
+                bank_id=q.bank_id,
+                text=q.text,
+                question_type=q.question_type,
+                difficulty=q.difficulty,
+                explanation=q.explanation,
+                options=[
+                    QuestionOption(
+                        id=opt.id,
+                        question_id=opt.question_id,
+                        option_text=opt.option_text,
+                        is_correct=opt.is_correct,
+                        order_index=opt.order_index,
+                    )
+                    for opt in q.options
+                ],
+                created_at=q.created_at,
             )
-        return questions
+            for q in models
+        ]
+
+    async def get_any_questions(self, limit: int = 20) -> list[Question]:
+        stmt = (
+            select(QuestionModel)
+            .options(selectinload(QuestionModel.options))
+            .order_by(QuestionModel.id)
+            .limit(limit)
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+
+        return [
+            Question(
+                id=q.id,
+                bank_id=q.bank_id,
+                text=q.text,
+                question_type=q.question_type,
+                difficulty=q.difficulty,
+                explanation=q.explanation,
+                options=[
+                    QuestionOption(
+                        id=opt.id,
+                        question_id=opt.question_id,
+                        option_text=opt.option_text,
+                        is_correct=opt.is_correct,
+                        order_index=opt.order_index,
+                    )
+                    for opt in q.options
+                ],
+                created_at=q.created_at,
+            )
+            for q in models
+        ]
+
+    async def get_course_id_by_item_id(self, item_id: str) -> str | None:
+        from src.modules.catalog.infrastructure.models import (
+            LearningItemModel,
+            LessonModel,
+            WeekModuleModel,
+        )
+
+        stmt = (
+            select(WeekModuleModel.course_id)
+            .join(
+                LessonModel,
+                LessonModel.week_module_id == WeekModuleModel.id,
+            )
+            .join(
+                LearningItemModel,
+                LearningItemModel.lesson_id == LessonModel.id,
+            )
+            .where(LearningItemModel.id == item_id)
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def get_lab_test_cases_json(self, item_id: str) -> str | None:
+        from src.modules.catalog.infrastructure.models import LearningItemModel
+
+        stmt = select(LearningItemModel.test_cases_json).where(
+            LearningItemModel.id == item_id
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()

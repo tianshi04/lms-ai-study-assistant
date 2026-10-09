@@ -1,4 +1,5 @@
 import pytest
+
 from src.shared.config import settings
 from src.shared.infrastructure.redis import close_redis_client, get_redis_client
 

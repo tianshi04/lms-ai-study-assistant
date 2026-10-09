@@ -124,7 +124,6 @@ message UpdateInstructorProfileResponse {
 
 message VerifyIdentityRequest {
   string user_id = 1;
-  string id_card_number = 2;
 }
 
 message VerifyIdentityResponse {

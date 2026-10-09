@@ -1,5 +1,6 @@
 import pytest
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+
+from src.modules.catalog.application import CatalogUseCase
 
 
 @pytest.mark.asyncio
@@ -40,7 +41,7 @@ async def test_instructor_create_and_update_course():
             updated_course.title == "Deep Learning & LLM Fine-Tuning with PyTorch 2.0"
         )
         assert updated_course.partner_name == "Meta AI & Coursera Partner"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping instructor course test: DB not reachable ({e})")
 
 
@@ -92,7 +93,7 @@ async def test_instructor_create_lesson_structure():
 
         # 4. Update Week Module
         updated_week = await usecase.update_week_module(
-            id=week.id,
+            module_id=week.id,
             course_id=course.id,
             title="Week 1: Updated Self-Attention Mechanism",
             summary="Updated Summary",
@@ -103,7 +104,7 @@ async def test_instructor_create_lesson_structure():
 
         # 5. Update Lesson
         updated_lesson = await usecase.update_lesson(
-            id=lesson.id,
+            lesson_id=lesson.id,
             course_id=course.id,
             week_module_id=week.id,
             title="Lesson 1: Updated Multi-Head Attention",
@@ -114,7 +115,7 @@ async def test_instructor_create_lesson_structure():
 
         # 6. Update Learning Item
         updated_item = await usecase.update_learning_item(
-            id=item.id,
+            item_id=item.id,
             course_id=course.id,
             lesson_id=lesson.id,
             title="Updated Lecture: Multi-Head Attention",
@@ -163,19 +164,23 @@ async def test_instructor_create_lesson_structure():
 
         # 10. Delete items & module
         del_item_ok = await usecase.delete_learning_item(
-            id=item.id, course_id=course.id
+            item_id=item.id, course_id=course.id
         )
         assert del_item_ok is True
 
-        del_lesson_ok = await usecase.delete_lesson(id=lesson.id, course_id=course.id)
+        del_lesson_ok = await usecase.delete_lesson(
+            lesson_id=lesson.id, course_id=course.id
+        )
         assert del_lesson_ok is True
 
-        del_week_ok = await usecase.delete_week_module(id=week.id, course_id=course.id)
+        del_week_ok = await usecase.delete_week_module(
+            module_id=week.id, course_id=course.id
+        )
         assert del_week_ok is True
 
         # 11. Delete Course
         del_course_ok = await usecase.delete_course(course_id=course.id)
         assert del_course_ok is True
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping lesson structure test: DB not reachable ({e})")

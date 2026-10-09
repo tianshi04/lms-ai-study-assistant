@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Pin, ChevronUp } from "lucide-react";
+import { Pin, ChevronUp, MessageSquare, MessageSquarePlus, Trash2 } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -15,9 +15,7 @@ import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Dialog } from "@/components/ui/Dialog";
-import { Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
@@ -299,17 +297,22 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       {/* Create New Quick Question Form */}
       <form
         onSubmit={handleCreateThread}
-        className="bg-surface-container-low border border-outline-variant rounded-2xl p-3.5 space-y-2.5 shadow-xs"
+        className="w-full bg-surface-container-low/50 border border-outline-variant/60 rounded-2xl p-4 space-y-3"
       >
+        <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
+          <MessageSquarePlus className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+          <span>{"Thảo luận bài học"}</span>
+        </h4>
         <Input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Đặt câu hỏi thảo luận cho bài học này…"
+          className="bg-surface-container-lowest"
         />
         {newTitle.trim() && (
           <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
@@ -318,9 +321,14 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Chi tiết câu hỏi (nếu có)…"
               rows={2}
-              className="flex-1 min-h-[60px]"
+              className="bg-surface-container-lowest flex-1 min-h-[60px]"
             />
-            <Button type="submit" disabled={submitting || !newTitle.trim() || submitting} size="sm">
+            <Button
+              type="submit"
+              disabled={submitting || !newTitle.trim()}
+              size="sm"
+              className="font-bold shadow-xs"
+            >
               Đăng Thảo Luận
             </Button>
           </div>
@@ -329,11 +337,14 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
       {/* Threads List */}
       {threads.length === 0 ? (
-        <div className="text-center py-6 text-xs text-on-surface-variant bg-surface-container-low border border-outline-variant p-6 rounded-2xl">
-          Chưa có câu hỏi thảo luận nào cho bài học này. Hãy gửi thắc mắc đầu tiên của bạn!
+        <div className="w-full border border-dashed border-outline-variant/70 bg-surface-container-low/30 p-6 rounded-2xl text-center text-xs text-on-surface-variant flex flex-col items-center justify-center gap-2">
+          <MessageSquare className="w-6 h-6 text-on-surface-variant/50" aria-hidden="true" />
+          <span>
+            {"Chưa có câu hỏi thảo luận nào cho bài học này. Hãy gửi thắc mắc đầu tiên của bạn!"}
+          </span>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="w-full space-y-3">
           {threads.map((thread) => {
             const isThreadAuthor = Boolean(currentUserId && thread.authorUserId === currentUserId);
             const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
@@ -344,25 +355,25 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
               <div
                 key={thread.id}
                 id={`thread-${thread.id}`}
-                className={`bg-surface-container-low border ${
+                className={`w-full bg-surface-container-lowest border ${
                   isTarget
-                    ? "border-primary ring-2 ring-primary/50 shadow-md bg-primary-container/20"
-                    : "border-outline-variant"
-                } rounded-2xl p-4 text-xs space-y-2.5 transition-colors duration-m3-medium-2 ease-m3-emphasized shadow-xs`}
+                    ? "border-primary ring-2 ring-primary/40 bg-primary-container/20"
+                    : "border-outline-variant/70 hover:border-primary/40 shadow-2xs"
+                } rounded-2xl p-4 text-xs space-y-2.5 transition-all`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {isTarget && (
-                        <Badge variant="primary" className="text-[10px]">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
                           📌 Thảo luận từ thông báo
-                        </Badge>
+                        </span>
                       )}
                       {thread.isStaffPinned && (
-                        <Badge variant="warning" className="gap-1 text-[10px]">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-warning/15 text-warning border border-warning/30">
                           <Pin aria-hidden="true" className="w-3 h-3 text-warning" />
                           Staff Pinned
-                        </Badge>
+                        </span>
                       )}
                       <span className="font-bold text-on-surface">{thread.authorName}</span>
                       <span className="text-[10px] text-on-surface-variant">
@@ -425,11 +436,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                             size="sm"
                             type="button"
                             onClick={() => handleUpdateThread(thread.id)}
-                            disabled={
-                              submittingEditThread ||
-                              !editThreadTitle.trim() ||
-                              submittingEditThread
-                            }
+                            disabled={submittingEditThread || !editThreadTitle.trim()}
                           >
                             {"Lưu thay đổi"}
                           </Button>

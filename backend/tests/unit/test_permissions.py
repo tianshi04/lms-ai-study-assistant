@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.shared.auth import CurrentUserContext
 from src.shared.permissions import (
@@ -121,8 +122,9 @@ def test_enforce_course_ownership_can_edit_false():
 
 def test_enforce_course_ownership_fallback_attributes():
     class CustomCourse:
-        owner_id = "owner_123"
-        co_instructor_ids = ["co_1", "co_2"]
+        def __init__(self):
+            self.owner_id = "owner_123"
+            self.co_instructor_ids = ["co_1", "co_2"]
 
         def can_edit(self, user, allow_read_only_pending=False):
             return True

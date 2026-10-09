@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
@@ -10,6 +11,8 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CopilotProvider } from "@/components/providers/CopilotProvider";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { getAuthServer } from "@/lib/auth_server";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -25,8 +28,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Coursera LMS Platform",
-  description: "Coursera-style Online Learning Platform",
+  title: {
+    template: "%s | LMS AI Platform",
+    default: "LMS AI Platform - Nền tảng học trực tuyến thông minh",
+  },
+  description: "Nền tảng học tập trực tuyến thông minh tích hợp trợ lý AI học tập cá nhân hóa.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 async function AsyncAuthProvider({ children }: { children: React.ReactNode }) {
@@ -55,7 +68,7 @@ export default function RootLayout({
       className={`${beVietnamPro.variable} ${jetbrainsMono.variable} font-sans antialiased`}
     >
       <head>
-        <script src="https://accounts.google.com/gsi/client" async defer />
+        <Script src="https://accounts.google.com/gsi/client" strategy="lazyOnload" />
       </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
         <QueryProvider>
@@ -76,6 +89,8 @@ export default function RootLayout({
             </ToastProvider>
           </ThemeProvider>
         </QueryProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

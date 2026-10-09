@@ -1,7 +1,9 @@
-import pytest
 import uuid
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.learning.application.learning_usecase import LearningUseCase
+
+import pytest
+
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.learning.application import LearningUseCase
 
 
 @pytest.mark.asyncio
@@ -35,12 +37,13 @@ async def test_list_enrolled_courses():
     assert courses[0].progress_percent == 0.0
     assert courses[0].status == "NOT_STARTED"
 
-    from unittest.mock import patch, AsyncMock
-    from src.modules.catalog.domain.entities import (
-        WeekModule,
-        Lesson,
-        LearningItem,
+    from unittest.mock import AsyncMock, patch
+
+    from src.modules.catalog.domain import (
         ItemType,
+        LearningItem,
+        Lesson,
+        WeekModule,
     )
 
     mock_course_with_items = course
@@ -68,9 +71,7 @@ async def test_list_enrolled_courses():
     ) as mock_get:
         mock_get.return_value = mock_course_with_items
         # Mark 50% progress
-        await learning_uc.mark_item_complete(
-            user_id, course.id, "item_1", total_course_items=2
-        )
+        await learning_uc.mark_item_complete(user_id, course.id, "item_1")
 
         courses = await learning_uc.list_enrolled_courses(user_id)
         assert len(courses) == 1
@@ -80,9 +81,7 @@ async def test_list_enrolled_courses():
         assert courses[0].status == "IN_PROGRESS"
 
         # Mark 100% progress
-        await learning_uc.mark_item_complete(
-            user_id, course.id, "item_2", total_course_items=2
-        )
+        await learning_uc.mark_item_complete(user_id, course.id, "item_2")
 
         courses = await learning_uc.list_enrolled_courses(user_id)
         assert len(courses) == 1
@@ -92,9 +91,10 @@ async def test_list_enrolled_courses():
 
 @pytest.mark.asyncio
 async def test_learning_handler_list_enrolled_courses():
-    from src.modules.learning.presentation.learning_handler import LearningHandler
-    from src.gen.learning.v1 import learning_pb as pb
     from unittest.mock import AsyncMock, patch
+
+    from src.gen.learning.v1 import learning_pb as pb
+    from src.modules.learning.presentation.learning_handler import LearningHandler
 
     learning_uc = LearningUseCase()
     # Mock list_enrolled_courses

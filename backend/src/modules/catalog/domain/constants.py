@@ -1,7 +1,5 @@
 """Domain constants for the Catalog bounded context."""
 
-DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS: int = 500
-
 MIN_RATING_STARS: int = 1
 MAX_RATING_STARS: int = 5
 MAX_REVIEW_COMMENT_LENGTH: int = 2000

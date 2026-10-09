@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from src.gen.payment.v1 import payment_pb as pb
-from src.modules.payment.domain.entities import PaymentTargetType, PlanType
+from src.modules.payment.domain import PaymentTargetType, PlanType
 from src.modules.payment.presentation.payment_handler import PaymentHandler
 from src.shared.auth import CurrentUser
 
@@ -42,6 +43,7 @@ async def test_create_vn_pay_payment_url_handler():
         target_type=PaymentTargetType.COURSE,
         target_id="course_1",
         plan_type=PlanType.UNSPECIFIED,
+        return_url="",
     )
 
 

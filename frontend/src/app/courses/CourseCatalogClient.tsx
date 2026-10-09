@@ -4,21 +4,27 @@ import { useState, useEffect } from "react";
 import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
-import { GraduationCap, Search, RotateCcw } from "lucide-react";
+import { Search, RotateCcw } from "lucide-react";
 
-export function CourseCatalogClient() {
+import type { Course, Category } from "@/gen/catalog/v1/catalog_pb";
+
+interface CourseCatalogClientProps {
+  initialCourses?: Course[];
+  initialSubjects?: Category[];
+  initialLevels?: Category[];
+}
+
+export function CourseCatalogClient({
+  initialCourses,
+  initialSubjects,
+  initialLevels,
+}: CourseCatalogClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [subject, setSubject] = useState<string>("");
@@ -30,43 +36,41 @@ export function CourseCatalogClient() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const hasActiveFilters = Boolean(debouncedSearch || subject || level || sortBy);
+
   const {
     data: courses = [],
     isLoading: loading,
     isFetching,
     error: queryError,
-  } = useCoursesQuery({
-    searchQuery: debouncedSearch,
-    subject,
-    level,
-    sortBy,
-  });
+  } = useCoursesQuery(
+    {
+      searchQuery: debouncedSearch,
+      subject,
+      level,
+      sortBy,
+    },
+    !hasActiveFilters && initialCourses && initialCourses.length > 0
+      ? { initialData: initialCourses }
+      : undefined,
+  );
 
-  const { data: subjects = [] } = useCategoriesQuery("SUBJECT");
-  const { data: levels = [] } = useCategoriesQuery("LEVEL");
+  const { data: subjects = [] } = useCategoriesQuery(
+    "SUBJECT",
+    initialSubjects && initialSubjects.length > 0 ? { initialData: initialSubjects } : undefined,
+  );
+  const { data: levels = [] } = useCategoriesQuery(
+    "LEVEL",
+    initialLevels && initialLevels.length > 0 ? { initialData: initialLevels } : undefined,
+  );
   const error = queryError ? queryError.message : null;
 
   const getCategoryTranslation = (slug: string, fallback: string) => fallback;
 
   return (
-    <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh] bg-surface text-on-surface">
-      <div className="mb-10 text-center md:text-left max-w-5xl">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-container border border-primary/20 text-on-primary-container text-xs font-bold uppercase tracking-wider mb-4 shadow-xs">
-          <GraduationCap className="w-4 h-4 text-primary" aria-hidden="true" />
-          {"Coursera-Style Specializations & Courses"}
-        </div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-on-surface mb-4 text-balance">
-          {"Khám phá Khóa học & Lộ trình Học tập"}
-        </h1>
-        <p className="text-on-surface-variant text-lg leading-relaxed">
-          {
-            "Học tập với bài giảng video tương tác, phụ đề cuộn thông minh, bài tập thực hành nâng cao và thảo luận cộng đồng."
-          }
-        </p>
-      </div>
-
+    <>
       {/* Controls Section: Search & Filters (MD3 Surface Container) */}
-      <Card variant="filled" className="w-full mb-10 p-5 md:p-6 rounded-3xl space-y-5">
+      <Surface variant="container" shape="3xl" className="w-full mb-10 p-5 md:p-6 space-y-5">
         {/* Top Toolbar: Search Bar + Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-4 border-b border-outline-variant">
           {/* Search Bar (MD3 Pill Input) */}
@@ -76,9 +80,12 @@ export function CourseCatalogClient() {
               aria-hidden="true"
             />
             <Input
-              type="text"
+              type="search"
               name="search"
+              inputMode="search"
+              enterKeyHint="search"
               autoComplete="off"
+              spellCheck={false}
               aria-label="Tìm kiếm khóa học"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -122,8 +129,8 @@ export function CourseCatalogClient() {
             {/* Sort Dropdown */}
             <div className="w-44 sm:w-48">
               <Select value={sortBy} onValueChange={(val) => setSortBy((val as string) || "")}>
-                <SelectTrigger className="w-full h-10 text-xs font-bold bg-surface-container-lowest border border-outline-variant rounded-full px-4 text-on-surface">
-                  <SelectValue placeholder={"Mặc định"}>
+                <Select.Trigger className="w-full h-10 text-xs font-bold bg-surface-container-lowest border border-outline-variant rounded-full px-4 text-on-surface">
+                  <Select.Value placeholder={"Mặc định"}>
                     {sortBy === "rating"
                       ? "Đánh giá cao nhất"
                       : sortBy === "popular"
@@ -131,14 +138,14 @@ export function CourseCatalogClient() {
                         : sortBy === "newest"
                           ? "Mới nhất"
                           : "Mặc định"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-surface-container-high border border-outline-variant rounded-2xl shadow-lg">
-                  <SelectItem value="">{"Mặc định"}</SelectItem>
-                  <SelectItem value="rating">{"Đánh giá cao nhất"}</SelectItem>
-                  <SelectItem value="popular">{"Phổ biến nhất"}</SelectItem>
-                  <SelectItem value="newest">{"Mới nhất"}</SelectItem>
-                </SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content className="bg-surface-container-high border border-outline-variant rounded-2xl shadow-lg">
+                  <Select.Item value="">{"Mặc định"}</Select.Item>
+                  <Select.Item value="rating">{"Đánh giá cao nhất"}</Select.Item>
+                  <Select.Item value="popular">{"Phổ biến nhất"}</Select.Item>
+                  <Select.Item value="newest">{"Mới nhất"}</Select.Item>
+                </Select.Content>
               </Select>
             </div>
           </div>
@@ -186,10 +193,10 @@ export function CourseCatalogClient() {
             ))}
           </div>
         </div>
-      </Card>
+      </Surface>
 
       {/* Content Section: Course Cards Grid */}
-      {loading ? (
+      {loading || isFetching ? (
         <CourseGridSkeleton />
       ) : error ? (
         <div className="bg-error-container text-on-error-container border border-error/20 p-6 rounded-3xl text-center">
@@ -237,6 +244,6 @@ export function CourseCatalogClient() {
           ))}
         </div>
       )}
-    </main>
+    </>
   );
 }

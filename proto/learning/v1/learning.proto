@@ -82,7 +82,6 @@ message DeletePersonalNoteResponse {
 message MarkItemCompleteRequest {
   string course_id = 1;
   string item_id = 2;
-  int32 total_course_items = 3;
 }
 
 message MarkItemCompleteResponse {

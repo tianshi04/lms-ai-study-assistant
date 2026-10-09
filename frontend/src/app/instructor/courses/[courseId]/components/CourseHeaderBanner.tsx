@@ -110,7 +110,6 @@ export function CourseHeaderBanner({
                 {"Từ chối (REJECTED)"}
               </span>
             )}
-            <span className="text-xs font-mono text-muted-foreground">ID: {course.id}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight text-balance">
             {course.title}

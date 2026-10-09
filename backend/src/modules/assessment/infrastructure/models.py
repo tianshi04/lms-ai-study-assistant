@@ -1,11 +1,12 @@
 from typing import Any
+
 from sqlalchemy import (
     ARRAY,
+    JSON,
     Boolean,
     Float,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -13,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.assessment.domain.constants import (
+from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     DEFAULT_QUIZ_EASY_COUNT,
     DEFAULT_QUIZ_HARD_COUNT,
@@ -150,7 +151,10 @@ class QuestionBankModel(Base):
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
 
     questions: Mapped[list["QuestionModel"]] = relationship(
-        "QuestionModel", back_populates="bank", cascade="all, delete-orphan"
+        "QuestionModel",
+        back_populates="bank",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
@@ -176,7 +180,10 @@ class QuestionModel(Base):
         "QuestionBankModel", back_populates="questions"
     )
     options: Mapped[list["QuestionOptionModel"]] = relationship(
-        "QuestionOptionModel", back_populates="question", cascade="all, delete-orphan"
+        "QuestionOptionModel",
+        back_populates="question",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
@@ -13,7 +12,7 @@ class ICertificateRepository(ABC):
     @abstractmethod
     async def get_financial_aid(
         self, user_id: str, course_id: str
-    ) -> Optional[FinancialAidApplication]:
+    ) -> FinancialAidApplication | None:
         pass
 
     @abstractmethod
@@ -24,14 +23,14 @@ class ICertificateRepository(ABC):
 
     @abstractmethod
     async def list_financial_aids(
-        self, course_id: Optional[str] = None, status: Optional[str] = None
+        self, course_id: str | None = None, status: str | None = None
     ) -> list[FinancialAidApplication]:
         pass
 
     @abstractmethod
     async def get_financial_aid_by_id(
         self, application_id: str
-    ) -> Optional[FinancialAidApplication]:
+    ) -> FinancialAidApplication | None:
         pass
 
     @abstractmethod
@@ -43,13 +42,13 @@ class ICertificateRepository(ABC):
     @abstractmethod
     async def get_certificate(
         self, user_id: str, course_id: str
-    ) -> Optional[VerifiedCertificate]:
+    ) -> VerifiedCertificate | None:
         pass
 
     @abstractmethod
     async def get_certificate_by_id(
         self, certificate_id: str
-    ) -> Optional[VerifiedCertificate]:
+    ) -> VerifiedCertificate | None:
         pass
 
     @abstractmethod
@@ -85,7 +84,7 @@ class ICertificateRepository(ABC):
     @abstractmethod
     async def get_specialization_details(
         self, specialization_id: str
-    ) -> tuple[Optional[str], Optional[str], Optional[str], list[str]]:
+    ) -> tuple[str | None, str | None, str | None, list[str]]:
         pass
 
     @abstractmethod

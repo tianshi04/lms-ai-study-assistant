@@ -1,6 +1,5 @@
 from sqlalchemy import (
     ARRAY,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Integer,
@@ -8,9 +7,12 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.learning.domain.entities import DeadlineStatus
+from src.modules.learning.domain import DeadlineStatus
 from src.shared.infrastructure.database import Base
 
 
@@ -33,6 +35,7 @@ class LearningProgressModel(Base):
         back_populates="progress",
         cascade="all, delete-orphan",
         order_by="WeeklyDeadlineModel.week_number",
+        lazy="selectin",
     )
 
 

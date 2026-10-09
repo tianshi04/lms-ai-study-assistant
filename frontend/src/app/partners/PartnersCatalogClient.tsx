@@ -142,9 +142,12 @@ export function PartnersCatalogClient() {
               aria-hidden="true"
             />
             <Input
-              type="text"
+              type="search"
               name="search"
+              inputMode="search"
+              enterKeyHint="search"
               autoComplete="off"
+              spellCheck={false}
               aria-label="Tìm kiếm đối tác"
               placeholder="Tìm kiếm đối tác theo tên hoặc thông tin…"
               value={searchQuery}
@@ -289,17 +292,21 @@ export function PartnersCatalogClient() {
                       </span>
 
                       {partner.websiteUrl && (
-                        <a
-                          href={partner.websiteUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        <Button
+                          type="button"
+                          variant="text"
+                          size="xs"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(partner.websiteUrl, "_blank", "noopener,noreferrer");
+                          }}
+                          className="h-7 px-2 text-[11px] font-semibold text-muted-foreground hover:text-primary gap-1"
                           title="Trang web chính thức"
                         >
                           <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Website</span>
-                        </a>
+                        </Button>
                       )}
                     </div>
                   </Card>

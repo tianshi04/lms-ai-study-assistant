@@ -8,12 +8,12 @@ import asyncio
 import logging
 import sys
 
-from src.modules.payment.application.payment_usecase import PaymentUseCase
-from src.modules.payment.domain.constants import (
+from src.modules.payment.application import PaymentUseCase
+from src.modules.payment.domain import (
     RECONCILIATION_BATCH_SIZE,
     RECONCILIATION_PENDING_WINDOW_MINUTES,
+    PaymentOrderStatus,
 )
-from src.modules.payment.domain.entities import PaymentOrderStatus
 from src.modules.payment.infrastructure.repository import PaymentRepository
 from src.modules.payment.infrastructure.vnpay_service import VNPayService
 from src.shared.infrastructure.database import async_session_scope
@@ -72,12 +72,11 @@ async def reconcile_pending_orders() -> int:
 
             if resp_code == "00" or txn_status == "00":
                 await repo.update_order_status(order.id, PaymentOrderStatus.COMPLETED)
-                await use_case._fulfill_access(
+                await use_case.fulfill_access(
                     repo,
                     order.user_id,
                     order.target_type,
                     order.target_id,
-                    order.plan_type,
                     order.amount,
                 )
                 reconciled_count += 1
@@ -108,10 +107,8 @@ def main():
     try:
         asyncio.run(reconcile_pending_orders())
         sys.exit(0)
-    except Exception as e:
-        logger.exception(
-            "[RECONCILE WORKER] Unexpected error during reconciliation: %s", e
-        )
+    except Exception:
+        logger.exception("[RECONCILE WORKER] Unexpected error during reconciliation")
         sys.exit(1)
 
 

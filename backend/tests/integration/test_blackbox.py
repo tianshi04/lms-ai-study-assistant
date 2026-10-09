@@ -101,7 +101,6 @@ async def test_blackbox_identity_and_learning_flows(client: AsyncClient):
     update_req = {
         "courseId": first_course_id,
         "itemId": "item-ml-intro-video",  # Giả định ID này
-        "totalCourseItems": 10,
     }
     resp = await client.post(
         "/learning.v1.LearningService/MarkItemComplete",

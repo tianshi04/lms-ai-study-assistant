@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from http.cookies import SimpleCookie
-from typing import Any, Optional
+from http.cookies import CookieError, SimpleCookie
+from typing import Any
 
 from starlette.datastructures import Headers
 
@@ -9,7 +9,7 @@ class TokenResolver(ABC):
     """Base class for credential extraction strategies."""
 
     @abstractmethod
-    def resolve(self, metadata: dict) -> Optional[str]:
+    def resolve(self, metadata: dict) -> str | None:
         """Extract raw token string from request metadata. Returns None if not found."""
         ...
 
@@ -50,7 +50,7 @@ def extract_header(metadata: Any, name: str) -> str:
 class BearerTokenResolver(TokenResolver):
     """Extracts JWT from Authorization: Bearer <token> header."""
 
-    def resolve(self, metadata: Any) -> Optional[str]:
+    def resolve(self, metadata: Any) -> str | None:
         auth_header = extract_header(metadata, "authorization")
         if not auth_header:
             return None
@@ -63,7 +63,7 @@ class BearerTokenResolver(TokenResolver):
 class CookieTokenResolver(TokenResolver):
     """Extracts JWT from access_token cookie."""
 
-    def resolve(self, metadata: Any) -> Optional[str]:
+    def resolve(self, metadata: Any) -> str | None:
         cookie_header = extract_header(metadata, "cookie")
         if not cookie_header:
             return None
@@ -73,8 +73,8 @@ class CookieTokenResolver(TokenResolver):
             cookie.load(cookie_header)
             if "access_token" in cookie:
                 return cookie["access_token"].value
-        except Exception:
-            pass
+        except (CookieError, KeyError, TypeError, ValueError):
+            return None
         return None
 
 
@@ -84,7 +84,7 @@ class TokenResolverChain:
     def __init__(self, resolvers: list[TokenResolver]) -> None:
         self._resolvers = resolvers
 
-    def resolve(self, metadata: dict) -> Optional[str]:
+    def resolve(self, metadata: dict) -> str | None:
         for resolver in self._resolvers:
             token = resolver.resolve(metadata)
             if token:

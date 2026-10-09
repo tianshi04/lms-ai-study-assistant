@@ -16,7 +16,7 @@ export class CourseDetailPage {
   }
 
   async goto(courseId: string) {
-    await this.page.goto(`/courses/${courseId}`);
+    await this.page.goto(`/courses/${courseId}`, { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

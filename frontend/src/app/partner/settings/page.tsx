@@ -11,7 +11,7 @@ import {
   useRotatePartnerKeyPairMutation,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -19,13 +19,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Progress } from "@/components/ui/Progress";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X, Plus, RefreshCw, Download, Copy, Building2, KeyRound } from "lucide-react";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 
 export interface Signatory {
   id: string;
@@ -316,6 +310,7 @@ function PartnerSettingsForm({
             <Input
               label="Tên Đối tác"
               type="text"
+              autoComplete="organization"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -341,7 +336,8 @@ function PartnerSettingsForm({
             <div>
               <Input
                 label="URL Logo Đối tác"
-                type="text"
+                type="url"
+                inputMode="url"
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
@@ -364,7 +360,8 @@ function PartnerSettingsForm({
             <div>
               <Input
                 label="URL Banner Bìa"
-                type="text"
+                type="url"
+                inputMode="url"
                 value={bannerUrl}
                 onChange={(e) => setBannerUrl(e.target.value)}
                 placeholder="https://example.com/banner.jpg"
@@ -386,7 +383,9 @@ function PartnerSettingsForm({
             <div>
               <Input
                 label="Website chính thức"
-                type="text"
+                type="url"
+                inputMode="url"
+                autoComplete="url"
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://hcmut.edu.vn"
@@ -673,8 +672,9 @@ export default function PartnerSettingsPage() {
 
   if (!isPartnerAdmin) {
     return (
-      <Card
-        variant="outlined"
+      <Surface
+        variant="low"
+        shape="2xl"
         className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/20"
       >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
@@ -684,20 +684,20 @@ export default function PartnerSettingsPage() {
         <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </Card>
+      </Surface>
     );
   }
 
   if (partners.length === 0 || !activePartner) {
     return (
-      <Card variant="outlined" className="max-w-2xl mx-auto my-16 p-8 text-center">
+      <Surface variant="low" shape="2xl" className="max-w-2xl mx-auto my-16 p-8 text-center">
         <Building2 aria-hidden="true" className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
         <h2 className="text-xl font-bold text-foreground mb-2">Chưa tìm thấy hồ sơ Đối tác</h2>
         <p className="text-muted-foreground text-sm">
           Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để
           khởi tạo hồ sơ đối tác.
         </p>
-      </Card>
+      </Surface>
     );
   }
 
@@ -721,22 +721,22 @@ export default function PartnerSettingsPage() {
               if (val) setSelectedPartnerId(val as string);
             }}
           >
-            <SelectTrigger className="w-[200px] text-sm font-medium">
-              <SelectValue placeholder="Chọn đối tác">
+            <Select.Trigger className="w-[200px] text-sm font-medium">
+              <Select.Value placeholder="Chọn đối tác">
                 {(() => {
                   const currentId = selectedPartnerId || activePartner.id;
                   const p = partners.find((item) => item.id === currentId);
                   return p ? p.name : currentId;
                 })()}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
+              </Select.Value>
+            </Select.Trigger>
+            <Select.Content>
               {partners.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
+                <Select.Item key={p.id} value={p.id}>
                   {p.name}
-                </SelectItem>
+                </Select.Item>
               ))}
-            </SelectContent>
+            </Select.Content>
           </Select>
         )}
       </div>

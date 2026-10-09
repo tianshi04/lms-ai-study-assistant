@@ -4,12 +4,12 @@ from connectrpc.request import RequestContext
 
 from src.gen.assessment.v1 import assessment_pb as pb
 from src.gen.assessment.v1.assessment_connect import AssessmentService
-from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
-from src.modules.assessment.domain.constants import (
+from src.modules.assessment.application import AssessmentUseCase
+from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    RubricCriteria,
 )
-from src.modules.assessment.domain.entities import RubricCriteria
 from src.shared.auth import CurrentUser, require_current_user
 
 

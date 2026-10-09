@@ -14,25 +14,12 @@ import { InvitationType } from "@/gen/identity/v1/identity_pb";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
+import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Progress } from "@/components/ui/Progress";
@@ -140,8 +127,9 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
         />
 
         {/* Action Header */}
-        <Card
-          variant="outlined"
+        <Surface
+          variant="low"
+          shape="2xl"
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6"
         >
           <div className="relative flex-1 max-w-md">
@@ -153,7 +141,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm thành viên theo tên hoặc email..."
+              placeholder="Tìm kiếm thành viên theo tên hoặc email…"
               className="pl-10"
             />
           </div>
@@ -170,10 +158,10 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               Gửi Lời mời Thành viên Mới
             </Button>
           )}
-        </Card>
+        </Surface>
 
         {/* Members Table */}
-        <Card variant="outlined" className="p-0 overflow-hidden">
+        <Surface variant="low" shape="2xl" className="p-0 overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" aria-hidden="true" />
@@ -184,7 +172,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
               <Progress.Circular size="md" />
-              <p className="text-sm">Đang tải danh sách thành viên...</p>
+              <p className="text-sm">Đang tải danh sách thành viên…</p>
             </div>
           ) : filteredMembers.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground space-y-2">
@@ -194,21 +182,21 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="px-6 py-3.5">Thành viên</TableHead>
-                    <TableHead className="px-6 py-3.5">Email</TableHead>
-                    <TableHead className="px-6 py-3.5">Vai trò trong Org</TableHead>
-                    <TableHead className="px-6 py-3.5">Trạng thái</TableHead>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head className="px-6 py-3.5">Thành viên</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Email</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Vai trò trong Org</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Trạng thái</Table.Head>
                     {isOwnerOrAdmin && (
-                      <TableHead className="px-6 py-3.5 text-right">Hành động</TableHead>
+                      <Table.Head className="px-6 py-3.5 text-right">Hành động</Table.Head>
                     )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
                   {filteredMembers.map((m) => (
-                    <TableRow key={m.memberId || m.userId}>
-                      <TableCell className="px-6 py-4">
+                    <Table.Row key={m.memberId || m.userId}>
+                      <Table.Cell className="px-6 py-4">
                         <div className="flex items-center space-x-3">
                           <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 text-xs">
                             {m.avatarUrl ? (
@@ -227,24 +215,24 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                             {m.fullName || "Thành viên"}
                           </span>
                         </div>
-                      </TableCell>
-                      <TableCell className="px-6 py-4 text-muted-foreground font-mono text-xs">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-muted-foreground font-mono text-xs">
                         {m.email}
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                           <Shield className="w-3 h-3" aria-hidden="true" />
                           {m.roleName || m.roleId || "Giảng viên"}
                         </span>
-                      </TableCell>
-                      <TableCell className="px-6 py-4">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success">
                           <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
                           {m.status || "ACTIVE"}
                         </span>
-                      </TableCell>
+                      </Table.Cell>
                       {isOwnerOrAdmin && (
-                        <TableCell className="px-6 py-4 text-right">
+                        <Table.Cell className="px-6 py-4 text-right">
                           <IconButton
                             type="button"
                             variant="standard"
@@ -260,15 +248,15 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                           >
                             <Trash2 className="w-4 h-4" aria-hidden="true" />
                           </IconButton>
-                        </TableCell>
+                        </Table.Cell>
                       )}
-                    </TableRow>
+                    </Table.Row>
                   ))}
-                </TableBody>
+                </Table.Body>
               </Table>
             </div>
           )}
-        </Card>
+        </Surface>
 
         {/* Invite Member Modal */}
         <Dialog.Root open={isInviteModalOpen} onOpenChange={(open) => setIsInviteModalOpen(open)}>
@@ -333,20 +321,20 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                     if (val) setInviteRole(val as string);
                   }}
                 >
-                  <SelectTrigger id="inviteRoleSelect" className="w-full">
-                    <SelectValue placeholder="Chọn vai trò">
+                  <Select.Trigger id="inviteRoleSelect" className="w-full">
+                    <Select.Value placeholder="Chọn vai trò">
                       {inviteRole === "ORG_ADMIN"
                         ? "Quản trị viên Tổ chức (ORG_ADMIN)"
                         : inviteRole === "INSTRUCTOR"
                           ? "Giảng viên (INSTRUCTOR)"
                           : "Thành viên / Học viên (MEMBER)"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ORG_ADMIN">Quản trị viên Tổ chức (ORG_ADMIN)</SelectItem>
-                    <SelectItem value="INSTRUCTOR">Giảng viên (INSTRUCTOR)</SelectItem>
-                    <SelectItem value="MEMBER">Thành viên / Học viên (MEMBER)</SelectItem>
-                  </SelectContent>
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="ORG_ADMIN">Quản trị viên Tổ chức (ORG_ADMIN)</Select.Item>
+                    <Select.Item value="INSTRUCTOR">Giảng viên (INSTRUCTOR)</Select.Item>
+                    <Select.Item value="MEMBER">Thành viên / Học viên (MEMBER)</Select.Item>
+                  </Select.Content>
                 </Select>
               </div>
 
@@ -359,7 +347,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                   rows={2}
                   value={inviteMsg}
                   onChange={(e) => setInviteMsg(e.target.value)}
-                  placeholder="Chào mừng bạn đến với tổ chức của chúng tôi..."
+                  placeholder="Chào mừng bạn đến với tổ chức của chúng tôi…"
                 />
               </div>
 
@@ -425,7 +413,7 @@ export default function OrgMembersPage({ params }: { params: Promise<{ slug: str
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
           <Progress.Circular size="sm" />
-          <span className="text-sm">Đang tải danh sách thành viên...</span>
+          <span className="text-sm">Đang tải danh sách thành viên…</span>
         </div>
       }
     >

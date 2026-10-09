@@ -1,10 +1,12 @@
-import pytest
 from unittest.mock import AsyncMock, patch
-from src.modules.certificate.application.certificate_usecase import (
+
+import pytest
+
+from src.modules.certificate.application import (
     CertificateUseCase,
     count_words,
 )
-from src.modules.certificate.domain.entities import (
+from src.modules.certificate.domain import (
     FinancialAidApplication,
     FinancialAidStatus,
     VerifiedCertificate,
@@ -65,16 +67,16 @@ async def test_apply_financial_aid_existing(
 
 
 @pytest.mark.asyncio
-@patch("src.modules.certificate.application.certificate_usecase.uuid")
+@patch("src.modules.certificate.application.certificate_usecase.uuid7")
 @patch("src.modules.certificate.application.certificate_usecase.CertificateRepository")
 @patch("src.modules.certificate.application.certificate_usecase.async_session_scope")
 async def test_apply_financial_aid_new(
-    mock_session_scope, mock_repo_class, mock_uuid, usecase
+    mock_session_scope, mock_repo_class, mock_uuid7, usecase
 ):
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
 
-    mock_uuid.uuid4.return_value.hex = "1234567890123456"
+    mock_uuid7.return_value.hex = "1234567890123456"
 
     mock_repo = mock_repo_class.return_value
     mock_repo.get_financial_aid = AsyncMock(return_value=None)
@@ -273,12 +275,12 @@ async def test_verify_certificate_public(mock_session_scope, mock_repo_class, us
     )
     mock_repo.get_certificate_by_id = AsyncMock(return_value=existing_cert)
 
-    valid, cert, msg = await usecase.verify_certificate_public("cert_1")
+    valid, cert, _msg = await usecase.verify_certificate_public("cert_1")
     assert valid is True
     assert cert == existing_cert
 
     mock_repo.get_certificate_by_id = AsyncMock(return_value=None)
-    valid, cert, msg = await usecase.verify_certificate_public("cert_2")
+    valid, cert, _msg = await usecase.verify_certificate_public("cert_2")
     assert valid is False
     assert cert is None
 
@@ -428,7 +430,7 @@ async def test_issue_specialization_certificate(
     )
     mock_repo.save_certificate = AsyncMock(side_effect=lambda c: c)
 
-    spec_cert, msg = await usecase.issue_specialization_certificate("u1", "spec_1")
+    spec_cert, _msg = await usecase.issue_specialization_certificate("u1", "spec_1")
     assert spec_cert is not None
     assert spec_cert.specialization_id == "spec_1"
     assert spec_cert.learner_name == "Alice"

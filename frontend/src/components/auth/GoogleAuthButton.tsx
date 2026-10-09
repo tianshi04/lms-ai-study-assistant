@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
 export function GoogleIcon({ className = "w-5 h-5 flex-shrink-0" }: { className?: string }) {
@@ -44,12 +44,73 @@ export function GoogleAuthButton({
   children,
 }: GoogleAuthButtonProps) {
   const [internalLoading, setInternalLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [useOfficialButton, setUseOfficialButton] = useState(false);
+
+  useEffect(() => {
+    // Listen for mock auth success event (used by automated E2E tests)
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
+        onSuccess(event.data.idToken, "mock");
+      }
+    };
+    window.addEventListener("message", handleMessage);
+
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!googleClientId) {
+      return () => window.removeEventListener("message", handleMessage);
+    }
+
+    const renderGsiButton = () => {
+      if (typeof google === "undefined" || !google.accounts?.id || !containerRef.current) return;
+
+      try {
+        google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: (response) => {
+            setInternalLoading(false);
+            if (response.credential) {
+              onSuccess(response.credential, "");
+            }
+          },
+        });
+
+        google.accounts.id.renderButton(containerRef.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          width: "360",
+          text: "continue_with",
+          locale: "vi",
+        });
+        setUseOfficialButton(true);
+      } catch (err) {
+        console.warn("Failed to render GIS official button:", err);
+      }
+    };
+
+    if (typeof google !== "undefined" && google.accounts?.id) {
+      renderGsiButton();
+    } else {
+      const timer = setInterval(() => {
+        if (typeof google !== "undefined" && google.accounts?.id) {
+          renderGsiButton();
+          clearInterval(timer);
+        }
+      }, 300);
+      return () => {
+        clearInterval(timer);
+        window.removeEventListener("message", handleMessage);
+      };
+    }
+
+    return () => window.removeEventListener("message", handleMessage);
+  }, [onSuccess]);
 
   const handleClick = async () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const isProduction = process.env.NEXT_PUBLIC_ENV === "production";
 
-    if (!googleClientId && !isProduction) {
+    if (!googleClientId || typeof google === "undefined" || !google.accounts?.oauth2) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
         "user.test@gmail.com",
@@ -66,7 +127,6 @@ export function GoogleAuthButton({
       return;
     }
 
-    // Fix #3: Guard against GIS script not loaded yet
     if (typeof google === "undefined" || !google.accounts?.oauth2) {
       alert("Hệ thống xác thực Google đang khởi tạo. Vui lòng thử lại sau giây lát.");
       return;
@@ -75,10 +135,6 @@ export function GoogleAuthButton({
     setInternalLoading(true);
 
     try {
-      // Fix #1: Don't pass nonce to initCodeClient — Authorization Code Flow
-      // doesn't forward nonce to the ID Token. Nonce validation is removed
-      // on the backend side as well. Anti-replay is handled by the one-time
-      // nature of the authorization code itself.
       const client = google.accounts.oauth2.initCodeClient({
         client_id: googleClientId,
         scope: "openid email profile",
@@ -103,16 +159,23 @@ export function GoogleAuthButton({
   };
 
   return (
-    <Button
-      type="button"
-      variant={variant}
-      onClick={handleClick}
-      disabled={disabled || internalLoading}
-      leadingIcon={<GoogleIcon />}
-      className={`w-full py-3 font-semibold text-sm shadow-sm ${className}`}
-    >
-      {/* Fix #2: Removed duplicate <GoogleIcon /> — leadingIcon already renders it */}
-      <span>{children ?? text}</span>
-    </Button>
+    <div className="w-full flex justify-center">
+      <div
+        ref={containerRef}
+        className={`w-full flex justify-center ${useOfficialButton ? "block" : "hidden"}`}
+      />
+      {!useOfficialButton && (
+        <Button
+          type="button"
+          variant={variant}
+          onClick={handleClick}
+          disabled={disabled || internalLoading}
+          leadingIcon={<GoogleIcon />}
+          className={`w-full py-3 font-semibold text-sm shadow-sm ${className}`}
+        >
+          <span>{children ?? text}</span>
+        </Button>
+      )}
+    </div>
   );
 }

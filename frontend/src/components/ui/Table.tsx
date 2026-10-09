@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export function Table({ className, ref, ...props }: React.ComponentProps<"table">) {
+function TableComponent({ className, ref, ...props }: React.ComponentProps<"table">) {
   return (
     <div className="relative w-full overflow-auto rounded-lg border border-outline-variant">
       <table
@@ -13,7 +13,17 @@ export function Table({ className, ref, ...props }: React.ComponentProps<"table"
   );
 }
 
-export function TableHeader({ className, ref, ...props }: React.ComponentProps<"thead">) {
+export const Table = Object.assign(TableComponent, {
+  Header: TableHeader,
+  Body: TableBody,
+  Footer: TableFooter,
+  Row: TableRow,
+  Head: TableHead,
+  Cell: TableCell,
+  Caption: TableCaption,
+});
+
+function TableHeader({ className, ref, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       ref={ref}
@@ -26,7 +36,7 @@ export function TableHeader({ className, ref, ...props }: React.ComponentProps<"
   );
 }
 
-export function TableBody({ className, ref, ...props }: React.ComponentProps<"tbody">) {
+function TableBody({ className, ref, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       ref={ref}
@@ -36,7 +46,7 @@ export function TableBody({ className, ref, ...props }: React.ComponentProps<"tb
   );
 }
 
-export function TableFooter({ className, ref, ...props }: React.ComponentProps<"tfoot">) {
+function TableFooter({ className, ref, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
       ref={ref}
@@ -49,7 +59,7 @@ export function TableFooter({ className, ref, ...props }: React.ComponentProps<"
   );
 }
 
-export function TableRow({ className, ref, ...props }: React.ComponentProps<"tr">) {
+function TableRow({ className, ref, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       ref={ref}
@@ -62,7 +72,7 @@ export function TableRow({ className, ref, ...props }: React.ComponentProps<"tr"
   );
 }
 
-export function TableHead({ className, ref, ...props }: React.ComponentProps<"th">) {
+function TableHead({ className, ref, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       ref={ref}
@@ -75,7 +85,7 @@ export function TableHead({ className, ref, ...props }: React.ComponentProps<"th
   );
 }
 
-export function TableCell({ className, ref, ...props }: React.ComponentProps<"td">) {
+function TableCell({ className, ref, ...props }: React.ComponentProps<"td">) {
   return (
     <td
       ref={ref}
@@ -85,7 +95,7 @@ export function TableCell({ className, ref, ...props }: React.ComponentProps<"td
   );
 }
 
-export function TableCaption({ className, ref, ...props }: React.ComponentProps<"caption">) {
+function TableCaption({ className, ref, ...props }: React.ComponentProps<"caption">) {
   return (
     <caption ref={ref} className={cn("mt-4 text-sm text-muted-foreground", className)} {...props} />
   );

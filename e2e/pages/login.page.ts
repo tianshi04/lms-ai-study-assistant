@@ -10,11 +10,11 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.emailInput = page.locator('input[type="email"]');
-    this.passwordInput = page.locator('input[type="password"]');
-    this.submitButton = page.getByRole('button', { name: /đăng nhập ngay|sign in/i });
+    this.emailInput = page.locator('input[type="email"]').first();
+    this.passwordInput = page.locator('input[type="password"]').first();
+    this.submitButton = page.getByRole('button', { name: /đăng nhập ngay|sign in/i }).first();
     this.errorBanner = page.getByRole('alert').or(page.getByRole('status')).first();
-    this.registerLink = page.getByRole('link', { name: /đăng ký miễn phí|register for free/i });
+    this.registerLink = page.locator('a[href="/auth/register"]').first();
   }
 
   async goto(redirectUrl?: string) {
@@ -23,10 +23,10 @@ export class LoginPage {
   }
 
   async verifyPageLoaded() {
-    await expect(this.page).toHaveURL(/\/auth\/login/);
-    await expect(this.emailInput).toBeVisible();
-    await expect(this.passwordInput).toBeVisible();
-    await expect(this.submitButton).toBeVisible();
+    await expect(this.page).toHaveURL(/\/auth\/login/, { timeout: 15000 });
+    await expect(this.emailInput).toBeVisible({ timeout: 10000 });
+    await expect(this.passwordInput).toBeVisible({ timeout: 10000 });
+    await expect(this.submitButton).toBeVisible({ timeout: 10000 });
   }
 
   async login(email: string, pass: string) {

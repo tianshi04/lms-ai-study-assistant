@@ -1,10 +1,9 @@
-from datetime import datetime, timezone
-import uuid
+from datetime import UTC, datetime
 
-from src.modules.identity.domain.constants import (
+from uuid6 import uuid7
+
+from src.modules.identity.domain import (
     INSTRUCTOR_APPLICATION_REAPPLY_COOLDOWN_DAYS,
-)
-from src.modules.identity.domain.entities import (
     ApplicationStatus,
     InstructorApplication,
 )
@@ -42,7 +41,7 @@ class SubmitInstructorApplicationUseCase:
                 raise ValueError(
                     "Bạn đã có đơn xin cấp quyền Giảng viên đang chờ duyệt."
                 )
-            elif (
+            if (
                 existing_app.status == ApplicationStatus.REJECTED
                 and existing_app.reviewed_at
             ):
@@ -50,12 +49,12 @@ class SubmitInstructorApplicationUseCase:
                 try:
                     reviewed_dt = datetime.fromisoformat(existing_app.reviewed_at)
                     if reviewed_dt.tzinfo is None:
-                        reviewed_dt = reviewed_dt.replace(tzinfo=timezone.utc)
+                        reviewed_dt = reviewed_dt.replace(tzinfo=UTC)
                 except (ValueError, TypeError):
                     reviewed_dt = None
 
                 if reviewed_dt is not None:
-                    now_dt = datetime.now(timezone.utc)
+                    now_dt = datetime.now(UTC)
                     days_since_rejected = (now_dt - reviewed_dt).days
                     if (
                         days_since_rejected
@@ -70,9 +69,9 @@ class SubmitInstructorApplicationUseCase:
                             f"Đơn đăng ký trước đó của bạn đã bị từ chối. Vui lòng chờ thêm {remaining_days} ngày để nộp lại đơn mới."
                         )
 
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         application = InstructorApplication(
-            id=str(uuid.uuid4()),
+            id=str(uuid7()),
             user_id=user_id,
             title=clean_title,
             bio=clean_bio,

@@ -1,14 +1,16 @@
-import pytest
 from unittest.mock import AsyncMock, patch
-from src.modules.learning.application.learning_usecase import LearningUseCase
-from src.modules.catalog.domain.entities import (
+
+import pytest
+
+from src.modules.catalog.domain import (
     Course,
-    WeekModule,
-    Lesson,
-    LearningItem,
     ItemType,
+    LearningItem,
+    Lesson,
+    WeekModule,
 )
-from src.modules.learning.domain.entities import (
+from src.modules.learning.application import LearningUseCase
+from src.modules.learning.domain import (
     LearningProgress,
     PersonalNote,
 )
@@ -143,6 +145,6 @@ async def test_mark_item_complete(mock_repo, mock_session_scope):
         repo_factory=lambda session: mock_repo,
         catalog_repo_factory=lambda session: mock_catalog_repo,
     )
-    result = await use_case.mark_item_complete("u1", "c1", "i1", 1)
+    result = await use_case.mark_item_complete("u1", "c1", "i1")
     assert result == (True, expected)
     mock_repo.mark_item_complete.assert_awaited_once_with("u1", "c1", "i1", 1, {"i1"})

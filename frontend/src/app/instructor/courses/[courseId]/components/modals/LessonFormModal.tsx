@@ -53,33 +53,23 @@ export function LessonFormModal({
           <Dialog.Title>{isEdit ? "Chỉnh sửa Bài học" : "Thêm Bài học Mới (Lesson)"}</Dialog.Title>
         </Dialog.Header>
         <form onSubmit={handleSubmit} className="space-y-4 my-2">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Tên Bài học"}
-            </label>
-            <Input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={"Ví dụ: 1.1 Khái niệm cơ bản về Perceptron"}
-              className="py-2.5 rounded-xl bg-card text-sm"
-              required
-            />
-          </div>
+          <Input
+            label="Tên Bài học"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ví dụ: 1.1 Khái niệm cơ bản về Perceptron"
+            required
+          />
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Thời lượng ước tính (Phút)"}
-            </label>
-            <Input
-              type="number"
-              min={1}
-              value={minutes}
-              onChange={(e) => setMinutes(parseInt(e.target.value) || 1)}
-              className="py-2.5 rounded-xl bg-card text-sm"
-              required
-            />
-          </div>
+          <Input
+            label="Thời lượng ước tính (Phút)"
+            type="number"
+            min={1}
+            value={minutes}
+            onChange={(e) => setMinutes(parseInt(e.target.value) || 1)}
+            required
+          />
 
           <Dialog.Footer>
             <Button

@@ -30,27 +30,28 @@ export const containerVariants = cva("w-full mx-auto", {
 
 export interface ContainerProps
   extends React.ComponentProps<"div">, VariantProps<typeof containerVariants> {
-  asChild?: boolean;
+  render?: React.ReactElement<any>;
 }
 
 export function Container({
   className,
   size,
   padding,
-  asChild = false,
+  render,
   children,
   ref,
   ...props
 }: ContainerProps) {
   const compClasses = cn(containerVariants({ size, padding, className }));
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
+  if (render && React.isValidElement(render)) {
+    const element = render as React.ReactElement<any>;
+    return React.cloneElement(element, {
       ...props,
-      ...child.props,
+      ...element.props,
       ref,
-      className: cn(compClasses, child.props.className),
+      className: cn(compClasses, element.props.className),
+      children: children ?? element.props.children,
     });
   }
 
@@ -88,27 +89,28 @@ export const sectionVariants = cva("", {
 
 export interface SectionProps
   extends React.ComponentProps<"section">, VariantProps<typeof sectionVariants> {
-  asChild?: boolean;
+  render?: React.ReactElement<any>;
 }
 
 export function Section({
   className,
   spacing,
   divider,
-  asChild = false,
+  render,
   children,
   ref,
   ...props
 }: SectionProps) {
   const compClasses = cn(sectionVariants({ spacing, divider, className }));
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
+  if (render && React.isValidElement(render)) {
+    const element = render as React.ReactElement<any>;
+    return React.cloneElement(element, {
       ...props,
-      ...child.props,
+      ...element.props,
       ref,
-      className: cn(compClasses, child.props.className),
+      className: cn(compClasses, element.props.className),
+      children: children ?? element.props.children,
     });
   }
 
@@ -123,12 +125,7 @@ export function Section({
 /* PageHeader Compound Primitives                                             */
 /* -------------------------------------------------------------------------- */
 
-export function PageHeaderTitle({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"h1">) {
+function PageHeaderTitle({ className, ref, children, ...props }: React.ComponentProps<"h1">) {
   return (
     <h1
       ref={ref}
@@ -143,12 +140,7 @@ export function PageHeaderTitle({
   );
 }
 
-export function PageHeaderDescription({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"p">) {
+function PageHeaderDescription({ className, ref, children, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       ref={ref}
@@ -160,12 +152,7 @@ export function PageHeaderDescription({
   );
 }
 
-export function PageHeaderActions({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
+function PageHeaderActions({ className, ref, children, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       ref={ref}
@@ -177,7 +164,7 @@ export function PageHeaderActions({
   );
 }
 
-export function PageHeaderBreadcrumbs({
+function PageHeaderBreadcrumbs({
   className,
   ref,
   children,
@@ -190,12 +177,7 @@ export function PageHeaderBreadcrumbs({
   );
 }
 
-export function PageHeaderBadge({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
+function PageHeaderBadge({ className, ref, children, ...props }: React.ComponentProps<"div">) {
   return (
     <div ref={ref} className={className} {...props}>
       {children}
@@ -204,28 +186,23 @@ export function PageHeaderBadge({
 }
 
 export interface PageHeaderProps extends React.ComponentProps<"div"> {
-  asChild?: boolean;
+  render?: React.ReactElement<any>;
 }
 
-export function PageHeader({
-  className,
-  children,
-  asChild = false,
-  ref,
-  ...props
-}: PageHeaderProps) {
+function PageHeaderComponent({ className, children, render, ref, ...props }: PageHeaderProps) {
   const compClasses = cn(
     "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-border mb-6",
     className,
   );
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
+  if (render && React.isValidElement(render)) {
+    const element = render as React.ReactElement<any>;
+    return React.cloneElement(element, {
       ...props,
-      ...child.props,
+      ...element.props,
       ref,
-      className: cn(compClasses, child.props.className),
+      className: cn(compClasses, element.props.className),
+      children: children ?? element.props.children,
     });
   }
 
@@ -235,6 +212,14 @@ export function PageHeader({
     </div>
   );
 }
+
+export const PageHeader = Object.assign(PageHeaderComponent, {
+  Title: PageHeaderTitle,
+  Description: PageHeaderDescription,
+  Actions: PageHeaderActions,
+  Breadcrumbs: PageHeaderBreadcrumbs,
+  Badge: PageHeaderBadge,
+});
 
 /* -------------------------------------------------------------------------- */
 /* Stack Layout Primitive                                                     */
@@ -286,7 +271,7 @@ export const stackVariants = cva("flex", {
 
 export interface StackProps
   extends React.ComponentProps<"div">, VariantProps<typeof stackVariants> {
-  asChild?: boolean;
+  render?: React.ReactElement<any>;
 }
 
 export function Stack({
@@ -296,7 +281,7 @@ export function Stack({
   align,
   justify,
   wrap,
-  asChild = false,
+  render,
   children,
   ref,
   ...props
@@ -312,13 +297,14 @@ export function Stack({
     }),
   );
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
+  if (render && React.isValidElement(render)) {
+    const element = render as React.ReactElement<any>;
+    return React.cloneElement(element, {
       ...props,
-      ...child.props,
+      ...element.props,
       ref,
-      className: cn(compClasses, child.props.className),
+      className: cn(compClasses, element.props.className),
+      children: children ?? element.props.children,
     });
   }
 

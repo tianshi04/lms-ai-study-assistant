@@ -4,15 +4,9 @@ import { useState } from "react";
 import { useMyInvitationsQuery, useRespondToInvitationMutation } from "@/lib/query_hooks";
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import { Button } from "@/components/ui/Button";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-} from "@/components/ui/Drawer";
+import { Drawer } from "@/components/ui/Drawer";
 import { Mail, CheckCircle2, XCircle, Building2, BookOpen, Award, Inbox } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Chip } from "@/components/ui/Chip";
 import { Progress } from "@/components/ui/Progress";
 
@@ -83,19 +77,19 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
         if (!open) onClose();
       }}
     >
-      <DrawerContent side="right" className="flex flex-col h-full">
+      <Drawer.Content side="right" className="flex flex-col h-full">
         {/* Header */}
-        <DrawerHeader className="flex items-center space-x-2">
+        <Drawer.Header className="flex items-center space-x-2">
           <Mail className="w-5 h-5 text-primary" aria-hidden="true" />
-          <DrawerTitle className="text-lg font-semibold">Lời mời của tôi</DrawerTitle>
-        </DrawerHeader>
+          <Drawer.Title className="text-lg font-semibold">Lời mời của tôi</Drawer.Title>
+        </Drawer.Header>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {isLoading && (
             <div className="flex justify-center py-12 text-muted-foreground gap-2 items-center">
               <Progress.Circular size="sm" ariaLabel="Đang tải danh sách lời mời" />
-              <span className="text-sm">Đang tải danh sách lời mời...</span>
+              <span className="text-sm">Đang tải danh sách lời mời…</span>
             </div>
           )}
 
@@ -113,10 +107,11 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                 Đang chờ xử lý ({pendingList.length})
               </h3>
               {pendingList.map((inv) => (
-                <Card
+                <Surface
                   key={inv.id}
-                  variant="outlined"
-                  className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-3"
+                  variant="low"
+                  shape="2xl"
+                  className="p-4 border border-primary/20 bg-primary/5 space-y-3"
                 >
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-card border border-border shadow-xs shrink-0">
@@ -174,7 +169,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                       Chấp nhận
                     </Button>
                   </div>
-                </Card>
+                </Surface>
               ))}
             </div>
           )}
@@ -227,12 +222,12 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
         </div>
 
         {/* Footer */}
-        <DrawerFooter>
+        <Drawer.Footer>
           <Button type="button" variant="outlined" onClick={onClose}>
             Đóng
           </Button>
-        </DrawerFooter>
-      </DrawerContent>
+        </Drawer.Footer>
+      </Drawer.Content>
     </Drawer>
   );
 }

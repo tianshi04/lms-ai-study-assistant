@@ -3,10 +3,6 @@ import { Avatar as BaseAvatar } from "@base-ui/react/avatar";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-export const AvatarRoot = BaseAvatar.Root;
-export const AvatarImage = BaseAvatar.Image;
-export const AvatarFallback = BaseAvatar.Fallback;
-
 export const avatarVariants = cva("rounded-full object-cover shrink-0 select-none", {
   variants: {
     size: {
@@ -26,7 +22,7 @@ export interface AvatarProps
   src?: string;
 }
 
-export function Avatar({
+function AvatarComponent({
   name = "",
   src,
   size = "md",
@@ -67,3 +63,9 @@ export function Avatar({
     </BaseAvatar.Root>
   );
 }
+
+export const Avatar = Object.assign(AvatarComponent, {
+  Root: BaseAvatar.Root,
+  Image: BaseAvatar.Image,
+  Fallback: BaseAvatar.Fallback,
+});

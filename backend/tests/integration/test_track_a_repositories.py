@@ -1,7 +1,7 @@
 import pytest
 
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.learning.application.learning_usecase import LearningUseCase
+from src.modules.catalog.application import CatalogUseCase
+from src.modules.learning.application import LearningUseCase
 from src.shared.infrastructure.database import Base, get_engine
 
 
@@ -44,6 +44,6 @@ async def test_track_a_database_repositories():
         notes = await learning_usecase.list_personal_notes(user_id, course_id)
         assert len(notes) >= 1
         assert notes[0].note_comment == "math concept note"
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         # If postgres container is offline during offline unit testing, fallback gracefully
         pytest.skip(f"PostgreSQL container offline for integration test: {exc}")

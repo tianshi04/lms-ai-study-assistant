@@ -1,6 +1,7 @@
 import pytest
-from src.modules.forum.application.forum_usecase import ForumUseCase
-from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
+
+from src.modules.forum.application import ForumUseCase
+from src.modules.forum.domain import ForumReplyEntity, ForumThreadEntity
 
 
 class MockForumRepository:
@@ -90,7 +91,6 @@ async def test_forum_update_sets_is_edited():
         title="Updated Title",
         content="Updated Content",
         current_user_id="user_123",
-        is_staff=False,
     )
     assert updated is not None
     assert updated.title == "Updated Title"
@@ -111,7 +111,6 @@ async def test_forum_update_sets_is_edited():
         reply_id=reply.id,
         content="Updated Reply Content",
         current_user_id="user_123",
-        is_staff=False,
     )
     assert updated_reply is not None
     assert updated_reply.content == "Updated Reply Content"
@@ -141,7 +140,6 @@ async def test_forum_update_permission_denied_for_other_user():
             title="Hacked Title",
             content="Hacked Content",
             current_user_id="user_attacker",
-            is_staff=False,
         )
 
 

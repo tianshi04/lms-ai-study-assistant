@@ -615,7 +615,6 @@ service CatalogService {
 
 message ParseScormPackageRequest {
   string scorm_object_key = 1;
-  string target_course_id = 2;
 }
 
 message ParseScormPackageResponse {

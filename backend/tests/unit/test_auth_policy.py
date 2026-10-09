@@ -1,9 +1,9 @@
 import pytest
 from connectrpc.errors import ConnectError
 
+from src.gen.auth.v1 import options_pb
 from src.shared.auth import CurrentUser
 from src.shared.auth_policy import AuthPolicyRegistry
-from src.gen.auth.v1 import options_pb
 
 
 def test_auth_policy_public():

@@ -87,6 +87,7 @@ message CreateVNPayPaymentUrlRequest {
   PaymentTargetType target_type = 1;
   string target_id = 2;
   PlanType plan_type = 3;
+  string return_url = 4;
 }
 
 message CreateVNPayPaymentUrlResponse {

@@ -1,33 +1,35 @@
 import hashlib
 import inspect
 import logging
-import uuid
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
-from src.modules.certificate.domain.constants import (
+from uuid6 import uuid7
+
+from src.modules.certificate.domain import (
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
     MIN_FINANCIAL_AID_ESSAY_WORDS,
-)
-from src.modules.certificate.domain.entities import (
+    CertificateIssuedDomainEvent,
     FinancialAidApplication,
+    FinancialAidReviewedDomainEvent,
     FinancialAidStatus,
+    ICertificateRepository,
     VerifiedCertificate,
     count_words,
 )
-from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
 
 class CertificateUseCase:
-    def __init__(self, repo: Optional[ICertificateRepository] = None) -> None:
+    def __init__(self, repo: ICertificateRepository | None = None) -> None:
         self._repo = repo
 
-    def _verify_admin(self, current_user: Optional[CurrentUser]) -> None:
+    def _verify_admin(self, current_user: CurrentUser | None) -> None:
         if current_user is not None and not current_user.is_admin:
             raise PermissionError(
                 "Yêu cầu quyền Quản trị viên (Admin) để thực hiện thao tác này."
@@ -38,7 +40,7 @@ class CertificateUseCase:
 
     async def apply_financial_aid(
         self, user_id: str, course_id: str, essay_150_words: str
-    ) -> tuple[Optional[FinancialAidApplication], str]:
+    ) -> tuple[FinancialAidApplication | None, str]:
         words = count_words(essay_150_words)
         if words < MIN_FINANCIAL_AID_ESSAY_WORDS:
             logger.warning(
@@ -82,7 +84,7 @@ class CertificateUseCase:
                 )
                 return saved, ""
 
-            app_id = f"faid_{uuid.uuid4().hex[:12]}"
+            app_id = f"faid_{uuid7().hex[:12]}"
             application = FinancialAidApplication(
                 id=app_id,
                 user_id=user_id,
@@ -99,15 +101,15 @@ class CertificateUseCase:
             return saved, ""
 
     async def _check_auto_approve(
-        self, app: Optional[FinancialAidApplication], repo: ICertificateRepository
-    ) -> Optional[FinancialAidApplication]:
+        self, app: FinancialAidApplication | None, repo: ICertificateRepository
+    ) -> FinancialAidApplication | None:
         if app and app.auto_approve_if_overdue():
             return await repo.save_financial_aid(app)
         return app
 
     async def get_financial_aid_status(
         self, user_id: str, course_id: str
-    ) -> Optional[FinancialAidApplication]:
+    ) -> FinancialAidApplication | None:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             app = await repo.get_financial_aid(user_id, course_id)
@@ -128,9 +130,9 @@ class CertificateUseCase:
 
     async def list_financial_aid_applications(
         self,
-        course_id: Optional[str] = None,
-        status: Optional[str] = None,
-        current_user: Optional[CurrentUser] = None,
+        course_id: str | None = None,
+        status: str | None = None,
+        current_user: CurrentUser | None = None,
     ) -> list[FinancialAidApplication]:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
@@ -147,8 +149,8 @@ class CertificateUseCase:
         self,
         application_id: str,
         is_approved: bool,
-        current_user: Optional[CurrentUser] = None,
-    ) -> tuple[Optional[FinancialAidApplication], str]:
+        current_user: CurrentUser | None = None,
+    ) -> tuple[FinancialAidApplication | None, str]:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
             repo = self._get_repo(session)
@@ -164,32 +166,23 @@ class CertificateUseCase:
                 is_approved,
             )
 
-            # Trigger ACADEMIC notification to user
-            try:
-                from src.modules.notification.application.use_cases import (
-                    NotificationUseCase,
+            # Trigger domain event
+            await EventBus.publish(
+                FinancialAidReviewedDomainEvent(
+                    application_id=app.id,
+                    user_id=app.user_id,
+                    course_id=app.course_id,
+                    is_approved=is_approved,
+                    status="APPROVED" if is_approved else "REJECTED",
+                    notes="",
                 )
-                from src.modules.notification.domain.constants import (
-                    NotificationCategory,
-                )
-
-                status_str = "chấp thuận" if is_approved else "chưa được duyệt"
-                notif_uc = NotificationUseCase()
-                await notif_uc.send_notification(
-                    recipient_id=app.user_id,
-                    category=NotificationCategory.ACADEMIC,
-                    title=f"Đơn Hỗ trợ Tài chính đã được {status_str}",
-                    content="Đơn nộp học bổng cho khóa học của bạn đã được quản trị viên xem xét.",
-                    action_url=f"/learn/{app.course_id}",
-                )
-            except Exception as e:
-                logger.warning("Failed to send financial aid notification: %s", e)
+            )
 
             return updated_app, ""
 
     async def get_verified_certificate(
         self, user_id: str, course_id: str
-    ) -> tuple[Optional[VerifiedCertificate], str]:
+    ) -> tuple[VerifiedCertificate | None, str]:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             (
@@ -253,8 +246,8 @@ class CertificateUseCase:
             learner_name = full_name or "Học viên Coursera"
 
             # Generate new certificate dynamically with REAL database metadata
-            cert_id = f"CERT-{uuid.uuid4().hex[:10].upper()}"
-            issue_date = datetime.now(timezone.utc).strftime("%d/%m/%Y")
+            cert_id = f"CERT-{uuid7().hex[:10].upper()}"
+            issue_date = datetime.now(UTC).strftime("%d/%m/%Y")
             verification_url = f"/verify/{cert_id}"
             qr_code_url = f"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'><rect width='150' height='150' fill='%23ffffff'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='12' fill='%230056D2'>QR:{cert_id}</text></svg>"
 
@@ -267,7 +260,7 @@ class CertificateUseCase:
                     "hashed": True,
                     "identity": f"sha256${hashlib.sha256(email.encode('utf-8')).hexdigest()}",
                 },
-                "issuedOn": datetime.now(timezone.utc).isoformat(),
+                "issuedOn": datetime.now(UTC).isoformat(),
                 "badge": {
                     "type": "BadgeClass",
                     "id": f"https://coursera.org/courses/{course_id}",
@@ -317,25 +310,16 @@ class CertificateUseCase:
                 real_course_id,
             )
 
-            # Trigger CERTIFICATE notification
-            try:
-                from src.modules.notification.application.use_cases import (
-                    NotificationUseCase,
+            # Trigger domain event
+            await EventBus.publish(
+                CertificateIssuedDomainEvent(
+                    certificate_id=cert_id,
+                    user_id=user_id,
+                    course_id=real_course_id,
+                    certificate_code=cert_id,
+                    course_title=course_title,
                 )
-                from src.modules.notification.domain.constants import (
-                    NotificationCategory,
-                )
-
-                notif_uc = NotificationUseCase()
-                await notif_uc.send_notification(
-                    recipient_id=user_id,
-                    category=NotificationCategory.ACADEMIC,
-                    title="Chúc mừng! Chứng chỉ xác minh của bạn đã được cấp",
-                    content=f'Bạn đã hoàn thành 100% khóa học "{course_title}". Bấm để xem và chia sẻ chứng chỉ.',
-                    action_url=f"/verify/{cert_id}",
-                )
-            except Exception as e:
-                logger.warning("Failed to send certificate notification: %s", e)
+            )
 
             return saved_cert, ""
 
@@ -343,7 +327,7 @@ class CertificateUseCase:
         self,
         certificate_id: str,
         reason: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         self._verify_admin(current_user)
         """Revokes a certificate by setting is_revoked=True (BR_CERT_004).
@@ -363,7 +347,7 @@ class CertificateUseCase:
 
     async def verify_certificate_public(
         self, certificate_id: str
-    ) -> tuple[bool, Optional[VerifiedCertificate], str]:
+    ) -> tuple[bool, VerifiedCertificate | None, str]:
         """Public certificate verification endpoint (BR_CERT_002, BR_CERT_004).
         Returns (is_valid, certificate, status_message).
         """
@@ -382,7 +366,7 @@ class CertificateUseCase:
 
     async def issue_specialization_certificate(
         self, user_id: str, specialization_id: str
-    ) -> tuple[Optional[VerifiedCertificate], str]:
+    ) -> tuple[VerifiedCertificate | None, str]:
         """Auto-issue a Specialization Verified Certificate when learner completes
         100% of all component courses in the specialization (BR_CERT_005).
 
@@ -426,8 +410,8 @@ class CertificateUseCase:
             learner_name = full_name or "Học viên"
 
             # 5. Build and save specialization certificate
-            cert_id = f"CERT-SPEC-{uuid.uuid4().hex[:8].upper()}"
-            issue_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            cert_id = f"CERT-SPEC-{uuid7().hex[:8].upper()}"
+            issue_date = datetime.now(UTC).strftime("%Y-%m-%d")
             verification_url = f"/verify/{cert_id}"
             qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}"
 

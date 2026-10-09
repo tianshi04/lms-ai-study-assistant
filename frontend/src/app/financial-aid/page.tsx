@@ -231,7 +231,7 @@ function FinancialAidContent() {
                     {app.status === "PENDING" && (
                       <Badge variant="warning" className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
-                        {`Chờ duyệt (${app.reviewDeadlineDaysLeft}d left)`}
+                        {`Chờ duyệt (còn ${app.reviewDeadlineDaysLeft} ngày)`}
                       </Badge>
                     )}
                     {app.status === "REJECTED" && (
@@ -467,7 +467,7 @@ export default function FinancialAidPage() {
       fallback={
         <div className="flex items-center justify-center py-24">
           <span aria-live="polite" className="text-sm text-muted-foreground">
-            Loading…
+            Đang tải dữ liệu…
           </span>
         </div>
       }

@@ -110,13 +110,13 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   2. Giảng viên thêm bài học Video, tải lên tệp `video.mp4` kèm file phụ đề `subtitles.vtt`.
   3. Giảng viên thiết lập **In-Video Quiz** tại phút 03:15 với câu hỏi trắc nghiệm và đáp án chi tiết.
   4. Giảng viên tạo bài tập **Peer-Graded Assignment**, thiết lập bộ tiêu chí **Rubric** (gồm 2 tiêu chí, mỗi tiêu chí tối đa 5 điểm kèm mô tả hướng dẫn chi tiết cho học viên chấm chéo).
-  5. Giảng viên tạo ngân hàng câu hỏi (Question Bank) cho bài thi Graded Quiz, cấu hình rút ngẫu nhiên 5 câu từ 10 câu, đặt Passing Threshold = 80% và bật Cooldown 8 tiếng.
+  5. Giảng viên tạo ngân hàng câu hỏi (Question Bank) cho bài thi Graded Quiz, cấu hình rút ngẫu nhiên 5 câu từ 10 câu, đặt Passing Threshold = 80% và chế độ không giới hạn lượt làm bài.
   6. Giảng viên kiểm tra lại toàn bộ nội dung và bấm nút **"Publish Course"** (Xuất bản khóa học).
 * **Kết quả mong đợi (Expected Results):**
   * *Tại bước 2:* Hệ thống xử lý tải video thành công và tự động trích xuất chuỗi phụ đề thành **Interactive Transcript**.
   * *Tại bước 3:* Mốc thời gian 03:15 trên video được đánh dấu vị trí chèn quiz thành công.
   * *Tại bước 4:* Bộ Rubric được lưu cấu trúc đầy đủ chuẩn xác (tiêu chí, thang điểm và hướng dẫn chấm bài cho học viên).
-  * *Tại bước 5:* Ngân hàng câu hỏi lưu 10 câu, cấu hình đề thi tính điểm hiển thị chính xác các tham số ngẫu nhiên & cooldown.
+  * *Tại bước 5:* Ngân hàng câu hỏi lưu 10 câu, cấu hình đề thi tính điểm hiển thị chính xác các tham số ngẫu nhiên.
   * *Tại bước 6:* Khóa học chuyển trạng thái từ `Draft` sang `Published`, hiển thị công khai trên danh mục khóa học (Catalog) cho Học viên đăng ký học.
   * *Tại bước 3:* Mốc thời gian 03:15 trên video được đánh dấu vị trí chèn quiz thành công.
   * *Tại bước 4:* Bộ Rubric được lưu cấu trúc đầy đủ chuẩn xác (tiêu chí, thang điểm và hướng dẫn chấm bài cho học viên).

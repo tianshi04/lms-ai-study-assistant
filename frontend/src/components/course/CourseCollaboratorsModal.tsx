@@ -5,7 +5,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Select, SelectItem } from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import {
   useCourseCollaboratorsQuery,
@@ -169,6 +169,10 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                     <Input
                       id="collaborator-email"
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      enterKeyHint="send"
+                      spellCheck={false}
                       placeholder="nhap.email@domain.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -184,8 +188,8 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                     Vai trò trong Khóa học
                   </label>
                   <Select value={role} onValueChange={(val) => setRole(val || "co_instructor")}>
-                    <SelectItem value="co_instructor">Đồng giảng viên (Co-Instructor)</SelectItem>
-                    <SelectItem value="ta">Trợ giảng (TA)</SelectItem>
+                    <Select.Item value="co_instructor">Đồng giảng viên (Co-Instructor)</Select.Item>
+                    <Select.Item value="ta">Trợ giảng (TA)</Select.Item>
                   </Select>
                 </div>
                 <div className="sm:col-span-2">
@@ -300,7 +304,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
             </Button>
             <Button
               variant="filled"
-              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              className="bg-error text-on-error hover:bg-error/90 active:bg-error/80"
               onClick={executeRemoveCollaborator}
               disabled={removeCollaboratorMutation.isPending}
             >

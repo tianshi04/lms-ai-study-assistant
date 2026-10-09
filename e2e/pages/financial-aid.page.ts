@@ -16,11 +16,11 @@ export class FinancialAidPage {
   }
 
   async goto(courseId = 'course-new-test') {
-    await this.page.goto(`/financial-aid?courseId=${courseId}`);
+    await this.page.goto(`/financial-aid?courseId=${courseId}`, { waitUntil: 'domcontentloaded' });
   }
 
   async gotoInstructorReview() {
-    await this.page.goto('/instructor/financial-aid');
+    await this.page.goto('/instructor/financial-aid', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

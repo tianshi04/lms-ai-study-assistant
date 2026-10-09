@@ -16,7 +16,7 @@ export class InstructorAnnouncementsPage {
   }
 
   async goto(courseId: string) {
-    await this.page.goto(`/instructor/courses/${courseId}/announcements`);
+    await this.page.goto(`/instructor/courses/${courseId}/announcements`, { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
@@ -25,8 +25,20 @@ export class InstructorAnnouncementsPage {
   }
 
   async postAnnouncement(title: string, content: string) {
+    await this.page.waitForLoadState('domcontentloaded');
+    await expect(this.titleInput).toBeVisible({ timeout: 10000 });
+    await expect(this.titleInput).toBeEnabled({ timeout: 5000 });
+
+    await this.titleInput.click();
     await this.titleInput.fill(title);
+    await expect(this.titleInput).toHaveValue(title, { timeout: 5000 });
+
+    await this.contentTextarea.click();
     await this.contentTextarea.fill(content);
+    await expect(this.contentTextarea).toHaveValue(content, { timeout: 5000 });
+
+    await expect(this.submitButton).toBeEnabled({ timeout: 5000 });
     await this.submitButton.click();
+    await expect(this.page.locator('text=Đã đăng thông báo khóa học thành công!').first()).toBeVisible({ timeout: 15000 });
   }
 }

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Optional
-
+from typing import Any
 
 from src.modules.certificate.domain.constants import (
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
@@ -74,10 +73,10 @@ class VerifiedCertificate:
     verification_url: str
     qr_code_url: str
     open_badges_json_ld: dict[str, Any]
-    course_id: Optional[str] = None
+    course_id: str | None = None
     is_revoked: bool = False
     revoked_reason: str = ""
-    specialization_id: Optional[str] = None
+    specialization_id: str | None = None
     signer_name: str = ""
     signer_title: str = ""
     signature_image_url: str = ""

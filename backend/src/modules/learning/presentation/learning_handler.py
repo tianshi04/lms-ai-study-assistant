@@ -2,8 +2,8 @@ from connectrpc.request import RequestContext
 
 from src.gen.learning.v1 import learning_pb as pb
 from src.gen.learning.v1.learning_connect import LearningService
-from src.modules.learning.application.learning_usecase import LearningUseCase
-from src.modules.learning.domain.entities import (
+from src.modules.learning.application import LearningUseCase
+from src.modules.learning.domain import (
     DeadlineStatus,
     EnrolledCourseSummary,
     LearningProgress,
@@ -143,7 +143,6 @@ class LearningHandler(LearningService):
             user_id=current_user.id,
             course_id=request.course_id,
             item_id=request.item_id,
-            total_course_items=request.total_course_items,
         )
         return pb.MarkItemCompleteResponse(
             success=success, updated_progress=_to_pb_progress(progress)

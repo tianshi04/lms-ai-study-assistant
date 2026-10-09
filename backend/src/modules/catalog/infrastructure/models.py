@@ -1,22 +1,23 @@
 from sqlalchemy import (
     ARRAY,
-    Enum as SQLEnum,
+    JSON,
+    Boolean,
+    Float,
     ForeignKey,
     Integer,
-    JSON,
     Numeric,
     String,
     Text,
     UniqueConstraint,
-    Float,
-    Boolean,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sqlalchemy.dialects.postgresql import JSONB
-
-from src.modules.catalog.domain.entities import ItemType, CourseStatus
-from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
+from src.modules.catalog.domain import CourseStatus, ItemType
+from src.modules.identity.domain import INTERNAL_SYSTEM_ORG_ID
 from src.shared.infrastructure.database import Base
 
 
@@ -104,6 +105,7 @@ class CourseModel(Base):
         back_populates="course",
         cascade="all, delete-orphan",
         order_by="WeekModuleModel.week_number",
+        lazy="selectin",
     )
     collaborators: Mapped[list["CourseCollaboratorModel"]] = relationship(
         "CourseCollaboratorModel",
@@ -134,6 +136,7 @@ class WeekModuleModel(Base):
         back_populates="week_module",
         cascade="all, delete-orphan",
         order_by="LessonModel.order_index",
+        lazy="selectin",
     )
 
 
@@ -161,6 +164,7 @@ class LessonModel(Base):
         back_populates="lesson",
         cascade="all, delete-orphan",
         order_by="LearningItemModel.order_index",
+        lazy="selectin",
     )
 
 
@@ -206,12 +210,14 @@ class LearningItemModel(Base):
         back_populates="item",
         cascade="all, delete-orphan",
         order_by="InteractiveTranscriptModel.timestamp_seconds",
+        lazy="selectin",
     )
     in_video_quizzes: Mapped[list["InVideoQuizModel"]] = relationship(
         "InVideoQuizModel",
         back_populates="item",
         cascade="all, delete-orphan",
         order_by="InVideoQuizModel.timestamp_seconds",
+        lazy="selectin",
     )
 
 

@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.modules.certificate.infrastructure.repository import CertificateRepository
-from src.modules.certificate.domain.entities import (
+
+from src.modules.certificate.domain import (
     FinancialAidApplication,
     FinancialAidStatus,
     VerifiedCertificate,
@@ -11,12 +12,12 @@ from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
 )
+from src.modules.certificate.infrastructure.repository import CertificateRepository
 
 
 @pytest.fixture
 def mock_session():
-    session = AsyncMock(spec=AsyncSession)
-    return session
+    return AsyncMock(spec=AsyncSession)
 
 
 @pytest.fixture

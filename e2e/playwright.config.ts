@@ -18,7 +18,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
-  workers: process.env.CI ? 1 : '50%',
+  workers: process.env.CI ? 1 : 2,
   timeout: 30000,
   expect: {
     timeout: 5000,
@@ -35,7 +35,6 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
-    permissions: ['clipboard-read', 'clipboard-write'],
     extraHTTPHeaders: {
       'Accept-Language': 'vi',
     },
@@ -51,7 +50,23 @@ export default defineConfig({
     // ─── Learner role ─────────────────────────────────────────────────────────
     {
       name: 'chromium-learner',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/instructor-application.spec.ts', '**/role-dashboards.spec.ts'],
+      testMatch: [
+        '**/health.spec.ts',
+        '**/auth.spec.ts',
+        '**/forgot-password.spec.ts',
+        '**/catalog.spec.ts',
+        '**/learning.spec.ts',
+        '**/course-completion.spec.ts',
+        '**/assessment.spec.ts',
+        '**/forum.spec.ts',
+        '**/financial-aid.spec.ts',
+        '**/payment.spec.ts',
+        '**/purchases-notifications.spec.ts',
+        '**/certificate.spec.ts',
+        '**/organization.spec.ts',
+        '**/instructor-application.spec.ts',
+        '**/role-dashboards.spec.ts',
+      ],
       use: {
         ...devices['Desktop Chrome'],
         storageState: LEARNER_AUTH,
@@ -62,7 +77,13 @@ export default defineConfig({
     // ─── Instructor role ──────────────────────────────────────────────────────
     {
       name: 'chromium-instructor',
-      testMatch: ['**/instructor.spec.ts', '**/question-bank.spec.ts', '**/financial-aid.spec.ts', '**/role-dashboards.spec.ts'],
+      testMatch: [
+        '**/instructor.spec.ts',
+        '**/question-bank.spec.ts',
+        '**/financial-aid.spec.ts',
+        '**/organization.spec.ts',
+        '**/role-dashboards.spec.ts',
+      ],
       use: {
         ...devices['Desktop Chrome'],
         storageState: INSTRUCTOR_AUTH,
@@ -73,7 +94,14 @@ export default defineConfig({
     // ─── Admin role ───────────────────────────────────────────────────────────
     {
       name: 'chromium-admin',
-      testMatch: ['**/admin.spec.ts', '**/partner.spec.ts', '**/admin-applications.spec.ts', '**/role-dashboards.spec.ts'],
+      testMatch: [
+        '**/admin.spec.ts',
+        '**/admin-moderation.spec.ts',
+        '**/admin-applications.spec.ts',
+        '**/partner.spec.ts',
+        '**/organization.spec.ts',
+        '**/role-dashboards.spec.ts',
+      ],
       use: {
         ...devices['Desktop Chrome'],
         storageState: ADMIN_AUTH,
@@ -84,7 +112,22 @@ export default defineConfig({
     // ─── Cross-browser (learner & public flows) ────────────────────────────────
     {
       name: 'firefox',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/instructor-application.spec.ts'],
+      testMatch: [
+        '**/health.spec.ts',
+        '**/auth.spec.ts',
+        '**/forgot-password.spec.ts',
+        '**/catalog.spec.ts',
+        '**/learning.spec.ts',
+        '**/course-completion.spec.ts',
+        '**/assessment.spec.ts',
+        '**/forum.spec.ts',
+        '**/financial-aid.spec.ts',
+        '**/payment.spec.ts',
+        '**/purchases-notifications.spec.ts',
+        '**/certificate.spec.ts',
+        '**/organization.spec.ts',
+        '**/instructor-application.spec.ts',
+      ],
       use: {
         ...devices['Desktop Firefox'],
         storageState: LEARNER_AUTH,
@@ -93,7 +136,22 @@ export default defineConfig({
     },
     {
       name: 'webkit',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/instructor-application.spec.ts'],
+      testMatch: [
+        '**/health.spec.ts',
+        '**/auth.spec.ts',
+        '**/forgot-password.spec.ts',
+        '**/catalog.spec.ts',
+        '**/learning.spec.ts',
+        '**/course-completion.spec.ts',
+        '**/assessment.spec.ts',
+        '**/forum.spec.ts',
+        '**/financial-aid.spec.ts',
+        '**/payment.spec.ts',
+        '**/purchases-notifications.spec.ts',
+        '**/certificate.spec.ts',
+        '**/organization.spec.ts',
+        '**/instructor-application.spec.ts',
+      ],
       use: {
         ...devices['Desktop Safari'],
         storageState: LEARNER_AUTH,
@@ -102,7 +160,22 @@ export default defineConfig({
     },
     {
       name: 'Mobile Chrome',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/instructor-application.spec.ts'],
+      testMatch: [
+        '**/health.spec.ts',
+        '**/auth.spec.ts',
+        '**/forgot-password.spec.ts',
+        '**/catalog.spec.ts',
+        '**/learning.spec.ts',
+        '**/course-completion.spec.ts',
+        '**/assessment.spec.ts',
+        '**/forum.spec.ts',
+        '**/financial-aid.spec.ts',
+        '**/payment.spec.ts',
+        '**/purchases-notifications.spec.ts',
+        '**/certificate.spec.ts',
+        '**/organization.spec.ts',
+        '**/instructor-application.spec.ts',
+      ],
       use: {
         ...devices['Pixel 5'],
         storageState: LEARNER_AUTH,

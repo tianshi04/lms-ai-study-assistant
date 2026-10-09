@@ -187,6 +187,7 @@
 }
 
 :root {
+  color-scheme: light;
   /* Tier 2 Semantic Tokens (Light Mode - OKLCH) */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -273,9 +274,9 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
 
-  --outline: oklch(0.88 0.008 260);
-  --outline-variant: oklch(0.92 0.005 260);
-  --border: var(--outline);
+  --outline: oklch(0.55 0.016 250);
+  --outline-variant: oklch(0.88 0.005 260);
+  --border: var(--outline-variant);
   --input: var(--outline);
   --ring: oklch(0.546 0.215 262.881);
 
@@ -294,6 +295,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   /* Tier 2 Semantic Tokens (Dark Mode - OKLCH) */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -380,9 +382,9 @@
   --chart-4: oklch(0.627 0.21 303.9); /* Gamut safe sRGB */
   --chart-5: oklch(0.645 0.2 16.439); /* Gamut safe sRGB */
 
-  --outline: oklch(0.28 0.008 260);
-  --outline-variant: oklch(0.24 0.008 260);
-  --border: var(--outline);
+  --outline: oklch(0.6 0.015 250);
+  --outline-variant: oklch(0.28 0.008 260);
+  --border: var(--outline-variant);
   --input: var(--outline);
   --ring: oklch(0.55 0.214 259.815);
 
@@ -402,6 +404,25 @@ body {
   transition:
     background-color var(--duration-m3-short-4) var(--ease-m3-emphasized),
     color var(--duration-m3-short-4) var(--ease-m3-emphasized);
+}
+
+/* Match scrollbar gutter and viewport background on Learn / Course Player page */
+html:has([data-page="learn"]),
+body:has([data-page="learn"]) {
+  background-color: var(--surface-container-low);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 /* Hide native browser password reveal icon */
@@ -438,6 +459,29 @@ input::-ms-clear {
 
 ::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+/* Accessibility: High contrast scrollbar */
+@media (prefers-contrast: more) {
+  * {
+    scrollbar-color: var(--outline) var(--surface-container-high);
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--outline);
+    border: 2px solid var(--background);
+  }
+}
+
+/* Accessibility: Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Utility to completely hide scrollbars across all browsers */
@@ -691,4 +735,48 @@ input::-ms-clear {
   background-color: var(--primary-container) !important;
   color: var(--primary) !important;
   border-color: var(--primary) !important;
+}
+
+/* ==========================================================================
+   View Transitions & Motion Specification for LMS Panels
+   ========================================================================== */
+
+/* Disable full-page root snapshot crossfade to eliminate whole-screen shaking/vibration */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+}
+::view-transition-group(root) {
+  animation-duration: 0s !important;
+}
+
+.learn-view-transition-panel {
+  view-transition-name: learn-side-panel;
+}
+
+::view-transition-group(learn-side-panel) {
+  animation-duration: var(--duration-m3-medium-2);
+  animation-timing-function: var(--ease-m3-emphasized);
+}
+
+::view-transition-old(learn-side-panel),
+::view-transition-new(learn-side-panel) {
+  animation-duration: var(--duration-m3-short-4);
+  animation-timing-function: var(--ease-m3-emphasized);
+}
+
+/* Custom Native HTML5 Video Subtitle / Track Cue Styling */
+video::cue {
+  background-color: rgba(15, 23, 42, 0.88);
+  color: #f8fafc;
+  font-size: clamp(10px, 1.15vw, 13.5px);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  max-width: 80%;
+  white-space: pre-line;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }

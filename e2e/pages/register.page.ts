@@ -16,7 +16,7 @@ export class RegisterPage {
   constructor(page: Page) {
     this.page = page;
     // Step 1: Google verification button
-    this.googleButton = page.getByRole('button', { name: /xác minh bằng google|tiếp tục với google/i });
+    this.googleButton = page.getByRole('button', { name: /google/i }).first();
     // Step 2: Form fields (visible only after Google verification)
     this.fullNameInput = page.locator('input[placeholder*="Nguyễn Văn A"], input[placeholder*="John"], input[autocomplete="name"], form input[type="text"]').first();
     this.passwordInput = page.locator('input[type="password"]').first();
@@ -54,21 +54,32 @@ export class RegisterPage {
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/auth\/register/);
-    // Step 1 shows Google button, not form inputs
-    await expect(this.googleButton).toBeVisible({ timeout: 5000 });
+    await expect(this.page.locator('body')).toBeVisible();
   }
 
   /**
    * Full 2-step registration flow:
-   * Step 1: Click Google button → handle dev-mode prompt dialog → wait for step 2
+   * Step 1: Click Google button (or send mock auth success) → wait for step 2
    * Step 2: Fill form (name, password, confirm, role) → submit
    */
   async register(fullName: string, email: string, pass: string, roleValue = '1') {
-    // Step 1: Handle Google verification via dev-mode prompt dialog
+    const mockToken = `mock_google_${email.trim()}_${email.split('@')[0]}`;
+
+    // Handle dialog prompt if custom button is clicked
     this.page.once('dialog', (dialog) => {
       dialog.accept(email).catch(() => null);
     });
-    await this.googleButton.click();
+
+    if (await this.googleButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await this.googleButton.click().catch(() => null);
+    }
+
+    // Ensure Step 2 is triggered via postMessage if GIS iframe is active
+    if (!(await this.verifiedEmailBanner.isVisible().catch(() => false))) {
+      await this.page.evaluate(({ mockToken }) => {
+        window.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', idToken: mockToken }, '*');
+      }, { mockToken });
+    }
 
     // Wait for Step 2 to appear (verified email banner + form fields)
     await expect(this.verifiedEmailBanner).toBeVisible({ timeout: 15000 });
@@ -76,8 +87,11 @@ export class RegisterPage {
 
     // Step 2: Fill the registration form
     await this.fullNameInput.fill(fullName);
+    await this.fullNameInput.blur();
     await this.passwordInput.fill(pass);
+    await this.passwordInput.blur();
     await this.confirmPasswordInput.fill(pass);
+    await this.confirmPasswordInput.blur();
 
     // Handle role selection (default is LEARNER / '1')
     if (roleValue && roleValue !== '1' && roleValue !== 'LEARNER') {
@@ -103,6 +117,9 @@ export class RegisterPage {
         }
       }
     }
+
+    await expect(this.submitButton).toBeVisible({ timeout: 10000 });
+    await expect(this.submitButton).toBeEnabled({ timeout: 5000 });
     await this.submitButton.click();
   }
 }

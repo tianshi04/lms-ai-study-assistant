@@ -28,27 +28,25 @@ export class AssessmentPage {
   constructor(page: Page) {
     this.page = page;
 
-    this.quizTab = page.getByRole('button', { name: /Graded Quiz|Bài trắc nghiệm/i });
-    this.labTab = page.getByRole('button', { name: /Auto-Graded Lab|Thực hành Lab/i });
-    this.peerTab = page.getByRole('button', { name: /Peer Review & Appeal|Đánh giá ngang hàng/i });
+    this.quizTab = page.getByRole('button', { name: /Bài trắc nghiệm|Graded Quiz/i }).first();
+    this.labTab = page.getByRole('button', { name: /Thực hành Lab tự chấm|Auto-Graded Lab|Thực hành Lab/i }).first();
+    this.peerTab = page.getByRole('button', { name: /Đánh giá ngang hàng|Peer Review/i }).first();
 
     this.openHonorButton = page.getByRole('button', { name: /Xác nhận Cam kết Trung thực|Agree Honor Code|Confirm Honor Code|I Agree \& Continue/i }).first();
     this.honorAgreedBadge = page.getByTestId('honor-agreed-badge');
     this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
     this.honorCheckbox = page.locator('.fixed.inset-0 label, .fixed.inset-0 [role="checkbox"], .fixed.inset-0 input[type="checkbox"]').first();
     this.agreeAndContinueButton = page.locator('.fixed.inset-0 button').filter({ hasText: /Tôi đồng ý \& Tiếp tục|Đồng ý \& Nộp bài ngay|I Agree \& Continue|Submitting/i }).first();
-
-    this.runLabButton = page.getByRole('button', { name: /Run & Submit Code/i });
-
-    this.mySubmissionTab = page.getByRole('button', { name: /1. My Submission/i });
-    this.gradePeersTab = page.getByRole('button', { name: /2. Grade Peers/i });
-    this.gradeAppealTab = page.getByRole('button', { name: /3. Grade Appeal/i });
-    this.submitPeerAssignmentButton = page.getByRole('button', { name: /Submit Peer Assignment/i });
+    this.runLabButton = page.getByRole('button', { name: /Chạy & Nộp bài làm|Chạy & Nộp bài|Run & Submit Code/i }).first();
+    this.mySubmissionTab = page.getByRole('tab', { name: /1. Bài nộp của tôi|1. My Submission/i }).or(page.getByRole('button', { name: /1. Bài nộp của tôi|1. My Submission/i })).first();
+    this.gradePeersTab = page.getByRole('tab', { name: /2. Chấm bài bạn học|2. Grade Peers/i }).or(page.getByRole('button', { name: /2. Chấm bài bạn học|2. Grade Peers/i })).first();
+    this.gradeAppealTab = page.getByRole('tab', { name: /3. Khiếu nại điểm|3. Grade Appeal/i }).or(page.getByRole('button', { name: /3. Khiếu nại điểm|3. Grade Appeal/i })).first();
+    this.submitPeerAssignmentButton = page.getByRole('button', { name: /Nộp bài tập|Submit Peer Assignment/i }).first();
     this.lockWarningNotice = page.locator('text=/BR_PEER_001/i');
   }
 
   async goto() {
-    await this.page.goto('/assessments');
+    await this.page.goto('/assessments', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
@@ -59,9 +57,17 @@ export class AssessmentPage {
   }
 
   async switchTab(tab: 'quiz' | 'lab' | 'peer') {
-    if (tab === 'quiz') await this.quizTab.click();
-    if (tab === 'lab') await this.labTab.click();
-    if (tab === 'peer') await this.peerTab.click();
+    await this.page.waitForLoadState('domcontentloaded');
+    if (tab === 'quiz') {
+      await this.quizTab.click();
+    }
+    if (tab === 'lab') {
+      await this.labTab.click();
+    }
+    if (tab === 'peer') {
+      await this.peerTab.click();
+    }
+    await this.page.waitForTimeout(300);
   }
 
   async agreeHonorCode() {

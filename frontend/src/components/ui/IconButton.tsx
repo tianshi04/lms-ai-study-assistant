@@ -144,6 +144,8 @@ export function IconButton({
   disabled,
   children,
   ref,
+  render,
+  nativeButton,
   ...props
 }: IconButtonProps) {
   const activeVariant = variant ?? "standard";
@@ -173,9 +175,13 @@ export function IconButton({
     className,
   );
 
+  const isNativeButton = nativeButton ?? (render ? false : true);
+
   return (
     <BaseButton
       ref={ref}
+      render={render}
+      nativeButton={isNativeButton}
       className={compClasses}
       disabled={disabled}
       aria-pressed={isToggle ? selected : undefined}

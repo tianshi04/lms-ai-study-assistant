@@ -7,14 +7,16 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery } from "@/lib/query_hooks";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Check, ShieldCheck, KeyRound, UserCheck, AlertCircle } from "lucide-react";
+import { Check, ShieldCheck, KeyRound, UserCheck, AlertCircle, Lock, Globe } from "lucide-react";
 import { Progress } from "@/components/ui/Progress";
+import { Switch } from "@/components/ui/Switch";
+import { Field } from "@/components/ui/Field";
 
 export default function AccountSettingsPage() {
   const { userId: authUserId } = useAuth();
@@ -25,6 +27,8 @@ export default function AccountSettingsPage() {
 
   const [enterpriseKey, setEnterpriseKey] = useState("");
   const [savingKey, setSavingKey] = useState(false);
+  const [twoFactor, setTwoFactor] = useState(false);
+  const [publicProfile, setPublicProfile] = useState(true);
 
   const handleAssignKey = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +67,6 @@ export default function AccountSettingsPage() {
       const client = getRpcClient(IdentityService);
       const res = await client.verifyIdentity({
         userId: user.id,
-        idCardNumber: "012345678999",
       });
       if (res.success) {
         toast.success(res.message || "Giả lập xác minh danh tính KYC thành công!");
@@ -94,7 +97,7 @@ export default function AccountSettingsPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1 bg-surface text-on-surface">
-      <Card variant="elevated" className="p-6 sm:p-8 space-y-8">
+      <Surface variant="low" shape="3xl" padding="lg" className="space-y-8">
         {/* User Banner */}
         <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-outline-variant">
           <Avatar
@@ -201,8 +204,12 @@ export default function AccountSettingsPage() {
               value={enterpriseKey}
               onChange={(e) => setEnterpriseKey(e.target.value)}
               placeholder="Nhập mã Enterprise Key (ví dụ: ENT-UNI-2026-X99)"
+              autoCapitalize="characters"
+              inputMode="text"
+              enterKeyHint="done"
               autoComplete="off"
               spellCheck={false}
+              aria-label="Mã kích hoạt Enterprise License"
               className="flex-1 py-3 px-4 rounded-2xl text-sm font-mono bg-surface-container-lowest border border-outline-variant text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <Button
@@ -216,7 +223,77 @@ export default function AccountSettingsPage() {
             </Button>
           </form>
         </div>
-      </Card>
+
+        {/* Security & Privacy Settings Section with M3 Switches */}
+        <div className="mt-8 pt-8 border-t border-outline-variant space-y-4">
+          <h2 className="text-lg font-bold text-on-surface mb-2 flex items-center gap-2">
+            <Lock className="w-5 h-5 text-primary" aria-hidden="true" />
+            <span>{"Tùy Chọn Bảo Mật & Quyền Riêng Tư"}</span>
+          </h2>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-outline-variant bg-surface-container-lowest">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+                  <Lock className="w-4 h-4" aria-hidden="true" />
+                </div>
+                <Field.Root className="space-y-0.5">
+                  <Field.Label
+                    htmlFor="2fa-toggle"
+                    className="text-sm font-semibold text-on-surface cursor-pointer select-none"
+                  >
+                    Xác thực 2 yếu tố (2FA)
+                  </Field.Label>
+                  <Field.Description className="text-xs text-on-surface-variant">
+                    Bảo vệ tài khoản bằng mã xác thực OTP gửi về thiết bị cá nhân
+                  </Field.Description>
+                </Field.Root>
+              </div>
+              <Switch
+                id="2fa-toggle"
+                checked={twoFactor}
+                onCheckedChange={(val) => {
+                  setTwoFactor(val);
+                  toast.success(val ? "Đã bật Xác thực 2 yếu tố!" : "Đã tắt Xác thực 2 yếu tố.");
+                }}
+                checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
+                aria-label="Xác thực 2 yếu tố (2FA)"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-outline-variant bg-surface-container-lowest">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+                  <Globe className="w-4 h-4" aria-hidden="true" />
+                </div>
+                <Field.Root className="space-y-0.5">
+                  <Field.Label
+                    htmlFor="public-profile-toggle"
+                    className="text-sm font-semibold text-on-surface cursor-pointer select-none"
+                  >
+                    Công khai hồ sơ học tập (Public Profile)
+                  </Field.Label>
+                  <Field.Description className="text-xs text-on-surface-variant">
+                    Cho phép nhà tuyển dụng và bạn học xem tiến trình hoàn thành khóa học
+                  </Field.Description>
+                </Field.Root>
+              </div>
+              <Switch
+                id="public-profile-toggle"
+                checked={publicProfile}
+                onCheckedChange={(val) => {
+                  setPublicProfile(val);
+                  toast.success(
+                    val ? "Đã công khai hồ sơ học tập." : "Đã chuyển hồ sơ sang chế độ Riêng tư.",
+                  );
+                }}
+                checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
+                aria-label="Công khai hồ sơ học tập"
+              />
+            </div>
+          </div>
+        </div>
+      </Surface>
     </main>
   );
 }

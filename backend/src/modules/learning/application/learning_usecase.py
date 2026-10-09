@@ -1,14 +1,15 @@
 import asyncio
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-from src.modules.catalog.domain.repository import ICatalogRepository
-from src.modules.learning.domain.entities import (
+from src.modules.catalog.domain import ICatalogRepository
+from src.modules.learning.domain import (
     EnrolledCourseSummary,
+    ILearningRepository,
     LearningProgress,
     PersonalNote,
 )
-from src.modules.learning.domain.repository import ILearningRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.infrastructure.database import async_session_scope
 
@@ -77,7 +78,7 @@ class LearningUseCase:
             return await repo.delete_personal_note(note_id, user_id)
 
     async def mark_item_complete(
-        self, user_id: str, course_id: str, item_id: str, total_course_items: int
+        self, user_id: str, course_id: str, item_id: str
     ) -> tuple[bool, LearningProgress]:
 
         async with async_session_scope() as session:

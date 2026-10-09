@@ -1,14 +1,14 @@
 from typing import Any
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
 from src.gen.forum.v1 import forum_pb as pb
 from src.gen.forum.v1.forum_connect import ForumService
-from src.modules.forum.application.forum_usecase import ForumUseCase
-from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
+from src.modules.forum.application import ForumUseCase
+from src.modules.forum.domain import ForumReplyEntity, ForumThreadEntity
 from src.shared.auth import require_current_user
-
 
 ROLE_MAP = {
     "USER_ROLE_LEARNER": "Learner",
@@ -169,14 +169,12 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.UpdateThreadRequest, pb.UpdateThreadResponse],
     ) -> pb.UpdateThreadResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff
         try:
             thread = await self.use_case.update_thread(
                 thread_id=request.thread_id,
                 title=request.title,
                 content=request.content,
                 current_user_id=current_user.id,
-                is_staff=is_staff,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
@@ -210,13 +208,11 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.UpdateReplyRequest, pb.UpdateReplyResponse],
     ) -> pb.UpdateReplyResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff
         try:
             reply = await self.use_case.update_reply(
                 reply_id=request.reply_id,
                 content=request.content,
                 current_user_id=current_user.id,
-                is_staff=is_staff,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))

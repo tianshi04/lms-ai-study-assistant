@@ -14,7 +14,7 @@ export class InstructorAnalyticsPage {
   }
 
   async goto(courseId: string) {
-    await this.page.goto(`/instructor/courses/${courseId}/analytics`);
+    await this.page.goto(`/instructor/courses/${courseId}/analytics`, { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

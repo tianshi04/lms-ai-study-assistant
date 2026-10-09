@@ -43,16 +43,21 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
     if (videoRef.current) {
       if (typeof videoRef.current.getCurrentTime === "function") {
         const t = videoRef.current.getCurrentTime();
-        if (typeof t === "number" && !isNaN(t)) currentSec = Math.floor(t);
+        if (typeof t === "number" && !isNaN(t) && t > 0) currentSec = Math.floor(t);
       }
-      if (currentSec < 0 && typeof videoRef.current.currentTime === "number") {
+      if (
+        currentSec <= 0 &&
+        typeof videoRef.current.currentTime === "number" &&
+        videoRef.current.currentTime > 0
+      ) {
         const t = videoRef.current.currentTime;
-        if (typeof t === "number" && !isNaN(t)) currentSec = Math.floor(t);
+        if (typeof t === "number" && !isNaN(t) && t > 0) currentSec = Math.floor(t);
       }
     }
-    if (currentSec < 0) {
-      currentSec = latestTimeRef.current || 0;
+    if (currentSec <= 0 && latestTimeRef.current > 0) {
+      currentSec = latestTimeRef.current;
     }
+    if (currentSec < 0) currentSec = 0;
     setTimestampSeconds(currentSec);
     toast.info(`Đã chọn mốc thời gian ${currentSec}s từ Video.`);
   };
