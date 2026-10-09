@@ -32,7 +32,7 @@ export function CourseCatalogClient({
   const [sortBy, setSortBy] = useState("");
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
