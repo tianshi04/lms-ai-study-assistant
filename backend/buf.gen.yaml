@@ -1,6 +1,6 @@
 version: v2
 plugins:
-  - remote: buf.build/bufbuild/py
+  - remote: buf.build/bufbuild/py:v0.1.1
     out: src/gen
-  - remote: buf.build/connectrpc/py
+  - remote: buf.build/connectrpc/py:v0.11.0
     out: src/gen

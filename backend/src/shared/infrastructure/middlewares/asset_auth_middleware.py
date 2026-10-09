@@ -97,7 +97,7 @@ class AssetAuthMiddleware:
         """Tạo error response chứa đầy đủ CORS headers để browser HTML5 video player xử lý HttpOnly cookie."""
         origin = request.headers.get("origin", "")
         headers = {}
-        if origin and origin in settings.CORS_ORIGINS:
+        if settings.is_allowed_origin(origin):
             headers["Access-Control-Allow-Origin"] = origin
             headers["Access-Control-Allow-Credentials"] = "true"
         return JSONResponse(

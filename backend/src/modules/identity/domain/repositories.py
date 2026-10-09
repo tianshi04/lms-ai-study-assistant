@@ -83,9 +83,15 @@ class IInvitationRepository(Protocol):
     async def find_pending_invitation(
         self, email: str, target_id: str, inv_type: str
     ) -> Invitation | None: ...
-    async def list_invitations_for_user(
-        self, email: str, status_filter: str = ""
+    async def list_sent_invitations(
+        self,
+        inviter_id: str,
+        inv_type: str | None = None,
+        target_id: str | None = None,
     ) -> list[Invitation]: ...
-    async def list_invitations_for_target(
-        self, target_id: str, status_filter: str = ""
+    async def list_my_invitations(
+        self,
+        email: str,
+        user_id: str | None = None,
+        status_filter: str | None = None,
     ) -> list[Invitation]: ...

@@ -70,59 +70,62 @@ def _to_pb_item_type(type_enum: ItemType) -> pb.ItemType:
 def _to_pb_transcript(
     t: InteractiveTranscript,
 ) -> pb.InteractiveTranscript:
-    return pb.InteractiveTranscript(timestamp_seconds=t.timestamp_seconds, text=t.text)
+    return pb.InteractiveTranscript(
+        timestamp_seconds=getattr(t, "timestamp_seconds", 0) or 0,
+        text=getattr(t, "text", "") or "",
+    )
 
 
 def _to_pb_quiz(q: InVideoQuiz) -> pb.InVideoQuiz:
     return pb.InVideoQuiz(
-        timestamp_seconds=q.timestamp_seconds,
-        question=q.question,
-        options=q.options,
-        correct_option_index=q.correct_option_index,
-        explanation=q.explanation,
+        timestamp_seconds=getattr(q, "timestamp_seconds", 0) or 0,
+        question=getattr(q, "question", "") or "",
+        options=getattr(q, "options", []) or [],
+        correct_option_index=getattr(q, "correct_option_index", 0) or 0,
+        explanation=getattr(q, "explanation", "") or "",
     )
 
 
 def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
     return pb.LearningItem(
-        id=item.id,
-        title=item.title,
+        id=item.id or "",
+        title=item.title or "",
         type=_to_pb_item_type(item.type),
-        estimated_minutes=item.estimated_minutes,
-        video_url=item.video_url,
-        vtt_subtitle_url=item.vtt_subtitle_url,
-        auto_transcribe=getattr(item, "auto_transcribe", False),
+        estimated_minutes=item.estimated_minutes or 0,
+        video_url=item.video_url or "",
+        vtt_subtitle_url=item.vtt_subtitle_url or "",
+        auto_transcribe=bool(getattr(item, "auto_transcribe", False)),
         interactive_transcripts=[
-            _to_pb_transcript(t) for t in item.interactive_transcripts
+            _to_pb_transcript(t) for t in item.interactive_transcripts or []
         ],
-        in_video_quizzes=[_to_pb_quiz(q) for q in item.in_video_quizzes],
-        reading_markdown=item.reading_markdown,
-        order_index=getattr(item, "order_index", 0),
-        starter_code=getattr(item, "starter_code", ""),
-        test_cases_json=getattr(item, "test_cases_json", ""),
-        language=getattr(item, "language", ""),
-        rubric_criteria_json=getattr(item, "rubric_criteria_json", ""),
-        quiz_matrix_id=getattr(item, "quiz_matrix_id", ""),
+        in_video_quizzes=[_to_pb_quiz(q) for q in item.in_video_quizzes or []],
+        reading_markdown=item.reading_markdown or "",
+        order_index=getattr(item, "order_index", 0) or 0,
+        starter_code=getattr(item, "starter_code", "") or "",
+        test_cases_json=getattr(item, "test_cases_json", "") or "",
+        language=getattr(item, "language", "") or "",
+        rubric_criteria_json=getattr(item, "rubric_criteria_json", "") or "",
+        quiz_matrix_id=getattr(item, "quiz_matrix_id", "") or "",
     )
 
 
 def _to_pb_lesson(lesson: Lesson) -> pb.Lesson:
     return pb.Lesson(
-        id=lesson.id,
-        title=lesson.title,
-        estimated_minutes=lesson.estimated_minutes,
-        items=[_to_pb_learning_item(i) for i in lesson.items],
-        order_index=getattr(lesson, "order_index", 0),
+        id=lesson.id or "",
+        title=lesson.title or "",
+        estimated_minutes=lesson.estimated_minutes or 0,
+        items=[_to_pb_learning_item(i) for i in lesson.items or []],
+        order_index=getattr(lesson, "order_index", 0) or 0,
     )
 
 
 def _to_pb_week_module(week: WeekModule) -> pb.WeekModule:
     return pb.WeekModule(
-        id=week.id,
-        week_number=week.week_number,
-        title=week.title,
-        summary=week.summary,
-        lessons=[_to_pb_lesson(lesson_item) for lesson_item in week.lessons],
+        id=week.id or "",
+        week_number=week.week_number or 0,
+        title=week.title or "",
+        summary=week.summary or "",
+        lessons=[_to_pb_lesson(lesson_item) for lesson_item in week.lessons or []],
     )
 
 
@@ -142,19 +145,19 @@ def _to_pb_course_status(status_enum: Any) -> pb.CourseStatus:
 
 def _to_pb_course(course: Course) -> pb.Course:
     return pb.Course(
-        id=course.id,
-        title=course.title,
-        slug=course.slug,
-        description=course.description,
-        partner_name=course.partner_name,
-        partner_logo_url=course.partner_logo_url,
-        instructor_names=course.instructor_names,
-        week_modules=[_to_pb_week_module(wm) for wm in course.week_modules],
-        average_rating=course.average_rating,
-        review_count=course.review_count,
-        subject=course.subject,
-        level=course.level,
-        financial_aid_enabled=getattr(course, "financial_aid_enabled", True),
+        id=course.id or "",
+        title=course.title or "",
+        slug=course.slug or "",
+        description=course.description or "",
+        partner_name=course.partner_name or "",
+        partner_logo_url=course.partner_logo_url or "",
+        instructor_names=course.instructor_names or [],
+        week_modules=[_to_pb_week_module(wm) for wm in course.week_modules or []],
+        average_rating=float(course.average_rating or 0.0),
+        review_count=int(course.review_count or 0),
+        subject=course.subject or "",
+        level=course.level or "",
+        financial_aid_enabled=bool(getattr(course, "financial_aid_enabled", True)),
         status=_to_pb_course_status(getattr(course, "status", "PUBLISHED")),
         rejection_reason=getattr(course, "rejection_reason", "") or "",
         organization_id=getattr(course, "organization_id", "partner_community")

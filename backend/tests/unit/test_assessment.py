@@ -794,3 +794,93 @@ async def test_peer_assignment_resubmission_updates_existing():
     assert stored.id == sub_id1
     assert stored.submission_url == "https://github.com/updated/repo"
     assert stored.text_content == "Updated submission text"
+
+
+@pytest.mark.asyncio
+async def test_sqlalchemy_assessment_repo_unique_ids():
+    from unittest.mock import AsyncMock, MagicMock
+
+    from src.modules.assessment.infrastructure.repository import (
+        SQLAlchemyAssessmentRepository,
+    )
+
+    mock_session = AsyncMock()
+    mock_session.add = MagicMock()
+    repo = SQLAlchemyAssessmentRepository(session=mock_session)
+
+    # 1. Verify create_question_bank produces full unique IDs
+    bank1 = await repo.create_question_bank("course-1", "Bank 1", "PRACTICE", "Desc")
+    bank2 = await repo.create_question_bank("course-1", "Bank 2", "PRACTICE", "Desc")
+    assert bank1.id != bank2.id
+    assert bank1.id.startswith("qbank-")
+    assert len(bank1.id) >= 38  # "qbank-" (6) + 32 hex = 38 chars
+
+    # 2. Verify add_question_to_bank produces unique q_id and opt_id
+    options = [
+        {"option_text": "Opt A", "is_correct": True},
+        {"option_text": "Opt B", "is_correct": False},
+    ]
+    q1 = await repo.add_question_to_bank(
+        bank1.id, "Question 1", "SINGLE_CHOICE", "EASY", "", options
+    )
+    q2 = await repo.add_question_to_bank(
+        bank1.id, "Question 2", "SINGLE_CHOICE", "EASY", "", options
+    )
+
+    assert q1.id != q2.id
+    assert q1.id.startswith("q-")
+    assert len(q1.id) >= 34  # "q-" (2) + 32 hex = 34 chars
+
+    # Verify options within question have distinct IDs
+    assert len(q1.options) == 2
+    assert q1.options[0].id != q1.options[1].id
+    assert q1.options[0].id.startswith("opt-")
+    assert len(q1.options[0].id) >= 36  # "opt-" (4) + 32 hex = 36 chars
+
+
+@pytest.mark.asyncio
+async def test_sqlalchemy_assessment_repo_update_question_post_commit():
+    from unittest.mock import AsyncMock, MagicMock
+
+    from src.modules.assessment.infrastructure.models import QuestionModel
+    from src.modules.assessment.infrastructure.repository import (
+        SQLAlchemyAssessmentRepository,
+    )
+
+    mock_session = AsyncMock()
+    q_model = QuestionModel(
+        id="q-existing-123",
+        bank_id="qbank-123",
+        text="Old Text",
+        question_type="SINGLE_CHOICE",
+        difficulty="EASY",
+        explanation="Old exp",
+        created_at="2026-08-18T12:00:00Z",
+    )
+    q_model.options = []
+
+    res_mock = MagicMock()
+    res_mock.scalar_one_or_none.return_value = q_model
+    mock_session.execute.return_value = res_mock
+
+    repo = SQLAlchemyAssessmentRepository(session=mock_session)
+    updated = await repo.update_question(
+        question_id="q-existing-123",
+        text="Updated Text",
+        question_type="MULTIPLE_CHOICE",
+        difficulty="HARD",
+        explanation="New exp",
+        options_data=[
+            {"option_text": "New A", "is_correct": True},
+            {"option_text": "New B", "is_correct": False},
+        ],
+    )
+
+    assert updated.id == "q-existing-123"
+    assert updated.bank_id == "qbank-123"
+    assert updated.text == "Updated Text"
+    assert updated.question_type == "MULTIPLE_CHOICE"
+    assert updated.difficulty == "HARD"
+    assert updated.explanation == "New exp"
+    assert len(updated.options) == 2
+    mock_session.commit.assert_awaited_once()

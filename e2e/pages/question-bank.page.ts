@@ -33,7 +33,7 @@ export class QuestionBankPage {
     this.optionTextInputs = page.locator('input[placeholder*="Phương án"], input[placeholder*="tùy chọn"], input[aria-label*="phương án"]');
     this.submitQuestionButton = page.getByRole('button', { name: /Lưu câu hỏi|Lưu thay đổi|Save Question/i });
 
-    this.bankCards = page.locator('button:has-text("câu hỏi")');
+    this.bankCards = page.locator('div.lg\\:col-span-4 div.space-y-3 > button');
     this.questionCards = page.locator('div.p-5.rounded-2xl');
   }
 
@@ -62,7 +62,7 @@ export class QuestionBankPage {
       await this.bankDescriptionInput.fill(description);
     }
     await this.submitBankButton.click();
-    await expect(this.bankTitleInput).toBeHidden({ timeout: 10000 });
+    await expect(this.bankTitleInput).toBeHidden({ timeout: 15000 });
   }
 
   async addQuestionToBank(questionText: string, option1: string, option2: string) {

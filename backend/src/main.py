@@ -45,7 +45,7 @@ from src.modules.partner.application import PartnerUseCase
 from src.modules.partner.presentation.partner_handler import PartnerHandler
 from src.modules.payment.application import PaymentUseCase
 from src.modules.payment.presentation.payment_handler import PaymentHandler
-from src.shared.config import settings
+from src.shared.config import VERCEL_ORIGIN_REGEX, settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
 from src.shared.infrastructure.logging import setup_logging
 from src.shared.infrastructure.middlewares import (
@@ -197,14 +197,10 @@ notification_app = NotificationServiceASGIApplication(
 )
 
 
-# Allowed CORS origins for asset proxy
-_ALLOWED_ASSET_ORIGINS = {"http://localhost:3000", "http://127.0.0.1:3000"}
-
-
 def _get_cors_origin(request) -> str:
-    """Return the request origin only if it is in settings.CORS_ORIGINS allow-list, otherwise empty string."""
+    """Return the request origin only if it is allow-listed, otherwise empty string."""
     origin = request.headers.get("origin", "")
-    return origin if origin in settings.CORS_ORIGINS else ""
+    return origin if settings.is_allowed_origin(origin) else ""
 
 
 async def proxy_media(request):
@@ -332,7 +328,8 @@ middleware = [
     Middleware(RequestIDMiddleware),
     Middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
+        allow_origins=sorted(settings.allowed_cors_origins),
+        allow_origin_regex=VERCEL_ORIGIN_REGEX,
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=[

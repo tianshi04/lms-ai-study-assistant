@@ -131,9 +131,9 @@ async def test_get_course_detail_not_found(repo, mock_session):
 
 @pytest.mark.asyncio
 async def test_get_lesson_detail(repo, mock_session, sample_course_model):
-    # get_lesson_detail calls get_course_detail
+    sample_lesson_model = sample_course_model.week_modules[0].lessons[0]
     mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = sample_course_model
+    mock_result.scalar_one_or_none.return_value = sample_lesson_model
     mock_session.execute.return_value = mock_result
 
     lesson = await repo.get_lesson_detail("c1", "l1")
@@ -155,11 +155,9 @@ async def test_get_lesson_detail_course_not_found(repo, mock_session):
 
 
 @pytest.mark.asyncio
-async def test_get_lesson_detail_lesson_not_found(
-    repo, mock_session, sample_course_model
-):
+async def test_get_lesson_detail_lesson_not_found(repo, mock_session):
     mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = sample_course_model
+    mock_result.scalar_one_or_none.return_value = None
     mock_session.execute.return_value = mock_result
 
     lesson = await repo.get_lesson_detail("c1", "nonexistent")

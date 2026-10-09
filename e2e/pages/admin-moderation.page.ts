@@ -14,7 +14,7 @@ export class AdminCourseReviewPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageHeading = page.locator('h1', { hasText: /Kiểm duyệt & Phê duyệt Phát hành Khóa học/i });
+    this.pageHeading = page.locator('h1', { hasText: /Kiểm duyệt & Phê duyệt Phát hành Khóa học/i }).first();
     this.pendingTab = page.getByRole('tab', { name: /Chờ kiểm duyệt/i });
     this.publishedTab = page.getByRole('tab', { name: /Đã xuất bản/i });
     this.draftTab = page.getByRole('tab', { name: /Bản nháp/i });

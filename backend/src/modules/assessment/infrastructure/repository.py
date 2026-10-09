@@ -483,7 +483,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         self, course_id: str, title: str, category: str, description: str
     ) -> QuestionBank:
         now_str = datetime.now(UTC).isoformat()
-        bank_id = f"qbank-{uuid7().hex[:8]}"
+        bank_id = f"qbank-{uuid7().hex}"
         model = QuestionBankModel(
             id=bank_id,
             course_id=course_id,
@@ -564,7 +564,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         options_data: list[dict],
     ) -> Question:
         now_str = datetime.now(UTC).isoformat()
-        q_id = f"q-{uuid7().hex[:8]}"
+        q_id = f"q-{uuid7().hex}"
         q_model = QuestionModel(
             id=q_id,
             bank_id=bank_id,
@@ -579,7 +579,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
         domain_options = []
         for idx, opt in enumerate(options_data):
-            opt_id = f"opt-{uuid7().hex[:8]}"
+            opt_id = f"opt-{uuid7().hex}"
             opt_model = QuestionOptionModel(
                 id=opt_id,
                 question_id=q_id,
@@ -648,7 +648,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
         domain_options = []
         for idx, opt in enumerate(options_data):
-            opt_id = f"opt-{uuid7().hex[:8]}"
+            opt_id = f"opt-{uuid7().hex}"
             opt_model = QuestionOptionModel(
                 id=opt_id,
                 question_id=question_id,
@@ -667,16 +667,20 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 )
             )
 
+        q_id = q_model.id
+        bank_id = q_model.bank_id
+        created_at = q_model.created_at or datetime.now(UTC).isoformat()
+
         await self.session.commit()
         return Question(
-            id=q_model.id,
-            bank_id=q_model.bank_id,
-            text=q_model.text,
-            question_type=q_model.question_type,
-            difficulty=q_model.difficulty,
-            explanation=q_model.explanation,
+            id=q_id,
+            bank_id=bank_id,
+            text=text,
+            question_type=question_type,
+            difficulty=difficulty,
+            explanation=explanation,
             options=domain_options,
-            created_at=q_model.created_at or datetime.now(UTC).isoformat(),
+            created_at=created_at,
         )
 
     async def configure_quiz_matrix(
