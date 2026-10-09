@@ -10,11 +10,11 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.emailInput = page.locator('input[type="email"]');
-    this.passwordInput = page.locator('input[type="password"]');
-    this.submitButton = page.getByRole('button', { name: /đăng nhập ngay|sign in/i });
+    this.emailInput = page.locator('input[type="email"]').first();
+    this.passwordInput = page.locator('input[type="password"]').first();
+    this.submitButton = page.getByRole('button', { name: /đăng nhập ngay|sign in/i }).first();
     this.errorBanner = page.getByRole('alert').or(page.getByRole('status')).first();
-    this.registerLink = page.locator('a[href="/auth/register"]');
+    this.registerLink = page.locator('a[href="/auth/register"]').first();
   }
 
   async goto(redirectUrl?: string) {

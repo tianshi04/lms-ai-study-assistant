@@ -26,9 +26,8 @@ test.describe('Full System Blackbox - Question Bank & Exam Matrix Flows (POM)', 
     await questionBankPage.goto('course-python-ai');
     await questionBankPage.verifyPageLoaded();
 
-    const firstBank = questionBankPage.bankCards.first();
-    if (await firstBank.isVisible()) {
-      await firstBank.click();
+    if (await questionBankPage.bankCards.count() > 0) {
+      await questionBankPage.bankCards.first().click();
     } else {
       await questionBankPage.createQuestionBank(`Bank E2E Auto ${Date.now()}`);
     }

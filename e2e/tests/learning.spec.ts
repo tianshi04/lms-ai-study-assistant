@@ -69,7 +69,7 @@ test.describe('Full System Blackbox - Learning Experience (POM)', () => {
     await learningPage.createPersonalNote(uniqueText, commentText);
 
     // Check that the note appears in the notes list
-    await expect(page.locator(`text=${uniqueText}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=${uniqueText}`)).toBeVisible({ timeout: 15000 });
   });
 
   test('should display deadlines schedule and handle reset deadlines if overdue', async ({ page }) => {

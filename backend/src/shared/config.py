@@ -16,6 +16,14 @@ class Settings(BaseSettings):
     # 1. Server settings
     ENV: str = Field(default="development", description="Environment mode")
     BACKEND_PORT: int = Field(default=8000, description="Backend port")
+    FRONTEND_URL: str = Field(
+        default="http://localhost:3000",
+        description="Public URL of the frontend application",
+    )
+    CORS_ORIGINS: str = Field(
+        default="http://localhost:3000,http://127.0.0.1:3000",
+        description="Comma-separated list of allowed CORS origins",
+    )
 
     # 2. PostgreSQL Database URL & Redis Cache/Broker URL
     DATABASE_URL: str = Field(

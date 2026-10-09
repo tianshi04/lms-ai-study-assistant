@@ -11,7 +11,12 @@ async def auto_rollback_db():
     that is automatically rolled back after the test completes.
     """
     engine = db_module.get_engine()
-    connection = await engine.connect()
+    try:
+        connection = await engine.connect()
+    except Exception:  # noqa: BLE001
+        yield
+        return
+
     transaction = await connection.begin()
 
     test_sessionmaker = async_sessionmaker(

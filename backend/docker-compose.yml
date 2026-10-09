@@ -26,7 +26,7 @@ services:
   # ------------------------------------------------------------------
   minio:
     profiles: ["infra", "app", "all"]
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     container_name: coursera_minio
     restart: always
     environment:
@@ -39,7 +39,7 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 5

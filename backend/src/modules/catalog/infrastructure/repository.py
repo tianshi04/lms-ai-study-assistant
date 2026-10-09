@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 from typing import Any
 
@@ -41,61 +42,61 @@ from src.modules.identity.infrastructure.models import UserModel
 from src.shared.auth import get_current_user
 from src.shared.infrastructure.scopes import apply_organization_scope
 
+logger = logging.getLogger(__name__)
+
+
+def _model_to_domain_lesson(l_model: LessonModel) -> Lesson:
+    items: list[LearningItem] = []
+    for i_model in l_model.items or []:
+        transcripts = [
+            InteractiveTranscript(timestamp_seconds=t.timestamp_seconds, text=t.text)
+            for t in i_model.interactive_transcripts or []
+        ]
+        quizzes = [
+            InVideoQuiz(
+                timestamp_seconds=q.timestamp_seconds,
+                question=q.question,
+                options=q.options,
+                correct_option_index=q.correct_option_index,
+                explanation=q.explanation,
+            )
+            for q in i_model.in_video_quizzes or []
+        ]
+        items.append(
+            LearningItem(
+                id=i_model.id,
+                title=i_model.title,
+                type=i_model.type,
+                estimated_minutes=i_model.estimated_minutes,
+                video_url=i_model.video_url,
+                vtt_subtitle_url=i_model.vtt_subtitle_url,
+                interactive_transcripts=transcripts,
+                in_video_quizzes=quizzes,
+                reading_markdown=i_model.reading_markdown,
+                order_index=getattr(i_model, "order_index", 0),
+                starter_code=getattr(i_model, "starter_code", ""),
+                test_cases_json=getattr(i_model, "test_cases_json", ""),
+                language=getattr(i_model, "language", ""),
+                rubric_criteria_json=getattr(i_model, "rubric_criteria_json", ""),
+                quiz_matrix_id=getattr(i_model, "quiz_matrix_id", ""),
+                auto_transcribe=getattr(i_model, "auto_transcribe", False),
+            )
+        )
+    return Lesson(
+        id=l_model.id,
+        title=l_model.title,
+        estimated_minutes=l_model.estimated_minutes,
+        items=items,
+        order_index=getattr(l_model, "order_index", 0),
+    )
+
 
 def _model_to_domain_course(model: CourseModel) -> Course:
     week_modules: list[WeekModule] = []
     for wm in model.week_modules or []:
-        lessons: list[Lesson] = []
-        for l_model in wm.lessons or []:
-            items: list[LearningItem] = []
-            for i_model in l_model.items or []:
-                transcripts = [
-                    InteractiveTranscript(
-                        timestamp_seconds=t.timestamp_seconds, text=t.text
-                    )
-                    for t in i_model.interactive_transcripts or []
-                ]
-                quizzes = [
-                    InVideoQuiz(
-                        timestamp_seconds=q.timestamp_seconds,
-                        question=q.question,
-                        options=q.options,
-                        correct_option_index=q.correct_option_index,
-                        explanation=q.explanation,
-                    )
-                    for q in i_model.in_video_quizzes or []
-                ]
-                items.append(
-                    LearningItem(
-                        id=i_model.id,
-                        title=i_model.title,
-                        type=i_model.type,
-                        estimated_minutes=i_model.estimated_minutes,
-                        video_url=i_model.video_url,
-                        vtt_subtitle_url=i_model.vtt_subtitle_url,
-                        interactive_transcripts=transcripts,
-                        in_video_quizzes=quizzes,
-                        reading_markdown=i_model.reading_markdown,
-                        order_index=getattr(i_model, "order_index", 0),
-                        starter_code=getattr(i_model, "starter_code", ""),
-                        test_cases_json=getattr(i_model, "test_cases_json", ""),
-                        language=getattr(i_model, "language", ""),
-                        rubric_criteria_json=getattr(
-                            i_model, "rubric_criteria_json", ""
-                        ),
-                        quiz_matrix_id=getattr(i_model, "quiz_matrix_id", ""),
-                        auto_transcribe=getattr(i_model, "auto_transcribe", False),
-                    )
-                )
-            lessons.append(
-                Lesson(
-                    id=l_model.id,
-                    title=l_model.title,
-                    estimated_minutes=l_model.estimated_minutes,
-                    items=items,
-                    order_index=getattr(l_model, "order_index", 0),
-                )
-            )
+        lessons: list[Lesson] = [
+            _model_to_domain_lesson(l_model) for l_model in wm.lessons or []
+        ]
         week_modules.append(
             WeekModule(
                 id=wm.id,
@@ -315,14 +316,34 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return _model_to_domain_course(model)
 
     async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
-        course = await self.get_course_detail(course_id)
-        if not course:
+        stmt = (
+            select(LessonModel)
+            .join(WeekModuleModel, LessonModel.week_module_id == WeekModuleModel.id)
+            .join(CourseModel, WeekModuleModel.course_id == CourseModel.id)
+            .where(
+                LessonModel.id == lesson_id,
+                CourseModel.status == CourseStatus.PUBLISHED,
+            )
+            .options(
+                selectinload(LessonModel.items).selectinload(
+                    LearningItemModel.interactive_transcripts
+                ),
+                selectinload(LessonModel.items).selectinload(
+                    LearningItemModel.in_video_quizzes
+                ),
+            )
+        )
+        if course_id:
+            stmt = stmt.where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
+
+        res = await self.session.execute(stmt)
+        l_model = res.scalar_one_or_none()
+        if not l_model:
             return None
-        for week in course.week_modules:
-            for lesson in week.lessons:
-                if lesson.id == lesson_id:
-                    return lesson
-        return None
+
+        return _model_to_domain_lesson(l_model)
 
     async def get_specialization(
         self, specialization_id: str
@@ -948,7 +969,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         _ = course_id
         stmt = (
             select(LearningItemModel)
-            .options(selectinload(LearningItemModel.in_video_quizzes))
+            .options(
+                selectinload(LearningItemModel.in_video_quizzes),
+                selectinload(LearningItemModel.interactive_transcripts),
+            )
             .where(LearningItemModel.id == item_id)
         )
         res = await self.session.execute(stmt)
@@ -1354,7 +1378,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         try:
             from src.modules.assessment.infrastructure.models import QuestionModel
 
-            stmt = select(QuestionModel).where(QuestionModel.bank_id == quiz_matrix_id)
+            stmt = (
+                select(QuestionModel)
+                .options(selectinload(QuestionModel.options))
+                .where(QuestionModel.bank_id == quiz_matrix_id)
+            )
             res = await self.session.execute(stmt)
             questions = res.scalars().all()
             return [
@@ -1369,5 +1397,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 }
                 for q in questions
             ]
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
+            logger.warning(
+                "Failed to export quiz questions for matrix %s: %s",
+                quiz_matrix_id,
+                e,
+            )
             return []

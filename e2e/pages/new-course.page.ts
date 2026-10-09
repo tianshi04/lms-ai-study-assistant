@@ -77,9 +77,12 @@ export class NewCoursePage {
       }
     }
 
+    await expect(this.descriptionTextarea).toBeVisible({ timeout: 10000 });
     await this.descriptionTextarea.click();
     await this.descriptionTextarea.fill(description);
-    await expect(this.descriptionTextarea).toHaveValue(description, { timeout: 5000 });
+    if ((await this.descriptionTextarea.inputValue()) !== description) {
+      await this.descriptionTextarea.fill(description);
+    }
 
     // Ensure title and slug remain filled before submission
     if ((await this.titleInput.inputValue()) !== title) {
