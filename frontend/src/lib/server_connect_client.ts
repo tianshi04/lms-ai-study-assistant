@@ -4,7 +4,7 @@ import type { DescService } from "@bufbuild/protobuf";
 import { cookies } from "next/headers";
 
 const API_BASE_URL =
-  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 /**
  * Server-side ConnectRPC Interceptor to inject Authorization Bearer token from cookies.
