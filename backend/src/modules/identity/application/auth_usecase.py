@@ -24,9 +24,7 @@ from src.shared.infrastructure.event_bus import EventBus
 logger = logging.getLogger(__name__)
 
 
-async def _exchange_google_code(
-    code: str, nonce: str = "", redirect_uri: str = ""
-) -> dict[str, str | bool]:
+async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
     """Exchange Google Authorization Code for user claims via back-channel HTTPS."""
     # Dev Mode Mock
     from src.shared.config import settings
@@ -44,7 +42,6 @@ async def _exchange_google_code(
             "email": email,
             "name": name,
             "picture": f"https://api.dicebear.com/7.x/avataaars/svg?seed={email}",
-            "email_verified": True,
         }
 
     client_id = settings.GOOGLE_CLIENT_ID
@@ -67,22 +64,12 @@ async def _exchange_google_code(
             "email": payload.get("email", ""),
             "name": payload.get("name", payload.get("email", "").split("@")[0]),
             "picture": payload.get("picture", ""),
-            "email_verified": bool(payload.get("email_verified", False)),
         }
 
     if not client_secret:
         raise ValueError("GOOGLE_CLIENT_SECRET chưa được cấu hình trên server")
 
-    # Explicit redirect_uri selection without candidate loop anti-pattern
-    effective_redirect_uri = redirect_uri
-    if not effective_redirect_uri:
-        frontend_url = str(getattr(settings, "FRONTEND_URL", "") or "")
-        if frontend_url:
-            effective_redirect_uri = f"{frontend_url.rstrip('/')}/auth/google/callback"
-        else:
-            effective_redirect_uri = "http://localhost:3000/auth/google/callback"
-
-    token_response = None
+    # Exchange code via server-to-server HTTPS
     async with httpx.AsyncClient(timeout=10.0) as http_client:
         token_response = await http_client.post(
             "https://oauth2.googleapis.com/token",
@@ -90,16 +77,13 @@ async def _exchange_google_code(
                 "code": code,
                 "client_id": client_id,
                 "client_secret": client_secret,
-                "redirect_uri": effective_redirect_uri,
+                "redirect_uri": "postmessage",
                 "grant_type": "authorization_code",
             },
         )
 
-    if not token_response or token_response.status_code != 200:
-        logger.error(
-            "Google token exchange failed: %s",
-            token_response.text if token_response else "No response",
-        )
+    if token_response.status_code != 200:
+        logger.error("Google token exchange failed: %s", token_response.text)
         raise ValueError("Đổi Authorization Code thất bại. Vui lòng thử lại.")
 
     token_data = token_response.json()
@@ -116,6 +100,9 @@ async def _exchange_google_code(
         logger.error("Google ID Token verification failed: %s", e)
         raise ValueError("Token Google không hợp lệ hoặc đã hết hạn.")
 
+    # Validate nonce to prevent replay attacks (only when nonce is provided
+    # and the token actually contains one — Authorization Code Flow may not
+    # include nonce in the ID Token)
     if nonce and nonce != "mock":
         token_nonce = payload.get("nonce", "")
         if token_nonce and token_nonce != nonce:
@@ -127,7 +114,6 @@ async def _exchange_google_code(
         "email": payload.get("email", ""),
         "name": payload.get("name", payload.get("email", "").split("@")[0]),
         "picture": payload.get("picture", ""),
-        "email_verified": bool(payload.get("email_verified", False)),
     }
 
 
@@ -285,17 +271,17 @@ class AuthUseCase:
             return saved_user, ""
 
     async def google_register_verify(
-        self, authorization_code: str, nonce: str = "", redirect_uri: str = ""
+        self, authorization_code: str, nonce: str = ""
     ) -> tuple[str, str, str, str, bool, str]:
         """Returns (temp_token, email, full_name, avatar_url, is_already_registered, error_message)."""
         if not authorization_code:
             return "", "", "", "", False, "Mã Google Authorization Code không hợp lệ"
 
-        claims = await _exchange_google_code(authorization_code, nonce, redirect_uri)
-        email = str(claims["email"])
-        google_id = str(claims["google_id"])
-        full_name = str(claims["name"])
-        avatar_url = str(claims["picture"])
+        claims = await _exchange_google_code(authorization_code, nonce)
+        email = claims["email"]
+        google_id = claims["google_id"]
+        full_name = claims["name"]
+        avatar_url = claims["picture"]
 
         if not email or not google_id:
             return "", "", "", "", False, "Không thể xác thực thông tin từ Google"
@@ -343,9 +329,8 @@ class AuthUseCase:
         if not email or not google_id:
             return None, "", "", "Thông tin Google không hợp lệ."
 
-        val_err = validate_password(password)
-        if val_err:
-            return None, "", "", val_err
+        if not password or len(password) < 6:
+            return None, "", "", "Mật khẩu phải chứa ít nhất 6 ký tự."
 
         try:
             role = UserRole(role_str)
@@ -355,7 +340,7 @@ class AuthUseCase:
         final_name = (
             full_name or payload.get("full_name") or email.split("@")[0]
         ).strip()
-        user_id = f"user_{uuid7().hex[:12]}"
+        user_id = f"usr_{uuid7().hex[:12]}"
         password_hash = hash_password(password)
 
         new_user = User(
@@ -376,15 +361,6 @@ class AuthUseCase:
                 return None, "", "", "Tài khoản với email này đã tồn tại."
 
             saved_user = await repo.save(new_user)
-
-            await EventBus.publish(
-                UserRegisteredDomainEvent(
-                    user_id=user_id,
-                    email=email,
-                    full_name=final_name,
-                )
-            )
-
             access_token = auth.create_access_token(
                 user_id=saved_user.id,
                 email=saved_user.email,
@@ -396,30 +372,15 @@ class AuthUseCase:
             return saved_user, access_token, refresh_token, ""
 
     async def google_login(
-        self, authorization_code: str, nonce: str = "", redirect_uri: str = ""
+        self, authorization_code: str, nonce: str = ""
     ) -> tuple[User | None, str, str, str]:
         """Returns (user, access_token, refresh_token, error_message)."""
         if not authorization_code:
             return None, "", "", "Mã Google Authorization Code không hợp lệ"
 
-        claims = await _exchange_google_code(authorization_code, nonce, redirect_uri)
-        email = str(claims["email"])
-        google_id = str(claims["google_id"])
-        full_name = str(claims.get("name", "") or email.split("@")[0])
-        avatar_url = str(claims.get("picture", ""))
-        email_verified = claims.get("email_verified") is True
-
-        if not email_verified:
-            logger.warning(
-                "Google auth denied for email %s: Google email_verified is False or missing",
-                email,
-            )
-            return (
-                None,
-                "",
-                "",
-                "Không thể đăng nhập: Địa chỉ email chưa được Google xác minh.",
-            )
+        claims = await _exchange_google_code(authorization_code, nonce)
+        email = claims["email"]
+        google_id = claims["google_id"]
 
         async with database.async_session_scope() as session:
             repo = repo_module.IdentityRepository(session)
@@ -428,36 +389,16 @@ class AuthUseCase:
                 user = await repo.get_by_email(email)
 
             if not user:
-                # Auto-provision new user on first Google sign-in (JIT Provisioning)
-                user = User(
-                    id=f"user_{uuid7().hex[:12]}",
-                    email=email,
-                    full_name=full_name,
-                    role=UserRole.LEARNER,
-                    avatar_url=avatar_url,
-                    password_hash="",
-                    google_id=google_id,
-                    is_identity_verified=False,
+                return (
+                    None,
+                    "",
+                    "",
+                    "Tài khoản chưa được đăng ký trong hệ thống. Vui lòng Đăng ký bằng Google trước!",
                 )
-                user = await repo.save(user)
 
-                await EventBus.publish(
-                    UserRegisteredDomainEvent(
-                        user_id=user.id,
-                        email=email,
-                        full_name=full_name,
-                    )
-                )
-            else:
-                updated = False
-                if not user.google_id:
-                    user.google_id = google_id
-                    updated = True
-                if avatar_url and not user.avatar_url:
-                    user.avatar_url = avatar_url
-                    updated = True
-                if updated:
-                    user = await repo.save(user)
+            if not user.google_id:
+                user.google_id = google_id
+                user = await repo.save(user)
 
             access_token = auth.create_access_token(
                 user_id=user.id,
@@ -470,29 +411,15 @@ class AuthUseCase:
             return user, access_token, refresh_token, ""
 
     async def google_reset_password_verify(
-        self, authorization_code: str, nonce: str = "", redirect_uri: str = ""
+        self, authorization_code: str, nonce: str = ""
     ) -> tuple[str, str, str, str]:
         """Returns (temp_token, email, full_name, error_message)."""
-        payload = await _exchange_google_code(authorization_code, nonce, redirect_uri)
+        payload = await _exchange_google_code(authorization_code, nonce)
         if not payload:
             return "", "", "", "Mã xác thực Google không hợp lệ hoặc đã hết hạn."
 
-        if payload.get("email_verified") is not True:
-            return (
-                "",
-                "",
-                "",
-                "Không thể đặt lại mật khẩu: Địa chỉ email chưa được Google xác minh.",
-            )
-
-        raw_email = payload.get("email", "")
-        email = (raw_email if isinstance(raw_email, str) else "").strip().lower()
-        raw_name = payload.get("name", "")
-        full_name = (raw_name if isinstance(raw_name, str) else "").strip()
-        raw_google_id = payload.get("google_id", "")
-        google_id = raw_google_id if isinstance(raw_google_id, str) else ""
-        raw_picture = payload.get("picture", "")
-        picture_str = raw_picture if isinstance(raw_picture, str) else ""
+        email = payload.get("email", "").strip().lower()
+        full_name = payload.get("name", "").strip()
 
         if not email:
             return "", "", "", "Không tìm thấy email trong thông tin Google."
@@ -510,9 +437,9 @@ class AuthUseCase:
 
             temp_token = auth.create_google_temp_token(
                 email=email,
-                google_id=google_id,
+                google_id=payload.get("google_id", ""),
                 full_name=full_name or user.full_name,
-                avatar_url=picture_str or user.avatar_url,
+                avatar_url=payload.get("picture", "") or user.avatar_url,
             )
             return temp_token, email, user.full_name, ""
 

@@ -133,12 +133,20 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Button
-                variant="filled"
+                variant="outlined"
                 size="sm"
                 render={<Link href="/auth/login" />}
-                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20 px-4 py-2"
+                className="rounded-xl text-xs font-semibold bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
               >
                 {"Đăng nhập"}
+              </Button>
+              <Button
+                variant="filled"
+                size="sm"
+                render={<Link href="/auth/register" />}
+                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
+              >
+                {"Đăng ký"}
               </Button>
             </div>
           )}
