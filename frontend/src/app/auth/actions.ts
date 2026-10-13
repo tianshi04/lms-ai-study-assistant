@@ -91,10 +91,14 @@ export async function refreshSessionAction() {
   }
 }
 
-export async function googleRegisterVerifyAction(authorizationCode: string, nonce: string) {
+export async function googleRegisterVerifyAction(
+  authorizationCode: string,
+  nonce: string,
+  redirectUri: string = "",
+) {
   try {
     const client = getUnauthenticatedBackendClient();
-    const res = await client.googleRegisterVerify({ authorizationCode, nonce });
+    const res = await client.googleRegisterVerify({ authorizationCode, nonce, redirectUri });
     return {
       success: true,
       tempToken: res.tempToken,
@@ -150,10 +154,14 @@ export async function completeGoogleRegistrationAction(
   }
 }
 
-export async function googleLoginAction(authorizationCode: string, nonce: string) {
+export async function googleLoginAction(
+  authorizationCode: string,
+  nonce: string,
+  redirectUri: string = "",
+) {
   try {
     const client = getUnauthenticatedBackendClient();
-    const res = await client.googleLogin({ authorizationCode, nonce });
+    const res = await client.googleLogin({ authorizationCode, nonce, redirectUri });
 
     if (!res.accessToken || !res.user) {
       return { success: false, error: "Đăng nhập bằng Google thất bại." };
@@ -181,10 +189,14 @@ export async function googleLoginAction(authorizationCode: string, nonce: string
   }
 }
 
-export async function googleResetPasswordVerifyAction(authorizationCode: string, nonce: string) {
+export async function googleResetPasswordVerifyAction(
+  authorizationCode: string,
+  nonce: string,
+  redirectUri: string = "",
+) {
   try {
     const client = getUnauthenticatedBackendClient();
-    const res = await client.googleResetPasswordVerify({ authorizationCode, nonce });
+    const res = await client.googleResetPasswordVerify({ authorizationCode, nonce, redirectUri });
     return {
       success: true,
       tempToken: res.tempToken,

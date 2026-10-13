@@ -16,19 +16,37 @@ export function normalizeUserRole(role: string | null | undefined): string {
   return "USER_ROLE_LEARNER";
 }
 
+function decodeBase64Url(str: string): string {
+  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (base64.length % 4 !== 0) {
+    base64 += "=";
+  }
+  if (typeof atob === "function") {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+  }
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(base64, "base64").toString("utf-8");
+  }
+  return "";
+}
+
 /**
  * Decode JWT payload on client or server without cryptographic verification.
  * Used for extracting claims (e.g. user_id, email, role, full_name) from session tokens.
  */
 export function decodeJwtPayload(token: string): JwtPayload | null {
   try {
+    if (!token || typeof token !== "string") return null;
     const parts = token.split(".");
     if (parts.length !== 3) return null;
-    const payload = parts[1];
-    // Base64Url decode
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = Buffer.from(base64, "base64").toString("utf-8");
-    return JSON.parse(jsonPayload) as JwtPayload;
+    const jsonStr = decodeBase64Url(parts[1]);
+    if (!jsonStr) return null;
+    return JSON.parse(jsonStr) as JwtPayload;
   } catch {
     return null;
   }
