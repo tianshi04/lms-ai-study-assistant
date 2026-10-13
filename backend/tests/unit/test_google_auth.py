@@ -14,7 +14,8 @@ FAKE_CODE_PREFIX = "fake_google_"
 def fake_google(monkeypatch):
     """Stand-in for Google's token endpoint, living in the TEST only.
 
-    Production code has no mock/bypass path: `_exchange_google_code` always talks to Google.
+    Production code has no mock/bypass path: `_exchange_google_code` always
+    talks to Google.
     """
 
     async def fake_exchange(code, nonce="", redirect_uri=""):
@@ -170,10 +171,12 @@ async def test_google_login_account_linking_requires_email_verified(monkeypatch)
 @pytest.mark.parametrize("env", ["development", "test", "staging", "production"])
 @pytest.mark.parametrize("configured", [False, True])
 async def test_legacy_mock_code_is_never_accepted(monkeypatch, env, configured):
-    """The old `mock_google_<email>_<name>` backdoor must not work in any environment."""
+    """The old `mock_google_<email>_<name>` backdoor must not work in any ENV."""
     monkeypatch.setattr(settings, "ENV", env)
     monkeypatch.setattr(settings, "GOOGLE_CLIENT_ID", "client-id" if configured else "")
-    monkeypatch.setattr(settings, "GOOGLE_CLIENT_SECRET", "secret" if configured else "")
+    monkeypatch.setattr(
+        settings, "GOOGLE_CLIENT_SECRET", "secret" if configured else ""
+    )
 
     class RejectingGoogleClient:
         """Google rejects a made-up authorization code; never reach the real network."""
@@ -197,7 +200,7 @@ async def test_legacy_mock_code_is_never_accepted(monkeypatch, env, configured):
     monkeypatch.setattr(auth_usecase.httpx, "AsyncClient", RejectingGoogleClient)
 
     usecase = IdentityUseCase()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="chưa được cấu hình|Đổi Authorization Code"):
         await usecase.google_login("mock_google_victim@gmail.com_Victim")
 
 
@@ -245,7 +248,7 @@ async def test_exchange_rejects_wrong_or_missing_nonce(monkeypatch, token_claims
     _fake_google_token_endpoint(
         monkeypatch, {"sub": "1", "email": "a@gmail.com", **token_claims}
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Nonce không khớp"):
         await auth_usecase._exchange_google_code("auth-code", nonce="n-123")
 
 
@@ -254,7 +257,7 @@ async def test_nonce_literal_mock_is_not_a_bypass(monkeypatch):
     _fake_google_token_endpoint(
         monkeypatch, {"sub": "1", "email": "a@gmail.com", "nonce": "real"}
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Nonce không khớp"):
         await auth_usecase._exchange_google_code("auth-code", nonce="mock")
 
 
@@ -281,5 +284,5 @@ def test_redirect_uri_allow_list(monkeypatch):
         "https://app.example.com/auth/google/callback#frag",
         "javascript:alert(1)",
     ]:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="redirect_uri không hợp lệ"):
             resolve(bad)
