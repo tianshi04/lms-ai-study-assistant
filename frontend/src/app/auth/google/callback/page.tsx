@@ -1,92 +1,72 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { googleLoginAction } from "@/app/auth/actions";
+import { useEffect, useRef, useState } from "react";
+import {
+  googleLoginAction,
+  googleRegisterVerifyAction,
+  googleResetPasswordVerifyAction,
+} from "@/app/auth/actions";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { normalizeUserRole } from "@/lib/jwt";
+import { consumeGoogleTransaction, storePendingGoogleVerification } from "@/lib/google_oauth";
+import { sanitizeRedirectPath } from "@/lib/safe_redirect";
 import { Loader2 } from "lucide-react";
+
+const FAILURE_REDIRECT_DELAY_MS = 1500;
 
 export default function GoogleCallbackPage() {
   const { setAuth } = useAuth();
   const [errorMsg, setErrorMsg] = useState("");
+  const [failurePath, setFailurePath] = useState("/auth/login");
+  // The one-time transaction is consumed on first run; guard against effect re-runs (Strict Mode).
+  const handled = useRef(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (handled.current) return;
+    handled.current = true;
 
-    // Parse auth code or id_token from URL query params or hash
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash || window.location.search);
-    const authCode = params.get("code") || params.get("id_token") || params.get("credential");
-    const error = params.get("error");
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code") ?? "";
+    const state = params.get("state") ?? "";
+    const providerError = params.get("error");
 
-    if (window.opener) {
-      // If opened in a Popup window
-      if (authCode) {
-        window.opener.postMessage(
-          { type: "GOOGLE_AUTH_SUCCESS", idToken: authCode },
-          window.location.origin,
-        );
-      } else if (error) {
-        window.opener.postMessage({ type: "GOOGLE_AUTH_ERROR", error }, window.location.origin);
-      }
-      window.close();
+    // Drop the authorization code from the address bar / history before doing anything else.
+    window.history.replaceState(null, "", window.location.pathname);
+
+    const fail = (message: string, path = "/auth/login") => {
+      setFailurePath(path);
+      setErrorMsg(message);
+      setTimeout(() => window.location.replace(path), FAILURE_REDIRECT_DELAY_MS);
+    };
+
+    if (providerError) {
+      fail("Bạn đã huỷ hoặc Google từ chối yêu cầu xác thực.");
       return;
     }
 
-    if (error) {
-      window.location.replace(`/auth/login?error=${encodeURIComponent(error)}`);
+    // Fail-closed: no stored transaction / state mismatch / expired => never exchange the code.
+    const context = consumeGoogleTransaction(code, state);
+    if (!context) {
+      fail("Phiên xác thực Google không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
       return;
     }
 
-    if (!authCode) {
-      window.location.replace("/auth/login");
-      return;
-    }
+    const { intent, nonce, redirectUri, redirect } = context;
+    const retryPath =
+      intent === "register"
+        ? "/auth/register"
+        : intent === "reset"
+          ? "/auth/forgot-password"
+          : "/auth/login";
 
-    // CSRF State Validation (Fail-Closed) & Target Redirect Extraction
-    const stateParam = params.get("state");
-    const cookieMatch = document.cookie.match(/(?:^|; )g_oauth_state=([^;]*)/);
-    const cookieCsrfToken = cookieMatch ? decodeURIComponent(cookieMatch[1]) : "";
-    document.cookie = "g_oauth_state=; Path=/; max-age=0";
-
-    let targetRedirectUrl = "";
-    let isValidState = false;
-
-    if (cookieCsrfToken && stateParam) {
+    const run = async () => {
       try {
-        const stateObj = JSON.parse(decodeURIComponent(stateParam));
-        if (stateObj && typeof stateObj === "object") {
-          const { csrfToken, redirectUrl } = stateObj;
-          if (csrfToken && csrfToken === cookieCsrfToken) {
-            isValidState = true;
-            if (
-              redirectUrl &&
-              typeof redirectUrl === "string" &&
-              redirectUrl.startsWith("/") &&
-              !redirectUrl.startsWith("//")
-            ) {
-              targetRedirectUrl = redirectUrl;
-            }
+        if (intent === "login") {
+          const res = await googleLoginAction(code, nonce, redirectUri);
+          if (!res.success || !res.user) {
+            fail(res.error || "Xác thực Google thất bại.", retryPath);
+            return;
           }
-        }
-      } catch {
-        isValidState = false;
-      }
-    }
-
-    if (!isValidState) {
-      setErrorMsg("Xác thực OAuth State không hợp lệ hoặc đã hết hạn, nghi ngờ tấn công CSRF!");
-      setTimeout(() => {
-        window.location.replace("/auth/login");
-      }, 2000);
-      return;
-    }
-
-    const processLogin = async () => {
-      try {
-        const callbackRedirectUri = `${window.location.origin}/auth/google/callback`;
-        const res = await googleLoginAction(authCode, "", callbackRedirectUri);
-        if (res.success && res.user) {
           setAuth({
             userId: res.user.id,
             userName: res.user.fullName,
@@ -94,30 +74,56 @@ export default function GoogleCallbackPage() {
             userRole: res.user.role,
             userAvatar: res.user.avatarUrl,
           });
-
           const role = normalizeUserRole(res.user.role);
           let defaultTarget = "/learner/dashboard";
           if (role === "USER_ROLE_ADMIN") defaultTarget = "/admin/dashboard";
           else if (role === "USER_ROLE_INSTRUCTOR") defaultTarget = "/instructor/dashboard";
-
-          const finalTarget = targetRedirectUrl || defaultTarget;
-          window.location.replace(finalTarget);
-        } else {
-          setErrorMsg(res.error || "Xác thực Google thất bại.");
-          setTimeout(() => {
-            window.location.replace("/auth/login");
-          }, 1500);
+          window.location.replace(sanitizeRedirectPath(redirect, defaultTarget));
+          return;
         }
+
+        if (intent === "register") {
+          const res = await googleRegisterVerifyAction(code, nonce, redirectUri);
+          if (res.success && res.isAlreadyRegistered) {
+            fail("Email này đã có tài khoản. Vui lòng đăng nhập.", "/auth/login");
+            return;
+          }
+          if (!res.success || !res.tempToken) {
+            fail(res.error || "Xác minh Google thất bại.", retryPath);
+            return;
+          }
+          storePendingGoogleVerification({
+            intent,
+            tempToken: res.tempToken,
+            email: res.email,
+            fullName: res.fullName,
+          });
+          window.location.replace("/auth/register");
+          return;
+        }
+
+        const res = await googleResetPasswordVerifyAction(code, nonce, redirectUri);
+        if (!res.success || !res.tempToken) {
+          fail(res.error || "Xác minh Google thất bại.", retryPath);
+          return;
+        }
+        storePendingGoogleVerification({
+          intent,
+          tempToken: res.tempToken,
+          email: res.email,
+          fullName: res.fullName,
+        });
+        window.location.replace(
+          redirect
+            ? `/auth/forgot-password?redirect=${encodeURIComponent(redirect)}`
+            : "/auth/forgot-password",
+        );
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Xác thực Google thất bại.";
-        setErrorMsg(msg);
-        setTimeout(() => {
-          window.location.replace("/auth/login");
-        }, 1500);
+        fail(err instanceof Error ? err.message : "Xác thực Google thất bại.", retryPath);
       }
     };
 
-    processLogin();
+    void run();
   }, [setAuth]);
 
   return (
@@ -127,13 +133,13 @@ export default function GoogleCallbackPage() {
           <Loader2 className="w-7 h-7 text-primary animate-spin" />
         </div>
         <div className="space-y-1">
-          <p className="text-base font-bold text-foreground">
+          <p role={errorMsg ? "alert" : "status"} className="text-base font-bold text-foreground">
             {errorMsg ? errorMsg : "Đang xác thực tài khoản với Google…"}
           </p>
           <p className="text-xs text-muted-foreground">
             {errorMsg
-              ? "Đang chuyển về trang đăng nhập..."
-              : "Đang chuyển thẳng vào không gian học tập của bạn"}
+              ? `Đang chuyển về ${failurePath === "/auth/login" ? "trang đăng nhập" : "trang trước"}...`
+              : "Vui lòng đợi trong giây lát"}
           </p>
         </div>
       </div>

@@ -43,16 +43,62 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     await expect(page).toHaveURL(/\/auth\/register/, { timeout: 5000 });
   });
 
-  test('should register a new learner user successfully', async ({ page }) => {
+  test('should start Google registration with state and nonce (no mock bypass)', async ({ page }) => {
+    // Never hit real Google from CI; we only inspect the outgoing authorization request.
+    await page.route('https://accounts.google.com/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: '<html></html>' }),
+    );
+
     const registerPage = new RegisterPage(page);
     await registerPage.goto();
     await registerPage.verifyPageLoaded();
 
-    const uniqueEmail = `testuser${Date.now()}@coursera.ai`;
-    await registerPage.register('Test User E2E', uniqueEmail, 'Password123', '1');
+    const googleRequest = page
+      .waitForRequest(/accounts\.google\.com\/o\/oauth2\/v2\/auth/, { timeout: 5000 })
+      .catch(() => null);
+    await registerPage.googleButton.click();
+    const request = await googleRequest;
 
-    // New 2-step flow auto-logs in after registration and redirects to homepage / learner dashboard
-    await expect(page).toHaveURL(/\/(courses|learn|learner\/dashboard)?$/, { timeout: 15000 });
+    if (!request) {
+      // Google sign-in not configured for this environment: must fail closed, not fall back to a mock.
+      await expect(page.getByText(/chưa được cấu hình/i)).toBeVisible();
+      await expect(page).toHaveURL(/\/auth\/register/);
+      return;
+    }
+
+    const params = new URL(request.url()).searchParams;
+    expect(params.get('response_type')).toBe('code');
+    expect(params.get('state')).toMatch(/^[A-Za-z0-9_-]{32,}$/);
+    expect(params.get('nonce')).toMatch(/^[A-Za-z0-9_-]{32,}$/);
+    expect(params.get('redirect_uri')).toMatch(/\/auth\/google\/callback$/);
+  });
+
+  test('should fail closed on a Google callback without a matching state', async ({ page }) => {
+    await page.goto('/auth/google/callback?code=forged-code&state=forged-state');
+
+    await expect(page.getByText(/không hợp lệ hoặc đã hết hạn/i)).toBeVisible();
+    await expect(page).toHaveURL(/\/auth\/login/, { timeout: 10000 });
+    await expect(page.context().cookies()).resolves.not.toContainEqual(
+      expect.objectContaining({ name: 'access_token' }),
+    );
+  });
+
+  test('should return to login when the user denies Google consent', async ({ page }) => {
+    await page.goto('/auth/google/callback?error=access_denied');
+
+    await expect(page).toHaveURL(/\/auth\/login/, { timeout: 10000 });
+  });
+
+  test('should ignore a backslash open-redirect target after login', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.goto('/\\evil.example.com');
+    await loginPage.verifyPageLoaded();
+
+    const { email, password } = E2E_CONFIG.credentials.learner;
+    await loginPage.login(email, password);
+
+    await expect(page).toHaveURL(/\/learner\/dashboard/, { timeout: 20000 });
+    expect(new URL(page.url()).hostname).not.toContain('evil');
   });
 
   test('should redirect to requested URL parameter after successful login', async ({ page, context }) => {

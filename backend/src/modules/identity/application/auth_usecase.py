@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import logging
 import os
+from urllib.parse import urlsplit
 
 import httpx
 from google.auth.transport import requests
@@ -24,28 +25,42 @@ from src.shared.infrastructure.event_bus import EventBus
 logger = logging.getLogger(__name__)
 
 
+GOOGLE_CALLBACK_PATH = "/auth/google/callback"
+
+
+def _resolve_google_redirect_uri(redirect_uri: str) -> str:
+    """Return the redirect_uri to send to Google together with the client secret.
+
+    The value is client-supplied, so it must be exactly
+    `<allow-listed frontend origin>/auth/google/callback`; otherwise the server would
+    forward its client secret for an attacker-chosen redirect_uri.
+    """
+    from src.shared.config import settings
+
+    if not redirect_uri:
+        frontend_url = str(settings.FRONTEND_URL or "").rstrip("/")
+        if not frontend_url:
+            raise ValueError("FRONTEND_URL chưa được cấu hình trên server")
+        return f"{frontend_url}{GOOGLE_CALLBACK_PATH}"
+
+    parsed = urlsplit(redirect_uri)
+    origin = f"{parsed.scheme}://{parsed.netloc}"
+    if (
+        parsed.path != GOOGLE_CALLBACK_PATH
+        or parsed.query
+        or parsed.fragment
+        or not settings.is_allowed_origin(origin)
+    ):
+        logger.warning("Rejected Google redirect_uri outside the allow-list")
+        raise ValueError("redirect_uri không hợp lệ.")
+    return redirect_uri
+
+
 async def _exchange_google_code(
     code: str, nonce: str = "", redirect_uri: str = ""
 ) -> dict[str, str | bool]:
     """Exchange Google Authorization Code for user claims via back-channel HTTPS."""
-    # Dev Mode Mock
     from src.shared.config import settings
-
-    if code.startswith("mock_google_") and (
-        not settings.GOOGLE_CLIENT_ID or settings.ENV != "production"
-    ):
-        raw = code[len("mock_google_") :]
-        parts = raw.rsplit("_", 1)
-        email = parts[0] if parts else "user@gmail.com"
-        name = parts[1] if len(parts) > 1 else "Google User"
-        google_id = f"google_id_{hashlib.md5(email.encode()).hexdigest()[:12]}"
-        return {
-            "google_id": google_id,
-            "email": email,
-            "name": name,
-            "picture": f"https://api.dicebear.com/7.x/avataaars/svg?seed={email}",
-            "email_verified": True,
-        }
 
     client_id = settings.GOOGLE_CLIENT_ID
     client_secret = settings.GOOGLE_CLIENT_SECRET
@@ -73,14 +88,7 @@ async def _exchange_google_code(
     if not client_secret:
         raise ValueError("GOOGLE_CLIENT_SECRET chưa được cấu hình trên server")
 
-    # Explicit redirect_uri selection without candidate loop anti-pattern
-    effective_redirect_uri = redirect_uri
-    if not effective_redirect_uri:
-        frontend_url = str(getattr(settings, "FRONTEND_URL", "") or "")
-        if frontend_url:
-            effective_redirect_uri = f"{frontend_url.rstrip('/')}/auth/google/callback"
-        else:
-            effective_redirect_uri = "http://localhost:3000/auth/google/callback"
+    effective_redirect_uri = _resolve_google_redirect_uri(redirect_uri)
 
     token_response = None
     async with httpx.AsyncClient(timeout=10.0) as http_client:
@@ -116,10 +124,12 @@ async def _exchange_google_code(
         logger.error("Google ID Token verification failed: %s", e)
         raise ValueError("Token Google không hợp lệ hoặc đã hết hạn.")
 
-    if nonce and nonce != "mock":
+    if nonce:
         token_nonce = payload.get("nonce", "")
-        if token_nonce and token_nonce != nonce:
-            logger.warning("Nonce mismatch! Expected=%s, Got=%s", nonce, token_nonce)
+        if not isinstance(token_nonce, str) or not hmac.compare_digest(
+            token_nonce, nonce
+        ):
+            logger.warning("Google ID token nonce mismatch")
             raise ValueError("Nonce không khớp — nghi ngờ tấn công Replay!")
 
     return {

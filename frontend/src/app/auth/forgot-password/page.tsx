@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, Suspense } from "react";
+import { useEffect, useState, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, ArrowLeft, CheckCircle2, ShieldCheck, KeyRound } from "lucide-react";
@@ -11,14 +11,14 @@ import { Surface } from "@/components/ui/Surface";
 import { useToast } from "@/components/ui/Toast";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { googleResetPasswordVerifyAction, completeResetPasswordAction } from "@/app/auth/actions";
+import { completeResetPasswordAction } from "@/app/auth/actions";
+import { clearPendingGoogleVerification, readPendingGoogleVerification } from "@/lib/google_oauth";
+import { sanitizeRedirectPath } from "@/lib/safe_redirect";
 
 function ForgotPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawRedirect = searchParams?.get("redirect");
-  const redirectTarget =
-    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
+  const redirectTarget = sanitizeRedirectPath(searchParams?.get("redirect"), "/");
 
   const { setAuth } = useAuth();
   const toast = useToast();
@@ -34,24 +34,15 @@ function ForgotPasswordContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Handle Step 1: Google verification success
-  const handleGoogleSuccess = async (authCode: string, nonce: string) => {
-    setErrorMsg("");
-    startTransition(async () => {
-      const res = await googleResetPasswordVerifyAction(authCode, nonce);
-      if (res.success && res.tempToken) {
-        setTempToken(res.tempToken);
-        setUserEmail(res.email || "");
-        setUserName(res.fullName || "");
-        setStep(2);
-        toast.success("Xác minh tài khoản Google thành công! Vui lòng nhập mật khẩu mới.");
-      } else {
-        const msg = res.error || "Xác minh thất bại. Vui lòng đảm bảo tài khoản đã được đăng ký!";
-        setErrorMsg(msg);
-        toast.error(msg);
-      }
-    });
-  };
+  // Step 1 happens on /auth/google/callback; it hands the verified context back via sessionStorage.
+  useEffect(() => {
+    const pending = readPendingGoogleVerification("reset");
+    if (!pending) return;
+    setTempToken(pending.tempToken);
+    setUserEmail(pending.email);
+    setUserName(pending.fullName);
+    setStep(2);
+  }, []);
 
   // Handle Step 2: Complete Password Reset
   const handleSubmitReset = (e: React.FormEvent) => {
@@ -71,6 +62,7 @@ function ForgotPasswordContent() {
     startTransition(async () => {
       const res = await completeResetPasswordAction(tempToken, newPassword);
       if (res.success && res.user) {
+        clearPendingGoogleVerification();
         setAuth({
           userId: res.user.id,
           userName: res.user.fullName,
@@ -156,7 +148,7 @@ function ForgotPasswordContent() {
               </div>
 
               <GoogleAuthButton
-                onSuccess={handleGoogleSuccess}
+                intent="reset"
                 disabled={isPending}
                 text="Xác minh bằng Google để đổi MK"
                 variant="outlined"

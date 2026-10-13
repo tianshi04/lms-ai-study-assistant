@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+import { startGoogleOAuth, type GoogleIntent } from "@/lib/google_oauth";
 
 export function GoogleIcon({ className = "w-5 h-5 flex-shrink-0" }: { className?: string }) {
   return (
@@ -27,7 +29,8 @@ export function GoogleIcon({ className = "w-5 h-5 flex-shrink-0" }: { className?
 }
 
 interface GoogleAuthButtonProps {
-  onSuccess: (authCode: string, nonce: string) => void;
+  /** What the callback page should do once Google has verified the user. */
+  intent: GoogleIntent;
   disabled?: boolean;
   text?: string;
   variant?: "outlined" | "filled" | "tonal";
@@ -36,66 +39,25 @@ interface GoogleAuthButtonProps {
 }
 
 export function GoogleAuthButton({
-  onSuccess,
+  intent,
   disabled = false,
   text = "Tiếp tục với Google",
   variant = "outlined",
   className = "",
   children,
 }: GoogleAuthButtonProps) {
+  const toast = useToast();
   const [internalLoading, setInternalLoading] = useState(false);
 
-  useEffect(() => {
-    // Listen for mock auth success event (used by automated E2E tests)
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
-        onSuccess(event.data.idToken, "mock");
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [onSuccess]);
-
   const handleGoogleRedirect = () => {
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-    if (!googleClientId) {
-      const inputEmail = window.prompt(
-        "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
-        "user.test@gmail.com",
-      );
-      if (inputEmail && inputEmail.includes("@")) {
-        const mockToken = `mock_google_${inputEmail.trim()}_${inputEmail.split("@")[0]}`;
-        onSuccess(mockToken, "mock");
-      }
-      return;
-    }
-
     setInternalLoading(true);
-    const origin = window.location.origin;
-    const redirectUri = encodeURIComponent(`${origin}/auth/google/callback`);
-    const scope = encodeURIComponent("openid email profile");
-
-    // Generate CSRF state token & preserve target redirect URL parameter
-    const searchParams = new URLSearchParams(window.location.search);
-    const redirectUrl = searchParams.get("redirect") || "";
-
-    const csrfToken =
-      typeof window.crypto?.randomUUID === "function"
-        ? window.crypto.randomUUID()
-        : Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-    // Save state token in cookie with SameSite=Lax
-    document.cookie = `g_oauth_state=${csrfToken}; Path=/; max-age=600; SameSite=Lax${
-      window.location.protocol === "https:" ? "; Secure" : ""
-    }`;
-
-    const stateObj = { csrfToken, redirectUrl };
-    const stateStr = encodeURIComponent(JSON.stringify(stateObj));
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${stateStr}&prompt=select_account`;
-    window.location.href = authUrl;
+    try {
+      const redirect = new URLSearchParams(window.location.search).get("redirect") ?? "";
+      startGoogleOAuth(intent, redirect);
+    } catch (err: unknown) {
+      setInternalLoading(false);
+      toast.error(err instanceof Error ? err.message : "Không thể bắt đầu đăng nhập Google.");
+    }
   };
 
   return (

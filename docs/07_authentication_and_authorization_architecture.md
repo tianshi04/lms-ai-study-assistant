@@ -95,37 +95,49 @@ sequenceDiagram
     participant BE as Backend (FastAPI)
     participant GG as Google OAuth (accounts.google.com)
 
-    Note over User, GG: LUỒNG ĐĂNG KÝ QUA GOOGLE + ĐẶT MẬT KHẨU DỰ PHÒNG (SO SÓNG VỚI ĐĂNG KÝ TRUYỀN THỐNG)
-    User->>FE: Bấm "Xác minh bằng Google" (Hoặc Đăng ký Email/Password qua RPC Register)
-    FE->>GG: Mở Cửa sổ OAuth Popup (https://accounts.google.com/o/oauth2/v2/auth)
-    GG-->>User: Xác thực tài khoản Gmail & Đồng ý cấp quyền
-    GG-->>FE: Trả về Google ID Token via /auth/google/callback
-    FE->>BE: Gọi RPC GoogleRegisterVerify(google_id_token)
-    BE->>BE: Xác minh Token Google -> Sinh temp_token JWT (TTL 15 phút)
-    BE-->>FE: Trả về temp_token + Verified Email + Avatar
-    FE-->>User: Chuyển sang Bước 2: "Tạo Mật khẩu dự phòng"
-    User->>FE: Nhập Mật khẩu & Chọn Vai trò (Learner/Instructor)
-    FE->>BE: Gọi RPC CompleteGoogleRegistration(temp_token, password, role)
-    BE->>BE: Hash Password (PBKDF2) & Lưu User (Lưu google_id + password_hash + avatar_url)
-    BE-->>FE: Đăng ký thành công! Trả về JWT Access Token (Có chứa avatar_url)
+    Note over User, GG: LUỒNG GOOGLE (login / register / reset dùng chung 1 callback, phân biệt bằng "intent")
+    User->>FE: Bấm nút Google (intent = login | register | reset)
+    FE->>FE: Sinh state + nonce, lưu vào sessionStorage (TTL 10 phút, dùng 1 lần)
+    FE->>GG: Redirect tới /o/oauth2/v2/auth (state, nonce, redirect_uri)
+    GG-->>User: Xác thực tài khoản Gmail & đồng ý cấp quyền
+    GG-->>FE: Redirect về /auth/google/callback?code&state
+    FE->>FE: Xoá code khỏi URL, kiểm tra state (fail-closed), đọc intent
+    FE->>BE: GoogleLogin | GoogleRegisterVerify | GoogleResetPasswordVerify(code, nonce, redirect_uri)
+    BE->>BE: Kiểm tra redirect_uri thuộc allow-list, đổi code lấy ID token
+    BE->>BE: Xác minh chữ ký/aud/exp, nonce khớp, email_verified = true
+    BE-->>FE: Đăng nhập: JWT cookie | Đăng ký / Đặt lại MK: temp_token (TTL 15 phút)
+    FE-->>User: Bước 2: tạo mật khẩu dự phòng / đặt mật khẩu mới
+    FE->>BE: CompleteGoogleRegistration(temp_token, password, full_name) | CompleteResetPassword(temp_token, new_password)
+    BE->>BE: validate_password, hash PBKDF2 & lưu User
+    BE-->>FE: JWT Access/Refresh Token (có avatar_url)
 ```
 
 ### A. Lý Do Kỹ Thuật & Nghiệp Vụ Của Luồng Đăng Ký
 1. **Linh hoạt 2 Chế độ Đăng ký (Dual Registration Flexibility)**:
    - Hỗ trợ đăng ký nhanh 1-click qua Google OAuth2 hoặc Đăng ký bằng Email & Mật khẩu chuẩn (RPC `Register`) cho người dùng tùy chọn.
 2. **Xác minh Email chính chủ & Chống Bot/Spam (Anti-Spam Email Guarantee)**:
-   - Đăng ký qua Google OAuth2 giúp xác minh 100% email là thật và thuộc về người dùng chính chủ mà không tốn chi phí gửi OTP.
+   - Đăng ký qua Google OAuth2 giúp xác minh 100% email là thật và thuộc về người dùng chính chủ mà không tốn chi phí gửi OTP. Backend từ chối mọi ID token có `email_verified != true`.
 3. **Cơ chế Dự phòng Sự cố (Disaster Recovery & High Availability)**:
-   - Việc tạo Mật khẩu phụ ngay lúc đăng ký Google đảm bảo **100% tài khoản trong DB đều có password_hash**.
+   - Việc tạo Mật khẩu phụ ngay lúc đăng ký Google đảm bảo tài khoản đăng ký thủ công luôn có `password_hash`.
    - Trong trường hợp dịch vụ Google bị sự cố (Google Outage) hoặc người dùng không lưu session Google, người dùng **vẫn đăng nhập bình thường bằng Email & Mật khẩu** mà không bị gián đoạn học tập.
+   - Tài khoản được JIT-provision lần đầu qua `GoogleLogin` có `password_hash` rỗng (chưa thể đăng nhập bằng mật khẩu) cho tới khi người dùng đặt mật khẩu qua luồng "Quên mật khẩu".
 4. **Đồng bộ Ảnh Đại diện Chính chủ (Google Avatar Synchronization)**:
    - Tự động trích xuất ảnh đại diện chính chủ từ Google (`picture` claim), lưu trữ vào PostgreSQL và nạp vào JWT Token payload (`avatar_url`).
    - Tự động đồng bộ hiển thị mượt mà trên Header Navbar (`UserDropdown`), Dropdown Menu, và Trang quản lý hồ sơ cá nhân.
 
+### A.1. Các Ràng Buộc Bảo Mật Của Luồng Google (Security Invariants)
+| Ràng buộc | Lý do |
+| :--- | :--- |
+| **Không có đường mock/bypass ở bất kỳ môi trường nào** (không token `mock_google_*`, không nonce `"mock"`, không `window.prompt`). Chưa cấu hình `GOOGLE_CLIENT_ID/SECRET` thì Google login bị từ chối (fail-closed). | Biến `ENV` mặc định là `development`, nên cổng mock "chỉ dev" thực tế mở trên mọi deploy thiếu cấu hình. Test dùng fake provider/monkeypatch, không dùng backdoor trong code chạy thật. |
+| **`state` + `nonce`** sinh bằng Web Crypto, lưu trong `sessionStorage`, dùng 1 lần, hết hạn sau 10 phút; callback fail-closed. Backend so khớp nonce bằng `hmac.compare_digest` khi client gửi nonce. | Chống CSRF đăng nhập và replay ID token. Không dùng cookie JS (tránh cookie tossing) và không có fallback `Math.random`. |
+| **`redirect_uri` phải là `<origin được allow-list>/auth/google/callback`** (không query/fragment); Backend tự validate trước khi gửi kèm client secret. | Ngăn client chọn `redirect_uri` tuỳ ý khi Backend giữ `GOOGLE_CLIENT_SECRET`. Origin phải khớp `CORS_ORIGINS`/`FRONTEND_URL`/Vercel; URI cũng phải được đăng ký trong Google Cloud Console. |
+| **Redirect sau đăng nhập đi qua `sanitizeRedirectPath`** (cùng origin, chặn `//`, `\`, ký tự điều khiển). | Chặn open redirect kiểu `/\evil.com`. |
+| **`decodeJwtPayload` ở `proxy.ts` chỉ là gợi ý UI** (không verify chữ ký, bỏ qua token hết hạn). Backend là nơi duy nhất thực thi phân quyền. | Khoá HS256 chỉ có ở Backend; muốn verify ở Edge cần chuyển sang RS256/JWKS (hướng phát triển). |
+
 ### B. Danh Mục Công Nghệ & Thư Viện Sử Dụng (Technology Stack)
 - **Frontend Stack**:
   - `Next.js 16` (React 19, Turbopack, Server Actions trong `src/app/auth/actions.ts`).
-  - `Google Identity Services (GSI)` & Standard OAuth2 Popup Flow (`https://accounts.google.com/o/oauth2/v2/auth`).
+  - `Google Identity Services (GSI)` (One Tap, ID token) & OAuth2 Authorization Code Flow qua redirect (state + nonce) (`https://accounts.google.com/o/oauth2/v2/auth`, helper `src/lib/google_oauth.ts`).
   - `@connectrpc/connect-web` giao tiếp RPC bất đồng bộ với Backend.
   - `AuthProvider` React Context quản lý Client Auth State & đồng bộ Avatar.
 - **Backend Stack**:

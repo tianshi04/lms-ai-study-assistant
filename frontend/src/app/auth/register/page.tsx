@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { googleRegisterVerifyAction, completeGoogleRegistrationAction } from "@/app/auth/actions";
+import { completeGoogleRegistrationAction } from "@/app/auth/actions";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
+import { clearPendingGoogleVerification, readPendingGoogleVerification } from "@/lib/google_oauth";
 
 import { User, Lock, Eye, EyeOff, CheckCircle2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -23,7 +24,6 @@ export default function RegisterPage() {
   const { setAuth } = useAuth();
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [googleVerifying, setGoogleVerifying] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [tempToken, setTempToken] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -61,6 +61,7 @@ export default function RegisterPage() {
         );
 
         if (res.success && res.user) {
+          clearPendingGoogleVerification();
           setAuth({
             userId: res.user.id,
             userName: res.user.fullName,
@@ -86,31 +87,16 @@ export default function RegisterPage() {
     },
   });
 
-  const handleGoogleVerify = async (authCode: string, nonce: string) => {
-    setGoogleVerifying(true);
-    try {
-      const res = await googleRegisterVerifyAction(authCode, nonce);
-      if (res.isAlreadyRegistered) {
-        toast.error("Email này đã được đăng ký tài khoản. Vui lòng Đăng nhập!");
-        setTimeout(() => router.push("/auth/login"), 1500);
-        return;
-      }
-
-      if (res.success && res.tempToken) {
-        setTempToken(res.tempToken);
-        setVerifiedEmail(res.email);
-        form.setFieldValue("fullName", res.fullName || res.email.split("@")[0]);
-        setStep(2);
-        toast.success("Xác minh Google thành công! Vui lòng đặt mật khẩu dự phòng.");
-      } else {
-        toast.error(res.error || "Xác minh Google thất bại. Vui lòng thử lại.");
-      }
-    } catch {
-      toast.error("Không thể kết nối với dịch vụ xác thực Google.");
-    } finally {
-      setGoogleVerifying(false);
-    }
-  };
+  // Step 1 happens on /auth/google/callback; it hands the verified context back via sessionStorage.
+  useEffect(() => {
+    const pending = readPendingGoogleVerification("register");
+    if (!pending) return;
+    setTempToken(pending.tempToken);
+    setVerifiedEmail(pending.email);
+    form.setFieldValue("fullName", pending.fullName || pending.email.split("@")[0]);
+    setStep(2);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
 
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12 bg-surface text-on-surface">
@@ -171,8 +157,7 @@ export default function RegisterPage() {
                 </div>
 
                 <GoogleAuthButton
-                  onSuccess={handleGoogleVerify}
-                  disabled={googleVerifying}
+                  intent="register"
                   text="Xác minh bằng Google"
                   variant="filled"
                   className="py-4 text-base"
@@ -229,7 +214,10 @@ export default function RegisterPage() {
                     type="button"
                     variant="text"
                     size="sm"
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      clearPendingGoogleVerification();
+                      setStep(1);
+                    }}
                     className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium shrink-0"
                   >
                     <ArrowLeft aria-hidden="true" className="w-3.5 h-3.5" />
