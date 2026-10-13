@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import posixpath
 from contextlib import asynccontextmanager
 from typing import Any, cast
 
@@ -8,7 +9,7 @@ from opentelemetry.instrumentation.starlette import StarletteInstrumentor
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse, Response, StreamingResponse
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Mount, Route
 
 from src.gen.assessment.v1.assessment_connect import AssessmentServiceASGIApplication
@@ -44,10 +45,13 @@ from src.modules.partner.application import PartnerUseCase
 from src.modules.partner.presentation.partner_handler import PartnerHandler
 from src.modules.payment.application import PaymentUseCase
 from src.modules.payment.presentation.payment_handler import PaymentHandler
-from src.shared.config import settings
+from src.shared.config import VERCEL_ORIGIN_REGEX, settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
 from src.shared.infrastructure.logging import setup_logging
-from src.shared.infrastructure.middlewares import RequestIDMiddleware
+from src.shared.infrastructure.middlewares import (
+    AssetAuthMiddleware,
+    RequestIDMiddleware,
+)
 from src.shared.infrastructure.telemetry import setup_telemetry
 
 setup_logging()
@@ -193,27 +197,49 @@ notification_app = NotificationServiceASGIApplication(
 )
 
 
+def _get_cors_origin(request) -> str:
+    """Return the request origin only if it is allow-listed, otherwise empty string."""
+    origin = request.headers.get("origin", "")
+    return origin if settings.is_allowed_origin(origin) else ""
+
+
 async def proxy_media(request):
+    """Proxy streaming endpoint for S3 media assets (/coursera-assets/{path:path}).
+
+    - Supports range requests (206 Partial Content) for smooth HTML5 video scrubbing.
+    - Streams content in 256KB chunks using StreamingResponse to avoid memory explosion.
+    - Manages S3 async client lifecycle cleanly to prevent resource leaks.
+    - Includes Access-Control-Allow-Credentials: true for cross-origin cookie authentication.
+    """
     path = request.path_params["path"]
+
+    # --- Sanitize path: block path traversal attacks ("../../etc/passwd") ---
+    normalized = posixpath.normpath(path).lstrip("/")
+    if ".." in normalized or not normalized:
+        return Response(status_code=400, content="Invalid path")
+
+    from starlette.responses import StreamingResponse
+
     from src.shared.infrastructure.s3_storage import get_s3_storage_service
 
     s3 = get_s3_storage_service()
+    cors_origin = _get_cors_origin(request)
 
     if request.method == "OPTIONS":
-        return Response(
-            status_code=204,
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type, Range, Authorization",
-                "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
-            },
-        )
+        resp_headers = {
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Range, Authorization",
+            "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
+        }
+        if cors_origin:
+            resp_headers["Access-Control-Allow-Origin"] = cors_origin
+            resp_headers["Access-Control-Allow-Credentials"] = "true"
+        return Response(status_code=204, headers=resp_headers)
 
     s3_client_ctx = s3.get_client()
     s3_client = await s3_client_ctx.__aenter__()
 
-    params = {"Bucket": s3.bucket_name, "Key": path}
+    params = {"Bucket": s3.bucket_name, "Key": normalized}
     range_header = request.headers.get("range")
     if range_header:
         params["Range"] = range_header
@@ -222,7 +248,12 @@ async def proxy_media(request):
         s3_resp = await s3_client.get_object(**params)
     except Exception as e:  # noqa: BLE001
         await s3_client_ctx.__aexit__(None, None, None)
-        return Response(status_code=404, content=str(e))
+        logger.warning("S3 proxy error for key '%s': %s", normalized, e)
+        headers = {}
+        if cors_origin:
+            headers["Access-Control-Allow-Origin"] = cors_origin
+            headers["Access-Control-Allow-Credentials"] = "true"
+        return Response(status_code=404, content="File not found", headers=headers)
 
     headers = {}
     if "ContentType" in s3_resp:
@@ -236,20 +267,29 @@ async def proxy_media(request):
         status_code = 200
 
     headers["Accept-Ranges"] = "bytes"
-    headers["Access-Control-Allow-Origin"] = "*"
+    if cors_origin:
+        headers["Access-Control-Allow-Origin"] = cors_origin
+        headers["Access-Control-Allow-Credentials"] = "true"
 
-    async def generate():
+    if request.method == "HEAD":
+        await s3_client_ctx.__aexit__(None, None, None)
+        return Response(status_code=status_code, headers=headers)
+
+    body_stream = s3_resp["Body"]
+
+    async def generate_chunks():
         try:
-            body = s3_resp["Body"]
-            while True:
-                chunk = await body.read(256 * 1024)  # 256KB chunks
-                if not chunk:
-                    break
-                yield chunk
+            async with body_stream as stream:
+                while chunk := await stream.read(256 * 1024):
+                    yield chunk
         finally:
             await s3_client_ctx.__aexit__(None, None, None)
 
-    return StreamingResponse(generate(), status_code=status_code, headers=headers)
+    return StreamingResponse(
+        generate_chunks(),
+        status_code=status_code,
+        headers=headers,
+    )
 
 
 async def health_check(_request):
@@ -283,24 +323,13 @@ routes = [
 ]
 
 
-def _build_cors_origins() -> list[str]:
-    origins = {"http://localhost:3000", "http://127.0.0.1:3000"}
-    if settings.FRONTEND_URL:
-        origins.add(settings.FRONTEND_URL.rstrip("/"))
-    if settings.CORS_ORIGINS:
-        for o in settings.CORS_ORIGINS.split(","):
-            cleaned = o.strip().rstrip("/")
-            if cleaned:
-                origins.add(cleaned)
-    return list(origins)
-
-
 middleware = [
+    Middleware(AssetAuthMiddleware),
     Middleware(RequestIDMiddleware),
     Middleware(
         CORSMiddleware,
-        allow_origins=_build_cors_origins(),
-        allow_origin_regex=r"^https://lms-ai-study-assistant(-[a-zA-Z0-9_-]+)?\.vercel\.app$",
+        allow_origins=sorted(settings.allowed_cors_origins),
+        allow_origin_regex=VERCEL_ORIGIN_REGEX,
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=[

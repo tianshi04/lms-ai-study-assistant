@@ -29,3 +29,32 @@ def test_singleton_settings_instance():
         settings.JWT_SECRET
         == "coursera_super_secret_jwt_key_production_2026_x99_secure_hmac_sha256"
     )
+
+
+def test_is_allowed_origin_uses_exact_match():
+    """CORS origin checks must be exact matches, never substring matches on the raw string."""
+    config = Settings(
+        FRONTEND_URL="https://app.example.com/",
+        CORS_ORIGINS="http://localhost:3000, https://admin.example.com",
+    )
+    assert config.is_allowed_origin("http://localhost:3000")
+    assert config.is_allowed_origin("https://app.example.com")
+    assert config.is_allowed_origin("https://admin.example.com")
+    # Substrings / prefixes of allowed origins must be rejected
+    assert not config.is_allowed_origin("http://localhost:300")
+    assert not config.is_allowed_origin("localhost")
+    assert not config.is_allowed_origin("https://admin.example.co")
+    assert not config.is_allowed_origin("")
+
+
+def test_is_allowed_origin_vercel_scope():
+    """Only this project's Vercel deployments are allowed, not arbitrary *.vercel.app sites."""
+    config = Settings()
+    assert config.is_allowed_origin("https://lms-ai-study-assistant.vercel.app")
+    assert config.is_allowed_origin(
+        "https://lms-ai-study-assistant-git-main-team.vercel.app"
+    )
+    assert not config.is_allowed_origin("https://evil.vercel.app")
+    assert not config.is_allowed_origin(
+        "https://lms-ai-study-assistant.vercel.app.evil.com"
+    )

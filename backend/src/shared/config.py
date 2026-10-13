@@ -1,7 +1,12 @@
+import re
 from functools import lru_cache
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Official production + preview deployments of this project only.
+VERCEL_ORIGIN_REGEX = r"^https://lms-ai-study-assistant(-[a-zA-Z0-9_-]+)?\.vercel\.app$"
+VERCEL_ORIGIN_PATTERN = re.compile(VERCEL_ORIGIN_REGEX)
 
 
 class Settings(BaseSettings):
@@ -24,6 +29,26 @@ class Settings(BaseSettings):
         default="http://localhost:3000,http://127.0.0.1:3000",
         description="Comma-separated list of allowed CORS origins",
     )
+
+    @property
+    def allowed_cors_origins(self) -> frozenset[str]:
+        """Exact-match origin allow-list built from FRONTEND_URL and CORS_ORIGINS."""
+        origins = {"http://localhost:3000", "http://127.0.0.1:3000"}
+        if self.FRONTEND_URL:
+            origins.add(self.FRONTEND_URL.strip().rstrip("/"))
+        for raw in self.CORS_ORIGINS.split(","):
+            cleaned = raw.strip().rstrip("/")
+            if cleaned:
+                origins.add(cleaned)
+        return frozenset(origins)
+
+    def is_allowed_origin(self, origin: str) -> bool:
+        """Return True only for an exact allow-listed origin or an official Vercel deployment."""
+        if not origin:
+            return False
+        return origin in self.allowed_cors_origins or bool(
+            VERCEL_ORIGIN_PATTERN.fullmatch(origin)
+        )
 
     # 2. PostgreSQL Database URL & Redis Cache/Broker URL
     DATABASE_URL: str = Field(
