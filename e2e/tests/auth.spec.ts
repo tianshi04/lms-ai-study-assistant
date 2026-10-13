@@ -53,18 +53,31 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     await registerPage.goto();
     await registerPage.verifyPageLoaded();
 
-    const googleRequest = page
-      .waitForRequest(/accounts\.google\.com\/o\/oauth2\/v2\/auth/, { timeout: 5000 })
-      .catch(() => null);
+    // Either the app redirects to Google, or (Google not configured) a toast appears briefly.
+    // Wait for both at once: the toast auto-dismisses, so it must not be awaited after a timeout.
+    const outcome = Promise.race([
+      page
+        .waitForRequest(/accounts\.google\.com\/o\/oauth2\/v2\/auth/, { timeout: 15000 })
+        .then((req) => ({ kind: 'google' as const, req }))
+        .catch(() => ({ kind: 'timeout' as const })),
+      page
+        .getByText(/chưa được cấu hình/i)
+        .waitFor({ state: 'visible', timeout: 15000 })
+        .then(() => ({ kind: 'not-configured' as const }))
+        .catch(() => ({ kind: 'timeout' as const })),
+    ]);
     await registerPage.googleButton.click();
-    const request = await googleRequest;
+    const result = await outcome;
+    if (result.kind === 'timeout') {
+      throw new Error('Neither a Google redirect nor a "not configured" message appeared');
+    }
 
-    if (!request) {
-      // Google sign-in not configured for this environment: must fail closed, not fall back to a mock.
-      await expect(page.getByText(/chưa được cấu hình/i)).toBeVisible();
+    if (result.kind === 'not-configured') {
+      // Must fail closed: stay on the page, never fall back to a mock.
       await expect(page).toHaveURL(/\/auth\/register/);
       return;
     }
+    const request = result.req;
 
     const params = new URL(request.url()).searchParams;
     expect(params.get('response_type')).toBe('code');
