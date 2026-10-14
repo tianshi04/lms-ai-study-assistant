@@ -36,8 +36,14 @@ function decodeBase64Url(str: string): string {
 }
 
 /**
- * Decode JWT payload on client or server without cryptographic verification.
- * Used for extracting claims (e.g. user_id, email, role, full_name) from session tokens.
+ * Read the claims of a session JWT **without verifying its signature**.
+ *
+ * The backend is the only party that holds the signing secret and the only
+ * authority on authorization (every RPC re-validates the token). The result of
+ * this function is therefore a *UI hint* — route shell gating, showing the user's
+ * name/role — and MUST NEVER be used to grant access to data or to perform an
+ * action. Tokens that are malformed, have no `exp`, or are already expired yield
+ * `null`, so callers fall back to the refresh flow instead of trusting stale claims.
  */
 export function decodeJwtPayload(token: string): JwtPayload | null {
   try {
@@ -46,7 +52,9 @@ export function decodeJwtPayload(token: string): JwtPayload | null {
     if (parts.length !== 3) return null;
     const jsonStr = decodeBase64Url(parts[1]);
     if (!jsonStr) return null;
-    return JSON.parse(jsonStr) as JwtPayload;
+    const payload = JSON.parse(jsonStr) as JwtPayload;
+    if (typeof payload.exp !== "number" || payload.exp * 1000 <= Date.now()) return null;
+    return payload;
   } catch {
     return null;
   }
