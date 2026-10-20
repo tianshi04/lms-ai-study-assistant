@@ -334,6 +334,26 @@ function LoginFormContent() {
                     email: "instructor@coursera.ai",
                     roleTag: "Giảng viên AI",
                   },
+                  {
+                    label: "Học viên Cá nhân",
+                    email: "learner@coursera.ai",
+                    roleTag: "Learner",
+                  },
+                  {
+                    label: "Trợ giảng Tổ chức",
+                    email: "ta@coursera.ai",
+                    roleTag: "Org TA",
+                  },
+                  {
+                    label: "Quản trị viên Tổ chức",
+                    email: "partner@coursera.ai",
+                    roleTag: "Org Admin",
+                  },
+                  {
+                    label: "Super Admin toàn sàn",
+                    email: "admin@coursera.ai",
+                    roleTag: "Super Admin",
+                  },
                 ].map((acc) => {
                   const isCurrentLoading = quickLoggingInEmail === acc.email;
                   return (
