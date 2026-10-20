@@ -17,7 +17,7 @@ class GradeAppealUseCase(BaseAssessmentUseCase):
     async def submit_grade_appeal(
         self, user_id: str, submission_id: str, appeal_reason: str
     ) -> tuple[bool, str]:
-        appeal_id = f"appeal-{uuid7().hex[:8]}"
+        appeal_id = f"appeal-{uuid7().hex}"
         now_iso = datetime.now(UTC).isoformat()
         appeal = GradeAppeal(
             id=appeal_id,

@@ -312,7 +312,7 @@ class QuizUseCase(BaseAssessmentUseCase):
                 }
 
                 return {
-                    "session_id": f"qsess-prev-{uuid7().hex[:8]}",
+                    "session_id": f"qsess-prev-{uuid7().hex}",
                     "start_time_iso": now.isoformat(),
                     "expires_at_iso": expires_at.isoformat(),
                     "duration_minutes": duration_minutes,
@@ -348,7 +348,7 @@ class QuizUseCase(BaseAssessmentUseCase):
             await repo.save_quiz_active_session(active_session)
 
             return {
-                "session_id": f"qsess-{uuid7().hex[:8]}",
+                "session_id": f"qsess-{uuid7().hex}",
                 "start_time_iso": now.isoformat(),
                 "expires_at_iso": expires_at.isoformat(),
                 "duration_minutes": duration_minutes,
@@ -509,7 +509,7 @@ class QuizUseCase(BaseAssessmentUseCase):
 
             # 5. Save submission & update Cooldown (only if not preview)
             if not preview:
-                submission_id = f"sub-{uuid7().hex[:8]}"
+                submission_id = f"sub-{uuid7().hex}"
                 attempt_number = len(prev_submissions) + 1
 
                 first_selected = [ans[0] if ans else -1 for ans in answers]
