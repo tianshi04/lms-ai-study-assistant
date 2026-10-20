@@ -927,3 +927,67 @@ async def test_sqlalchemy_assessment_repo_update_question_post_commit():
     assert updated.explanation == "New exp"
     assert len(updated.options) == 2
     mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_start_quiz_session_force_new_preserves_previous_result():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-preserve-test"
+    item_id = "item-preserve-test"
+
+    # Add question bank with sample questions
+    bank = await repo.create_question_bank(
+        course_id="course-1",
+        title="Sample Bank",
+        category="PRACTICE",
+        description="Desc",
+    )
+    bank_id = bank.id
+
+    for i in range(3):
+        await repo.add_question_to_bank(
+            bank_id=bank_id,
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text=f"Question {i + 1}",
+            explanation="Explanation",
+            options_data=[
+                {"option_text": "Correct", "is_correct": True},
+                {"option_text": "Wrong", "is_correct": False},
+            ],
+        )
+
+    await repo.configure_quiz_matrix(
+        item_id=item_id,
+        bank_id=bank_id,
+        time_limit_minutes=15,
+        passing_threshold_percent=80.0,
+        easy_count=3,
+        medium_count=0,
+        hard_count=0,
+        shuffle_options=False,
+        max_attempts=3,
+        cooldown_hours=8,
+    )
+
+    # Submit an initial quiz attempt
+    sess1 = await usecase.start_graded_quiz_session(user_id, item_id, force_new=True)
+    assert sess1["has_previous_result"] is False
+
+    await usecase.submit_honor_code(user_id, item_id, True)
+    res_sub = await usecase.submit_graded_quiz(
+        user_id,
+        item_id,
+        question_answers=[[0], [0], [0]],
+        session_seed=sess1["session_seed"],
+    )
+    assert res_sub["passed"] is True
+    assert res_sub["score_percent"] == 100.0
+
+    # Start a brand new session with force_new=True (retake)
+    sess2 = await usecase.start_graded_quiz_session(user_id, item_id, force_new=True)
+    assert sess2["has_previous_result"] is True
+    assert sess2["previous_result"] is not None
+    assert sess2["previous_result"]["score_percent"] == 100.0
+    assert sess2["previous_result"]["passed"] is True

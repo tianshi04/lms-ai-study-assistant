@@ -276,23 +276,24 @@ class QuizUseCase(BaseAssessmentUseCase):
                     except (ValueError, TypeError):
                         cooldown_sec = 0
 
-            if prev_submissions and not force_new and not preview:
-                questions = await self.generate_quiz_session_questions(
-                    repo, item_id, seed=42
-                )
+            prev_result = None
+            if prev_submissions and not preview:
                 target_sub = (
                     max(prev_submissions, key=lambda s: s.score_percent)
                     if has_passed
                     else max(prev_submissions, key=lambda s: s.created_at)
                 )
+                summary_questions = await self.generate_quiz_session_questions(
+                    repo, item_id, seed=42
+                )
                 explanations = []
-                total_qs = len(questions)
+                total_qs = len(summary_questions)
                 num_correct = (
                     round(total_qs * (target_sub.score_percent / 100.0))
                     if total_qs > 0
                     else 0
                 )
-                for idx, q in enumerate(questions):
+                for idx, q in enumerate(summary_questions):
                     is_corr = idx < num_correct
                     clean_exp = _clean_explanation(q.get("explanation"))
                     exp_suffix = f" — {clean_exp}" if clean_exp else ""
@@ -311,6 +312,7 @@ class QuizUseCase(BaseAssessmentUseCase):
                     "cooldown_hours": cooldown_hours if is_graded else 0,
                 }
 
+            if prev_submissions and not force_new and not preview:
                 return {
                     "session_id": f"qsess-prev-{uuid7().hex}",
                     "start_time_iso": now.isoformat(),
@@ -318,7 +320,7 @@ class QuizUseCase(BaseAssessmentUseCase):
                     "duration_minutes": duration_minutes,
                     "passing_threshold_percent": passing_threshold,
                     "session_seed": 42,
-                    "questions": questions,
+                    "questions": summary_questions,
                     "cooldown_seconds_left": cooldown_sec,
                     "attempts_left": attempts_left,
                     "max_attempts": max_attempts if is_graded else 999,
@@ -359,6 +361,8 @@ class QuizUseCase(BaseAssessmentUseCase):
                 "attempts_left": attempts_left,
                 "max_attempts": max_attempts if is_graded else 999,
                 "cooldown_hours": cooldown_hours if is_graded else 0,
+                "has_previous_result": prev_result is not None,
+                "previous_result": prev_result,
             }
 
     async def submit_graded_quiz(
