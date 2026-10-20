@@ -5,6 +5,7 @@ import pytest
 
 from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.domain import (
+    UNLIMITED_ATTEMPTS_SENTINEL,
     AssessmentRepositoryInterface,
     GradeAppeal,
     HonorCodeAgreement,
@@ -574,21 +575,63 @@ async def test_audit_mode_access_blocking():
             )
             await repo.save(user)
 
-        # Attempt submitting graded quiz in audit mode -> Should be blocked
-        res = await usecase.submit_graded_quiz(
-            audit_user_id, "item_quiz_audit", question_answers=[[0], [1]]
-        )
-        assert res["passed"] is False
-        assert "Audit Mode" in res["answer_explanations"][0]
+        # Attempt submitting graded quiz in audit mode -> Should be blocked with PermissionError
+        with pytest.raises(PermissionError, match="Audit Mode"):
+            await usecase.submit_graded_quiz(
+                audit_user_id, "item_quiz_audit", question_answers=[[0], [1]]
+            )
 
-        # Attempt submitting peer assignment in audit mode -> Should be blocked
-        sub_id, msg = await usecase.submit_peer_assignment(
-            audit_user_id, "item_peer_audit", "http://example.com", "text"
-        )
-        assert sub_id == ""
-        assert "Audit Mode" in msg
+        # Attempt submitting peer assignment in audit mode -> Should be blocked with PermissionError
+        with pytest.raises(PermissionError, match="Audit Mode"):
+            await usecase.submit_peer_assignment(
+                audit_user_id, "item_peer_audit", "http://example.com", "text"
+            )
     except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping audit mode db test: DB not reachable ({e})")
+
+
+@pytest.mark.asyncio
+async def test_audit_mode_practice_vs_graded_quiz():
+    """BR_ACCESS_001: Practice Quizzes are open in Audit Mode, Graded Quizzes require Paid Mode."""
+    from unittest.mock import AsyncMock, patch
+
+    class MockSQLAlchemyAssessmentRepository(InMemoryAssessmentRepository):
+        pass
+
+    repo = MockSQLAlchemyAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-audit-quiz-test"
+
+    item_practice = "item-practice-audit"
+    item_graded = "item-graded-audit"
+    repo.item_types[item_practice] = "ITEM_TYPE_PRACTICE_QUIZ"
+    repo.item_types[item_graded] = "ITEM_TYPE_GRADED_QUIZ"
+
+    await usecase.submit_honor_code(user_id, item_practice, True)
+    await usecase.submit_honor_code(user_id, item_graded, True)
+
+    with patch(
+        "src.shared.access_policy.AccessPolicyService.verify_paid_access",
+        new=AsyncMock(
+            return_value=(
+                False,
+                "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode.",
+            )
+        ),
+    ):
+        # 1. Practice Quiz: Audit mode learner MUST BE ALLOWED to submit and receive explanations
+        res_practice = await usecase.submit_graded_quiz(
+            user_id, item_practice, question_answers=[[0]]
+        )
+        assert res_practice is not None
+        assert "score_percent" in res_practice
+        assert res_practice["attempts_left"] == UNLIMITED_ATTEMPTS_SENTINEL
+
+        # 2. Graded Quiz: Audit mode learner MUST BE BLOCKED with PermissionError
+        with pytest.raises(PermissionError, match="Audit Mode"):
+            await usecase.submit_graded_quiz(
+                user_id, item_graded, question_answers=[[0]]
+            )
 
 
 @pytest.mark.asyncio

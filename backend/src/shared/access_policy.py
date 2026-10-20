@@ -3,9 +3,6 @@
 import functools
 from typing import Any
 
-from connectrpc.code import Code
-from connectrpc.errors import ConnectError
-
 from src.modules.certificate.domain import FinancialAidStatus, ICertificateRepository
 from src.modules.identity.domain import UserRole
 from src.shared.infrastructure.database import async_session_scope
@@ -123,11 +120,25 @@ def require_paid_access(course_id_param: str = ""):
 
             async with async_session_scope() as session:
                 course_id = kwargs.get("course_id", course_id_param)
+                if not course_id:
+                    item_id = kwargs.get("item_id") or (args[0] if args else None)
+                    if item_id:
+                        repo_obj = getattr(self, "repository", None)
+                        if not repo_obj and hasattr(self, "_get_repo"):
+                            repo_obj = await self._get_repo(session)
+                        elif not repo_obj and hasattr(self, "repo_factory"):
+                            repo_obj = self.repo_factory(session)
+
+                        if repo_obj and hasattr(repo_obj, "get_course_id_by_item_id"):
+                            course_id = (
+                                await repo_obj.get_course_id_by_item_id(item_id) or ""
+                            )
+
                 is_paid, err = await AccessPolicyService.verify_paid_access(
                     session, user_id, course_id
                 )
                 if not is_paid:
-                    raise ConnectError(Code.PERMISSION_DENIED, err)
+                    raise PermissionError(err)
 
             return await func(self, user_id, *args, **kwargs)
 

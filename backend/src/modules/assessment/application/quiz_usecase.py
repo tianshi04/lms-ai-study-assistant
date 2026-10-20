@@ -30,7 +30,7 @@ from src.modules.assessment.domain import (
     QuizSubmittedDomainEvent,
     is_graded_quiz_item,
 )
-from src.shared.access_policy import require_paid_access
+from src.shared.access_policy import AccessPolicyService
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
@@ -361,7 +361,6 @@ class QuizUseCase(BaseAssessmentUseCase):
                 "cooldown_hours": cooldown_hours if is_graded else 0,
             }
 
-    @require_paid_access()
     async def submit_graded_quiz(
         self,
         user_id: str,
@@ -374,6 +373,23 @@ class QuizUseCase(BaseAssessmentUseCase):
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+
+            # BR_ACCESS_001: Practice Quizzes are open in Audit Mode.
+            # Only Graded Quizzes require Paid Mode authorization.
+            item_type_str = await repo.get_item_type(item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
+
+            if (
+                is_graded
+                and not preview
+                and (repo is None or "SQLAlchemy" in repo.__class__.__name__)
+            ):
+                target_course_id = await repo.get_course_id_by_item_id(item_id) or ""
+                is_paid, err = await AccessPolicyService.verify_paid_access(
+                    session, user_id, target_course_id
+                )
+                if not is_paid:
+                    raise PermissionError(err)
 
             matrix = await self._get_quiz_matrix(repo, item_id)
 
@@ -487,10 +503,7 @@ class QuizUseCase(BaseAssessmentUseCase):
                 except ValueError:
                     pass
 
-            # 4. Check item type & Cooldown state
-            item_type_str = await repo.get_item_type(item_id)
-            is_graded = is_graded_quiz_item(item_type_str)
-
+            # 4. Check Cooldown state
             cooldown_sec = 0
             attempts_left = UNLIMITED_ATTEMPTS_SENTINEL
 
