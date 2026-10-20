@@ -13,7 +13,7 @@ import { Surface } from "@/components/ui/Surface";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { normalizeUserRole } from "@/lib/jwt";
 import { sanitizeRedirectPath } from "@/lib/safe_redirect";
@@ -27,6 +27,7 @@ function LoginFormContent() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [quickLoggingInEmail, setQuickLoggingInEmail] = useState<string | null>(null);
   const [isSuccessRedirecting, setIsSuccessRedirecting] = useState(false);
 
   const getDestinationUrl = (role?: string) => {
@@ -82,7 +83,37 @@ function LoginFormContent() {
     },
   });
 
-  const isAnyLoading = submitting || isSuccessRedirecting;
+  const handleQuickLogin = async (email: string, _roleName: string) => {
+    form.setFieldValue("email", email);
+    form.setFieldValue("password", "123456");
+    setQuickLoggingInEmail(email);
+    setIsSuccessRedirecting(true);
+    try {
+      const res = await loginAction(email, "123456");
+      if (res.success && res.user) {
+        setAuth({
+          userId: res.user.id,
+          userName: res.user.fullName,
+          userEmail: res.user.email,
+          userRole: res.user.role,
+          userAvatar: res.user.avatarUrl,
+        });
+
+        window.location.replace(getDestinationUrl(res.user.role));
+      } else {
+        setIsSuccessRedirecting(false);
+        setQuickLoggingInEmail(null);
+        toast.error(res.error || "Đăng nhập thất bại.");
+      }
+    } catch (err: unknown) {
+      setIsSuccessRedirecting(false);
+      setQuickLoggingInEmail(null);
+      const msg = err instanceof Error ? err.message : "Đăng nhập thất bại.";
+      toast.error(msg);
+    }
+  };
+
+  const isAnyLoading = submitting || !!quickLoggingInEmail || isSuccessRedirecting;
 
   return (
     <div className="w-full max-w-md relative">
@@ -267,6 +298,76 @@ function LoginFormContent() {
               )}
             </form.Subscribe>
           </form>
+
+          {/* Quick Test Accounts Selector for Dev Mode */}
+          {process.env.NEXT_PUBLIC_ENV !== "production" && (
+            <div className="mt-6 p-4 rounded-2xl bg-muted/60 border border-border/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                  <Zap aria-hidden="true" className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  {"1-Click Đăng nhập nhanh"}
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  {"Mật khẩu: 123456"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  {
+                    label: "NGUYEN THANH PHONG",
+                    email: "n22dccn158@student.ptithcm.edu.vn",
+                    roleTag: "Học viên PTIT",
+                  },
+                  {
+                    label: "Nguyễn Phong",
+                    email: "phongnguyen.30604@gmail.com",
+                    roleTag: "Giảng viên",
+                  },
+                  {
+                    label: "Nguyễn Thanh Phong",
+                    email: "ttxmath1110@gmail.com",
+                    roleTag: "Quản trị viên",
+                  },
+                  {
+                    label: "Prof. Andrew Ng",
+                    email: "instructor@coursera.ai",
+                    roleTag: "Giảng viên AI",
+                  },
+                ].map((acc) => {
+                  const isCurrentLoading = quickLoggingInEmail === acc.email;
+                  return (
+                    <Button
+                      key={acc.email}
+                      type="button"
+                      variant="outlined"
+                      disabled={isAnyLoading}
+                      onClick={() => handleQuickLogin(acc.email, acc.roleTag)}
+                      className="w-full text-left p-2.5 h-auto rounded-xl bg-card border border-border hover:border-primary/80 hover:shadow-sm text-xs font-medium flex items-center justify-between group cursor-pointer transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed justify-between"
+                    >
+                      <div className="min-w-0 flex-1 pr-1.5 text-left">
+                        <div className="font-semibold text-foreground group-hover:text-primary min-w-0 truncate text-[11px]">
+                          {acc.label}
+                        </div>
+                        <div className="text-[10px] font-mono text-muted-foreground min-w-0 truncate">
+                          {acc.email}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {isCurrentLoading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                        ) : (
+                          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {acc.roleTag}
+                          </span>
+                        )}
+                      </div>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 text-center pt-4 border-t border-border">
             <p className="text-sm text-muted-foreground">
