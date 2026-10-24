@@ -48,7 +48,7 @@ class S3StorageService:
 
         Presigned URLs include the host in the AWS4-HMAC-SHA256 signature.
         If we generate the URL with 'minio:9000' but the browser sends it to
-        'localhost:9090', the signature will not match and MinIO rejects the request.
+        'localhost:9000', the signature will not match and MinIO rejects the request.
         This client uses the public endpoint so the signature matches the browser's Host header.
         """
         return self.session.client(
