@@ -4,10 +4,6 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Official production + preview deployments of this project only.
-VERCEL_ORIGIN_REGEX = r"^https://lms-ai-study-assistant(-[a-zA-Z0-9_-]+)?\.vercel\.app$"
-VERCEL_ORIGIN_PATTERN = re.compile(VERCEL_ORIGIN_REGEX)
-
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables or .env file."""
@@ -20,6 +16,7 @@ class Settings(BaseSettings):
 
     # 1. Server settings
     ENV: str = Field(default="development", description="Environment mode")
+    BACKEND_HOST: str = Field(default="0.0.0.0", description="Backend bind host")
     BACKEND_PORT: int = Field(default=8000, description="Backend port")
     FRONTEND_URL: str = Field(
         default="http://localhost:3000",
@@ -28,6 +25,10 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = Field(
         default="http://localhost:3000,http://127.0.0.1:3000",
         description="Comma-separated list of allowed CORS origins",
+    )
+    CORS_ORIGIN_REGEX: str = Field(
+        default="",
+        description="Optional regex pattern for allowed CORS origins (empty by default for Same-Domain Model 1)",
     )
 
     @property
@@ -42,13 +43,21 @@ class Settings(BaseSettings):
                 origins.add(cleaned)
         return frozenset(origins)
 
+    @property
+    def cors_origin_pattern(self) -> re.Pattern[str] | None:
+        """Compiled regex pattern for CORS_ORIGIN_REGEX, or None if empty."""
+        if not self.CORS_ORIGIN_REGEX:
+            return None
+        return re.compile(self.CORS_ORIGIN_REGEX)
+
     def is_allowed_origin(self, origin: str) -> bool:
-        """Return True only for an exact allow-listed origin or an official Vercel deployment."""
+        """Return True only for an exact allow-listed origin or a regex-matched deployment."""
         if not origin:
             return False
-        return origin in self.allowed_cors_origins or bool(
-            VERCEL_ORIGIN_PATTERN.fullmatch(origin)
-        )
+        if origin in self.allowed_cors_origins:
+            return True
+        pattern = self.cors_origin_pattern
+        return bool(pattern.fullmatch(origin)) if pattern else False
 
     # 2. PostgreSQL Database URL & Redis Cache/Broker URL
     DATABASE_URL: str = Field(

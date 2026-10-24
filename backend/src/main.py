@@ -45,7 +45,7 @@ from src.modules.partner.application import PartnerUseCase
 from src.modules.partner.presentation.partner_handler import PartnerHandler
 from src.modules.payment.application import PaymentUseCase
 from src.modules.payment.presentation.payment_handler import PaymentHandler
-from src.shared.config import VERCEL_ORIGIN_REGEX, settings
+from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
 from src.shared.infrastructure.logging import setup_logging
 from src.shared.infrastructure.middlewares import (
@@ -297,7 +297,7 @@ middleware = [
     Middleware(
         CORSMiddleware,
         allow_origins=sorted(settings.allowed_cors_origins),
-        allow_origin_regex=VERCEL_ORIGIN_REGEX,
+        allow_origin_regex=settings.CORS_ORIGIN_REGEX or None,
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=[
@@ -320,3 +320,15 @@ middleware = [
 
 app = Starlette(routes=routes, middleware=middleware, lifespan=lifespan)
 StarletteInstrumentor().instrument_app(app)
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "src.main:app",
+        host=settings.BACKEND_HOST,
+        port=settings.BACKEND_PORT,
+        reload=settings.ENV.lower() in ("development", "dev"),
+        reload_dirs=["src"],
+    )
