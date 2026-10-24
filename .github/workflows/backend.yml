@@ -60,6 +60,10 @@ jobs:
         run: uv run alembic upgrade head
         working-directory: backend
 
+      - name: Check for unapplied ORM migrations
+        run: make check-migrations
+        working-directory: backend
+
       - name: Run test suite (pytest + ruff + ty)
         run: make test
         working-directory: backend

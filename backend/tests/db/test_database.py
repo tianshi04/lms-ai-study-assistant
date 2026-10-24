@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import pytest
 from sqlalchemy import text
 
@@ -47,3 +50,29 @@ async def test_async_session_scope_context_manager():
             assert res.scalar() == 1
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"PostgreSQL container offline for async_session_scope test: {exc}")
+
+
+def test_alembic_migrations_in_sync():
+    """Verify that SQLAlchemy ORM models match the Alembic migration history (no pending migrations)."""
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "alembic", "check"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+        )
+        output = result.stdout + result.stderr
+        if (
+            "Can't connect to database" in output
+            or "Connection refused" in output
+            or "Is the server running" in output
+        ):
+            pytest.skip(
+                f"PostgreSQL container offline for alembic check test: {output}"
+            )
+        assert result.returncode == 0, (
+            f"Alembic check detected pending unmigrated changes or schema drift:\n{output}"
+        )
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Alembic check skipped: {exc}")

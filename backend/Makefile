@@ -1,4 +1,4 @@
-.PHONY: help setup gen dev test format seed seed-reset infra infra-down infra-clean infra-logs app app-down all docker-build app-logs migrate
+.PHONY: help setup gen dev test format seed seed-reset infra infra-down infra-clean infra-logs app app-down all docker-build app-logs migrate check-migrations
 
 help:
 	@echo "Available commands:"
@@ -17,7 +17,9 @@ help:
 	@echo "  make seed         - Seed database with initial sample courses (Upsert mode)"
 	@echo "  make seed-reset   - Truncate all tables and re-seed pristine initial catalog"
 	@echo "  make format       - Format code and fix auto-fixable lint issues"
-	@echo "  make test         - Run test suite (pytest + ruff + ty)"
+	@echo "  make test             - Run test suite (pytest + ruff + ty)"
+	@echo "  make migrate          - Run database migrations (alembic upgrade head)"
+	@echo "  make check-migrations - Check for ungenerated ORM model changes (alembic check)"
 
 infra:
 	docker compose --profile infra up -d --wait
@@ -58,6 +60,9 @@ dev:
 
 migrate:
 	uv run alembic upgrade head
+
+check-migrations:
+	uv run alembic check
 
 seed: migrate
 	uv run python -m src.seed
