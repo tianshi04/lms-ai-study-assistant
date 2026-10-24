@@ -1,10 +1,9 @@
 import {
   CopilotRuntime,
-  createCopilotHonoHandler,
+  createCopilotRuntimeHandler,
   InMemoryAgentRunner,
   BuiltInAgent,
 } from "@copilotkit/runtime/v2";
-import { handle } from "hono/vercel";
 
 const modelName =
   process.env.NEXT_PUBLIC_COPILOT_MODEL || process.env.COPILOT_MODEL || "google/gemini-3.6-flash";
@@ -51,12 +50,13 @@ const runtime = new CopilotRuntime({
   runner: new InMemoryAgentRunner(),
 });
 
-const app = createCopilotHonoHandler({
+const handler = createCopilotRuntimeHandler({
   runtime,
   basePath: "/api/copilotkit",
 });
 
-export const GET = handle(app);
-export const POST = handle(app);
-export const PATCH = handle(app);
-export const DELETE = handle(app);
+export const GET = handler;
+export const POST = handler;
+export const PATCH = handler;
+export const DELETE = handler;
+export const OPTIONS = handler;
