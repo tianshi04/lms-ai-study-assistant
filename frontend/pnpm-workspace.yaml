@@ -1,3 +1,6 @@
+packages:
+  - "."
+
 allowBuilds:
   "@bufbuild/buf": true
   "@scarf/scarf": false
