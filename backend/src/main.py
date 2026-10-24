@@ -59,36 +59,9 @@ setup_telemetry()
 logger = logging.getLogger("main")
 
 
-async def run_auto_migrations() -> None:
-    """Run Alembic upgrade head automatically on application startup (Dev mode only)."""
-    if settings.ENV.lower() not in ("development", "dev"):
-        logger.info(
-            "[AUTO MIGRATION] Skipped auto-migration in '%s' environment mode.",
-            settings.ENV,
-        )
-        return
-
-    try:
-        from alembic.config import Config
-
-        from alembic import command
-
-        alembic_cfg = Config("alembic.ini")
-
-        def _upgrade():
-            command.upgrade(alembic_cfg, "head")
-
-        await asyncio.to_thread(_upgrade)
-        logger.info(
-            "[AUTO MIGRATION] Alembic migrations upgraded to head successfully (Dev mode)."
-        )
-    except Exception as e:  # noqa: BLE001
-        logger.warning("[AUTO MIGRATION] Warning during auto-migration: %s", e)
-
-
 @asynccontextmanager
 async def lifespan(_app: Starlette):
-    """Lifespan context manager for AuthPolicy pre-initialization, database migrations and initial seeding."""
+    """Lifespan context manager for AuthPolicy and EventBus pre-initialization, plus graceful shutdown."""
     try:
         from src.modules.notification.application.event_handlers import (
             register_notification_event_handlers,
@@ -100,11 +73,6 @@ async def lifespan(_app: Starlette):
         logger.info(
             "[STARTUP] Pre-initialized AuthPolicyRegistry and EventBus handlers successfully."
         )
-
-        await run_auto_migrations()
-        from src.seed import seed_database
-
-        await seed_database(auto_mode=True)
     except Exception as e:  # noqa: BLE001
         logger.warning("[STARTUP] Warning during startup: %s", e)
 

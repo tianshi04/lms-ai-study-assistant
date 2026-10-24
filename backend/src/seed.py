@@ -3,7 +3,6 @@
 Best-Practice DDD Infrastructure Seeding Entrypoint:
 - Default Execution (Upsert Mode): Uses session.merge() to safely insert missing seed records or update existing ones without destructive data wipes.
 - Reset Execution (--reset Flag): Dynamically truncates all database tables when explicitly requested for a pristine environment reset (blocked in production).
-- Dev Startup Integration (auto_mode): Auto-seeds initial catalog if the database contains no courses.
 
 Usage:
   - Default / Upsert:  uv run python -m src.seed
@@ -21,9 +20,8 @@ backend_dir = Path(__file__).resolve().parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from sqlalchemy import select, text
+from sqlalchemy import text
 
-from src.modules.catalog.infrastructure.models import CourseModel
 from src.scripts.seeds import (
     build_categories,
     build_sample_catalog,
@@ -46,26 +44,16 @@ __all__ = [
 ]
 
 
-async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
+async def seed_database(reset: bool = False) -> None:
     """Execute database seeding across all bounded contexts.
 
     :param reset: If True, truncates all database tables before re-seeding.
-    :param auto_mode: If True (e.g. dev startup), skips seeding if database already contains courses.
     """
     if reset and settings.ENV.lower() in ("production", "prod"):
         msg = "Refusing to run destructive seed (--reset) in production environment!"
         raise RuntimeError(msg)
 
     async with async_session_scope() as session:
-        if auto_mode:
-            stmt = select(CourseModel).limit(1)
-            res = await session.execute(stmt)
-            if res.scalar_one_or_none() is not None:
-                logger.info(
-                    "[SEED] Database already contains courses. Auto-seeding skipped."
-                )
-                return
-
         if reset:
             logger.info("[SEED] Truncating ALL database tables for full clean reset...")
             tables = [f'"{table.name}"' for table in Base.metadata.sorted_tables]
@@ -102,4 +90,4 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    asyncio.run(seed_database(reset=args.reset, auto_mode=False))
+    asyncio.run(seed_database(reset=args.reset))
