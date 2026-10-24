@@ -10,7 +10,7 @@ AI Chatbot được triển khai theo mô hình Hybrid giữa Server-Side Runtim
 
 ```
 [ Frontend Next.js ] <---> [ CopilotKit Runtime Endpoint ] <---> [ Google Gemini 3.6 Flash ]
-  (AIChatbot / LearnPageAIChatbot)   (/api/copilotkit/[[...slug]])        (GOOGLE_API_KEY)
+  (AIChatbot / LearnPageAIChatbot)   (/copilotkit/[[...slug]])            (GOOGLE_API_KEY)
            |                                   |
    (useFrontendTool)                     (Multi-Agent)
            |                        (generalAgent & learnAgent)
@@ -22,7 +22,7 @@ AI Chatbot được triển khai theo mô hình Hybrid giữa Server-Side Runtim
 ## 2. Các Thành phần Chính
 
 ### 2.1 Runtime Handler Endpoint & Multi-Agent Engine
-- **Vị trí**: `frontend/src/app/api/copilotkit/[[...slug]]/route.ts`
+- **Vị trí**: `frontend/src/app/copilotkit/[[...slug]]/route.ts`
 - **Công nghệ**: Hono Vercel Adapter (`createCopilotHonoHandler` từ `@copilotkit/runtime/v2`).
 - **LLM Model**: Cấu hình mặc định `google/gemini-3.6-flash` (đọc qua `COPILOT_MODEL` hoặc `NEXT_PUBLIC_COPILOT_MODEL`).
 - **Biến môi trường**: Đọc `GOOGLE_API_KEY` từ `frontend/.env.local`.
@@ -32,7 +32,7 @@ AI Chatbot được triển khai theo mô hình Hybrid giữa Server-Side Runtim
 
 ### 2.2 React Provider & Style
 - **Vị trí**: `frontend/src/components/providers/CopilotProvider.tsx`
-- Bọc `<CopilotKit runtimeUrl="/api/copilotkit" useSingleEndpoint={false}>` từ `@copilotkit/react-core/v2`.
+- Bọc `<CopilotKit runtimeUrl="/copilotkit" useSingleEndpoint={false}>` từ `@copilotkit/react-core/v2`.
 - Tự động nạp stylesheet chuẩn `@copilotkit/react-core/v2/styles.css`.
 
 ### 2.3 UI Chatbot Components (Giao diện Kép)
@@ -70,4 +70,4 @@ AI Chatbot được triển khai theo mô hình Hybrid giữa Server-Side Runtim
    pnpm run dev
    ```
 3. **Kiểm tra thông tin Runtime Endpoint**:
-   Tải `http://localhost:3000/api/copilotkit/info` để xác nhận danh sách Agents khả dụng (`default` và `learnAgent`).
+   Tải `http://localhost:3000/copilotkit/info` để xác nhận danh sách Agents khả dụng (`default` và `learnAgent`).

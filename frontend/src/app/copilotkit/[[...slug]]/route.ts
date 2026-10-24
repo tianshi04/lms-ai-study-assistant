@@ -52,7 +52,7 @@ const runtime = new CopilotRuntime({
 
 const handler = createCopilotRuntimeHandler({
   runtime,
-  basePath: "/api/copilotkit",
+  basePath: "/copilotkit",
 });
 
 export const GET = handler;
