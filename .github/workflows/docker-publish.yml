@@ -153,30 +153,45 @@ jobs:
     name: Deploy to VPS
     needs: [build-and-push-backend, build-and-push-frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && secrets.VPS_HOST != ''
+    if: github.ref == 'refs/heads/main'
     steps:
+      - name: Check if VPS deployment is configured
+        id: check-vps
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          if [ -z "$VPS_HOST" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "VPS_HOST secret is not configured. Skipping deploy to VPS."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
+        if: steps.check-vps.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Copy Compose and Caddy files to VPS via SCP
+        if: steps.check-vps.outputs.skip != 'true'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          port: 22
           source: "docker-compose.yml,Caddyfile"
-          target: ${{ secrets.VPS_PROJECT_PATH || '/root/lms' }}
+          target: "/root/lms"
 
       - name: Execute deployment commands via SSH
+        if: steps.check-vps.outputs.skip != 'true'
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          port: 22
           script: |
-            cd ${{ secrets.VPS_PROJECT_PATH || '/root/lms' }}
+            cd /root/lms
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
