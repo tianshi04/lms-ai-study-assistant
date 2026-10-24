@@ -34,7 +34,7 @@ def fake_google(monkeypatch):
 @pytest.mark.asyncio
 async def test_google_register_and_fallback_login_flow(fake_google):
     usecase = IdentityUseCase()
-    unique_email = f"student_{uuid7().hex[:8]}@gmail.com"
+    unique_email = f"student_{uuid7().hex}@gmail.com"
 
     # Step 1: Google Register Verification
     test_code = f"{FAKE_CODE_PREFIX}{unique_email}_Student Name"
@@ -116,7 +116,7 @@ async def test_google_register_and_fallback_login_flow(fake_google):
 @pytest.mark.asyncio
 async def test_google_login_auto_provisions_new_user(fake_google):
     usecase = IdentityUseCase()
-    brand_new_email = f"brand_new_{uuid7().hex[:8]}@gmail.com"
+    brand_new_email = f"brand_new_{uuid7().hex}@gmail.com"
     test_code = f"{FAKE_CODE_PREFIX}{brand_new_email}_Brand New User"
 
     user, access_token, refresh_token, err = await usecase.google_login(test_code)
@@ -133,7 +133,7 @@ async def test_google_login_auto_provisions_new_user(fake_google):
 @pytest.mark.asyncio
 async def test_google_login_account_linking_requires_email_verified(monkeypatch):
     usecase = IdentityUseCase()
-    existing_email = f"unverified_link_{uuid7().hex[:8]}@gmail.com"
+    existing_email = f"unverified_link_{uuid7().hex}@gmail.com"
 
     # Register standard account first
     reg_user, reg_err = await usecase.register(
