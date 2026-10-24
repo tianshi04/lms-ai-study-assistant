@@ -75,12 +75,17 @@ class AssessmentHandler(AssessmentService):
             raise ConnectError(
                 Code.INVALID_ARGUMENT, "Vui lòng chỉ định ngôn ngữ lập trình"
             )
-        res = await self.use_case.submit_auto_graded_lab(
-            user_id=current_user.id,
-            item_id=request.item_id,
-            source_code=request.source_code,
-            language=request.language,
-        )
+        try:
+            res = await self.use_case.submit_auto_graded_lab(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                source_code=request.source_code,
+                language=request.language,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.FAILED_PRECONDITION, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         lab_result = pb.AutoGradedLabResult(
             score_percent=res["score_percent"],
             passed=res["passed"],
@@ -98,12 +103,17 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.SubmitPeerAssignmentResponse:
         current_user = require_current_user()
-        sub_id, msg = await self.use_case.submit_peer_assignment(
-            user_id=current_user.id,
-            item_id=request.item_id,
-            submission_url=request.submission_url,
-            text_content=request.text_content,
-        )
+        try:
+            sub_id, msg = await self.use_case.submit_peer_assignment(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                submission_url=request.submission_url,
+                text_content=request.text_content,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.FAILED_PRECONDITION, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         return pb.SubmitPeerAssignmentResponse(submission_id=sub_id, status_message=msg)
 
     async def get_peer_reviews_to_grade(
