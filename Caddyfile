@@ -1,0 +1,54 @@
+{
+	# Global options
+	# Điền email nếu cần nhận thông báo khi chứng chỉ SSL sắp hết hạn (Let's Encrypt / ZeroSSL)
+	# email your-email@example.com
+}
+
+# Sử dụng biến môi trường: mặc định là localhost nếu chạy dev, hoặc điền domain thực tế (vd: coursera.vn)
+{$DOMAIN:localhost} {
+	# 1. Nén dữ liệu tự động cho text, HTML, JSON
+	encode zstd gzip
+
+	# 2. Các header bảo mật tiêu chuẩn
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# 3. Stream Video & Media Assets (Bypass Next.js, đi thẳng vào Backend)
+	# Tắt buffer (flush_interval -1) để hỗ trợ HTTP 206 Partial Content (tua video HTML5)
+	handle /coursera-assets/* {
+		reverse_proxy {$BACKEND_UPSTREAM:127.0.0.1:8000} {
+			flush_interval -1
+		}
+	}
+
+	# 4. REST Webhooks & Toàn bộ API bên ngoài (/api/*) -> 100% đi thẳng vào Backend
+	handle /api/* {
+		reverse_proxy {$BACKEND_UPSTREAM:127.0.0.1:8000}
+	}
+
+	# 5. Tối ưu bộ nhớ đệm (Cache) cho các tài nguyên tĩnh của Next.js (JS, CSS, Font)
+	handle /_next/static/* {
+		header Cache-Control "public, max-age=31536000, immutable"
+		reverse_proxy {$FRONTEND_UPSTREAM:127.0.0.1:3000}
+	}
+
+	# 6. Toàn bộ Giao diện Web, SSR, RPC nội bộ (/rpc/*) và CopilotKit (/copilotkit/*) -> Đi vào Next.js
+	handle {
+		reverse_proxy {$FRONTEND_UPSTREAM:127.0.0.1:3000} {
+			# Hỗ trợ Streaming SSR (React Suspense) & Server-Sent Events (AI Chat CopilotKit)
+			flush_interval -1
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	# 6. Ghi log có cấu trúc (JSON Format)
+	log {
+		output stdout
+		format json
+	}
+}

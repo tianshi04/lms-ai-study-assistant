@@ -1,0 +1,252 @@
+services:
+  # ------------------------------------------------------------------
+  # 1. REVERSE PROXY & AUTOMATIC SSL: Caddy v2
+  # ------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    container_name: coursera_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+      - BACKEND_UPSTREAM=backend:8000
+      - FRONTEND_UPSTREAM=frontend:3000
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - coursera_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ------------------------------------------------------------------
+  # 2. FRONTEND: Next.js 16 (App Router + Standalone Output)
+  # ------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: ${FRONTEND_IMAGE:-coursera-frontend:latest}
+    container_name: coursera_frontend
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NODE_ENV=production
+      - INTERNAL_API_URL=http://backend:8000
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - COPILOT_MODEL=${COPILOT_MODEL:-google/gemini-2.5-flash}
+    expose:
+      - "3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - coursera_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ------------------------------------------------------------------
+  # 3. DATABASE MIGRATION RUNNER (One-shot before Backend starts)
+  # ------------------------------------------------------------------
+  migration:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${BACKEND_IMAGE:-coursera-backend:latest}
+    container_name: coursera_migration
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-coursera_admin}:${POSTGRES_PASSWORD:-coursera_password123}@postgres:5432/${POSTGRES_DB:-coursera_lms}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - coursera_network
+
+  # ------------------------------------------------------------------
+  # 4. BACKEND: Python 3.13 + Uvicorn ASGI (ConnectRPC)
+  # ------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${BACKEND_IMAGE:-coursera-backend:latest}
+    container_name: coursera_backend
+    restart: unless-stopped
+    stop_grace_period: 45s
+    environment:
+      - ENV=production
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-coursera_admin}:${POSTGRES_PASSWORD:-coursera_password123}@postgres:5432/${POSTGRES_DB:-coursera_lms}
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT:-https://${DOMAIN:-localhost}/coursera-assets}
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minio_admin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minio_password123}
+      - MINIO_BUCKET_NAME=coursera-assets
+      - MINIO_SECURE=false
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-your_super_secret_jwt_key_coursera_2026_change_in_prod}
+      - FRONTEND_URL=https://${DOMAIN:-localhost}
+      - CORS_ORIGINS=https://${DOMAIN:-localhost},http://localhost:3000
+      - VNPAY_TMN_CODE=${VNPAY_TMN_CODE:-}
+      - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET:-}
+      - VNPAY_PAYMENT_URL=${VNPAY_PAYMENT_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      - VNPAY_API_URL=${VNPAY_API_URL:-https://sandbox.vnpayment.vn/merchant_webapi/api/transaction}
+      - VNPAY_RETURN_URL=https://${DOMAIN:-localhost}/payment/vnpay-return
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - coursera_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ------------------------------------------------------------------
+  # 5. POSTGRESQL 17 + PGVECTOR
+  # ------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: coursera_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-coursera_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coursera_password123}
+      POSTGRES_DB: ${POSTGRES_DB:-coursera_lms}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-coursera_admin} -d ${POSTGRES_DB:-coursera_lms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - coursera_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ------------------------------------------------------------------
+  # 6. MINIO S3 OBJECT STORAGE
+  # ------------------------------------------------------------------
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: coursera_minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_password123}
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:${MINIO_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - coursera_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ------------------------------------------------------------------
+  # 7. REDIS 7 IN-MEMORY CACHE
+  # ------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: coursera_redis
+    restart: always
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - coursera_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ------------------------------------------------------------------
+  # 8. JAEGER OBSERVABILITY (Distributed Tracing)
+  # ------------------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: coursera_jaeger
+    restart: always
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "127.0.0.1:${JAEGER_UI_PORT:-16686}:16686"
+    networks:
+      - coursera_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  minio_data:
+  redis_data:
+
+networks:
+  coursera_network:
+    driver: bridge
