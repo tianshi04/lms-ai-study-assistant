@@ -5,11 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 import src.shared.infrastructure.database as db_module
 from src.main import app
 from src.seed import seed_database
+from tests.conftest import check_postgres_available
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def auto_rollback_db():
     """Ensure every DB operation in integration tests runs inside a Savepoint transaction."""
+    check_postgres_available()
+
     engine = db_module.get_engine()
     connection = await engine.connect()
     transaction = await connection.begin()
@@ -39,6 +42,7 @@ async def client():
     """
     Tạo test client cho Starlette app với ASGI transport.
     """
+    check_postgres_available()
     await seed_database()
     transport = ASGITransport(app=app)
 

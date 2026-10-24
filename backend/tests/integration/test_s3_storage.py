@@ -1,11 +1,13 @@
 import pytest
 
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
+from tests.conftest import check_minio_available
 
 
 @pytest.mark.asyncio(loop_scope="function")
 async def test_s3_storage_operations():
     """Verify S3 storage operations against the coursera_minio Docker container."""
+    check_minio_available()
     s3_service = get_s3_storage_service()
 
     # 1. Ensure test bucket exists in MinIO/S3

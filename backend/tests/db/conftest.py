@@ -2,21 +2,18 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 import src.shared.infrastructure.database as db_module
+from tests.conftest import check_postgres_available
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def auto_rollback_db():
     """Ensure every DB operation in repository tests runs inside a Savepoint transaction
-
     that is automatically rolled back after the test completes.
     """
-    engine = db_module.get_engine()
-    try:
-        connection = await engine.connect()
-    except Exception:  # noqa: BLE001
-        yield
-        return
+    check_postgres_available()
 
+    engine = db_module.get_engine()
+    connection = await engine.connect()
     transaction = await connection.begin()
 
     test_sessionmaker = async_sessionmaker(

@@ -6,6 +6,7 @@ from uuid6 import uuid7
 from src.modules.identity.application import IdentityUseCase, auth_usecase
 from src.modules.identity.domain import UserRole
 from src.shared.config import settings
+from tests.conftest import check_postgres_available
 
 FAKE_CODE_PREFIX = "fake_google_"
 
@@ -33,6 +34,7 @@ def fake_google(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_google_register_and_fallback_login_flow(fake_google):
+    check_postgres_available()
     usecase = IdentityUseCase()
     unique_email = f"student_{uuid7().hex}@gmail.com"
 
@@ -115,6 +117,7 @@ async def test_google_register_and_fallback_login_flow(fake_google):
 
 @pytest.mark.asyncio
 async def test_google_login_auto_provisions_new_user(fake_google):
+    check_postgres_available()
     usecase = IdentityUseCase()
     brand_new_email = f"brand_new_{uuid7().hex}@gmail.com"
     test_code = f"{FAKE_CODE_PREFIX}{brand_new_email}_Brand New User"
@@ -132,6 +135,7 @@ async def test_google_login_auto_provisions_new_user(fake_google):
 
 @pytest.mark.asyncio
 async def test_google_login_account_linking_requires_email_verified(monkeypatch):
+    check_postgres_available()
     usecase = IdentityUseCase()
     existing_email = f"unverified_link_{uuid7().hex}@gmail.com"
 
