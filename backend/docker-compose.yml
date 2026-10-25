@@ -102,7 +102,7 @@ services:
   # ------------------------------------------------------------------
   openobserve:
     profiles: ["infra", "app", "all"]
-    image: public.ecr.aws/zinclabs/openobserve:latest
+    image: openobserve/openobserve:latest
     container_name: coursera_openobserve
     restart: always
     environment:

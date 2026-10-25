@@ -234,7 +234,7 @@ services:
   # 8. OPENOBSERVE (All-in-One Observability: Logs, Metrics, Traces, RUM)
   # ------------------------------------------------------------------
   openobserve:
-    image: public.ecr.aws/zinclabs/openobserve:latest
+    image: openobserve/openobserve:latest
     container_name: coursera_openobserve
     restart: always
     environment:
