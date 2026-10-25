@@ -133,31 +133,31 @@ Now you can use shorthand:
 <Dialog className="data-open:opacity-100 data-closed:opacity-0" />
 ```
 
-### Integration with Base UI (@base-ui/react)
+### Integration with Radix UI
 
-This pattern is used extensively by [Base UI](https://base-ui.com/), which automatically applies state data attributes to its primitives:
+This pattern is used extensively by [Radix UI](https://www.radix-ui.com/), which automatically applies data attributes to its primitives:
 
 ```tsx
-import { Dialog } from "@base-ui/react/dialog";
+import * as Dialog from "@radix-ui/react-dialog";
 
 <Dialog.Root>
-  <Dialog.Trigger className="data-[state=open]:bg-accent" />
+  <Dialog.Trigger />
   <Dialog.Portal>
-    {/* Base UI automatically adds data-open, data-closed, data-starting-style, data-ending-style */}
-    <Dialog.Backdrop className="data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 transition-opacity" />
-    <Dialog.Popup className="data-[open]:animate-in data-[closed]:animate-out" />
+    {/* Radix automatically adds data-state="open" | "closed" */}
+    <Dialog.Overlay className="data-[state=open]:animate-in data-[state=closed]:animate-out" />
+    <Dialog.Content className="data-[state=open]:fade-in data-[state=closed]:fade-out" />
   </Dialog.Portal>
 </Dialog.Root>;
 ```
 
-Other data attributes Base UI provides include:
+Other data attributes Radix provides include:
 
-- `data-open` / `data-closed` - open/closed modal or popup state
-- `data-starting-style` / `data-ending-style` - CSS transition entry/exit states
+- `data-state` - open/closed, active/inactive, on/off
 - `data-side` - top/right/bottom/left (for positioned elements)
 - `data-align` - start/center/end (for positioned elements)
-- `data-disabled` - present when element is disabled
-- `data-checked` - present when checkbox/toggle is checked
+- `data-orientation` - horizontal/vertical
+- `data-disabled` - present when disabled
+- `data-placeholder` - present when showing placeholder
 
 ## Component identification with data-slot
 

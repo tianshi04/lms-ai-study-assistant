@@ -55,9 +55,17 @@ export const Stepper = ({ value, setValue }: StepperProps) => (
 
 ## Merging states
 
-Modern unstyled primitive libraries like [Base UI](https://base-ui.com/) (`@base-ui/react`) and Radix UI handle both controlled and uncontrolled states out of the box (e.g. `open` vs `defaultOpen` with `onOpenChange`).
+The best components support both controlled and uncontrolled state. This allows the component to be used in a variety of scenarios, and to be easily customized.
 
-For custom primitives, libraries maintain utilities for merging controllable and uncontrolled state (such as `useControlled` in Base UI or `useControllableState` in Radix UI).
+[Radix UI](https://www.radix-ui.com/) maintain an internal utility for merging controllable and uncontrolled state called [`use-controllable-state`](https://github.com/radix-ui/primitives/tree/main/packages/react/use-controllable-state). While not intended for public use, registries like [Kibo UI](https://www.kibo-ui.com) have implemented this utility to build their own Radix-like components.
+
+Let's install the hook:
+
+```package-install
+npm install @radix-ui/react-use-controllable-state
+```
+
+This lightweight hook gives you the same state management patterns used internally by Radix UI's component library, ensuring your components behave consistently with industry standards.
 
 The hook accepts three main parameters and returns a tuple with the current value and setter. Let's use it to merge the controlled and uncontrolled state of the `Stepper` component:
 
