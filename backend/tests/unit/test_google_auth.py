@@ -290,3 +290,21 @@ def test_redirect_uri_allow_list(monkeypatch):
     ]:
         with pytest.raises(ValueError, match="redirect_uri không hợp lệ"):
             resolve(bad)
+
+
+@pytest.mark.asyncio
+async def test_exchange_passes_clock_skew_tolerance(monkeypatch):
+    captured_kwargs = {}
+
+    def fake_verify(*args, **kwargs):
+        captured_kwargs.update(kwargs)
+        return {"sub": "1", "email": "a@gmail.com", "email_verified": True}
+
+    _fake_google_token_endpoint(monkeypatch, {})
+    monkeypatch.setattr(auth_usecase.id_token, "verify_oauth2_token", fake_verify)
+
+    await auth_usecase._exchange_google_code("auth-code")
+    assert (
+        captured_kwargs.get("clock_skew_in_seconds")
+        == auth_usecase.GOOGLE_CLOCK_SKEW_SECONDS
+    )

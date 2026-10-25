@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 GOOGLE_CALLBACK_PATH = "/auth/google/callback"
+GOOGLE_CLOCK_SKEW_SECONDS = 10
 
 
 def _resolve_google_redirect_uri(redirect_uri: str) -> str:
@@ -72,7 +73,11 @@ async def _exchange_google_code(
     if code.count(".") == 2:
         try:
             payload = await asyncio.to_thread(
-                id_token.verify_oauth2_token, code, requests.Request(), client_id
+                id_token.verify_oauth2_token,
+                code,
+                requests.Request(),
+                client_id,
+                clock_skew_in_seconds=GOOGLE_CLOCK_SKEW_SECONDS,
             )
         except ValueError as e:
             logger.error("Google ID Token verification failed: %s", e)
@@ -118,7 +123,11 @@ async def _exchange_google_code(
     # Verify RS256 signature and audience (blocking I/O → offload to thread)
     try:
         payload = await asyncio.to_thread(
-            id_token.verify_oauth2_token, id_token_jwt, requests.Request(), client_id
+            id_token.verify_oauth2_token,
+            id_token_jwt,
+            requests.Request(),
+            client_id,
+            clock_skew_in_seconds=GOOGLE_CLOCK_SKEW_SECONDS,
         )
     except ValueError as e:
         logger.error("Google ID Token verification failed: %s", e)
