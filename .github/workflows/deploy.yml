@@ -271,4 +271,5 @@ jobs:
             cd ${{ secrets.VPS_PROJECT_PATH || '/root/lms' }}
             docker compose pull
             docker compose up -d --remove-orphans
+            docker compose restart caddy
             docker image prune -f
