@@ -1,4 +1,4 @@
-name: Publish Docker Images to GHCR
+name: Release & Deploy to VPS
 
 on:
   push:
@@ -21,8 +21,8 @@ permissions:
   packages: write
 
 jobs:
-  build-and-push-backend:
-    name: Build & Push Backend Image
+  backend:
+    name: Backend CI & Publish
     runs-on: ubuntu-latest
 
     steps:
@@ -40,13 +40,31 @@ jobs:
         with:
           version: "latest"
           python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
 
       - name: Install Python dependencies
         run: uv sync --frozen
         working-directory: backend
 
+      - name: Start Docker Compose Infrastructure
+        run: make infra
+        working-directory: backend
+
       - name: Generate Protobuf / ConnectRPC stubs
         run: make gen
+        working-directory: backend
+
+      - name: Run database migrations
+        run: uv run alembic upgrade head
+        working-directory: backend
+
+      - name: Check for unapplied ORM migrations
+        run: make check-migrations
+        working-directory: backend
+
+      - name: Run test suite (pytest + ruff + ty)
+        run: make test
         working-directory: backend
 
       - name: Set up Docker Buildx
@@ -82,8 +100,8 @@ jobs:
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
-  build-and-push-frontend:
-    name: Build & Push Frontend Image
+  frontend:
+    name: Frontend CI & Publish
     runs-on: ubuntu-latest
 
     steps:
@@ -114,6 +132,14 @@ jobs:
 
       - name: Generate Protobuf / ConnectRPC stubs
         run: pnpm run gen
+        working-directory: frontend
+
+      - name: Run quality check (Type check, Oxlint & Oxfmt)
+        run: pnpm run check
+        working-directory: frontend
+
+      - name: Run production build
+        run: pnpm run build
         working-directory: frontend
 
       - name: Set up Docker Buildx
@@ -151,9 +177,12 @@ jobs:
 
   deploy-to-vps:
     name: Deploy to VPS
-    needs: [build-and-push-backend, build-and-push-frontend]
+    needs: [backend, frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      (needs.backend.result == 'success' || needs.frontend.result == 'success')
     steps:
       - name: Check VPS secrets configuration
         id: check-secrets

@@ -1,13 +1,6 @@
 name: Backend CI
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-      - 'proto/**'
-      - '.github/workflows/backend.yml'
   pull_request:
     branches:
       - main
@@ -27,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Set up Buf CLI
         uses: bufbuild/buf-action@v1
@@ -35,9 +28,8 @@ jobs:
           setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-
       - name: Set up uv
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
           python-version: "3.13"
@@ -71,6 +63,3 @@ jobs:
       - name: Verify Docker Image Build
         run: docker build -t coursera-backend:ci .
         working-directory: backend
-
-
-
