@@ -8,6 +8,19 @@ from src.shared.config import settings
 from src.shared.infrastructure.logging.context import get_request_id, get_user_id
 
 
+class ContextFilter(logging.Filter):
+    """Filter that injects request_id and user_id into LogRecord attributes for OTel & structured formatters."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        req_id = get_request_id()
+        if req_id:
+            record.request_id = req_id
+        user_id = get_user_id()
+        if user_id:
+            record.user_id = user_id
+        return True
+
+
 class ContextAwareFormatter(logging.Formatter):
     """Console formatter adding request_id and user_id to log records."""
 
@@ -88,6 +101,11 @@ def setup_logging() -> None:
     logging_config: dict[str, Any] = {
         "version": 1,
         "disable_existing_loggers": False,
+        "filters": {
+            "context_filter": {
+                "()": ContextFilter,
+            },
+        },
         "formatters": {
             "console": {
                 "()": ContextAwareFormatter,
@@ -104,11 +122,13 @@ def setup_logging() -> None:
                 "class": "logging.StreamHandler",
                 "stream": sys.stdout,
                 "formatter": formatter_name,
+                "filters": ["context_filter"],
             },
         },
         "loggers": {
             "": {
                 "handlers": ["default"],
+                "filters": ["context_filter"],
                 "level": log_level,
             },
             "alembic": {

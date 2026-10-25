@@ -122,3 +122,28 @@ async def test_request_id_middleware():
         assert resp_auto.status_code == 200
         assert "x-request-id" in resp_auto.headers
         assert resp_auto.json()["request_id"] == resp_auto.headers["x-request-id"]
+
+
+def test_context_filter_populates_record_attributes():
+    from src.shared.infrastructure.logging.config import ContextFilter
+
+    filter_instance = ContextFilter()
+    token_req = set_request_id("ctx-filter-req-777")
+    token_user = set_user_id("ctx-filter-usr-888")
+
+    try:
+        record = logging.LogRecord(
+            name="filter_logger",
+            level=logging.INFO,
+            pathname="test.py",
+            lineno=30,
+            msg="Testing context filter",
+            args=(),
+            exc_info=None,
+        )
+        assert filter_instance.filter(record) is True
+        assert getattr(record, "request_id", None) == "ctx-filter-req-777"
+        assert getattr(record, "user_id", None) == "ctx-filter-usr-888"
+    finally:
+        reset_request_id(token_req)
+        reset_user_id(token_user)

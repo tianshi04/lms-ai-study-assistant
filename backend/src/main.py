@@ -52,7 +52,10 @@ from src.shared.infrastructure.middlewares import (
     AssetAuthMiddleware,
     RequestIDMiddleware,
 )
-from src.shared.infrastructure.telemetry import setup_telemetry
+from src.shared.infrastructure.telemetry import (
+    setup_telemetry,
+    shutdown_telemetry,
+)
 
 setup_logging()
 setup_telemetry()
@@ -100,10 +103,7 @@ async def lifespan(_app: Starlette):
         )
 
     try:
-        from opentelemetry import metrics, trace
-
-        trace.get_tracer_provider().shutdown()  # type: ignore
-        metrics.get_meter_provider().shutdown()  # type: ignore
+        shutdown_telemetry()
         logger.info("[SHUTDOWN] OpenTelemetry providers flushed and shut down.")
     except Exception as e:  # noqa: BLE001
         logger.warning("[SHUTDOWN] Error shutting down OpenTelemetry providers: %s", e)
