@@ -3,8 +3,9 @@ import { createClient, Client, Interceptor } from "@connectrpc/connect";
 import type { DescService } from "@bufbuild/protobuf";
 import { cookies } from "next/headers";
 
-const API_BASE_URL =
-  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+export function getInternalApiUrl(): string {
+  return process.env.INTERNAL_API_URL || "http://127.0.0.1:8000";
+}
 
 /**
  * Server-side ConnectRPC Interceptor to inject Authorization Bearer token from cookies.
@@ -28,7 +29,7 @@ const serverAuthInterceptor: Interceptor = (next) => async (req) => {
  */
 export function getPublicRpcServerClient<T extends DescService>(service: T): Client<T> {
   const transport = createConnectTransport({
-    baseUrl: API_BASE_URL,
+    baseUrl: getInternalApiUrl(),
   });
   return createClient(service, transport);
 }
@@ -43,7 +44,7 @@ export function getPublicRpcServerClient<T extends DescService>(service: T): Cli
  */
 export async function getRpcServerClient<T extends DescService>(service: T): Promise<Client<T>> {
   const transport = createConnectTransport({
-    baseUrl: API_BASE_URL,
+    baseUrl: getInternalApiUrl(),
     interceptors: [serverAuthInterceptor],
   });
   return createClient(service, transport);

@@ -3,11 +3,6 @@ import { createClient, Client, Interceptor, ConnectError, Code } from "@connectr
 import type { DescService } from "@bufbuild/protobuf";
 import { refreshSessionAction } from "@/app/auth/actions";
 
-const API_BASE_URL =
-  typeof window !== "undefined"
-    ? "/rpc"
-    : process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
 let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
@@ -55,33 +50,39 @@ const refreshInterceptor: Interceptor = (next) => async (req) => {
   }
 };
 
-/**
- * Shared ConnectRPC Transport instance configured to include cookies on all requests.
- */
-export const transport = createConnectTransport({
-  baseUrl: API_BASE_URL,
-  fetch: (input, init) => fetch(input, { ...init, credentials: "include" }),
-  interceptors: [refreshInterceptor],
-});
+function getTransport() {
+  const baseUrl =
+    typeof window !== "undefined"
+      ? "/rpc"
+      : process.env.INTERNAL_API_URL || "http://127.0.0.1:8000";
+  return createConnectTransport({
+    baseUrl,
+    fetch: (input, init) => fetch(input, { ...init, credentials: "include" }),
+    interceptors: [refreshInterceptor],
+  });
+}
 
 /**
- * Module-level cache for ConnectRPC client instances.
+ * Module-level cache for browser ConnectRPC client instances.
  * Avoids redundant createClient() calls on every render or hook invocation.
  */
 const clientCache = new Map<string, Client<DescService>>();
 
 /**
  * Factory function to obtain a typed ConnectRPC client for any generated service schema.
- * Returns a cached instance if one already exists for the given service.
+ * Returns a cached instance in the browser, or a fresh runtime-bound instance on the server.
  *
  * @example
  * import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
  * const catalogClient = getRpcClient(CatalogService);
  */
 export function getRpcClient<T extends DescService>(service: T): Client<T> {
+  if (typeof window === "undefined") {
+    return createClient(service, getTransport());
+  }
   const key = service.typeName;
   if (!clientCache.has(key)) {
-    clientCache.set(key, createClient(service, transport));
+    clientCache.set(key, createClient(service, getTransport()));
   }
   return clientCache.get(key) as Client<T>;
 }

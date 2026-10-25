@@ -5,9 +5,7 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient } from "@connectrpc/connect";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { normalizeUserRole } from "@/lib/jwt";
-
-const API_BASE_URL =
-  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+import { getInternalApiUrl } from "@/lib/server_connect_client";
 
 const ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1 hour (matches backend 60m expiry)
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 days (matches backend 7d expiry)
@@ -24,7 +22,7 @@ function getCookieOptions(maxAge: number) {
 
 function getUnauthenticatedBackendClient() {
   const transport = createConnectTransport({
-    baseUrl: API_BASE_URL,
+    baseUrl: getInternalApiUrl(),
   });
   return createClient(IdentityService, transport);
 }

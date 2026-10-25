@@ -1,7 +1,5 @@
 import { type NextRequest } from "next/server";
-
-const BACKEND_URL =
-  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+import { getInternalApiUrl } from "@/lib/server_connect_client";
 
 async function handleRpcProxy(
   request: NextRequest,
@@ -9,7 +7,8 @@ async function handleRpcProxy(
 ) {
   const { path } = await params;
   const targetPath = path.join("/");
-  const targetUrl = `${BACKEND_URL.replace(/\/+$/, "")}/${targetPath}${request.nextUrl.search}`;
+  const backendUrl = getInternalApiUrl();
+  const targetUrl = `${backendUrl.replace(/\/+$/, "")}/${targetPath}${request.nextUrl.search}`;
 
   // 1. Forward request headers while stripping hop-by-hop headers
   const headers = new Headers(request.headers);
