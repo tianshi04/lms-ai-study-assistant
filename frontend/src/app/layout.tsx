@@ -9,10 +9,9 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CopilotProvider } from "@/components/providers/CopilotProvider";
+import { OpenObserveProvider } from "@/components/providers/OpenObserveProvider";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { getAuthServer } from "@/lib/auth_server";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -53,7 +52,21 @@ async function AsyncAuthProvider({ children }: { children: React.ReactNode }) {
     userAvatar: session.userAvatar,
   };
 
-  return <AuthProvider initialAuth={initialAuth}>{children}</AuthProvider>;
+  const openObserveConfig = {
+    clientToken: (process.env.OPENOBSERVE_CLIENT_TOKEN || "").trim(),
+    applicationId: (process.env.OPENOBSERVE_APPLICATION_ID || "lms-frontend").trim(),
+    site: (process.env.OPENOBSERVE_SITE || "").trim(),
+    organizationIdentifier: (process.env.OPENOBSERVE_ORG || "default").trim(),
+    service: "lms-frontend",
+    env: process.env.NODE_ENV || "production",
+    version: "1.0.0",
+  };
+
+  return (
+    <AuthProvider initialAuth={initialAuth}>
+      <OpenObserveProvider config={openObserveConfig}>{children}</OpenObserveProvider>
+    </AuthProvider>
+  );
 }
 
 export default function RootLayout({
@@ -89,8 +102,6 @@ export default function RootLayout({
             </ToastProvider>
           </ThemeProvider>
         </QueryProvider>
-        <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );
