@@ -13,6 +13,18 @@
       "skillPath": "skills/building-components/SKILL.md",
       "computedHash": "20889af7cb9b3abca1e38824f7fffaa873eb0cc4d45187967b97bd85462cf934"
     },
+    "copilotkit": {
+      "source": "CopilotKit/CopilotKit",
+      "sourceType": "github",
+      "skillPath": "skills/copilotkit/SKILL.md",
+      "computedHash": "ac868a5739231c574a48878783e5430393796fb29b161d57f3c22151c9f1d9b7"
+    },
+    "copilotkit-cli": {
+      "source": "CopilotKit/CopilotKit",
+      "sourceType": "github",
+      "skillPath": "skills/copilotkit-cli/SKILL.md",
+      "computedHash": "16fd56be7a4602ec100fa991bc6504b9f815ee2bff543c72523314fc3c24ea16"
+    },
     "gh-stack": {
       "source": "github/gh-stack",
       "sourceType": "github",
