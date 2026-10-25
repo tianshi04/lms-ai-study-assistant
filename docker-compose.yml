@@ -46,9 +46,9 @@ services:
       - HOSTNAME=0.0.0.0
       - NODE_ENV=production
       - INTERNAL_API_URL=http://backend:8000
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
-      - COPILOT_MODEL=${COPILOT_MODEL:-google/gemini-2.5-flash}
+      - COPILOT_MODEL=${COPILOT_MODEL:-google/gemini-3.5-flash-lite}
     expose:
       - "3000"
     depends_on:

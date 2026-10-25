@@ -201,3 +201,10 @@ File workflow `.github/workflows/docker-publish.yml` đã được tích hợp s
 | **Kiểm tra trạng thái container** | `docker compose ps` |
 | **Chạy Alembic migration thủ công** | `docker compose run --rm migration` |
 | **Dọn dẹp image cũ giải phóng dung lượng** | `docker image prune -f` |
+
+
+---
+
+## 7. Kế Hoạch Nâng Cấp Hạ Tầng (TODO)
+
+- [ ] **Nâng cấp Jaeger v1 lên Jaeger v2**: Thay thế container image `jaegertracing/all-in-one:latest` sang `jaegertracing/jaeger:2` chạy trên nền kiến trúc OpenTelemetry Collector gốc nhằm tối ưu hóa hiệu năng, giảm tiêu thụ RAM và chuẩn bị trước hạn chót End-of-Life của v1.

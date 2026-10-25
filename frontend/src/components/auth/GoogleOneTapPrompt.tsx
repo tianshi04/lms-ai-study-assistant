@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { getGoogleClientIdAction, googleLoginAction } from "@/app/auth/actions";
+import { googleLoginAction } from "@/app/auth/actions";
+import { resolveGoogleClientId } from "@/lib/google_oauth";
 import { useToast } from "@/components/ui/Toast";
 
 export function GoogleOneTapPrompt() {
@@ -28,8 +29,7 @@ export function GoogleOneTapPrompt() {
     let timer: NodeJS.Timeout | null = null;
 
     async function setupOneTap() {
-      const googleClientId =
-        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || (await getGoogleClientIdAction());
+      const googleClientId = await resolveGoogleClientId();
       if (!googleClientId || cancelled) {
         console.error = originalConsoleError;
         return;

@@ -9,7 +9,7 @@ Tài liệu này mô tả chi tiết giải pháp thiết kế và triển khai 
 AI Chatbot được triển khai theo mô hình Hybrid giữa Server-Side Runtime Handler và Client-Side Chatbot Widgets:
 
 ```
-[ Frontend Next.js ] <---> [ CopilotKit Runtime Endpoint ] <---> [ Google Gemini 3.6 Flash ]
+[ Frontend Next.js ] <---> [ CopilotKit Runtime Endpoint ] <---> [ Google Gemini 3.5 Flash Lite ]
   (AIChatbot / LearnPageAIChatbot)   (/copilotkit/[[...slug]])            (GOOGLE_API_KEY)
            |                                   |
    (useFrontendTool)                     (Multi-Agent)
@@ -24,8 +24,8 @@ AI Chatbot được triển khai theo mô hình Hybrid giữa Server-Side Runtim
 ### 2.1 Runtime Handler Endpoint & Multi-Agent Engine
 - **Vị trí**: `frontend/src/app/copilotkit/[[...slug]]/route.ts`
 - **Công nghệ**: Hono Vercel Adapter (`createCopilotHonoHandler` từ `@copilotkit/runtime/v2`).
-- **LLM Model**: Cấu hình mặc định `google/gemini-3.6-flash` (đọc qua `COPILOT_MODEL` hoặc `NEXT_PUBLIC_COPILOT_MODEL`).
-- **Biến môi trường**: Đọc `GOOGLE_API_KEY` từ `frontend/.env.local`.
+- **LLM Model**: Cấu hình mặc định `google/gemini-3.5-flash-lite` (đọc qua biến môi trường runtime `COPILOT_MODEL`).
+- **Biến môi trường**: Đọc `GOOGLE_API_KEY` và `COPILOT_MODEL` từ `frontend/.env.local` (hoặc container environment).
 - **Cấu hình Đa Trợ Lý (Multi-Agent Setup)**:
   1. `default` (`generalAgent`): Trợ Lý AI Tổng Quan cho toàn hệ thống LMS, hỗ trợ điều hướng, tìm kiếm khóa học, tra cứu lịch học, thông báo, hỗ trợ tài chính và cài đặt tài khoản.
   2. `learnAgent`: Trợ Lý AI Học Tập Socratic chuyên biệt cho giao diện Trình phát bài học (`/learn/[courseId]`), đóng vai trò trợ giảng kiên nhẫn, đưa ra gợi ý từng bước (Scaffolding Hints) mà không cho trực tiếp đáp án bài tập.
@@ -63,7 +63,7 @@ AI Chatbot được triển khai theo mô hình Hybrid giữa Server-Side Runtim
 1. **Thêm API Key vào `.env.local`**:
    ```env
    GOOGLE_API_KEY=AIzaSy...
-   COPILOT_MODEL=google/gemini-3.6-flash
+   COPILOT_MODEL=google/gemini-3.5-flash-lite
    ```
 2. **Khởi chạy Development Server**:
    ```bash

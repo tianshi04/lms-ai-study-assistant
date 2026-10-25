@@ -5,8 +5,7 @@ import {
   BuiltInAgent,
 } from "@copilotkit/runtime/v2";
 
-const modelName =
-  process.env.NEXT_PUBLIC_COPILOT_MODEL || process.env.COPILOT_MODEL || "google/gemini-3.6-flash";
+const modelName = process.env.COPILOT_MODEL || "google/gemini-3.5-flash-lite";
 
 const generalAgent = new BuiltInAgent({
   model: modelName,

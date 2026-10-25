@@ -255,5 +255,5 @@ export async function logoutAction() {
  * Allows Docker production containers to use server-provided GOOGLE_CLIENT_ID without rebuilding images.
  */
 export async function getGoogleClientIdAction(): Promise<string> {
-  return process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  return process.env.GOOGLE_CLIENT_ID || "";
 }

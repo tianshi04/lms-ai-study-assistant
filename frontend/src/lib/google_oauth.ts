@@ -52,13 +52,25 @@ function toBase64Url(bytes: Uint8Array): string {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+let clientIdPromise: Promise<string> | null = null;
+
+export function resolveGoogleClientId(): Promise<string> {
+  if (!clientIdPromise) {
+    clientIdPromise = getGoogleClientIdAction().catch(() => {
+      clientIdPromise = null;
+      return "";
+    });
+  }
+  return clientIdPromise;
+}
+
 export function googleRedirectUri(): string {
   return `${window.location.origin}${CALLBACK_PATH}`;
 }
 
 /** Throws when Google sign-in is not configured; there is deliberately no mock fallback. */
 export async function startGoogleOAuth(intent: GoogleIntent, redirect = ""): Promise<void> {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || (await getGoogleClientIdAction());
+  const clientId = await resolveGoogleClientId();
   if (!clientId) {
     throw new Error("Đăng nhập bằng Google chưa được cấu hình.");
   }
