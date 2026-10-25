@@ -15,6 +15,12 @@ async function handleRpcProxy(
   headers.delete("host");
   headers.delete("connection");
 
+  // 2. Attach Authorization header from HttpOnly access_token cookie if not already set
+  const token = request.cookies.get("access_token")?.value;
+  if (token && !headers.has("authorization")) {
+    headers.set("authorization", `Bearer ${token}`);
+  }
+
   try {
     const isBodyAllowed = request.method !== "GET" && request.method !== "HEAD";
     const backendResponse = await fetch(targetUrl, {
