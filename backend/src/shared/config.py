@@ -104,10 +104,14 @@ class Settings(BaseSettings):
         description="Refresh token expiration in days",
     )
 
-    # 5. OpenTelemetry & Jaeger Observability
-    OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(
+    # 5. OpenTelemetry & Jaeger Observability (Spec-compliant)
+    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: str | None = Field(
         default=None,
-        description="OpenTelemetry OTLP Collector Endpoint (e.g. http://localhost:4317)",
+        description="OpenTelemetry OTLP Collector Endpoint for Traces (e.g. http://localhost:4317)",
+    )
+    OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: str | None = Field(
+        default=None,
+        description="Dedicated OpenTelemetry OTLP Metrics Endpoint (optional, e.g. http://localhost:4317)",
     )
 
     # 6. VNPay Sandbox Gateway Configuration

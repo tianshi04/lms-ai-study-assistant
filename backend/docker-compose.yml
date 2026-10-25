@@ -68,7 +68,7 @@ services:
       - MINIO_SECURE=false
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-your_super_secret_jwt_key_coursera_2026_change_in_prod}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4317
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -115,4 +115,3 @@ volumes:
   postgres_data:
   minio_data:
   redis_data:
-
