@@ -30,7 +30,7 @@ from src.modules.assessment.domain import (
     QuizSubmittedDomainEvent,
     is_graded_quiz_item,
 )
-from src.shared.access_policy import require_paid_access
+from src.shared.access_policy import AccessPolicyService
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
@@ -276,23 +276,24 @@ class QuizUseCase(BaseAssessmentUseCase):
                     except (ValueError, TypeError):
                         cooldown_sec = 0
 
-            if prev_submissions and not force_new and not preview:
-                questions = await self.generate_quiz_session_questions(
-                    repo, item_id, seed=42
-                )
+            prev_result = None
+            if prev_submissions and not preview:
                 target_sub = (
                     max(prev_submissions, key=lambda s: s.score_percent)
                     if has_passed
                     else max(prev_submissions, key=lambda s: s.created_at)
                 )
+                summary_questions = await self.generate_quiz_session_questions(
+                    repo, item_id, seed=42
+                )
                 explanations = []
-                total_qs = len(questions)
+                total_qs = len(summary_questions)
                 num_correct = (
                     round(total_qs * (target_sub.score_percent / 100.0))
                     if total_qs > 0
                     else 0
                 )
-                for idx, q in enumerate(questions):
+                for idx, q in enumerate(summary_questions):
                     is_corr = idx < num_correct
                     clean_exp = _clean_explanation(q.get("explanation"))
                     exp_suffix = f" — {clean_exp}" if clean_exp else ""
@@ -311,14 +312,15 @@ class QuizUseCase(BaseAssessmentUseCase):
                     "cooldown_hours": cooldown_hours if is_graded else 0,
                 }
 
+            if prev_submissions and not force_new and not preview:
                 return {
-                    "session_id": f"qsess-prev-{uuid7().hex[:8]}",
+                    "session_id": f"qsess-prev-{uuid7().hex}",
                     "start_time_iso": now.isoformat(),
                     "expires_at_iso": expires_at.isoformat(),
                     "duration_minutes": duration_minutes,
                     "passing_threshold_percent": passing_threshold,
                     "session_seed": 42,
-                    "questions": questions,
+                    "questions": summary_questions,
                     "cooldown_seconds_left": cooldown_sec,
                     "attempts_left": attempts_left,
                     "max_attempts": max_attempts if is_graded else 999,
@@ -348,7 +350,7 @@ class QuizUseCase(BaseAssessmentUseCase):
             await repo.save_quiz_active_session(active_session)
 
             return {
-                "session_id": f"qsess-{uuid7().hex[:8]}",
+                "session_id": f"qsess-{uuid7().hex}",
                 "start_time_iso": now.isoformat(),
                 "expires_at_iso": expires_at.isoformat(),
                 "duration_minutes": duration_minutes,
@@ -359,9 +361,10 @@ class QuizUseCase(BaseAssessmentUseCase):
                 "attempts_left": attempts_left,
                 "max_attempts": max_attempts if is_graded else 999,
                 "cooldown_hours": cooldown_hours if is_graded else 0,
+                "has_previous_result": prev_result is not None,
+                "previous_result": prev_result,
             }
 
-    @require_paid_access()
     async def submit_graded_quiz(
         self,
         user_id: str,
@@ -374,6 +377,23 @@ class QuizUseCase(BaseAssessmentUseCase):
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+
+            # BR_ACCESS_001: Practice Quizzes are open in Audit Mode.
+            # Only Graded Quizzes require Paid Mode authorization.
+            item_type_str = await repo.get_item_type(item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
+
+            if (
+                is_graded
+                and not preview
+                and (repo is None or "SQLAlchemy" in repo.__class__.__name__)
+            ):
+                target_course_id = await repo.get_course_id_by_item_id(item_id) or ""
+                is_paid, err = await AccessPolicyService.verify_paid_access(
+                    session, user_id, target_course_id
+                )
+                if not is_paid:
+                    raise PermissionError(err)
 
             matrix = await self._get_quiz_matrix(repo, item_id)
 
@@ -487,16 +507,13 @@ class QuizUseCase(BaseAssessmentUseCase):
                 except ValueError:
                     pass
 
-            # 4. Check item type & Cooldown state
-            item_type_str = await repo.get_item_type(item_id)
-            is_graded = is_graded_quiz_item(item_type_str)
-
+            # 4. Check Cooldown state
             cooldown_sec = 0
             attempts_left = UNLIMITED_ATTEMPTS_SENTINEL
 
             # 5. Save submission & update Cooldown (only if not preview)
             if not preview:
-                submission_id = f"sub-{uuid7().hex[:8]}"
+                submission_id = f"sub-{uuid7().hex}"
                 attempt_number = len(prev_submissions) + 1
 
                 first_selected = [ans[0] if ans else -1 for ans in answers]

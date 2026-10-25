@@ -32,11 +32,9 @@ def is_practice_quiz_item(item_type_str: str) -> bool:
 
 def is_graded_quiz_item(item_type_str: str) -> bool:
     if not item_type_str:
-        return False
+        return True
     val = item_type_str.upper()
-    if is_practice_quiz_item(item_type_str):
-        return False
-    return "GRADED" in val or val in GRADED_QUIZ_ITEM_TYPES
+    return not is_practice_quiz_item(val)
 
 
 REQUIRED_PEER_REVIEWS_COUNT: int = 3

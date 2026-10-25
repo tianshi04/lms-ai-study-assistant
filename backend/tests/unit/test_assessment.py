@@ -5,6 +5,7 @@ import pytest
 
 from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.domain import (
+    UNLIMITED_ATTEMPTS_SENTINEL,
     AssessmentRepositoryInterface,
     GradeAppeal,
     HonorCodeAgreement,
@@ -574,21 +575,63 @@ async def test_audit_mode_access_blocking():
             )
             await repo.save(user)
 
-        # Attempt submitting graded quiz in audit mode -> Should be blocked
-        res = await usecase.submit_graded_quiz(
-            audit_user_id, "item_quiz_audit", question_answers=[[0], [1]]
-        )
-        assert res["passed"] is False
-        assert "Audit Mode" in res["answer_explanations"][0]
+        # Attempt submitting graded quiz in audit mode -> Should be blocked with PermissionError
+        with pytest.raises(PermissionError, match="Audit Mode"):
+            await usecase.submit_graded_quiz(
+                audit_user_id, "item_quiz_audit", question_answers=[[0], [1]]
+            )
 
-        # Attempt submitting peer assignment in audit mode -> Should be blocked
-        sub_id, msg = await usecase.submit_peer_assignment(
-            audit_user_id, "item_peer_audit", "http://example.com", "text"
-        )
-        assert sub_id == ""
-        assert "Audit Mode" in msg
+        # Attempt submitting peer assignment in audit mode -> Should be blocked with PermissionError
+        with pytest.raises(PermissionError, match="Audit Mode"):
+            await usecase.submit_peer_assignment(
+                audit_user_id, "item_peer_audit", "http://example.com", "text"
+            )
     except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping audit mode db test: DB not reachable ({e})")
+
+
+@pytest.mark.asyncio
+async def test_audit_mode_practice_vs_graded_quiz():
+    """BR_ACCESS_001: Practice Quizzes are open in Audit Mode, Graded Quizzes require Paid Mode."""
+    from unittest.mock import AsyncMock, patch
+
+    class MockSQLAlchemyAssessmentRepository(InMemoryAssessmentRepository):
+        pass
+
+    repo = MockSQLAlchemyAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-audit-quiz-test"
+
+    item_practice = "item-practice-audit"
+    item_graded = "item-graded-audit"
+    repo.item_types[item_practice] = "ITEM_TYPE_PRACTICE_QUIZ"
+    repo.item_types[item_graded] = "ITEM_TYPE_GRADED_QUIZ"
+
+    await usecase.submit_honor_code(user_id, item_practice, True)
+    await usecase.submit_honor_code(user_id, item_graded, True)
+
+    with patch(
+        "src.shared.access_policy.AccessPolicyService.verify_paid_access",
+        new=AsyncMock(
+            return_value=(
+                False,
+                "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode.",
+            )
+        ),
+    ):
+        # 1. Practice Quiz: Audit mode learner MUST BE ALLOWED to submit and receive explanations
+        res_practice = await usecase.submit_graded_quiz(
+            user_id, item_practice, question_answers=[[0]]
+        )
+        assert res_practice is not None
+        assert "score_percent" in res_practice
+        assert res_practice["attempts_left"] == UNLIMITED_ATTEMPTS_SENTINEL
+
+        # 2. Graded Quiz: Audit mode learner MUST BE BLOCKED with PermissionError
+        with pytest.raises(PermissionError, match="Audit Mode"):
+            await usecase.submit_graded_quiz(
+                user_id, item_graded, question_answers=[[0]]
+            )
 
 
 @pytest.mark.asyncio
@@ -884,3 +927,67 @@ async def test_sqlalchemy_assessment_repo_update_question_post_commit():
     assert updated.explanation == "New exp"
     assert len(updated.options) == 2
     mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_start_quiz_session_force_new_preserves_previous_result():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-preserve-test"
+    item_id = "item-preserve-test"
+
+    # Add question bank with sample questions
+    bank = await repo.create_question_bank(
+        course_id="course-1",
+        title="Sample Bank",
+        category="PRACTICE",
+        description="Desc",
+    )
+    bank_id = bank.id
+
+    for i in range(3):
+        await repo.add_question_to_bank(
+            bank_id=bank_id,
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text=f"Question {i + 1}",
+            explanation="Explanation",
+            options_data=[
+                {"option_text": "Correct", "is_correct": True},
+                {"option_text": "Wrong", "is_correct": False},
+            ],
+        )
+
+    await repo.configure_quiz_matrix(
+        item_id=item_id,
+        bank_id=bank_id,
+        time_limit_minutes=15,
+        passing_threshold_percent=80.0,
+        easy_count=3,
+        medium_count=0,
+        hard_count=0,
+        shuffle_options=False,
+        max_attempts=3,
+        cooldown_hours=8,
+    )
+
+    # Submit an initial quiz attempt
+    sess1 = await usecase.start_graded_quiz_session(user_id, item_id, force_new=True)
+    assert sess1["has_previous_result"] is False
+
+    await usecase.submit_honor_code(user_id, item_id, True)
+    res_sub = await usecase.submit_graded_quiz(
+        user_id,
+        item_id,
+        question_answers=[[0], [0], [0]],
+        session_seed=sess1["session_seed"],
+    )
+    assert res_sub["passed"] is True
+    assert res_sub["score_percent"] == 100.0
+
+    # Start a brand new session with force_new=True (retake)
+    sess2 = await usecase.start_graded_quiz_session(user_id, item_id, force_new=True)
+    assert sess2["has_previous_result"] is True
+    assert sess2["previous_result"] is not None
+    assert sess2["previous_result"]["score_percent"] == 100.0
+    assert sess2["previous_result"]["passed"] is True

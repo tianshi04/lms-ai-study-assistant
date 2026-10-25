@@ -39,7 +39,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 await repo.save_peer_submission(existing)
                 sub_id = existing.id
             else:
-                sub_id = f"peer-{uuid7().hex[:8]}"
+                sub_id = f"peer-{uuid7().hex}"
                 submission = PeerAssignmentSubmission(
                     id=sub_id,
                     user_id=user_id,
@@ -241,7 +241,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 if review_id.startswith("rev-")
                 else review_id
             )
-            appeal_id = f"report-{uuid7().hex[:8]}"
+            appeal_id = f"report-{uuid7().hex}"
             now_iso = datetime.now(UTC).isoformat()
             appeal = GradeAppeal(
                 id=appeal_id,

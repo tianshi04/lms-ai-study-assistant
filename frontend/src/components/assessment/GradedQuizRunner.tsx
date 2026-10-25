@@ -43,6 +43,14 @@ interface QuizSessionQuestion {
   questionType: string;
 }
 
+interface QuizResultData {
+  scorePercent: number;
+  passed: boolean;
+  attemptsLeft: number;
+  cooldownSecondsLeft: number;
+  explanations: string[];
+}
+
 interface GradedQuizRunnerProps {
   itemId: string;
   title?: string;
@@ -79,13 +87,10 @@ export function GradedQuizRunner({
   const [error, setError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [quizResult, setQuizResult] = useState<{
-    scorePercent: number;
-    passed: boolean;
-    attemptsLeft: number;
-    cooldownSecondsLeft: number;
-    explanations: string[];
-  } | null>(null);
+  // Historical best score achieved from previous submissions (for overview banner)
+  const [historicalResult, setHistoricalResult] = useState<QuizResultData | null>(null);
+  // Result of the current in-progress attempt once submitted (for active quiz grading screen)
+  const [activeQuizResult, setActiveQuizResult] = useState<QuizResultData | null>(null);
 
   const [isQuizActive, setIsQuizActive] = useState<boolean>(false);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -181,7 +186,7 @@ export function GradedQuizRunner({
       setLoading(true);
       setError(null);
       setSubmitError(null);
-      setQuizResult(null);
+      setActiveQuizResult(null);
       setSelectedAnswers([]);
       try {
         const client = getRpcClient(AssessmentService);
@@ -202,7 +207,7 @@ export function GradedQuizRunner({
 
           // Restore previous result state if available
           if (res.hasPreviousResult && res.previousResult) {
-            setQuizResult({
+            setHistoricalResult({
               scorePercent: res.previousResult.scorePercent,
               passed: res.previousResult.passed,
               attemptsLeft: res.previousResult.attemptsLeft,
@@ -210,7 +215,7 @@ export function GradedQuizRunner({
               explanations: res.previousResult.answerExplanations,
             });
           } else {
-            setQuizResult(null);
+            setHistoricalResult(null);
           }
         }
       } catch (err: unknown) {
@@ -265,7 +270,7 @@ export function GradedQuizRunner({
   };
 
   const handleResetPreview = async () => {
-    setQuizResult(null);
+    setActiveQuizResult(null);
     setSubmitError(null);
     setLoading(true);
     try {
@@ -292,7 +297,7 @@ export function GradedQuizRunner({
   };
 
   const handleStartQuiz = async () => {
-    setQuizResult(null);
+    setActiveQuizResult(null);
     setSubmitError(null);
     setLoading(true);
     try {
@@ -309,6 +314,15 @@ export function GradedQuizRunner({
       setPassingThreshold(res.passingThresholdPercent);
       if (res.maxAttempts) setMaxAttempts(res.maxAttempts);
       if (res.attemptsLeft !== undefined) setAttemptsLeft(res.attemptsLeft);
+      if (res.hasPreviousResult && res.previousResult) {
+        setHistoricalResult({
+          scorePercent: res.previousResult.scorePercent,
+          passed: res.previousResult.passed,
+          attemptsLeft: res.previousResult.attemptsLeft,
+          cooldownSecondsLeft: res.previousResult.cooldownSecondsLeft,
+          explanations: res.previousResult.answerExplanations,
+        });
+      }
       setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => []));
       setIsQuizActive(true);
     } catch (err: unknown) {
@@ -354,12 +368,19 @@ export function GradedQuizRunner({
       });
 
       if (res.result) {
-        setQuizResult({
+        const resultData: QuizResultData = {
           scorePercent: res.result.scorePercent,
           passed: res.result.passed,
           attemptsLeft: res.result.attemptsLeft,
           cooldownSecondsLeft: res.result.cooldownSecondsLeft,
           explanations: res.result.answerExplanations,
+        };
+        setActiveQuizResult(resultData);
+        setHistoricalResult((prev) => {
+          if (!prev || resultData.scorePercent >= prev.scorePercent) {
+            return resultData;
+          }
+          return prev;
         });
         if (res.result.maxAttempts) setMaxAttempts(res.result.maxAttempts);
         if (res.result.attemptsLeft !== undefined) setAttemptsLeft(res.result.attemptsLeft);
@@ -466,9 +487,11 @@ export function GradedQuizRunner({
     const questionCountDisplay =
       questions.length > 0
         ? `${questions.length} câu`
-        : quizResult?.explanations?.length
-          ? `${quizResult.explanations.length} câu`
+        : (historicalResult?.explanations?.length ?? 0) > 0
+          ? `${historicalResult!.explanations.length} câu`
           : "--";
+
+    const hasActiveDraft = questions.length > 0 && !activeQuizResult && Boolean(startTimeIso);
 
     return (
       <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6 animate-in fade-in duration-m3-short-4">
@@ -534,10 +557,10 @@ export function GradedQuizRunner({
         </div>
 
         {/* Highest Score Achieved Banner */}
-        {quizResult ? (
+        {historicalResult ? (
           <div
             className={`p-6 rounded-2xl border ${
-              quizResult.passed
+              historicalResult.passed
                 ? "bg-success/10 border-success/30 text-success"
                 : "bg-warning/10 border-warning/30 text-warning"
             } space-y-4 shadow-xs`}
@@ -549,10 +572,10 @@ export function GradedQuizRunner({
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-bold">
-                    Kết quả cao nhất đã làm: {quizResult.scorePercent}%
+                    Kết quả cao nhất đã làm: {historicalResult.scorePercent}%
                   </h3>
                   <p className="text-xs opacity-90">
-                    {quizResult.passed
+                    {historicalResult.passed
                       ? "Bạn đã đạt bài thi này. Bạn vẫn có thể làm lại để nâng cao kết quả."
                       : "Bạn chưa đạt ngưỡng điểm yêu cầu. Hãy ôn lại bài và thử lại."}
                   </p>
@@ -560,22 +583,22 @@ export function GradedQuizRunner({
               </div>
               <span
                 className={`px-3 py-1 rounded-full text-xs font-extrabold border uppercase shrink-0 self-start sm:self-center ${
-                  quizResult.passed
+                  historicalResult.passed
                     ? "bg-success/20 border-success/40 text-success"
                     : "bg-warning/20 border-warning/40 text-warning"
                 }`}
               >
-                {quizResult.passed ? "ĐÃ ĐẠT" : "CHƯA ĐẠT"}
+                {historicalResult.passed ? "ĐÃ ĐẠT" : "CHƯA ĐẠT"}
               </span>
             </div>
 
-            {quizResult.explanations && quizResult.explanations.length > 0 && (
+            {historicalResult.explanations && historicalResult.explanations.length > 0 && (
               <div className="pt-3 border-t border-current/15 space-y-1 text-xs">
                 <h5 className="font-bold uppercase tracking-wider text-[10px] opacity-75">
                   Phản hồi bài làm:
                 </h5>
                 <ul className="list-disc list-inside space-y-1 opacity-90 leading-relaxed max-h-36 overflow-y-auto pr-2">
-                  {quizResult.explanations.map((exp, idx) => (
+                  {historicalResult.explanations.map((exp, idx) => (
                     <li key={idx}>{exp}</li>
                   ))}
                 </ul>
@@ -595,21 +618,44 @@ export function GradedQuizRunner({
           </div>
         )}
 
-        {/* Start / Retry Action Button */}
-        <div className="pt-4 border-t border-border flex justify-end">
-          <Button
-            type="button"
-            disabled={loading}
-            onClick={() => handleStartQuiz()}
-            className="px-8 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md flex items-center gap-2"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <Play className="w-4 h-4 fill-current" aria-hidden="true" />
-            )}
-            {quizResult ? "Làm lại bài thi" : "Bắt đầu làm bài"}
-          </Button>
+        {/* Start / Continue / Retry Action Button */}
+        <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
+          {hasActiveDraft ? (
+            <>
+              <Button
+                type="button"
+                variant="outlined"
+                disabled={loading}
+                onClick={() => handleStartQuiz()}
+                className="px-6 py-2.5 rounded-full text-xs font-semibold"
+              >
+                Làm bài mới từ đầu
+              </Button>
+              <Button
+                type="button"
+                disabled={loading}
+                onClick={() => setIsQuizActive(true)}
+                className="px-8 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md flex items-center gap-2"
+              >
+                <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+                Tiếp tục làm bài
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              disabled={loading}
+              onClick={() => handleStartQuiz()}
+              className="px-8 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md flex items-center gap-2"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+              )}
+              {historicalResult ? "Làm lại bài thi" : "Bắt đầu làm bài"}
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -769,10 +815,10 @@ export function GradedQuizRunner({
       </div>
 
       {/* Quiz Results Panel (Prominently rendered at TOP when previous results exist) */}
-      {quizResult && (
+      {activeQuizResult && (
         <div
           className={`p-5 sm:p-6 rounded-2xl border ${
-            quizResult.passed
+            activeQuizResult.passed
               ? "bg-success/10 border-success/30 text-success"
               : "bg-destructive/10 border-destructive/30 text-destructive"
           } space-y-4 shadow-xs`}
@@ -780,7 +826,7 @@ export function GradedQuizRunner({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full flex items-center justify-center bg-current/10 shrink-0">
-                {quizResult.passed ? (
+                {activeQuizResult.passed ? (
                   <Check aria-hidden="true" className="w-5 h-5 text-success" />
                 ) : (
                   <X aria-hidden="true" className="w-5 h-5 text-destructive" />
@@ -788,12 +834,12 @@ export function GradedQuizRunner({
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-bold">
-                  {quizResult.passed
+                  {activeQuizResult.passed
                     ? "Chúc mừng! Bạn đã vượt qua bài thi"
                     : "Kết quả lần làm gần nhất: Chưa đạt"}
                 </h3>
                 <p className="text-xs opacity-85">
-                  Điểm số: {quizResult.scorePercent}% (Yêu cầu: {passingThreshold}%){" "}
+                  Điểm số: {activeQuizResult.scorePercent}% (Yêu cầu: {passingThreshold}%){" "}
                   {isPreviewMode ? "(Xem trước)" : "• Lượt làm: Không giới hạn"}
                 </p>
               </div>
@@ -801,7 +847,7 @@ export function GradedQuizRunner({
 
             <div className="flex items-center gap-3 self-end sm:self-center">
               <span className="text-2xl sm:text-3xl font-extrabold tabular-nums">
-                {quizResult.scorePercent}%
+                {activeQuizResult.scorePercent}%
               </span>
               {!isPreviewMode && (
                 <Button
@@ -830,13 +876,13 @@ export function GradedQuizRunner({
             </div>
           </div>
 
-          {quizResult.explanations.length > 0 && (
+          {activeQuizResult.explanations.length > 0 && (
             <div className="pt-3 border-t border-current/10 space-y-1.5 text-xs">
               <h5 className="font-bold uppercase tracking-wider text-[10px] opacity-75">
                 Phản hồi & Giải thích đáp án:
               </h5>
               <ul className="list-disc list-inside space-y-1 opacity-90 leading-relaxed">
-                {quizResult.explanations.map((exp, idx) => {
+                {activeQuizResult.explanations.map((exp, idx) => {
                   const formattedExp = exp
                     .replace(/Đã đạt/g, "Đúng")
                     .replace(/Chưa đạt/g, "Sai")
@@ -896,7 +942,7 @@ export function GradedQuizRunner({
                         key={optIdx}
                         checked={isSelected}
                         onCheckedChange={() => handleOptionSelect(qIdx, optIdx, true)}
-                        disabled={quizResult !== null}
+                        disabled={activeQuizResult !== null}
                         label={opt.optionText}
                         containerClassName={`p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                           isSelected
@@ -921,7 +967,7 @@ export function GradedQuizRunner({
                     <RadioGroup.Item
                       key={optIdx}
                       value={optIdx.toString()}
-                      disabled={quizResult !== null}
+                      disabled={activeQuizResult !== null}
                       label={opt.optionText}
                       containerClassName="p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:border-outline hover:bg-surface-container-low transition-all"
                     />
@@ -959,7 +1005,7 @@ export function GradedQuizRunner({
         </p>
 
         <div className="flex items-center gap-3">
-          {!quizResult && (
+          {!activeQuizResult && (
             <Button type="button" onClick={handleSubmitQuiz} disabled={isSubmitting} size="sm">
               {isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}
               {!isSubmitting && <Send aria-hidden="true" className="w-4 h-4 ml-1.5" />}

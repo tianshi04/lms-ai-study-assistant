@@ -86,7 +86,7 @@ class CodingLabUseCase(BaseAssessmentUseCase):
 
         result = await self.sandbox_executor.execute_python(source_code, test_cases)
         now_iso = datetime.now(UTC).isoformat()
-        sub_id = f"lab-{uuid7().hex[:8]}"
+        sub_id = f"lab-{uuid7().hex}"
 
         submission = LabSubmission(
             id=sub_id,
