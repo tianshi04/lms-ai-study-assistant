@@ -49,11 +49,11 @@ export function GoogleAuthButton({
   const toast = useToast();
   const [internalLoading, setInternalLoading] = useState(false);
 
-  const handleGoogleRedirect = () => {
+  const handleGoogleRedirect = async () => {
     setInternalLoading(true);
     try {
       const redirect = new URLSearchParams(window.location.search).get("redirect") ?? "";
-      startGoogleOAuth(intent, redirect);
+      await startGoogleOAuth(intent, redirect);
     } catch (err: unknown) {
       setInternalLoading(false);
       toast.error(err instanceof Error ? err.message : "Không thể bắt đầu đăng nhập Google.");

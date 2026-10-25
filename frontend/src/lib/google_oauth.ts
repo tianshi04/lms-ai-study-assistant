@@ -1,3 +1,4 @@
+import { getGoogleClientIdAction } from "@/app/auth/actions";
 import { sanitizeRedirectPath } from "@/lib/safe_redirect";
 
 /**
@@ -56,8 +57,8 @@ export function googleRedirectUri(): string {
 }
 
 /** Throws when Google sign-in is not configured; there is deliberately no mock fallback. */
-export function startGoogleOAuth(intent: GoogleIntent, redirect = ""): void {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+export async function startGoogleOAuth(intent: GoogleIntent, redirect = ""): Promise<void> {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || (await getGoogleClientIdAction());
   if (!clientId) {
     throw new Error("Đăng nhập bằng Google chưa được cấu hình.");
   }
