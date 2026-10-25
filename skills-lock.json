@@ -7,6 +7,18 @@
       "skillPath": "skills/gh-stack/SKILL.md",
       "computedHash": "90489e57c9a6cc05fa571e10b73b7347a682fda6fbd57facb8ff7d29f502cac2"
     },
+    "git-commit": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/git-commit/SKILL.md",
+      "computedHash": "78b6a33700091345cd449f9e3642ddd611b479b341efc9d6c750f7e04d15216a"
+    },
+    "git-flow-branch-creator": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/git-flow-branch-creator/SKILL.md",
+      "computedHash": "8add10a7fce31ef99856d36bffeb90f1f1130f5afd88b111417c257f1e5d39bd"
+    },
     "modern-web-guidance": {
       "source": "GoogleChrome/modern-web-guidance",
       "sourceType": "github",
