@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "gh-stack": {
+      "source": "github/gh-stack",
+      "sourceType": "github",
+      "skillPath": "skills/gh-stack/SKILL.md",
+      "computedHash": "90489e57c9a6cc05fa571e10b73b7347a682fda6fbd57facb8ff7d29f502cac2"
+    },
     "modern-web-guidance": {
       "source": "GoogleChrome/modern-web-guidance",
       "sourceType": "github",
