@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
@@ -25,6 +25,10 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["vietnamese", "latin"],
   display: "swap",
 });
+
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+};
 
 export const metadata: Metadata = {
   title: {

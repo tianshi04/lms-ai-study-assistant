@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 interface DragOptions {
   isInstructorOrAdmin: boolean;
@@ -11,7 +11,9 @@ interface DragOptions {
 
 export function usePointerDragOrder(options: DragOptions) {
   const optionsRef = useRef(options);
-  optionsRef.current = options;
+  useLayoutEffect(() => {
+    optionsRef.current = options;
+  });
   const isInstructorOrAdmin = options.isInstructorOrAdmin;
 
   const [activeDraggingItemId, setActiveDraggingItemId] = useState<string | null>(null);

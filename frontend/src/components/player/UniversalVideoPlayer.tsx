@@ -1,6 +1,14 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useMediaSession } from "@/hooks/useMediaSession";
 
 export interface UniversalVideoRef {
@@ -125,22 +133,24 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
     const htmlVideoRef = useRef<HTMLVideoElement | null>(null);
     const ytPlayerRef = useRef<any>(null);
     const mountPointRef = useRef<HTMLDivElement | null>(null);
-    const containerIdRef = useRef<string>(
-      `yt-player-${Math.random().toString(36).substring(2, 9)}`,
-    );
+    const rawId = useId();
+    const containerId = `yt-player-${rawId.replace(/[^a-zA-Z0-9-_]/g, "")}`;
+    const containerIdRef = useRef<string>(containerId);
     const activeVideoIdRef = useRef<string | null>(null);
     const [isYtReady, setIsYtReady] = useState(false);
 
     const lastKnownTimeRef = useRef<number>(0);
 
     const onTimeUpdateRef = useRef(onTimeUpdate);
-    onTimeUpdateRef.current = onTimeUpdate;
-
     const onSeekingRef = useRef(onSeeking);
-    onSeekingRef.current = onSeeking;
-
     const onEndedRef = useRef(onEnded);
-    onEndedRef.current = onEnded;
+
+    useLayoutEffect(() => {
+      containerIdRef.current = containerId;
+      onTimeUpdateRef.current = onTimeUpdate;
+      onSeekingRef.current = onSeeking;
+      onEndedRef.current = onEnded;
+    });
 
     // ─── Modern Web API: Media Session Integration ───
     useMediaSession({

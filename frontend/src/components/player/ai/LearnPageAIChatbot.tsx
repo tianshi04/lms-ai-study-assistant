@@ -81,11 +81,12 @@ export const LearnPageAIChatbot = forwardRef<LearnPageAIChatbotRef, LearnPageAIC
     const { agent } = useAgent({ agentId: "learnAgent" });
     const { copilotkit } = useCopilotKit();
 
+    const agentMessages = agent?.messages;
     // Filter messages for current chat session
     const displayMessages = useMemo(() => {
-      if (!agent?.messages) return [];
-      return agent.messages.slice(sessionStartIndex);
-    }, [agent?.messages, sessionStartIndex]);
+      if (!agentMessages) return [];
+      return agentMessages.slice(sessionStartIndex);
+    }, [agentMessages, sessionStartIndex]);
 
     // Thinking indicator should ONLY show before AI emits its response text
     const showThinkingIndicator = useMemo(() => {
