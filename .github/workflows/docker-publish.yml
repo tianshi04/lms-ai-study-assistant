@@ -153,26 +153,42 @@ jobs:
     name: Deploy to VPS
     needs: [build-and-push-backend, build-and-push-frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && secrets.VPS_HOST != ''
+    if: github.ref == 'refs/heads/main'
     steps:
+      - name: Check VPS secrets configuration
+        id: check-secrets
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          if [ -z "$VPS_HOST" ] || [ -z "$VPS_SSH_KEY" ]; then
+            echo "VPS secrets (VPS_HOST / VPS_SSH_KEY) are not configured. Skipping deploy step."
+            echo "configured=false" >> $GITHUB_OUTPUT
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout repository
+        if: steps.check-secrets.outputs.configured == 'true'
         uses: actions/checkout@v4
 
       - name: Copy Compose and Caddy files to VPS via SCP
+        if: steps.check-secrets.outputs.configured == 'true'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
+          username: ${{ secrets.VPS_USERNAME || 'root' }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
           source: "docker-compose.yml,Caddyfile"
           target: ${{ secrets.VPS_PROJECT_PATH || '/root/lms' }}
 
       - name: Execute deployment commands via SSH
+        if: steps.check-secrets.outputs.configured == 'true'
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
+          username: ${{ secrets.VPS_USERNAME || 'root' }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
           script: |
