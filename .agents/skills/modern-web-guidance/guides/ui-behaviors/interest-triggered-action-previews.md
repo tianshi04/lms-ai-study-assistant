@@ -1,3 +1,5 @@
+# Interest Triggered Action Previews
+
 It can be beneficial to provide users a preview of their actions before they commit to them. Interest invokers are an experimental web platform feature that provides a declarative-based way of creating interest relationships between an interest source (i.e. a button or a link) and an interest target. Once the declarative relationship has been established there are a number of methods a developer can respond to based on interest and loss of interest using both CSS and JavaScript. For this use case, we can leverage the `interest` and `loseinterest` events to preview various effects for an interest target.
 
 ## How to implement
@@ -47,28 +49,40 @@ The start and end delay for an interest invoker (i.e. the element with the `inte
 
 ### Fallback strategies
 
-Interest invokers has limited availability.
+### Fallbacks & browser support for Interest invokers
+
+Browser support for Interest invokers: Limited availability.
 Supported by: Chrome 142 (Oct 2025) and Edge 142 (Oct 2025).
 Unsupported in: Firefox and Safari.
 
-Interest invokers must be conditionally polyfilled using the `interestfor` polyfill package from NPM. Do prefer bundling the polyfill over using the CDN.
+Interest invokers must be conditionally polyfilled using the `interestfor` polyfill package from NPM. Prefer bundling the polyfill over using the CDN.
+
+**MANDATORY:** Feature detect by checking for the `interestForElement` property on `HTMLButtonElement.prototype`, and load the polyfill **only** when native support is missing.
 
 ```html
 <script type="module">
-  if(!HTMLButtonElement.prototype.hasOwnProperty("interestForElement")){
+  if (!HTMLButtonElement.prototype.hasOwnProperty("interestForElement")) {
     // CDN link only used for example, prefer bundling.
     await import("https://unpkg.com/interestfor@latest");
   }
 </script>
 ```
 
-When using the polyfill the CSS API changes slightly for the `:interest-source` and `:interest-target` pseudo-classes, as well as, the `interest-delay`, `interest-delay-start`, and `interest-delay-end` properties:
+### CSS Polyfill Caveats
+
+When using the polyfill, the CSS API changes slightly to account for the lack of native pseudo-class and property support:
+
+- **Pseudo-classes:** The polyfill cannot define real `:interest-source` and `:interest-target` pseudo-classes, so it applies `.interest-source` and `.interest-target` classes instead. **MANDATORY:** Combine them with `:is()` to support both native and polyfilled states.
 
 ```css
 /* Styles to apply when the effect is being previewed */
-:is(:interest-source, .interest-source) {}
-:is(:interest-target, .interest-target) {}
+:is(:interest-source, .interest-source) { /* ... */ }
+:is(:interest-target, .interest-target) { /* ... */ }
+```
 
+- **CSS Properties:** For `interest-delay`, `interest-delay-start`, and `interest-delay-end`, the polyfill requires using CSS variables as it cannot read the custom properties directly in all browsers.
+
+```css
 /* Adjust the start and end delay for interest invokers */
 [interestfor] {
   --interest-delay-start: 0.2s;

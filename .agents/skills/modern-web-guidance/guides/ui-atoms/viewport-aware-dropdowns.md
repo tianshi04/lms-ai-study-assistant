@@ -1,3 +1,5 @@
+# Viewport-Aware Dropdowns
+
 A revealed action panel or popover button group is a useful pattern for users to access additional functionality while taking up minimal space. This overlay pattern comes with layout complexity, as the panel must remain tethered to a trigger element while adapting to viewport constraints. Traditionally, this required complex JavaScript libraries (like Popper.js or Floating UI) to calculate positions and handle collisions.
 
 CSS Anchor Positioning provides a declarative, performance-optimized way to handle these relationships entirely in CSS, allowing browsers to manage the positioning and overflow logic natively.
@@ -53,10 +55,13 @@ To prevent the panel from being cut off at the edge of the screen, define "try t
   /* 
      If the panel overflows the bottom, flip it to the top (flip-block).
      If it overflows the inline edges, flip it horizontally (flip-inline).
+     If it overflows both (e.g., in a corner), flip on both axes (flip-block flip-inline).
   */
-  position-try-fallbacks: flip-block, flip-inline;
+  position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
 }
 ```
+
+If your dropdown or flyout includes a directional arrow or border that needs to change style depending on which fallback position was chosen, see `position-aware-tooltips` (via `npx -y modern-web-guidance@latest retrieve "position-aware-tooltips"`). For declarative invocation of dialogs and popovers without JavaScript, see `declarative-dialog-popover-control` (via `npx -y modern-web-guidance@latest retrieve "declarative-dialog-popover-control"`).
 
 ## Fallback strategies
 
@@ -98,7 +103,9 @@ Without a bundler, import from a CDN inside a `<script type="module">`:
 
 Alternatively, for a legacy fallback without a polyfill, use `position: fixed` and manually calculate coordinates via `getBoundingClientRect()` or rely on default positioning with `inset: auto` if that's acceptable for the use case.
 
-Anchor positioning is not natively supported by any major browser yet.
+Browser support for Anchor positioning: Limited availability.
+Supported by: Safari 27.
+Unsupported in: Chrome, Edge, and Firefox.
 
 To support browsers without anchor positioning, you must set a reasonable position. By default popovers are centered in the middle of the screen, which may work for your use case.
 
@@ -117,7 +124,7 @@ For some use cases, you may be able to use the `@oddbird/css-anchor-positioning`
 .panel {
   /* Mandatory: use explicit anchor name */
   position-anchor: --kebab-anchor;
-  /* Mandatory: use insets rather that position-area for positioning */
+  /* Mandatory: use insets rather than position-area for positioning */
   bottom: auto;
   right: auto;
   top: anchor(bottom);

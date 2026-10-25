@@ -37,9 +37,9 @@ Every `<input>`, `<select>`, and `<textarea>` element SHOULD have an appropriate
 
 ### Make buttons helpful
 
-Use `<button>` for buttons. You can also use `<input type="submit">`, but don't use a `div` or some other random element acting as a button. Button elements provide accessible behaviour, built-in form submission functionality, and can easily be styled.
+Use `<button>` for buttons. You can also use `<input type="submit">`, but don't use a `div` or some other random element acting as a button. Button elements provide accessible behavior, built-in form submission functionality, and can easily be styled.
 
-Give each form submit button a value that says what it does. For each step towards checkout, use a descriptive call-to-action that shows progress and makes the next step obvious. For example, label the submit button on your delivery address form **Proceed to Payment** rather than **Continue** or **Save**.
+Give each form submit button a value that says what it does. For each step toward checkout, use a descriptive call-to-action that shows progress and makes the next step obvious. For example, label the submit button on your delivery address form **Proceed to Payment** rather than **Continue** or **Save**.
 
 ### Use a single name input where possible
 
@@ -59,15 +59,16 @@ By default, set the billing address to be the same as the delivery address. Redu
 
 Use appropriate autocomplete values for the billing address, just as you do for shipping address, so the user doesn't have to enter data more than once. Add a prefix word to autocomplete attributes if you have different values for inputs with the same name in different sections. For example:
 
-```
-<input autocomplete="shipping address-line-1" ...>
+```html
+<!-- Prefix with shipping or billing; note that the valid token is address-line1 (no hyphen before the digit) -->
+<input autocomplete="shipping address-line1" ...>
 ...
-<input autocomplete="billing address-line-1" ...>
+<input autocomplete="billing address-line1" ...>
 ```
 
 ### Show checkout progress
 
-For each step towards payment, use page headings and descriptive button values that make it clear what needs to be done now, and what checkout step is next.
+For each step toward payment, use page headings and descriptive button values that make it clear what needs to be done now, and what checkout step is next.
 
 Use the `enterkeyhint` attribute on form inputs to set the mobile keyboard enter key label. For example, use `enterkeyhint="previous"` and `enterkeyhint="next"` within a multi-page form, `enterkeyhint="done"` for the final input in the form, and `enterkeyhint="search"` for a search input.
 
@@ -117,8 +118,10 @@ Add the `required` attribute to mandatory fields. Modern browsers automatically 
 
 Baseline status for enterkeyhint: Widely available. It's been Baseline since 2021-11-02.
 Supported by: Chrome 77 (Sep 2019), Edge 79 (Jan 2020), Firefox 94 (Nov 2021), Safari 13.1 (Mar 2020), and Safari iOS 13.4 (Mar 2020).
+
 Baseline status for Email, telephone, and URL <input> types: Widely available. It's been Baseline since 2015-07-29.
 Supported by: Chrome 5 (May 2010), Edge 12 (Jul 2015), Firefox 4 (Mar 2011), Safari 5 (Jun 2010), and Safari iOS 3 (Jun 2009).
+
 Baseline status for inputmode: Widely available. It's been Baseline since 2021-12-07.
 Supported by: Chrome 66 (Apr 2018), Edge 79 (Jan 2020), Firefox 95 (Dec 2021), Safari 12.1 (Mar 2019), and Safari iOS 12.2 (Mar 2019).
 
