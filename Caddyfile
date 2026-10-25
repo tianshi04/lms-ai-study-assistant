@@ -36,7 +36,7 @@
 		reverse_proxy {$FRONTEND_UPSTREAM:127.0.0.1:3000}
 	}
 
-	# 6. Toàn bộ Giao diện Web, SSR, RPC nội bộ (/rpc/*) và CopilotKit (/copilotkit/*) -> Đi vào Next.js
+	# 6. Toàn bộ Giao diện Web, SSR, ConnectRPC (/rpc/*) và CopilotKit (/copilotkit/*) -> Đi vào Next.js
 	handle {
 		reverse_proxy {$FRONTEND_UPSTREAM:127.0.0.1:3000} {
 			# Hỗ trợ Streaming SSR (React Suspense) & Server-Sent Events (AI Chat CopilotKit)
@@ -46,7 +46,7 @@
 		}
 	}
 
-	# 6. Ghi log có cấu trúc (JSON Format)
+	# 7. Ghi log có cấu trúc (JSON Format)
 	log {
 		output stdout
 		format json
