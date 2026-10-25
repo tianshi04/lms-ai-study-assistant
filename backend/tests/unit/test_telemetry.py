@@ -1,11 +1,12 @@
 from connectrpc_otel import OpenTelemetryInterceptor
 from opentelemetry import metrics, trace
 
+from src.shared.config import settings
 from src.shared.infrastructure.telemetry import setup_telemetry
 
 
 def test_setup_telemetry_initialization():
-    setup_telemetry(service_name="test-service", otlp_endpoint="http://localhost:4317")
+    setup_telemetry(service_name="test-service", otlp_endpoint="http://localhost:5081")
     tracer = trace.get_tracer("test_tracer")
     assert tracer is not None
 
@@ -14,7 +15,7 @@ def test_setup_telemetry_initialization():
 
 
 def test_setup_telemetry_metrics_initialization():
-    setup_telemetry(service_name="test-service", otlp_endpoint="http://localhost:4317")
+    setup_telemetry(service_name="test-service", otlp_endpoint="http://localhost:5081")
     meter = metrics.get_meter("test_meter")
     assert meter is not None
 
@@ -22,6 +23,13 @@ def test_setup_telemetry_metrics_initialization():
         "test_counter", unit="1", description="Test counter metric"
     )
     counter.add(1, {"test_label": "value"})
+
+
+def test_otlp_headers_generation():
+    headers = settings.otlp_headers
+    assert headers["organization"] == settings.OPENOBSERVE_ORG
+    assert headers["stream-name"] == settings.OPENOBSERVE_STREAM
+    assert headers["authorization"].startswith("Basic ")
 
 
 def test_connectrpc_otel_interceptor():

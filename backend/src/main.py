@@ -306,6 +306,9 @@ middleware = [
             "authorization",
             "cookie",
             "x-request-id",
+            "traceparent",
+            "tracestate",
+            "baggage",
         ],
         expose_headers=[
             "connect-error-info",

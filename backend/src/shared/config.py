@@ -1,3 +1,4 @@
+import base64
 import re
 from functools import lru_cache
 
@@ -104,15 +105,40 @@ class Settings(BaseSettings):
         description="Refresh token expiration in days",
     )
 
-    # 5. OpenTelemetry & Jaeger Observability (Spec-compliant)
-    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: str | None = Field(
+    # 5. OpenTelemetry & OpenObserve Observability (Spec-compliant)
+    OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(
         default=None,
-        description="OpenTelemetry OTLP Collector Endpoint for Traces (e.g. http://localhost:4317)",
+        description="Unified OpenTelemetry OTLP gRPC Endpoint for Traces and Metrics (e.g. http://localhost:5081)",
     )
-    OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: str | None = Field(
-        default=None,
-        description="Dedicated OpenTelemetry OTLP Metrics Endpoint (optional, e.g. http://localhost:4317)",
+    ZO_ROOT_USER_EMAIL: str = Field(
+        default="admin@coursera.local",
+        description="OpenObserve Root User Email for OTLP ingestion authentication",
     )
+    ZO_ROOT_USER_PASSWORD: str = Field(
+        default="openobserve_password123",
+        description="OpenObserve Root User Password for OTLP ingestion authentication",
+    )
+    OPENOBSERVE_ORG: str = Field(
+        default="default",
+        description="OpenObserve organization identifier for OTLP ingestion",
+    )
+    OPENOBSERVE_STREAM: str = Field(
+        default="default",
+        description="OpenObserve stream name for OTLP ingestion",
+    )
+
+    @property
+    def otlp_headers(self) -> dict[str, str]:
+        """Build lowercase gRPC metadata headers for OpenObserve OTLP ingestion."""
+        if not self.ZO_ROOT_USER_EMAIL or not self.ZO_ROOT_USER_PASSWORD:
+            return {}
+        credentials = f"{self.ZO_ROOT_USER_EMAIL}:{self.ZO_ROOT_USER_PASSWORD}"
+        encoded = base64.b64encode(credentials.encode("utf-8")).decode("ascii")
+        return {
+            "authorization": f"Basic {encoded}",
+            "organization": self.OPENOBSERVE_ORG,
+            "stream-name": self.OPENOBSERVE_STREAM,
+        }
 
     # 6. VNPay Sandbox Gateway Configuration
     VNPAY_TMN_CODE: str = Field(

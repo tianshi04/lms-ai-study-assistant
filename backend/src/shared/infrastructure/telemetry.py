@@ -29,20 +29,23 @@ def setup_telemetry(
         }
     )
 
-    trace_endpoint = otlp_endpoint or settings.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+    endpoint = otlp_endpoint or settings.OTEL_EXPORTER_OTLP_ENDPOINT
+    otlp_headers = settings.otlp_headers
     is_testing = "pytest" in sys.modules or settings.ENV.lower() in ("testing", "test")
 
     # 1. Configure OpenTelemetry Tracing
     tracer_provider = TracerProvider(resource=resource)
-    if trace_endpoint and not is_testing:
+    if endpoint and not is_testing:
         try:
             otlp_trace_exporter = OTLPSpanExporter(
-                endpoint=trace_endpoint, insecure=True
+                endpoint=endpoint,
+                insecure=True,
+                headers=otlp_headers,
             )
             tracer_provider.add_span_processor(BatchSpanProcessor(otlp_trace_exporter))
             logger.info(
                 "OpenTelemetry OTLP Trace Exporter configured for endpoint: %s",
-                trace_endpoint,
+                endpoint,
             )
         except Exception as err:  # noqa: BLE001
             logger.warning("Could not initialize OTLPSpanExporter: %s", err)
@@ -50,12 +53,12 @@ def setup_telemetry(
     trace.set_tracer_provider(tracer_provider)
 
     # 2. Configure OpenTelemetry Metrics
-    # Only export remote metrics if a dedicated metrics endpoint is explicitly provided
-    metric_endpoint = settings.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
-    if metric_endpoint and not is_testing:
+    if endpoint and not is_testing:
         try:
             otlp_metric_exporter = OTLPMetricExporter(
-                endpoint=metric_endpoint, insecure=True
+                endpoint=endpoint,
+                insecure=True,
+                headers=otlp_headers,
             )
             metric_reader = PeriodicExportingMetricReader(
                 exporter=otlp_metric_exporter,
@@ -68,7 +71,7 @@ def setup_telemetry(
             metrics.set_meter_provider(meter_provider)
             logger.info(
                 "OpenTelemetry OTLP Metric Exporter configured for endpoint: %s",
-                metric_endpoint,
+                endpoint,
             )
         except Exception as err:  # noqa: BLE001
             logger.warning("Could not initialize OTLPMetricExporter: %s", err)
