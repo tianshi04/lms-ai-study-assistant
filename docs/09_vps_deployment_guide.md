@@ -62,19 +62,20 @@ Tất cả các thành phần được đóng gói và kết nối an toàn qua 
         ├─► /                                 ──► Next.js Frontend (:3000)
         ├─► /_next/static/* (Immutable Cache) ──► Next.js Frontend (:3000)
         ├─► /rpc/*, /copilotkit/*             ──► Next.js Frontend (:3000)
+        ├─► /rum/* (Browser RUM & Replay)     ──► OpenObserve (:5080)
         ├─► /api/*                            ──► Python Backend API (:8000)
         └─► /coursera-assets/* (Video/Stream) ──► Python Backend API (:8000)
                                                         │
-                      ┌─────────────────────────────────┼────────────────────────┐
-                      ▼                                 ▼                        ▼
-               PostgreSQL 17                         MinIO S3                 Redis 7
-              (+ pgvector :5432)                 (Storage :9000)           (Cache :6379)
+              ┌───────────────────────┬─────────────────┼─────────────────┐
+              ▼                       ▼                 ▼                 ▼
+       PostgreSQL 17              MinIO S3           Redis 7         OpenObserve
+      (+ pgvector :5432)       (Storage :9000)    (Cache :6379)    (OTLP gRPC :5081)
 ```
 
 - **Database Migration**: Service `migration` chạy tự động lệnh `alembic upgrade head` mỗi khi khởi động stack trước khi backend nhận request.
-- **Bảo mật cơ sở dữ liệu**: PostgreSQL, MinIO, Redis và Jaeger chỉ bind vào `127.0.0.1` trên VPS (ngăn ngừa hoàn toàn nguy cơ brute-force từ Internet).
-- **Jaeger Observability**: Mặc định được khởi động cùng hệ thống để thu thập distributed traces, hỗ trợ theo dõi và gỡ lỗi hiệu năng API.
-- **Bảo toàn dữ liệu (Data Persistence)**: Toàn bộ dữ liệu PostgreSQL, video MinIO và cache Redis được lưu ở Docker Named Volumes (`postgres_data`, `minio_data`, `redis_data`). Khi cập nhật image mới hoặc khởi động lại container, **dữ liệu không bao giờ bị mất hay bị reset**.
+- **Bảo mật cơ sở dữ liệu & quản trị**: PostgreSQL, MinIO, Redis và giao diện quản trị OpenObserve (`:5080`) chỉ bind vào `127.0.0.1` trên VPS (ngăn ngừa hoàn toàn nguy cơ brute-force từ Internet; truy cập an toàn qua SSH Port Forwarding `ssh -L 5080:localhost:5080 root@<ip>`).
+- **OpenObserve All-in-One Observability (Rust)**: Giải pháp giám sát hợp nhất thu thập **Backend OpenTelemetry Traces + Metrics** (qua cổng gRPC `:5081`) và **Frontend Browser RUM, Core Web Vitals, Error Logs & Session Replay** (qua đường dẫn `/rum/*` trên cùng domain, chống AdBlock và không cần cấu hình CORS).
+- **Bảo toàn dữ liệu (Data Persistence)**: Toàn bộ dữ liệu PostgreSQL, video MinIO, cache Redis và dữ liệu giám sát OpenObserve được lưu ở Docker Named Volumes (`postgres_data`, `minio_data`, `redis_data`, `openobserve_data`). Khi cập nhật image mới hoặc khởi động lại container, **dữ liệu không bao giờ bị mất hay bị reset**.
 
 ---
 
@@ -117,11 +118,20 @@ POSTGRES_DB=coursera_lms
 MINIO_ROOT_USER=minio_admin
 MINIO_ROOT_PASSWORD=MatKhauMinioManh_123456
 
-# --- 4. BẢO MẬT & AI COPILOTKIT ---
+# --- 4. GIÁM SÁT HỆ THỐNG OPENOBSERVE (LOGS, METRICS, TRACES, RUM) ---
+ZO_ROOT_USER_EMAIL=admin@coursera.local
+ZO_ROOT_USER_PASSWORD=MatKhauOpenObserveManh_123456
+# Sau khi đăng nhập OpenObserve UI (http://localhost:5080 -> Ingestion -> RUM), dán Client Token vào đây:
+OPENOBSERVE_CLIENT_TOKEN=
+
+# --- 5. BẢO MẬT & AI COPILOTKIT ---
 JWT_SECRET=chuoi_ky_tu_bi_mat_jwt_khoang_32_ky_tu_tro_len_ngau_nhien
 GOOGLE_API_KEY=your_gemini_api_key_o_day
+COPILOT_MODEL=google/gemini-3.5-flash-lite
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-# --- 5. ĐƯỜNG DẪN DOCKER IMAGE TRÊN GHCR ---
+# --- 6. ĐƯỜNG DẪN DOCKER IMAGE TRÊN GHCR ---
 FRONTEND_IMAGE=ghcr.io/<your-username>/<your-repo>/frontend:latest
 BACKEND_IMAGE=ghcr.io/<your-username>/<your-repo>/backend:latest
 ```
@@ -156,7 +166,7 @@ docker compose exec backend python -m src.seed
 
 ## 5. Tự Động Hóa Triển Khai (CI/CD với GitHub Actions)
 
-File workflow `.github/workflows/docker-publish.yml` đã được tích hợp sẵn chu trình Continuous Deployment (CD). Mỗi khi bạn `git push origin main` trên máy tính:
+File workflow `.github/workflows/deploy.yml` đã được tích hợp sẵn chu trình Continuous Deployment (CD). Mỗi khi bạn `git push origin main` trên máy tính:
 1. GitHub Actions tự động build 2 image `frontend` và `backend`.
 2. Đẩy 2 image lên GitHub Container Registry (`ghcr.io`).
 3. Dùng giao thức SCP copy đè 2 file `docker-compose.yml` và `Caddyfile` mới nhất sang `/root/lms` trên VPS.
@@ -196,15 +206,10 @@ File workflow `.github/workflows/docker-publish.yml` đã được tích hợp s
 | **Xem logs riêng cho Caddy** | `docker compose logs -f caddy` |
 | **Xem logs riêng cho Backend** | `docker compose logs -f backend` |
 | **Xem logs riêng cho Frontend** | `docker compose logs -f frontend` |
+| **Xem logs riêng cho OpenObserve** | `docker compose logs -f openobserve` |
+| **Mở giao diện OpenObserve UI qua SSH Tunnel** | `ssh -L 5080:localhost:5080 root@<ip-vps>` (sau đó mở `http://localhost:5080`) |
 | **Khởi động lại toàn bộ** | `docker compose restart` |
 | **Dừng toàn bộ hệ thống** | `docker compose down` |
 | **Kiểm tra trạng thái container** | `docker compose ps` |
 | **Chạy Alembic migration thủ công** | `docker compose run --rm migration` |
 | **Dọn dẹp image cũ giải phóng dung lượng** | `docker image prune -f` |
-
-
----
-
-## 7. Kế Hoạch Nâng Cấp Hạ Tầng (TODO)
-
-- [ ] **Nâng cấp Jaeger v1 lên Jaeger v2**: Thay thế container image `jaegertracing/all-in-one:latest` sang `jaegertracing/jaeger:2` chạy trên nền kiến trúc OpenTelemetry Collector gốc nhằm tối ưu hóa hiệu năng, giảm tiêu thụ RAM và chuẩn bị trước hạn chót End-of-Life của v1.

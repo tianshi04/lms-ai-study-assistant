@@ -68,7 +68,9 @@ services:
       - MINIO_SECURE=false
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-your_super_secret_jwt_key_coursera_2026_change_in_prod}
-      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4317
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://openobserve:5081
+      - ZO_ROOT_USER_EMAIL=${ZO_ROOT_USER_EMAIL:-admin@coursera.local}
+      - ZO_ROOT_USER_PASSWORD=${ZO_ROOT_USER_PASSWORD:-openobserve_password123}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -96,22 +98,26 @@ services:
       retries: 5
 
   # ------------------------------------------------------------------
-  # 5. HẠ TẦNG OBSERVABILITY: Jaeger All-In-One (OTel Collector & UI)
+  # 5. HẠ TẦNG OBSERVABILITY: OpenObserve All-In-One (Logs, Metrics, Traces, RUM)
   # ------------------------------------------------------------------
-  jaeger:
+  openobserve:
     profiles: ["infra", "app", "all"]
-    image: jaegertracing/all-in-one:latest
-    container_name: coursera_jaeger
+    image: public.ecr.aws/zinclabs/openobserve:latest
+    container_name: coursera_openobserve
     restart: always
     environment:
-      - COLLECTOR_OTLP_ENABLED=true
+      - ZO_DATA_DIR=/data
+      - ZO_ROOT_USER_EMAIL=${ZO_ROOT_USER_EMAIL:-admin@coursera.local}
+      - ZO_ROOT_USER_PASSWORD=${ZO_ROOT_USER_PASSWORD:-openobserve_password123}
     ports:
-      - "4317:4317" # OTLP gRPC receiver
-      - "4318:4318" # OTLP HTTP receiver
-      - "16686:16686" # Jaeger Web UI
+      - "${OPENOBSERVE_HTTP_PORT:-5080}:5080" # Web UI, HTTP API & Browser RUM Ingestion
+      - "${OPENOBSERVE_GRPC_PORT:-5081}:5081" # OTLP gRPC Receiver (Traces & Metrics)
+    volumes:
+      - openobserve_data:/data
 
 
 volumes:
   postgres_data:
   minio_data:
   redis_data:
+  openobserve_data:

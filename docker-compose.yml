@@ -14,6 +14,7 @@ services:
       - DOMAIN=${DOMAIN:-localhost}
       - BACKEND_UPSTREAM=backend:8000
       - FRONTEND_UPSTREAM=frontend:3000
+      - OPENOBSERVE_UPSTREAM=openobserve:5080
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -49,6 +50,10 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
       - COPILOT_MODEL=${COPILOT_MODEL:-google/gemini-3.5-flash-lite}
+      - OPENOBSERVE_CLIENT_TOKEN=${OPENOBSERVE_CLIENT_TOKEN:-}
+      - OPENOBSERVE_APPLICATION_ID=${OPENOBSERVE_APPLICATION_ID:-lms-frontend}
+      - OPENOBSERVE_SITE=${OPENOBSERVE_SITE:-}
+      - OPENOBSERVE_ORG=${OPENOBSERVE_ORG:-default}
     expose:
       - "3000"
     depends_on:
@@ -98,7 +103,7 @@ services:
       - BACKEND_PORT=8000
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-coursera_admin}:${POSTGRES_PASSWORD:-coursera_password123}@postgres:5432/${POSTGRES_DB:-coursera_lms}
       - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT:-https://${DOMAIN:-localhost}/coursera-assets}
+      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT:-https://${DOMAIN:-localhost}}
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minio_admin}
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minio_password123}
       - MINIO_BUCKET_NAME=coursera-assets
@@ -114,8 +119,11 @@ services:
       - VNPAY_RETURN_URL=https://${DOMAIN:-localhost}/payment/vnpay-return
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
-      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://jaeger:4317}
-      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:-}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://openobserve:5081}
+      - ZO_ROOT_USER_EMAIL=${ZO_ROOT_USER_EMAIL:-admin@coursera.local}
+      - ZO_ROOT_USER_PASSWORD=${ZO_ROOT_USER_PASSWORD:-openobserve_password123}
+      - OPENOBSERVE_ORG=${OPENOBSERVE_ORG:-default}
+      - OPENOBSERVE_STREAM=${OPENOBSERVE_STREAM:-default}
     expose:
       - "8000"
     healthcheck:
@@ -223,16 +231,20 @@ services:
         max-file: "3"
 
   # ------------------------------------------------------------------
-  # 8. JAEGER OBSERVABILITY (Distributed Tracing)
+  # 8. OPENOBSERVE (All-in-One Observability: Logs, Metrics, Traces, RUM)
   # ------------------------------------------------------------------
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: coursera_jaeger
+  openobserve:
+    image: public.ecr.aws/zinclabs/openobserve:latest
+    container_name: coursera_openobserve
     restart: always
     environment:
-      - COLLECTOR_OTLP_ENABLED=true
+      - ZO_DATA_DIR=/data
+      - ZO_ROOT_USER_EMAIL=${ZO_ROOT_USER_EMAIL:-admin@coursera.local}
+      - ZO_ROOT_USER_PASSWORD=${ZO_ROOT_USER_PASSWORD:-openobserve_password123}
     ports:
-      - "127.0.0.1:${JAEGER_UI_PORT:-16686}:16686"
+      - "127.0.0.1:${OPENOBSERVE_HTTP_PORT:-5080}:5080"
+    volumes:
+      - openobserve_data:/data
     networks:
       - coursera_network
     logging:
@@ -247,6 +259,7 @@ volumes:
   postgres_data:
   minio_data:
   redis_data:
+  openobserve_data:
 
 networks:
   coursera_network:

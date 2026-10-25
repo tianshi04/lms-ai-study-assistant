@@ -30,13 +30,19 @@
 		reverse_proxy {$BACKEND_UPSTREAM:127.0.0.1:8000}
 	}
 
-	# 5. Tối ưu bộ nhớ đệm (Cache) cho các tài nguyên tĩnh của Next.js (JS, CSS, Font)
+	# 5. OpenObserve Browser RUM, Logs & Session Replay Ingestion (/rum/*)
+	# Đi thẳng vào OpenObserve nội bộ trên cùng domain (chống AdBlock & miễn cấu hình CORS)
+	handle /rum/* {
+		reverse_proxy {$OPENOBSERVE_UPSTREAM:127.0.0.1:5080}
+	}
+
+	# 6. Tối ưu bộ nhớ đệm (Cache) cho các tài nguyên tĩnh của Next.js (JS, CSS, Font)
 	handle /_next/static/* {
 		header Cache-Control "public, max-age=31536000, immutable"
 		reverse_proxy {$FRONTEND_UPSTREAM:127.0.0.1:3000}
 	}
 
-	# 6. Toàn bộ Giao diện Web, SSR, ConnectRPC (/rpc/*) và CopilotKit (/copilotkit/*) -> Đi vào Next.js
+	# 7. Toàn bộ Giao diện Web, SSR, ConnectRPC (/rpc/*) và CopilotKit (/copilotkit/*) -> Đi vào Next.js
 	handle {
 		reverse_proxy {$FRONTEND_UPSTREAM:127.0.0.1:3000} {
 			# Hỗ trợ Streaming SSR (React Suspense) & Server-Sent Events (AI Chat CopilotKit)
@@ -46,7 +52,7 @@
 		}
 	}
 
-	# 7. Ghi log có cấu trúc (JSON Format)
+	# 8. Ghi log có cấu trúc (JSON Format)
 	log {
 		output stdout
 		format json
