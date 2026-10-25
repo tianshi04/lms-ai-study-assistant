@@ -28,6 +28,8 @@ import { Chip } from "@/components/ui/Chip";
 import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Dialog } from "@/components/ui/Dialog";
+import { useIsMounted } from "@/hooks/useIsMounted";
+import { computeSubscriptionStatus } from "@/lib/subscription";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -53,7 +55,7 @@ function formatDate(isoStr: string) {
 
 function MyPurchasesContent() {
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useIsMounted();
   const [orderToCancel, setOrderToCancel] = useState<any | null>(null);
   const [actionNotice, setActionNotice] = useState<{
     type: "success" | "error" | "cancelled";
@@ -63,10 +65,6 @@ function MyPurchasesContent() {
 
   const queryClient = useQueryClient();
   const { data, isLoading, isFetching, refetch } = useListUserPurchasesQuery();
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const createVNPayMutation = useCreateVNPayPaymentUrlMutation({
     onSuccess: (res) => {
@@ -104,59 +102,7 @@ function MyPurchasesContent() {
     if (!isMounted) {
       return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
     }
-    const rawSub = data?.activeSubscription;
-    let expStr = rawSub?.expiresAt || "";
-
-    // Fallback: If no activeSubscription object, check completed SYSTEM_SUBSCRIPTION orders
-    if (!expStr && data?.orders?.length) {
-      const completedSubOrders = data.orders.filter(
-        (o) =>
-          o.status === PaymentOrderStatus.COMPLETED &&
-          o.targetType === PaymentTargetType.SYSTEM_SUBSCRIPTION,
-      );
-      if (completedSubOrders.length > 0) {
-        let accumulatedExp: Date | null = null;
-        const sorted = [...completedSubOrders].sort(
-          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-        );
-        for (const o of sorted) {
-          const addDays = o.planType === PlanType.YEARLY ? 365 : 30;
-          const orderDate = new Date(o.createdAt);
-          if (!accumulatedExp || accumulatedExp.getTime() < orderDate.getTime()) {
-            accumulatedExp = new Date(orderDate.getTime() + addDays * 24 * 60 * 60 * 1000);
-          } else {
-            accumulatedExp = new Date(accumulatedExp.getTime() + addDays * 24 * 60 * 60 * 1000);
-          }
-        }
-        if (accumulatedExp) {
-          expStr = accumulatedExp.toISOString();
-        }
-      }
-    }
-
-    if (!expStr) {
-      return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
-    }
-
-    const expTime = new Date(expStr.trim().replace(" ", "T")).getTime();
-    const nowTime = Date.now();
-    const diffDays = Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24));
-    const active = !isNaN(expTime) && diffDays > 0;
-    let formattedDate = "";
-    try {
-      formattedDate = new Date(expTime).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    } catch {
-      formattedDate = expStr;
-    }
-    return {
-      daysRemaining: active ? diffDays : 0,
-      isPlusActive: active,
-      formattedExpDate: formattedDate,
-    };
+    return computeSubscriptionStatus(data?.activeSubscription, data?.orders);
   }, [data, isMounted]);
 
   const handleSubscribePlus = (plan: PlanType) => {

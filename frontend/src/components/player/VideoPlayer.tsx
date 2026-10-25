@@ -107,7 +107,12 @@ export function VideoPlayer({
   onQuizActiveChange,
 }: VideoPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const centerScroll = useScrollEdgeFade<HTMLDivElement>();
+  const {
+    scrollRef: centerScrollRef,
+    canScrollUp: canCenterScrollUp,
+    canScrollDown: canCenterScrollDown,
+    handleScroll: handleCenterScroll,
+  } = useScrollEdgeFade<HTMLDivElement>();
 
   // Compute dynamic HTML5 WebVTT caption URL for native <video controls> track subtitles
   const computedCaptionUrl = useMemo(() => {
@@ -507,15 +512,15 @@ export function VideoPlayer({
       {/* Top Floating Gradient Fade Overlay (Dynamically appears when scrolling down) */}
       <div
         className={`absolute top-0 inset-x-0 h-8 bg-gradient-to-b from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none z-20 transition-opacity duration-200 ${
-          centerScroll.canScrollUp ? "opacity-100" : "opacity-0"
+          canCenterScrollUp ? "opacity-100" : "opacity-0"
         }`}
         aria-hidden="true"
       />
 
       {/* Scrollable Content Container - Native Scrollbar Hidden */}
       <div
-        ref={centerScroll.scrollRef}
-        onScroll={centerScroll.handleScroll}
+        ref={centerScrollRef}
+        onScroll={handleCenterScroll}
         className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto scrollbar-none"
       >
         {renderLessonContent()}
@@ -524,7 +529,7 @@ export function VideoPlayer({
       {/* Bottom Floating Gradient Fade Overlay (Dynamically appears when content extends below) */}
       <div
         className={`absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent pointer-events-none z-20 transition-opacity duration-200 ${
-          centerScroll.canScrollDown ? "opacity-100" : "opacity-0"
+          canCenterScrollDown ? "opacity-100" : "opacity-0"
         }`}
         aria-hidden="true"
       />

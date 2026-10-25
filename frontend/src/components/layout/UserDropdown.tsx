@@ -21,7 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useListUserPurchasesQuery } from "@/lib/query_hooks";
-import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
+import { computeSubscriptionStatus } from "@/lib/subscription";
 import { Menu } from "@/components/ui/Menu";
 import { Chip } from "@/components/ui/Chip";
 
@@ -45,58 +45,7 @@ export function UserDropdown() {
   const { data: purchasesData } = useListUserPurchasesQuery({ enabled: !!userId });
 
   const { daysRemaining, isPlusActive, formattedExpDate } = useMemo(() => {
-    const rawSub = purchasesData?.activeSubscription;
-    let expStr = rawSub?.expiresAt || "";
-
-    if (!expStr && purchasesData?.orders?.length) {
-      const completedSubOrders = purchasesData.orders.filter(
-        (o) =>
-          o.status === PaymentOrderStatus.COMPLETED &&
-          o.targetType === PaymentTargetType.SYSTEM_SUBSCRIPTION,
-      );
-      if (completedSubOrders.length > 0) {
-        let accumulatedExp: Date | null = null;
-        const sorted = [...completedSubOrders].sort(
-          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-        );
-        for (const o of sorted) {
-          const addDays = o.planType === PlanType.YEARLY ? 365 : 30;
-          const orderDate = new Date(o.createdAt);
-          if (!accumulatedExp || accumulatedExp.getTime() < orderDate.getTime()) {
-            accumulatedExp = new Date(orderDate.getTime() + addDays * 24 * 60 * 60 * 1000);
-          } else {
-            accumulatedExp = new Date(accumulatedExp.getTime() + addDays * 24 * 60 * 60 * 1000);
-          }
-        }
-        if (accumulatedExp) {
-          expStr = accumulatedExp.toISOString();
-        }
-      }
-    }
-
-    if (!expStr) {
-      return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
-    }
-
-    const expTime = new Date(expStr.trim().replace(" ", "T")).getTime();
-    const nowTime = Date.now();
-    const diffDays = Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24));
-    const active = !isNaN(expTime) && diffDays > 0;
-    let formattedDate = "";
-    try {
-      formattedDate = new Date(expTime).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    } catch {
-      formattedDate = expStr;
-    }
-    return {
-      daysRemaining: active ? diffDays : 0,
-      isPlusActive: active,
-      formattedExpDate: formattedDate,
-    };
+    return computeSubscriptionStatus(purchasesData?.activeSubscription, purchasesData?.orders);
   }, [purchasesData]);
 
   useEffect(() => {
