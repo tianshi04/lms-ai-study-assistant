@@ -25,6 +25,7 @@ from src.modules.catalog.domain import (
     Specialization,
     WeekModule,
 )
+from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,
@@ -316,7 +317,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return _model_to_domain_course(model)
 
     async def get_course_recommendations(
-        self, course_id: str, target_count: int = 4
+        self, course_id: str, target_count: int = DEFAULT_RECOMMENDED_COURSES_COUNT
     ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
         stmt = select(CourseModel).where(
             (CourseModel.id == course_id) | (CourseModel.slug == course_id)

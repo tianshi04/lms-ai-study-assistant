@@ -19,6 +19,7 @@ from src.modules.catalog.domain import (
     Specialization,
     WeekModule,
 )
+from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
 from src.shared.auth import CurrentUser, require_current_user
 
 
@@ -300,7 +301,7 @@ class CatalogHandler(CatalogService):
             raise ConnectError(Code.NOT_FOUND, f"Course {request.id_or_slug} not found")
 
         foundational, recs = await self.use_case.get_course_recommendations(
-            request.id_or_slug, target_count=4
+            request.id_or_slug, target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
         )
         pb_foundational = _to_pb_course(foundational) if foundational else None
         pb_recs = [

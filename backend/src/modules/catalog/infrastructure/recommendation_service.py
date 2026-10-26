@@ -5,7 +5,7 @@ Formula:
 
 Sections:
   1. Foundational Course: Identifies pedagogical prerequisite (Specialization sequence or high vector similarity foundational match).
-  2. Recommended Courses: Curates exactly 4 highly-relevant distinct courses with badges.
+  2. Recommended Courses: Curates up to 6 highly-relevant distinct courses with badges.
 """
 
 import logging
@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.catalog.domain import CourseStatus
+from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
 from src.modules.catalog.infrastructure.models import (
     CourseEmbeddingModel,
     CourseModel,
@@ -108,7 +109,7 @@ async def get_foundational_course(
 async def get_recommended_courses(
     session: AsyncSession,
     current_course: CourseModel,
-    target_count: int = 4,
+    target_count: int = DEFAULT_RECOMMENDED_COURSES_COUNT,
     exclude_ids: set[str] | None = None,
 ) -> list[RecommendedCourseDto]:
     """Retrieve exactly `target_count` recommended courses using hybrid scoring formula."""
