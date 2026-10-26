@@ -774,7 +774,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               {recommendedCourses.map((rec) => {
                 if (!rec.course) return null;
                 return (
-                  <CourseCard key={rec.course.id} course={rec.course} badge={rec.badgeLabel} />
+                  <CourseCard key={rec.course.id} course={rec.course} />
                 );
               })}
             </div>

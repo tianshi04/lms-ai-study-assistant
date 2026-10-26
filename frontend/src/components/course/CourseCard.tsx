@@ -9,10 +9,9 @@ import { PartnerLogo } from "./PartnerLogo";
 export interface CourseCardProps {
   course: Course;
   progress?: number;
-  badge?: string;
 }
 
-export function CourseCard({ course, progress, badge }: CourseCardProps) {
+export function CourseCard({ course, progress }: CourseCardProps) {
   const fallbackInstructor = course.partnerName
     ? `Đội ngũ ${course.partnerName}`
     : "Giảng viên LMS";
@@ -23,16 +22,9 @@ export function CourseCard({ course, progress, badge }: CourseCardProps) {
       className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between [content-visibility:auto] [contain-intrinsic-size:auto_320px]"
     >
       <div>
-        {/* Partner Header & Recommendation Badge */}
-        <div className="flex items-center justify-between gap-3 mb-4 h-7">
-          <div className="flex items-center gap-3 min-w-0">
-            <PartnerLogo logoUrl={course.partnerLogoUrl} partnerName={course.partnerName} />
-          </div>
-          {badge && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 shrink-0">
-              {badge}
-            </span>
-          )}
+        {/* Partner Header */}
+        <div className="flex items-center gap-3 mb-4 h-7 min-w-0">
+          <PartnerLogo logoUrl={course.partnerLogoUrl} partnerName={course.partnerName} />
         </div>
 
         {/* Title & Description */}

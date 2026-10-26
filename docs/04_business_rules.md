@@ -185,6 +185,9 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * $S_{\text{vector}}$ (55%): Điểm Cosine Similarity giữa 2 vector tri thức ngữ nghĩa của Khóa học A và Khóa học B.
     * $I_{\text{author}}$ (30%): Trọng số cùng Giảng viên (`owner_id`) hoặc cùng Tổ chức Đối tác (`partner_name`). Nhận giá trị $1.0$ nếu trùng khớp, ngược lại $= 0.0$.
     * $R_{\text{norm}}$ (15%): Điểm đánh giá trung bình chuẩn hóa $\frac{\text{Rating}}{5.0} \in [0, 1]$ (nếu khóa học chưa có lượt đánh giá nào, fallback nhận giá trị an toàn $0.8$ tương đương 4.0 sao).
+  * **Ngưỡng Lọc Độ Tin cậy (Minimum Relevance Threshold):**
+    * Hệ thống áp dụng ngưỡng chặn tin cậy tối thiểu `MIN_RECOMMENDATION_SCORE_THRESHOLD = 0.55` (hoặc cùng giảng viên `is_same_author == True`). Các khóa học có tổng điểm dưới ngưỡng sẽ bị loại bỏ hoàn toàn khỏi danh sách đề xuất để tránh hiện tượng rác dữ liệu (Recommender Noise).
+    * Giao diện thẻ khóa học (`CourseCard`) hiển thị tinh gọn theo thiết kế chuẩn mực của Coursera, không hiển thị các huy hiệu nhãn quảng cáo gây rối mắt.
   * **Chi tiết Thành phần Dữ liệu cấu thành Vector Ngữ nghĩa (Trọng số 55% - $S_{\text{vector}}$):**
     Hệ thống trích xuất đầy đủ 7 trường dữ liệu ngữ nghĩa từ cơ sở dữ liệu để ghép thành chuỗi văn bản đại diện (Payload) trước khi vector hóa:
     1. **Tên khóa học (`course.title`):** Khái niệm và chủ đề đào tạo cốt lõi.

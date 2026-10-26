@@ -8,6 +8,8 @@ VERIFIED_COMPLETER_PROGRESS_PERCENT: float = 100.0
 
 # Course Recommendation defaults
 DEFAULT_RECOMMENDED_COURSES_COUNT: int = 6
+MIN_RECOMMENDATION_SCORE_THRESHOLD: float = 0.55
+MIN_FOUNDATIONAL_SIMILARITY_THRESHOLD: float = 0.65
 
 # Public S3 Storage Asset Folders & Prefixes (bypass JWT auth)
 PUBLIC_ASSET_FOLDERS: set[str] = {"thumbnails", "banners", "avatars"}
