@@ -16,7 +16,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.catalog.domain import CourseStatus
-from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
+from src.modules.catalog.domain.constants import (
+    DEFAULT_RECOMMENDED_COURSES_COUNT,
+    MIN_FOUNDATIONAL_SIMILARITY_THRESHOLD,
+    MIN_RECOMMENDATION_SCORE_THRESHOLD,
+)
 from src.modules.catalog.infrastructure.models import (
     CourseEmbeddingModel,
     CourseModel,
@@ -46,8 +50,8 @@ class RecommendedCourseDto:
     badge_label: str
 
 
-def cosine_similarity(v1: Sequence[float], v2: Sequence[float]) -> float:
-    """Calculate cosine similarity between two normalized or arbitrary vectors."""
+def raw_cosine_similarity(v1: Sequence[float], v2: Sequence[float]) -> float:
+    """Calculate raw cosine similarity between two normalized or arbitrary vectors."""
     if not v1 or not v2 or len(v1) != len(v2):
         return 0.0
     dot = sum(a * b for a, b in zip(v1, v2))
@@ -55,8 +59,12 @@ def cosine_similarity(v1: Sequence[float], v2: Sequence[float]) -> float:
     norm_b = sum(b * b for b in v2) ** 0.5
     if norm_a == 0.0 or norm_b == 0.0:
         return 0.0
-    val = dot / (norm_a * norm_b)
-    # Clamp to [0.0, 1.0]
+    return dot / (norm_a * norm_b)
+
+
+def cosine_similarity(v1: Sequence[float], v2: Sequence[float]) -> float:
+    """Calculate normalized cosine similarity mapped to [0.0, 1.0]."""
+    val = raw_cosine_similarity(v1, v2)
     return max(0.0, min(1.0, (val + 1.0) / 2.0))
 
 
@@ -96,11 +104,19 @@ async def get_foundational_course(
     best_sim = 0.0
 
     for emb_rec, course in candidates:
-        sim = cosine_similarity(current_emb.embedding, emb_rec.embedding)
+        raw_sim = raw_cosine_similarity(current_emb.embedding, emb_rec.embedding)
         title_lower = course.title.lower()
         is_foundational = any(kw in title_lower for kw in FOUNDATIONAL_KEYWORDS)
-        if is_foundational and sim >= 0.50 and sim > best_sim:
-            best_sim = sim
+        is_relevant_domain = (course.subject == current_course.subject) or (
+            raw_sim >= 0.75
+        )
+        if (
+            is_foundational
+            and is_relevant_domain
+            and raw_sim >= MIN_FOUNDATIONAL_SIMILARITY_THRESHOLD
+            and raw_sim > best_sim
+        ):
+            best_sim = raw_sim
             best_match = course
 
     return best_match
@@ -169,19 +185,11 @@ async def get_recommended_courses(
 
         total_score = (0.55 * sim) + (0.30 * author_score) + (0.15 * rating_score)
 
-        # Determine badge label
-        if is_same_author:
-            badge = "⭐ Cùng Giảng viên"
-        elif sim >= 0.70:
-            badge = "💡 Gợi ý theo nội dung"
-        elif course.subject == current_course.subject:
-            badge = "📚 Cùng chuyên ngành"
-        else:
-            badge = "🔥 Khóa học nổi bật"
-
-        scored_candidates.append(
-            RecommendedCourseDto(course=course, score=total_score, badge_label=badge)
-        )
+        # Confidence filter: Only retain courses meeting the minimum relevance threshold or from same author
+        if total_score >= MIN_RECOMMENDATION_SCORE_THRESHOLD or is_same_author:
+            scored_candidates.append(
+                RecommendedCourseDto(course=course, score=total_score, badge_label="")
+            )
 
     # Sort descending by score
     scored_candidates.sort(key=lambda x: x.score, reverse=True)
