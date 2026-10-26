@@ -176,6 +176,17 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * Phía Backend kiểm tra đa tầng tại `CatalogUseCase._verify_ownership` và Repository DB Level. Mọi cố gắng xóa khóa học `PUBLISHED` từ phía Giảng viên đều bị từ chối và trả về ngoại lệ `PermissionError` / `ConnectError(Code.PERMISSION_DENIED)`.
   * **Quyền Chỉnh sửa Nối tiếp (Live Content Maintenance):** Giảng viên vẫn giữ quyền chỉnh sửa nội dung mô tả, cập nhật bài đọc (Reading), sửa lỗi phụ đề VTT, video bài giảng hoặc cập nhật ngân hàng câu hỏi/ma trận đề thi để cập nhật kiến thức mới mà không ảnh hưởng tới các học viên đã tốt nghiệp.
   * **Quy trình Gỡ/Hủy Xuất bản Khóa học (Unpublish / Archive Workflow):** Khi cần dừng nhận học viên mới hoặc gỡ khóa học khỏi danh mục công khai, Quản trị viên hệ thống (Super Admin) thực hiện chuyển trạng thái khóa học sang `UNPUBLISHED` hoặc `ARCHIVED`. Khóa học bị ẩn khỏi trang tìm kiếm công khai nhưng học viên cũ đã đăng ký vẫn giữ nguyên 100% quyền truy cập và chứng chỉ đã cấp.
+* **BR_CATALOG_005 (Nguyên tắc Môn Nền tảng Khuyến nghị - Soft Prerequisite & Open Enrollment):**
+  * **Chính sách Mở (Open Enrollment Policy):** Nền tảng tuân thủ triết lý học tập mở tương tự Coursera. Khóa học có môn tiên quyết/nền tảng chỉ đóng vai trò khuyến nghị mềm (Soft Advisory). Hệ thống tuyệt đối **KHÔNG KHÓA CỨNG (No Hard Lock)**; học viên luôn được phép ghi danh và học trực tiếp khóa học nâng cao bất kể đã hoàn thành môn nền tảng hay chưa.
+  * **Quy tắc Tự động Phát hiện Môn Nền tảng:** Môn nền tảng của khóa học B được ưu tiên xác định theo thứ tự chuỗi Specialization (khóa đứng liền trước trong cùng lộ trình). Nếu không thuộc Specialization nào, hệ thống tự động suy luận môn nền tảng từ tập khóa học đã xuất bản (`PUBLISHED`) có vector tương đồng cao nhất và chứa các từ khóa nền tảng ("căn bản", "cơ bản", "nhập môn", "nền tảng", "foundation", "introduction", "basic").
+* **BR_CATALOG_006 (Thuật toán Gợi ý Khóa học Đề xuất - Hybrid Vector Recommendation Engine):**
+  * **Công thức Chấm điểm Lai (Hybrid Scoring Formula):**
+    $$Score(A, B) = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$$
+    * $S_{\text{vector}}$ (55%): Điểm Cosine Similarity giữa 2 vector biểu diễn tri thức (FastEmbed `sentence-transformers/all-MiniLM-L6-v2`, 384 chiều, lưu trữ `pgvector` kèm HNSW Cosine Index).
+    * $I_{\text{author}}$ (30%): Trọng số cùng Giảng viên (`owner_id`) hoặc cùng Tổ chức Đối tác (`partner_name`). Nhận giá trị $1.0$ nếu trùng khớp, ngược lại $= 0.0$.
+    * $R_{\text{norm}}$ (15%): Điểm đánh giá trung bình chuẩn hóa $\frac{\text{Rating}}{5.0} \in [0, 1]$.
+  * **Số lượng và Lưới hiển thị:** Mặc định cung cấp 6 khóa học (`DEFAULT_RECOMMENDED_COURSES_COUNT = 6`), loại bỏ chính khóa học hiện tại và môn nền tảng đã hiển thị. Hiển thị dạng lưới 3 cột x 2 hàng trên desktop.
+  * **Ràng buộc Trạng thái (Lifecycle Boundary):** Chỉ các khóa học ở trạng thái **`PUBLISHED`** mới tham gia vào tập ứng viên đề xuất và sinh vector embedding. Khóa học ở trạng thái `DRAFT` hoặc `PENDING_REVIEW` tuyệt đối không được hiển thị cho người học.
 
 
 ---
