@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
 from src.modules.catalog.domain.entities import (
     Category,
     Course,
@@ -47,7 +48,7 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def get_course_recommendations(
-        self, course_id: str, target_count: int = 4
+        self, course_id: str, target_count: int = DEFAULT_RECOMMENDED_COURSES_COUNT
     ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
         pass
 
