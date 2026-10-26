@@ -298,7 +298,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning/10 border border-warning/20 text-warning text-xs font-bold">
                   <Star aria-hidden="true" className="w-4 h-4 text-amber-400 fill-amber-400" />
                   <span>
-                    {course.averageRating.toFixed(1)} ★ ({course.reviewCount} {"nhận xét"})
+                    {course.averageRating.toFixed(1)} / 5.0 ({course.reviewCount} {"nhận xét"})
                   </span>
                 </div>
               )}
@@ -773,9 +773,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendedCourses.map((rec) => {
                 if (!rec.course) return null;
-                return (
-                  <CourseCard key={rec.course.id} course={rec.course} />
-                );
+                return <CourseCard key={rec.course.id} course={rec.course} />;
               })}
             </div>
           </section>
