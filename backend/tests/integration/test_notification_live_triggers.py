@@ -136,7 +136,7 @@ async def test_live_quiz_submission_trigger():
         fa_model = FinancialAidModel(
             id=f"fa_{uuid.uuid4().hex[:8]}",
             user_id=learner_id,
-            course_id="",
+            course_id="course-python-ai",
             essay_150_words="Valid essay text...",
             status="APPROVED",
             review_deadline_days_left=15,

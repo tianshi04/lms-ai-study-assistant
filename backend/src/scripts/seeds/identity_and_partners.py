@@ -63,7 +63,23 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
         created_at="2026-07-20T00:00:00Z",
         updated_at="2026-07-20T00:00:00Z",
     )
-    for partner in (partner_stanford, partner_dl, partner_gcp):
+    partner_neu = PartnerModel(
+        id="partner-neu",
+        name="NEU Business School",
+        slug="neu-business-school",
+        description="NEU Business School - Trường Đại học Kinh tế Quốc dân đào tạo kinh tế & quản trị kinh doanh hàng đầu.",
+        logo_url="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Truong_Dai_hoc_Kinh_te_Quoc_dan.svg",
+        banner_url="https://images.unsplash.com/photo-1541339907198-e08756dedf3f",
+        website_url="https://neu.edu.vn",
+        allowed_domains=["neu.edu.vn"],
+        signature_image_url="https://example.com/signatures/neu_dean.png",
+        signer_name="GS. TS. Phạm Hồng Chương",
+        signer_title="Hiệu trưởng Trường Đại học Kinh tế Quốc dân",
+        public_key_pem="-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAneu...\n-----END PUBLIC KEY-----",
+        created_at="2026-07-20T00:00:00Z",
+        updated_at="2026-07-20T00:00:00Z",
+    )
+    for partner in (partner_stanford, partner_dl, partner_gcp, partner_neu):
         await session.merge(partner)
 
     # Enterprise Licenses
@@ -165,6 +181,17 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
             enterprise_seat_key="",
             password_hash=default_pw_hash,
         ),
+        UserModel(
+            id="user_instructor_econ",
+            email="tuan.tran@neu.edu.vn",
+            full_name="PGS. TS. Trần Minh Tuấn",
+            role=UserRole.INSTRUCTOR,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=tuan.tran@neu.edu.vn",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+            title="Trưởng Bộ môn Kinh tế lượng, ĐH Kinh tế Quốc dân",
+            signature_image_url="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Truong_Dai_hoc_Kinh_te_Quoc_dan.svg",
+        ),
     ]
     for user in users:
         await session.merge(user)
@@ -187,6 +214,12 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
             name="Coursera Project Network",
             slug="coursera-project-network",
             avatar_url="",
+        ),
+        OrganizationModel(
+            id="partner_neu",
+            name="NEU Business School",
+            slug="neu-business-school",
+            avatar_url="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Truong_Dai_hoc_Kinh_te_Quoc_dan.svg",
         ),
     ]
     for org in organizations:
@@ -218,6 +251,13 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
             id="member_ta_01",
             user_id="user_ta_01",
             organization_id="partner_stanford",
+            role_id="INSTRUCTOR",
+            status="ACTIVE",
+        ),
+        OrganizationMemberModel(
+            id="member_instructor_econ",
+            user_id="user_instructor_econ",
+            organization_id="partner_neu",
             role_id="INSTRUCTOR",
             status="ACTIVE",
         ),
