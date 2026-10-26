@@ -6,18 +6,33 @@ import { Card } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Progress";
 import { PartnerLogo } from "./PartnerLogo";
 
-export function CourseCard({ course, progress }: { course: Course; progress?: number }) {
+export interface CourseCardProps {
+  course: Course;
+  progress?: number;
+  badge?: string;
+}
+
+export function CourseCard({ course, progress, badge }: CourseCardProps) {
+  const fallbackInstructor = course.partnerName
+    ? `Đội ngũ ${course.partnerName}`
+    : "Giảng viên LMS";
+
   return (
     <Card
       variant="outlined"
       className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between [content-visibility:auto] [contain-intrinsic-size:auto_320px]"
     >
       <div>
-        {/* Partner Header */}
+        {/* Partner Header & Recommendation Badge */}
         <div className="flex items-center justify-between gap-3 mb-4 h-7">
           <div className="flex items-center gap-3 min-w-0">
             <PartnerLogo logoUrl={course.partnerLogoUrl} partnerName={course.partnerName} />
           </div>
+          {badge && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 shrink-0">
+              {badge}
+            </span>
+          )}
         </div>
 
         {/* Title & Description */}
@@ -46,7 +61,9 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
         <div className="pt-4 border-t border-outline-variant mb-5 flex items-center justify-between text-xs text-on-surface-variant font-medium">
           <span className="flex items-center gap-1.5 min-w-0 truncate max-w-[160px]">
             <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
-            {course.instructorNames.join(", ") || "Giảng viên Coursera"}
+            {course.instructorNames.length > 0
+              ? course.instructorNames.join(", ")
+              : fallbackInstructor}
           </span>
           <span className="flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-on-surface-variant" aria-hidden="true" />

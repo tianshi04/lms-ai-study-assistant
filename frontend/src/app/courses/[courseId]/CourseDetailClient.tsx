@@ -29,6 +29,7 @@ import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
+import { CourseCard } from "@/components/course/CourseCard";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Pencil,
@@ -46,6 +47,7 @@ import {
   SquarePen,
   X,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 
 interface CourseDetailClientProps {
@@ -58,10 +60,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const queryClient = useQueryClient();
 
   const {
-    data: course,
+    data: courseDetail,
     isLoading: loadingCourse,
     error: courseErr,
   } = useCourseDetailQuery(courseId);
+
+  const course = courseDetail?.course ?? null;
+  const foundationalCourse = courseDetail?.foundationalCourse ?? null;
+  const recommendedCourses = courseDetail?.recommendedCourses ?? [];
 
   const isOwnCourse = useMemo(() => {
     if (!course) return false;
@@ -261,9 +267,16 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2">
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider">
-                {"Khóa học Chuyên sâu (Specialization)"}
-              </div>
+              {course.subject && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide">
+                  <span>{course.subject}</span>
+                </div>
+              )}
+              {course.level && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border text-foreground text-xs font-semibold">
+                  <span>{course.level}</span>
+                </div>
+              )}
               {isInstructorOrAdmin && (
                 <Chip
                   variant="assist"
@@ -309,7 +322,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   {"Giảng viên"}
                 </span>
                 <span className="font-semibold text-foreground">
-                  {course.instructorNames.join(", ")}
+                  {course.instructorNames.length > 0
+                    ? course.instructorNames.join(", ")
+                    : `Đội ngũ ${course.partnerName}`}
                 </span>
               </div>
             </div>
@@ -430,6 +445,103 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
       {/* Course Syllabus Content */}
       <main className="max-w-7xl mx-auto px-6 py-12">
+        {/* Section 1: Khóa học Nền tảng Khuyến nghị */}
+        {foundationalCourse && (
+          <section aria-labelledby="foundational-course-heading" className="mb-12">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide">
+                <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{"Khóa học Nền tảng Khuyến nghị"}</span>
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">
+                {"Khuyến nghị học trước (Không bắt buộc)"}
+              </span>
+            </div>
+
+            <Surface
+              variant="low"
+              shape="2xl"
+              className="p-6 md:p-8 border border-primary/20 bg-primary/5 space-y-4 hover:border-primary/40 transition-colors"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium">
+                    <span className="font-semibold text-foreground">
+                      {foundationalCourse.partnerName}
+                    </span>
+                    {foundationalCourse.subject && (
+                      <>
+                        <span>•</span>
+                        <span>{foundationalCourse.subject}</span>
+                      </>
+                    )}
+                    {foundationalCourse.level && (
+                      <>
+                        <span>•</span>
+                        <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[11px]">
+                          {foundationalCourse.level}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <h3
+                    id="foundational-course-heading"
+                    className="text-xl md:text-2xl font-bold text-foreground hover:text-primary transition-colors"
+                  >
+                    <Link href={`/courses/${foundationalCourse.id}`}>
+                      {foundationalCourse.title}
+                    </Link>
+                  </h3>
+
+                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                    {foundationalCourse.description}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
+                    <span>
+                      {foundationalCourse.instructorNames.length > 0
+                        ? foundationalCourse.instructorNames.join(", ")
+                        : `Đội ngũ ${foundationalCourse.partnerName}`}
+                    </span>
+                    {foundationalCourse.weekModules.length > 0 && (
+                      <>
+                        <span>•</span>
+                        <span>
+                          {foundationalCourse.weekModules.length} {"tuần học"}
+                        </span>
+                      </>
+                    )}
+                    {foundationalCourse.averageRating > 0 && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1 text-amber-500 font-semibold">
+                          <Star
+                            className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                            aria-hidden="true"
+                          />
+                          {foundationalCourse.averageRating.toFixed(1)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3">
+                  <Link
+                    href={`/courses/${foundationalCourse.id}`}
+                    prefetch={true}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-colors shadow-sm cursor-pointer"
+                  >
+                    <span>{"Xem Khóa Nền Tảng"}</span>
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+            </Surface>
+          </section>
+        )}
+
         <h2 className="text-2xl font-extrabold text-foreground mb-6">
           {"Nội Dung Chương Trình Học (Syllabus)"}
         </h2>
@@ -633,6 +745,41 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             </div>
           )}
         </div>
+
+        {/* Section 2: Khóa học Đề xuất Liên quan */}
+        {recommendedCourses.length > 0 && (
+          <section
+            aria-labelledby="recommended-courses-heading"
+            className="mt-16 border-t border-border pt-12"
+          >
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide mb-3">
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{"AI Recommender"}</span>
+              </div>
+              <h2
+                id="recommended-courses-heading"
+                className="text-2xl font-extrabold text-foreground"
+              >
+                {"Khóa học Đề xuất Liên quan"}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {
+                  "Gợi ý thông minh dựa trên nội dung bài giảng, độ tương đồng tri thức và giảng viên tương ứng."
+                }
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recommendedCourses.map((rec) => {
+                if (!rec.course) return null;
+                return (
+                  <CourseCard key={rec.course.id} course={rec.course} badge={rec.badgeLabel} />
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Review & Rating Modal */}

@@ -315,6 +315,40 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             return None
         return _model_to_domain_course(model)
 
+    async def get_course_recommendations(
+        self, course_id: str, target_count: int = 4
+    ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
+        stmt = select(CourseModel).where(
+            (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+        )
+        current_model = (await self.session.execute(stmt)).scalar_one_or_none()
+        if not current_model:
+            return None, []
+
+        from src.modules.catalog.infrastructure.recommendation_service import (
+            get_foundational_course,
+            get_recommended_courses,
+        )
+
+        foundational_model = await get_foundational_course(self.session, current_model)
+        exclude_ids = {current_model.id}
+        foundational_domain = None
+        if foundational_model:
+            foundational_domain = _model_to_domain_course(foundational_model)
+            exclude_ids.add(foundational_model.id)
+
+        rec_dtos = await get_recommended_courses(
+            self.session,
+            current_model,
+            target_count=target_count,
+            exclude_ids=exclude_ids,
+        )
+        recommended_domain: list[tuple[Course, str, float]] = [
+            (_model_to_domain_course(r.course), r.badge_label, r.score)
+            for r in rec_dtos
+        ]
+        return foundational_domain, recommended_domain
+
     async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
         stmt = (
             select(LessonModel)
