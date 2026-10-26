@@ -25,6 +25,7 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { usePaymentAccessQuery } from "@/lib/query_hooks";
+import { playbackTimeStore } from "@/lib/playback_time_store";
 import { CourseSyllabusDrawer } from "@/components/player/sidebar/CourseSyllabusDrawer";
 import { Button } from "@/components/ui/Button";
 import { Menu, Sparkles, X, CheckCircle2, ChevronRight } from "lucide-react";
@@ -192,7 +193,8 @@ function CoursePlayerContent() {
   const maxTimeRef = useRef<number>(0);
   const isMarkingRef = useRef<boolean>(false);
   const markedItemIdsRef = useRef<Set<string>>(new Set());
-  const [currentTime, setCurrentTime] = useState(0);
+  // Seek requested from the transcript/AI: ignore stale (pre-seek) player times until the player catches up
+  const pendingSeekRef = useRef<{ target: number; expiresAt: number } | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<InVideoQuiz | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -414,8 +416,9 @@ function CoursePlayerContent() {
   const activeItemId = activeItem?.id;
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
-    setCurrentTime(0);
+    playbackTimeStore.set(0);
     maxTimeRef.current = 0;
+    pendingSeekRef.current = null;
     setActiveQuiz(null);
     setSelectedOption(null);
     setQuizSubmitted(false);
@@ -436,6 +439,18 @@ function CoursePlayerContent() {
       currentSeconds = videoRef.current.currentTime || 0;
     }
 
+    // Right after a transcript seek, the player may still report the old position for a short while.
+    // Ignore those stale values so the highlight does not jump back to the previous cue.
+    const pendingSeek = pendingSeekRef.current;
+    if (pendingSeek) {
+      const hasCaughtUp = Math.abs(currentSeconds - pendingSeek.target) <= 1.5;
+      if (hasCaughtUp || Date.now() > pendingSeek.expiresAt) {
+        pendingSeekRef.current = null;
+      } else {
+        return;
+      }
+    }
+
     if (currentSeconds === 0 && maxTimeRef.current > 2) {
       return;
     }
@@ -444,9 +459,11 @@ function CoursePlayerContent() {
       maxTimeRef.current = currentSeconds;
     }
 
-    // Keep exact float precision for currentTime state to prevent clipping end words in transcripts
+    // Keep exact float precision for the playback time to prevent clipping end words in transcripts
     const currentFloat = Math.round(currentSeconds * 100) / 100;
-    setCurrentTime((prev) => (Math.abs(prev - currentFloat) < 0.1 ? prev : currentFloat));
+    if (Math.abs(playbackTimeStore.get() - currentFloat) >= 0.1) {
+      playbackTimeStore.set(currentFloat);
+    }
 
     const integerTime = Math.floor(currentSeconds);
 
@@ -490,6 +507,9 @@ function CoursePlayerContent() {
 
   // Jump to video timestamp from transcript
   const handleSeekVideo = (timestampSeconds: number) => {
+    // Optimistic update: highlight the target cue immediately instead of waiting for the player to report back
+    pendingSeekRef.current = { target: timestampSeconds, expiresAt: Date.now() + 2000 };
+    playbackTimeStore.set(timestampSeconds);
     if (videoRef.current) {
       videoRef.current.currentTime = timestampSeconds;
       videoRef.current.play();
@@ -767,7 +787,6 @@ function CoursePlayerContent() {
                 selectedOption={selectedOption}
                 quizSubmitted={quizSubmitted}
                 completedItemIds={progress?.completedItemIds || []}
-                currentTime={currentTime}
                 onTimeUpdate={handleTimeUpdate}
                 onSeeking={handleSeeking}
                 onSelectOption={setSelectedOption}
@@ -811,7 +830,6 @@ function CoursePlayerContent() {
               courseId={courseId}
               course={course}
               activeItem={activeItem}
-              currentTime={currentTime}
               progress={progress}
               notes={notes}
               highlightText={highlightText}

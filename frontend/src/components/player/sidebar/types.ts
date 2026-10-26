@@ -7,7 +7,6 @@ export interface LearnSidebarWorkspaceProps {
   courseId: string;
   course: Course | null;
   activeItem: LearningItem | null;
-  currentTime: number;
   progress: LearningProgress | null;
   notes: PersonalNote[];
   highlightText: string;

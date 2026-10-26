@@ -20,6 +20,7 @@ import { Sparkles, ArrowUp } from "lucide-react";
 import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { formatTime, getItemTypeName } from "./utils";
+import { usePlaybackTime } from "@/lib/playback_time_store";
 import { getMessageText } from "@/components/ai/utils";
 import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
@@ -38,7 +39,6 @@ interface LearnPageAIChatbotProps {
   courseTitle: string;
   moduleTitle?: string;
   activeItem: LearningItem | null;
-  currentTime: number;
   transcriptText?: string;
   readingMarkdown?: string;
   externalPrompt?: string | null;
@@ -56,7 +56,6 @@ export const LearnPageAIChatbot = forwardRef<LearnPageAIChatbotRef, LearnPageAIC
       courseTitle,
       moduleTitle = "Bài học hiện tại",
       activeItem,
-      currentTime,
       transcriptText = "",
       readingMarkdown = "",
       externalPrompt = null,
@@ -69,6 +68,8 @@ export const LearnPageAIChatbot = forwardRef<LearnPageAIChatbotRef, LearnPageAIC
     ref,
   ) {
     const [inputValue, setInputValue] = useState("");
+    // Whole-second playback time from the external store (only re-renders once per second)
+    const currentTime = usePlaybackTime(Math.floor);
     const [sessionStartIndex, setSessionStartIndex] = useState(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const {
