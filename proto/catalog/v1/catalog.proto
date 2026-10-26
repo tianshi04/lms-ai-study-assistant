@@ -133,8 +133,16 @@ message GetCourseDetailRequest {
   string id_or_slug = 1;
 }
 
+message CourseRecommendationItem {
+  Course course = 1;
+  string badge_label = 2;
+  double score = 3;
+}
+
 message GetCourseDetailResponse {
   Course course = 1;
+  Course foundational_course = 2;
+  repeated CourseRecommendationItem recommended_courses = 3;
 }
 
 message GetLessonDetailRequest {

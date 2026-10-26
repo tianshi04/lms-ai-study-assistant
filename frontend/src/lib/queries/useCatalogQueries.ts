@@ -13,6 +13,7 @@ import {
   type Category,
   type CourseReview,
   type CourseCollaboratorDetail,
+  type GetCourseDetailResponse,
 } from "@/gen/catalog/v1/catalog_pb";
 
 export interface CourseFilters {
@@ -24,19 +25,20 @@ export interface CourseFilters {
 }
 
 /**
- * Custom TanStack Query hook for fetching single course details.
+ * Custom TanStack Query hook for fetching single course details,
+ * including foundational course and hybrid AI recommendations.
  */
 export function useCourseDetailQuery(
   courseId: string,
-  options?: Partial<UseQueryOptions<Course | null, Error>>,
+  options?: Partial<UseQueryOptions<GetCourseDetailResponse | null, Error>>,
 ) {
-  return useQuery<Course | null, Error>({
+  return useQuery<GetCourseDetailResponse | null, Error>({
     queryKey: ["courseDetail", courseId],
     queryFn: async () => {
       if (!courseId) return null;
       const client = getRpcClient(CatalogService);
       const res = await client.getCourseDetail({ idOrSlug: courseId });
-      return res.course ?? null;
+      return res;
     },
     enabled: !!courseId,
     ...options,

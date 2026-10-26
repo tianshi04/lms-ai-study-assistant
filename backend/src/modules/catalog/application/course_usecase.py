@@ -160,6 +160,13 @@ class CourseUseCase:
             repo = self.repo_factory(session)
             return await repo.get_course_detail(course_id)
 
+    async def get_course_recommendations(
+        self, course_id: str, target_count: int = 4
+    ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.get_course_recommendations(course_id, target_count)
+
     async def get_specialization(
         self, specialization_id: str
     ) -> tuple[Specialization | None, list[Course]]:

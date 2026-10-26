@@ -46,6 +46,12 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_course_recommendations(
+        self, course_id: str, target_count: int = 4
+    ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
+        pass
+
+    @abstractmethod
     async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
         pass
 

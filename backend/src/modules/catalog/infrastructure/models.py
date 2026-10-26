@@ -1,9 +1,11 @@
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     ARRAY,
     JSON,
     Boolean,
     Float,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -342,3 +344,26 @@ class CourseAuditLogModel(Base):
     action: Mapped[str] = mapped_column(String(64), nullable=False)
     details: Mapped[str] = mapped_column(Text, nullable=True, default="")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+
+
+class CourseEmbeddingModel(Base):
+    __tablename__ = "course_embeddings"
+    __table_args__ = (
+        Index(
+            "idx_course_embeddings_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
+
+    course_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=False)
+    payload_text: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    updated_at: Mapped[str] = mapped_column(String(64), nullable=False)

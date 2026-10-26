@@ -1,0 +1,187 @@
+"""Hybrid Recommendation Service for Course Detail Page.
+
+Formula:
+  Score(A, B) = 0.55 * VectorSimilarity(A, B) + 0.30 * SameAuthor(A, B) + 0.15 * NormalizedRating(B)
+
+Sections:
+  1. Foundational Course: Identifies pedagogical prerequisite (Specialization sequence or high vector similarity foundational match).
+  2. Recommended Courses: Curates exactly 4 highly-relevant distinct courses with badges.
+"""
+
+import logging
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.modules.catalog.domain import CourseStatus
+from src.modules.catalog.infrastructure.models import (
+    CourseEmbeddingModel,
+    CourseModel,
+    SpecializationModel,
+)
+
+logger = logging.getLogger(__name__)
+
+FOUNDATIONAL_KEYWORDS = (
+    "căn bản",
+    "cơ bản",
+    "nhập môn",
+    "nền tảng",
+    "foundation",
+    "foundations",
+    "introduction",
+    "intro",
+    "basic",
+    "basics",
+)
+
+
+@dataclass
+class RecommendedCourseDto:
+    course: CourseModel
+    score: float
+    badge_label: str
+
+
+def cosine_similarity(v1: Sequence[float], v2: Sequence[float]) -> float:
+    """Calculate cosine similarity between two normalized or arbitrary vectors."""
+    if not v1 or not v2 or len(v1) != len(v2):
+        return 0.0
+    dot = sum(a * b for a, b in zip(v1, v2))
+    norm_a = sum(a * a for a in v1) ** 0.5
+    norm_b = sum(b * b for b in v2) ** 0.5
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+    val = dot / (norm_a * norm_b)
+    # Clamp to [0.0, 1.0]
+    return max(0.0, min(1.0, (val + 1.0) / 2.0))
+
+
+async def get_foundational_course(
+    session: AsyncSession, current_course: CourseModel
+) -> CourseModel | None:
+    """Identify foundational / prerequisite course using Specialization sequence or semantic match."""
+    # 1. Check if course belongs to a Specialization sequence
+    spec_stmt = select(SpecializationModel)
+    specs = (await session.execute(spec_stmt)).scalars().all()
+    for spec in specs:
+        if current_course.id in spec.course_ids:
+            idx = spec.course_ids.index(current_course.id)
+            if idx > 0:
+                # Predecessor course in specialization is the foundational prerequisite
+                prereq_id = spec.course_ids[idx - 1]
+                prereq = await session.get(CourseModel, prereq_id)
+                if prereq and prereq.status == CourseStatus.PUBLISHED:
+                    return prereq
+
+    # 2. Semantic vector fallback: find published course with foundational concepts & high similarity
+    current_emb = await session.get(CourseEmbeddingModel, current_course.id)
+    if not current_emb:
+        return None
+
+    emb_stmt = (
+        select(CourseEmbeddingModel, CourseModel)
+        .join(CourseModel, CourseModel.id == CourseEmbeddingModel.course_id)
+        .where(
+            CourseModel.id != current_course.id,
+            CourseModel.status == CourseStatus.PUBLISHED,
+        )
+    )
+    candidates = (await session.execute(emb_stmt)).all()
+
+    best_match: CourseModel | None = None
+    best_sim = 0.0
+
+    for emb_rec, course in candidates:
+        sim = cosine_similarity(current_emb.embedding, emb_rec.embedding)
+        title_lower = course.title.lower()
+        is_foundational = any(kw in title_lower for kw in FOUNDATIONAL_KEYWORDS)
+        if is_foundational and sim >= 0.50 and sim > best_sim:
+            best_sim = sim
+            best_match = course
+
+    return best_match
+
+
+async def get_recommended_courses(
+    session: AsyncSession,
+    current_course: CourseModel,
+    target_count: int = 4,
+    exclude_ids: set[str] | None = None,
+) -> list[RecommendedCourseDto]:
+    """Retrieve exactly `target_count` recommended courses using hybrid scoring formula."""
+    if exclude_ids is None:
+        exclude_ids = set()
+    exclude_ids.add(current_course.id)
+
+    # Load current course embedding
+    current_emb = await session.get(CourseEmbeddingModel, current_course.id)
+    current_vector = current_emb.embedding if current_emb else None
+
+    # Load all published candidates
+    all_courses_stmt = select(CourseModel).where(
+        CourseModel.id.notin_(exclude_ids),
+        CourseModel.status == CourseStatus.PUBLISHED,
+    )
+    candidate_courses = (await session.execute(all_courses_stmt)).scalars().all()
+
+    if not candidate_courses:
+        return []
+
+    # Pre-fetch embeddings for candidates if current vector exists
+    candidate_vectors: dict[str, list[float]] = {}
+    if current_vector:
+        cand_ids = [c.id for c in candidate_courses]
+        cand_emb_stmt = select(CourseEmbeddingModel).where(
+            CourseEmbeddingModel.course_id.in_(cand_ids)
+        )
+        cand_embs = (await session.execute(cand_emb_stmt)).scalars().all()
+        for ce in cand_embs:
+            candidate_vectors[ce.course_id] = ce.embedding
+
+    scored_candidates: list[RecommendedCourseDto] = []
+
+    for course in candidate_courses:
+        # 1. Vector similarity (55%)
+        cand_vec = candidate_vectors.get(course.id)
+        if current_vector and cand_vec:
+            sim = cosine_similarity(current_vector, cand_vec)
+        else:
+            sim = 0.5 if course.subject == current_course.subject else 0.2
+
+        # 2. Same author / partner (30%)
+        is_same_author = (
+            course.owner_id and course.owner_id == current_course.owner_id
+        ) or (
+            course.partner_name and course.partner_name == current_course.partner_name
+        )
+        author_score = 1.0 if is_same_author else 0.0
+
+        # 3. Rating score (15%)
+        rating_score = (
+            min(5.0, max(0.0, course.average_rating)) / 5.0
+            if course.average_rating
+            else 0.8
+        )
+
+        total_score = (0.55 * sim) + (0.30 * author_score) + (0.15 * rating_score)
+
+        # Determine badge label
+        if is_same_author:
+            badge = "⭐ Cùng Giảng viên"
+        elif sim >= 0.70:
+            badge = "💡 Gợi ý theo nội dung"
+        elif course.subject == current_course.subject:
+            badge = "📚 Cùng chuyên ngành"
+        else:
+            badge = "🔥 Khóa học nổi bật"
+
+        scored_candidates.append(
+            RecommendedCourseDto(course=course, score=total_score, badge_label=badge)
+        )
+
+    # Sort descending by score
+    scored_candidates.sort(key=lambda x: x.score, reverse=True)
+    return scored_candidates[:target_count]
