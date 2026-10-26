@@ -205,6 +205,18 @@ flowchart TD
 * **Hạn nộp linh hoạt (Flexible Deadlines):** Mỗi tuần học có hạn nộp gợi ý (Suggested Deadlines) để học viên duy trì tiến độ.
 * **Tính năng "Reset My Deadlines":** Nếu học viên bận việc và quá hạn nộp bài (Overdue), màn hình khóa học sẽ xuất hiện nút **"Reset my deadlines"**. Khi bấm nút này, hệ thống sẽ tự động cập nhật lịch nộp bài sang đợt mới mà không trừ điểm thi. Đối với khóa Self-paced, hệ thống tự động gia hạn `Course_End_Date` tính từ mốc reset để phân bổ hạn nộp các tuần hợp lý mà không bị dồn cục (`BR_DEADLINE_001`).
 
+### 3.3. Trang Chi tiết Khóa học, Môn Nền tảng & Đề xuất Thông minh (Course Detail & Smart Recommendation System)
+* **Tổng quan Khóa học (Course Hero & Metadata):**
+  * Hiển thị đầy đủ nhãn Lĩnh vực (`subject`), Cấp độ (`level`), Đơn vị Đối tác bảo chứng (`partner_name`, `partner_logo_url`), và Giảng viên phụ trách (fallback hiển thị `Đội ngũ [Tên Đối tác]` nếu danh sách giảng viên để trống).
+* **Mục 1: Khóa học Nền tảng Khuyến nghị (Foundational Prerequisite Course):**
+  * Tự động nhận diện khóa học nền tảng dựa trên chuỗi chuyên ngành (Specialization) hoặc độ tương đồng tri thức cao nhất.
+  * Hiển thị Card tóm tắt môn nền tảng kèm huy hiệu "Khóa học Nền tảng Khuyến nghị" và nút điều hướng xem khóa học.
+  * Tuân thủ nghiêm ngặt nguyên tắc **Open Enrollment**: Khóa học nâng cao luôn mở 100%, không áp đặt khóa cứng (Hard Lock) học viên.
+* **Mục 2: Khóa học Đề xuất Liên quan (Smart Recommendations Grid):**
+  * Hiển thị lưới 6 thẻ khóa học (3 cột x 2 hàng trên desktop) chuẩn Material Design 3.
+  * Ứng dụng thuật toán chấm điểm lai (Hybrid Recommendation Algorithm) kết hợp Vector Cosine Similarity (FastEmbed 384-dim), Cùng Giảng viên/Đối tác, và Điểm đánh giá (Rating) chuẩn hóa.
+  * Mỗi thẻ hiển thị rõ lý do đề xuất qua các badge: `⭐ Cùng Giảng viên`, `💡 Gợi ý theo nội dung`, `📚 Cùng chuyên ngành`, hoặc `🔥 Khóa học nổi bật`.
+
 ### 3.4. Diễn đàn Thảo luận theo Bài học (Discussion Forum)
 * **Thảo luận gắn với Item (Item-level Discussion):** Dưới mỗi bài học video/bài đọc có mục "Discussion". Học viên gửi câu hỏi và nhận câu trả lời từ bạn học trên khắp thế giới.
 * **Chỉnh sửa & Chỉ báo Chỉnh sửa (`is_edited`):** Học viên có thể cập nhật bài hỏi hoặc câu trả lời của chính mình. Nội dung sau khi chỉnh sửa sẽ hiển thị nhãn chỉ báo "Đã chỉnh sửa" (`is_edited = True`) kèm mốc thời gian `edited_at`.
