@@ -92,6 +92,7 @@ message Course {
   string organization_id = 16;
   string owner_id = 17;
   repeated string co_instructor_ids = 18;
+  double price = 19;
 }
 
 // Specialization messages
@@ -103,6 +104,9 @@ message Specialization {
   string partner_name = 5;
   string partner_logo_url = 6;
   repeated Course courses = 7;
+  double bundle_price = 8;
+  double total_individual_price = 9;
+  int32 discount_percent = 10;
 }
 
 message GetSpecializationRequest {
@@ -143,6 +147,7 @@ message GetCourseDetailResponse {
   Course course = 1;
   Course foundational_course = 2;
   repeated CourseRecommendationItem recommended_courses = 3;
+  Specialization specialization = 4;
 }
 
 message GetLessonDetailRequest {

@@ -212,6 +212,10 @@ flowchart TD
   * Tự động nhận diện khóa học nền tảng dựa trên chuỗi chuyên ngành (Specialization) hoặc độ tương đồng tri thức cao nhất.
   * Hiển thị Card tóm tắt môn nền tảng kèm huy hiệu "Khóa học Nền tảng Khuyến nghị" và nút điều hướng xem khóa học.
   * Tuân thủ nghiêm ngặt nguyên tắc **Open Enrollment**: Khóa học nâng cao luôn mở 100%, không áp đặt khóa cứng (Hard Lock) học viên.
+* **Khu vực Trình diễn Chuyên ngành & Đăng ký Gói Combo (Specialization Showcase & Bundle):**
+  * Tự động liên kết khóa học với Chuyên ngành tương ứng thông qua trường `specialization` trong `GetCourseDetailResponse`.
+  * Trình bày trực quan Lộ trình tuần tự các môn trong Chuyên ngành (Roadmap timeline), đánh dấu vị trí môn hiện tại (`Đang xem`), môn tiên quyết và môn nâng cao kế tiếp.
+  * Hỗ trợ gói mua trọn bộ Chuyên ngành (Combo Bundle) với mức ưu đãi 25%, hiển thị so sánh minh bạch giữa tổng giá lẻ từng môn và giá trọn gói tiết kiệm kèm hộp thoại xác nhận thanh toán (`SpecializationCheckoutModal`).
 * **Mục 2: Khóa học Đề xuất Liên quan (Smart Recommendations Grid):**
   * Hiển thị lưới 6 thẻ khóa học (3 cột x 2 hàng trên desktop) chuẩn Material Design 3.
   * Ứng dụng thuật toán chấm điểm lai (Hybrid Recommendation Algorithm): $Score = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$.

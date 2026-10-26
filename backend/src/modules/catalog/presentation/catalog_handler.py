@@ -168,6 +168,7 @@ def _to_pb_course(course: Course) -> pb.Course:
         or "partner_community",
         owner_id=getattr(course, "owner_id", "") or "",
         co_instructor_ids=getattr(course, "co_instructor_ids", []) or [],
+        price=float(getattr(course, "price", 0.0) or 0.0),
     )
 
 
@@ -196,13 +197,20 @@ def _to_pb_review(review: CourseReview) -> pb.CourseReview:
 def _to_pb_specialization(
     spec: Specialization, courses: list[Course] | None = None
 ) -> pb.Specialization:
+    effective_courses = courses if courses is not None else getattr(spec, "courses", [])
+    pb_courses = [_to_pb_course(c) for c in (effective_courses or [])]
     return pb.Specialization(
         id=spec.id,
         title=spec.title,
         description=spec.description,
         partner_name=spec.partner_name,
         partner_logo_url=spec.partner_logo_url,
-        courses=[_to_pb_course(c) for c in (courses or [])],
+        courses=pb_courses,
+        bundle_price=float(getattr(spec, "bundle_price", 0.0) or 0.0),
+        total_individual_price=float(
+            getattr(spec, "total_individual_price", 0.0) or 0.0
+        ),
+        discount_percent=int(getattr(spec, "discount_percent", 0) or 0),
     )
 
 
@@ -313,6 +321,16 @@ class CatalogHandler(CatalogService):
                 request.id_or_slug,
             )
             foundational, recs = None, []
+
+        try:
+            specialization = await self.use_case.get_specialization_for_course(course.id)
+            pb_spec = _to_pb_specialization(specialization) if specialization else None
+        except Exception:
+            logger.exception(
+                "Failed to get specialization for course %s",
+                course.id,
+            )
+            pb_spec = None
         pb_foundational = _to_pb_course(foundational) if foundational else None
         pb_recs = [
             pb.CourseRecommendationItem(
@@ -327,6 +345,7 @@ class CatalogHandler(CatalogService):
             course=_to_pb_course(course),
             foundational_course=pb_foundational,
             recommended_courses=pb_recs,
+            specialization=pb_spec,
         )
 
     async def get_lesson_detail(

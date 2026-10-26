@@ -63,6 +63,12 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_specialization_for_course(
+        self, course_id: str
+    ) -> Specialization | None:
+        pass
+
+    @abstractmethod
     async def create_course(
         self,
         title: str,

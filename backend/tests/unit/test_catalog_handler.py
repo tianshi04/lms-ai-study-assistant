@@ -203,6 +203,7 @@ async def test_handler_get_course_detail_with_recommendations():
         week_modules=[],
     )
     usecase_mock.get_course_detail.return_value = mock_course
+    usecase_mock.get_specialization_for_course.return_value = None
     usecase_mock.get_course_recommendations.return_value = (
         None,
         [(rec_course, "⭐ Cùng Giảng viên", 0.88)],
@@ -261,3 +262,49 @@ async def test_handler_get_course_detail_fallback_on_recommendation_error():
     usecase_mock.get_course_recommendations.assert_called_once_with(
         "c-fallback", target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
     )
+
+
+@pytest.mark.asyncio
+async def test_handler_get_course_detail_with_specialization():
+    from src.modules.catalog.domain import Course, Specialization
+
+    usecase_mock = AsyncMock()
+    mock_course = Course(
+        id="c-econ-1",
+        title="Microeconomics",
+        slug="microeconomics",
+        price=790000.0,
+    )
+    mock_course_2 = Course(
+        id="c-econ-2",
+        title="Econometrics",
+        slug="econometrics",
+        price=1290000.0,
+    )
+    mock_spec = Specialization(
+        id="spec-econ",
+        title="Economics Specialization",
+        partner_name="NEU",
+        course_ids=["c-econ-1", "c-econ-2"],
+        courses=[mock_course, mock_course_2],
+        bundle_price=1560000.0,
+        total_individual_price=2080000.0,
+        discount_percent=25,
+    )
+
+    usecase_mock.get_course_detail.return_value = mock_course
+    usecase_mock.get_course_recommendations.return_value = (None, [])
+    usecase_mock.get_specialization_for_course.return_value = mock_spec
+
+    handler = CatalogHandler(usecase_mock)
+    request = pb.GetCourseDetailRequest(id_or_slug="c-econ-1")
+    context_mock = MagicMock()
+
+    response = await handler.get_course_detail(request, context_mock)
+    assert response is not None
+    assert response.specialization is not None
+    assert response.specialization.id == "spec-econ"
+    assert response.specialization.discount_percent == 25
+    assert response.specialization.bundle_price == 1560000.0
+    assert response.specialization.total_individual_price == 2080000.0
+    assert len(response.specialization.courses) == 2

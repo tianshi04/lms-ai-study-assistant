@@ -25,7 +25,10 @@ from src.modules.catalog.domain import (
     Specialization,
     WeekModule,
 )
-from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
+from src.modules.catalog.domain.constants import (
+    DEFAULT_RECOMMENDED_COURSES_COUNT,
+    DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT,
+)
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,
@@ -127,12 +130,26 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         rejection_reason=getattr(model, "rejection_reason", "") or "",
         organization_id=getattr(model, "organization_id", "partner_community")
         or "partner_community",
+        price=float(getattr(model, "price", 0.0) or 0.0),
     )
 
 
 def _model_to_domain_specialization(
     model: SpecializationModel,
+    courses: list[Course] | None = None,
 ) -> Specialization:
+    loaded_courses = courses or []
+    total_price = sum(getattr(c, "price", 0.0) for c in loaded_courses)
+    bundle_price = (
+        round(
+            total_price
+            * (1.0 - DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT / 100.0)
+            / 10000
+        )
+        * 10000
+        if total_price > 0
+        else 0.0
+    )
     return Specialization(
         id=model.id,
         title=model.title,
@@ -140,6 +157,12 @@ def _model_to_domain_specialization(
         partner_name=model.partner_name,
         partner_logo_url=model.partner_logo_url,
         course_ids=model.course_ids,
+        courses=loaded_courses,
+        bundle_price=bundle_price,
+        total_individual_price=total_price,
+        discount_percent=DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT
+        if total_price > 0
+        else 0,
     )
 
 
@@ -395,7 +418,23 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             c = await self.get_course_detail(cid)
             if c:
                 courses.append(c)
-        return _model_to_domain_specialization(spec_model), courses
+        return _model_to_domain_specialization(spec_model, courses), courses
+
+    async def get_specialization_for_course(
+        self, course_id: str
+    ) -> Specialization | None:
+        stmt = select(SpecializationModel)
+        res = await self.session.execute(stmt)
+        specs = res.scalars().all()
+        for spec_model in specs:
+            if course_id in (spec_model.course_ids or []):
+                courses: list[Course] = []
+                for cid in spec_model.course_ids:
+                    c = await self.get_course_detail(cid)
+                    if c:
+                        courses.append(c)
+                return _model_to_domain_specialization(spec_model, courses)
+        return None
 
     async def create_course(
         self,

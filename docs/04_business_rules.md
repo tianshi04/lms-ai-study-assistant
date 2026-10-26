@@ -216,6 +216,20 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
       * *Nguyên tắc Tính toán Tách biệt $O(1)$:* Quá trình sinh vector chỉ diễn ra 1 lần duy nhất khi Khóa học được Xuất bản (`PUBLISHED`) hoặc khi chạy CLI nạp dữ liệu (`make seed`). Khi người dùng mở trang Chi tiết Khóa học, hệ thống chỉ thực hiện phép chiếu Cosine trên các vector đã pre-computed trong Database, tuyệt đối không tính toán lại embedding on-the-fly.
   * **Số lượng và Lưới hiển thị:** Mặc định cung cấp 6 khóa học (`DEFAULT_RECOMMENDED_COURSES_COUNT = 6`), loại bỏ chính khóa học hiện tại và môn nền tảng đã hiển thị. Hiển thị dạng lưới 3 cột x 2 hàng trên desktop.
   * **Ràng buộc Trạng thái (Lifecycle Boundary):** Chỉ các khóa học ở trạng thái **`PUBLISHED`** mới tham gia vào tập ứng viên đề xuất và sinh vector embedding. Khóa học ở trạng thái `DRAFT` hoặc `PENDING_REVIEW` tuyệt đối không được hiển thị cho người học.
+* **BR_CATALOG_007 (Chương trình Chuyên ngành & Chính sách Ưu đãi Mua trọn gói - Specialization & Bundle Pricing):**
+  * **Cấu trúc Lộ trình Chuyên ngành (Specialization Learning Path):**
+    * Mỗi Chuyên ngành tập hợp chuỗi các khóa học có tính chất kế thừa và phát triển kỹ năng tuần tự (ví dụ: Khóa 1: Kinh tế học Vi mô $\to$ Khóa 2: Kinh tế lượng Ứng dụng $\to$ Khóa 3: Kinh tế học Hành vi & Định giá).
+    * Khi học viên đang xem bất kỳ khóa học nào thuộc Chuyên ngành, hệ thống hiển thị rõ ràng vị trí hiện tại (`Đang xem`), các môn tiên quyết đứng trước, các môn nâng cao đứng sau, và cột mốc đích đến nhận Chứng chỉ Chuyên ngành.
+  * **Công thức Giá Combo Trọn gói (Specialization Bundle Pricing):**
+    * `total_individual_price`: Tổng học phí khi mua lẻ từng môn trong Chuyên ngành.
+    * `discount_percent`: Tỷ lệ giảm giá combo trọn gói (mặc định $25\%$, định nghĩa tại `DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT = 25` trong `src.modules.catalog.domain.constants`).
+    * `bundle_price`: Học phí trọn gói sau ưu đãi, làm tròn đến hàng chục nghìn đồng để tối ưu tính thân thiện:
+      $$\text{bundle\_price} = \text{round}\left(\text{total\_individual\_price} \times \left(1 - \frac{\text{discount\_percent}}{100}\right) \div 10000\right) \times 10000$$
+    * *Quyền lợi gói combo:* Học viên sở hữu quyền truy cập trọn đời vào tất cả khóa học trong chuyên ngành, toàn bộ bài tập thực hành & bài kiểm tra có tính điểm, và 1 Chứng chỉ Chuyên ngành danh giá sau khi hoàn thành.
+  * **Tích hợp Trực quan trên Trang Chi tiết Khóa học (UI Integration):**
+    * *Hero Hint Callout:* Nằm tại thẻ Ghi danh góc phải, thông báo cho học viên biết khóa học thuộc chương trình Chuyên ngành và gợi ý mức tiết kiệm $25\%$, kèm liên kết cuộn mượt xuống khu vực chuyên biệt.
+    * *Khu vực Chuyên ngành Chuyên biệt (`#specialization-showcase`):* Bố cục 2 cột (Lộ trình học tập trực quan 65% vs Thẻ Thanh toán Combo Trọn gói 35%).
+    * *Hộp thoại Xác nhận Mua Combo (`SpecializationCheckoutModal`):* Tóm tắt bảng giá chi tiết, danh sách môn học, số tiền tiết kiệm và dẫn tới cổng thanh toán VNPay.
 
 
 ---

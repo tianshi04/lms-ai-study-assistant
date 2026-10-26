@@ -175,6 +175,13 @@ class CourseUseCase:
             repo = self.repo_factory(session)
             return await repo.get_specialization(specialization_id)
 
+    async def get_specialization_for_course(
+        self, course_id: str
+    ) -> Specialization | None:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.get_specialization_for_course(course_id)
+
     async def create_course(
         self,
         title: str,
