@@ -182,9 +182,35 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_CATALOG_006 (Thuật toán Gợi ý Khóa học Đề xuất - Hybrid Vector Recommendation Engine):**
   * **Công thức Chấm điểm Lai (Hybrid Scoring Formula):**
     $$Score(A, B) = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$$
-    * $S_{\text{vector}}$ (55%): Điểm Cosine Similarity giữa 2 vector biểu diễn tri thức (FastEmbed `sentence-transformers/all-MiniLM-L6-v2`, 384 chiều, lưu trữ `pgvector` kèm HNSW Cosine Index).
+    * $S_{\text{vector}}$ (55%): Điểm Cosine Similarity giữa 2 vector tri thức ngữ nghĩa của Khóa học A và Khóa học B.
     * $I_{\text{author}}$ (30%): Trọng số cùng Giảng viên (`owner_id`) hoặc cùng Tổ chức Đối tác (`partner_name`). Nhận giá trị $1.0$ nếu trùng khớp, ngược lại $= 0.0$.
-    * $R_{\text{norm}}$ (15%): Điểm đánh giá trung bình chuẩn hóa $\frac{\text{Rating}}{5.0} \in [0, 1]$.
+    * $R_{\text{norm}}$ (15%): Điểm đánh giá trung bình chuẩn hóa $\frac{\text{Rating}}{5.0} \in [0, 1]$ (nếu khóa học chưa có lượt đánh giá nào, fallback nhận giá trị an toàn $0.8$ tương đương 4.0 sao).
+  * **Chi tiết Thành phần Dữ liệu cấu thành Vector Ngữ nghĩa (Trọng số 55% - $S_{\text{vector}}$):**
+    Hệ thống trích xuất đầy đủ 7 trường dữ liệu ngữ nghĩa từ cơ sở dữ liệu để ghép thành chuỗi văn bản đại diện (Payload) trước khi vector hóa:
+    1. **Tên khóa học (`course.title`):** Khái niệm và chủ đề đào tạo cốt lõi.
+    2. **Đơn vị Đối tác bảo chứng (`course.partner_name`):** Trường đại học hoặc tổ chức đối tác đào tạo.
+    3. **Lĩnh vực môn học (`course.subject`):** Bounded context chuyên môn (ví dụ: `BUSINESS_ECONOMICS`, `DATA_SCIENCE`, `AI_ML`...).
+    4. **Cấp độ kiến thức (`course.level`):** Ngữ cảnh độ khó sư phạm (`BEGINNER`, `INTERMEDIATE`, `ADVANCED`).
+    5. **Mô tả chi tiết khóa học (`course.description`):** Tóm tắt mục tiêu, năng lực đầu ra và các chủ đề thảo luận.
+    6. **Khung sườn Tuần học (`week.week_number`, `week.title`):** Cấu trúc phân kỳ học tập theo thời gian.
+    7. **Tên toàn bộ Bài giảng trong đề cương (`lesson.title`):** Tập hợp danh sách tên tất cả các bài đọc, video, bài kiểm tra trong từng tuần học (nguồn tri thức sâu nhất thể hiện nội hàm khóa học).
+    * *Khuôn mẫu Văn bản Ngữ nghĩa (Structured Text Template):*
+      ```text
+      Khóa học: {course.title}
+      Đối tác: {course.partner_name}
+      Lĩnh vực: {course.subject} | Cấp độ: {course.level}
+      Mô tả: {course.description}
+      Đề cương bài học chi tiết:
+      - Tuần {week_1.week_number} ({week_1.title}): {lesson_1.title}, {lesson_2.title}...
+      - Tuần {week_2.week_number} ({week_2.title}): {lesson_3.title}, {lesson_4.title}...
+      ```
+    * *Mô hình & Hạ tầng Tính toán AI:*
+      * Sử dụng mô hình chuẩn **`sentence-transformers/all-MiniLM-L6-v2`** qua thư viện `fastembed` (chạy ONNX Runtime tối ưu CPU, độ trễ sinh vector < 20ms, không phụ thuộc GPU).
+      * Vector đầu ra có số chiều cố định **384 chiều (dense vector 384-dimensions)**.
+      * Lưu trữ tại bảng `course_embeddings` (`embedding vector(384)`) trên PostgreSQL với pgvector, đánh chỉ mục HNSW (`idx_course_embeddings_hnsw`, `vector_cosine_ops`) hỗ trợ tìm kiếm lân cận $O(\log N)$.
+      * Điểm tương đồng Cosine chuẩn hóa trong khoảng $[0, 1]$:
+        $$S_{\text{vector}} = \max\left(0.0, \min\left(1.0, \frac{\vec{u} \cdot \vec{v}}{\|\vec{u}\| \|\vec{v}\|}\right)\right)$$
+      * *Nguyên tắc Tính toán Tách biệt $O(1)$:* Quá trình sinh vector chỉ diễn ra 1 lần duy nhất khi Khóa học được Xuất bản (`PUBLISHED`) hoặc khi chạy CLI nạp dữ liệu (`make seed`). Khi người dùng mở trang Chi tiết Khóa học, hệ thống chỉ thực hiện phép chiếu Cosine trên các vector đã pre-computed trong Database, tuyệt đối không tính toán lại embedding on-the-fly.
   * **Số lượng và Lưới hiển thị:** Mặc định cung cấp 6 khóa học (`DEFAULT_RECOMMENDED_COURSES_COUNT = 6`), loại bỏ chính khóa học hiện tại và môn nền tảng đã hiển thị. Hiển thị dạng lưới 3 cột x 2 hàng trên desktop.
   * **Ràng buộc Trạng thái (Lifecycle Boundary):** Chỉ các khóa học ở trạng thái **`PUBLISHED`** mới tham gia vào tập ứng viên đề xuất và sinh vector embedding. Khóa học ở trạng thái `DRAFT` hoặc `PENDING_REVIEW` tuyệt đối không được hiển thị cho người học.
 
