@@ -64,7 +64,7 @@ export function LearnNonAiTabsPanel({
       case "notes":
         return "Ghi chú Cá nhân";
       case "deadlines":
-        return "Thời hạn & Tiến độ";
+        return "Deadlines & Tiến độ";
       default:
         return "";
     }
