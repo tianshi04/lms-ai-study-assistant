@@ -166,7 +166,8 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   );
 
   const { userId: authUserId, userName } = useAuth();
-  const { data: course } = useCourseDetailQuery(courseId);
+  const { data: courseDetail } = useCourseDetailQuery(courseId);
+  const course = courseDetail?.course;
   const [verifyingKyc, setVerifyingKyc] = useState<boolean>(false);
 
   const handleQuickKycVerify = async () => {

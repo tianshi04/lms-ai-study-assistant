@@ -176,6 +176,46 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * Phía Backend kiểm tra đa tầng tại `CatalogUseCase._verify_ownership` và Repository DB Level. Mọi cố gắng xóa khóa học `PUBLISHED` từ phía Giảng viên đều bị từ chối và trả về ngoại lệ `PermissionError` / `ConnectError(Code.PERMISSION_DENIED)`.
   * **Quyền Chỉnh sửa Nối tiếp (Live Content Maintenance):** Giảng viên vẫn giữ quyền chỉnh sửa nội dung mô tả, cập nhật bài đọc (Reading), sửa lỗi phụ đề VTT, video bài giảng hoặc cập nhật ngân hàng câu hỏi/ma trận đề thi để cập nhật kiến thức mới mà không ảnh hưởng tới các học viên đã tốt nghiệp.
   * **Quy trình Gỡ/Hủy Xuất bản Khóa học (Unpublish / Archive Workflow):** Khi cần dừng nhận học viên mới hoặc gỡ khóa học khỏi danh mục công khai, Quản trị viên hệ thống (Super Admin) thực hiện chuyển trạng thái khóa học sang `UNPUBLISHED` hoặc `ARCHIVED`. Khóa học bị ẩn khỏi trang tìm kiếm công khai nhưng học viên cũ đã đăng ký vẫn giữ nguyên 100% quyền truy cập và chứng chỉ đã cấp.
+* **BR_CATALOG_005 (Nguyên tắc Môn Nền tảng Khuyến nghị - Soft Prerequisite & Open Enrollment):**
+  * **Chính sách Mở (Open Enrollment Policy):** Nền tảng tuân thủ triết lý học tập mở tương tự Coursera. Khóa học có môn tiên quyết/nền tảng chỉ đóng vai trò khuyến nghị mềm (Soft Advisory). Hệ thống tuyệt đối **KHÔNG KHÓA CỨNG (No Hard Lock)**; học viên luôn được phép ghi danh và học trực tiếp khóa học nâng cao bất kể đã hoàn thành môn nền tảng hay chưa.
+  * **Quy tắc Tự động Phát hiện Môn Nền tảng:** Môn nền tảng của khóa học B được ưu tiên xác định theo thứ tự chuỗi Specialization (khóa đứng liền trước trong cùng lộ trình). Nếu không thuộc Specialization nào, hệ thống tự động suy luận môn nền tảng từ tập khóa học đã xuất bản (`PUBLISHED`) có vector tương đồng cao nhất và chứa các từ khóa nền tảng ("căn bản", "cơ bản", "nhập môn", "nền tảng", "foundation", "introduction", "basic").
+* **BR_CATALOG_006 (Thuật toán Gợi ý Khóa học Đề xuất - Hybrid Vector Recommendation Engine):**
+  * **Công thức Chấm điểm Lai (Hybrid Scoring Formula):**
+    $$Score(A, B) = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$$
+    * $S_{\text{vector}}$ (55%): Điểm Cosine Similarity giữa 2 vector tri thức ngữ nghĩa của Khóa học A và Khóa học B.
+    * $I_{\text{author}}$ (30%): Trọng số cùng Giảng viên (`owner_id`) hoặc cùng Tổ chức Đối tác (`partner_name`). Nhận giá trị $1.0$ nếu trùng khớp, ngược lại $= 0.0$.
+    * $R_{\text{norm}}$ (15%): Điểm đánh giá trung bình chuẩn hóa $\frac{\text{Rating}}{5.0} \in [0, 1]$ (nếu khóa học chưa có lượt đánh giá nào, fallback nhận giá trị an toàn $0.8$ tương đương 4.0 sao).
+  * **Ngưỡng Lọc Độ Tin cậy (Minimum Relevance Threshold):**
+    * Hệ thống áp dụng ngưỡng chặn tin cậy tối thiểu `MIN_RECOMMENDATION_SCORE_THRESHOLD = 0.55` (hoặc cùng giảng viên `is_same_author == True`). Các khóa học có tổng điểm dưới ngưỡng sẽ bị loại bỏ hoàn toàn khỏi danh sách đề xuất để tránh hiện tượng rác dữ liệu (Recommender Noise).
+    * Giao diện thẻ khóa học (`CourseCard`) hiển thị tinh gọn theo thiết kế chuẩn mực của Coursera, không hiển thị các huy hiệu nhãn quảng cáo gây rối mắt.
+  * **Chi tiết Thành phần Dữ liệu cấu thành Vector Ngữ nghĩa (Trọng số 55% - $S_{\text{vector}}$):**
+    Hệ thống trích xuất đầy đủ 7 trường dữ liệu ngữ nghĩa từ cơ sở dữ liệu để ghép thành chuỗi văn bản đại diện (Payload) trước khi vector hóa:
+    1. **Tên khóa học (`course.title`):** Khái niệm và chủ đề đào tạo cốt lõi.
+    2. **Đơn vị Đối tác bảo chứng (`course.partner_name`):** Trường đại học hoặc tổ chức đối tác đào tạo.
+    3. **Lĩnh vực môn học (`course.subject`):** Bounded context chuyên môn (ví dụ: `BUSINESS_ECONOMICS`, `DATA_SCIENCE`, `AI_ML`...).
+    4. **Cấp độ kiến thức (`course.level`):** Ngữ cảnh độ khó sư phạm (`BEGINNER`, `INTERMEDIATE`, `ADVANCED`).
+    5. **Mô tả chi tiết khóa học (`course.description`):** Tóm tắt mục tiêu, năng lực đầu ra và các chủ đề thảo luận.
+    6. **Khung sườn Tuần học (`week.week_number`, `week.title`):** Cấu trúc phân kỳ học tập theo thời gian.
+    7. **Tên toàn bộ Bài giảng trong đề cương (`lesson.title`):** Tập hợp danh sách tên tất cả các bài đọc, video, bài kiểm tra trong từng tuần học (nguồn tri thức sâu nhất thể hiện nội hàm khóa học).
+    * *Khuôn mẫu Văn bản Ngữ nghĩa (Structured Text Template):*
+      ```text
+      Khóa học: {course.title}
+      Đối tác: {course.partner_name}
+      Lĩnh vực: {course.subject} | Cấp độ: {course.level}
+      Mô tả: {course.description}
+      Đề cương bài học chi tiết:
+      - Tuần {week_1.week_number} ({week_1.title}): {lesson_1.title}, {lesson_2.title}...
+      - Tuần {week_2.week_number} ({week_2.title}): {lesson_3.title}, {lesson_4.title}...
+      ```
+    * *Mô hình & Hạ tầng Tính toán AI:*
+      * Sử dụng mô hình chuẩn **`sentence-transformers/all-MiniLM-L6-v2`** qua thư viện `fastembed` (chạy ONNX Runtime tối ưu CPU, độ trễ sinh vector < 20ms, không phụ thuộc GPU).
+      * Vector đầu ra có số chiều cố định **384 chiều (dense vector 384-dimensions)**.
+      * Lưu trữ tại bảng `course_embeddings` (`embedding vector(384)`) trên PostgreSQL với pgvector, đánh chỉ mục HNSW (`idx_course_embeddings_hnsw`, `vector_cosine_ops`) hỗ trợ tìm kiếm lân cận $O(\log N)$.
+      * Điểm tương đồng Cosine chuẩn hóa trong khoảng $[0, 1]$:
+        $$S_{\text{vector}} = \max\left(0.0, \min\left(1.0, \frac{\vec{u} \cdot \vec{v}}{\|\vec{u}\| \|\vec{v}\|}\right)\right)$$
+      * *Nguyên tắc Tính toán Tách biệt $O(1)$:* Quá trình sinh vector chỉ diễn ra 1 lần duy nhất khi Khóa học được Xuất bản (`PUBLISHED`) hoặc khi chạy CLI nạp dữ liệu (`make seed`). Khi người dùng mở trang Chi tiết Khóa học, hệ thống chỉ thực hiện phép chiếu Cosine trên các vector đã pre-computed trong Database, tuyệt đối không tính toán lại embedding on-the-fly.
+  * **Số lượng và Lưới hiển thị:** Mặc định cung cấp 6 khóa học (`DEFAULT_RECOMMENDED_COURSES_COUNT = 6`), loại bỏ chính khóa học hiện tại và môn nền tảng đã hiển thị. Hiển thị dạng lưới 3 cột x 2 hàng trên desktop.
+  * **Ràng buộc Trạng thái (Lifecycle Boundary):** Chỉ các khóa học ở trạng thái **`PUBLISHED`** mới tham gia vào tập ứng viên đề xuất và sinh vector embedding. Khóa học ở trạng thái `DRAFT` hoặc `PENDING_REVIEW` tuyệt đối không được hiển thị cho người học.
 
 
 ---

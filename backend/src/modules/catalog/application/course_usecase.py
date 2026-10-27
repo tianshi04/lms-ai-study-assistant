@@ -9,6 +9,7 @@ from src.modules.catalog.domain import (
     ICatalogRepository,
     Specialization,
 )
+from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
@@ -159,6 +160,13 @@ class CourseUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.get_course_detail(course_id)
+
+    async def get_course_recommendations(
+        self, course_id: str, target_count: int = DEFAULT_RECOMMENDED_COURSES_COUNT
+    ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.get_course_recommendations(course_id, target_count)
 
     async def get_specialization(
         self, specialization_id: str

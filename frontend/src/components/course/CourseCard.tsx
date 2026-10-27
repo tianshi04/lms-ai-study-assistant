@@ -6,7 +6,16 @@ import { Card } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Progress";
 import { PartnerLogo } from "./PartnerLogo";
 
-export function CourseCard({ course, progress }: { course: Course; progress?: number }) {
+export interface CourseCardProps {
+  course: Course;
+  progress?: number;
+}
+
+export function CourseCard({ course, progress }: CourseCardProps) {
+  const fallbackInstructor = course.partnerName
+    ? `Đội ngũ ${course.partnerName}`
+    : "Giảng viên LMS";
+
   return (
     <Card
       variant="outlined"
@@ -14,10 +23,8 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
     >
       <div>
         {/* Partner Header */}
-        <div className="flex items-center justify-between gap-3 mb-4 h-7">
-          <div className="flex items-center gap-3 min-w-0">
-            <PartnerLogo logoUrl={course.partnerLogoUrl} partnerName={course.partnerName} />
-          </div>
+        <div className="flex items-center gap-3 mb-4 h-7 min-w-0">
+          <PartnerLogo logoUrl={course.partnerLogoUrl} partnerName={course.partnerName} />
         </div>
 
         {/* Title & Description */}
@@ -46,11 +53,13 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
         <div className="pt-4 border-t border-outline-variant mb-5 flex items-center justify-between text-xs text-on-surface-variant font-medium">
           <span className="flex items-center gap-1.5 min-w-0 truncate max-w-[160px]">
             <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
-            {course.instructorNames.join(", ") || "Giảng viên Coursera"}
+            {(course.instructorNames ?? []).length > 0
+              ? (course.instructorNames ?? []).join(", ")
+              : fallbackInstructor}
           </span>
           <span className="flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-on-surface-variant" aria-hidden="true" />
-            {course.weekModules.length} {"Tuần học"}
+            {(course.weekModules ?? []).length} {"Tuần học"}
           </span>
         </div>
 

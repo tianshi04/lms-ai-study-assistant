@@ -103,6 +103,45 @@ async def test_get_course_detail(mock_scope, catalog_usecase, mock_repo, mock_se
 
 
 @pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
+async def test_get_course_recommendations(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
+
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    rec_course = Course(
+        id="c2",
+        title="Course 2",
+        slug="c-2",
+        description="",
+        partner_name="",
+        partner_logo_url="",
+        instructor_names=[],
+        week_modules=[],
+    )
+    mock_repo.get_course_recommendations.return_value = (
+        None,
+        [(rec_course, "Gợi ý", 0.95)],
+    )
+
+    foundational, recs = await catalog_usecase.get_course_recommendations("c1")
+
+    mock_scope.assert_called_once()
+    mock_repo.get_course_recommendations.assert_awaited_once_with(
+        "c1", DEFAULT_RECOMMENDED_COURSES_COUNT
+    )
+    assert foundational is None
+    assert len(recs) == 1
+    assert recs[0][0].id == "c2"
+    assert recs[0][1] == "Gợi ý"
+    assert recs[0][2] == 0.95
+
+
+@pytest.mark.asyncio
 @patch("src.modules.catalog.application.curriculum_usecase.async_session_scope")
 async def test_get_lesson_detail(mock_scope, catalog_usecase, mock_repo, mock_session):
     mock_ctx = AsyncMock()
