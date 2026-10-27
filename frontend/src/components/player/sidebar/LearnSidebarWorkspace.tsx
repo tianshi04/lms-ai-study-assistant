@@ -66,30 +66,20 @@ export function LearnSidebarWorkspace({
 
   return (
     <div
-      className={`shrink-0 h-full relative overflow-hidden transition-[width,max-width,opacity] duration-300 ease-m3-emphasized ${
+      className={`w-full relative lg:overflow-hidden transition-[width,max-width,opacity] duration-300 ease-m3-emphasized ${
         !isPanelOpen
-          ? "w-16 lg:w-20 opacity-100"
-          : "w-[396px] lg:w-[412px] xl:w-[452px] max-w-[calc(100vw-24px)] opacity-100"
+          ? "h-auto shrink-0 lg:h-full lg:w-20 opacity-100"
+          : "flex-1 min-h-0 flex flex-col gap-2 lg:block lg:flex-none lg:h-full lg:w-[412px] xl:w-[452px] lg:max-w-[calc(100vw-24px)] opacity-100"
       }`}
     >
-      {/* Vertical Navigation Rail (Fixed at Right Edge - Always accessible) */}
-      <LearnSidebarRail
-        activeTab={activeTab}
-        isPanelOpen={isPanelOpen}
-        isVideoItem={isVideoItem}
-        isLectureItem={isLectureItem}
-        isPreviewMode={isPreviewMode}
-        onTabClick={onTabClick}
-      />
-
-      {/* Morphing White Card - Locked to left: 0, Right Edge Expands to the Right */}
+      {/* Morphing White Card (Desktop) / Inline Split Panel Below Video (Mobile) */}
       <aside
-        className={`absolute top-0 bottom-0 left-0 z-10 flex flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden transition-all duration-300 ease-m3-emphasized ${
+        className={`relative flex-1 min-h-0 w-full lg:w-auto lg:absolute lg:top-0 lg:bottom-0 lg:left-0 lg:z-10 lg:h-full flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden transition-all duration-300 ease-m3-emphasized ${
           !isPanelOpen
-            ? "opacity-0 pointer-events-none invisible right-[76px] lg:right-[92px]"
+            ? "hidden lg:flex opacity-0 pointer-events-none invisible lg:right-[92px]"
             : isAiActive
-              ? "opacity-100 pointer-events-auto visible right-0"
-              : "opacity-100 pointer-events-auto visible right-[76px] lg:right-[92px]"
+              ? "flex opacity-100 pointer-events-auto visible lg:right-0"
+              : "flex opacity-100 pointer-events-auto visible lg:right-[92px]"
         }`}
       >
         {/* Floating Morphing Header Action Controls - Glides seamlessly with the right edge */}
@@ -103,7 +93,7 @@ export function LearnSidebarWorkspace({
         {/* Persistent AI Chatbot View with Smooth Dissolve Transition */}
         {isAiSupported && (
           <div
-            className={`absolute inset-0 h-full w-[412px] xl:w-[452px] max-w-none shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
+            className={`absolute inset-0 h-full w-full lg:w-[412px] xl:w-[452px] max-w-none shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
               isAiActive
                 ? "opacity-100 translate-x-0 pointer-events-auto visible"
                 : "opacity-0 -translate-x-2 pointer-events-none invisible"
@@ -131,7 +121,7 @@ export function LearnSidebarWorkspace({
 
         {/* Standard Non-AI Tabs View with Smooth Dissolve Transition */}
         <div
-          className={`absolute inset-0 h-full w-[320px] xl:w-[360px] max-w-none shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
+          className={`absolute inset-0 h-full w-full lg:w-[320px] xl:w-[360px] max-w-none shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
             !isAiActive
               ? "opacity-100 translate-x-0 pointer-events-auto visible"
               : "opacity-0 translate-x-2 pointer-events-none invisible"
@@ -159,6 +149,16 @@ export function LearnSidebarWorkspace({
           />
         </div>
       </aside>
+
+      {/* Vertical Navigation Rail on Desktop / Horizontal Bottom Bar on Mobile */}
+      <LearnSidebarRail
+        activeTab={activeTab}
+        isPanelOpen={isPanelOpen}
+        isVideoItem={isVideoItem}
+        isLectureItem={isLectureItem}
+        isPreviewMode={isPreviewMode}
+        onTabClick={onTabClick}
+      />
     </div>
   );
 }

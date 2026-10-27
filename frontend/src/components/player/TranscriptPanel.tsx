@@ -69,14 +69,10 @@ interface CueSpanProps {
 }
 
 // Memoized so that only cues whose active state changes re-render on each active-cue change.
+// Design Decision (Modern Web): Intentional inline <span> with role="button" & keyboard handlers (Enter/Space)
+// to maintain natural continuous flowing paragraph typography ([box-decoration-break:clone])
+// without breaking inline text wraps across lines like native button tags would.
 const CueSpan = memo(function CueSpan({ index, startTime, text, isActive, onSeek }: CueSpanProps) {
-  {
-    /*
-    Design Decision (Modern Web): Intentional inline <span> with role="button" & keyboard handlers (Enter/Space)
-    to maintain natural continuous flowing paragraph typography ([box-decoration-break:clone])
-    without breaking inline text wraps across lines like native button tags would.
-  */
-  }
   return (
     <span
       id={`transcript-cue-${index}`}

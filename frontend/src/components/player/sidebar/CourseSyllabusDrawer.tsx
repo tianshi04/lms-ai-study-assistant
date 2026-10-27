@@ -63,7 +63,7 @@ export function CourseSyllabusDrawer({
 
   return (
     <div
-      className={`h-full flex flex-col w-80 xl:w-90 min-w-80 xl:min-w-90 shrink-0 transition-all duration-300 ease-m3-emphasized relative ${
+      className={`h-full flex flex-col w-full lg:w-80 xl:w-90 lg:min-w-80 xl:min-w-90 shrink-0 transition-all duration-300 ease-m3-emphasized relative ${
         isSidebarOpen
           ? "opacity-100 translate-x-0 visible"
           : "opacity-0 -translate-x-4 invisible pointer-events-none"
@@ -194,6 +194,9 @@ export function CourseSyllabusDrawer({
                                   }
                                   onSetLockNotice("");
                                   onSelectItem(item);
+                                  if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                                    onClose();
+                                  }
                                 }}
                                 className={`w-full text-left justify-start items-center gap-3 p-3 rounded-xl h-auto whitespace-normal ${
                                   itemLocked

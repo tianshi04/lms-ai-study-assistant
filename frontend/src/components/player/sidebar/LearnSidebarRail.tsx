@@ -20,8 +20,12 @@ export function LearnSidebarRail({
   isPreviewMode,
   onTabClick,
 }: LearnSidebarRailProps) {
+  if (!isVideoItem && isPreviewMode) {
+    return null;
+  }
+
   return (
-    <div className="absolute top-0 bottom-0 right-0 w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 select-none rounded-3xl z-0">
+    <div className="w-full h-14 bg-surface-container-lowest flex flex-row items-center justify-around px-2 py-1.5 rounded-2xl shadow-xs shrink-0 select-none z-0 lg:absolute lg:top-0 lg:bottom-0 lg:right-0 lg:w-20 lg:h-auto lg:bg-surface-container-low lg:flex-col lg:items-center lg:justify-start lg:px-0 lg:py-5 lg:gap-5 lg:rounded-3xl lg:shadow-none">
       {/* Transcript Button: Only for Video Items */}
       {isVideoItem && (
         <button
@@ -41,7 +45,7 @@ export function LearnSidebarRail({
             <AlignLeft className="w-4 h-4" aria-hidden="true" />
           </div>
           <span
-            className={`text-xs tracking-tight leading-none transition-colors ${
+            className={`text-[11px] lg:text-xs tracking-tight leading-none transition-colors ${
               isPanelOpen && activeTab === "transcript"
                 ? "text-primary font-bold"
                 : "text-on-surface-variant group-hover:text-on-surface"
@@ -73,7 +77,7 @@ export function LearnSidebarRail({
                 <FileText className="w-4 h-4" aria-hidden="true" />
               </div>
               <span
-                className={`text-[10px] tracking-tight leading-none transition-colors ${
+                className={`text-[11px] lg:text-[10px] tracking-tight leading-none transition-colors ${
                   isPanelOpen && activeTab === "notes"
                     ? "text-primary font-bold"
                     : "text-on-surface-variant group-hover:text-on-surface"
@@ -103,7 +107,7 @@ export function LearnSidebarRail({
                 <MessageSquare className="w-4 h-4" aria-hidden="true" />
               </div>
               <span
-                className={`text-[10px] tracking-tight leading-none transition-colors ${
+                className={`text-[11px] lg:text-[10px] tracking-tight leading-none transition-colors ${
                   isPanelOpen && activeTab === "forum"
                     ? "text-primary font-bold"
                     : "text-on-surface-variant group-hover:text-on-surface"
@@ -132,7 +136,7 @@ export function LearnSidebarRail({
               <Clock className="w-4 h-4" aria-hidden="true" />
             </div>
             <span
-              className={`text-[10px] tracking-tight leading-none transition-colors ${
+              className={`text-[11px] lg:text-[10px] tracking-tight leading-none transition-colors ${
                 isPanelOpen && activeTab === "deadlines"
                   ? "text-primary font-bold"
                   : "text-on-surface-variant group-hover:text-on-surface"
