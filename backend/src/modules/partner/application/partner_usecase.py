@@ -60,7 +60,7 @@ class PartnerUseCase:
         current_user: CurrentUser | None = None,
     ) -> Partner:
         self._verify_admin(current_user)
-        partner_id = f"partner-{uuid7().hex[:8]}"
+        partner_id = f"partner-{uuid7().hex}"
 
         async with async_session_scope() as session:
             repo = self._get_repo(session)

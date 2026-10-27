@@ -204,6 +204,7 @@ function CoursePlayerContent() {
   const [highlightText, setHighlightText] = useState("");
   const [noteComment, setNoteComment] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [noteError, setNoteError] = useState("");
   const [lockNotice, setLockNotice] = useState("");
   const [externalAiPrompt, setExternalAiPrompt] = useState<string | null>(null);
   const isVideoItem = activeItem?.type === 1 || Boolean(activeItem?.videoUrl);
@@ -533,8 +534,9 @@ function CoursePlayerContent() {
   // Save Personal Note
   const handleSaveNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!highlightText.trim() || !activeItem) return;
+    if (savingNote || !highlightText.trim() || !activeItem) return;
     setSavingNote(true);
+    setNoteError("");
     try {
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.savePersonalNote({
@@ -550,6 +552,7 @@ function CoursePlayerContent() {
       }
     } catch (err) {
       console.error("Failed to save note:", err);
+      setNoteError("Không thể lưu ghi chú lúc này. Vui lòng thử lại.");
     } finally {
       setSavingNote(false);
     }
@@ -835,6 +838,7 @@ function CoursePlayerContent() {
               highlightText={highlightText}
               noteComment={noteComment}
               savingNote={savingNote}
+              noteError={noteError}
               activeTab={activeTab as SidebarTab}
               isPanelOpen={isPanelOpen}
               isVideoItem={isVideoItem}
@@ -855,8 +859,14 @@ function CoursePlayerContent() {
                 }
               }}
               onNoteCreated={(newNote) => setNotes((prev) => [newNote, ...prev])}
-              onHighlightTextChange={setHighlightText}
-              onNoteCommentChange={setNoteComment}
+              onHighlightTextChange={(text) => {
+                setHighlightText(text);
+                if (noteError) setNoteError("");
+              }}
+              onNoteCommentChange={(text) => {
+                setNoteComment(text);
+                if (noteError) setNoteError("");
+              }}
               onSaveNote={handleSaveNote}
               onDeleteNote={handleDeleteNote}
               onResetDeadlines={handleResetDeadlines}

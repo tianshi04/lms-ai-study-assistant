@@ -12,6 +12,7 @@ interface NotesPanelProps {
   highlightText: string;
   noteComment: string;
   savingNote: boolean;
+  noteError?: string;
   onHighlightTextChange: (val: string) => void;
   onNoteCommentChange: (val: string) => void;
   onSaveNote: (e: React.FormEvent) => void;
@@ -23,6 +24,7 @@ export function NotesPanel({
   highlightText,
   noteComment,
   savingNote,
+  noteError,
   onHighlightTextChange,
   onNoteCommentChange,
   onSaveNote,
@@ -57,6 +59,11 @@ export function NotesPanel({
               className="bg-surface-container-lowest"
             />
           </div>
+          {noteError && (
+            <p className="text-xs font-medium text-destructive" role="alert">
+              {noteError}
+            </p>
+          )}
           <Button
             type="submit"
             disabled={savingNote || !highlightText.trim()}
@@ -64,7 +71,7 @@ export function NotesPanel({
             size="sm"
             className="w-full sm:w-auto font-bold shadow-xs"
           >
-            Lưu ghi chú
+            {savingNote ? "Đang lưu..." : "Lưu ghi chú"}
           </Button>
         </form>
       </Surface>

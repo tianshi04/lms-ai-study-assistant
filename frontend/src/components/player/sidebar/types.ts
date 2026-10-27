@@ -12,6 +12,7 @@ export interface LearnSidebarWorkspaceProps {
   highlightText: string;
   noteComment: string;
   savingNote: boolean;
+  noteError?: string;
   activeTab: SidebarTab;
   isPanelOpen: boolean;
   isVideoItem: boolean;

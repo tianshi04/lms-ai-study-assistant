@@ -201,7 +201,7 @@ class ScormUseCase:
 
             # 3. Upload ZIP file to storage
             zip_bytes = zip_buffer.getvalue()
-            object_key = f"scorm/exports/{uuid7().hex[:16]}.zip"
+            object_key = f"scorm/exports/{uuid7().hex}.zip"
             s3 = get_s3_storage_service()
             await s3.ensure_bucket_exists()
             await s3.upload_file(

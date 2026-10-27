@@ -175,7 +175,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         note_comment: str,
     ) -> PersonalNote:
         note_model = PersonalNoteModel(
-            id=f"note-{uuid7().hex[:8]}",
+            id=f"note-{uuid7().hex}",
             user_id=user_id,
             course_id=course_id,
             item_id=item_id,

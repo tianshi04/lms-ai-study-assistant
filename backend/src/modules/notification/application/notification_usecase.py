@@ -76,7 +76,7 @@ class NotificationUseCase:
         actor_avatar_url: str,
     ) -> Notification:
         notif = Notification(
-            id=f"notif_{uuid7().hex[:12]}",
+            id=f"notif_{uuid7().hex}",
             recipient_id=recipient_id,
             category=category,
             title=title,
@@ -135,7 +135,7 @@ class NotificationUseCase:
         now = datetime.now(UTC)
         notifs = [
             Notification(
-                id=f"notif_{uuid7().hex[:12]}",
+                id=f"notif_{uuid7().hex}",
                 recipient_id=rid,
                 category=category,
                 title=title,

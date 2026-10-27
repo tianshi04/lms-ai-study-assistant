@@ -17,6 +17,7 @@ interface LearnNonAiTabsPanelProps {
   highlightText: string;
   noteComment: string;
   savingNote: boolean;
+  noteError?: string;
   activeTab: SidebarTab;
   isVideoItem: boolean;
   isLectureItem: boolean;
@@ -38,6 +39,7 @@ export function LearnNonAiTabsPanel({
   highlightText,
   noteComment,
   savingNote,
+  noteError,
   activeTab,
   isVideoItem,
   isLectureItem,
@@ -112,6 +114,7 @@ export function LearnNonAiTabsPanel({
             highlightText={highlightText}
             noteComment={noteComment}
             savingNote={savingNote}
+            noteError={noteError}
             onHighlightTextChange={onHighlightTextChange}
             onNoteCommentChange={onNoteCommentChange}
             onSaveNote={onSaveNote}

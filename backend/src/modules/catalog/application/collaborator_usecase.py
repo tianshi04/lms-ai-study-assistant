@@ -103,7 +103,7 @@ class CourseCollaboratorUseCase:
 
             return {
                 "collaborator": {
-                    "collaborator_id": f"collab_{uuid7().hex[:12]}",
+                    "collaborator_id": f"collab_{uuid7().hex}",
                     "user_id": target_user.id,
                     "email": target_user.email,
                     "full_name": target_user.full_name,

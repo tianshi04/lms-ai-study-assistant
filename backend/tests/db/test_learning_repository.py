@@ -147,6 +147,18 @@ async def test_save_personal_note(repository, mock_session):
 
 
 @pytest.mark.asyncio
+async def test_save_personal_note_generates_unique_ids_consecutively(
+    repository, mock_session
+):
+    note1 = await repository.save_personal_note("u1", "c1", "i1", "first", "")
+    note2 = await repository.save_personal_note("u1", "c1", "i1", "second", "")
+
+    assert note1.id != note2.id
+    assert len(note1.id) == len("note-") + 32
+    assert len(note2.id) == len("note-") + 32
+
+
+@pytest.mark.asyncio
 async def test_list_personal_notes(repository, mock_session):
     mock_model = PersonalNoteModel(
         id="n1",

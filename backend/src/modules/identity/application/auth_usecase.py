@@ -275,7 +275,7 @@ class AuthUseCase:
             except ValueError:
                 user_role = UserRole.LEARNER
 
-            new_id = f"user_{uuid7().hex[:12]}"
+            new_id = f"user_{uuid7().hex}"
             hashed_pw = hash_password(password)
 
             user = User(
@@ -374,7 +374,7 @@ class AuthUseCase:
         final_name = (
             full_name or payload.get("full_name") or email.split("@")[0]
         ).strip()
-        user_id = f"user_{uuid7().hex[:12]}"
+        user_id = f"user_{uuid7().hex}"
         password_hash = hash_password(password)
 
         new_user = User(
@@ -449,7 +449,7 @@ class AuthUseCase:
             if not user:
                 # Auto-provision new user on first Google sign-in (JIT Provisioning)
                 user = User(
-                    id=f"user_{uuid7().hex[:12]}",
+                    id=f"user_{uuid7().hex}",
                     email=email,
                     full_name=full_name,
                     role=UserRole.LEARNER,
