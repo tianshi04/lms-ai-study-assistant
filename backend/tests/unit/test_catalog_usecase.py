@@ -715,3 +715,102 @@ async def test_delete_specialization_success(
     )
     assert success is True
     mock_repo.delete_specialization.assert_called_once_with("s1", "inst_1")
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.enforce_organization_permission")
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
+async def test_create_specialization_deduplicates_and_enforces_org_permission(
+    mock_scope, mock_enforce, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    instructor = CurrentUser(
+        id="inst_1",
+        email="inst1@coursera.ai",
+        full_name="Instructor 1",
+        role="INSTRUCTOR",
+    )
+    c1 = Course(id="c1", title="AI 1", slug="ai-1", owner_id="inst_1", price=1000000.0)
+    mock_repo.get_course_detail.return_value = c1
+    mock_repo.create_specialization.return_value = Specialization(
+        id="spec-ai",
+        title="AI Track",
+        owner_id="inst_1",
+        course_ids=["c1"],
+        bundle_price=1000000.0,
+        total_individual_price=1000000.0,
+        discount_percent=0,
+    )
+
+    # Pass duplicated c1 IDs: ["c1", "c1"]
+    res = await catalog_usecase.create_specialization(
+        title="AI Track",
+        slug="ai-track",
+        description="Master AI",
+        partner_name="Test Partner",
+        partner_logo_url="",
+        course_ids=["c1", "c1"],
+        organization_id="org_test",
+        current_user=instructor,
+    )
+    assert res.id == "spec-ai"
+    # Verify course_ids was deduplicated to ["c1"]
+    mock_repo.create_specialization.assert_called_once()
+    call_kwargs = mock_repo.create_specialization.call_args.kwargs
+    assert call_kwargs["course_ids"] == ["c1"]
+
+    # Verify Layer 3 organization permission was enforced
+    from src.shared.permissions import OrgPermission
+
+    mock_enforce.assert_called_once_with(
+        mock_session,
+        instructor,
+        "org_test",
+        required_permission=OrgPermission.CREATE_COURSE,
+    )
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
+async def test_update_specialization_deduplicates_courses(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    instructor = CurrentUser(
+        id="inst_1",
+        email="inst1@coursera.ai",
+        full_name="Instructor 1",
+        role="INSTRUCTOR",
+    )
+    c1 = Course(id="c1", title="AI 1", slug="ai-1", owner_id="inst_1", price=1000000.0)
+    c2 = Course(id="c2", title="AI 2", slug="ai-2", owner_id="inst_1", price=1000000.0)
+    mock_repo.get_specialization.return_value = (
+        Specialization(id="s1", title="Spec 1", owner_id="inst_1"),
+        [],
+    )
+    mock_repo.get_course_detail.side_effect = lambda cid: c1 if cid == "c1" else c2
+    mock_repo.update_specialization.return_value = Specialization(
+        id="s1",
+        title="Spec 1 Updated",
+        owner_id="inst_1",
+        course_ids=["c1", "c2"],
+    )
+
+    await catalog_usecase.update_specialization(
+        specialization_id="s1",
+        title="Spec 1 Updated",
+        description="",
+        partner_name="",
+        partner_logo_url="",
+        course_ids=["c1", "c1", "c2", "c2"],
+        current_user=instructor,
+    )
+    mock_repo.update_specialization.assert_called_once()
+    call_kwargs = mock_repo.update_specialization.call_args.kwargs
+    assert call_kwargs["course_ids"] == ["c1", "c2"]

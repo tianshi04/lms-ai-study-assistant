@@ -176,12 +176,25 @@ async def test_get_specialization(repo, mock_session, sample_course_model):
         course_ids=["c1", "c2"],
     )
 
+    sample_course_2 = CourseModel(
+        id="c2",
+        title="Course 2",
+        slug="c-2",
+        description="Desc 2",
+        partner_name="Partner",
+        partner_logo_url="URL",
+    )
+
     def mock_execute_side_effect(stmt):
         mock_res = MagicMock()
         stmt_str = str(stmt).lower()
         if "specializations" in stmt_str:
             mock_res.scalar_one_or_none.return_value = spec_model
         else:
+            mock_res.scalars.return_value.all.return_value = [
+                sample_course_model,
+                sample_course_2,
+            ]
             mock_res.scalar_one_or_none.return_value = sample_course_model
         return mock_res
 
@@ -193,7 +206,7 @@ async def test_get_specialization(repo, mock_session, sample_course_model):
     assert spec.id == "s1"
     assert len(courses) == 2
     assert courses[0].id == "c1"
-    assert courses[1].id == "c1"
+    assert courses[1].id == "c2"
 
 
 @pytest.mark.asyncio

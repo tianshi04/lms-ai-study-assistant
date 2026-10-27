@@ -195,6 +195,7 @@ class CourseUseCase:
     ) -> Specialization:
         if not title or not title.strip():
             raise ValueError("Tên Chuyên ngành không được để trống.")
+        course_ids = list(dict.fromkeys(course_ids or []))
         if not course_ids or len(course_ids) < 1:
             raise ValueError("Chuyên ngành phải bao gồm ít nhất 1 khóa học.")
 
@@ -205,6 +206,13 @@ class CourseUseCase:
             )
 
         async with async_session_scope() as session:
+            if current_user and organization_id:
+                await enforce_organization_permission(
+                    session,
+                    current_user,
+                    organization_id,
+                    required_permission=OrgPermission.CREATE_COURSE,
+                )
             repo = self.repo_factory(session)
             for cid in course_ids:
                 course = await repo.get_course_detail(cid)
@@ -262,6 +270,7 @@ class CourseUseCase:
             raise PermissionError("Yêu cầu xác thực tài khoản giảng viên.")
         if not title or not title.strip():
             raise ValueError("Tên Chuyên ngành không được để trống.")
+        course_ids = list(dict.fromkeys(course_ids or []))
         if not course_ids or len(course_ids) < 1:
             raise ValueError("Chuyên ngành phải bao gồm ít nhất 1 khóa học.")
 

@@ -38,7 +38,7 @@ export function SpecializationFormModal({
   // Form Fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [partnerName, setPartnerName] = useState("DeepLearning.AI");
+  const [partnerName, setPartnerName] = useState("");
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
 
   // Fetch all instructor's courses
@@ -64,13 +64,13 @@ export function SpecializationFormModal({
       if (initialData) {
         setTitle(initialData.title || "");
         setDescription(initialData.description || "");
-        setPartnerName(initialData.partnerName || "DeepLearning.AI");
+        setPartnerName(initialData.partnerName || "");
         const existingIds = initialData.courses?.map((c) => c.id) || [];
         setSelectedCourseIds(existingIds);
       } else {
         setTitle("");
         setDescription("");
-        setPartnerName("DeepLearning.AI");
+        setPartnerName("");
         setSelectedCourseIds([]);
       }
     }

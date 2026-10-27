@@ -395,3 +395,32 @@ async def test_handler_delete_specialization():
     usecase_mock.delete_specialization.assert_called_once_with(
         specialization_id="spec-1", current_user=instructor_user
     )
+
+
+@pytest.mark.asyncio
+async def test_handler_get_course_detail_fallback_on_specialization_error():
+    from src.modules.catalog.domain import Course
+
+    usecase_mock = AsyncMock()
+    mock_course = Course(
+        id="c-resilient",
+        title="Resilient Course",
+        slug="resilient-course",
+        price=500000.0,
+    )
+    usecase_mock.get_course_detail.return_value = mock_course
+    usecase_mock.get_course_recommendations.return_value = (None, [])
+    usecase_mock.get_specialization_for_course.side_effect = RuntimeError(
+        "DB Query Failure"
+    )
+
+    handler = CatalogHandler(usecase_mock)
+    request = pb.GetCourseDetailRequest(id_or_slug="c-resilient")
+    context_mock = MagicMock()
+
+    response = await handler.get_course_detail(request, context_mock)
+    assert response is not None
+    assert response.course is not None
+    assert response.course.id == "c-resilient"
+    # Specialization failure handled gracefully, does not break entire course detail
+    assert not response.has_field("specialization")

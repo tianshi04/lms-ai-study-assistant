@@ -434,12 +434,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     <Sparkles className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     {"Combo Chuyên ngành"}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                    {`Tiết kiệm ${specialization.discountPercent || 25}%`}
-                  </span>
+                  {(specialization.discountPercent ?? 0) > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                      {`Tiết kiệm ${specialization.discountPercent}%`}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {`Khóa học này thuộc chương trình ${specialization.title} gồm ${specialization.courses.length || 3} môn.`}
+                  {`Khóa học này thuộc chương trình ${specialization.title} gồm ${specialization.courses.length} môn.`}
                 </p>
                 <a
                   href="#specialization-showcase"
@@ -823,7 +825,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                           {"Đích đến: Chứng chỉ Chuyên ngành Chính thức"}
                         </h4>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          {`Được cấp bởi ${specialization.partnerName} & xác thực trên hệ thống blockchain LMS.`}
+                          {`Được cấp bởi ${specialization.partnerName || "Hệ thống"} & xác thực chứng chỉ hoàn thành.`}
                         </p>
                       </div>
                     </Surface>
@@ -847,9 +849,11 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                         <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                         {"Gói Trọn Bộ Chuyên Ngành"}
                       </span>
-                      <span className="px-2.5 py-1 rounded-full bg-destructive text-destructive-foreground text-xs font-extrabold tracking-wide">
-                        {`TIẾT KIỆM ${specialization.discountPercent || 25}%`}
-                      </span>
+                      {(specialization.discountPercent ?? 0) > 0 && (
+                        <span className="px-2.5 py-1 rounded-full bg-destructive text-destructive-foreground text-xs font-extrabold tracking-wide">
+                          {`TIẾT KIỆM ${specialization.discountPercent}%`}
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-xl font-black text-foreground">
                       {`Mua Trọn Gói ${specialization.courses.length} Khóa Học`}
@@ -866,21 +870,22 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{`Tổng giá lẻ từng môn (${specialization.courses.length} môn):`}</span>
                       <span className="line-through font-semibold">
-                        {specialization.totalIndividualPrice > 0
+                        {(specialization.totalIndividualPrice ?? 0) > 0
                           ? `${specialization.totalIndividualPrice.toLocaleString("vi-VN")} đ`
-                          : "3.970.000 đ"}
+                          : "Miễn phí"}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs font-bold text-destructive">
-                      <span>{`Ưu đãi Combo Chuyên ngành (-${specialization.discountPercent || 25}%):`}</span>
-                      <span>
-                        {`-${(specialization.totalIndividualPrice > specialization.bundlePrice
-                          ? specialization.totalIndividualPrice - specialization.bundlePrice
-                          : 990000
-                        ).toLocaleString("vi-VN")} đ`}
-                      </span>
-                    </div>
+                    {(specialization.discountPercent ?? 0) > 0 &&
+                      (specialization.totalIndividualPrice ?? 0) >
+                        (specialization.bundlePrice ?? 0) && (
+                        <div className="flex items-center justify-between text-xs font-bold text-destructive">
+                          <span>{`Ưu đãi Combo Chuyên ngành (-${specialization.discountPercent}%):`}</span>
+                          <span>
+                            {`-${((specialization.totalIndividualPrice ?? 0) - (specialization.bundlePrice ?? 0)).toLocaleString("vi-VN")} đ`}
+                          </span>
+                        </div>
+                      )}
 
                     <div className="h-px bg-border my-1" />
 
@@ -890,14 +895,16 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                           {"Giá thanh toán trọn gói"}
                         </span>
                         <span className="text-2xl md:text-3xl font-black text-primary tracking-tight">
-                          {specialization.bundlePrice > 0
+                          {(specialization.bundlePrice ?? 0) > 0
                             ? `${specialization.bundlePrice.toLocaleString("vi-VN")} đ`
-                            : "2.980.000 đ"}
+                            : "Miễn phí"}
                         </span>
                       </div>
-                      <span className="text-[11px] text-muted-foreground font-semibold">
-                        {"(Đã gồm VAT)"}
-                      </span>
+                      {(specialization.bundlePrice ?? 0) > 0 && (
+                        <span className="text-[11px] text-muted-foreground font-semibold">
+                          {"(Đã gồm VAT)"}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -1374,15 +1381,17 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <span className="px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold">
                   {"Combo Chuyên Ngành"}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
-                  {`Tiết kiệm ${specialization.discountPercent || 25}%`}
-                </span>
+                {(specialization.discountPercent ?? 0) > 0 && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                    {`Tiết kiệm ${specialization.discountPercent}%`}
+                  </span>
+                )}
               </div>
               <Dialog.Title className="text-xl font-black text-foreground">
                 {specialization.title}
               </Dialog.Title>
               <Dialog.Description className="text-xs text-muted-foreground">
-                {`Chương trình chuyên sâu cấp chứng chỉ bởi ${specialization.partnerName}`}
+                {`Chương trình chuyên sâu cấp chứng chỉ bởi ${specialization.partnerName || "Hệ thống"}`}
               </Dialog.Description>
             </Dialog.Header>
 
@@ -1417,54 +1426,46 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{"Tổng học phí gốc:"}</span>
                   <span className="line-through">
-                    {specialization.totalIndividualPrice > 0
+                    {(specialization.totalIndividualPrice ?? 0) > 0
                       ? `${specialization.totalIndividualPrice.toLocaleString("vi-VN")} đ`
-                      : "3.970.000 đ"}
+                      : "Miễn phí"}
                   </span>
                 </div>
-                <div className="flex justify-between text-xs font-bold text-destructive">
-                  <span>{`Ưu đãi combo (-${specialization.discountPercent || 25}%):`}</span>
-                  <span>
-                    {`-${(specialization.totalIndividualPrice > specialization.bundlePrice
-                      ? specialization.totalIndividualPrice - specialization.bundlePrice
-                      : 990000
-                    ).toLocaleString("vi-VN")} đ`}
-                  </span>
-                </div>
+                {(specialization.discountPercent ?? 0) > 0 &&
+                  (specialization.totalIndividualPrice ?? 0) >
+                    (specialization.bundlePrice ?? 0) && (
+                    <div className="flex justify-between text-xs font-bold text-destructive">
+                      <span>{`Ưu đãi combo (-${specialization.discountPercent}%):`}</span>
+                      <span>
+                        {`-${((specialization.totalIndividualPrice ?? 0) - (specialization.bundlePrice ?? 0)).toLocaleString("vi-VN")} đ`}
+                      </span>
+                    </div>
+                  )}
                 <div className="h-px bg-border my-1" />
                 <div className="flex justify-between items-baseline">
                   <span className="text-xs font-bold text-foreground">
                     {"Tổng thanh toán trọn gói:"}
                   </span>
                   <span className="text-2xl font-black text-primary">
-                    {specialization.bundlePrice > 0
+                    {(specialization.bundlePrice ?? 0) > 0
                       ? `${specialization.bundlePrice.toLocaleString("vi-VN")} đ`
-                      : "2.980.000 đ"}
+                      : "Miễn phí"}
                   </span>
                 </div>
               </div>
             </div>
 
-            <Dialog.Footer className="pt-2 border-t border-border flex items-center justify-end gap-3">
+            <Dialog.Footer className="pt-2 border-t border-border flex items-center justify-between gap-3">
+              <span className="text-[11px] text-muted-foreground italic">
+                {"* Cổng thanh toán trọn gói combo chuyên ngành đang được cập nhật."}
+              </span>
               <Button
                 type="button"
-                variant="outlined"
+                variant="filled"
                 onClick={() => setIsSpecializationModalOpen(false)}
                 className="rounded-full text-xs font-semibold"
               >
                 {"Đóng"}
-              </Button>
-              <Button
-                type="button"
-                variant="filled"
-                onClick={() => {
-                  setIsSpecializationModalOpen(false);
-                  setIsPaymentModalOpen(true);
-                }}
-                className="rounded-full text-xs font-bold gap-2 shadow-lg cursor-pointer"
-              >
-                <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{"Tiến hành Thanh toán"}</span>
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

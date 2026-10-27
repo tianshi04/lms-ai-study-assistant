@@ -98,7 +98,7 @@ export default function InstructorCoursesPage() {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
-  const [partnerName, setPartnerName] = useState("DeepLearning.AI");
+  const [partnerName, setPartnerName] = useState("");
   const [partnerLogoUrl, setPartnerLogoUrl] = useState(
     "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
   );
@@ -147,7 +147,7 @@ export default function InstructorCoursesPage() {
     setTitle("");
     setSlug("");
     setDescription("");
-    setPartnerName("DeepLearning.AI");
+    setPartnerName("");
     setPartnerLogoUrl(
       "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
     );

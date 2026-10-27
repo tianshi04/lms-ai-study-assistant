@@ -161,7 +161,7 @@ export function SpecializationsTab({ isInstructorOrAdmin }: SpecializationsTabPr
                       </span>
 
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-foreground">
-                        {spec.partnerName || "DeepLearning.AI"}
+                        {spec.partnerName || "Hệ thống"}
                       </span>
 
                       {hasCombo && (

@@ -409,32 +409,61 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         stmt = select(SpecializationModel).where(
             SpecializationModel.id == specialization_id
         )
+        stmt = apply_organization_scope(stmt, SpecializationModel, get_current_user())
         res = await self.session.execute(stmt)
         spec_model = res.scalar_one_or_none()
         if not spec_model:
             return None, []
-        courses: list[Course] = []
-        for cid in spec_model.course_ids:
-            c = await self.get_course_detail(cid)
-            if c:
-                courses.append(c)
+        if not spec_model.course_ids:
+            return _model_to_domain_specialization(spec_model, []), []
+
+        courses_stmt = (
+            select(CourseModel)
+            .where(CourseModel.id.in_(spec_model.course_ids))
+            .options(
+                selectinload(CourseModel.week_modules).selectinload(
+                    WeekModuleModel.lessons
+                )
+            )
+        )
+        c_res = await self.session.execute(courses_stmt)
+        c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+        courses = [c_map[cid] for cid in spec_model.course_ids if cid in c_map]
         return _model_to_domain_specialization(spec_model, courses), courses
 
     async def get_specialization_for_course(
         self, course_id: str
     ) -> Specialization | None:
-        stmt = select(SpecializationModel)
+        stmt = select(SpecializationModel).where(
+            SpecializationModel.course_ids.contains([course_id])
+        )
+        stmt = apply_organization_scope(stmt, SpecializationModel, get_current_user())
         res = await self.session.execute(stmt)
-        specs = res.scalars().all()
-        for spec_model in specs:
-            if course_id in (spec_model.course_ids or []):
-                courses: list[Course] = []
-                for cid in spec_model.course_ids:
-                    c = await self.get_course_detail(cid)
-                    if c:
-                        courses.append(c)
-                return _model_to_domain_specialization(spec_model, courses)
-        return None
+        spec_model = res.scalars().first()
+        if not spec_model:
+            return None
+
+        courses_stmt = (
+            select(CourseModel)
+            .where(
+                CourseModel.id.in_(spec_model.course_ids),
+                CourseModel.status == CourseStatus.PUBLISHED,
+            )
+            .options(
+                selectinload(CourseModel.week_modules).selectinload(
+                    WeekModuleModel.lessons
+                )
+            )
+        )
+        c_res = await self.session.execute(courses_stmt)
+        c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+        if course_id not in c_map:
+            return None
+
+        courses = [c_map[cid] for cid in spec_model.course_ids if cid in c_map]
+        if not courses:
+            return None
+        return _model_to_domain_specialization(spec_model, courses)
 
     async def create_specialization(
         self,
@@ -471,10 +500,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         await self.session.flush()
 
         courses: list[Course] = []
-        for cid in course_ids:
-            c = await self.get_course_detail(cid)
-            if c:
-                courses.append(c)
+        if course_ids:
+            c_stmt = (
+                select(CourseModel)
+                .where(CourseModel.id.in_(course_ids))
+                .options(
+                    selectinload(CourseModel.week_modules).selectinload(
+                        WeekModuleModel.lessons
+                    )
+                )
+            )
+            c_res = await self.session.execute(c_stmt)
+            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+            courses = [c_map[cid] for cid in course_ids if cid in c_map]
         return _model_to_domain_specialization(model, courses)
 
     async def list_instructor_specializations(
@@ -495,12 +533,23 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         spec_models = res.scalars().all()
 
         specializations: list[Specialization] = []
+        all_cids = {cid for sm in spec_models for cid in (sm.course_ids or [])}
+        c_map: dict[str, Course] = {}
+        if all_cids:
+            c_stmt = (
+                select(CourseModel)
+                .where(CourseModel.id.in_(all_cids))
+                .options(
+                    selectinload(CourseModel.week_modules).selectinload(
+                        WeekModuleModel.lessons
+                    )
+                )
+            )
+            c_res = await self.session.execute(c_stmt)
+            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+
         for sm in spec_models:
-            courses: list[Course] = []
-            for cid in sm.course_ids:
-                c = await self.get_course_detail(cid)
-                if c:
-                    courses.append(c)
+            courses = [c_map[cid] for cid in (sm.course_ids or []) if cid in c_map]
             specializations.append(_model_to_domain_specialization(sm, courses))
         return specializations, ""
 
@@ -534,10 +583,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         await self.session.flush()
         courses: list[Course] = []
-        for cid in model.course_ids:
-            c = await self.get_course_detail(cid)
-            if c:
-                courses.append(c)
+        if model.course_ids:
+            c_stmt = (
+                select(CourseModel)
+                .where(CourseModel.id.in_(model.course_ids))
+                .options(
+                    selectinload(CourseModel.week_modules).selectinload(
+                        WeekModuleModel.lessons
+                    )
+                )
+            )
+            c_res = await self.session.execute(c_stmt)
+            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+            courses = [c_map[cid] for cid in model.course_ids if cid in c_map]
         return _model_to_domain_specialization(model, courses)
 
     async def delete_specialization(

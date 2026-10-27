@@ -302,6 +302,7 @@ export function useCreateSpecializationMutation(
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["instructorSpecializations"] });
       queryClient.invalidateQueries({ queryKey: ["specialization"] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
@@ -341,6 +342,7 @@ export function useUpdateSpecializationMutation(
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["instructorSpecializations"] });
       queryClient.invalidateQueries({ queryKey: ["specialization"] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
@@ -363,6 +365,7 @@ export function useDeleteSpecializationMutation(
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["instructorSpecializations"] });
       queryClient.invalidateQueries({ queryKey: ["specialization"] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });

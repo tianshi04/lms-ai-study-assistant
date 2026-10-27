@@ -326,7 +326,9 @@ class CatalogHandler(CatalogService):
             foundational, recs = None, []
 
         try:
-            specialization = await self.use_case.get_specialization_for_course(course.id)
+            specialization = await self.use_case.get_specialization_for_course(
+                course.id
+            )
             pb_spec = _to_pb_specialization(specialization) if specialization else None
         except Exception:
             logger.exception(
