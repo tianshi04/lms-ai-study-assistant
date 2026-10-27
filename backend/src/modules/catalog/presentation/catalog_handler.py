@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from connectrpc.code import Code
@@ -19,7 +20,10 @@ from src.modules.catalog.domain import (
     Specialization,
     WeekModule,
 )
+from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
 from src.shared.auth import CurrentUser, require_current_user
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_request_item_type(val: Any) -> int:
@@ -298,7 +302,32 @@ class CatalogHandler(CatalogService):
         course = await self.use_case.get_course_detail(request.id_or_slug)
         if not course:
             raise ConnectError(Code.NOT_FOUND, f"Course {request.id_or_slug} not found")
-        return pb.GetCourseDetailResponse(course=_to_pb_course(course))
+
+        try:
+            foundational, recs = await self.use_case.get_course_recommendations(
+                course.id, target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
+            )
+        except Exception:
+            logger.exception(
+                "Failed to get course recommendations for %s",
+                request.id_or_slug,
+            )
+            foundational, recs = None, []
+        pb_foundational = _to_pb_course(foundational) if foundational else None
+        pb_recs = [
+            pb.CourseRecommendationItem(
+                course=_to_pb_course(rec_course),
+                badge_label=badge,
+                score=score,
+            )
+            for rec_course, badge, score in recs
+        ]
+
+        return pb.GetCourseDetailResponse(
+            course=_to_pb_course(course),
+            foundational_course=pb_foundational,
+            recommended_courses=pb_recs,
+        )
 
     async def get_lesson_detail(
         self,

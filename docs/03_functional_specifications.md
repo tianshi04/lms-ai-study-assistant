@@ -205,6 +205,18 @@ flowchart TD
 * **Hạn nộp linh hoạt (Flexible Deadlines):** Mỗi tuần học có hạn nộp gợi ý (Suggested Deadlines) để học viên duy trì tiến độ.
 * **Tính năng "Reset My Deadlines":** Nếu học viên bận việc và quá hạn nộp bài (Overdue), màn hình khóa học sẽ xuất hiện nút **"Reset my deadlines"**. Khi bấm nút này, hệ thống sẽ tự động cập nhật lịch nộp bài sang đợt mới mà không trừ điểm thi. Đối với khóa Self-paced, hệ thống tự động gia hạn `Course_End_Date` tính từ mốc reset để phân bổ hạn nộp các tuần hợp lý mà không bị dồn cục (`BR_DEADLINE_001`).
 
+### 3.3. Trang Chi tiết Khóa học, Môn Nền tảng & Đề xuất Thông minh (Course Detail & Smart Recommendation System)
+* **Tổng quan Khóa học (Course Hero & Metadata):**
+  * Hiển thị đầy đủ nhãn Lĩnh vực (`subject`), Cấp độ (`level`), Đơn vị Đối tác bảo chứng (`partner_name`, `partner_logo_url`), và Giảng viên phụ trách (fallback hiển thị `Đội ngũ [Tên Đối tác]` nếu danh sách giảng viên để trống).
+* **Mục 1: Khóa học Nền tảng Khuyến nghị (Foundational Prerequisite Course):**
+  * Tự động nhận diện khóa học nền tảng dựa trên chuỗi chuyên ngành (Specialization) hoặc độ tương đồng tri thức cao nhất.
+  * Hiển thị Card tóm tắt môn nền tảng kèm huy hiệu "Khóa học Nền tảng Khuyến nghị" và nút điều hướng xem khóa học.
+  * Tuân thủ nghiêm ngặt nguyên tắc **Open Enrollment**: Khóa học nâng cao luôn mở 100%, không áp đặt khóa cứng (Hard Lock) học viên.
+* **Mục 2: Khóa học Đề xuất Liên quan (Smart Recommendations Grid):**
+  * Hiển thị lưới 6 thẻ khóa học (3 cột x 2 hàng trên desktop) chuẩn Material Design 3.
+  * Ứng dụng thuật toán chấm điểm lai (Hybrid Recommendation Algorithm): $Score = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$.
+  * **Thành phần Vector Ngữ nghĩa 55% ($S_{\text{vector}}$):** Được sinh từ chuỗi Payload tổng hợp trích xuất đầy đủ 7 trường dữ liệu: (1) Tên khóa học, (2) Đơn vị Đối tác, (3) Lĩnh vực, (4) Cấp độ, (5) Mô tả khóa học, (6) Khung sườn các Tuần học, và (7) Tên toàn bộ các bài giảng trong từng tuần. Vector được sinh qua FastEmbed (`sentence-transformers/all-MiniLM-L6-v2`, 384 chiều) và truy vấn qua pgvector HNSW Cosine Index (`BR_CATALOG_006`).
+
 ### 3.4. Diễn đàn Thảo luận theo Bài học (Discussion Forum)
 * **Thảo luận gắn với Item (Item-level Discussion):** Dưới mỗi bài học video/bài đọc có mục "Discussion". Học viên gửi câu hỏi và nhận câu trả lời từ bạn học trên khắp thế giới.
 * **Chỉnh sửa & Chỉ báo Chỉnh sửa (`is_edited`):** Học viên có thể cập nhật bài hỏi hoặc câu trả lời của chính mình. Nội dung sau khi chỉnh sửa sẽ hiển thị nhãn chỉ báo "Đã chỉnh sửa" (`is_edited = True`) kèm mốc thời gian `edited_at`.
