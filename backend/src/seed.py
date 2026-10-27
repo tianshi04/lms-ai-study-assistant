@@ -1,8 +1,8 @@
-"""Database Seeding Script for Development & Testing Environment.
+"""Single Source of Truth for Database Seeding (CLI & Migration Runner).
 
-Best-Practice DDD Infrastructure Seeding Entrypoint:
+Modes:
 - Default Execution (Upsert Mode): Uses session.merge() to safely insert missing seed records or update existing ones without destructive data wipes.
-- Reset Execution (--reset Flag): Dynamically truncates all database tables when explicitly requested for a pristine environment reset (blocked in production).
+- Reset Execution (Clean Reset Mode): Executes TRUNCATE CASCADE across all tables before re-seeding a pristine catalog.
 
 Usage:
   - Default / Upsert:  uv run python -m src.seed
@@ -15,13 +15,16 @@ import logging
 import sys
 from pathlib import Path
 
-# Add backend directory to sys.path
+# Ensure backend root is in sys.path
 backend_dir = Path(__file__).resolve().parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from sqlalchemy import text
 
+from src.modules.catalog.infrastructure.embedding_service import (
+    sync_all_course_embeddings,
+)
 from src.scripts.seeds import (
     build_categories,
     build_sample_catalog,
@@ -70,6 +73,10 @@ async def seed_database(reset: bool = False) -> None:
         await seed_catalog_and_reviews(session)
         await seed_learning_and_assessments(session)
         await seed_commerce_and_community(session)
+
+        # Synchronize vector embeddings for course recommendations
+        logger.info("[SEED] Computing and caching course vector embeddings...")
+        await sync_all_course_embeddings(session)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")

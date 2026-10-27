@@ -174,3 +174,90 @@ async def test_handler_list_instructor_courses_null_safety():
         assert pb_course.week_modules[0].lessons[0].items[0].estimated_minutes == 0
     finally:
         set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_handler_get_course_detail_with_recommendations():
+    from src.modules.catalog.domain import Course
+    from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
+
+    usecase_mock = AsyncMock()
+    mock_course = Course(
+        id="c-detail",
+        title="Detail Course",
+        slug="detail-course",
+        description="Detail desc",
+        partner_name="Test Partner",
+        partner_logo_url="",
+        instructor_names=["Dr. Test"],
+        week_modules=[],
+    )
+    rec_course = Course(
+        id="c-rec",
+        title="Rec Course",
+        slug="rec-course",
+        description="Rec desc",
+        partner_name="Rec Partner",
+        partner_logo_url="",
+        instructor_names=["Dr. Rec"],
+        week_modules=[],
+    )
+    usecase_mock.get_course_detail.return_value = mock_course
+    usecase_mock.get_course_recommendations.return_value = (
+        None,
+        [(rec_course, "⭐ Cùng Giảng viên", 0.88)],
+    )
+
+    handler = CatalogHandler(usecase_mock)
+    request = pb.GetCourseDetailRequest(id_or_slug="c-detail")
+    context_mock = MagicMock()
+
+    response = await handler.get_course_detail(request, context_mock)
+    assert response is not None
+    assert response.course is not None
+    assert response.course.id == "c-detail"
+    assert response.foundational_course is None
+    assert len(response.recommended_courses) == 1
+    assert response.recommended_courses[0].course is not None
+    assert response.recommended_courses[0].course.id == "c-rec"
+    assert response.recommended_courses[0].badge_label == "⭐ Cùng Giảng viên"
+    assert response.recommended_courses[0].score == 0.88
+    usecase_mock.get_course_recommendations.assert_called_once_with(
+        "c-detail", target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler_get_course_detail_fallback_on_recommendation_error():
+    from src.modules.catalog.domain import Course
+    from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
+
+    usecase_mock = AsyncMock()
+    mock_course = Course(
+        id="c-fallback",
+        title="Fallback Course",
+        slug="fallback-course",
+        description="Desc",
+        partner_name="Test",
+        partner_logo_url="",
+        instructor_names=[],
+        week_modules=[],
+    )
+    usecase_mock.get_course_detail.return_value = mock_course
+    usecase_mock.get_course_recommendations.side_effect = RuntimeError(
+        "Vector DB unreachable"
+    )
+
+    handler = CatalogHandler(usecase_mock)
+    request = pb.GetCourseDetailRequest(id_or_slug="c-fallback")
+    context_mock = MagicMock()
+
+    response = await handler.get_course_detail(request, context_mock)
+    assert response is not None
+    assert response.course is not None
+    assert response.course.id == "c-fallback"
+    assert response.foundational_course is None
+    assert len(response.recommended_courses) == 0
+    usecase_mock.get_course_recommendations.assert_called_once_with(
+        "c-fallback", target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
+    )

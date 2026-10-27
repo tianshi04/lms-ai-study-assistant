@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  useCategoriesQuery,
   useCourseDetailQuery,
   useCourseReviewsQuery,
   useLearningProgressQuery,
@@ -29,6 +30,7 @@ import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
+import { CourseCard } from "@/components/course/CourseCard";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Pencil,
@@ -46,6 +48,7 @@ import {
   SquarePen,
   X,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 
 interface CourseDetailClientProps {
@@ -58,10 +61,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const queryClient = useQueryClient();
 
   const {
-    data: course,
+    data: courseDetail,
     isLoading: loadingCourse,
     error: courseErr,
   } = useCourseDetailQuery(courseId);
+
+  const course = courseDetail?.course ?? null;
+  const foundationalCourse = courseDetail?.foundationalCourse ?? null;
+  const recommendedCourses = courseDetail?.recommendedCourses ?? [];
 
   const isOwnCourse = useMemo(() => {
     if (!course) return false;
@@ -72,6 +79,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
     return false;
   }, [course, userId, userName]);
 
+  const { data: subjects } = useCategoriesQuery("SUBJECT", { staleTime: 5 * 60 * 1000 });
+  const { data: levels } = useCategoriesQuery("LEVEL", { staleTime: 5 * 60 * 1000 });
+
+  const subjectMap = useMemo(
+    () => new Map((subjects ?? []).map((s) => [s.id, s.name])),
+    [subjects],
+  );
+  const levelMap = useMemo(() => new Map((levels ?? []).map((l) => [l.id, l.name])), [levels]);
+
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
   const { data: learningProgress } = useLearningProgressQuery(courseId, {
     enabled: isAuthenticated && !!courseId,
@@ -80,7 +96,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const canReview = isAuthenticated && progressPercent >= 50;
 
   const { data: myCertificates = [], isLoading: loadingCerts } = useMyCertificatesQuery();
-  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(courseId);
+  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(courseId, {
+    enabled: isAuthenticated && !!courseId,
+  });
   const loadingAccess = loadingCerts || loadingPayment;
   const isPaidAccess = paymentAccess?.hasPaidAccess ?? false;
   const matchingCert = course?.title
@@ -240,14 +258,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             {"Không thể tải danh sách khóa học"}
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            {error || `Course "${courseId}" not found.`}
+            {error || `Không tìm thấy khóa học "${courseId}".`}
           </p>
           <Link
             href="/courses"
             prefetch={true}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
           >
-            ← {"Trở lại Catalog"}
+            ← {"Quay lại Danh mục Khóa học"}
           </Link>
         </div>
       </div>
@@ -261,16 +279,23 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2">
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider">
-                {"Khóa học Chuyên sâu (Specialization)"}
-              </div>
+              {course.subject && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide">
+                  <span>{subjectMap.get(course.subject) || course.subject}</span>
+                </div>
+              )}
+              {course.level && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border text-foreground text-xs font-semibold">
+                  <span>{levelMap.get(course.level) || course.level}</span>
+                </div>
+              )}
               {isInstructorOrAdmin && (
                 <Chip
                   variant="assist"
                   leadingIcon={<Pencil aria-hidden="true" className="w-3.5 h-3.5" />}
                   render={
                     <Link href={`/instructor/courses/${course.id}`}>
-                      {"Biên soạn Bài giảng (Instructor Builder)"}
+                      {"Biên soạn Bài giảng (Giảng viên)"}
                     </Link>
                   }
                 />
@@ -285,7 +310,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning/10 border border-warning/20 text-warning text-xs font-bold">
                   <Star aria-hidden="true" className="w-4 h-4 text-amber-400 fill-amber-400" />
                   <span>
-                    {course.averageRating.toFixed(1)} ★ ({course.reviewCount} {"nhận xét"})
+                    {course.averageRating.toFixed(1)} / 5.0 ({course.reviewCount} {"nhận xét"})
                   </span>
                 </div>
               )}
@@ -309,7 +334,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   {"Giảng viên"}
                 </span>
                 <span className="font-semibold text-foreground">
-                  {course.instructorNames.join(", ")}
+                  {course.instructorNames.length > 0
+                    ? course.instructorNames.join(", ")
+                    : `Đội ngũ ${course.partnerName}`}
                 </span>
               </div>
             </div>
@@ -430,31 +457,131 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
       {/* Course Syllabus Content */}
       <main className="max-w-7xl mx-auto px-6 py-12">
+        {/* Section 1: Khóa học Nền tảng Khuyến nghị */}
+        {foundationalCourse && (
+          <section aria-labelledby="foundational-course-heading" className="mb-12">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide">
+                <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{"Khóa học Nền tảng Khuyến nghị"}</span>
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">
+                {"Khuyến nghị học trước (Không bắt buộc)"}
+              </span>
+            </div>
+
+            <Surface
+              variant="low"
+              shape="2xl"
+              className="p-6 md:p-8 border border-primary/20 bg-primary/5 space-y-4 hover:border-primary/40 transition-colors"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium">
+                    <span className="font-semibold text-foreground">
+                      {foundationalCourse.partnerName}
+                    </span>
+                    {foundationalCourse.subject && (
+                      <>
+                        <span>•</span>
+                        <span>
+                          {subjectMap.get(foundationalCourse.subject) || foundationalCourse.subject}
+                        </span>
+                      </>
+                    )}
+                    {foundationalCourse.level && (
+                      <>
+                        <span>•</span>
+                        <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[11px]">
+                          {levelMap.get(foundationalCourse.level) || foundationalCourse.level}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <h2
+                    id="foundational-course-heading"
+                    className="text-xl md:text-2xl font-bold text-foreground hover:text-primary transition-colors"
+                  >
+                    <Link href={`/courses/${foundationalCourse.id}`}>
+                      {foundationalCourse.title}
+                    </Link>
+                  </h2>
+
+                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                    {foundationalCourse.description}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
+                    <span>
+                      {(foundationalCourse.instructorNames ?? []).length > 0
+                        ? (foundationalCourse.instructorNames ?? []).join(", ")
+                        : `Đội ngũ ${foundationalCourse.partnerName}`}
+                    </span>
+                    {(foundationalCourse.weekModules ?? []).length > 0 && (
+                      <>
+                        <span>•</span>
+                        <span>
+                          {(foundationalCourse.weekModules ?? []).length} {"tuần học"}
+                        </span>
+                      </>
+                    )}
+                    {foundationalCourse.averageRating > 0 && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1 text-warning font-semibold">
+                          <Star
+                            className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                            aria-hidden="true"
+                          />
+                          {foundationalCourse.averageRating.toFixed(1)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3">
+                  <Link
+                    href={`/courses/${foundationalCourse.id}`}
+                    prefetch={true}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-colors shadow-sm cursor-pointer"
+                  >
+                    <span>{"Xem Khóa Nền Tảng"}</span>
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+            </Surface>
+          </section>
+        )}
+
         <h2 className="text-2xl font-extrabold text-foreground mb-6">
-          {"Nội Dung Chương Trình Học (Syllabus)"}
+          {"Nội Dung Chương Trình Học"}
         </h2>
 
-        {course.weekModules.length === 0 ? (
+        {(course.weekModules ?? []).length === 0 ? (
           <div className="bg-card border border-border p-8 rounded-2xl text-center text-muted-foreground">
             {"Khóa học đang trong quá trình cập nhật các bài giảng tuần tiếp theo."}
           </div>
         ) : (
           <div className="space-y-6">
-            {course.weekModules.map((week) => (
+            {(course.weekModules ?? []).map((week) => (
               <div key={week.id} className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
                     {"Tuần"} {week.weekNumber}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {week.lessons.reduce((sum, l) => sum + l.items.length, 0)} {"bài học"}
+                    {(week.lessons ?? []).reduce((sum, l) => sum + (l.items ?? []).length, 0)}{" "}
+                    {"bài học"}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">{week.title}</h3>
                 <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{week.summary}</p>
 
                 <div className="space-y-3">
-                  {week.lessons.map((lesson) => (
+                  {(week.lessons ?? []).map((lesson) => (
                     <div
                       key={lesson.id}
                       className="bg-muted/50 border border-border rounded-xl p-4"
@@ -464,7 +591,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                         {lesson.title}
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-6">
-                        {lesson.items.map((item) => (
+                        {(lesson.items ?? []).map((item) => (
                           <div
                             key={item.id}
                             className="flex items-center gap-2 text-xs text-muted-foreground"
@@ -615,7 +742,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-0.5 text-amber-400 bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-full text-xs font-semibold">
+                    <div className="flex items-center gap-0.5 text-warning bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-full text-xs font-semibold">
                       <span>{rev.ratingStars}</span>
                       <Star
                         aria-hidden="true"
@@ -633,6 +760,39 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             </div>
           )}
         </div>
+
+        {/* Section 2: Khóa học Đề xuất Liên quan */}
+        {recommendedCourses.length > 0 && (
+          <section
+            aria-labelledby="recommended-courses-heading"
+            className="mt-16 border-t border-border pt-12"
+          >
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide mb-3">
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{"Gợi ý thông minh từ AI"}</span>
+              </div>
+              <h2
+                id="recommended-courses-heading"
+                className="text-2xl font-extrabold text-foreground"
+              >
+                {"Khóa học Đề xuất Liên quan"}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {
+                  "Gợi ý thông minh dựa trên nội dung bài giảng, độ tương đồng tri thức và giảng viên tương ứng."
+                }
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recommendedCourses.map((rec) => {
+                if (!rec.course || rec.course.id === course.id) return null;
+                return <CourseCard key={rec.course.id} course={rec.course} />;
+              })}
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Review & Rating Modal */}
