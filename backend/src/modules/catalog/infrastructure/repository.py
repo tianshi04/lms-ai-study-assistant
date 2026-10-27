@@ -520,6 +520,18 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         if level and level != "UNSPECIFIED":
             model.level = level
 
+        if model.status == CourseStatus.PUBLISHED:
+            try:
+                from src.modules.catalog.infrastructure.embedding_service import (
+                    sync_course_embedding,
+                )
+
+                await sync_course_embedding(self.session, model)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(
+                    "Failed to sync course embedding for %s: %s", course_id, e
+                )
+
         await self.session.commit()
         return await self.get_course_detail(course_id)
 
@@ -533,6 +545,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             return None
         model.status = status
         model.rejection_reason = rejection_reason
+
+        if status == CourseStatus.PUBLISHED:
+            try:
+                from src.modules.catalog.infrastructure.embedding_service import (
+                    sync_course_embedding,
+                )
+
+                await sync_course_embedding(self.session, model)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(
+                    "Failed to sync course embedding for %s: %s", course_id, e
+                )
+
         await self.session.commit()
         return await self.get_course_detail(course_id)
 
@@ -1432,7 +1457,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 }
                 for q in questions
             ]
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001  # noqa: BLE001
             logger.warning(
                 "Failed to export quiz questions for matrix %s: %s",
                 quiz_matrix_id,

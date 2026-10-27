@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  useCategoriesQuery,
   useCourseDetailQuery,
   useCourseReviewsQuery,
   useLearningProgressQuery,
@@ -77,6 +78,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
       return true;
     return false;
   }, [course, userId, userName]);
+
+  const { data: subjects = [] } = useCategoriesQuery("SUBJECT");
+  const { data: levels = [] } = useCategoriesQuery("LEVEL");
+
+  const subjectMap = useMemo(() => new Map(subjects.map((s) => [s.id, s.name])), [subjects]);
+  const levelMap = useMemo(() => new Map(levels.map((l) => [l.id, l.name])), [levels]);
 
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
   const { data: learningProgress } = useLearningProgressQuery(courseId, {
@@ -269,12 +276,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {course.subject && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide">
-                  <span>{course.subject}</span>
+                  <span>{subjectMap.get(course.subject) || course.subject}</span>
                 </div>
               )}
               {course.level && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border text-foreground text-xs font-semibold">
-                  <span>{course.level}</span>
+                  <span>{levelMap.get(course.level) || course.level}</span>
                 </div>
               )}
               {isInstructorOrAdmin && (
@@ -472,14 +479,16 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     {foundationalCourse.subject && (
                       <>
                         <span>•</span>
-                        <span>{foundationalCourse.subject}</span>
+                        <span>
+                          {subjectMap.get(foundationalCourse.subject) || foundationalCourse.subject}
+                        </span>
                       </>
                     )}
                     {foundationalCourse.level && (
                       <>
                         <span>•</span>
                         <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[11px]">
-                          {foundationalCourse.level}
+                          {levelMap.get(foundationalCourse.level) || foundationalCourse.level}
                         </span>
                       </>
                     )}
@@ -515,7 +524,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     {foundationalCourse.averageRating > 0 && (
                       <>
                         <span>•</span>
-                        <span className="flex items-center gap-1 text-amber-500 font-semibold">
+                        <span className="flex items-center gap-1 text-warning font-semibold">
                           <Star
                             className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
                             aria-hidden="true"
@@ -755,7 +764,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             <div className="mb-8">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide mb-3">
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{"AI Recommender"}</span>
+                <span>{"Gợi ý thông minh từ AI"}</span>
               </div>
               <h2
                 id="recommended-courses-heading"
