@@ -14,7 +14,6 @@ export function LearnSidebarWorkspace({
   courseId,
   course,
   activeItem,
-  currentTime,
   progress,
   notes,
   highlightText,
@@ -116,7 +115,6 @@ export function LearnSidebarWorkspace({
               courseTitle={course?.title || "Khóa học"}
               moduleTitle={activeModule?.title || "Module bài học"}
               activeItem={activeItem}
-              currentTime={currentTime}
               readingMarkdown={activeItem?.readingMarkdown}
               externalPrompt={externalAiPrompt}
               onPromptConsumed={onExternalPromptConsumed}
@@ -142,7 +140,6 @@ export function LearnSidebarWorkspace({
           <LearnNonAiTabsPanel
             courseId={courseId}
             activeItem={activeItem}
-            currentTime={currentTime}
             progress={progress}
             notes={notes}
             highlightText={highlightText}

@@ -12,7 +12,6 @@ import type { SidebarTab } from "./types";
 interface LearnNonAiTabsPanelProps {
   courseId: string;
   activeItem: LearningItem | null;
-  currentTime: number;
   progress: LearningProgress | null;
   notes: PersonalNote[];
   highlightText: string;
@@ -34,7 +33,6 @@ interface LearnNonAiTabsPanelProps {
 export function LearnNonAiTabsPanel({
   courseId,
   activeItem,
-  currentTime,
   progress,
   notes,
   highlightText,
@@ -97,11 +95,7 @@ export function LearnNonAiTabsPanel({
         className="flex-1 overflow-y-auto p-4 bg-surface-container-lowest min-h-0 flex flex-col animate-in fade-in duration-200 ease-out scrollbar-none"
       >
         {activeTab === "transcript" && isVideoItem && (
-          <TranscriptPanel
-            activeItem={activeItem}
-            currentTime={currentTime}
-            onSeekVideo={onSeekVideo}
-          />
+          <TranscriptPanel activeItem={activeItem} onSeekVideo={onSeekVideo} />
         )}
 
         {!isPreviewMode && activeTab === "forum" && (

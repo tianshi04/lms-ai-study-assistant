@@ -194,7 +194,8 @@ flowchart TD
   * Cột bên trái hiển thị danh sách Tuần học (Week) và danh sách Items.
   * Khung giữa phát Video / Bài đọc / Quiz.
 * **Tính năng Interactive Transcript & Highlight Notes:**
-  * Phụ đề cuộn tự động theo lời nói trong video. Bấm vào dòng phụ đề để nhảy đến giây video tương ứng.
+  * Phụ đề cuộn tự động theo lời nói trong video. Bấm vào dòng phụ đề để nhảy đến giây video tương ứng (dòng được bấm sáng lên ngay lập tức, không chờ trình phát báo lại).
+  * Khi học viên tự cuộn khung phụ đề (lăn chuột, vuốt hoặc dùng phím cuộn), hệ thống tạm dừng tự cuộn để không giật vị trí đang đọc. Nếu dòng phụ đề đang phát nằm ngoài khung nhìn, nút **"Về vị trí hiện tại"** (mũi tên lên/xuống theo hướng của dòng đang phát) hiện ở góc dưới bên phải. Tự cuộn chạy lại khi học viên bấm nút, bấm một dòng phụ đề, hoặc tự cuộn tới vị trí đang phát.
   * Học viên có thể bôi đen (Highlight) từ/cụm từ trong phụ đề hoặc bài đọc để lưu lại thành **Ghi chú cá nhân (Personal Notes)**.
 * **In-Video Quiz Experience:** Video tự dừng tại mốc thời gian chèn quiz. Học viên chọn đáp án và bấm "Submit" để xem giải thích và tiếp tục xem video.
 * **Theo dõi & Lưu vết Tiến độ Bài học (Granular Item Completion Tracking):**

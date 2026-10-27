@@ -71,7 +71,6 @@ interface VideoPlayerProps {
   selectedOption: number | null;
   quizSubmitted: boolean;
   completedItemIds?: string[];
-  currentTime?: number;
   onTimeUpdate: () => void;
   onSeeking?: () => void;
   onSelectOption: (index: number) => void;
@@ -93,7 +92,6 @@ export function VideoPlayer({
   selectedOption,
   quizSubmitted,
   completedItemIds = [],
-  currentTime: _currentTime,
   onTimeUpdate,
   onSeeking,
   onSelectOption,
