@@ -123,8 +123,8 @@ export function LearnSidebarRail({
             type="button"
             onClick={() => onTabClick("deadlines")}
             className="group flex flex-col items-center gap-1 cursor-pointer select-none bg-transparent border-0 p-0 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 rounded-xl transition-transform active:scale-95"
-            title="Deadlines"
-            aria-label="Xem Deadlines & Tiến độ"
+            title="Thời hạn"
+            aria-label="Xem Thời hạn & Tiến độ"
           >
             <div
               className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors duration-200 ${
@@ -142,7 +142,7 @@ export function LearnSidebarRail({
                   : "text-on-surface-variant group-hover:text-on-surface"
               }`}
             >
-              Deadlines
+              Thời hạn
             </span>
           </button>
         </>

@@ -63,6 +63,7 @@ export function CourseSyllabusDrawer({
 
   return (
     <div
+      inert={!isSidebarOpen}
       className={`h-full flex flex-col w-full lg:w-80 xl:w-90 lg:min-w-80 xl:min-w-90 shrink-0 transition-all duration-300 ease-m3-emphasized relative ${
         isSidebarOpen
           ? "opacity-100 translate-x-0 visible"

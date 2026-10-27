@@ -56,18 +56,20 @@ function CoursePlayerContent() {
         : "transcript",
   );
   const [isQuizActive, setIsQuizActive] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [collapsedWeeks, setCollapsedWeeks] = useState<Record<string, boolean>>({});
   const prevActiveItemIdRef = useRef<string | null>(null);
 
-  // Auto-collapse sidebars on small screens (< 1024px) for optimal mobile responsiveness
-  // Use matchMedia so virtual keyboard / address bar height resizes on mobile do not unexpectedly close open drawers
+  // Default sidebars closed on mobile (< 1024px) to prevent layout shift, and open on desktop (>= 1024px).
+  // Use matchMedia so virtual keyboard / address bar height resizes on mobile do not unexpectedly close open drawers.
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
-    if (mql.matches) {
-      setIsSidebarOpen(false);
-      setIsPanelOpen(false);
+    if (!mql.matches) {
+      setIsSidebarOpen(true);
+      setIsPanelOpen(true);
+    } else if (urlThreadId || urlTab) {
+      setIsPanelOpen(true);
     }
     const handleMediaChange = (e: MediaQueryListEvent) => {
       if (e.matches) {
@@ -77,7 +79,23 @@ function CoursePlayerContent() {
     };
     mql.addEventListener("change", handleMediaChange);
     return () => mql.removeEventListener("change", handleMediaChange);
-  }, []);
+  }, [urlThreadId, urlTab]);
+
+  // Close mobile syllabus drawer or split panel on Escape key for keyboard accessibility
+  useEffect(() => {
+    if (!isSidebarOpen && !isPanelOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && window.innerWidth < 1024) {
+        if (isSidebarOpen) {
+          setIsSidebarOpen(false);
+        } else if (isPanelOpen) {
+          setIsPanelOpen(false);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSidebarOpen, isPanelOpen]);
 
   const toggleWeek = (weekId: string) => {
     setCollapsedWeeks((prev) => ({
@@ -718,7 +736,7 @@ function CoursePlayerContent() {
             {/* Mobile Backdrop Overlay for Course Syllabus Drawer */}
             {isSidebarOpen && (
               <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-200"
+                className="fixed inset-0 bg-scrim backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-200"
                 onClick={() => setIsSidebarOpen(false)}
                 aria-hidden="true"
               />
@@ -727,8 +745,8 @@ function CoursePlayerContent() {
             <aside
               className={`fixed top-14 bottom-0 left-0 z-50 w-80 max-w-[85vw] rounded-r-3xl rounded-l-none shadow-2xl lg:relative lg:inset-auto lg:z-auto lg:h-full lg:rounded-3xl lg:shadow-xs bg-surface-container-lowest text-on-surface overflow-hidden shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
                 isSidebarOpen
-                  ? "translate-x-0 lg:w-80 xl:w-90 lg:max-w-[calc(100vw-24px)]"
-                  : "-translate-x-full pointer-events-none lg:pointer-events-auto lg:translate-x-0 lg:w-14"
+                  ? "translate-x-0 visible lg:w-80 xl:w-90 lg:max-w-[calc(100vw-24px)]"
+                  : "-translate-x-full max-lg:invisible pointer-events-none lg:pointer-events-auto lg:translate-x-0 lg:w-14"
               }`}
               aria-label="Lộ trình khóa học"
             >
@@ -846,11 +864,7 @@ function CoursePlayerContent() {
 
               {/* Fixed Bottom-Right Next Lesson Floating Action Button */}
               {nextItem && (
-                <div
-                  className={`absolute bottom-3.5 right-3.5 z-30 pointer-events-auto ${
-                    isPanelOpen ? "hidden lg:block" : ""
-                  }`}
-                >
+                <div className="absolute bottom-2.5 sm:bottom-3.5 right-3 sm:right-3.5 z-30 pointer-events-auto">
                   <Button
                     type="button"
                     variant="tonal"

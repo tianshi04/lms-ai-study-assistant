@@ -74,6 +74,7 @@ export function LearnSidebarWorkspace({
     >
       {/* Morphing White Card (Desktop) / Inline Split Panel Below Video (Mobile) */}
       <aside
+        inert={!isPanelOpen}
         className={`relative flex-1 min-h-0 w-full lg:w-auto lg:absolute lg:top-0 lg:bottom-0 lg:left-0 lg:z-10 lg:h-full flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden transition-all duration-300 ease-m3-emphasized ${
           !isPanelOpen
             ? "hidden lg:flex opacity-0 pointer-events-none invisible lg:right-[92px]"

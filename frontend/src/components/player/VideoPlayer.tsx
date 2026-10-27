@@ -448,9 +448,19 @@ export function VideoPlayer({
           )}
         </div>
 
-        {/* Video Lesson Title under video */}
-        <div className={isPanelOpen ? "hidden lg:block w-full px-1 py-1" : "w-full px-1 py-1"}>
-          <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+        {/* Video Lesson Title under video (kept visible in mobile split-view with right padding for Next Lesson button) */}
+        <div
+          className={`w-full px-1 ${
+            isPanelOpen ? "py-1.5 min-h-9 flex items-center pr-36 lg:pr-0 lg:py-1" : "py-1"
+          }`}
+        >
+          <h1
+            className={`font-bold text-foreground tracking-tight ${
+              isPanelOpen
+                ? "text-sm sm:text-base lg:text-xl line-clamp-1 lg:line-clamp-none"
+                : "text-lg sm:text-xl"
+            }`}
+          >
             {activeItem.title}
           </h1>
         </div>
