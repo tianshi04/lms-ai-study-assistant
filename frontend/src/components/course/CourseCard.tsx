@@ -53,13 +53,13 @@ export function CourseCard({ course, progress }: CourseCardProps) {
         <div className="pt-4 border-t border-outline-variant mb-5 flex items-center justify-between text-xs text-on-surface-variant font-medium">
           <span className="flex items-center gap-1.5 min-w-0 truncate max-w-[160px]">
             <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
-            {course.instructorNames.length > 0
-              ? course.instructorNames.join(", ")
+            {(course.instructorNames ?? []).length > 0
+              ? (course.instructorNames ?? []).join(", ")
               : fallbackInstructor}
           </span>
           <span className="flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-on-surface-variant" aria-hidden="true" />
-            {course.weekModules.length} {"Tuần học"}
+            {(course.weekModules ?? []).length} {"Tuần học"}
           </span>
         </div>
 

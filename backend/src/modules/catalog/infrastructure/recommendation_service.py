@@ -5,7 +5,7 @@ Formula:
 
 Sections:
   1. Foundational Course: Identifies pedagogical prerequisite (Specialization sequence or high vector similarity foundational match).
-  2. Recommended Courses: Curates up to 6 highly-relevant distinct courses with badges.
+  2. Recommended Courses: Curates up to 6 highly-relevant distinct courses.
 """
 
 import logging
@@ -17,7 +17,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.catalog.domain import CourseStatus
 from src.modules.catalog.domain.constants import (
+    BEGINNER_LEVEL_ALIASES,
+    COLD_START_DEFAULT_RATING_SCORE,
     DEFAULT_RECOMMENDED_COURSES_COUNT,
+    FALLBACK_SIMILARITY_DIFF_SUBJECT,
+    FALLBACK_SIMILARITY_SAME_SUBJECT,
+    FOUNDATIONAL_PEDAGOGICAL_KEYWORDS,
+    HIGH_SIMILARITY_CROSS_DOMAIN_THRESHOLD,
+    HYBRID_WEIGHT_AUTHOR,
+    HYBRID_WEIGHT_RATING,
+    HYBRID_WEIGHT_VECTOR,
     MIN_FOUNDATIONAL_SIMILARITY_THRESHOLD,
     MIN_RECOMMENDATION_SCORE_THRESHOLD,
 )
@@ -29,19 +38,6 @@ from src.modules.catalog.infrastructure.models import (
 
 logger = logging.getLogger(__name__)
 
-FOUNDATIONAL_KEYWORDS = (
-    "căn bản",
-    "cơ bản",
-    "nhập môn",
-    "nền tảng",
-    "foundation",
-    "foundations",
-    "introduction",
-    "intro",
-    "basic",
-    "basics",
-)
-
 
 @dataclass
 class RecommendedCourseDto:
@@ -51,15 +47,17 @@ class RecommendedCourseDto:
 
 
 def raw_cosine_similarity(v1: Sequence[float], v2: Sequence[float]) -> float:
-    """Calculate raw cosine similarity between two normalized or arbitrary vectors."""
+    """Calculate raw cosine similarity between two normalized or arbitrary vectors with epsilon guard."""
     if not v1 or not v2 or len(v1) != len(v2):
         return 0.0
     dot = sum(a * b for a, b in zip(v1, v2))
     norm_a = sum(a * a for a in v1) ** 0.5
     norm_b = sum(b * b for b in v2) ** 0.5
-    if norm_a == 0.0 or norm_b == 0.0:
+    denominator = norm_a * norm_b
+    if denominator <= 1e-12:
         return 0.0
-    return dot / (norm_a * norm_b)
+    val = dot / denominator
+    return max(-1.0, min(1.0, val))
 
 
 def cosine_similarity(v1: Sequence[float], v2: Sequence[float]) -> float:
@@ -73,7 +71,8 @@ async def get_foundational_course(
 ) -> CourseModel | None:
     """Identify foundational / prerequisite course using Specialization sequence or semantic match."""
     # Introductory/Beginner courses are entry points and do not require foundational prerequisites
-    if current_course.level in ("cat-lvl-beg", "BEGINNER", "Sơ cấp", "Cơ bản"):
+    level_normalized = (current_course.level or "").strip().lower()
+    if level_normalized in BEGINNER_LEVEL_ALIASES:
         return None
 
     # 1. Check if course belongs to a Specialization sequence
@@ -113,9 +112,11 @@ async def get_foundational_course(
     for emb_rec, course in candidates:
         raw_sim = raw_cosine_similarity(current_emb.embedding, emb_rec.embedding)
         title_lower = course.title.lower()
-        is_foundational = any(kw in title_lower for kw in FOUNDATIONAL_KEYWORDS)
+        is_foundational = any(
+            kw in title_lower for kw in FOUNDATIONAL_PEDAGOGICAL_KEYWORDS
+        )
         is_relevant_domain = (course.subject == current_course.subject) or (
-            raw_sim >= 0.75
+            raw_sim >= HIGH_SIMILARITY_CROSS_DOMAIN_THRESHOLD
         )
         if (
             is_foundational
@@ -173,7 +174,11 @@ async def get_recommended_courses(
         if current_vector and cand_vec:
             sim = cosine_similarity(current_vector, cand_vec)
         else:
-            sim = 0.5 if course.subject == current_course.subject else 0.2
+            sim = (
+                FALLBACK_SIMILARITY_SAME_SUBJECT
+                if course.subject == current_course.subject
+                else FALLBACK_SIMILARITY_DIFF_SUBJECT
+            )
 
         # 2. Same author / partner (30%)
         is_same_author = (
@@ -183,14 +188,21 @@ async def get_recommended_courses(
         )
         author_score = 1.0 if is_same_author else 0.0
 
-        # 3. Rating score (15%)
-        rating_score = (
-            min(5.0, max(0.0, course.average_rating)) / 5.0
-            if course.average_rating
-            else 0.8
-        )
+        # 3. Rating score (15%) - only apply rating if course has actual reviews, else cold-start
+        if (
+            course.review_count
+            and course.review_count > 0
+            and course.average_rating is not None
+        ):
+            rating_score = min(5.0, max(0.0, course.average_rating)) / 5.0
+        else:
+            rating_score = COLD_START_DEFAULT_RATING_SCORE
 
-        total_score = (0.55 * sim) + (0.30 * author_score) + (0.15 * rating_score)
+        total_score = (
+            (HYBRID_WEIGHT_VECTOR * sim)
+            + (HYBRID_WEIGHT_AUTHOR * author_score)
+            + (HYBRID_WEIGHT_RATING * rating_score)
+        )
 
         # Confidence filter: Only retain courses meeting the minimum relevance threshold or from same author
         if total_score >= MIN_RECOMMENDATION_SCORE_THRESHOLD or is_same_author:

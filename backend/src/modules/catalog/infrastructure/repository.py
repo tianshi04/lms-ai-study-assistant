@@ -526,7 +526,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     sync_course_embedding,
                 )
 
-                await sync_course_embedding(self.session, model)
+                async with self.session.begin_nested():
+                    await sync_course_embedding(self.session, model)
             except Exception as e:  # noqa: BLE001
                 logger.warning(
                     "Failed to sync course embedding for %s: %s", course_id, e
@@ -552,7 +553,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     sync_course_embedding,
                 )
 
-                await sync_course_embedding(self.session, model)
+                async with self.session.begin_nested():
+                    await sync_course_embedding(self.session, model)
             except Exception as e:  # noqa: BLE001
                 logger.warning(
                     "Failed to sync course embedding for %s: %s", course_id, e
