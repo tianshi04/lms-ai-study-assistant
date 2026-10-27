@@ -72,12 +72,19 @@ async def get_foundational_course(
     session: AsyncSession, current_course: CourseModel
 ) -> CourseModel | None:
     """Identify foundational / prerequisite course using Specialization sequence or semantic match."""
+    # Introductory/Beginner courses are entry points and do not require foundational prerequisites
+    if current_course.level in ("cat-lvl-beg", "BEGINNER", "Sơ cấp", "Cơ bản"):
+        return None
+
     # 1. Check if course belongs to a Specialization sequence
     spec_stmt = select(SpecializationModel)
     specs = (await session.execute(spec_stmt)).scalars().all()
     for spec in specs:
         if current_course.id in spec.course_ids:
             idx = spec.course_ids.index(current_course.id)
+            if idx == 0:
+                # First course in specialization sequence is the foundational root; do not search further
+                return None
             if idx > 0:
                 # Predecessor course in specialization is the foundational prerequisite
                 prereq_id = spec.course_ids[idx - 1]

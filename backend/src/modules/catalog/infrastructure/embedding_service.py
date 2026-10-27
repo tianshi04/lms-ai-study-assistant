@@ -25,6 +25,18 @@ logger = logging.getLogger(__name__)
 # Canonical lightweight sentence transformer (384 dimensions, sub-20ms latency on CPU)
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
+# Human-readable labels for category IDs to enrich vector semantics
+CATEGORY_LABEL_MAP: dict[str, str] = {
+    "cat-subj-cs": "Khoa học Máy tính",
+    "cat-subj-ds": "Khoa học Dữ liệu",
+    "cat-subj-biz": "Kinh doanh & Kinh tế",
+    "cat-subj-ai": "Trí tuệ Nhân tạo & Machine Learning",
+    "cat-subj-it": "Công nghệ Thông tin",
+    "cat-lvl-beg": "Cơ bản / Sơ cấp",
+    "cat-lvl-int": "Trung cấp",
+    "cat-lvl-adv": "Nâng cao",
+}
+
 _embedding_model: TextEmbedding | None = None
 
 
@@ -44,7 +56,7 @@ def build_course_payload(course: CourseModel) -> str:
     lines: list[str] = [
         f"Khóa học: {course.title}",
         f"Đối tác: {course.partner_name or 'Hệ thống'}",
-        f"Lĩnh vực: {course.subject} | Cấp độ: {course.level}",
+        f"Lĩnh vực: {CATEGORY_LABEL_MAP.get(course.subject, course.subject or 'Đại cương')} | Cấp độ: {CATEGORY_LABEL_MAP.get(course.level, course.level or 'Mọi cấp độ')}",
         f"Mô tả: {course.description}",
     ]
 

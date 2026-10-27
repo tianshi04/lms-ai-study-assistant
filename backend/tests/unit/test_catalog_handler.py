@@ -225,3 +225,39 @@ async def test_handler_get_course_detail_with_recommendations():
     usecase_mock.get_course_recommendations.assert_called_once_with(
         "c-detail", target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
     )
+
+
+@pytest.mark.asyncio
+async def test_handler_get_course_detail_fallback_on_recommendation_error():
+    from src.modules.catalog.domain import Course
+    from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
+
+    usecase_mock = AsyncMock()
+    mock_course = Course(
+        id="c-fallback",
+        title="Fallback Course",
+        slug="fallback-course",
+        description="Desc",
+        partner_name="Test",
+        partner_logo_url="",
+        instructor_names=[],
+        week_modules=[],
+    )
+    usecase_mock.get_course_detail.return_value = mock_course
+    usecase_mock.get_course_recommendations.side_effect = RuntimeError(
+        "Vector DB unreachable"
+    )
+
+    handler = CatalogHandler(usecase_mock)
+    request = pb.GetCourseDetailRequest(id_or_slug="c-fallback")
+    context_mock = MagicMock()
+
+    response = await handler.get_course_detail(request, context_mock)
+    assert response is not None
+    assert response.course is not None
+    assert response.course.id == "c-fallback"
+    assert response.foundational_course is None
+    assert len(response.recommended_courses) == 0
+    usecase_mock.get_course_recommendations.assert_called_once_with(
+        "c-fallback", target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
+    )

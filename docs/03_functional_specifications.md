@@ -216,7 +216,6 @@ flowchart TD
   * Hiển thị lưới 6 thẻ khóa học (3 cột x 2 hàng trên desktop) chuẩn Material Design 3.
   * Ứng dụng thuật toán chấm điểm lai (Hybrid Recommendation Algorithm): $Score = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$.
   * **Thành phần Vector Ngữ nghĩa 55% ($S_{\text{vector}}$):** Được sinh từ chuỗi Payload tổng hợp trích xuất đầy đủ 7 trường dữ liệu: (1) Tên khóa học, (2) Đơn vị Đối tác, (3) Lĩnh vực, (4) Cấp độ, (5) Mô tả khóa học, (6) Khung sườn các Tuần học, và (7) Tên toàn bộ các bài giảng trong từng tuần. Vector được sinh qua FastEmbed (`sentence-transformers/all-MiniLM-L6-v2`, 384 chiều) và truy vấn qua pgvector HNSW Cosine Index (`BR_CATALOG_006`).
-  * Mỗi thẻ hiển thị rõ lý do đề xuất qua các badge: `⭐ Cùng Giảng viên`, `💡 Gợi ý theo nội dung`, `📚 Cùng chuyên ngành`, hoặc `🔥 Khóa học nổi bật`.
 
 ### 3.4. Diễn đàn Thảo luận theo Bài học (Discussion Forum)
 * **Thảo luận gắn với Item (Item-level Discussion):** Dưới mỗi bài học video/bài đọc có mục "Discussion". Học viên gửi câu hỏi và nhận câu trả lời từ bạn học trên khắp thế giới.
