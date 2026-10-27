@@ -305,7 +305,7 @@ class CatalogHandler(CatalogService):
 
         try:
             foundational, recs = await self.use_case.get_course_recommendations(
-                request.id_or_slug, target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
+                course.id, target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
             )
         except Exception:
             logger.exception(

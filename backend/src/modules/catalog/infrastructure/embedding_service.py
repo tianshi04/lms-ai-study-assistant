@@ -4,6 +4,7 @@ This service converts course titles, partner names, subjects, levels, descriptio
 and detailed syllabus lesson titles into 384-dimensional dense vectors for semantic similarity.
 """
 
+import asyncio
 import logging
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -14,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.modules.catalog.domain import CourseStatus
+from src.modules.catalog.domain.constants import CATEGORY_LABEL_MAP
 from src.modules.catalog.infrastructure.models import (
     CourseEmbeddingModel,
     CourseModel,
@@ -24,18 +26,6 @@ logger = logging.getLogger(__name__)
 
 # Canonical lightweight sentence transformer (384 dimensions, sub-20ms latency on CPU)
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-
-# Human-readable labels for category IDs to enrich vector semantics
-CATEGORY_LABEL_MAP: dict[str, str] = {
-    "cat-subj-cs": "Khoa học Máy tính",
-    "cat-subj-ds": "Khoa học Dữ liệu",
-    "cat-subj-biz": "Kinh doanh & Kinh tế",
-    "cat-subj-ai": "Trí tuệ Nhân tạo & Machine Learning",
-    "cat-subj-it": "Công nghệ Thông tin",
-    "cat-lvl-beg": "Cơ bản / Sơ cấp",
-    "cat-lvl-int": "Trung cấp",
-    "cat-lvl-adv": "Nâng cao",
-}
 
 _embedding_model: TextEmbedding | None = None
 
@@ -53,10 +43,14 @@ def get_embedding_model() -> TextEmbedding:
 
 def build_course_payload(course: CourseModel) -> str:
     """Construct structured text representation of a course for semantic vectorization."""
+    subject_label = CATEGORY_LABEL_MAP.get(
+        course.subject, course.subject or "Đại cương"
+    )
+    level_label = CATEGORY_LABEL_MAP.get(course.level, course.level or "Mọi cấp độ")
     lines: list[str] = [
         f"Khóa học: {course.title}",
         f"Đối tác: {course.partner_name or 'Hệ thống'}",
-        f"Lĩnh vực: {CATEGORY_LABEL_MAP.get(course.subject, course.subject or 'Đại cương')} | Cấp độ: {CATEGORY_LABEL_MAP.get(course.level, course.level or 'Mọi cấp độ')}",
+        f"Lĩnh vực: {subject_label} | Cấp độ: {level_label}",
         f"Mô tả: {course.description}",
     ]
 
@@ -91,7 +85,7 @@ def generate_embeddings_batch(texts: Sequence[str]) -> list[list[float]]:
 async def sync_course_embedding(
     session: AsyncSession, course: CourseModel
 ) -> CourseEmbeddingModel:
-    """Compute and upsert vector embedding for a published course."""
+    """Compute and upsert vector embedding for a published course offloaded to worker thread."""
     # Ensure week modules and lessons are loaded
     if not course.week_modules:
         stmt = (
@@ -108,7 +102,8 @@ async def sync_course_embedding(
             course = loaded
 
     payload = build_course_payload(course)
-    vector = generate_embedding(payload)
+    # Offload CPU-bound inference to worker thread so async event loop stays responsive
+    vector = await asyncio.to_thread(generate_embedding, payload)
     now_iso = datetime.now(UTC).isoformat()
 
     embedding_record = CourseEmbeddingModel(

@@ -79,11 +79,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
     return false;
   }, [course, userId, userName]);
 
-  const { data: subjects = [] } = useCategoriesQuery("SUBJECT");
-  const { data: levels = [] } = useCategoriesQuery("LEVEL");
+  const { data: subjects } = useCategoriesQuery("SUBJECT", { staleTime: 5 * 60 * 1000 });
+  const { data: levels } = useCategoriesQuery("LEVEL", { staleTime: 5 * 60 * 1000 });
 
-  const subjectMap = useMemo(() => new Map(subjects.map((s) => [s.id, s.name])), [subjects]);
-  const levelMap = useMemo(() => new Map(levels.map((l) => [l.id, l.name])), [levels]);
+  const subjectMap = useMemo(
+    () => new Map((subjects ?? []).map((s) => [s.id, s.name])),
+    [subjects],
+  );
+  const levelMap = useMemo(() => new Map((levels ?? []).map((l) => [l.id, l.name])), [levels]);
 
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
   const { data: learningProgress } = useLearningProgressQuery(courseId, {
@@ -93,7 +96,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const canReview = isAuthenticated && progressPercent >= 50;
 
   const { data: myCertificates = [], isLoading: loadingCerts } = useMyCertificatesQuery();
-  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(courseId);
+  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(courseId, {
+    enabled: isAuthenticated && !!courseId,
+  });
   const loadingAccess = loadingCerts || loadingPayment;
   const isPaidAccess = paymentAccess?.hasPaidAccess ?? false;
   const matchingCert = course?.title
@@ -253,14 +258,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             {"Không thể tải danh sách khóa học"}
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            {error || `Course "${courseId}" not found.`}
+            {error || `Không tìm thấy khóa học "${courseId}".`}
           </p>
           <Link
             href="/courses"
             prefetch={true}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
           >
-            ← {"Trở lại Catalog"}
+            ← {"Quay lại Danh mục Khóa học"}
           </Link>
         </div>
       </div>
@@ -290,7 +295,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   leadingIcon={<Pencil aria-hidden="true" className="w-3.5 h-3.5" />}
                   render={
                     <Link href={`/instructor/courses/${course.id}`}>
-                      {"Biên soạn Bài giảng (Instructor Builder)"}
+                      {"Biên soạn Bài giảng (Giảng viên)"}
                     </Link>
                   }
                 />
@@ -494,14 +499,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     )}
                   </div>
 
-                  <h3
+                  <h2
                     id="foundational-course-heading"
                     className="text-xl md:text-2xl font-bold text-foreground hover:text-primary transition-colors"
                   >
                     <Link href={`/courses/${foundationalCourse.id}`}>
                       {foundationalCourse.title}
                     </Link>
-                  </h3>
+                  </h2>
 
                   <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                     {foundationalCourse.description}
@@ -509,15 +514,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
                     <span>
-                      {foundationalCourse.instructorNames.length > 0
-                        ? foundationalCourse.instructorNames.join(", ")
+                      {(foundationalCourse.instructorNames ?? []).length > 0
+                        ? (foundationalCourse.instructorNames ?? []).join(", ")
                         : `Đội ngũ ${foundationalCourse.partnerName}`}
                     </span>
-                    {foundationalCourse.weekModules.length > 0 && (
+                    {(foundationalCourse.weekModules ?? []).length > 0 && (
                       <>
                         <span>•</span>
                         <span>
-                          {foundationalCourse.weekModules.length} {"tuần học"}
+                          {(foundationalCourse.weekModules ?? []).length} {"tuần học"}
                         </span>
                       </>
                     )}
@@ -552,30 +557,31 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
         )}
 
         <h2 className="text-2xl font-extrabold text-foreground mb-6">
-          {"Nội Dung Chương Trình Học (Syllabus)"}
+          {"Nội Dung Chương Trình Học"}
         </h2>
 
-        {course.weekModules.length === 0 ? (
+        {(course.weekModules ?? []).length === 0 ? (
           <div className="bg-card border border-border p-8 rounded-2xl text-center text-muted-foreground">
             {"Khóa học đang trong quá trình cập nhật các bài giảng tuần tiếp theo."}
           </div>
         ) : (
           <div className="space-y-6">
-            {course.weekModules.map((week) => (
+            {(course.weekModules ?? []).map((week) => (
               <div key={week.id} className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
                     {"Tuần"} {week.weekNumber}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {week.lessons.reduce((sum, l) => sum + l.items.length, 0)} {"bài học"}
+                    {(week.lessons ?? []).reduce((sum, l) => sum + (l.items ?? []).length, 0)}{" "}
+                    {"bài học"}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">{week.title}</h3>
                 <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{week.summary}</p>
 
                 <div className="space-y-3">
-                  {week.lessons.map((lesson) => (
+                  {(week.lessons ?? []).map((lesson) => (
                     <div
                       key={lesson.id}
                       className="bg-muted/50 border border-border rounded-xl p-4"
@@ -585,7 +591,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                         {lesson.title}
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-6">
-                        {lesson.items.map((item) => (
+                        {(lesson.items ?? []).map((item) => (
                           <div
                             key={item.id}
                             className="flex items-center gap-2 text-xs text-muted-foreground"
@@ -736,7 +742,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-0.5 text-amber-400 bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-full text-xs font-semibold">
+                    <div className="flex items-center gap-0.5 text-warning bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-full text-xs font-semibold">
                       <span>{rev.ratingStars}</span>
                       <Star
                         aria-hidden="true"
@@ -781,7 +787,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recommendedCourses.map((rec) => {
-                if (!rec.course) return null;
+                if (!rec.course || rec.course.id === course.id) return null;
                 return <CourseCard key={rec.course.id} course={rec.course} />;
               })}
             </div>
