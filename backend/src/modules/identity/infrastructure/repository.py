@@ -401,7 +401,7 @@ class OrganizationRepository(IOrganizationRepository):
                 status=existing.status,
             )
 
-        member_id = f"member_{uuid7().hex[:12]}"
+        member_id = f"member_{uuid7().hex}"
         model = OrganizationMemberModel(
             id=member_id,
             user_id=user_id,
@@ -465,7 +465,7 @@ class OrganizationRepository(IOrganizationRepository):
         action: str,
         details: str = "",
     ) -> dict:
-        log_id = f"audit_{uuid7().hex[:12]}"
+        log_id = f"audit_{uuid7().hex}"
         now_str = datetime.now(UTC).isoformat()
         log_model = OrganizationAuditLogModel(
             id=log_id,

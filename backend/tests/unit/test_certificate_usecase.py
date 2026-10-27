@@ -91,7 +91,7 @@ async def test_apply_financial_aid_new(
 
     assert err == ""
     assert app is not None
-    assert app.id == "faid_123456789012"
+    assert app.id == "faid_1234567890123456"
     assert app.user_id == "u1"
     assert app.course_id == "c1"
     assert app.essay_150_words == essay

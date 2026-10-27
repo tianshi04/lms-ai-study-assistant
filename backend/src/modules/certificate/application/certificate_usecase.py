@@ -84,7 +84,7 @@ class CertificateUseCase:
                 )
                 return saved, ""
 
-            app_id = f"faid_{uuid7().hex[:12]}"
+            app_id = f"faid_{uuid7().hex}"
             application = FinancialAidApplication(
                 id=app_id,
                 user_id=user_id,
@@ -246,7 +246,7 @@ class CertificateUseCase:
             learner_name = full_name or "Học viên Coursera"
 
             # Generate new certificate dynamically with REAL database metadata
-            cert_id = f"CERT-{uuid7().hex[:10].upper()}"
+            cert_id = f"CERT-{uuid7().hex[-10:].upper()}"
             issue_date = datetime.now(UTC).strftime("%d/%m/%Y")
             verification_url = f"/verify/{cert_id}"
             qr_code_url = f"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'><rect width='150' height='150' fill='%23ffffff'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='12' fill='%230056D2'>QR:{cert_id}</text></svg>"
@@ -410,7 +410,7 @@ class CertificateUseCase:
             learner_name = full_name or "Học viên"
 
             # 5. Build and save specialization certificate
-            cert_id = f"CERT-SPEC-{uuid7().hex[:8].upper()}"
+            cert_id = f"CERT-SPEC-{uuid7().hex[-8:].upper()}"
             issue_date = datetime.now(UTC).strftime("%Y-%m-%d")
             verification_url = f"/verify/{cert_id}"
             qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}"

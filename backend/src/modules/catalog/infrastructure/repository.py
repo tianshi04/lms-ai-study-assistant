@@ -420,7 +420,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             if slug
             else ""
         )
-        course_id = f"course-{safe_slug}" if safe_slug else f"course-{uuid7().hex[:8]}"
+        course_id = f"course-{safe_slug}" if safe_slug else f"course-{uuid7().hex[-8:]}"
         clean_org_id = (
             organization_id.strip()
             if organization_id and organization_id.strip()
@@ -462,7 +462,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         if owner_id:
             owner_collab = CourseCollaboratorModel(
-                id=f"collab_{uuid7().hex[:12]}",
+                id=f"collab_{uuid7().hex}",
                 course_id=course_id,
                 user_id=owner_id,
                 role="PRIMARY_INSTRUCTOR",
@@ -474,7 +474,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             for co_id in co_instructor_ids:
                 if co_id != owner_id:
                     co_collab = CourseCollaboratorModel(
-                        id=f"collab_{uuid7().hex[:12]}",
+                        id=f"collab_{uuid7().hex}",
                         course_id=course_id,
                         user_id=co_id,
                         role="CO_INSTRUCTOR",
@@ -574,7 +574,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         max_week = res.scalar()
         week_number = (max_week or 0) + 1
 
-        wm_id = f"week-{week_number}-{uuid7().hex[:6]}"
+        wm_id = f"week-{week_number}-{uuid7().hex}"
         wm_model = WeekModuleModel(
             id=wm_id,
             course_id=real_id,
@@ -596,7 +596,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         self, course_id: str, week_module_id: str, title: str, estimated_minutes: int
     ) -> Lesson:
         _ = course_id
-        l_id = f"lesson-{uuid7().hex[:8]}"
+        l_id = f"lesson-{uuid7().hex}"
         l_model = LessonModel(
             id=l_id,
             week_module_id=week_module_id,
@@ -631,7 +631,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         quiz_matrix_id: str = "",
     ) -> LearningItem:
         _ = course_id
-        item_id = f"item-{uuid7().hex[:8]}"
+        item_id = f"item-{uuid7().hex}"
         type_mapping = {
             0: ItemType.UNSPECIFIED,
             1: ItemType.VIDEO,
@@ -793,7 +793,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
             return _model_to_domain_review(existing)
 
-        review_id = f"rev-{uuid7().hex[:10]}"
+        review_id = f"rev-{uuid7().hex}"
         model = CourseReviewModel(
             id=review_id,
             user_id=user_id,
@@ -900,7 +900,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         import re
 
         slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
-        cat_id = f"cat-{uuid7().hex[:8]}"
+        cat_id = f"cat-{uuid7().hex}"
         now_str = datetime.now(UTC).isoformat()
 
         model = CategoryModel(
@@ -1132,7 +1132,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         self, course_id: str, author_id: str, author_name: str, title: str, content: str
     ) -> CourseAnnouncement:
         real_id = await self.get_course_id_by_slug_or_id(course_id)
-        ann_id = f"ann_{uuid7().hex[:12]}"
+        ann_id = f"ann_{uuid7().hex}"
         now_iso = datetime.now(UTC).isoformat()
         ann = CourseAnnouncementModel(
             id=ann_id,
@@ -1301,7 +1301,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             collab.role = role
         else:
             collab = CourseCollaboratorModel(
-                id=f"collab_{uuid7().hex[:12]}",
+                id=f"collab_{uuid7().hex}",
                 course_id=course_id,
                 user_id=user_id,
                 role=role,
@@ -1361,7 +1361,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     ) -> CourseAuditLogModel:
         now_str = datetime.now(UTC).isoformat()
         log_model = CourseAuditLogModel(
-            id=f"calog_{uuid7().hex[:12]}",
+            id=f"calog_{uuid7().hex}",
             course_id=course_id,
             actor_id=actor_id,
             target_user_id=target_user_id,

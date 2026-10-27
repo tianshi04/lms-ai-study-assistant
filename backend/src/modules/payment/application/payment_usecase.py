@@ -183,7 +183,7 @@ class PaymentUseCase:
 
             # Record completed order for audit & transaction history
             now_str = now_dt.isoformat()
-            vnp_txn_ref = f"SUB-{uuid7().hex[:12].upper()}"
+            vnp_txn_ref = f"SUB-{uuid7().hex[-12:].upper()}"
             sub_order = PaymentOrder(
                 id=str(uuid7()),
                 user_id=user_id,
@@ -297,7 +297,7 @@ class PaymentUseCase:
                     existing_order.vnp_txn_ref,
                 )
 
-            vnp_txn_ref = f"VNP-{uuid7().hex[:12].upper()}"
+            vnp_txn_ref = f"VNP-{uuid7().hex[-12:].upper()}"
             now_str = datetime.now(UTC).isoformat()
             order_id = str(uuid7())
 

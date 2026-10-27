@@ -19,6 +19,7 @@ export function LearnSidebarWorkspace({
   highlightText,
   noteComment,
   savingNote,
+  noteError,
   activeTab,
   isPanelOpen,
   isVideoItem,
@@ -145,6 +146,7 @@ export function LearnSidebarWorkspace({
             highlightText={highlightText}
             noteComment={noteComment}
             savingNote={savingNote}
+            noteError={noteError}
             activeTab={activeTab}
             isVideoItem={isVideoItem}
             isLectureItem={isLectureItem}

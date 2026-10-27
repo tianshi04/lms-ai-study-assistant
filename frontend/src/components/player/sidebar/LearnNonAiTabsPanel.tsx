@@ -17,6 +17,7 @@ interface LearnNonAiTabsPanelProps {
   highlightText: string;
   noteComment: string;
   savingNote: boolean;
+  noteError?: string;
   activeTab: SidebarTab;
   isVideoItem: boolean;
   isLectureItem: boolean;
@@ -38,6 +39,7 @@ export function LearnNonAiTabsPanel({
   highlightText,
   noteComment,
   savingNote,
+  noteError,
   activeTab,
   isVideoItem,
   isLectureItem,
@@ -62,7 +64,7 @@ export function LearnNonAiTabsPanel({
       case "notes":
         return "Ghi chú Cá nhân";
       case "deadlines":
-        return "Deadlines & Tiến độ";
+        return "Thời hạn & Tiến độ";
       default:
         return "";
     }
@@ -112,6 +114,7 @@ export function LearnNonAiTabsPanel({
             highlightText={highlightText}
             noteComment={noteComment}
             savingNote={savingNote}
+            noteError={noteError}
             onHighlightTextChange={onHighlightTextChange}
             onNoteCommentChange={onNoteCommentChange}
             onSaveNote={onSaveNote}

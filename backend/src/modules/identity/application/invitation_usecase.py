@@ -221,7 +221,7 @@ class InvitationUseCase:
             expires_dt = now_dt + timedelta(days=DEFAULT_INVITATION_EXPIRATION_DAYS)
 
             inv = Invitation(
-                id=f"inv_{uuid7().hex[:12]}",
+                id=f"inv_{uuid7().hex}",
                 type=type_enum,
                 status=InvitationStatus.PENDING,
                 inviter_id=inviter_id,
