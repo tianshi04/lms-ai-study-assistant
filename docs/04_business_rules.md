@@ -226,6 +226,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * `bundle_price`: Học phí trọn gói sau ưu đãi, làm tròn đến hàng chục nghìn đồng để tối ưu tính thân thiện:
       $$\text{bundle\_price} = \text{round}\left(\text{total\_individual\_price} \times \left(1 - \frac{\text{discount\_percent}}{100}\right) \div 10000\right) \times 10000$$
     * *Quyền lợi gói combo:* Học viên sở hữu quyền truy cập trọn đời vào tất cả khóa học trong chuyên ngành, toàn bộ bài tập thực hành & bài kiểm tra có tính điểm, và 1 Chứng chỉ Chuyên ngành danh giá sau khi hoàn thành.
+  * **Quyền hạn Giảng viên & Quản trị Chuyên ngành (Instructor Specialization Management):**
+    * *Kiểm tra Quyền Sở hữu (Ownership Guard):* Giảng viên chỉ được phép gom các khóa học mà chính mình là chủ sở hữu (`owner_id`) hoặc đồng giảng viên được cấp quyền (`co_instructor_ids`). Tuyệt đối không thể thêm khóa học của giảng viên khác vào chuyên ngành của mình.
+    * *Quy tắc Sàn Cố định Nền tảng (Platform Floor Pricing Rule - Phương án 1 chuẩn Coursera):* Nền tảng quy định cứng và tự động áp dụng mức ưu đãi trọn gói $25\%$ cho tất cả gói Chuyên ngành từ 2 môn trở lên. Giảng viên không thể tùy ý điều chỉnh tỷ lệ này nhằm chống phá giá, giữ gìn giá trị sư phạm và bảo đảm tính công bằng thương mại.
+    * *Đa tổ chức (Multi-Tenant Organization Scoping):* Mọi thao tác tạo và truy vấn danh sách chuyên ngành đều được đẩy xuống tầng CSDL (`apply_organization_scope`) theo phân quyền tổ chức của giảng viên.
   * **Tích hợp Trực quan trên Trang Chi tiết Khóa học (UI Integration):**
     * *Hero Hint Callout:* Nằm tại thẻ Ghi danh góc phải, thông báo cho học viên biết khóa học thuộc chương trình Chuyên ngành và gợi ý mức tiết kiệm $25\%$, kèm liên kết cuộn mượt xuống khu vực chuyên biệt.
     * *Khu vực Chuyên ngành Chuyên biệt (`#specialization-showcase`):* Bố cục 2 cột (Lộ trình học tập trực quan 65% vs Thẻ Thanh toán Combo Trọn gói 35%).

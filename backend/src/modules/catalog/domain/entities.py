@@ -292,6 +292,8 @@ class Specialization(Entity):
         bundle_price: float = 0.0,
         total_individual_price: float = 0.0,
         discount_percent: int = 0,
+        owner_id: str = "",
+        organization_id: str = "partner_community",
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -303,6 +305,8 @@ class Specialization(Entity):
         self.bundle_price = bundle_price
         self.total_individual_price = total_individual_price
         self.discount_percent = discount_percent
+        self.owner_id = owner_id
+        self.organization_id = organization_id
 
 
 class CourseAnnouncement(Entity):

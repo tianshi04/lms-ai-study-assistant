@@ -69,6 +69,49 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
+    async def create_specialization(
+        self,
+        title: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        course_ids: list[str],
+        owner_id: str,
+        organization_id: str = "partner_community",
+        slug: str = "",
+    ) -> Specialization:
+        pass
+
+    @abstractmethod
+    async def list_instructor_specializations(
+        self,
+        owner_id: str,
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> tuple[list[Specialization], str]:
+        pass
+
+    @abstractmethod
+    async def update_specialization(
+        self,
+        specialization_id: str,
+        title: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        course_ids: list[str],
+    ) -> Specialization | None:
+        pass
+
+    @abstractmethod
+    async def delete_specialization(
+        self,
+        specialization_id: str,
+        owner_id: str,
+    ) -> bool:
+        pass
+
+    @abstractmethod
     async def create_course(
         self,
         title: str,

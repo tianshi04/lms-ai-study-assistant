@@ -2626,36 +2626,9 @@ $$k_h(t) = \min \left( k_{\max}, 1.0 + \gamma \cdot \ln \left( \max(1.0, R_h) \r
 
     course6.week_modules = [week1_pricing, week2_pricing]
 
-    # Specializations
-    spec1 = SpecializationModel(
-        id="spec-ai-eng",
-        title="Machine Learning Specialization",
-        description="Master fundamental AI concepts and develop practical machine learning skills in this beginner-friendly program.",
-        partner_name="DeepLearning.AI",
-        course_ids=[course1.id, course3.id],
-    )
-    spec2 = SpecializationModel(
-        id="spec-fullstack-web",
-        title="Fullstack Web Engineering Specialization",
-        description="Build high-performance web applications with Next.js 15, ConnectRPC, and microservice architectures.",
-        partner_name="Meta",
-        course_ids=[course2.id],
-    )
-
-    spec_econ = SpecializationModel(
-        id="spec-economics-pricing",
-        title="Chuyên ngành Kinh tế Ứng dụng & Chiến lược Giá",
-        description="Lộ trình toàn diện từ Nguyên lý Kinh tế Vi mô, Phân tích Kinh tế lượng đến Thuật toán Định giá Động trong Doanh nghiệp.",
-        partner_name="NEU Business School",
-        partner_logo_url="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Truong_Dai_hoc_Kinh_te_Quoc_dan.svg",
-        course_ids=[course4.id, course5.id, course6.id],
-    )
-
-    return [course1, course2, course3, course4, course5, course6], [
-        spec1,
-        spec2,
-        spec_econ,
-    ]
+    # Specializations are created on-demand by instructors via the Instructor Portal
+    # rather than hardcoded in seed data, ensuring zero drift between course owners and bundles.
+    return [course1, course2, course3, course4, course5, course6], []
 
 
 async def seed_catalog_and_reviews(session: AsyncSession) -> None:

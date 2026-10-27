@@ -107,6 +107,8 @@ message Specialization {
   double bundle_price = 8;
   double total_individual_price = 9;
   int32 discount_percent = 10;
+  string owner_id = 11;
+  string organization_id = 12;
 }
 
 message GetSpecializationRequest {
@@ -115,6 +117,52 @@ message GetSpecializationRequest {
 
 message GetSpecializationResponse {
   Specialization specialization = 1;
+}
+
+message CreateSpecializationRequest {
+  string title = 1;
+  string slug = 2;
+  string description = 3;
+  string partner_name = 4;
+  string partner_logo_url = 5;
+  repeated string course_ids = 6;
+  string organization_id = 7;
+}
+
+message CreateSpecializationResponse {
+  Specialization specialization = 1;
+}
+
+message ListInstructorSpecializationsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListInstructorSpecializationsResponse {
+  repeated Specialization specializations = 1;
+  string next_page_token = 2;
+}
+
+message UpdateSpecializationRequest {
+  string id = 1;
+  string title = 2;
+  string slug = 3;
+  string description = 4;
+  string partner_name = 5;
+  string partner_logo_url = 6;
+  repeated string course_ids = 7;
+}
+
+message UpdateSpecializationResponse {
+  Specialization specialization = 1;
+}
+
+message DeleteSpecializationRequest {
+  string id = 1;
+}
+
+message DeleteSpecializationResponse {
+  bool success = 1;
 }
 
 // Catalog queries
@@ -507,6 +555,18 @@ message ListInstructorCoursesResponse {
 service CatalogService {
   rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CreateSpecialization(CreateSpecializationRequest) returns (CreateSpecializationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListInstructorSpecializations(ListInstructorSpecializationsRequest) returns (ListInstructorSpecializationsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateSpecialization(UpdateSpecializationRequest) returns (UpdateSpecializationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteSpecialization(DeleteSpecializationRequest) returns (DeleteSpecializationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;

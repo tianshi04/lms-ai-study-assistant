@@ -4,6 +4,7 @@ import pytest
 
 from src.gen.catalog.v1 import catalog_pb as pb
 from src.modules.catalog.presentation.catalog_handler import CatalogHandler
+from src.shared.auth import CurrentUser
 
 
 @pytest.mark.asyncio
@@ -308,3 +309,89 @@ async def test_handler_get_course_detail_with_specialization():
     assert response.specialization.bundle_price == 1560000.0
     assert response.specialization.total_individual_price == 2080000.0
     assert len(response.specialization.courses) == 2
+
+
+@pytest.mark.asyncio
+async def test_handler_create_specialization():
+    from src.modules.catalog.domain import Course, Specialization
+
+    usecase_mock = AsyncMock()
+    mock_spec = Specialization(
+        id="spec-new-01",
+        title="AI Engineering Track",
+        description="Comprehensive track",
+        partner_name="DeepLearning.AI",
+        course_ids=["c-1", "c-2"],
+        courses=[
+            Course(id="c-1", title="AI 1", slug="ai-1", price=1000000.0),
+            Course(id="c-2", title="AI 2", slug="ai-2", price=1000000.0),
+        ],
+        bundle_price=1500000.0,
+        total_individual_price=2000000.0,
+        discount_percent=25,
+        owner_id="inst-1",
+    )
+    usecase_mock.create_specialization.return_value = mock_spec
+
+    handler = CatalogHandler(usecase_mock)
+    instructor_user = CurrentUser(id="inst-1", email="inst@test.com", role="INSTRUCTOR")
+    handler._verify_instructor_permission = MagicMock(return_value=instructor_user)
+
+    req = pb.CreateSpecializationRequest(
+        title="AI Engineering Track",
+        description="Comprehensive track",
+        partner_name="DeepLearning.AI",
+        course_ids=["c-1", "c-2"],
+    )
+    ctx = MagicMock()
+    res = await handler.create_specialization(req, ctx)
+
+    assert res.specialization is not None
+    assert res.specialization.id == "spec-new-01"
+    assert res.specialization.bundle_price == 1500000.0
+    assert len(res.specialization.courses) == 2
+    usecase_mock.create_specialization.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_handler_list_instructor_specializations():
+    from src.modules.catalog.domain import Specialization
+
+    usecase_mock = AsyncMock()
+    mock_spec = Specialization(
+        id="spec-1",
+        title="Track 1",
+        owner_id="inst-1",
+    )
+    usecase_mock.list_instructor_specializations.return_value = ([mock_spec], "")
+
+    handler = CatalogHandler(usecase_mock)
+    instructor_user = CurrentUser(id="inst-1", email="inst@test.com", role="INSTRUCTOR")
+    handler._verify_instructor_permission = MagicMock(return_value=instructor_user)
+
+    req = pb.ListInstructorSpecializationsRequest(page_size=20)
+    ctx = MagicMock()
+    res = await handler.list_instructor_specializations(req, ctx)
+
+    assert len(res.specializations) == 1
+    assert res.specializations[0].id == "spec-1"
+    usecase_mock.list_instructor_specializations.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_handler_delete_specialization():
+    usecase_mock = AsyncMock()
+    usecase_mock.delete_specialization.return_value = True
+
+    handler = CatalogHandler(usecase_mock)
+    instructor_user = CurrentUser(id="inst-1", email="inst@test.com", role="INSTRUCTOR")
+    handler._verify_instructor_permission = MagicMock(return_value=instructor_user)
+
+    req = pb.DeleteSpecializationRequest(id="spec-1")
+    ctx = MagicMock()
+    res = await handler.delete_specialization(req, ctx)
+
+    assert res.success is True
+    usecase_mock.delete_specialization.assert_called_once_with(
+        specialization_id="spec-1", current_user=instructor_user
+    )

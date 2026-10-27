@@ -17,8 +17,13 @@ import { IconButton } from "@/components/ui/IconButton";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import { PageHeader } from "@/components/ui/LayoutPrimitives";
+import { Tabs } from "@/components/ui/Tabs";
+import { SpecializationsTab } from "./components/SpecializationsTab";
+
 import {
   FileText,
+  BookOpen,
+  Layers,
   Plus,
   AlertTriangle,
   Pencil,
@@ -313,150 +318,195 @@ export default function InstructorCoursesPage() {
         </div>
       )}
 
-      {/* Courses Table / Cards */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20 text-muted-foreground">
-          <Progress.Circular size="sm" className="mr-3" />
-          <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
-        </div>
-      ) : courses.length === 0 ? (
-        <Surface variant="low" shape="2xl" className="text-center py-16">
-          <p className="text-muted-foreground mb-4">{"Chưa có khóa học nào được tạo."}</p>
-          <Button onClick={handleOpenCreateModal}>{"Tạo khóa học đầu tiên"}</Button>
-        </Surface>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course) => (
-            <Surface
-              key={course.id}
-              variant="low"
-              shape="2xl"
-              className="p-5 flex flex-col justify-between h-full group hover:shadow-md transition-all border border-border/60 hover:border-primary/30"
-            >
-              <div>
-                {/* Header: Partner Name + Status + Context Menu Dropdown */}
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 truncate">
-                      {course.partnerName}
-                    </span>
-                    {getStatusBadge(course.status)}
-                  </div>
+      {/* Navigation Tabs (Courses vs Specializations) */}
+      <Tabs defaultValue="courses" className="space-y-6">
+        <Tabs.List className="border-b border-border">
+          <Tabs.Trigger value="courses" className="gap-2 cursor-pointer">
+            <BookOpen className="w-4 h-4" aria-hidden="true" />
+            <span>{"Khóa học đơn lẻ"}</span>
+            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-muted text-muted-foreground">
+              {courses.length}
+            </span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="specializations" className="gap-2 cursor-pointer">
+            <Layers className="w-4 h-4" aria-hidden="true" />
+            <span>{"Chuyên ngành (Specializations)"}</span>
+            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+              {"Combo -25%"}
+            </span>
+          </Tabs.Trigger>
+        </Tabs.List>
 
-                  {/* Options Menu (...) */}
-                  <DropdownMenu.Root>
-                    <DropdownMenu.Trigger
-                      render={
-                        <IconButton
-                          variant="standard"
-                          size="xs"
-                          aria-label="Thao tác khóa học"
-                          className="text-muted-foreground hover:text-foreground -mr-1"
-                        >
-                          <MoreVertical className="w-4 h-4" aria-hidden="true" />
-                        </IconButton>
-                      }
-                    />
-                    <DropdownMenu.Content align="end">
-                      <DropdownMenu.Item
-                        render={<Link href={`/instructor/courses/${course.id}`} />}
-                      >
-                        <Pencil className="w-4 h-4 text-primary" aria-hidden="true" />
-                        <span>Biên soạn bài giảng</span>
-                      </DropdownMenu.Item>
+        <Tabs.Content value="courses" className="space-y-6 pt-2">
+          {/* Courses Table / Cards */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20 text-muted-foreground">
+              <Progress.Circular size="sm" className="mr-3" />
+              <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
+            </div>
+          ) : courses.length === 0 ? (
+            <Surface variant="low" shape="2xl" className="text-center py-16">
+              <p className="text-muted-foreground mb-4">{"Chưa có khóa học nào được tạo."}</p>
+              <Button onClick={handleOpenCreateModal}>{"Tạo khóa học đầu tiên"}</Button>
+            </Surface>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {courses.map((course) => (
+                <Surface
+                  key={course.id}
+                  variant="low"
+                  shape="2xl"
+                  className="p-5 flex flex-col justify-between h-full group hover:shadow-md transition-all border border-border/60 hover:border-primary/30"
+                >
+                  <div>
+                    {/* Header: Partner Name + Status + Context Menu Dropdown */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 truncate">
+                          {course.partnerName}
+                        </span>
+                        {getStatusBadge(course.status)}
+                      </div>
 
-                      <DropdownMenu.Item onClick={() => handleOpenEditModal(course)}>
-                        <Settings className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                        <span>Sửa thông tin khóa học</span>
-                      </DropdownMenu.Item>
+                      {/* Options Menu (...) */}
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger
+                          render={
+                            <IconButton
+                              variant="standard"
+                              size="xs"
+                              aria-label="Thao tác khóa học"
+                              className="text-muted-foreground hover:text-foreground -mr-1"
+                            >
+                              <MoreVertical className="w-4 h-4" aria-hidden="true" />
+                            </IconButton>
+                          }
+                        />
+                        <DropdownMenu.Content align="end">
+                          <DropdownMenu.Item
+                            render={<Link href={`/instructor/courses/${course.id}`} />}
+                          >
+                            <Pencil className="w-4 h-4 text-primary" aria-hidden="true" />
+                            <span>Biên soạn bài giảng</span>
+                          </DropdownMenu.Item>
 
-                      <DropdownMenu.Item
-                        render={<Link href={`/instructor/courses/${course.id}/analytics`} />}
-                      >
-                        <BarChart2 className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                        <span>Thống kê & Phân tích</span>
-                      </DropdownMenu.Item>
+                          <DropdownMenu.Item onClick={() => handleOpenEditModal(course)}>
+                            <Settings
+                              className="w-4 h-4 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                            <span>Sửa thông tin khóa học</span>
+                          </DropdownMenu.Item>
 
-                      <DropdownMenu.Item
-                        render={<Link href={`/instructor/courses/${course.id}/announcements`} />}
-                      >
-                        <Megaphone className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                        <span>Thông báo khóa học</span>
-                      </DropdownMenu.Item>
+                          <DropdownMenu.Item
+                            render={<Link href={`/instructor/courses/${course.id}/analytics`} />}
+                          >
+                            <BarChart2
+                              className="w-4 h-4 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                            <span>Thống kê & Phân tích</span>
+                          </DropdownMenu.Item>
 
-                      <DropdownMenu.Item
-                        render={<Link href={`/courses/${course.id}`} target="_blank" />}
-                      >
-                        <ExternalLink
-                          className="w-4 h-4 text-muted-foreground"
+                          <DropdownMenu.Item
+                            render={
+                              <Link href={`/instructor/courses/${course.id}/announcements`} />
+                            }
+                          >
+                            <Megaphone
+                              className="w-4 h-4 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                            <span>Thông báo khóa học</span>
+                          </DropdownMenu.Item>
+
+                          <DropdownMenu.Item
+                            render={<Link href={`/courses/${course.id}`} target="_blank" />}
+                          >
+                            <ExternalLink
+                              className="w-4 h-4 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                            <span>Xem trang học viên</span>
+                          </DropdownMenu.Item>
+
+                          <DropdownMenu.Separator className="my-1 h-px bg-border/60" />
+
+                          <DropdownMenu.Item
+                            onClick={() =>
+                              handleDeleteCourse(course.id, course.title, course.status)
+                            }
+                            className="text-destructive hover:bg-destructive/10 data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" aria-hidden="true" />
+                            <span>Xóa khóa học</span>
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Root>
+                    </div>
+
+                    {/* Course Title & Description */}
+                    <Link href={`/instructor/courses/${course.id}`} className="block group/title">
+                      <h3 className="font-bold text-base sm:text-lg text-foreground mb-1.5 min-w-0 line-clamp-2 leading-snug group-hover/title:text-primary transition-colors">
+                        {course.title}
+                      </h3>
+                    </Link>
+                    <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 mb-4 leading-relaxed">
+                      {course.description || "Chưa có mô tả khóa học."}
+                    </p>
+
+                    {/* Metadata Row */}
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground pt-3 border-t border-border/40 mb-4">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <Clock
+                          className="w-3.5 h-3.5 text-muted-foreground/70"
                           aria-hidden="true"
                         />
-                        <span>Xem trang học viên</span>
-                      </DropdownMenu.Item>
-
-                      <DropdownMenu.Separator className="my-1 h-px bg-border/60" />
-
-                      <DropdownMenu.Item
-                        onClick={() => handleDeleteCourse(course.id, course.title, course.status)}
-                        className="text-destructive hover:bg-destructive/10 data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" aria-hidden="true" />
-                        <span>Xóa khóa học</span>
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Root>
-                </div>
-
-                {/* Course Title & Description */}
-                <Link href={`/instructor/courses/${course.id}`} className="block group/title">
-                  <h3 className="font-bold text-base sm:text-lg text-foreground mb-1.5 min-w-0 line-clamp-2 leading-snug group-hover/title:text-primary transition-colors">
-                    {course.title}
-                  </h3>
-                </Link>
-                <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 mb-4 leading-relaxed">
-                  {course.description || "Chưa có mô tả khóa học."}
-                </p>
-
-                {/* Metadata Row */}
-                <div className="flex items-center gap-4 text-xs text-muted-foreground pt-3 border-t border-border/40 mb-4">
-                  <div className="flex items-center gap-1.5 font-medium">
-                    <Clock className="w-3.5 h-3.5 text-muted-foreground/70" aria-hidden="true" />
-                    <span>{course.weekModules.length} tuần học</span>
+                        <span>{course.weekModules.length} tuần học</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <Award
+                          className="w-3.5 h-3.5 text-muted-foreground/70"
+                          aria-hidden="true"
+                        />
+                        <span>
+                          FinAid:{" "}
+                          <strong
+                            className={
+                              course.financialAidEnabled
+                                ? "text-success font-semibold"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {course.financialAidEnabled ? "Bật" : "Tắt"}
+                          </strong>
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 font-medium">
-                    <Award className="w-3.5 h-3.5 text-muted-foreground/70" aria-hidden="true" />
-                    <span>
-                      FinAid:{" "}
-                      <strong
-                        className={
-                          course.financialAidEnabled
-                            ? "text-success font-semibold"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {course.financialAidEnabled ? "Bật" : "Tắt"}
-                      </strong>
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Card Footer: Primary CTA Button */}
-              <div className="pt-3 border-t border-border/60 flex items-center justify-end">
-                <Button
-                  variant="filled"
-                  size="sm"
-                  render={<Link href={`/instructor/courses/${course.id}`} />}
-                  className="w-full sm:w-auto font-semibold gap-2 shadow-xs group-hover:shadow-sm"
-                >
-                  <span>Biên soạn bài giảng</span>
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                </Button>
-              </div>
-            </Surface>
-          ))}
-        </div>
-      )}
+                  {/* Card Footer: Primary CTA Button */}
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-end">
+                    <Button
+                      variant="filled"
+                      size="sm"
+                      render={<Link href={`/instructor/courses/${course.id}`} />}
+                      className="w-full sm:w-auto font-semibold gap-2 shadow-xs group-hover:shadow-sm"
+                    >
+                      <span>Biên soạn bài giảng</span>
+                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                    </Button>
+                  </div>
+                </Surface>
+              ))}
+            </div>
+          )}
+        </Tabs.Content>
+
+        <Tabs.Content value="specializations" className="pt-2">
+          <SpecializationsTab isInstructorOrAdmin={isInstructorOrAdmin} />
+        </Tabs.Content>
+      </Tabs>
 
       {/* Modal Soạn / Chỉnh Sửa Khóa Học */}
       <Dialog.Root open={showModal} onOpenChange={(open) => setShowModal(open)}>

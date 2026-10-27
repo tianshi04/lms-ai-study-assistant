@@ -182,6 +182,145 @@ class CourseUseCase:
             repo = self.repo_factory(session)
             return await repo.get_specialization_for_course(course_id)
 
+    async def create_specialization(
+        self,
+        title: str,
+        slug: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        course_ids: list[str],
+        organization_id: str = "partner_community",
+        current_user: CurrentUser | None = None,
+    ) -> Specialization:
+        if not title or not title.strip():
+            raise ValueError("Tên Chuyên ngành không được để trống.")
+        if not course_ids or len(course_ids) < 1:
+            raise ValueError("Chuyên ngành phải bao gồm ít nhất 1 khóa học.")
+
+        owner_id = current_user.id if current_user else ""
+        if not owner_id:
+            raise PermissionError(
+                "Bạn cần đăng nhập với vai trò Giảng viên để tạo Chuyên ngành."
+            )
+
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            for cid in course_ids:
+                course = await repo.get_course_detail(cid)
+                if not course:
+                    raise ValueError(f"Khóa học với mã {cid} không tồn tại.")
+                if (
+                    not (current_user and current_user.is_admin)
+                    and course.owner_id != owner_id
+                    and owner_id not in (course.co_instructor_ids or [])
+                ):
+                    raise PermissionError(
+                        f"Bạn không có quyền quản lý khóa học '{course.title}'."
+                    )
+
+            return await repo.create_specialization(
+                title=title.strip(),
+                description=description.strip(),
+                partner_name=partner_name.strip() or "Hệ thống LMS",
+                partner_logo_url=partner_logo_url.strip(),
+                course_ids=course_ids,
+                owner_id=owner_id,
+                organization_id=organization_id or "partner_community",
+                slug=slug.strip(),
+            )
+
+    async def list_instructor_specializations(
+        self,
+        current_user: CurrentUser | None = None,
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> tuple[list[Specialization], str]:
+        owner_id = current_user.id if current_user else ""
+        if not owner_id:
+            raise PermissionError("Yêu cầu xác thực tài khoản giảng viên.")
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_instructor_specializations(
+                owner_id=owner_id,
+                page_size=page_size,
+                page_token=page_token,
+            )
+
+    async def update_specialization(
+        self,
+        specialization_id: str,
+        title: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        course_ids: list[str],
+        current_user: CurrentUser | None = None,
+    ) -> Specialization:
+        owner_id = current_user.id if current_user else ""
+        if not owner_id:
+            raise PermissionError("Yêu cầu xác thực tài khoản giảng viên.")
+        if not title or not title.strip():
+            raise ValueError("Tên Chuyên ngành không được để trống.")
+        if not course_ids or len(course_ids) < 1:
+            raise ValueError("Chuyên ngành phải bao gồm ít nhất 1 khóa học.")
+
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            existing_spec, _ = await repo.get_specialization(specialization_id)
+            if not existing_spec:
+                raise ValueError("Không tìm thấy Chuyên ngành cần cập nhật.")
+            if (
+                not (current_user and current_user.is_admin)
+                and getattr(existing_spec, "owner_id", "") != owner_id
+            ):
+                raise PermissionError("Bạn không có quyền chỉnh sửa Chuyên ngành này.")
+
+            for cid in course_ids:
+                course = await repo.get_course_detail(cid)
+                if not course:
+                    raise ValueError(f"Khóa học với mã {cid} không tồn tại.")
+                if (
+                    not (current_user and current_user.is_admin)
+                    and course.owner_id != owner_id
+                    and owner_id not in (course.co_instructor_ids or [])
+                ):
+                    raise PermissionError(
+                        f"Bạn không có quyền quản lý khóa học '{course.title}'."
+                    )
+
+            updated = await repo.update_specialization(
+                specialization_id=specialization_id,
+                title=title.strip(),
+                description=description.strip(),
+                partner_name=partner_name.strip(),
+                partner_logo_url=partner_logo_url.strip(),
+                course_ids=course_ids,
+            )
+            if not updated:
+                raise ValueError("Cập nhật Chuyên ngành thất bại.")
+            return updated
+
+    async def delete_specialization(
+        self,
+        specialization_id: str,
+        current_user: CurrentUser | None = None,
+    ) -> bool:
+        owner_id = current_user.id if current_user else ""
+        if not owner_id:
+            raise PermissionError("Yêu cầu xác thực tài khoản giảng viên.")
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            existing_spec, _ = await repo.get_specialization(specialization_id)
+            if not existing_spec:
+                return False
+            if (
+                not (current_user and current_user.is_admin)
+                and getattr(existing_spec, "owner_id", "") != owner_id
+            ):
+                raise PermissionError("Bạn không có quyền xóa Chuyên ngành này.")
+            return await repo.delete_specialization(specialization_id, owner_id)
+
     async def create_course(
         self,
         title: str,
