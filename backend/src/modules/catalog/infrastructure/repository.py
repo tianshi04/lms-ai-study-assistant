@@ -25,7 +25,10 @@ from src.modules.catalog.domain import (
     Specialization,
     WeekModule,
 )
-from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
+from src.modules.catalog.domain.constants import (
+    DEFAULT_RECOMMENDED_COURSES_COUNT,
+    DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT,
+)
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,
@@ -127,12 +130,25 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         rejection_reason=getattr(model, "rejection_reason", "") or "",
         organization_id=getattr(model, "organization_id", "partner_community")
         or "partner_community",
+        price=float(getattr(model, "price", 0.0) or 0.0),
     )
 
 
 def _model_to_domain_specialization(
     model: SpecializationModel,
+    courses: list[Course] | None = None,
 ) -> Specialization:
+    loaded_courses = courses or []
+    total_price = sum(getattr(c, "price", 0.0) for c in loaded_courses)
+    is_bundle = len(loaded_courses) >= 2
+    discount_pct = (
+        DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT if is_bundle and total_price > 0 else 0
+    )
+    bundle_price = (
+        round(total_price * (1.0 - discount_pct / 100.0) / 10000) * 10000
+        if total_price > 0
+        else 0.0
+    )
     return Specialization(
         id=model.id,
         title=model.title,
@@ -140,6 +156,13 @@ def _model_to_domain_specialization(
         partner_name=model.partner_name,
         partner_logo_url=model.partner_logo_url,
         course_ids=model.course_ids,
+        courses=loaded_courses,
+        bundle_price=bundle_price,
+        total_individual_price=total_price,
+        discount_percent=discount_pct,
+        owner_id=getattr(model, "owner_id", "") or "",
+        organization_id=getattr(model, "organization_id", "partner_community")
+        or "partner_community",
     )
 
 
@@ -386,16 +409,217 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         stmt = select(SpecializationModel).where(
             SpecializationModel.id == specialization_id
         )
+        stmt = apply_organization_scope(stmt, SpecializationModel, get_current_user())
         res = await self.session.execute(stmt)
         spec_model = res.scalar_one_or_none()
         if not spec_model:
             return None, []
+        if not spec_model.course_ids:
+            return _model_to_domain_specialization(spec_model, []), []
+
+        courses_stmt = (
+            select(CourseModel)
+            .where(
+                CourseModel.id.in_(spec_model.course_ids),
+                CourseModel.status == CourseStatus.PUBLISHED,
+            )
+            .options(
+                selectinload(CourseModel.week_modules).selectinload(
+                    WeekModuleModel.lessons
+                )
+            )
+        )
+        c_res = await self.session.execute(courses_stmt)
+        c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+        courses = [c_map[cid] for cid in spec_model.course_ids if cid in c_map]
+        return _model_to_domain_specialization(spec_model, courses), courses
+
+    async def get_specialization_for_course(
+        self, course_id: str
+    ) -> Specialization | None:
+        stmt = select(SpecializationModel).where(
+            SpecializationModel.course_ids.contains([course_id])
+        )
+        stmt = apply_organization_scope(stmt, SpecializationModel, get_current_user())
+        res = await self.session.execute(stmt)
+        spec_model = res.scalars().first()
+        if not spec_model:
+            return None
+
+        courses_stmt = (
+            select(CourseModel)
+            .where(
+                CourseModel.id.in_(spec_model.course_ids),
+                CourseModel.status == CourseStatus.PUBLISHED,
+            )
+            .options(
+                selectinload(CourseModel.week_modules).selectinload(
+                    WeekModuleModel.lessons
+                )
+            )
+        )
+        c_res = await self.session.execute(courses_stmt)
+        c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+        if course_id not in c_map:
+            return None
+
+        courses = [c_map[cid] for cid in spec_model.course_ids if cid in c_map]
+        if not courses:
+            return None
+        return _model_to_domain_specialization(spec_model, courses)
+
+    async def create_specialization(
+        self,
+        title: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        course_ids: list[str],
+        owner_id: str,
+        organization_id: str = "partner_community",
+        slug: str = "",
+    ) -> Specialization:
+        if slug and slug.strip():
+            candidate_id = f"spec-{slug.strip()}"
+            existing = await self.session.get(SpecializationModel, candidate_id)
+            spec_id = (
+                candidate_id
+                if not existing
+                else f"spec-{slug.strip()}-{str(uuid7())[:8]}"
+            )
+        else:
+            spec_id = f"spec-{uuid7()}"
+        model = SpecializationModel(
+            id=spec_id,
+            title=title,
+            description=description,
+            partner_name=partner_name,
+            partner_logo_url=partner_logo_url,
+            course_ids=course_ids,
+            owner_id=owner_id,
+            organization_id=organization_id,
+        )
+        self.session.add(model)
+        await self.session.flush()
+
         courses: list[Course] = []
-        for cid in spec_model.course_ids:
-            c = await self.get_course_detail(cid)
-            if c:
-                courses.append(c)
-        return _model_to_domain_specialization(spec_model), courses
+        if course_ids:
+            c_stmt = (
+                select(CourseModel)
+                .where(CourseModel.id.in_(course_ids))
+                .options(
+                    selectinload(CourseModel.week_modules).selectinload(
+                        WeekModuleModel.lessons
+                    )
+                )
+            )
+            c_res = await self.session.execute(c_stmt)
+            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+            courses = [c_map[cid] for cid in course_ids if cid in c_map]
+        return _model_to_domain_specialization(model, courses)
+
+    async def list_instructor_specializations(
+        self,
+        owner_id: str,
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> tuple[list[Specialization], str]:
+        _ = page_token
+        stmt = (
+            select(SpecializationModel)
+            .where(SpecializationModel.owner_id == owner_id)
+            .order_by(SpecializationModel.id.desc())
+            .limit(page_size)
+        )
+        stmt = apply_organization_scope(stmt, SpecializationModel, get_current_user())
+        res = await self.session.execute(stmt)
+        spec_models = res.scalars().all()
+
+        specializations: list[Specialization] = []
+        all_cids = {cid for sm in spec_models for cid in (sm.course_ids or [])}
+        c_map: dict[str, Course] = {}
+        if all_cids:
+            c_stmt = (
+                select(CourseModel)
+                .where(CourseModel.id.in_(all_cids))
+                .options(
+                    selectinload(CourseModel.week_modules).selectinload(
+                        WeekModuleModel.lessons
+                    )
+                )
+            )
+            c_res = await self.session.execute(c_stmt)
+            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+
+        for sm in spec_models:
+            courses = [c_map[cid] for cid in (sm.course_ids or []) if cid in c_map]
+            specializations.append(_model_to_domain_specialization(sm, courses))
+        return specializations, ""
+
+    async def update_specialization(
+        self,
+        specialization_id: str,
+        title: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        course_ids: list[str],
+    ) -> Specialization | None:
+        stmt = select(SpecializationModel).where(
+            SpecializationModel.id == specialization_id
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+
+        if title:
+            model.title = title
+        if description is not None:
+            model.description = description
+        if partner_name:
+            model.partner_name = partner_name
+        if partner_logo_url is not None:
+            model.partner_logo_url = partner_logo_url
+        if course_ids:
+            model.course_ids = course_ids
+
+        await self.session.flush()
+        courses: list[Course] = []
+        if model.course_ids:
+            c_stmt = (
+                select(CourseModel)
+                .where(CourseModel.id.in_(model.course_ids))
+                .options(
+                    selectinload(CourseModel.week_modules).selectinload(
+                        WeekModuleModel.lessons
+                    )
+                )
+            )
+            c_res = await self.session.execute(c_stmt)
+            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+            courses = [c_map[cid] for cid in model.course_ids if cid in c_map]
+        return _model_to_domain_specialization(model, courses)
+
+    async def delete_specialization(
+        self,
+        specialization_id: str,
+        owner_id: str,
+    ) -> bool:
+        stmt = select(SpecializationModel).where(
+            SpecializationModel.id == specialization_id
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return False
+        if model.owner_id != owner_id:
+            current_user = get_current_user()
+            if not current_user or not current_user.is_admin:
+                return False
+        await self.session.delete(model)
+        await self.session.flush()
+        return True
 
     async def create_course(
         self,

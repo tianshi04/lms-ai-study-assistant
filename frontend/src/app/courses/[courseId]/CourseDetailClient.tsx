@@ -49,6 +49,7 @@ import {
   X,
   AlertTriangle,
   Sparkles,
+  Award,
 } from "lucide-react";
 
 interface CourseDetailClientProps {
@@ -69,6 +70,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const course = courseDetail?.course ?? null;
   const foundationalCourse = courseDetail?.foundationalCourse ?? null;
   const recommendedCourses = courseDetail?.recommendedCourses ?? [];
+  const specialization = courseDetail?.specialization ?? null;
 
   const isOwnCourse = useMemo(() => {
     if (!course) return false;
@@ -124,6 +126,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   );
   const [checkingFinAidStatus, setCheckingFinAidStatus] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSpecializationModalOpen, setIsSpecializationModalOpen] = useState(false);
 
   const finAidWordCount = finAidEssay.trim() === "" ? 0 : finAidEssay.trim().split(/\s+/).length;
   const isFinAidEnoughWords = finAidWordCount >= 150;
@@ -423,6 +426,36 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               </div>
             )}
 
+            {/* Specialization Combo Anchor Callout */}
+            {specialization && (
+              <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-primary">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                    {"Combo Chuyên ngành"}
+                  </span>
+                  {(specialization.discountPercent ?? 0) > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                      {`Tiết kiệm ${specialization.discountPercent}%`}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {`Khóa học này thuộc chương trình ${specialization.title} gồm ${specialization.courses.length} môn.`}
+                </p>
+                <a
+                  href="#specialization-showcase"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline pt-0.5 group cursor-pointer"
+                >
+                  <span>{"Xem Lộ trình & Mua Combo"}</span>
+                  <ArrowRight
+                    className="w-3 h-3 group-hover:translate-x-0.5 transition-transform"
+                    aria-hidden="true"
+                  />
+                </a>
+              </div>
+            )}
+
             <ul className="space-y-3 text-xs text-muted-foreground border-t border-border pt-4">
               <li className="flex items-center gap-2">
                 <Check aria-hidden="true" className="w-4 h-4 text-primary" />
@@ -639,6 +672,290 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Specialization Showcase & Combo Bundle Section */}
+        {specialization && specialization.courses.length > 0 && (
+          <section
+            id="specialization-showcase"
+            aria-labelledby="specialization-showcase-heading"
+            className="mt-16 border-t border-border pt-12 scroll-mt-24"
+          >
+            {/* Section Header */}
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide mb-3">
+                <Award className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                <span>{"Chương trình Chuyên ngành (Specialization)"}</span>
+              </div>
+              <h2
+                id="specialization-showcase-heading"
+                className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight"
+              >
+                {specialization.title}
+              </h2>
+              {specialization.description && (
+                <p className="text-muted-foreground text-sm md:text-base mt-2 max-w-3xl leading-relaxed">
+                  {specialization.description}
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-muted-foreground font-medium">
+                <span>{"Chứng nhận tốt nghiệp cấp bởi"}</span>
+                <span className="font-bold text-foreground">{specialization.partnerName}</span>
+                <span>•</span>
+                <span>{`${specialization.courses.length} khóa học chuyên sâu`}</span>
+              </div>
+            </div>
+
+            {/* Showcase Grid: 65% Roadmap vs 35% Combo Pricing */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Left Column: Learning Roadmap */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    {"Lộ trình học tập tuần tự"}
+                  </h3>
+                  <span className="text-xs text-muted-foreground">
+                    {"Đề xuất học từ Cơ bản đến Nâng cao"}
+                  </span>
+                </div>
+
+                <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-border">
+                  {specialization.courses.map((specCourse, idx) => {
+                    const isCurrent = specCourse.id === course.id;
+                    const courseOrder = idx + 1;
+                    return (
+                      <div key={specCourse.id} className="relative group">
+                        {/* Dot indicator on timeline */}
+                        <div
+                          className={`absolute -left-6 top-4 w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-colors ${
+                            isCurrent
+                              ? "bg-primary border-primary text-primary-foreground ring-4 ring-primary/20"
+                              : "bg-card border-border text-muted-foreground group-hover:border-primary group-hover:text-primary"
+                          }`}
+                        >
+                          {courseOrder}
+                        </div>
+
+                        {/* Course Card in Roadmap */}
+                        <Surface
+                          variant={isCurrent ? "bright" : "low"}
+                          shape="2xl"
+                          className={`p-5 border transition-all ${
+                            isCurrent
+                              ? "border-primary/40 shadow-md ring-1 ring-primary/20"
+                              : "border-border hover:border-border/80 hover:shadow-sm"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                                  {`Môn ${courseOrder} / ${specialization.courses.length}`}
+                                </span>
+                                {isCurrent && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                                    {"Đang xem"}
+                                  </span>
+                                )}
+                                {specCourse.level && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-foreground text-[10px] font-semibold border border-border">
+                                    {specCourse.level}
+                                  </span>
+                                )}
+                              </div>
+
+                              <h4 className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
+                                {specCourse.title}
+                              </h4>
+
+                              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                {specCourse.description}
+                              </p>
+
+                              <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-muted-foreground">
+                                {specCourse.averageRating > 0 && (
+                                  <span className="flex items-center gap-1 text-warning font-semibold">
+                                    <Star
+                                      className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                                      aria-hidden="true"
+                                    />
+                                    {specCourse.averageRating.toFixed(1)}
+                                  </span>
+                                )}
+                                <span>{`${specCourse.weekModules?.length || 4} tuần học`}</span>
+                                <span>•</span>
+                                <span className="font-semibold text-foreground">
+                                  {specCourse.price > 0
+                                    ? `${specCourse.price.toLocaleString("vi-VN")} đ`
+                                    : "Miễn phí"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {!isCurrent && (
+                              <Link
+                                href={`/courses/${specCourse.id}`}
+                                className="self-center p-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground transition-colors shrink-0"
+                                aria-label={`Xem chi tiết ${specCourse.title}`}
+                              >
+                                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                              </Link>
+                            )}
+                          </div>
+                        </Surface>
+                      </div>
+                    );
+                  })}
+
+                  {/* Destination / Capstone Milestone */}
+                  <div className="relative group">
+                    <div className="absolute -left-6 top-3 w-5 h-5 rounded-full bg-warning border-2 border-warning text-warning-foreground flex items-center justify-center text-[10px] font-bold shadow">
+                      <Award className="w-3 h-3" aria-hidden="true" />
+                    </div>
+                    <Surface
+                      variant="low"
+                      shape="2xl"
+                      className="p-4 border border-dashed border-warning/40 bg-warning/5 flex items-center gap-3.5"
+                    >
+                      <div className="p-2.5 rounded-xl bg-warning/10 text-warning shrink-0">
+                        <Award className="w-5 h-5" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-foreground">
+                          {"Đích đến: Chứng chỉ Chuyên ngành Chính thức"}
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {`Được cấp bởi ${specialization.partnerName || "Hệ thống"} & xác thực chứng chỉ hoàn thành.`}
+                        </p>
+                      </div>
+                    </Surface>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Specialization Bundle Checkout Card */}
+              <div className="lg:col-span-5 lg:sticky lg:top-24">
+                <Surface
+                  variant="bright"
+                  shape="3xl"
+                  className="relative overflow-hidden border-2 border-primary/30 p-6 space-y-6 shadow-xl bg-card"
+                >
+                  {/* Top Accent Ribbon */}
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold">
+                        <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                        {"Gói Trọn Bộ Chuyên Ngành"}
+                      </span>
+                      {(specialization.discountPercent ?? 0) > 0 && (
+                        <span className="px-2.5 py-1 rounded-full bg-destructive text-destructive-foreground text-xs font-extrabold tracking-wide">
+                          {`TIẾT KIỆM ${specialization.discountPercent}%`}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-black text-foreground">
+                      {`Mua Trọn Gói ${specialization.courses.length} Khóa Học`}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {
+                        "Đăng ký một lần để sở hữu trọn bộ lộ trình chuyên sâu cùng quyền lợi làm Đồ án tốt nghiệp và nhận Chứng chỉ Chuyên ngành."
+                      }
+                    </p>
+                  </div>
+
+                  {/* Pricing Breakdown */}
+                  <div className="p-4 rounded-2xl bg-muted/60 border border-border space-y-2.5">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{`Tổng giá lẻ từng môn (${specialization.courses.length} môn):`}</span>
+                      <span className="line-through font-semibold">
+                        {(specialization.totalIndividualPrice ?? 0) > 0
+                          ? `${specialization.totalIndividualPrice.toLocaleString("vi-VN")} đ`
+                          : "Miễn phí"}
+                      </span>
+                    </div>
+
+                    {(specialization.discountPercent ?? 0) > 0 &&
+                      (specialization.totalIndividualPrice ?? 0) >
+                        (specialization.bundlePrice ?? 0) && (
+                        <div className="flex items-center justify-between text-xs font-bold text-destructive">
+                          <span>{`Ưu đãi Combo Chuyên ngành (-${specialization.discountPercent}%):`}</span>
+                          <span>
+                            {`-${((specialization.totalIndividualPrice ?? 0) - (specialization.bundlePrice ?? 0)).toLocaleString("vi-VN")} đ`}
+                          </span>
+                        </div>
+                      )}
+
+                    <div className="h-px bg-border my-1" />
+
+                    <div className="flex items-baseline justify-between">
+                      <div>
+                        <span className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {"Giá thanh toán trọn gói"}
+                        </span>
+                        <span className="text-2xl md:text-3xl font-black text-primary tracking-tight">
+                          {(specialization.bundlePrice ?? 0) > 0
+                            ? `${specialization.bundlePrice.toLocaleString("vi-VN")} đ`
+                            : "Miễn phí"}
+                        </span>
+                      </div>
+                      {(specialization.bundlePrice ?? 0) > 0 && (
+                        <span className="text-[11px] text-muted-foreground font-semibold">
+                          {"(Đã gồm VAT)"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Benefit Checklist */}
+                  <ul className="space-y-2.5 text-xs text-foreground">
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                      <span>
+                        {"Toàn quyền truy cập trọn đời cả "}
+                        <strong>{`${specialization.courses.length} khóa học`}</strong>
+                        {" trong chương trình"}
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                      <span>
+                        {"Toàn bộ bài tập thực hành, code lab và bài trắc nghiệm có chấm điểm"}
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                      <span>
+                        <strong>{"1 Chứng chỉ Chuyên ngành chính thức"}</strong>
+                        {` từ ${specialization.partnerName}`}
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                      <span>{"Thời gian học linh hoạt, không giới hạn tiến độ cá nhân"}</span>
+                    </li>
+                  </ul>
+
+                  {/* Primary CTA Button */}
+                  <div className="space-y-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="filled"
+                      onClick={() => setIsSpecializationModalOpen(true)}
+                      className="w-full py-4 px-6 rounded-full font-bold text-sm justify-center gap-2 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4" aria-hidden="true" />
+                      <span>{"Đăng Ký Trọn Gói Chuyên Ngành"}</span>
+                    </Button>
+                    <p className="text-[11px] text-center text-muted-foreground">
+                      {"Cam kết hoàn tiền trong 7 ngày nếu không hài lòng"}
+                    </p>
+                  </div>
+                </Surface>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Course Rating & Reviews Section */}
@@ -1051,6 +1368,109 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
         courseId={course.id}
         courseTitle={course.title}
       />
+
+      {/* Specialization Bundle Checkout Confirmation Modal */}
+      {specialization && (
+        <Dialog.Root
+          open={isSpecializationModalOpen}
+          onOpenChange={(open) => setIsSpecializationModalOpen(open)}
+        >
+          <Dialog.Content className="max-w-xl p-6 bg-card border border-border rounded-3xl shadow-2xl">
+            <Dialog.Header className="space-y-1.5 pb-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold">
+                  {"Combo Chuyên Ngành"}
+                </span>
+                {(specialization.discountPercent ?? 0) > 0 && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                    {`Tiết kiệm ${specialization.discountPercent}%`}
+                  </span>
+                )}
+              </div>
+              <Dialog.Title className="text-xl font-black text-foreground">
+                {specialization.title}
+              </Dialog.Title>
+              <Dialog.Description className="text-xs text-muted-foreground">
+                {`Chương trình chuyên sâu cấp chứng chỉ bởi ${specialization.partnerName || "Hệ thống"}`}
+              </Dialog.Description>
+            </Dialog.Header>
+
+            <div className="py-5 space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {`Các khóa học bao gồm trong gói (${specialization.courses.length} môn)`}
+              </h4>
+              <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                {specialization.courses.map((sc, idx) => (
+                  <div
+                    key={sc.id}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-muted/50 border border-border"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-foreground truncate">{sc.title}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {sc.price > 0 ? `${sc.price.toLocaleString("vi-VN")} đ` : "Miễn phí"}
+                        </p>
+                      </div>
+                    </div>
+                    <CheckCircle2 className="w-4 h-4 text-success shrink-0" aria-hidden="true" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Pricing Summary */}
+              <div className="p-4 rounded-2xl bg-muted border border-border space-y-2">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{"Tổng học phí gốc:"}</span>
+                  <span className="line-through">
+                    {(specialization.totalIndividualPrice ?? 0) > 0
+                      ? `${specialization.totalIndividualPrice.toLocaleString("vi-VN")} đ`
+                      : "Miễn phí"}
+                  </span>
+                </div>
+                {(specialization.discountPercent ?? 0) > 0 &&
+                  (specialization.totalIndividualPrice ?? 0) >
+                    (specialization.bundlePrice ?? 0) && (
+                    <div className="flex justify-between text-xs font-bold text-destructive">
+                      <span>{`Ưu đãi combo (-${specialization.discountPercent}%):`}</span>
+                      <span>
+                        {`-${((specialization.totalIndividualPrice ?? 0) - (specialization.bundlePrice ?? 0)).toLocaleString("vi-VN")} đ`}
+                      </span>
+                    </div>
+                  )}
+                <div className="h-px bg-border my-1" />
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs font-bold text-foreground">
+                    {"Tổng thanh toán trọn gói:"}
+                  </span>
+                  <span className="text-2xl font-black text-primary">
+                    {(specialization.bundlePrice ?? 0) > 0
+                      ? `${specialization.bundlePrice.toLocaleString("vi-VN")} đ`
+                      : "Miễn phí"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <Dialog.Footer className="pt-2 border-t border-border flex items-center justify-between gap-3">
+              <span className="text-[11px] text-muted-foreground italic">
+                {"* Cổng thanh toán trọn gói combo chuyên ngành đang được cập nhật."}
+              </span>
+              <Button
+                type="button"
+                variant="filled"
+                onClick={() => setIsSpecializationModalOpen(false)}
+                className="rounded-full text-xs font-semibold"
+              >
+                {"Đóng"}
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
+      )}
     </>
   );
 }

@@ -49,6 +49,9 @@ CATEGORY_LABEL_MAP: dict[str, str] = {
     "cat-lvl-adv": "Nâng cao",
 }
 
+# Specialization Bundle defaults
+DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT: int = 25
+
 # Public S3 Storage Asset Folders & Prefixes (bypass JWT auth)
 PUBLIC_ASSET_FOLDERS: set[str] = {"thumbnails", "banners", "avatars"}
 PUBLIC_ASSET_PREFIXES: tuple[str, ...] = ("public/",)

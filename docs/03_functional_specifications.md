@@ -115,7 +115,12 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 
 ### 2.1. Quản lý Cấu trúc Học tập Coursera & Hồ sơ Chữ ký (Specialization, Course & Instructor Profile)
 * **Quản lý Hồ sơ & Chữ ký tay Điện tử (Instructor Profile & Signature V2):** Giảng viên chủ động cập nhật Chức danh khoa học (`title` - VD: *Professor of Computer Science, Stanford University*) và tải lên ảnh Chữ ký tay điện tử (`signature_image_url`) thông qua RPC `UpdateInstructorProfile`. Chữ ký này sẽ được nhúng tự động lên các chứng chỉ Verified Certificate do giảng viên đó phụ trách (`BR_CERT_002`).
-* **Tạo Specialization (Chuỗi Chuyên ngành):** Nhóm nhiều khóa học liên quan theo một lộ trình nghề nghiệp (ví dụ: Chuyên ngành *Lập trình Python Nâng cao & AI* bao gồm 4 khóa học thành phần).
+* **Quản lý & Thiết lập Chuỗi Chuyên ngành (Specialization Lifecycle & Track Management):**
+  * *Giao diện Quản lý Phân tầng:* Tab chuyên biệt *"Chuyên ngành (Specializations)"* ngay trên trang Quản lý Khóa học Giảng dạy (`/instructor/courses`), cho phép chuyển đổi mượt mà giữa các môn đơn lẻ và các chuỗi chuyên ngành.
+  * *Tạo & Cập nhật Lộ trình (`CreateSpecialization`, `UpdateSpecialization`):* Giảng viên chọn các khóa học do chính mình phụ trách, linh hoạt sắp xếp thứ tự các môn học ($1 \to 2 \to 3$) theo đúng trình tự sư phạm từ nền tảng đến nâng cao.
+  * *Chính sách Giá Sàn Tự động (Platform Floor Price Enforced):* Hệ thống tự động kích hoạt ưu đãi trọn gói $25\%$ cho gói từ 2 môn trở lên. Giảng viên xem trước trực quan giá gốc, giá combo và khoản tiết kiệm của học viên trong thời gian thực mà không cần cấu hình giá thủ công.
+  * *Xóa Chuyên ngành (`DeleteSpecialization`):* Cho phép gỡ bỏ gói chuyên ngành khỏi hệ thống mà vẫn giữ nguyên trạng thái độc lập của các khóa học thành phần.
+  * *Kiểm tra Quyền Truy cập:* Xác thực chặt chẽ quyền sở hữu khóa học (`owner_id` hoặc danh sách `co_instructors`) và phân vùng dữ liệu tổ chức (`organization_id`).
 * **Cấu trúc Khóa học & Quản lý Vòng đời (Course Hierarchy & Lifecycle):**
   * **Tạo & Cập nhật Khóa học:** Giảng viên tạo mới (`CreateCourse`) hoặc cập nhật (`UpdateCourse`) Tên khóa học, Mô tả, Slug, Logo, Giảng viên phụ trách, và cờ cấu hình Hỗ trợ Tài chính (`financial_aid_enabled` - Bật/tắt xin học bổng theo từng khóa học).
   * **Xóa Khóa học (`DeleteCourse`):** Giảng viên/Admin có quyền xóa hoàn toàn khóa học và toàn bộ bài giảng phụ thuộc khỏi hệ thống khi khóa học bị hủy bỏ.
@@ -212,6 +217,10 @@ flowchart TD
   * Tự động nhận diện khóa học nền tảng dựa trên chuỗi chuyên ngành (Specialization) hoặc độ tương đồng tri thức cao nhất.
   * Hiển thị Card tóm tắt môn nền tảng kèm huy hiệu "Khóa học Nền tảng Khuyến nghị" và nút điều hướng xem khóa học.
   * Tuân thủ nghiêm ngặt nguyên tắc **Open Enrollment**: Khóa học nâng cao luôn mở 100%, không áp đặt khóa cứng (Hard Lock) học viên.
+* **Khu vực Trình diễn Chuyên ngành & Đăng ký Gói Combo (Specialization Showcase & Bundle):**
+  * Tự động liên kết khóa học với Chuyên ngành tương ứng thông qua trường `specialization` trong `GetCourseDetailResponse`.
+  * Trình bày trực quan Lộ trình tuần tự các môn trong Chuyên ngành (Roadmap timeline), đánh dấu vị trí môn hiện tại (`Đang xem`), môn tiên quyết và môn nâng cao kế tiếp.
+  * Hỗ trợ gói mua trọn bộ Chuyên ngành (Combo Bundle) với mức ưu đãi 25%, hiển thị so sánh minh bạch giữa tổng giá lẻ từng môn và giá trọn gói tiết kiệm kèm hộp thoại xác nhận thanh toán (`SpecializationCheckoutModal`).
 * **Mục 2: Khóa học Đề xuất Liên quan (Smart Recommendations Grid):**
   * Hiển thị lưới 6 thẻ khóa học (3 cột x 2 hàng trên desktop) chuẩn Material Design 3.
   * Ứng dụng thuật toán chấm điểm lai (Hybrid Recommendation Algorithm): $Score = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$.

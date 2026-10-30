@@ -36,6 +36,16 @@ class SpecializationModel(Base):
     course_ids: Mapped[list[str]] = mapped_column(
         ARRAY(String(64)), nullable=False, default=list
     )
+    owner_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="", server_default=""
+    )
+    organization_id: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default=INTERNAL_SYSTEM_ORG_ID,
+        server_default=INTERNAL_SYSTEM_ORG_ID,
+        index=True,
+    )
 
 
 class CategoryModel(Base):

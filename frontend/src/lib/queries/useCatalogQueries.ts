@@ -14,6 +14,7 @@ import {
   type CourseReview,
   type CourseCollaboratorDetail,
   type GetCourseDetailResponse,
+  type Specialization,
 } from "@/gen/catalog/v1/catalog_pb";
 
 export interface CourseFilters {
@@ -227,6 +228,149 @@ export function useRemoveCourseCollaboratorMutation(
 /**
  * Hook danh sách nhật ký lịch sử khóa học (Course Audit Logs)
  */
+// --- Specializations & Instructor Queries ---
+
+/**
+ * Hook danh sách khóa học do giảng viên phụ trách (Instructor Courses)
+ */
+export function useInstructorCoursesQuery(
+  pageSize = 50,
+  options?: Partial<UseQueryOptions<Course[], Error>>,
+) {
+  return useQuery<Course[], Error>({
+    queryKey: ["instructorCourses", pageSize],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.listInstructorCourses({ pageSize });
+      return res.courses || [];
+    },
+    ...options,
+  });
+}
+
+/**
+ * Hook danh sách chuyên ngành do giảng viên phụ trách (Instructor Specializations)
+ */
+export function useInstructorSpecializationsQuery(
+  pageSize = 50,
+  options?: Partial<UseQueryOptions<Specialization[], Error>>,
+) {
+  return useQuery<Specialization[], Error>({
+    queryKey: ["instructorSpecializations", pageSize],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.listInstructorSpecializations({ pageSize });
+      return res.specializations || [];
+    },
+    ...options,
+  });
+}
+
+export interface CreateSpecializationInput {
+  title: string;
+  slug?: string;
+  description?: string;
+  partnerName?: string;
+  partnerLogoUrl?: string;
+  courseIds: string[];
+  organizationId?: string;
+}
+
+/**
+ * Hook tạo chuyên ngành mới
+ */
+export function useCreateSpecializationMutation(
+  options?: Partial<UseMutationOptions<Specialization, Error, CreateSpecializationInput>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<Specialization, Error, CreateSpecializationInput>({
+    mutationFn: async (input) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.createSpecialization({
+        title: input.title,
+        slug: input.slug || "",
+        description: input.description || "",
+        partnerName: input.partnerName || "",
+        partnerLogoUrl: input.partnerLogoUrl || "",
+        courseIds: input.courseIds,
+        organizationId: input.organizationId || "",
+      });
+      if (!res.specialization) throw new Error("Tạo chuyên ngành thất bại.");
+      return res.specialization;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["instructorSpecializations"] });
+      queryClient.invalidateQueries({ queryKey: ["specialization"] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+export interface UpdateSpecializationInput {
+  id: string;
+  title: string;
+  description?: string;
+  partnerName?: string;
+  partnerLogoUrl?: string;
+  courseIds: string[];
+}
+
+/**
+ * Hook cập nhật thông tin chuyên ngành
+ */
+export function useUpdateSpecializationMutation(
+  options?: Partial<UseMutationOptions<Specialization, Error, UpdateSpecializationInput>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<Specialization, Error, UpdateSpecializationInput>({
+    mutationFn: async (input) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.updateSpecialization({
+        id: input.id,
+        title: input.title,
+        description: input.description || "",
+        partnerName: input.partnerName || "",
+        partnerLogoUrl: input.partnerLogoUrl || "",
+        courseIds: input.courseIds,
+      });
+      if (!res.specialization) throw new Error("Cập nhật chuyên ngành thất bại.");
+      return res.specialization;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["instructorSpecializations"] });
+      queryClient.invalidateQueries({ queryKey: ["specialization"] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+/**
+ * Hook xóa chuyên ngành
+ */
+export function useDeleteSpecializationMutation(
+  options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<boolean, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.deleteSpecialization({ id });
+      return res.success;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["instructorSpecializations"] });
+      queryClient.invalidateQueries({ queryKey: ["specialization"] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
 export function useListCourseAuditLogsQuery(courseId: string) {
   return useQuery({
     queryKey: ["courseAuditLogs", courseId],

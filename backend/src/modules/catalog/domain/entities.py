@@ -196,6 +196,7 @@ class Course(Entity):
         status: CourseStatus = CourseStatus.DRAFT,
         rejection_reason: str = "",
         organization_id: str = "partner_community",
+        price: float = 0.0,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -215,6 +216,7 @@ class Course(Entity):
         self.status = status
         self.rejection_reason = rejection_reason
         self.organization_id = organization_id
+        self.price = price
 
     def check_pre_submit_checklist(self) -> list[str]:
         """Validates BR_CATALOG_003 pre-submit 4 criteria."""
@@ -286,6 +288,12 @@ class Specialization(Entity):
         partner_name: str = "DeepLearning.AI",
         partner_logo_url: str = "",
         course_ids: list[str] | None = None,
+        courses: list[Course] | None = None,
+        bundle_price: float = 0.0,
+        total_individual_price: float = 0.0,
+        discount_percent: int = 0,
+        owner_id: str = "",
+        organization_id: str = "partner_community",
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -293,6 +301,12 @@ class Specialization(Entity):
         self.partner_name = partner_name
         self.partner_logo_url = partner_logo_url
         self.course_ids = course_ids or []
+        self.courses = courses or []
+        self.bundle_price = bundle_price
+        self.total_individual_price = total_individual_price
+        self.discount_percent = discount_percent
+        self.owner_id = owner_id
+        self.organization_id = organization_id
 
 
 class CourseAnnouncement(Entity):

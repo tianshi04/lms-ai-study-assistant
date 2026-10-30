@@ -168,6 +168,7 @@ def _to_pb_course(course: Course) -> pb.Course:
         or "partner_community",
         owner_id=getattr(course, "owner_id", "") or "",
         co_instructor_ids=getattr(course, "co_instructor_ids", []) or [],
+        price=float(getattr(course, "price", 0.0) or 0.0),
     )
 
 
@@ -196,13 +197,23 @@ def _to_pb_review(review: CourseReview) -> pb.CourseReview:
 def _to_pb_specialization(
     spec: Specialization, courses: list[Course] | None = None
 ) -> pb.Specialization:
+    effective_courses = courses if courses is not None else getattr(spec, "courses", [])
+    pb_courses = [_to_pb_course(c) for c in (effective_courses or [])]
     return pb.Specialization(
         id=spec.id,
         title=spec.title,
         description=spec.description,
         partner_name=spec.partner_name,
         partner_logo_url=spec.partner_logo_url,
-        courses=[_to_pb_course(c) for c in (courses or [])],
+        courses=pb_courses,
+        bundle_price=float(getattr(spec, "bundle_price", 0.0) or 0.0),
+        total_individual_price=float(
+            getattr(spec, "total_individual_price", 0.0) or 0.0
+        ),
+        discount_percent=int(getattr(spec, "discount_percent", 0) or 0),
+        owner_id=getattr(spec, "owner_id", "") or "",
+        organization_id=getattr(spec, "organization_id", "partner_community")
+        or "partner_community",
     )
 
 
@@ -313,6 +324,18 @@ class CatalogHandler(CatalogService):
                 request.id_or_slug,
             )
             foundational, recs = None, []
+
+        try:
+            specialization = await self.use_case.get_specialization_for_course(
+                course.id
+            )
+            pb_spec = _to_pb_specialization(specialization) if specialization else None
+        except Exception:
+            logger.exception(
+                "Failed to get specialization for course %s",
+                course.id,
+            )
+            pb_spec = None
         pb_foundational = _to_pb_course(foundational) if foundational else None
         pb_recs = [
             pb.CourseRecommendationItem(
@@ -327,6 +350,7 @@ class CatalogHandler(CatalogService):
             course=_to_pb_course(course),
             foundational_course=pb_foundational,
             recommended_courses=pb_recs,
+            specialization=pb_spec,
         )
 
     async def get_lesson_detail(
@@ -354,6 +378,101 @@ class CatalogHandler(CatalogService):
         return pb.GetSpecializationResponse(
             specialization=_to_pb_specialization(spec, courses),
         )
+
+    async def create_specialization(
+        self,
+        request: pb.CreateSpecializationRequest,
+        ctx: RequestContext[
+            pb.CreateSpecializationRequest, pb.CreateSpecializationResponse
+        ],
+    ) -> pb.CreateSpecializationResponse:
+        user = self._verify_instructor_permission()
+        try:
+            spec = await self.use_case.create_specialization(
+                title=request.title,
+                slug=request.slug,
+                description=request.description,
+                partner_name=request.partner_name,
+                partner_logo_url=request.partner_logo_url,
+                course_ids=list(request.course_ids),
+                organization_id=request.organization_id or "partner_community",
+                current_user=user,
+            )
+            return pb.CreateSpecializationResponse(
+                specialization=_to_pb_specialization(spec)
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+    async def list_instructor_specializations(
+        self,
+        request: pb.ListInstructorSpecializationsRequest,
+        ctx: RequestContext[
+            pb.ListInstructorSpecializationsRequest,
+            pb.ListInstructorSpecializationsResponse,
+        ],
+    ) -> pb.ListInstructorSpecializationsResponse:
+        user = self._verify_instructor_permission()
+        try:
+            (
+                specializations,
+                next_token,
+            ) = await self.use_case.list_instructor_specializations(
+                current_user=user,
+                page_size=request.page_size or 50,
+                page_token=request.page_token or "",
+            )
+            return pb.ListInstructorSpecializationsResponse(
+                specializations=[_to_pb_specialization(s) for s in specializations],
+                next_page_token=next_token,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+    async def update_specialization(
+        self,
+        request: pb.UpdateSpecializationRequest,
+        ctx: RequestContext[
+            pb.UpdateSpecializationRequest, pb.UpdateSpecializationResponse
+        ],
+    ) -> pb.UpdateSpecializationResponse:
+        user = self._verify_instructor_permission()
+        try:
+            spec = await self.use_case.update_specialization(
+                specialization_id=request.id,
+                title=request.title,
+                description=request.description,
+                partner_name=request.partner_name,
+                partner_logo_url=request.partner_logo_url,
+                course_ids=list(request.course_ids),
+                current_user=user,
+            )
+            return pb.UpdateSpecializationResponse(
+                specialization=_to_pb_specialization(spec)
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+    async def delete_specialization(
+        self,
+        request: pb.DeleteSpecializationRequest,
+        ctx: RequestContext[
+            pb.DeleteSpecializationRequest, pb.DeleteSpecializationResponse
+        ],
+    ) -> pb.DeleteSpecializationResponse:
+        user = self._verify_instructor_permission()
+        try:
+            success = await self.use_case.delete_specialization(
+                specialization_id=request.id,
+                current_user=user,
+            )
+            return pb.DeleteSpecializationResponse(success=success)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
 
     def _verify_instructor_permission(self) -> CurrentUser:
         user = require_current_user()
