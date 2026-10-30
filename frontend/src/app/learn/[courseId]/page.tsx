@@ -56,23 +56,46 @@ function CoursePlayerContent() {
         : "transcript",
   );
   const [isQuizActive, setIsQuizActive] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [collapsedWeeks, setCollapsedWeeks] = useState<Record<string, boolean>>({});
   const prevActiveItemIdRef = useRef<string | null>(null);
 
-  // Auto-collapse sidebars on small screens (< 1024px) for optimal mobile responsiveness
+  // Default sidebars closed on mobile (< 1024px) to prevent layout shift, and open on desktop (>= 1024px).
+  // Use matchMedia so virtual keyboard / address bar height resizes on mobile do not unexpectedly close open drawers.
   useEffect(() => {
-    const handleResponsiveLayout = () => {
-      if (window.innerWidth < 1024) {
+    const mql = window.matchMedia("(max-width: 1023px)");
+    if (!mql.matches) {
+      setIsSidebarOpen(true);
+      setIsPanelOpen(true);
+    } else if (urlThreadId || urlTab) {
+      setIsPanelOpen(true);
+    }
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
         setIsSidebarOpen(false);
         setIsPanelOpen(false);
       }
     };
-    handleResponsiveLayout();
-    window.addEventListener("resize", handleResponsiveLayout);
-    return () => window.removeEventListener("resize", handleResponsiveLayout);
-  }, []);
+    mql.addEventListener("change", handleMediaChange);
+    return () => mql.removeEventListener("change", handleMediaChange);
+  }, [urlThreadId, urlTab]);
+
+  // Close mobile syllabus drawer or split panel on Escape key for keyboard accessibility
+  useEffect(() => {
+    if (!isSidebarOpen && !isPanelOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && window.innerWidth < 1024) {
+        if (isSidebarOpen) {
+          setIsSidebarOpen(false);
+        } else if (isPanelOpen) {
+          setIsPanelOpen(false);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSidebarOpen, isPanelOpen]);
 
   const toggleWeek = (weekId: string) => {
     setCollapsedWeeks((prev) => ({
@@ -631,12 +654,25 @@ function CoursePlayerContent() {
       className="h-screen h-dvh bg-surface-container-low text-on-surface flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized"
     >
       {/* Top Player Navbar - Seamless Borderless Header */}
-      <header className="h-14 bg-surface-container-low px-4 sm:px-5 flex items-center justify-between flex-shrink-0 relative z-sticky">
-        <div className="flex items-center gap-4 min-w-0">
+      <header className="h-14 bg-surface-container-low px-3 sm:px-5 flex items-center justify-between flex-shrink-0 relative z-sticky">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          {!isPreviewMode && !isQuizActive && (
+            <Button
+              type="button"
+              variant="text"
+              iconOnly
+              onClick={() => setIsSidebarOpen((prev) => !prev)}
+              className="lg:hidden w-9 h-9 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface shrink-0"
+              title="Mở Lộ trình Bài học"
+              aria-label="Mở Lộ trình Bài học"
+            >
+              <Menu className="w-5 h-5" aria-hidden="true" />
+            </Button>
+          )}
           <BrandLogo size="sm" />
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4">
           {!isPreviewMode &&
             progress &&
             (progress.overallProgressPercent >= 100 ||
@@ -696,64 +732,77 @@ function CoursePlayerContent() {
       </header>
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden p-3 gap-3">
+      <div className="flex-1 flex overflow-hidden p-2 sm:p-3 gap-2 sm:gap-3">
         {/* Left Sidebar - MD3 Collapsible Floating Surface Container Drawer */}
         {!isPreviewMode && !isQuizActive && (
-          <aside
-            className={`relative bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden shrink-0 flex flex-col transition-[width,max-width] duration-300 ease-m3-emphasized ${
-              isSidebarOpen ? "w-80 xl:w-90 max-w-[calc(100vw-24px)]" : "w-14"
-            }`}
-            aria-label="Lộ trình khóa học"
-          >
-            {/* Collapsed Icon Strip Trigger */}
-            <div
-              className={`absolute top-2 left-2 transition-all duration-300 ease-m3-emphasized z-10 ${
-                isSidebarOpen
-                  ? "opacity-0 pointer-events-none scale-90 invisible"
-                  : "opacity-100 scale-100 visible"
-              }`}
-            >
-              <Button
-                type="button"
-                variant="text"
-                iconOnly
-                onClick={() => setIsSidebarOpen(true)}
-                className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                title="Mở Lộ trình Bài học"
-                aria-label="Mở Lộ trình Bài học"
-              >
-                <Menu className="w-5 h-5" aria-hidden="true" />
-              </Button>
-            </div>
+          <>
+            {/* Mobile Backdrop Overlay for Course Syllabus Drawer */}
+            {isSidebarOpen && (
+              <div
+                className="fixed inset-0 bg-scrim backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-200"
+                onClick={() => setIsSidebarOpen(false)}
+                aria-hidden="true"
+              />
+            )}
 
-            {/* Expanded Full Drawer Content - Isolated Subcomponent to prevent parent re-renders */}
-            <CourseSyllabusDrawer
-              course={course}
-              isSidebarOpen={isSidebarOpen}
-              activeItem={activeItem}
-              progress={progress}
-              collapsedWeeks={collapsedWeeks}
-              onClose={() => setIsSidebarOpen(false)}
-              onToggleWeek={toggleWeek}
-              onSelectItem={(item) => {
-                setActiveItem(item);
-                setActiveQuiz(null);
-              }}
-              onSetLockNotice={setLockNotice}
-              isItemLocked={isItemLocked}
-              isWeekUnlocked={isWeekUnlocked}
-              isPaidAccess={isPaidAccess}
-              isPreviewMode={isPreviewMode}
-              isGradedItem={isGradedItem}
-            />
-          </aside>
+            <aside
+              className={`fixed top-14 bottom-0 left-0 z-50 w-80 max-w-[85vw] rounded-r-3xl rounded-l-none shadow-2xl lg:relative lg:inset-auto lg:z-auto lg:h-full lg:rounded-3xl lg:shadow-xs bg-surface-container-lowest text-on-surface overflow-hidden shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
+                isSidebarOpen
+                  ? "translate-x-0 visible lg:w-80 xl:w-90 lg:max-w-[calc(100vw-24px)]"
+                  : "-translate-x-full max-lg:invisible pointer-events-none lg:pointer-events-auto lg:translate-x-0 lg:w-14"
+              }`}
+              aria-label="Lộ trình khóa học"
+            >
+              {/* Collapsed Icon Strip Trigger (Desktop only) */}
+              <div
+                className={`hidden lg:block absolute top-2 left-2 transition-all duration-300 ease-m3-emphasized z-10 ${
+                  isSidebarOpen
+                    ? "opacity-0 pointer-events-none scale-90 invisible"
+                    : "opacity-100 scale-100 visible"
+                }`}
+              >
+                <Button
+                  type="button"
+                  variant="text"
+                  iconOnly
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                  title="Mở Lộ trình Bài học"
+                  aria-label="Mở Lộ trình Bài học"
+                >
+                  <Menu className="w-5 h-5" aria-hidden="true" />
+                </Button>
+              </div>
+
+              {/* Expanded Full Drawer Content - Isolated Subcomponent to prevent parent re-renders */}
+              <CourseSyllabusDrawer
+                course={course}
+                isSidebarOpen={isSidebarOpen}
+                activeItem={activeItem}
+                progress={progress}
+                collapsedWeeks={collapsedWeeks}
+                onClose={() => setIsSidebarOpen(false)}
+                onToggleWeek={toggleWeek}
+                onSelectItem={(item) => {
+                  setActiveItem(item);
+                  setActiveQuiz(null);
+                }}
+                onSetLockNotice={setLockNotice}
+                isItemLocked={isItemLocked}
+                isWeekUnlocked={isWeekUnlocked}
+                isPaidAccess={isPaidAccess}
+                isPreviewMode={isPreviewMode}
+                isGradedItem={isGradedItem}
+              />
+            </aside>
+          </>
         )}
 
         {/* Center Workspace & Bottom Panels */}
         <main className="flex-1 flex flex-col overflow-hidden relative text-on-surface min-w-0 h-full">
           {/* Lock Notice Banner */}
           {lockNotice && !isQuizActive && (
-            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate gap-3">
+            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-4 sm:px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate gap-3 rounded-2xl mb-2">
               <span>{lockNotice}</span>
               <div className="flex items-center gap-2 shrink-0">
                 {!isPaidAccess && (
@@ -779,9 +828,17 @@ function CoursePlayerContent() {
           )}
 
           {/* Center Video & Side Tool Panel Layout */}
-          <div className="flex-1 flex flex-row overflow-hidden relative min-h-0 gap-3">
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative min-h-0 gap-2 sm:gap-3">
             {/* Left/Center Video Media Viewer Canvas - MD3 Floating Surface Card */}
-            <div className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden flex flex-col relative min-h-0">
+            <div
+              className={`min-w-0 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden flex flex-col relative min-h-0 ${
+                isPanelOpen
+                  ? isVideoItem
+                    ? "shrink-0 lg:flex-1 lg:shrink"
+                    : "flex-1 max-h-[38dvh] lg:max-h-none"
+                  : "flex-1"
+              }`}
+            >
               <VideoPlayer
                 videoRef={videoRef}
                 activeItem={activeItem}
@@ -805,11 +862,12 @@ function CoursePlayerContent() {
                 }}
                 onNextLesson={handleNextLesson}
                 onQuizActiveChange={setIsQuizActive}
+                isPanelOpen={isPanelOpen}
               />
 
               {/* Fixed Bottom-Right Next Lesson Floating Action Button */}
               {nextItem && (
-                <div className="absolute bottom-3.5 right-3.5 z-30 pointer-events-auto">
+                <div className="absolute bottom-2.5 sm:bottom-3.5 right-3 sm:right-3.5 z-30 pointer-events-auto">
                   <Button
                     type="button"
                     variant="tonal"

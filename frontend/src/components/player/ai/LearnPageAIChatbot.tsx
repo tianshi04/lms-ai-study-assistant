@@ -206,7 +206,7 @@ export const LearnPageAIChatbot = forwardRef<LearnPageAIChatbotRef, LearnPageAIC
               estimatedMinutes: activeItem.estimatedMinutes,
             }
           : null,
-        currentTimeSeconds: Math.floor(currentTime),
+        currentTimeSeconds: currentTime,
         currentTimeFormatted: formatTime(currentTime),
         transcriptSnippet: activeTranscriptSegment,
         readingSnippet: activeReadingContent,

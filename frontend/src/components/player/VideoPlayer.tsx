@@ -82,6 +82,7 @@ interface VideoPlayerProps {
   onSelectAiPrompt?: (promptText: string) => void;
   onNextLesson?: () => void;
   onQuizActiveChange?: (active: boolean) => void;
+  isPanelOpen?: boolean;
 }
 
 export function VideoPlayer({
@@ -103,6 +104,7 @@ export function VideoPlayer({
   onSelectAiPrompt,
   onNextLesson,
   onQuizActiveChange,
+  isPanelOpen = false,
 }: VideoPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const {
@@ -446,15 +448,29 @@ export function VideoPlayer({
           )}
         </div>
 
-        {/* Video Lesson Title under video */}
-        <div className="w-full px-1 py-1">
-          <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+        {/* Video Lesson Title under video (kept visible in mobile split-view with right padding for Next Lesson button) */}
+        <div
+          className={`w-full px-1 ${
+            isPanelOpen ? "py-1.5 min-h-9 flex items-center pr-36 lg:pr-0 lg:py-1" : "py-1"
+          }`}
+        >
+          <h1
+            className={`font-bold text-foreground tracking-tight ${
+              isPanelOpen
+                ? "text-sm sm:text-base lg:text-xl line-clamp-1 lg:line-clamp-none"
+                : "text-lg sm:text-xl"
+            }`}
+          >
             {activeItem.title}
           </h1>
         </div>
 
         {/* Coursera-style AI Learning Prompts Surface ("Tìm hiểu sâu hơn về chủ đề này") - Only for Video Items */}
-        <Surface variant="low" shape="2xl" className="w-full my-1 p-4">
+        <Surface
+          variant="low"
+          shape="2xl"
+          className={isPanelOpen ? "hidden lg:block w-full my-1 p-4" : "w-full my-1 p-4"}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
@@ -519,7 +535,9 @@ export function VideoPlayer({
       <div
         ref={centerScrollRef}
         onScroll={handleCenterScroll}
-        className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto scrollbar-none"
+        className={`w-full flex-1 flex flex-col p-2 sm:p-3 min-h-0 overflow-y-auto scrollbar-none ${
+          isPanelOpen ? "pb-2 lg:pb-14" : "pb-16 lg:pb-14"
+        }`}
       >
         {renderLessonContent()}
       </div>

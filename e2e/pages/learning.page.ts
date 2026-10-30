@@ -37,12 +37,12 @@ export class LearningPage {
     this.transcriptTab = page.getByRole('button', { name: /Xem Phụ đề Tương tác/i }).or(page.locator('button[title="Phụ đề"]')).first();
     this.forumTab = page.getByRole('button', { name: /Mở Thảo luận Bài học/i }).or(page.locator('button[title="Thảo luận"]')).first();
     this.notesTab = page.getByRole('button', { name: /Xem Ghi chú Cá nhân/i }).or(page.locator('button[title="Ghi chú"]')).first();
-    this.deadlinesTab = page.getByRole('button', { name: /Xem Deadlines & Tiến độ/i }).or(page.locator('button[title="Deadlines"]')).first();
+    this.deadlinesTab = page.getByRole('button', { name: /Xem Thời hạn & Tiến độ/i }).or(page.locator('button[title="Thời hạn"]')).first();
 
     this.highlightInput = page.locator('input[placeholder*="trích dẫn"]').or(page.locator('input[placeholder*="ý chính"]')).first();
     this.commentInput = page.locator('input[placeholder*="bình luận"]').or(page.locator('input[placeholder*="suy nghĩ"]')).first();
     this.saveNoteButton = page.getByRole('button', { name: /Lưu ghi chú/i });
-    this.deadlinesHeading = page.locator('text=/Lịch Nộp Bài Hàng Tuần|Upcoming Course Deadlines|Các mốc Deadline|Deadlines & Tiến độ/i').first();
+    this.deadlinesHeading = page.locator('text=/Lịch Nộp Bài Hàng Tuần|Upcoming Course Deadlines|Các mốc Deadline|Thời hạn & Tiến độ/i').first();
     this.resetDeadlinesButton = page.getByRole('button', { name: /Reset My Deadlines/i });
     this.markCompleteButton = page.getByRole('button', { name: /Đánh dấu Hoàn thành|Mark Complete/i });
   }
