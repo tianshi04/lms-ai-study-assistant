@@ -2,7 +2,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -28,12 +28,14 @@ from src.modules.catalog.domain import (
 from src.modules.catalog.domain.constants import (
     DEFAULT_RECOMMENDED_COURSES_COUNT,
     DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT,
+    MAX_FOUNDATIONAL_COURSES_COUNT,
 )
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,
     CourseAuditLogModel,
     CourseCollaboratorModel,
+    CourseEmbeddingModel,
     CourseModel,
     CourseReviewModel,
     InVideoQuizModel,
@@ -131,6 +133,9 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         organization_id=getattr(model, "organization_id", "partner_community")
         or "partner_community",
         price=float(getattr(model, "price", 0.0) or 0.0),
+        foundational_course_ids=list(
+            getattr(model, "foundational_course_ids", []) or []
+        ),
     )
 
 
@@ -341,25 +346,27 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
     async def get_course_recommendations(
         self, course_id: str, target_count: int = DEFAULT_RECOMMENDED_COURSES_COUNT
-    ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
+    ) -> tuple[list[Course], list[tuple[Course, str, float]]]:
         stmt = select(CourseModel).where(
             (CourseModel.id == course_id) | (CourseModel.slug == course_id)
         )
         current_model = (await self.session.execute(stmt)).scalar_one_or_none()
         if not current_model:
-            return None, []
+            return [], []
 
         from src.modules.catalog.infrastructure.recommendation_service import (
-            get_foundational_course,
+            get_foundational_courses,
             get_recommended_courses,
         )
 
-        foundational_model = await get_foundational_course(self.session, current_model)
+        foundational_models = await get_foundational_courses(
+            self.session, current_model
+        )
         exclude_ids = {current_model.id}
-        foundational_domain = None
-        if foundational_model:
-            foundational_domain = _model_to_domain_course(foundational_model)
-            exclude_ids.add(foundational_model.id)
+        foundational_domain: list[Course] = []
+        for fm in foundational_models:
+            foundational_domain.append(_model_to_domain_course(fm))
+            exclude_ids.add(fm.id)
 
         rec_dtos = await get_recommended_courses(
             self.session,
@@ -621,6 +628,161 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         await self.session.flush()
         return True
 
+    async def list_foundational_course_candidates(
+        self,
+        current_user_id: str,
+        course_id: str = "",
+        search_query: str = "",
+        page_size: int = 10,
+        page_token: str = "",
+    ) -> tuple[list[Course], str]:
+        offset = int(page_token) if page_token.isdigit() else 0
+        limit = max(1, min(page_size, 50))
+
+        target_partner_name = ""
+        target_vector: list[float] | None = None
+        curr = None
+
+        if course_id:
+            c_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
+            c_res = await self.session.execute(c_stmt)
+            curr = c_res.scalar_one_or_none()
+            if curr:
+                target_partner_name = curr.partner_name
+                emb_stmt = select(CourseEmbeddingModel).where(
+                    CourseEmbeddingModel.course_id == curr.id
+                )
+                emb_res = await self.session.execute(emb_stmt)
+                emb_row = emb_res.scalar_one_or_none()
+                if emb_row and emb_row.embedding is not None:
+                    target_vector = emb_row.embedding
+
+        # Filter: PUBLISHED only, exclude course itself
+        base_filter = [CourseModel.status == CourseStatus.PUBLISHED]
+        if curr:
+            base_filter.append(CourseModel.id != curr.id)
+        elif course_id:
+            base_filter.append(CourseModel.id != course_id)
+            base_filter.append(CourseModel.slug != course_id)
+
+        clean_search = search_query.strip()
+        if clean_search:
+            escaped_search = (
+                clean_search.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+            )
+            base_filter.append(CourseModel.title.ilike(f"%{escaped_search}%"))
+
+        count_stmt = select(func.count(CourseModel.id)).where(*base_filter)
+        count_stmt = apply_organization_scope(
+            count_stmt, CourseModel, get_current_user()
+        )
+        total_count = (await self.session.execute(count_stmt)).scalar() or 0
+
+        # Tier 1: Same Author
+        is_same_author = case(
+            (CourseModel.owner_id == current_user_id, 1),
+            else_=0,
+        )
+
+        order_clauses = [is_same_author.desc()]
+
+        # Tier 2: Same Partner/Organization
+        if target_partner_name:
+            is_same_partner = case(
+                (CourseModel.partner_name == target_partner_name, 1),
+                else_=0,
+            )
+            order_clauses.append(is_same_partner.desc())
+
+        query = select(CourseModel).where(*base_filter)
+        query = apply_organization_scope(query, CourseModel, get_current_user())
+
+        dialect_name = getattr(getattr(self.session.bind, "dialect", None), "name", "")
+        if dialect_name == "postgresql" and target_vector is not None:
+            query = query.outerjoin(
+                CourseEmbeddingModel, CourseModel.id == CourseEmbeddingModel.course_id
+            )
+            vec_dist = func.coalesce(
+                CourseEmbeddingModel.embedding.cosine_distance(target_vector), 2.0
+            )
+            order_clauses.append(vec_dist.asc())
+
+        order_clauses.extend(
+            [
+                CourseModel.average_rating.desc(),
+                CourseModel.review_count.desc(),
+                CourseModel.id.asc(),
+            ]
+        )
+        query = query.order_by(*order_clauses)
+
+        query = query.offset(offset).limit(limit)
+        result = await self.session.execute(query)
+        models = result.scalars().all()
+
+        courses = [_model_to_domain_course(m) for m in models]
+        next_offset = offset + len(courses)
+        next_page_token = str(next_offset) if next_offset < total_count else ""
+
+        return courses, next_page_token
+
+    async def _validate_foundational_course_ids(
+        self,
+        current_course_id: str,
+        current_slug: str,
+        foundational_ids: list[str] | None,
+    ) -> list[str]:
+        if not foundational_ids:
+            return []
+
+        clean_ids = [cid.strip() for cid in foundational_ids if cid.strip()]
+        if not clean_ids:
+            return []
+
+        if len(clean_ids) > MAX_FOUNDATIONAL_COURSES_COUNT:
+            raise ValueError(
+                f"Số lượng môn học nền tảng tối đa được phép là {MAX_FOUNDATIONAL_COURSES_COUNT}."
+            )
+
+        target_identifiers = {current_course_id}
+        if current_slug:
+            target_identifiers.add(current_slug)
+
+        # 1. Chặn tự chọn chính mình (Self-selection A ↔ A)
+        if target_identifiers & set(clean_ids):
+            raise ValueError("Khóa học không thể tự chọn chính mình làm môn nền tảng.")
+
+        # 2. Kiểm tra tồn tại trong DB (Existence Check)
+        stmt = select(CourseModel).where(CourseModel.id.in_(clean_ids))
+        res = await self.session.execute(stmt)
+        found_courses = res.scalars().all()
+        found_map = {c.id: c for c in found_courses}
+
+        missing = set(clean_ids) - set(found_map.keys())
+        if missing:
+            raise ValueError(
+                f"Khóa học nền tảng không tồn tại: {', '.join(sorted(missing))}"
+            )
+
+        # 3. Chặn phụ thuộc vòng 2 chiều (Circular Dependency A ↔ B)
+        for fc in found_courses:
+            fc_deps = set(fc.foundational_course_ids or [])
+            if target_identifiers & fc_deps:
+                raise ValueError(
+                    f"Phát hiện quan hệ phụ thuộc vòng: Khóa học '{fc.title}' ({fc.id}) đã chọn khóa học này làm môn nền tảng."
+                )
+
+        # 4. Bảo toàn thứ tự gốc và deduplicate
+        deduped: list[str] = []
+        for x in clean_ids:
+            if x not in deduped:
+                deduped.append(x)
+        return deduped
+
     async def create_course(
         self,
         title: str,
@@ -635,6 +797,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         co_instructor_ids: list[str] | None = None,
         financial_aid_enabled: bool = True,
         organization_id: str = "partner_community",
+        foundational_course_ids: list[str] | None = None,
     ) -> Course:
         _ = instructor_names
         import re
@@ -645,6 +808,12 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             else ""
         )
         course_id = f"course-{safe_slug}" if safe_slug else f"course-{uuid7().hex[-8:]}"
+        clean_foundational_ids = await self._validate_foundational_course_ids(
+            current_course_id=course_id,
+            current_slug=safe_slug,
+            foundational_ids=foundational_course_ids,
+        )
+
         clean_org_id = (
             organization_id.strip()
             if organization_id and organization_id.strip()
@@ -665,7 +834,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 if not final_partner_logo:
                     final_partner_logo = org_row.avatar_url
             else:
-                final_partner_name = "Coursera Project Network"
+                final_partner_name = ""
 
         model = CourseModel(
             id=course_id,
@@ -681,6 +850,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             organization_id=clean_org_id,
             status=CourseStatus.DRAFT,
             rejection_reason="",
+            foundational_course_ids=clean_foundational_ids,
         )
         self.session.add(model)
 
@@ -721,6 +891,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         subject: str = "",
         level: str = "",
         financial_aid_enabled: bool = True,
+        foundational_course_ids: list[str] | None = None,
     ) -> Course | None:
         _ = instructor_names
         stmt = select(CourseModel).where(CourseModel.id == course_id)
@@ -743,6 +914,15 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             model.subject = subject
         if level and level != "UNSPECIFIED":
             model.level = level
+
+        if foundational_course_ids is not None:
+            model.foundational_course_ids = (
+                await self._validate_foundational_course_ids(
+                    current_course_id=model.id,
+                    current_slug=model.slug or "",
+                    foundational_ids=foundational_course_ids,
+                )
+            )
 
         if model.status == CourseStatus.PUBLISHED:
             try:

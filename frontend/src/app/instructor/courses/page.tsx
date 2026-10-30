@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
@@ -19,6 +19,7 @@ import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import { PageHeader } from "@/components/ui/LayoutPrimitives";
 import { Tabs } from "@/components/ui/Tabs";
 import { SpecializationsTab } from "./components/SpecializationsTab";
+import { FoundationalCoursePickerModal } from "./components/modals/FoundationalCoursePickerModal";
 
 import {
   FileText,
@@ -104,6 +105,9 @@ export default function InstructorCoursesPage() {
   );
   const [instructorNames, setInstructorNames] = useState("Andrew Ng, Giảng viên AI");
   const [financialAidEnabled, setFinancialAidEnabled] = useState(true);
+  const [foundationalCourses, setFoundationalCourses] = useState<Course[]>([]);
+  const [showFoundationalPicker, setShowFoundationalPicker] = useState(false);
+  const activeEditingCourseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -143,6 +147,7 @@ export default function InstructorCoursesPage() {
       );
       return;
     }
+    activeEditingCourseIdRef.current = null;
     setEditingCourseId(null);
     setTitle("");
     setSlug("");
@@ -153,6 +158,7 @@ export default function InstructorCoursesPage() {
     );
     setInstructorNames("Andrew Ng, Giảng viên AI");
     setFinancialAidEnabled(true);
+    setFoundationalCourses([]);
     setShowModal(true);
   };
 
@@ -161,6 +167,7 @@ export default function InstructorCoursesPage() {
       toast.error("Tài khoản Học viên (Learner) không có quyền chỉnh sửa khóa học.");
       return;
     }
+    activeEditingCourseIdRef.current = course.id;
     setEditingCourseId(course.id);
     setTitle(course.title);
     setSlug(course.slug);
@@ -169,6 +176,40 @@ export default function InstructorCoursesPage() {
     setPartnerLogoUrl(course.partnerLogoUrl);
     setInstructorNames(course.instructorNames.join(", "));
     setFinancialAidEnabled(course.financialAidEnabled);
+
+    const fcIds = course.foundationalCourseIds || [];
+    if (fcIds.length > 0) {
+      const courseById = new Map(courses.map((c) => [c.id, c]));
+      const missingIds = fcIds.filter((id) => !courseById.has(id));
+
+      const initialResolved = fcIds
+        .map((id) => courseById.get(id))
+        .filter((c): c is Course => Boolean(c));
+      setFoundationalCourses(initialResolved);
+
+      if (missingIds.length > 0) {
+        const currentEditingId = course.id;
+        Promise.all(
+          missingIds.map((id) =>
+            getRpcClient(CatalogService)
+              .getCourseDetail({ idOrSlug: id })
+              .then((res) => res.course)
+              .catch(() => null),
+          ),
+        ).then((resolvedNew) => {
+          if (activeEditingCourseIdRef.current !== currentEditingId) return;
+          const newMap = new Map(courseById);
+          for (const c of resolvedNew) {
+            if (c) newMap.set(c.id, c);
+          }
+          setFoundationalCourses(
+            fcIds.map((id) => newMap.get(id)).filter((c): c is Course => Boolean(c)),
+          );
+        });
+      }
+    } else {
+      setFoundationalCourses([]);
+    }
     setShowModal(true);
   };
 
@@ -202,12 +243,11 @@ export default function InstructorCoursesPage() {
           partnerLogoUrl,
           instructorNames: instructors,
           financialAidEnabled,
+          foundationalCourseIds: foundationalCourses.map((fc) => fc.id),
         });
 
         if (res.course) {
-          toast.success(
-            `${"Cập Nhật Khóa Học".replace("Cập Nhật ", "")} "${res.course.title}" ${"Tạo khóa học mới thành công!".split(" ").slice(-2).join(" ")}`,
-          );
+          toast.success(`Cập nhật khóa học "${res.course.title}" thành công!`);
           await revalidateCoursesCache(res.course.id);
           setShowModal(false);
           await refreshCourses();
@@ -222,6 +262,7 @@ export default function InstructorCoursesPage() {
           partnerLogoUrl,
           instructorNames: instructors,
           financialAidEnabled,
+          foundationalCourseIds: foundationalCourses.map((fc) => fc.id),
         });
 
         if (res.course) {
@@ -509,7 +550,13 @@ export default function InstructorCoursesPage() {
       </Tabs>
 
       {/* Modal Soạn / Chỉnh Sửa Khóa Học */}
-      <Dialog.Root open={showModal} onOpenChange={(open) => setShowModal(open)}>
+      <Dialog.Root
+        open={showModal}
+        onOpenChange={(open) => {
+          if (!open) activeEditingCourseIdRef.current = null;
+          setShowModal(open);
+        }}
+      >
         <Dialog.Content size="lg">
           <Dialog.Header>
             <Dialog.Title>
@@ -589,6 +636,79 @@ export default function InstructorCoursesPage() {
               onChange={(e) => setInstructorNames(e.target.value)}
             />
 
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {"Khóa Học Nền Tảng Khuyến Nghị (Tùy chọn)"}
+                </label>
+                {foundationalCourses.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="tonal"
+                    size="sm"
+                    onClick={() => setShowFoundationalPicker(true)}
+                    className="gap-1.5 text-xs h-7"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Quản lý ({foundationalCourses.length})</span>
+                  </Button>
+                )}
+              </div>
+              {foundationalCourses.length > 0 ? (
+                <div className="space-y-2">
+                  {foundationalCourses.map((fc) => (
+                    <Surface
+                      key={fc.id}
+                      variant="container"
+                      className="p-3 rounded-xl border border-border flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <BookOpen className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {fc.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">{fc.partnerName}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <IconButton
+                          type="button"
+                          variant="standard"
+                          size="sm"
+                          aria-label={`Gỡ bỏ môn ${fc.title}`}
+                          onClick={() => {
+                            setFoundationalCourses((prev) => prev.filter((c) => c.id !== fc.id));
+                          }}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        </IconButton>
+                      </div>
+                    </Surface>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border/80 p-3.5 text-center bg-surface-container/30">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Chưa thiết lập (Học viên có thể học ngay mà không cần môn nền tảng)
+                  </p>
+                  <Button
+                    type="button"
+                    variant="tonal"
+                    size="sm"
+                    onClick={() => setShowFoundationalPicker(true)}
+                    className="gap-1.5 text-xs font-semibold"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>＋ Chọn khóa học nền tảng</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <div className="p-3.5 rounded-2xl bg-muted border border-border">
               <Checkbox
                 id="financialAidToggle"
@@ -615,6 +735,14 @@ export default function InstructorCoursesPage() {
           </form>
         </Dialog.Content>
       </Dialog.Root>
+
+      <FoundationalCoursePickerModal
+        open={showFoundationalPicker}
+        onOpenChange={setShowFoundationalPicker}
+        currentCourseId={editingCourseId}
+        selectedCourses={foundationalCourses}
+        onSave={(courses) => setFoundationalCourses(courses)}
+      />
 
       <Dialog
         open={Boolean(deletingCourseTarget)}

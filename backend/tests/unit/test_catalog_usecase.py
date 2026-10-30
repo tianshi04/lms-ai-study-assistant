@@ -814,3 +814,150 @@ async def test_update_specialization_deduplicates_courses(
     mock_repo.update_specialization.assert_called_once()
     call_kwargs = mock_repo.update_specialization.call_args.kwargs
     assert call_kwargs["course_ids"] == ["c1", "c2"]
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
+async def test_create_course_with_foundational_course_ids(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    user = CurrentUser(
+        id="inst_1", email="i1@coursera.ai", full_name="Inst 1", role="INSTRUCTOR"
+    )
+    mock_repo.create_course.return_value = Course(
+        id="c-new",
+        title="Deep Learning",
+        slug="deep-learning",
+        foundational_course_ids=["c-math-101", "c-stats-101"],
+    )
+
+    created = await catalog_usecase.create_course(
+        title="Deep Learning",
+        slug="deep-learning",
+        description="Advanced ML",
+        partner_name="DeepLearning.AI",
+        partner_logo_url="",
+        instructor_names=["Andrew Ng"],
+        foundational_course_ids=["c-math-101", "c-stats-101"],
+        current_user=user,
+    )
+    assert created.foundational_course_ids == ["c-math-101", "c-stats-101"]
+    mock_repo.create_course.assert_called_once()
+    assert mock_repo.create_course.call_args[1]["foundational_course_ids"] == [
+        "c-math-101",
+        "c-stats-101",
+    ]
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
+async def test_update_course_with_foundational_course_ids(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    user = CurrentUser(
+        id="inst_1", email="i1@coursera.ai", full_name="Inst 1", role="INSTRUCTOR"
+    )
+    mock_repo.get_course_detail.return_value = Course(
+        id="c-new", title="ML", slug="ml", owner_id="inst_1"
+    )
+    mock_repo.update_course.return_value = Course(
+        id="c-new",
+        title="ML Updated",
+        slug="ml",
+        foundational_course_ids=["c-python-101"],
+    )
+
+    updated = await catalog_usecase.update_course(
+        course_id="c-new",
+        title="ML Updated",
+        description="Desc",
+        partner_name="Partner",
+        partner_logo_url="",
+        instructor_names=[],
+        foundational_course_ids=["c-python-101"],
+        current_user=user,
+    )
+    assert updated is not None
+    assert updated.foundational_course_ids == ["c-python-101"]
+    assert mock_repo.update_course.call_args[1]["foundational_course_ids"] == [
+        "c-python-101"
+    ]
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
+async def test_list_foundational_course_candidates(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    cand = Course(id="c-cand-1", title="Math Foundations", slug="math-foundations")
+    mock_repo.list_foundational_course_candidates.return_value = ([cand], "")
+
+    courses, next_token = await catalog_usecase.list_foundational_course_candidates(
+        current_user_id="inst_1",
+        course_id="c-target",
+        search_query="Math",
+        page_size=10,
+        page_token="",
+    )
+    assert len(courses) == 1
+    assert courses[0].id == "c-cand-1"
+    assert next_token == ""
+    mock_repo.list_foundational_course_candidates.assert_awaited_once_with(
+        current_user_id="inst_1",
+        course_id="c-target",
+        search_query="Math",
+        page_size=10,
+        page_token="",
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_course_exceeds_max_foundational_courses(catalog_usecase):
+    user = CurrentUser(
+        id="inst_1", email="i1@coursera.ai", full_name="Inst 1", role="INSTRUCTOR"
+    )
+    with pytest.raises(
+        ValueError, match="Số lượng môn học nền tảng tối đa được phép là 10"
+    ):
+        await catalog_usecase.create_course(
+            title="Course",
+            slug="course",
+            description="Desc",
+            partner_name="Partner",
+            partner_logo_url="",
+            instructor_names=[],
+            foundational_course_ids=[f"fc-{i}" for i in range(11)],
+            current_user=user,
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_course_exceeds_max_foundational_courses(catalog_usecase):
+    user = CurrentUser(
+        id="inst_1", email="i1@coursera.ai", full_name="Inst 1", role="INSTRUCTOR"
+    )
+    with pytest.raises(
+        ValueError, match="Số lượng môn học nền tảng tối đa được phép là 10"
+    ):
+        await catalog_usecase.update_course(
+            course_id="c-1",
+            title="Course",
+            description="Desc",
+            partner_name="Partner",
+            partner_logo_url="",
+            instructor_names=[],
+            foundational_course_ids=[f"fc-{i}" for i in range(11)],
+            current_user=user,
+        )

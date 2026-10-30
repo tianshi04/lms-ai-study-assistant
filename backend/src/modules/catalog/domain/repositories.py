@@ -49,7 +49,7 @@ class ICatalogRepository(ABC):
     @abstractmethod
     async def get_course_recommendations(
         self, course_id: str, target_count: int = DEFAULT_RECOMMENDED_COURSES_COUNT
-    ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
+    ) -> tuple[list[Course], list[tuple[Course, str, float]]]:
         pass
 
     @abstractmethod
@@ -112,6 +112,17 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
+    async def list_foundational_course_candidates(
+        self,
+        current_user_id: str,
+        course_id: str = "",
+        search_query: str = "",
+        page_size: int = 10,
+        page_token: str = "",
+    ) -> tuple[list[Course], str]:
+        pass
+
+    @abstractmethod
     async def create_course(
         self,
         title: str,
@@ -126,6 +137,7 @@ class ICatalogRepository(ABC):
         co_instructor_ids: list[str] | None = None,
         financial_aid_enabled: bool = True,
         organization_id: str = "partner_community",
+        foundational_course_ids: list[str] | None = None,
     ) -> Course:
         pass
 
@@ -141,6 +153,7 @@ class ICatalogRepository(ABC):
         subject: str = "",
         level: str = "",
         financial_aid_enabled: bool = True,
+        foundational_course_ids: list[str] | None = None,
     ) -> Course | None:
         pass
 

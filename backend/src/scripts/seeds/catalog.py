@@ -688,6 +688,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         subject="cat-subj-cs",
         level="cat-lvl-adv",
         status="PUBLISHED",
+        foundational_course_ids=["course-python-ai"],
     )
     week_dl1 = WeekModuleModel(
         id="week-1-dl",
@@ -1384,6 +1385,7 @@ Tại Việt Nam, Bộ Giao thông Vận tải quy định khung giá trần vé
         financial_aid_enabled=True,
         average_rating=4.85,
         review_count=36,
+        foundational_course_ids=["course-microeconomics-foundations"],
     )
 
     # =========================================================================
@@ -2022,6 +2024,10 @@ Chúng ta kiểm định giả định này bằng đồ thị Event Study qua c
         financial_aid_enabled=True,
         average_rating=5.0,
         review_count=52,
+        foundational_course_ids=[
+            "course-microeconomics-foundations",
+            "course-applied-econometrics",
+        ],
     )
 
     # =========================================================================

@@ -9,7 +9,10 @@ from src.modules.catalog.domain import (
     ICatalogRepository,
     Specialization,
 )
-from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
+from src.modules.catalog.domain.constants import (
+    DEFAULT_RECOMMENDED_COURSES_COUNT,
+    MAX_FOUNDATIONAL_COURSES_COUNT,
+)
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
@@ -163,7 +166,7 @@ class CourseUseCase:
 
     async def get_course_recommendations(
         self, course_id: str, target_count: int = DEFAULT_RECOMMENDED_COURSES_COUNT
-    ) -> tuple[Course | None, list[tuple[Course, str, float]]]:
+    ) -> tuple[list[Course], list[tuple[Course, str, float]]]:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.get_course_recommendations(course_id, target_count)
@@ -330,6 +333,24 @@ class CourseUseCase:
                 raise PermissionError("Bạn không có quyền xóa Chuyên ngành này.")
             return await repo.delete_specialization(specialization_id, owner_id)
 
+    async def list_foundational_course_candidates(
+        self,
+        current_user_id: str,
+        course_id: str = "",
+        search_query: str = "",
+        page_size: int = 10,
+        page_token: str = "",
+    ) -> tuple[list[Course], str]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_foundational_course_candidates(
+                current_user_id=current_user_id,
+                course_id=course_id,
+                search_query=search_query,
+                page_size=page_size,
+                page_token=page_token,
+            )
+
     async def create_course(
         self,
         title: str,
@@ -343,8 +364,17 @@ class CourseUseCase:
         owner_id: str = "",
         financial_aid_enabled: bool = True,
         organization_id: str = "partner_community",
+        foundational_course_ids: list[str] | None = None,
         current_user: CurrentUser | None = None,
     ) -> Course:
+        if (
+            foundational_course_ids
+            and len(foundational_course_ids) > MAX_FOUNDATIONAL_COURSES_COUNT
+        ):
+            raise ValueError(
+                f"Số lượng môn học nền tảng tối đa được phép là {MAX_FOUNDATIONAL_COURSES_COUNT}."
+            )
+
         async with async_session_scope() as session:
             if current_user and organization_id:
                 await enforce_organization_permission(
@@ -366,6 +396,7 @@ class CourseUseCase:
                 owner_id=owner_id,
                 financial_aid_enabled=financial_aid_enabled,
                 organization_id=organization_id or "partner_community",
+                foundational_course_ids=foundational_course_ids,
             )
             logger.info(
                 "Created course %s by owner %s",
@@ -385,8 +416,17 @@ class CourseUseCase:
         subject: str = "",
         level: str = "",
         financial_aid_enabled: bool = True,
+        foundational_course_ids: list[str] | None = None,
         current_user: CurrentUser | None = None,
     ) -> Course | None:
+        if (
+            foundational_course_ids
+            and len(foundational_course_ids) > MAX_FOUNDATIONAL_COURSES_COUNT
+        ):
+            raise ValueError(
+                f"Số lượng môn học nền tảng tối đa được phép là {MAX_FOUNDATIONAL_COURSES_COUNT}."
+            )
+
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             await self._verify_ownership(
@@ -402,6 +442,7 @@ class CourseUseCase:
                 subject=subject,
                 level=level,
                 financial_aid_enabled=financial_aid_enabled,
+                foundational_course_ids=foundational_course_ids,
             )
 
     async def delete_course(

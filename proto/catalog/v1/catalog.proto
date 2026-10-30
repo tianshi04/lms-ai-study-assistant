@@ -93,6 +93,7 @@ message Course {
   string owner_id = 17;
   repeated string co_instructor_ids = 18;
   double price = 19;
+  repeated string foundational_course_ids = 20;
 }
 
 // Specialization messages
@@ -192,7 +193,7 @@ message CourseRecommendationItem {
 
 message GetCourseDetailResponse {
   Course course = 1;
-  Course foundational_course = 2;
+  repeated Course foundational_courses = 2;
   repeated CourseRecommendationItem recommended_courses = 3;
   Specialization specialization = 4;
 }
@@ -217,6 +218,7 @@ message CreateCourseRequest {
   string level = 8;
   bool financial_aid_enabled = 9;
   string organization_id = 10;
+  repeated string foundational_course_ids = 11;
 }
 
 message CreateCourseResponse {
@@ -234,6 +236,7 @@ message UpdateCourseRequest {
   string subject = 8;
   string level = 9;
   bool financial_aid_enabled = 10;
+  repeated string foundational_course_ids = 11;
 }
 
 message UpdateCourseResponse {
@@ -551,6 +554,18 @@ message ListInstructorCoursesResponse {
   string next_page_token = 2;
 }
 
+message ListFoundationalCourseCandidatesRequest {
+  string course_id = 1;
+  string search_query = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListFoundationalCourseCandidatesResponse {
+  repeated Course courses = 1;
+  string next_page_token = 2;
+}
+
 service CatalogService {
   rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -571,6 +586,10 @@ service CatalogService {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc ListInstructorCourses(ListInstructorCoursesRequest) returns (ListInstructorCoursesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc ListFoundationalCourseCandidates(ListFoundationalCourseCandidatesRequest) returns (ListFoundationalCourseCandidatesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse) {

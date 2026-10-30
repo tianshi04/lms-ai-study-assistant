@@ -176,9 +176,27 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * Phía Backend kiểm tra đa tầng tại `CatalogUseCase._verify_ownership` và Repository DB Level. Mọi cố gắng xóa khóa học `PUBLISHED` từ phía Giảng viên đều bị từ chối và trả về ngoại lệ `PermissionError` / `ConnectError(Code.PERMISSION_DENIED)`.
   * **Quyền Chỉnh sửa Nối tiếp (Live Content Maintenance):** Giảng viên vẫn giữ quyền chỉnh sửa nội dung mô tả, cập nhật bài đọc (Reading), sửa lỗi phụ đề VTT, video bài giảng hoặc cập nhật ngân hàng câu hỏi/ma trận đề thi để cập nhật kiến thức mới mà không ảnh hưởng tới các học viên đã tốt nghiệp.
   * **Quy trình Gỡ/Hủy Xuất bản Khóa học (Unpublish / Archive Workflow):** Khi cần dừng nhận học viên mới hoặc gỡ khóa học khỏi danh mục công khai, Quản trị viên hệ thống (Super Admin) thực hiện chuyển trạng thái khóa học sang `UNPUBLISHED` hoặc `ARCHIVED`. Khóa học bị ẩn khỏi trang tìm kiếm công khai nhưng học viên cũ đã đăng ký vẫn giữ nguyên 100% quyền truy cập và chứng chỉ đã cấp.
-* **BR_CATALOG_005 (Nguyên tắc Môn Nền tảng Khuyến nghị - Soft Prerequisite & Open Enrollment):**
-  * **Chính sách Mở (Open Enrollment Policy):** Nền tảng tuân thủ triết lý học tập mở tương tự Coursera. Khóa học có môn tiên quyết/nền tảng chỉ đóng vai trò khuyến nghị mềm (Soft Advisory). Hệ thống tuyệt đối **KHÔNG KHÓA CỨNG (No Hard Lock)**; học viên luôn được phép ghi danh và học trực tiếp khóa học nâng cao bất kể đã hoàn thành môn nền tảng hay chưa.
-  * **Quy tắc Tự động Phát hiện Môn Nền tảng:** Môn nền tảng của khóa học B được ưu tiên xác định theo thứ tự chuỗi Specialization (khóa đứng liền trước trong cùng lộ trình). Nếu không thuộc Specialization nào, hệ thống tự động suy luận môn nền tảng từ tập khóa học đã xuất bản (`PUBLISHED`) có vector tương đồng cao nhất và chứa các từ khóa nền tảng ("căn bản", "cơ bản", "nhập môn", "nền tảng", "foundation", "introduction", "basic").
+* **BR_CATALOG_005 (Nguyên tắc Môn Nền tảng Khuyến nghị Đa Khóa & Thuật toán Xếp hạng 3 Bậc - Multi-Select Soft Prerequisite & 3-Tier Candidate Ranking Engine):**
+  * **Chính sách Mở (Open Enrollment Policy):** Nền tảng tuân thủ triết lý học tập mở tương tự Coursera. Khóa học có môn tiên quyết/nền tảng chỉ đóng vai trò khuyến nghị mềm (Soft Advisory). Hệ thống tuyệt đối **KHÔNG KHÓA CỨNG (No Hard Lock)**; học viên luôn được phép ghi danh và học trực tiếp khóa học nâng cao bất kể đã hoàn thành các môn nền tảng hay chưa.
+  * **Hỗ trợ Chọn Nhiều Môn Nền tảng (Multi-Select Architecture):**
+    * Giảng viên có quyền cấu hình một hoặc nhiều môn nền tảng (`foundational_course_ids: ARRAY(String(64))`) trực tiếp trong Course Builder hoặc Modal chỉnh sửa khóa học (ví dụ: một môn Deep Learning nâng cao có thể yêu cầu cả *Toán rời rạc* và *Python cơ bản*).
+    * Thứ tự các môn nền tảng do Giảng viên sắp đặt được bảo toàn nguyên vẹn khi lưu trữ và hiển thị cho học viên.
+  * **Bộ máy Xếp hạng Ứng viên Lai (Hybrid Heuristic & pgvector Cosine Distance Ranking Engine):**
+    Khi Giảng viên mở Modal chọn môn nền tảng, hệ thống tự động xếp hạng danh sách ứng viên từ cơ sở dữ liệu theo 3 cấp độ ưu tiên kết hợp heuristic và ngữ nghĩa (thực thi truy vấn tối ưu tại tầng SQL Database, áp dụng `apply_organization_scope` chuẩn Multi-Tenant Layer 2):
+    * **Bậc 1 (Ưu tiên Cao nhất - Cùng Giảng viên):** Các khóa học do chính Giảng viên đang đăng nhập tạo ra (`owner_id == current_user_id`).
+    * **Bậc 2 (Cùng Tổ chức / Đối tác):** Các khóa học thuộc cùng đơn vị đào tạo / đối tác với khóa học hiện tại (`partner_name == current_course.partner_name`).
+    * **Bậc 3 (Khoảng cách Vector Cosine & Điểm Đánh giá):** Khóa học có khoảng cách Cosine Distance nhỏ nhất trên vector embedding 384 chiều (`all-MiniLM-L6-v2`), kết hợp điểm đánh giá trung bình (`average_rating DESC`) và số lượt đánh giá (`review_count DESC`).
+  * **Cơ chế Phân trang Từng đợt 10 Khóa & Tìm kiếm Real-time (Scalable Pagination & Debounced Search):**
+    * Hệ thống tải danh sách ứng viên theo từng đợt 10 khóa học (`page_size = 10`, `next_page_token`), ngăn chặn triệt để hiện tượng nghẽn mạng hay nghẽn bộ nhớ khi số lượng khóa học trên toàn hệ thống đạt hàng chục ngàn hay hàng triệu môn.
+    * Tích hợp thanh tìm kiếm theo tên khóa học có độ trễ debounce (300ms), kết hợp lọc tức thời trên nền thuật toán xếp hạng 3 bậc.
+  * **Mặc định là Mảng Rỗng & Trực quan hóa Giao diện Học viên (UI/UX Grid Presentation):**
+    * **Mặc định là rỗng (`{}`):** Khóa học mới tạo không bị ép buộc môn nền tảng. Khi `foundational_course_ids` rỗng, trang chi tiết khóa học của học viên tự động ẩn hoàn toàn khu vực môn nền tảng.
+    * **Hiển thị linh hoạt theo số lượng:** Nếu cấu hình đúng 1 môn, giao diện hiển thị dạng Thẻ Hero Callout nổi bật; nếu cấu hình từ 2 môn trở lên, hệ thống tự động render lưới thẻ đáp ứng chuẩn Material Design 3 (`grid grid-cols-1 md:grid-cols-2`).
+  * **Ràng buộc Toàn vẹn Dữ liệu & Ngăn chặn Vòng lặp Tiên quyết:**
+    * **Chống tự chọn (Self-selection):** Khóa học không thể tự chọn chính mình làm môn nền tảng ($A \leftrightarrow A$).
+    * **Chống phụ thuộc vòng 2 chiều (Circular Dependency):** Nếu khóa học B đã chọn A làm môn nền tảng, hệ thống kiên quyết từ chối không cho phép A chọn B làm môn nền tảng ($A \leftrightarrow B$).
+    * **Kiểm tra tồn tại thực tế:** Toàn bộ `foundational_course_ids` gửi lên khi tạo/cập nhật khóa học bắt buộc phải tồn tại trong cơ sở dữ liệu và thuộc phạm vi tổ chức cho phép (`apply_organization_scope`).
+    * **Giới hạn số lượng:** Mỗi khóa học được cấu hình tối đa không quá 10 môn nền tảng (`MAX_FOUNDATIONAL_COURSES_COUNT = 10`). Chỉ các khóa học đã xuất bản (`status = PUBLISHED`) mới được gợi ý trong tập ứng viên.
 * **BR_CATALOG_006 (Thuật toán Gợi ý Khóa học Đề xuất - Hybrid Vector Recommendation Engine):**
   * **Công thức Chấm điểm Lai (Hybrid Scoring Formula):**
     $$Score(A, B) = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$$
