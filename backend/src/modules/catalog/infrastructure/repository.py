@@ -419,7 +419,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         courses_stmt = (
             select(CourseModel)
-            .where(CourseModel.id.in_(spec_model.course_ids))
+            .where(
+                CourseModel.id.in_(spec_model.course_ids),
+                CourseModel.status == CourseStatus.PUBLISHED,
+            )
             .options(
                 selectinload(CourseModel.week_modules).selectinload(
                     WeekModuleModel.lessons

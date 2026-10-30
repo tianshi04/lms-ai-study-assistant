@@ -198,7 +198,13 @@ async def test_get_specialization(repo, mock_session, sample_course_model):
             mock_res.scalar_one_or_none.return_value = sample_course_model
         return mock_res
 
-    mock_session.execute.side_effect = mock_execute_side_effect
+    captured_stmts = []
+
+    def wrapper(stmt):
+        captured_stmts.append(stmt)
+        return mock_execute_side_effect(stmt)
+
+    mock_session.execute.side_effect = wrapper
 
     spec, courses = await repo.get_specialization("s1")
 
@@ -207,6 +213,8 @@ async def test_get_specialization(repo, mock_session, sample_course_model):
     assert len(courses) == 2
     assert courses[0].id == "c1"
     assert courses[1].id == "c2"
+    assert len(captured_stmts) == 2
+    assert "courses.status" in str(captured_stmts[1]).lower()
 
 
 @pytest.mark.asyncio
