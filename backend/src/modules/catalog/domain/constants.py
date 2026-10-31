@@ -9,8 +9,7 @@ VERIFIED_COMPLETER_PROGRESS_PERCENT: float = 100.0
 # Course Recommendation defaults
 DEFAULT_RECOMMENDED_COURSES_COUNT: int = 6
 MIN_RECOMMENDATION_SCORE_THRESHOLD: float = 0.55
-MIN_FOUNDATIONAL_SIMILARITY_THRESHOLD: float = 0.65
-HIGH_SIMILARITY_CROSS_DOMAIN_THRESHOLD: float = 0.75
+MAX_FOUNDATIONAL_COURSES_COUNT: int = 10
 
 HYBRID_WEIGHT_VECTOR: float = 0.55
 HYBRID_WEIGHT_AUTHOR: float = 0.30
@@ -20,22 +19,6 @@ COLD_START_DEFAULT_RATING_SCORE: float = 0.8
 FALLBACK_SIMILARITY_SAME_SUBJECT: float = 0.5
 FALLBACK_SIMILARITY_DIFF_SUBJECT: float = 0.2
 
-FOUNDATIONAL_PEDAGOGICAL_KEYWORDS: tuple[str, ...] = (
-    "căn bản",
-    "cơ bản",
-    "nhập môn",
-    "nền tảng",
-    "foundation",
-    "foundations",
-    "introduction",
-    "intro",
-    "basic",
-    "basics",
-)
-
-BEGINNER_LEVEL_ALIASES: frozenset[str] = frozenset(
-    {"cat-lvl-beg", "beginner", "sơ cấp", "cơ bản"}
-)
 
 # Human-readable labels for category IDs to enrich vector semantics
 CATEGORY_LABEL_MAP: dict[str, str] = {

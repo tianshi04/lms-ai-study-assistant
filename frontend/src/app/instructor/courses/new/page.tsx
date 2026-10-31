@@ -5,13 +5,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { FoundationalCoursePickerModal } from "../components/modals/FoundationalCoursePickerModal";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
-import { Building2, Check } from "lucide-react";
+import { Building2, Check, BookOpen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Chip } from "@/components/ui/Chip";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -50,6 +52,8 @@ export default function NewCoursePage() {
   const [tags, setTags] = useState<string[]>(["Python", "Machine Learning"]);
   const [tagInput, setTagInput] = useState("");
   const [financialAidEnabled, setFinancialAidEnabled] = useState(true);
+  const [foundationalCourses, setFoundationalCourses] = useState<Course[]>([]);
+  const [showFoundationalPicker, setShowFoundationalPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleAddTag = (e: React.KeyboardEvent | React.MouseEvent) => {
@@ -145,6 +149,7 @@ export default function NewCoursePage() {
         level,
         financialAidEnabled,
         organizationId: selectedOrgId,
+        foundationalCourseIds: foundationalCourses.map((fc) => fc.id),
       });
 
       toast.success("Khởi tạo khóa học mới thành công!");
@@ -465,6 +470,81 @@ export default function NewCoursePage() {
               />
             </div>
 
+            {/* Foundational Course Picker */}
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <span className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                  Khóa Học Nền Tảng Khuyến Nghị (Tùy chọn)
+                </span>
+                {foundationalCourses.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="tonal"
+                    size="sm"
+                    onClick={() => setShowFoundationalPicker(true)}
+                    className="gap-1.5 text-xs h-7"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Quản lý ({foundationalCourses.length})</span>
+                  </Button>
+                )}
+              </div>
+              {foundationalCourses.length > 0 ? (
+                <div className="space-y-2">
+                  {foundationalCourses.map((fc) => (
+                    <Surface
+                      key={fc.id}
+                      variant="container"
+                      className="p-3 rounded-2xl border border-border flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <BookOpen className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {fc.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">{fc.partnerName}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <IconButton
+                          type="button"
+                          variant="standard"
+                          size="sm"
+                          aria-label={`Gỡ bỏ môn ${fc.title}`}
+                          onClick={() =>
+                            setFoundationalCourses((prev) => prev.filter((c) => c.id !== fc.id))
+                          }
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        </IconButton>
+                      </div>
+                    </Surface>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border/80 p-5 text-center bg-card/50">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Chưa thiết lập môn nền tảng (Học viên có thể học ngay mà không cần hoàn thành
+                    môn tiên quyết)
+                  </p>
+                  <Button
+                    type="button"
+                    variant="tonal"
+                    size="sm"
+                    onClick={() => setShowFoundationalPicker(true)}
+                    className="gap-2 text-xs font-semibold"
+                  >
+                    <BookOpen className="w-4 h-4" aria-hidden="true" />
+                    <span>＋ Chọn môn học nền tảng</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+
             {/* Financial Aid Switch */}
             <div className="md:col-span-2 p-4 rounded-2xl bg-card border border-border">
               <Field.Root className="space-y-1">
@@ -511,6 +591,13 @@ export default function NewCoursePage() {
           </div>
         </Surface>
       </div>
+
+      <FoundationalCoursePickerModal
+        open={showFoundationalPicker}
+        onOpenChange={setShowFoundationalPicker}
+        selectedCourses={foundationalCourses}
+        onSave={(courses) => setFoundationalCourses(courses)}
+      />
     </div>
   );
 }

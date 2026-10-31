@@ -197,6 +197,7 @@ class Course(Entity):
         rejection_reason: str = "",
         organization_id: str = "partner_community",
         price: float = 0.0,
+        foundational_course_ids: list[str] | None = None,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -217,6 +218,7 @@ class Course(Entity):
         self.rejection_reason = rejection_reason
         self.organization_id = organization_id
         self.price = price
+        self.foundational_course_ids = foundational_course_ids or []
 
     def check_pre_submit_checklist(self) -> list[str]:
         """Validates BR_CATALOG_003 pre-submit 4 criteria."""

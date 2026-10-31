@@ -111,6 +111,12 @@ class CourseModel(Base):
     rejection_reason: Mapped[str] = mapped_column(
         Text, nullable=False, default="", server_default=""
     )
+    foundational_course_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(String(64)),
+        nullable=False,
+        default=list,
+        server_default="{}",
+    )
 
     week_modules: Mapped[list["WeekModuleModel"]] = relationship(
         "WeekModuleModel",

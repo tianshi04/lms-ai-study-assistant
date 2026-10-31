@@ -169,6 +169,7 @@ def _to_pb_course(course: Course) -> pb.Course:
         owner_id=getattr(course, "owner_id", "") or "",
         co_instructor_ids=getattr(course, "co_instructor_ids", []) or [],
         price=float(getattr(course, "price", 0.0) or 0.0),
+        foundational_course_ids=getattr(course, "foundational_course_ids", []) or [],
     )
 
 
@@ -315,7 +316,7 @@ class CatalogHandler(CatalogService):
             raise ConnectError(Code.NOT_FOUND, f"Course {request.id_or_slug} not found")
 
         try:
-            foundational, recs = await self.use_case.get_course_recommendations(
+            foundational_list, recs = await self.use_case.get_course_recommendations(
                 course.id, target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
             )
         except Exception:
@@ -323,7 +324,7 @@ class CatalogHandler(CatalogService):
                 "Failed to get course recommendations for %s",
                 request.id_or_slug,
             )
-            foundational, recs = None, []
+            foundational_list, recs = [], []
 
         try:
             specialization = await self.use_case.get_specialization_for_course(
@@ -336,7 +337,7 @@ class CatalogHandler(CatalogService):
                 course.id,
             )
             pb_spec = None
-        pb_foundational = _to_pb_course(foundational) if foundational else None
+        pb_foundational = [_to_pb_course(c) for c in (foundational_list or [])]
         pb_recs = [
             pb.CourseRecommendationItem(
                 course=_to_pb_course(rec_course),
@@ -348,7 +349,7 @@ class CatalogHandler(CatalogService):
 
         return pb.GetCourseDetailResponse(
             course=_to_pb_course(course),
-            foundational_course=pb_foundational,
+            foundational_courses=pb_foundational,
             recommended_courses=pb_recs,
             specialization=pb_spec,
         )
@@ -483,26 +484,54 @@ class CatalogHandler(CatalogService):
             )
         return user
 
+    async def list_foundational_course_candidates(
+        self,
+        request: pb.ListFoundationalCourseCandidatesRequest,
+        ctx: RequestContext[
+            pb.ListFoundationalCourseCandidatesRequest,
+            pb.ListFoundationalCourseCandidatesResponse,
+        ],
+    ) -> pb.ListFoundationalCourseCandidatesResponse:
+        user = self._verify_instructor_permission()
+        (
+            courses,
+            next_page_token,
+        ) = await self.use_case.list_foundational_course_candidates(
+            current_user_id=user.id,
+            course_id=request.course_id,
+            search_query=request.search_query,
+            page_size=request.page_size or 10,
+            page_token=request.page_token,
+        )
+        return pb.ListFoundationalCourseCandidatesResponse(
+            courses=[_to_pb_course(c) for c in courses],
+            next_page_token=next_page_token,
+        )
+
     async def create_course(
         self,
         request: pb.CreateCourseRequest,
         ctx: RequestContext[pb.CreateCourseRequest, pb.CreateCourseResponse],
     ) -> pb.CreateCourseResponse:
         user = self._verify_instructor_permission()
-        course = await self.use_case.create_course(
-            title=request.title,
-            slug=request.slug,
-            description=request.description,
-            partner_name=request.partner_name,
-            partner_logo_url=request.partner_logo_url,
-            instructor_names=list(request.instructor_names),
-            subject=request.subject,
-            level=request.level,
-            owner_id=user.id,
-            financial_aid_enabled=request.financial_aid_enabled,
-            organization_id=request.organization_id,
-            current_user=user,
-        )
+        try:
+            course = await self.use_case.create_course(
+                title=request.title,
+                slug=request.slug,
+                description=request.description,
+                partner_name=request.partner_name,
+                partner_logo_url=request.partner_logo_url,
+                instructor_names=list(request.instructor_names),
+                subject=request.subject,
+                level=request.level,
+                owner_id=user.id,
+                financial_aid_enabled=request.financial_aid_enabled,
+                organization_id=request.organization_id,
+                foundational_course_ids=list(request.foundational_course_ids),
+                current_user=user,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.CreateCourseResponse(course=_to_pb_course(course))
 
     async def update_course(
@@ -511,18 +540,25 @@ class CatalogHandler(CatalogService):
         ctx: RequestContext[pb.UpdateCourseRequest, pb.UpdateCourseResponse],
     ) -> pb.UpdateCourseResponse:
         user = self._verify_instructor_permission()
-        course = await self.use_case.update_course(
-            course_id=request.id,
-            title=request.title,
-            description=request.description,
-            partner_name=request.partner_name,
-            partner_logo_url=request.partner_logo_url,
-            instructor_names=list(request.instructor_names),
-            subject=request.subject,
-            level=request.level,
-            financial_aid_enabled=request.financial_aid_enabled,
-            current_user=user,
-        )
+        try:
+            course = await self.use_case.update_course(
+                course_id=request.id,
+                title=request.title,
+                description=request.description,
+                partner_name=request.partner_name,
+                partner_logo_url=request.partner_logo_url,
+                instructor_names=list(request.instructor_names),
+                subject=request.subject,
+                level=request.level,
+                financial_aid_enabled=request.financial_aid_enabled,
+                # In Proto3, repeated fields default to empty list when unset.
+                # Instructor management UI transmits the full list of foundational course IDs;
+                # passing [] intentionally clears all prerequisite foundational courses.
+                foundational_course_ids=list(request.foundational_course_ids),
+                current_user=user,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         if not course:
             raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.id} không tồn tại")
         return pb.UpdateCourseResponse(course=_to_pb_course(course))

@@ -218,7 +218,7 @@ async def test_handler_get_course_detail_with_recommendations():
     assert response is not None
     assert response.course is not None
     assert response.course.id == "c-detail"
-    assert response.foundational_course is None
+    assert list(response.foundational_courses) == []
     assert len(response.recommended_courses) == 1
     assert response.recommended_courses[0].course is not None
     assert response.recommended_courses[0].course.id == "c-rec"
@@ -258,7 +258,7 @@ async def test_handler_get_course_detail_fallback_on_recommendation_error():
     assert response is not None
     assert response.course is not None
     assert response.course.id == "c-fallback"
-    assert response.foundational_course is None
+    assert list(response.foundational_courses) == []
     assert len(response.recommended_courses) == 0
     usecase_mock.get_course_recommendations.assert_called_once_with(
         "c-fallback", target_count=DEFAULT_RECOMMENDED_COURSES_COUNT
@@ -424,3 +424,104 @@ async def test_handler_get_course_detail_fallback_on_specialization_error():
     assert response.course.id == "c-resilient"
     # Specialization failure handled gracefully, does not break entire course detail
     assert not response.has_field("specialization")
+
+
+@pytest.mark.asyncio
+async def test_handler_list_foundational_course_candidates():
+    from src.modules.catalog.domain import Course, CourseStatus
+
+    usecase_mock = AsyncMock()
+    mock_course = Course(
+        id="c-cand-1",
+        slug="foundational-math",
+        title="Toán Nền Tảng",
+        description="Khóa học toán cơ bản",
+        partner_name="Đại học Quốc gia",
+        owner_id="inst-1",
+        status=CourseStatus.PUBLISHED,
+    )
+    usecase_mock.list_foundational_course_candidates.return_value = (
+        [mock_course],
+        "next-token-123",
+    )
+
+    handler = CatalogHandler(usecase_mock)
+    instructor_user = CurrentUser(id="inst-1", email="inst@test.com", role="INSTRUCTOR")
+    handler._verify_instructor_permission = MagicMock(return_value=instructor_user)
+
+    req = pb.ListFoundationalCourseCandidatesRequest(
+        course_id="target-course-1",
+        search_query="toán",
+        page_size=10,
+        page_token="",
+    )
+    ctx = MagicMock()
+    res = await handler.list_foundational_course_candidates(req, ctx)
+
+    assert len(res.courses) == 1
+    assert res.courses[0].id == "c-cand-1"
+    assert res.courses[0].title == "Toán Nền Tảng"
+    assert res.next_page_token == "next-token-123"
+    usecase_mock.list_foundational_course_candidates.assert_called_once_with(
+        course_id="target-course-1",
+        search_query="toán",
+        page_size=10,
+        page_token="",
+        current_user_id="inst-1",
+    )
+
+
+@pytest.mark.asyncio
+async def test_handler_create_course_maps_value_error_to_invalid_argument():
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+
+    usecase_mock = AsyncMock()
+    usecase_mock.create_course.side_effect = ValueError(
+        "Khóa học không thể tự chọn chính mình làm môn nền tảng."
+    )
+
+    handler = CatalogHandler(usecase_mock)
+    instructor_user = CurrentUser(id="inst-1", email="inst@test.com", role="INSTRUCTOR")
+    handler._verify_instructor_permission = MagicMock(return_value=instructor_user)
+
+    req = pb.CreateCourseRequest(
+        title="ML",
+        slug="ml",
+        foundational_course_ids=["c-self"],
+    )
+    ctx = MagicMock()
+
+    with pytest.raises(ConnectError) as exc_info:
+        await handler.create_course(req, ctx)
+
+    assert exc_info.value.code == Code.INVALID_ARGUMENT
+    assert "tự chọn chính mình" in exc_info.value.message
+
+
+@pytest.mark.asyncio
+async def test_handler_update_course_maps_value_error_to_invalid_argument():
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+
+    usecase_mock = AsyncMock()
+    usecase_mock.update_course.side_effect = ValueError(
+        "Số lượng môn học nền tảng tối đa được phép là 10."
+    )
+
+    handler = CatalogHandler(usecase_mock)
+    instructor_user = CurrentUser(id="inst-1", email="inst@test.com", role="INSTRUCTOR")
+    handler._verify_instructor_permission = MagicMock(return_value=instructor_user)
+
+    req = pb.UpdateCourseRequest(
+        id="c-1",
+        title="ML",
+        foundational_course_ids=[f"fc-{i}" for i in range(11)],
+    )
+    ctx = MagicMock()
+
+    with pytest.raises(ConnectError) as exc_info:
+        await handler.update_course(req, ctx)
+
+    assert exc_info.value.code == Code.INVALID_ARGUMENT
+    assert "tối đa được phép là 10" in exc_info.value.message
