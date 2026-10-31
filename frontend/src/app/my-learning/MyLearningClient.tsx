@@ -276,12 +276,12 @@ export function MyLearningClient() {
                   {certificates.map((cert) => (
                     <div
                       key={cert.certificateId}
-                      className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between"
+                      className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between min-w-0"
                     >
                       <div className="p-6 rounded-t-3xl">
                         {/* Header Badge & Partner */}
                         <div className="flex items-center justify-between gap-3 mb-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
                             {cert.partnerLogoUrl ? (
                               <Image
                                 src={cert.partnerLogoUrl}
@@ -289,14 +289,14 @@ export function MyLearningClient() {
                                 width={28}
                                 height={28}
                                 unoptimized
-                                className="w-7 h-7 object-contain rounded"
+                                className="w-7 h-7 object-contain rounded shrink-0"
                               />
                             ) : (
-                              <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                              <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">
                                 {cert.partnerName.slice(0, 2).toUpperCase()}
                               </div>
                             )}
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate">
+                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate" title={cert.partnerName}>
                               {cert.partnerName}
                             </span>
                           </div>
