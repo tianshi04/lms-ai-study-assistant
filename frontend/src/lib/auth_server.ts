@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { cookies } from "next/headers";
 import { decodeJwtPayload, normalizeUserRole } from "@/lib/jwt";
 
@@ -30,6 +31,10 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
       userAvatar: null,
     };
   }
+
+  // Token expiry validation reads the current time (`Date.now()`), which Next.js
+  // (cacheComponents) rejects while prerendering. Opt into request-time rendering first.
+  await connection();
 
   const payload = decodeJwtPayload(token);
   if (!payload) {
