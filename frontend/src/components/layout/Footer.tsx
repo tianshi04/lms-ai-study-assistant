@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Award,
@@ -12,9 +13,15 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 
-const CURRENT_YEAR = new Date().getFullYear();
-
 export function Footer() {
+  // Read the current year on the client only: `new Date()` is an unstable value that
+  // Next.js (cacheComponents) rejects during prerendering.
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
+
   return (
     <footer className="border-t border-border bg-card text-card-foreground transition-colors mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -129,7 +136,7 @@ export function Footer() {
 
         {/* Bottom copyright line */}
         <div className="pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center text-xs text-muted-foreground gap-3">
-          <p>© {CURRENT_YEAR} LMS AI Study Assistant. Tất cả các quyền được bảo lưu.</p>
+          <p>© {currentYear ?? ""} LMS AI Study Assistant. Tất cả các quyền được bảo lưu.</p>
           <div className="flex items-center space-x-4 text-[11px]">
             <Link href="/privacy" className="hover:text-primary transition-colors">
               Chính sách Bảo mật
