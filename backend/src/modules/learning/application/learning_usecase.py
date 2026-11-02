@@ -93,11 +93,14 @@ class LearningUseCase:
                 user_id=user_id, course_id=course_id, overall_progress_percent=0.0
             )
 
-        valid_item_ids = set()
+        valid_item_ids: set[str] = set()
+        week_item_ids: dict[int, set[str]] = {}
         for week in course.week_modules:
+            w_items = week_item_ids.setdefault(week.week_number, set())
             for lesson in week.lessons:
                 for item in lesson.items:
                     valid_item_ids.add(item.id)
+                    w_items.add(item.id)
 
         if item_id not in valid_item_ids:
             logger.warning(
@@ -114,13 +117,18 @@ class LearningUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             result = await repo.mark_item_complete(
-                user_id, course_id, item_id, real_total_items, valid_item_ids
+                user_id,
+                course.id,
+                item_id,
+                real_total_items,
+                valid_item_ids,
+                week_item_ids,
             )
             logger.info(
                 "User %s marked item %s complete in course %s",
                 user_id,
                 item_id,
-                course_id,
+                course.id,
             )
             return result
 

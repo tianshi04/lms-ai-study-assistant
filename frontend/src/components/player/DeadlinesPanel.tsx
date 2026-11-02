@@ -61,7 +61,9 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
             className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between transition-all ${
               d.status === 2
                 ? "bg-destructive/10 border-destructive/30 text-destructive font-medium"
-                : "bg-surface-container-low/50 border-border/80 text-foreground hover:border-primary/40"
+                : d.status === 3
+                  ? "bg-success/10 border-success/30 text-foreground"
+                  : "bg-surface-container-low/50 border-border/80 text-foreground hover:border-primary/40"
             }`}
           >
             <div>
@@ -73,6 +75,10 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
             {d.status === 2 ? (
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
                 QUÁ HẠN
+              </span>
+            ) : d.status === 3 ? (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/15 text-success border border-success/30">
+                HOÀN THÀNH
               </span>
             ) : (
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/15 text-primary border border-primary/30">
