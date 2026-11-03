@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -49,6 +50,53 @@ class QuizSubmissionModel(Base):
     passed: Mapped[bool] = mapped_column(Boolean, nullable=False)
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    answers: Mapped[list["QuizSubmissionAnswerModel"]] = relationship(
+        "QuizSubmissionAnswerModel",
+        back_populates="submission",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+
+class QuizSubmissionAnswerModel(Base):
+    __tablename__ = "quiz_submission_answers"
+    __table_args__ = (
+        UniqueConstraint(
+            "submission_id", "order_index", name="uq_submission_answer_order"
+        ),
+        Index("ix_sub_answers_submission_topic", "submission_id", "topic"),
+        Index("ix_sub_answers_submission_correct", "submission_id", "is_correct"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    submission_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("quiz_submissions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    question_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    question_text: Mapped[str] = mapped_column(Text, nullable=False)
+    question_type: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="SINGLE_CHOICE"
+    )
+    topic: Mapped[str] = mapped_column(
+        String(128), nullable=False, default="Tổng quan", server_default="Tổng quan"
+    )
+    options_json: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
+    selected_option_indices: Mapped[list[int]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
+    is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    submission: Mapped["QuizSubmissionModel"] = relationship(
+        "QuizSubmissionModel", back_populates="answers"
+    )
 
 
 class QuizCooldownModel(Base):
@@ -174,6 +222,9 @@ class QuestionModel(Base):
     difficulty: Mapped[str] = mapped_column(String(16), nullable=False, default="EASY")
     text: Mapped[str] = mapped_column(Text, nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    topic: Mapped[str] = mapped_column(
+        String(128), nullable=False, default="Tổng quan", server_default="Tổng quan"
+    )
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
 
     bank: Mapped["QuestionBankModel"] = relationship(

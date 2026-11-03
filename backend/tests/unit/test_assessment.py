@@ -25,6 +25,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     def __init__(self) -> None:
         self.honor_codes: dict[str, HonorCodeAgreement] = {}
         self.quiz_submissions: list[QuizSubmission] = []
+        self.submission_answers: list[Any] = []
         self.cooldowns: dict[str, QuizCooldown] = {}
         self.active_sessions: dict[str, Any] = {}
         self.lab_submissions: list[LabSubmission] = []
@@ -53,6 +54,27 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             for s in self.quiz_submissions
             if s.user_id == user_id and s.item_id == item_id
         ]
+
+    async def get_quiz_submission_by_id(
+        self, submission_id: str
+    ) -> QuizSubmission | None:
+        return next((s for s in self.quiz_submissions if s.id == submission_id), None)
+
+    async def save_quiz_submission_answers(self, answers: list[Any]) -> None:
+        self.submission_answers.extend(answers)
+
+    async def get_quiz_submission_answers(self, submission_id: str) -> list[Any]:
+        return [a for a in self.submission_answers if a.submission_id == submission_id]
+
+    async def get_quiz_submission_answers_for_user_item(
+        self, user_id: str, item_id: str
+    ) -> list[Any]:
+        sub_ids = {
+            s.id
+            for s in self.quiz_submissions
+            if s.user_id == user_id and s.item_id == item_id
+        }
+        return [a for a in self.submission_answers if a.submission_id in sub_ids]
 
     async def get_quiz_cooldown(
         self, user_id: str, item_id: str
@@ -165,6 +187,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         difficulty: str,
         explanation: str,
         options_data: list[dict],
+        topic: str = "Tổng quan",
     ):
         from src.modules.assessment.domain import Question
 
@@ -188,6 +211,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         difficulty: str,
         explanation: str,
         options_data: list[dict],
+        topic: str = "Tổng quan",
     ):
         from src.modules.assessment.domain import Question, QuestionOption
 

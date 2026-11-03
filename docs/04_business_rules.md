@@ -125,6 +125,22 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_QUIZ_003 (Quy tắc Quản lý Session Đếm ngược & Auto-submit):**
   * Mọi bài thi Graded Quiz có giới hạn thời gian (Timed Quiz) được quản lý thời gian đếm ngược trực tiếp từ phía Server (Server-side Session Timer) tính từ mốc bấm nút "Start Quiz".
   * Việc tải lại trang (F5) hoặc tạm đóng trình duyệt không làm dừng đồng hồ đếm ngược. Khi hết giờ đếm ngược, Server tự động đóng phiên và thực hiện chấm điểm (Auto-submit on timeout) với các câu trả lời hiện tại.
+
+* **BR_QUIZ_004 (Lịch sử Bài làm Chi tiết, Snapshot Câu hỏi, Che Đáp án Động & Chẩn đoán Lỗ hổng Kiến thức - Detailed Attempt History, Immutability Snapshot, Adaptive Answer Masking & Topic Mastery Diagnostics):**
+  * **Snapshot Bài làm Bất biến (Immutability Snapshotting):** Mỗi lần nộp bài Quiz, hệ thống lưu vết chi tiết từng câu hỏi vào bảng `quiz_submission_answers` bao gồm: `question_id`, `question_text`, `question_type`, `topic`, `options_json` (snapshot đầy đủ các phương án sau khi xáo trộn), `selected_option_indices` (phương án học viên chọn), `is_correct`, `explanation` và `order_index`. Lịch sử bài làm hoàn toàn độc lập và không bị thay đổi kể cả khi ngân hàng câu hỏi bị cập nhật sau này.
+  * **Chính sách Che Đáp án Động (Adaptive Answer Masking - Academic Integrity):**
+    * *Practice Quiz:* Học viên luôn được mở khóa 100% đáp án đúng và lời giải chi tiết ngay sau khi nộp để củng cố kiến thức.
+    * *Graded Quiz:* Để ngăn chặn tuyệt đối tình trạng "hy sinh lượt làm bài đầu tiên để lấy toàn bộ đáp án rồi thi lại đạt 100%", hệ thống áp dụng cơ chế Masking:
+      * Chừng nào học viên **chưa đạt điểm Pass (`has_passed == False`)**, thì toàn bộ đáp án đúng (`correct_option_indices`) và lời giải chi tiết (`explanation`) **BẮT BUỘC PHẢI BỊ ẨN** đối với học viên (`is_answer_masked = True`), kể cả khi đang trong thời gian Cooldown hoặc đã hết lượt của đợt thi hiện tại. Học viên chỉ được xem câu nào đúng/sai và chẩn đoán năng lực theo chủ đề để định hướng ôn tập.
+      * Hệ thống **chỉ mở khóa đầy đủ đáp án và lời giải** khi: (1) Học viên ĐÃ ĐẠT bài thi (`has_passed == True`) HOẶC (2) Người xem là Giảng viên / Trợ giảng / Quản trị viên (`is_staff == True`).
+  * **Chẩn đoán Lỗ hổng Kiến thức (Knowledge Gap & Topic Mastery Diagnostics):**
+    * Mỗi câu hỏi được gán một chủ đề kiến thức (`topic`, mặc định "Tổng quan").
+    * Hệ thống tự động tính tỷ lệ nắm vững (`mastery_percent`) theo từng chủ đề dựa trên công thức $Score_{topic} = \frac{\text{Correct}}{\text{Total}} \times 100\%$.
+    * Phân loại 3 cấp độ:
+      * $\ge 80.0\%$: `TOPIC_MASTERY_LEVEL_MASTERED` (Đã vững kiến thức - xanh lá).
+      * $50.0\% \le \text{Score} < 80.0\%$: `TOPIC_MASTERY_LEVEL_NEEDS_PRACTICE` (Cần củng cố thêm - vàng cam).
+      * $< 50.0\%$: `TOPIC_MASTERY_LEVEL_WEAK_GAP` (Lỗ hổng trọng tâm - đỏ).
+  * **Trải nghiệm Single-Container Master-Detail Drawer/Dialog:** Cung cấp giao diện tra cứu lịch sử và xem chi tiết bài nộp trong một Dialog hợp nhất, kèm bộ lọc "Chỉ câu sai" và "Lọc theo chủ đề", hỗ trợ rèn luyện thích ứng (Adaptive Learning).
 * **BR_AUTOGRADE_001 (Quy định Sandbox Auto-Grader & Bảo mật Test Case Ẩn):**
   * **Môi trường Thực thi Cách ly (Sandbox Execution):** Mỗi bài nộp lập trình gửi tới Auto-Grader chạy trong môi trường Sandbox cách ly với Timeout mặc định 5.0 giây (tối đa 30.0 giây) và Memory Limit = 512MB.
   * **Ràng buộc Tạo bài Lab (Lab Creation Validation):** Mỗi bài Auto-Graded Lab bắt buộc có **tối thiểu 3 Test Cases** mới được phép lưu. Trình Course Builder hỗ trợ giao diện tạo/sửa/xóa Test Cases trực quan (Visual Test Case Builder) kết hợp soạn thảo Mô tả đề bài dạng Markdown (hỗ trợ Live Preview 2 cột).

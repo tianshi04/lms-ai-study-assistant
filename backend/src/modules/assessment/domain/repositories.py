@@ -12,6 +12,7 @@ from src.modules.assessment.domain.entities import (
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
+    QuizSubmissionAnswer,
 )
 
 
@@ -34,6 +35,30 @@ class AssessmentRepositoryInterface(ABC):
     async def get_quiz_submissions(
         self, user_id: str, item_id: str
     ) -> list[QuizSubmission]:
+        pass
+
+    @abstractmethod
+    async def get_quiz_submission_by_id(
+        self, submission_id: str
+    ) -> QuizSubmission | None:
+        pass
+
+    @abstractmethod
+    async def save_quiz_submission_answers(
+        self, answers: list[QuizSubmissionAnswer]
+    ) -> None:
+        pass
+
+    @abstractmethod
+    async def get_quiz_submission_answers(
+        self, submission_id: str
+    ) -> list[QuizSubmissionAnswer]:
+        pass
+
+    @abstractmethod
+    async def get_quiz_submission_answers_for_user_item(
+        self, user_id: str, item_id: str
+    ) -> list[QuizSubmissionAnswer]:
         pass
 
     @abstractmethod
@@ -131,6 +156,7 @@ class AssessmentRepositoryInterface(ABC):
         difficulty: str,
         explanation: str,
         options_data: list[dict],
+        topic: str = "Tổng quan",
     ) -> Question:
         pass
 
@@ -151,6 +177,7 @@ class AssessmentRepositoryInterface(ABC):
         difficulty: str,
         explanation: str,
         options_data: list[dict],
+        topic: str = "Tổng quan",
     ) -> Question:
         pass
 

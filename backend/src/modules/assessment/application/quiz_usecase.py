@@ -27,7 +27,9 @@ from src.modules.assessment.domain import (
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
+    QuizSubmissionAnswer,
     QuizSubmittedDomainEvent,
+    calculate_topic_mastery,
     is_graded_quiz_item,
 )
 from src.shared.access_policy import AccessPolicyService
@@ -186,6 +188,7 @@ class QuizUseCase(BaseAssessmentUseCase):
                     "explanation": q.explanation or "",
                     "question_type": q.question_type,
                     "difficulty": q.difficulty,
+                    "topic": getattr(q, "topic", "Tổng quan") or "Tổng quan",
                 }
             )
 
@@ -529,6 +532,43 @@ class QuizUseCase(BaseAssessmentUseCase):
                 )
                 await repo.save_quiz_submission(submission)
 
+                # Save detailed snapshot answers for history & gap analysis
+                submission_answers: list[QuizSubmissionAnswer] = []
+                for idx, q in enumerate(generated_qs):
+                    corr_indices = list(q.get("shuffled_correct_indices", []))
+                    corr_indices_set = set(corr_indices)
+                    user_ans_list = answers[idx] if idx < len(answers) else []
+                    user_ans_set = set(user_ans_list)
+                    is_corr = bool(user_ans_set and user_ans_set == corr_indices_set)
+
+                    raw_options = q.get("options", [])
+                    opts_payload = [
+                        {
+                            "index": opt_i,
+                            "text": opt_t,
+                            "is_correct": opt_i in corr_indices_set,
+                        }
+                        for opt_i, opt_t in enumerate(raw_options)
+                    ]
+
+                    clean_exp = _clean_explanation(q.get("explanation"))
+                    submission_answers.append(
+                        QuizSubmissionAnswer(
+                            id=f"qsa-{uuid7().hex}",
+                            submission_id=submission_id,
+                            question_id=q.get("question_id", f"q-{idx}"),
+                            question_text=q.get("text", ""),
+                            question_type=q.get("question_type", "SINGLE_CHOICE"),
+                            options_json=opts_payload,
+                            selected_option_indices=user_ans_list,
+                            is_correct=is_corr,
+                            topic=q.get("topic", "Tổng quan") or "Tổng quan",
+                            explanation=clean_exp,
+                            order_index=idx,
+                        )
+                    )
+                await repo.save_quiz_submission_answers(submission_answers)
+
                 # Trigger domain event
                 target_course_id = ""
                 try:
@@ -713,3 +753,191 @@ class QuizUseCase(BaseAssessmentUseCase):
                 explanation=explanation,
                 options_data=options_data,
             )
+
+    async def get_quiz_attempt_history(
+        self, user_id: str, item_id: str
+    ) -> dict[str, Any]:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            submissions = await repo.get_quiz_submissions(user_id, item_id)
+            matrix = await self._get_quiz_matrix(repo, item_id)
+
+            max_attempts = (
+                matrix.max_attempts
+                if (matrix and matrix.max_attempts > 0)
+                else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+            )
+            passing_threshold = (
+                matrix.passing_threshold_percent
+                if (matrix and matrix.passing_threshold_percent > 0)
+                else DEFAULT_PASSING_THRESHOLD_PERCENT
+            )
+            time_limit = (
+                matrix.time_limit_minutes
+                if (matrix and matrix.time_limit_minutes > 0)
+                else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+            )
+
+            now = datetime.now(UTC)
+            item_type_str = await repo.get_item_type(item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
+
+            cooldown_sec = 0
+            has_passed = any(s.passed for s in submissions) if submissions else False
+            highest_score = max((s.score_percent for s in submissions), default=0.0)
+
+            if is_graded:
+                cooldown = await repo.get_quiz_cooldown(user_id, item_id)
+                failed_count = cooldown.failed_attempts_count if cooldown else 0
+                attempts_left = (
+                    max(0, max_attempts - failed_count)
+                    if not has_passed
+                    else max_attempts
+                )
+                if (
+                    cooldown
+                    and cooldown.is_in_cooldown(now)
+                    and cooldown.cooldown_until
+                ):
+                    try:
+                        until_dt = datetime.fromisoformat(cooldown.cooldown_until)
+                        if until_dt.tzinfo is None:
+                            until_dt = until_dt.replace(tzinfo=UTC)
+                        cooldown_sec = max(0, int((until_dt - now).total_seconds()))
+                    except (ValueError, TypeError):
+                        cooldown_sec = 0
+            else:
+                attempts_left = UNLIMITED_ATTEMPTS_SENTINEL
+
+            # Fetch all answers for aggregate topic mastery
+            all_user_answers = await repo.get_quiz_submission_answers_for_user_item(
+                user_id, item_id
+            )
+            aggregate_mastery = calculate_topic_mastery(all_user_answers)
+
+            # Group answers by submission_id to avoid N+1 queries
+            answers_by_sub: dict[str, list[QuizSubmissionAnswer]] = {}
+            for ans in all_user_answers:
+                answers_by_sub.setdefault(ans.submission_id, []).append(ans)
+
+            # Build summaries
+            attempts_summary: list[dict[str, Any]] = []
+            for sub in sorted(
+                submissions, key=lambda s: s.attempt_number, reverse=True
+            ):
+                sub_answers = answers_by_sub.get(sub.id, [])
+                total_q = len(sub_answers)
+                correct_q = sum(1 for a in sub_answers if a.is_correct)
+
+                attempts_summary.append(
+                    {
+                        "submission_id": sub.id,
+                        "attempt_number": sub.attempt_number,
+                        "score_percent": sub.score_percent,
+                        "passed": sub.passed,
+                        "total_questions": total_q,
+                        "correct_count": correct_q,
+                        "submitted_at": sub.created_at,
+                    }
+                )
+
+            return {
+                "attempts": attempts_summary,
+                "aggregate_topic_mastery": [
+                    {
+                        "topic": m.topic,
+                        "total_questions": m.total_questions,
+                        "correct_questions": m.correct_questions,
+                        "mastery_percent": m.mastery_percent,
+                        "mastery_level": m.mastery_level,
+                        "recommendation": m.recommendation,
+                    }
+                    for m in aggregate_mastery
+                ],
+                "highest_score_percent": highest_score,
+                "has_passed": has_passed,
+                "attempts_left": attempts_left,
+                "max_attempts": max_attempts if is_graded else 999,
+                "cooldown_seconds_left": cooldown_sec,
+                "passing_threshold_percent": passing_threshold,
+                "time_limit_minutes": time_limit,
+            }
+
+    async def get_quiz_attempt_detail(
+        self, user_id: str, submission_id: str, is_staff: bool = False
+    ) -> dict[str, Any]:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            submission = await repo.get_quiz_submission_by_id(submission_id)
+            if not submission:
+                raise ValueError("Không tìm thấy bài nộp.")
+
+            # Layer 3: ReBAC IDOR protection
+            if submission.user_id != user_id and not is_staff:
+                raise PermissionError(
+                    "Bạn không có quyền xem chi tiết bài làm của học viên khác."
+                )
+
+            answers = await repo.get_quiz_submission_answers(submission_id)
+            topic_mastery = calculate_topic_mastery(answers)
+
+            item_type_str = await repo.get_item_type(submission.item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
+
+            # Adaptive Answer Masking (Academic Integrity)
+            # If user has not passed, correct answers and explanations MUST REMAIN MASKED
+            # even when in cooldown or out of attempts for current batch, preventing sacrifice exploits.
+            is_answer_masked = False
+            if is_graded and not is_staff:
+                all_subs = await repo.get_quiz_submissions(user_id, submission.item_id)
+                has_passed = any(s.passed for s in all_subs)
+                if not has_passed:
+                    is_answer_masked = True
+
+            answers_detail: list[dict[str, Any]] = []
+            for a in answers:
+                opts = [o["text"] for o in a.options_json] if a.options_json else []
+                correct_indices = (
+                    [o["index"] for o in a.options_json if o.get("is_correct")]
+                    if (a.options_json and not is_answer_masked)
+                    else []
+                )
+                explanation_text = a.explanation if not is_answer_masked else ""
+
+                answers_detail.append(
+                    {
+                        "question_id": a.question_id,
+                        "question_text": a.question_text,
+                        "question_type": a.question_type,
+                        "topic": a.topic,
+                        "options": opts,
+                        "selected_option_indices": a.selected_option_indices,
+                        "correct_option_indices": correct_indices,
+                        "is_correct": a.is_correct,
+                        "explanation": explanation_text,
+                        "order_index": a.order_index,
+                        "is_answer_masked": is_answer_masked,
+                    }
+                )
+
+            return {
+                "submission_id": submission.id,
+                "item_id": submission.item_id,
+                "attempt_number": submission.attempt_number,
+                "score_percent": submission.score_percent,
+                "passed": submission.passed,
+                "submitted_at": submission.created_at,
+                "answers": answers_detail,
+                "topic_mastery": [
+                    {
+                        "topic": m.topic,
+                        "total_questions": m.total_questions,
+                        "correct_questions": m.correct_questions,
+                        "mastery_percent": m.mastery_percent,
+                        "mastery_level": m.mastery_level,
+                        "recommendation": m.recommendation,
+                    }
+                    for m in topic_mastery
+                ],
+                "is_answer_masked": is_answer_masked,
+            }

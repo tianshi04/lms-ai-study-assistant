@@ -179,7 +179,6 @@ class AssessmentHandler(AssessmentService):
         request: pb.SubmitGradeAppealRequest,
         ctx: RequestContext[pb.SubmitGradeAppealRequest, pb.SubmitGradeAppealResponse],
     ) -> pb.SubmitGradeAppealResponse:
-
         current_user = require_current_user()
         try:
             success, status = await self.use_case.submit_grade_appeal(
@@ -505,6 +504,7 @@ class AssessmentHandler(AssessmentService):
                     text=q["text"],
                     options=pb_options,
                     question_type=q.get("question_type", "SINGLE_CHOICE"),
+                    topic=q.get("topic", "Tổng quan"),
                 )
             )
 
@@ -536,4 +536,116 @@ class AssessmentHandler(AssessmentService):
             cooldown_hours=res.get("cooldown_hours", 8),
             has_previous_result=res.get("has_previous_result", False),
             previous_result=pb_prev_result,
+        )
+
+    async def get_quiz_attempt_history(
+        self,
+        request: pb.GetQuizAttemptHistoryRequest,
+        ctx: RequestContext[
+            pb.GetQuizAttemptHistoryRequest, pb.GetQuizAttemptHistoryResponse
+        ],
+    ) -> pb.GetQuizAttemptHistoryResponse:
+        current_user = require_current_user()
+        res = await self.use_case.get_quiz_attempt_history(
+            user_id=current_user.id,
+            item_id=request.item_id,
+        )
+
+        pb_attempts = [
+            pb.QuizAttemptSummary(
+                submission_id=att["submission_id"],
+                attempt_number=att["attempt_number"],
+                score_percent=att["score_percent"],
+                passed=att["passed"],
+                total_questions=att["total_questions"],
+                correct_count=att["correct_count"],
+                submitted_at=att["submitted_at"],
+            )
+            for att in res["attempts"]
+        ]
+
+        pb_mastery = [
+            pb.TopicMastery(
+                topic=tm["topic"],
+                total_questions=tm["total_questions"],
+                correct_questions=tm["correct_questions"],
+                mastery_percent=tm["mastery_percent"],
+                mastery_level=tm["mastery_level"],
+                recommendation=tm["recommendation"],
+            )
+            for tm in res["aggregate_topic_mastery"]
+        ]
+
+        return pb.GetQuizAttemptHistoryResponse(
+            attempts=pb_attempts,
+            aggregate_topic_mastery=pb_mastery,
+            highest_score_percent=res["highest_score_percent"],
+            has_passed=res["has_passed"],
+            attempts_left=res["attempts_left"],
+            max_attempts=res["max_attempts"],
+            cooldown_seconds_left=res["cooldown_seconds_left"],
+            passing_threshold_percent=res["passing_threshold_percent"],
+            time_limit_minutes=res["time_limit_minutes"],
+        )
+
+    async def get_quiz_attempt_detail(
+        self,
+        request: pb.GetQuizAttemptDetailRequest,
+        ctx: RequestContext[
+            pb.GetQuizAttemptDetailRequest, pb.GetQuizAttemptDetailResponse
+        ],
+    ) -> pb.GetQuizAttemptDetailResponse:
+        current_user = require_current_user()
+        user_role = str(getattr(current_user, "role", "")).upper()
+        is_staff = user_role in ("ADMIN", "STAFF", "INSTRUCTOR")
+        try:
+            res = await self.use_case.get_quiz_attempt_detail(
+                user_id=current_user.id,
+                submission_id=request.submission_id,
+                is_staff=is_staff,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+        pb_answers = [
+            pb.QuizAttemptAnswerDetail(
+                question_id=ans["question_id"],
+                question_text=ans["question_text"],
+                question_type=ans["question_type"],
+                topic=ans["topic"],
+                options=ans["options"],
+                selected_option_indices=ans["selected_option_indices"],
+                correct_option_indices=ans["correct_option_indices"],
+                is_correct=ans["is_correct"],
+                explanation=ans["explanation"],
+                order_index=ans["order_index"],
+                is_answer_masked=ans["is_answer_masked"],
+            )
+            for ans in res["answers"]
+        ]
+
+        pb_mastery = [
+            pb.TopicMastery(
+                topic=tm["topic"],
+                total_questions=tm["total_questions"],
+                correct_questions=tm["correct_questions"],
+                mastery_percent=tm["mastery_percent"],
+                mastery_level=tm["mastery_level"],
+                recommendation=tm["recommendation"],
+            )
+            for tm in res["topic_mastery"]
+        ]
+
+        return pb.GetQuizAttemptDetailResponse(
+            submission_id=res["submission_id"],
+            item_id=res["item_id"],
+            attempt_number=res["attempt_number"],
+            score_percent=res["score_percent"],
+            passed=res["passed"],
+            submitted_at=res["submitted_at"],
+            answers=pb_answers,
+            topic_mastery=pb_mastery,
+            is_answer_masked=res["is_answer_masked"],
         )
