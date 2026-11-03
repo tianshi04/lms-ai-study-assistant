@@ -83,6 +83,21 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         now_str = datetime.now(UTC).isoformat()
 
         if not model:
+            if not current_item_id:
+                # Pure query: return empty progress domain entity without mutating database
+                return LearningProgress(
+                    user_id=user_id,
+                    course_id=course_id,
+                    completed_item_ids=[],
+                    overall_progress_percent=0.0,
+                    weekly_deadlines=[],
+                    last_reset_at=None,
+                    enrolled_at="",
+                    completed_at=None,
+                    last_accessed_at="",
+                    last_accessed_item_id=None,
+                )
+
             # Atomic PostgreSQL UPSERT to prevent race conditions without exception overhead
             insert_stmt = (
                 pg_insert(LearningProgressModel)
@@ -123,10 +138,10 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                     res = await self.session.execute(stmt)
                     model = res.scalar_one()
         else:
-            model.last_accessed_at = now_str
             if current_item_id:
+                model.last_accessed_at = now_str
                 model.last_accessed_item_id = current_item_id
-            await self.session.commit()
+                await self.session.commit()
 
         return _model_to_domain_progress(model)
 

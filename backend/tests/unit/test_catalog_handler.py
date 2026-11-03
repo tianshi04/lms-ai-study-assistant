@@ -1,6 +1,8 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from connectrpc.code import Code
+from connectrpc.errors import ConnectError
 
 from src.gen.catalog.v1 import catalog_pb as pb
 from src.modules.catalog.presentation.catalog_handler import CatalogHandler
@@ -594,6 +596,11 @@ async def test_check_course_bookmarked():
         ctx = MagicMock()
         res = await handler.check_course_bookmarked(req, ctx)
         assert res.is_bookmarked is True
+
+        empty_req = pb.CheckCourseBookmarkedRequest(course_id="")
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.check_course_bookmarked(empty_req, ctx)
+        assert exc_info.value.code == Code.INVALID_ARGUMENT
     finally:
         set_current_user(None)
 

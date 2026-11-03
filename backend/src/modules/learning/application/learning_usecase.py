@@ -44,9 +44,7 @@ class LearningUseCase:
     ) -> LearningProgress:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            if current_item_id is not None:
-                return await repo.get_progress(user_id, course_id, current_item_id)
-            return await repo.get_progress(user_id, course_id)
+            return await repo.get_progress(user_id, course_id, current_item_id)
 
     async def reset_deadlines(
         self, user_id: str, course_id: str
@@ -66,21 +64,13 @@ class LearningUseCase:
     ) -> PersonalNote:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            if timestamp_seconds:
-                return await repo.save_personal_note(
-                    user_id,
-                    course_id,
-                    item_id,
-                    highlighted_text,
-                    note_comment,
-                    timestamp_seconds,
-                )
             return await repo.save_personal_note(
                 user_id,
                 course_id,
                 item_id,
                 highlighted_text,
                 note_comment,
+                timestamp_seconds,
             )
 
     async def list_personal_notes(

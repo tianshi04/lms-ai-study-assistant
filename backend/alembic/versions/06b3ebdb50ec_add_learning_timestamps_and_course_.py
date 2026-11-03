@@ -42,12 +42,6 @@ def upgrade() -> None:
         ["course_id"],
         unique=False,
     )
-    op.create_index(
-        op.f("ix_course_bookmarks_user_id"),
-        "course_bookmarks",
-        ["user_id"],
-        unique=False,
-    )
     op.add_column(
         "learning_progresses",
         sa.Column("last_accessed_at", sa.String(length=64), nullable=True),
@@ -90,7 +84,6 @@ def downgrade() -> None:
     op.drop_column("learning_progresses", "enrolled_at")
     op.drop_column("learning_progresses", "last_accessed_item_id")
     op.drop_column("learning_progresses", "last_accessed_at")
-    op.drop_index(op.f("ix_course_bookmarks_user_id"), table_name="course_bookmarks")
     op.drop_index(op.f("ix_course_bookmarks_course_id"), table_name="course_bookmarks")
     op.drop_table("course_bookmarks")
     # ### end Alembic commands ###

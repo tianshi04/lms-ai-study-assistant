@@ -34,6 +34,40 @@ const TAB_TO_PARAM: Record<Tab, string> = {
   BOOKMARKS: "bookmarks",
 };
 
+function TabSkeletonGrid() {
+  return (
+    <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[1, 2, 3, 4, 5, 6].map((n) => (
+        <div
+          key={n}
+          className="bg-card border border-border rounded-2xl p-6 animate-pulse shadow-sm flex flex-col justify-between h-64"
+        >
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <div className="h-3 bg-muted rounded w-1/4" />
+              <div className="h-4 bg-muted rounded w-1/5" />
+            </div>
+            <div className="h-6 bg-muted rounded w-3/4 mb-3" />
+            <div className="h-4 bg-muted rounded w-1/2 mb-6" />
+          </div>
+          <div>
+            <div className="h-2 bg-muted rounded mb-4" />
+            <div className="h-10 bg-muted rounded-xl" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TabErrorMessage({ message }: { message: string }) {
+  return (
+    <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
+      <p className="font-semibold">{message}</p>
+    </div>
+  );
+}
+
 export function MyLearningClient() {
   const { isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
@@ -71,9 +105,6 @@ export function MyLearningClient() {
 
   const unbookmarkMutation = useUnbookmarkCourseMutation();
   const toast = useToast();
-
-  const loading = loadingCourses || loadingCertificates || loadingBookmarks;
-  const error = coursesError?.message || certsError?.message || bookmarksError?.message || null;
 
   const handleRemoveBookmark = async (courseId: string, courseTitle?: string) => {
     try {
@@ -123,355 +154,330 @@ export function MyLearningClient() {
           </Tabs.Tab>
         </Tabs.List>
 
-        {/* Content Section */}
-        {loading ? (
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <div
-                key={n}
-                className="bg-card border border-border rounded-2xl p-6 animate-pulse shadow-sm flex flex-col justify-between h-64"
+        {/* Tab Panel: IN_PROGRESS */}
+        <Tabs.Panel value="IN_PROGRESS">
+          {loadingCourses ? (
+            <TabSkeletonGrid />
+          ) : coursesError ? (
+            <TabErrorMessage message={coursesError.message} />
+          ) : inProgressCourses.length === 0 ? (
+            <div className="py-16 text-center text-muted-foreground">
+              <BookOpen
+                className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
+                aria-hidden="true"
+              />
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                {"Không có khóa học nào đang tiến hành"}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                {
+                  "Bạn chưa ghi danh khóa học nào hoặc đã hoàn thành tất cả. Khám phá các khóa học mới ngay!"
+                }
+              </p>
+              <Link
+                href="/courses"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
               >
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="h-3 bg-muted rounded w-1/4" />
-                    <div className="h-4 bg-muted rounded w-1/5" />
+                {"Khám phá danh mục"}
+              </Link>
+            </div>
+          ) : (
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
+              {inProgressCourses.map((course) => (
+                <div
+                  key={course.courseId}
+                  className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
+                >
+                  <div className="p-6 flex-1 rounded-t-2xl">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        {course.partnerName}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/courses/${course.courseId}`}
+                      prefetch={true}
+                      className="block group-hover:text-primary transition-colors"
+                    >
+                      <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
+                        {course.courseTitle}
+                      </h3>
+                    </Link>
+
+                    <div className="mb-2">
+                      <Progress.Linear value={course.progressPercent} showLabel label="Tiến độ" />
+                    </div>
                   </div>
-                  <div className="h-6 bg-muted rounded w-3/4 mb-3" />
-                  <div className="h-4 bg-muted rounded w-1/2 mb-6" />
-                </div>
-                <div>
-                  <div className="h-2 bg-muted rounded mb-4" />
-                  <div className="h-10 bg-muted rounded-xl" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
-            <p className="font-semibold">{error}</p>
-          </div>
-        ) : (
-          <>
-            {/* Tab Panel: IN_PROGRESS */}
-            <Tabs.Panel value="IN_PROGRESS">
-              {inProgressCourses.length === 0 ? (
-                <div className="py-16 text-center text-muted-foreground">
-                  <BookOpen
-                    className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
-                    aria-hidden="true"
-                  />
-                  <h3 className="text-lg font-bold text-foreground mb-2">
-                    {"Không có khóa học nào đang tiến hành"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {
-                      "Bạn chưa ghi danh khóa học nào hoặc đã hoàn thành tất cả. Khám phá các khóa học mới ngay!"
-                    }
-                  </p>
-                  <Link
-                    href="/courses"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
-                  >
-                    {"Khám phá danh mục"}
-                  </Link>
-                </div>
-              ) : (
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
-                  {inProgressCourses.map((course) => (
-                    <div
-                      key={course.courseId}
-                      className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
-                    >
-                      <div className="p-6 flex-1 rounded-t-2xl">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            {course.partnerName}
-                          </span>
-                        </div>
-                        <Link
-                          href={`/courses/${course.courseId}`}
-                          prefetch={true}
-                          className="block group-hover:text-primary transition-colors"
-                        >
-                          <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
-                            {course.courseTitle}
-                          </h3>
-                        </Link>
 
-                        <div className="mb-2">
-                          <Progress.Linear
-                            value={course.progressPercent}
-                            showLabel
-                            label="Tiến độ"
+                  <div className="p-4 border-t border-border bg-muted/40 rounded-b-2xl">
+                    <Link
+                      href={
+                        course.lastAccessedItemId
+                          ? `/learn/${course.courseId}?item=${course.lastAccessedItemId}`
+                          : `/learn/${course.courseId}`
+                      }
+                      prefetch={true}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
+                    >
+                      {course.status === "NOT_STARTED" ? "Bắt đầu học" : "Tiếp tục học"}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Tabs.Panel>
+
+        {/* Tab Panel: COMPLETED */}
+        <Tabs.Panel value="COMPLETED">
+          {loadingCourses ? (
+            <TabSkeletonGrid />
+          ) : coursesError ? (
+            <TabErrorMessage message={coursesError.message} />
+          ) : completedCourses.length === 0 ? (
+            <div className="py-16 text-center text-muted-foreground">
+              <CheckCircle2
+                className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
+                aria-hidden="true"
+              />
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                {"Chưa có khóa học nào hoàn thành"}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                {"Hãy tiếp tục hoàn thành các bài học và kiểm tra để nhận chứng chỉ!"}
+              </p>
+            </div>
+          ) : (
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
+              {completedCourses.map((course) => (
+                <div
+                  key={course.courseId}
+                  className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
+                >
+                  <div className="p-6 flex-1 rounded-t-2xl">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        {course.partnerName}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/courses/${course.courseId}`}
+                      prefetch={true}
+                      className="block group-hover:text-primary transition-colors"
+                    >
+                      <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
+                        {course.courseTitle}
+                      </h3>
+                    </Link>
+
+                    <div className="mb-2">
+                      <Progress.Linear value={course.progressPercent} showLabel label="Tiến độ" />
+                    </div>
+                  </div>
+
+                  <div className="p-4 border-t border-border bg-muted/40 rounded-b-2xl">
+                    <Link
+                      href={`/learn/${course.courseId}`}
+                      prefetch={true}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
+                    >
+                      {"Đánh giá khóa học"}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Tabs.Panel>
+
+        {/* Tab Panel: CERTIFICATES */}
+        <Tabs.Panel value="CERTIFICATES">
+          {loadingCertificates ? (
+            <TabSkeletonGrid />
+          ) : certsError ? (
+            <TabErrorMessage message={certsError.message} />
+          ) : certificates.length === 0 ? (
+            <div className="py-16 text-center text-muted-foreground">
+              <Award
+                className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
+                aria-hidden="true"
+              />
+              <h3 className="text-lg font-bold text-foreground mb-2">{"Chưa có chứng chỉ nào"}</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                {"Bạn chưa đạt được chứng chỉ nào. Hãy hoàn thành khóa học để nhận chứng chỉ."}
+              </p>
+              <Link
+                href="/courses"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
+              >
+                {"Khám phá khóa học"}
+              </Link>
+            </div>
+          ) : (
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
+              {certificates.map((cert) => (
+                <div
+                  key={cert.certificateId}
+                  className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between"
+                >
+                  <div className="p-6 rounded-t-3xl">
+                    {/* Header Badge & Partner */}
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        {cert.partnerLogoUrl ? (
+                          <Image
+                            src={cert.partnerLogoUrl}
+                            alt={cert.partnerName}
+                            width={28}
+                            height={28}
+                            unoptimized
+                            className="w-7 h-7 object-contain rounded"
                           />
-                        </div>
+                        ) : (
+                          <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                            {cert.partnerName.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate">
+                          {cert.partnerName}
+                        </span>
                       </div>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20 shrink-0">
+                        <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                        Verified
+                      </span>
+                    </div>
 
-                      <div className="p-4 border-t border-border bg-muted/40 rounded-b-2xl">
-                        <Link
-                          href={
-                            course.lastAccessedItemId
-                              ? `/learn/${course.courseId}?item=${course.lastAccessedItemId}`
-                              : `/learn/${course.courseId}`
-                          }
-                          prefetch={true}
-                          className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
-                        >
-                          {course.status === "NOT_STARTED" ? "Bắt đầu học" : "Tiếp tục học"}
-                        </Link>
+                    {/* Course Title */}
+                    <h3 className="text-lg font-bold text-foreground leading-snug min-w-0 line-clamp-2 mb-4 group-hover:text-primary transition-colors">
+                      {cert.courseTitle}
+                    </h3>
+
+                    {/* Details */}
+                    <div className="space-y-2 text-xs text-muted-foreground bg-muted p-3.5 rounded-2xl border border-border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{"Cấp ngày"}:</span>
+                        <span className="font-semibold text-foreground">{cert.issueDate}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{"Mã chứng chỉ"}:</span>
+                        <span className="font-mono text-[11px] font-bold text-primary min-w-0 truncate max-w-[150px]">
+                          {cert.certificateId}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </Tabs.Panel>
+                  </div>
 
-            {/* Tab Panel: COMPLETED */}
-            <Tabs.Panel value="COMPLETED">
-              {completedCourses.length === 0 ? (
-                <div className="py-16 text-center text-muted-foreground">
-                  <CheckCircle2
-                    className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
-                    aria-hidden="true"
-                  />
-                  <h3 className="text-lg font-bold text-foreground mb-2">
-                    {"Chưa có khóa học nào hoàn thành"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {"Hãy tiếp tục hoàn thành các bài học và kiểm tra để nhận chứng chỉ!"}
-                  </p>
-                </div>
-              ) : (
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
-                  {completedCourses.map((course) => (
-                    <div
-                      key={course.courseId}
-                      className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
+                  {/* Footer Actions */}
+                  <div className="p-4 border-t border-border bg-muted/50 flex items-center gap-2 rounded-b-3xl">
+                    <Link
+                      href={cert.verificationUrl || `/verify/${cert.certificateId}`}
+                      prefetch={true}
+                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors cursor-pointer"
                     >
-                      <div className="p-6 flex-1 rounded-t-2xl">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            {course.partnerName}
-                          </span>
-                        </div>
-                        <Link
-                          href={`/courses/${course.courseId}`}
-                          prefetch={true}
-                          className="block group-hover:text-primary transition-colors"
-                        >
-                          <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
-                            {course.courseTitle}
-                          </h3>
-                        </Link>
-
-                        <div className="mb-2">
-                          <Progress.Linear
-                            value={course.progressPercent}
-                            showLabel
-                            label="Tiến độ"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="p-4 border-t border-border bg-muted/40 rounded-b-2xl">
-                        <Link
-                          href={`/learn/${course.courseId}`}
-                          prefetch={true}
-                          className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
-                        >
-                          {"Đánh giá khóa học"}
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
+                      <Eye className="w-4 h-4" aria-hidden="true" />
+                      <span>{"Xem chứng chỉ"}</span>
+                    </Link>
+                  </div>
                 </div>
-              )}
-            </Tabs.Panel>
+              ))}
+            </div>
+          )}
+        </Tabs.Panel>
 
-            {/* Tab Panel: CERTIFICATES */}
-            <Tabs.Panel value="CERTIFICATES">
-              {certificates.length === 0 ? (
-                <div className="py-16 text-center text-muted-foreground">
-                  <Award
-                    className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
-                    aria-hidden="true"
-                  />
-                  <h3 className="text-lg font-bold text-foreground mb-2">
-                    {"Chưa có chứng chỉ nào"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {"Bạn chưa đạt được chứng chỉ nào. Hãy hoàn thành khóa học để nhận chứng chỉ."}
-                  </p>
-                  <Link
-                    href="/courses"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
+        {/* Tab Panel: BOOKMARKS */}
+        <Tabs.Panel value="BOOKMARKS">
+          {loadingBookmarks ? (
+            <TabSkeletonGrid />
+          ) : bookmarksError ? (
+            <TabErrorMessage message={bookmarksError.message} />
+          ) : bookmarkedList.length === 0 ? (
+            <div className="py-16 text-center text-muted-foreground">
+              <Bookmark
+                className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
+                aria-hidden="true"
+              />
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                {"Chưa có khóa học nào được lưu"}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                {
+                  "Bạn có thể lưu các khóa học yêu thích khi duyệt danh mục để dễ dàng xem lại sau này."
+                }
+              </p>
+              <Link
+                href="/courses"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
+              >
+                {"Khám phá khóa học"}
+              </Link>
+            </div>
+          ) : (
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
+              {bookmarkedList.map((bm) => {
+                const c = bm.course;
+                const courseTitle = c?.title || "Khóa học trực tuyến";
+                const partnerName = c?.partnerName || "Coursera Clone";
+                return (
+                  <div
+                    key={bm.id}
+                    className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
                   >
-                    {"Khám phá khóa học"}
-                  </Link>
-                </div>
-              ) : (
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
-                  {certificates.map((cert) => (
-                    <div
-                      key={cert.certificateId}
-                      className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between"
-                    >
-                      <div className="p-6 rounded-t-3xl">
-                        {/* Header Badge & Partner */}
-                        <div className="flex items-center justify-between gap-3 mb-4">
-                          <div className="flex items-center gap-2">
-                            {cert.partnerLogoUrl ? (
-                              <Image
-                                src={cert.partnerLogoUrl}
-                                alt={cert.partnerName}
-                                width={28}
-                                height={28}
-                                unoptimized
-                                className="w-7 h-7 object-contain rounded"
-                              />
-                            ) : (
-                              <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                                {cert.partnerName.slice(0, 2).toUpperCase()}
-                              </div>
-                            )}
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate">
-                              {cert.partnerName}
-                            </span>
-                          </div>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20 shrink-0">
-                            <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                            Verified
-                          </span>
-                        </div>
-
-                        {/* Course Title */}
-                        <h3 className="text-lg font-bold text-foreground leading-snug min-w-0 line-clamp-2 mb-4 group-hover:text-primary transition-colors">
-                          {cert.courseTitle}
-                        </h3>
-
-                        {/* Details */}
-                        <div className="space-y-2 text-xs text-muted-foreground bg-muted p-3.5 rounded-2xl border border-border">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">{"Cấp ngày"}:</span>
-                            <span className="font-semibold text-foreground">{cert.issueDate}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">{"Mã chứng chỉ"}:</span>
-                            <span className="font-mono text-[11px] font-bold text-primary min-w-0 truncate max-w-[150px]">
-                              {cert.certificateId}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Footer Actions */}
-                      <div className="p-4 border-t border-border bg-muted/50 flex items-center gap-2 rounded-b-3xl">
-                        <Link
-                          href={cert.verificationUrl || `/verify/${cert.certificateId}`}
-                          prefetch={true}
-                          className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors cursor-pointer"
+                    <div className="p-6 flex-1 rounded-t-2xl">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate">
+                          {partnerName}
+                        </span>
+                        <IconButton
+                          type="button"
+                          variant="standard"
+                          size="xs"
+                          onClick={() => handleRemoveBookmark(bm.courseId, courseTitle)}
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7 rounded-lg transition-colors shrink-0"
+                          title="Bỏ lưu khóa học"
+                          aria-label={`Bỏ lưu ${courseTitle}`}
                         >
-                          <Eye className="w-4 h-4" aria-hidden="true" />
-                          <span>{"Xem chứng chỉ"}</span>
-                        </Link>
+                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        </IconButton>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Tabs.Panel>
-
-            {/* Tab Panel: BOOKMARKS */}
-            <Tabs.Panel value="BOOKMARKS">
-              {bookmarkedList.length === 0 ? (
-                <div className="py-16 text-center text-muted-foreground">
-                  <Bookmark
-                    className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
-                    aria-hidden="true"
-                  />
-                  <h3 className="text-lg font-bold text-foreground mb-2">
-                    {"Chưa có khóa học nào được lưu"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    {
-                      "Bạn có thể lưu các khóa học yêu thích khi duyệt danh mục để dễ dàng xem lại sau này."
-                    }
-                  </p>
-                  <Link
-                    href="/courses"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
-                  >
-                    {"Khám phá khóa học"}
-                  </Link>
-                </div>
-              ) : (
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
-                  {bookmarkedList.map((bm) => {
-                    const c = bm.course;
-                    const courseTitle = c?.title || "Khóa học trực tuyến";
-                    const partnerName = c?.partnerName || "Coursera Clone";
-                    return (
-                      <div
-                        key={bm.id}
-                        className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
+                      <Link
+                        href={`/courses/${bm.courseId}`}
+                        prefetch={true}
+                        className="block group-hover:text-primary transition-colors"
                       >
-                        <div className="p-6 flex-1 rounded-t-2xl">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate">
-                              {partnerName}
-                            </span>
-                            <IconButton
-                              type="button"
-                              variant="standard"
-                              size="xs"
-                              onClick={() => handleRemoveBookmark(bm.courseId, courseTitle)}
-                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7 rounded-lg transition-colors shrink-0"
-                              title="Bỏ lưu khóa học"
-                              aria-label={`Bỏ lưu ${courseTitle}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                            </IconButton>
-                          </div>
-                          <Link
-                            href={`/courses/${bm.courseId}`}
-                            prefetch={true}
-                            className="block group-hover:text-primary transition-colors"
-                          >
-                            <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
-                              {courseTitle}
-                            </h3>
-                          </Link>
-                          {c?.description && (
-                            <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 leading-relaxed">
-                              {c.description}
-                            </p>
-                          )}
-                        </div>
+                        <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
+                          {courseTitle}
+                        </h3>
+                      </Link>
+                      {c?.description && (
+                        <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 leading-relaxed">
+                          {c.description}
+                        </p>
+                      )}
+                    </div>
 
-                        <div className="p-4 border-t border-border bg-muted/40 rounded-b-2xl flex items-center gap-2">
-                          <Link
-                            href={`/courses/${bm.courseId}`}
-                            prefetch={true}
-                            className="flex-1 inline-flex items-center justify-center py-2 px-3 rounded-xl border border-border bg-card hover:bg-accent text-foreground text-xs font-semibold transition-colors cursor-pointer"
-                          >
-                            {"Chi tiết"}
-                          </Link>
-                          <Link
-                            href={`/learn/${bm.courseId}`}
-                            prefetch={true}
-                            className="flex-1 inline-flex items-center justify-center py-2 px-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-semibold transition-colors cursor-pointer"
-                          >
-                            {"Vào học"}
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Tabs.Panel>
-          </>
-        )}
+                    <div className="p-4 border-t border-border bg-muted/40 rounded-b-2xl flex items-center gap-2">
+                      <Link
+                        href={`/courses/${bm.courseId}`}
+                        prefetch={true}
+                        className="flex-1 inline-flex items-center justify-center py-2 px-3 rounded-xl border border-border bg-card hover:bg-accent text-foreground text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        {"Chi tiết"}
+                      </Link>
+                      <Link
+                        href={`/learn/${bm.courseId}`}
+                        prefetch={true}
+                        className="flex-1 inline-flex items-center justify-center py-2 px-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        {"Vào học"}
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Tabs.Panel>
       </Tabs.Root>
     </>
   );

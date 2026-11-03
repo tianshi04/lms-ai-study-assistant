@@ -51,7 +51,7 @@ async def test_get_progress(use_case, mock_repo, mock_session_scope):
 
     result = await use_case.get_progress("u1", "c1")
     assert result == expected
-    mock_repo.get_progress.assert_awaited_once_with("u1", "c1")
+    mock_repo.get_progress.assert_awaited_once_with("u1", "c1", None)
 
 
 @pytest.mark.asyncio
@@ -86,7 +86,7 @@ async def test_save_personal_note(use_case, mock_repo, mock_session_scope):
     result = await use_case.save_personal_note("u1", "c1", "i1", "text", "comment")
     assert result == expected
     mock_repo.save_personal_note.assert_awaited_once_with(
-        "u1", "c1", "i1", "text", "comment"
+        "u1", "c1", "i1", "text", "comment", 0
     )
 
 

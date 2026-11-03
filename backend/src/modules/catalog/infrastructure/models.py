@@ -394,7 +394,7 @@ class CourseBookmarkModel(Base):
     )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False)
     course_id: Mapped[str] = mapped_column(
         String(64),
         ForeignKey("courses.id", ondelete="CASCADE"),

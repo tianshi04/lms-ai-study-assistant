@@ -1265,6 +1265,8 @@ class CatalogHandler(CatalogService):
     ) -> pb.CheckCourseBookmarkedResponse:
         user = require_current_user()
         course_id = request.course_id.strip()
+        if not course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
         is_bookmarked = await self.use_case.check_course_bookmarked(
             user_id=user.id, course_id=course_id
         )

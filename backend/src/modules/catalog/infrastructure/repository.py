@@ -100,20 +100,27 @@ def _model_to_domain_lesson(l_model: LessonModel) -> Lesson:
 
 
 def _model_to_domain_course(model: CourseModel) -> Course:
+    from sqlalchemy import inspect as sa_inspect
+
+    insp = sa_inspect(model)
     week_modules: list[WeekModule] = []
-    for wm in model.week_modules or []:
-        lessons: list[Lesson] = [
-            _model_to_domain_lesson(l_model) for l_model in wm.lessons or []
-        ]
-        week_modules.append(
-            WeekModule(
-                id=wm.id,
-                week_number=wm.week_number,
-                title=wm.title,
-                summary=wm.summary,
-                lessons=lessons,
+    if "week_modules" not in insp.unloaded:
+        for wm in model.week_modules or []:
+            lessons: list[Lesson] = []
+            wm_insp = sa_inspect(wm)
+            if "lessons" not in wm_insp.unloaded:
+                lessons = [
+                    _model_to_domain_lesson(l_model) for l_model in wm.lessons or []
+                ]
+            week_modules.append(
+                WeekModule(
+                    id=wm.id,
+                    week_number=wm.week_number,
+                    title=wm.title,
+                    summary=wm.summary,
+                    lessons=lessons,
+                )
             )
-        )
 
     return Course(
         id=model.id,
@@ -1879,10 +1886,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         course = await self.get_course_detail(course_id)
         if not course:
             return None
+        real_course_id = course.id
 
         stmt = select(CourseBookmarkModel).where(
             CourseBookmarkModel.user_id == user_id,
-            CourseBookmarkModel.course_id == course_id,
+            CourseBookmarkModel.course_id == real_course_id,
         )
         res = await self.session.execute(stmt)
         existing = res.scalar_one_or_none()
@@ -1900,7 +1908,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         bookmark_model = CourseBookmarkModel(
             id=bookmark_id,
             user_id=user_id,
-            course_id=course_id,
+            course_id=real_course_id,
             created_at=now_str,
         )
         self.session.add(bookmark_model)
@@ -1918,19 +1926,25 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     created_at=existing.created_at,
                     course=course,
                 )
+            raise
 
         return CourseBookmark(
             id=bookmark_id,
             user_id=user_id,
-            course_id=course_id,
+            course_id=real_course_id,
             created_at=now_str,
             course=course,
         )
 
     async def unbookmark_course(self, user_id: str, course_id: str) -> bool:
-        stmt = select(CourseBookmarkModel).where(
-            CourseBookmarkModel.user_id == user_id,
-            CourseBookmarkModel.course_id == course_id,
+        stmt = (
+            select(CourseBookmarkModel)
+            .outerjoin(CourseModel, CourseBookmarkModel.course_id == CourseModel.id)
+            .where(
+                CourseBookmarkModel.user_id == user_id,
+                (CourseBookmarkModel.course_id == course_id)
+                | (CourseModel.slug == course_id),
+            )
         )
         res = await self.session.execute(stmt)
         model = res.scalar_one_or_none()
@@ -1941,9 +1955,14 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return True
 
     async def is_course_bookmarked(self, user_id: str, course_id: str) -> bool:
-        stmt = select(CourseBookmarkModel.id).where(
-            CourseBookmarkModel.user_id == user_id,
-            CourseBookmarkModel.course_id == course_id,
+        stmt = (
+            select(CourseBookmarkModel.id)
+            .outerjoin(CourseModel, CourseBookmarkModel.course_id == CourseModel.id)
+            .where(
+                CourseBookmarkModel.user_id == user_id,
+                (CourseBookmarkModel.course_id == course_id)
+                | (CourseModel.slug == course_id),
+            )
         )
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none() is not None
@@ -1952,12 +1971,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         stmt = (
             select(CourseBookmarkModel)
             .where(CourseBookmarkModel.user_id == user_id)
-            .options(
-                selectinload(CourseBookmarkModel.course)
-                .selectinload(CourseModel.week_modules)
-                .selectinload(WeekModuleModel.lessons)
-                .selectinload(LessonModel.items)
-            )
+            .options(selectinload(CourseBookmarkModel.course))
             .order_by(CourseBookmarkModel.created_at.desc())
         )
         res = await self.session.execute(stmt)

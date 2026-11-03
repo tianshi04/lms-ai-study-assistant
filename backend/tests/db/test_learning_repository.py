@@ -48,7 +48,22 @@ async def test_get_progress_existing(repository, mock_session):
 
 
 @pytest.mark.asyncio
-async def test_get_progress_not_existing(repository, mock_session):
+async def test_get_progress_not_existing_pure_query(repository, mock_session):
+    mock_res_none = MagicMock()
+    mock_res_none.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res_none
+
+    progress = await repository.get_progress("u2", "c2")
+
+    assert progress.user_id == "u2"
+    assert progress.course_id == "c2"
+    assert progress.overall_progress_percent == 0.0
+    assert progress.completed_item_ids == []
+    assert len(progress.weekly_deadlines) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_progress_not_existing_with_current_item(repository, mock_session):
     mock_model = LearningProgressModel(
         id="u2:c2",
         user_id="u2",
@@ -65,7 +80,7 @@ async def test_get_progress_not_existing(repository, mock_session):
 
     mock_session.execute.side_effect = [mock_res_none, None, mock_res_found]
 
-    progress = await repository.get_progress("u2", "c2")
+    progress = await repository.get_progress("u2", "c2", "item-1")
 
     assert progress.user_id == "u2"
     assert progress.course_id == "c2"
