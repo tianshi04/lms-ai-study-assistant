@@ -525,3 +525,106 @@ async def test_handler_update_course_maps_value_error_to_invalid_argument():
 
     assert exc_info.value.code == Code.INVALID_ARGUMENT
     assert "tối đa được phép là 10" in exc_info.value.message
+
+
+@pytest.mark.asyncio
+async def test_bookmark_course_success():
+    from src.modules.catalog.domain.entities import Course, CourseBookmark
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    mock_course = Course(id="c-1", title="Python 101", slug="python-101")
+    mock_bm = CourseBookmark(
+        id="bm-1",
+        user_id="u-1",
+        course_id="c-1",
+        created_at="2026-11-03T20:00:00Z",
+        course=mock_course,
+    )
+    usecase_mock.bookmark_course.return_value = mock_bm
+
+    handler = CatalogHandler(usecase_mock)
+    user = CurrentUser(id="u-1", email="u1@test.com", role="LEARNER")
+    set_current_user(user)
+    try:
+        req = pb.BookmarkCourseRequest(course_id="c-1")
+        ctx = MagicMock()
+        res = await handler.bookmark_course(req, ctx)
+        assert res.success is True
+        assert res.bookmark is not None
+        assert res.bookmark.id == "bm-1"
+        assert res.bookmark.course_id == "c-1"
+        assert res.bookmark.course is not None
+        assert res.bookmark.course.title == "Python 101"
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_unbookmark_course_success():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    usecase_mock.unbookmark_course.return_value = True
+
+    handler = CatalogHandler(usecase_mock)
+    user = CurrentUser(id="u-1", email="u1@test.com", role="LEARNER")
+    set_current_user(user)
+    try:
+        req = pb.UnbookmarkCourseRequest(course_id="c-1")
+        ctx = MagicMock()
+        res = await handler.unbookmark_course(req, ctx)
+        assert res.success is True
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_check_course_bookmarked():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    usecase_mock.check_course_bookmarked.return_value = True
+
+    handler = CatalogHandler(usecase_mock)
+    user = CurrentUser(id="u-1", email="u1@test.com", role="LEARNER")
+    set_current_user(user)
+    try:
+        req = pb.CheckCourseBookmarkedRequest(course_id="c-1")
+        ctx = MagicMock()
+        res = await handler.check_course_bookmarked(req, ctx)
+        assert res.is_bookmarked is True
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_list_my_bookmarked_courses():
+    from src.modules.catalog.domain.entities import Course, CourseBookmark
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    mock_course = Course(id="c-1", title="Python 101", slug="python-101")
+    usecase_mock.list_my_bookmarked_courses.return_value = [
+        CourseBookmark(
+            id="bm-1",
+            user_id="u-1",
+            course_id="c-1",
+            created_at="2026-11-03T20:00:00Z",
+            course=mock_course,
+        )
+    ]
+
+    handler = CatalogHandler(usecase_mock)
+    user = CurrentUser(id="u-1", email="u1@test.com", role="LEARNER")
+    set_current_user(user)
+    try:
+        req = pb.ListMyBookmarkedCoursesRequest()
+        ctx = MagicMock()
+        res = await handler.list_my_bookmarked_courses(req, ctx)
+        assert len(res.bookmarks) == 1
+        assert res.bookmarks[0].course_id == "c-1"
+        assert res.bookmarks[0].course is not None
+        assert res.bookmarks[0].course.title == "Python 101"
+    finally:
+        set_current_user(None)

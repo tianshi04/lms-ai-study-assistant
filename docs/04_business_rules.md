@@ -234,6 +234,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
       * *Nguyên tắc Tính toán Tách biệt $O(1)$:* Quá trình sinh vector chỉ diễn ra 1 lần duy nhất khi Khóa học được Xuất bản (`PUBLISHED`) hoặc khi chạy CLI nạp dữ liệu (`make seed`). Khi người dùng mở trang Chi tiết Khóa học, hệ thống chỉ thực hiện phép chiếu Cosine trên các vector đã pre-computed trong Database, tuyệt đối không tính toán lại embedding on-the-fly.
   * **Số lượng và Lưới hiển thị:** Mặc định cung cấp 6 khóa học (`DEFAULT_RECOMMENDED_COURSES_COUNT = 6`), loại bỏ chính khóa học hiện tại và môn nền tảng đã hiển thị. Hiển thị dạng lưới 3 cột x 2 hàng trên desktop.
   * **Ràng buộc Trạng thái (Lifecycle Boundary):** Chỉ các khóa học ở trạng thái **`PUBLISHED`** mới tham gia vào tập ứng viên đề xuất và sinh vector embedding. Khóa học ở trạng thái `DRAFT` hoặc `PENDING_REVIEW` tuyệt đối không được hiển thị cho người học.
+* **BR_CATALOG_008 (Đánh dấu & Quản lý Khóa học Yêu thích - Course Bookmarks):**
+  * Mỗi tài khoản có thể lưu trữ danh sách các khóa học quan tâm/yêu thích (`course_bookmarks`).
+  * Khóa duy nhất `(user_id, course_id)` (`uq_user_course_bookmark`) đảm bảo tính idempotent: thao tác lưu lặp lại không tạo ra bản ghi thừa và thao tác hủy lưu xóa sạch bản ghi tương ứng.
+  * RPC `ListMyBookmarkedCourses` tự động join và tải dữ liệu thực thể `Course` mới nhất để hiển thị trực quan thông tin đối tác và khóa học.
 * **BR_CATALOG_007 (Chương trình Chuyên ngành & Chính sách Ưu đãi Mua trọn gói - Specialization & Bundle Pricing):**
   * **Cấu trúc Lộ trình Chuyên ngành (Specialization Learning Path):**
     * Mỗi Chuyên ngành tập hợp chuỗi các khóa học có tính chất kế thừa và phát triển kỹ năng tuần tự (ví dụ: Khóa 1: Kinh tế học Vi mô $\to$ Khóa 2: Kinh tế lượng Ứng dụng $\to$ Khóa 3: Kinh tế học Hành vi & Định giá).
@@ -269,6 +273,13 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Tất cả các trạng thái hạn nộp tự động chuyển về `ON_TRACK` mà không trừ điểm thi hay làm mất tiến độ học tập cũ.
 * **BR_LEARNING_001 (Tính toán Tiến độ, Khử trùng lặp & Ràng buộc Bảng Completed Items):**
   * Mỗi khi hoàn thành 1 bài học (Video, Reading, Quiz), hệ thống tự động lưu vết bản ghi trạng thái hoàn thành vào cơ sở dữ liệu (`user_item_completions`) với khóa chính duy nhất `(user_id, item_id)` (`uq_user_item_completion`) và timestamp `completed_at`, đồng thời thêm `item_id` vào danh sách `completed_item_ids` (sử dụng tập hợp `set` để khử trùng lặp).
+  * *Theo dõi Thời gian & Vị trí Bài học gần nhất (Granular Resuming & Timestamps):*
+    * `enrolled_at`: Mốc thời gian ghi danh khóa học lần đầu.
+    * `completed_at`: Mốc thời gian hoàn thành 100% khóa học (chuyển sang trạng thái `COMPLETED`).
+    * `last_accessed_at` & `last_accessed_item_id`: Tự động cập nhật mỗi khi học viên truy cập hoặc đổi bài học trong khóa học qua RPC `GetProgress(course_id, current_item_id)`.
+    * Khi học viên bấm "Tiếp tục học" trên giao diện `/my-learning` hoặc mở `/learn/[courseId]`, hệ thống tự động đưa học viên tới bài học tương ứng với `last_accessed_item_id`.
+  * *Ghi chú cá nhân gắn với Mốc Thời gian Video (Video Timestamped Personal Notes):*
+    * Mỗi bản ghi `PersonalNote` lưu trữ `timestamp_seconds` (mốc giây tại thời điểm tạo ghi chú) và `updated_at`. Cho phép học viên bấm trực tiếp vào mốc thời gian để nhảy đến phân đoạn video liên quan.
   * *Xác thực danh mục Server-side (Server-side Item Validation):* Hệ thống tự động truy vấn danh mục bài học từ Catalog module (`CatalogUseCase.get_course_detail`) để lấy tập hợp bài học hợp lệ (`valid_item_ids`) và tổng số bài học thực tế (`real_total_items`). Tất cả `item_id` không nằm trong danh mục khóa học sẽ bị từ chối (`item_id in valid_item_ids`), đồng thời danh sách bài hoàn thành được lọc loại bỏ các item không còn tồn tại (`completed = completed.intersection(valid_item_ids)`). Loại bỏ hoàn toàn khả năng gửi tham số `total_course_items` tùy ý từ phía client.
   * Phần trăm tiến độ được tính toán và làm tròn 1 chữ số thập phân:
     $$\text{Overall Progress \%} = \min\left(100.0, \text{round}\left(\frac{|\text{Completed Items}|}{\max(1, \text{Total Course Items})} \times 100, 1\right)\right)$$

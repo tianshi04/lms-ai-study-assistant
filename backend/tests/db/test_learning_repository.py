@@ -329,3 +329,37 @@ async def test_reset_deadlines_progress_not_found(repository, mock_session):
         success, res = await repository.reset_deadlines("u1", "c1")
         assert success is True
         assert res.course_id == "c1"
+
+
+@pytest.mark.asyncio
+async def test_save_personal_note_with_timestamp_seconds(repository, mock_session):
+    note = await repository.save_personal_note(
+        "u1", "c1", "i1", "highlight text", "comment text", timestamp_seconds=120
+    )
+    assert note.timestamp_seconds == 120
+    assert note.created_at != ""
+    assert note.updated_at != ""
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_progress_updates_last_accessed_item_id(repository, mock_session):
+    mock_model = LearningProgressModel(
+        id="u1:c1",
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=50.0,
+        completed_item_ids=["i1"],
+        weekly_deadlines=[],
+        last_accessed_item_id="i1",
+        last_accessed_at="2026-11-01T00:00:00Z",
+    )
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_model
+    mock_session.execute.return_value = mock_result
+
+    res = await repository.get_progress("u1", "c1", current_item_id="i2")
+    assert mock_model.last_accessed_item_id == "i2"
+    assert res.last_accessed_item_id == "i2"
+    mock_session.commit.assert_awaited_once()

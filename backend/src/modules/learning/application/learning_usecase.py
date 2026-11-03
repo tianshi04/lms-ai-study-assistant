@@ -39,9 +39,13 @@ class LearningUseCase:
             catalog_repo_factory or _default_catalog_repo_factory
         )
 
-    async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
+    async def get_progress(
+        self, user_id: str, course_id: str, current_item_id: str | None = None
+    ) -> LearningProgress:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
+            if current_item_id is not None:
+                return await repo.get_progress(user_id, course_id, current_item_id)
             return await repo.get_progress(user_id, course_id)
 
     async def reset_deadlines(
@@ -58,11 +62,25 @@ class LearningUseCase:
         item_id: str,
         highlighted_text: str,
         note_comment: str,
+        timestamp_seconds: int = 0,
     ) -> PersonalNote:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
+            if timestamp_seconds:
+                return await repo.save_personal_note(
+                    user_id,
+                    course_id,
+                    item_id,
+                    highlighted_text,
+                    note_comment,
+                    timestamp_seconds,
+                )
             return await repo.save_personal_note(
-                user_id, course_id, item_id, highlighted_text, note_comment
+                user_id,
+                course_id,
+                item_id,
+                highlighted_text,
+                note_comment,
             )
 
     async def list_personal_notes(
@@ -101,7 +119,7 @@ class LearningUseCase:
 
         if item_id not in valid_item_ids:
             logger.warning(
-                "Failed to mark item complete: Item %s not found in course %s",
+                "Failed to mark item complete: Item %s is not part of course %s",
                 item_id,
                 course_id,
             )
@@ -109,12 +127,16 @@ class LearningUseCase:
                 user_id=user_id, course_id=course_id, overall_progress_percent=0.0
             )
 
-        real_total_items = max(1, len(valid_item_ids))
+        total_course_items = len(valid_item_ids)
 
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             result = await repo.mark_item_complete(
-                user_id, course_id, item_id, real_total_items, valid_item_ids
+                user_id,
+                course_id,
+                item_id,
+                total_course_items,
+                valid_item_ids,
             )
             logger.info(
                 "User %s marked item %s complete in course %s",
@@ -156,7 +178,10 @@ class LearningUseCase:
                     partner_name=c_partner,
                     progress_percent=progress,
                     status=status,
-                    last_accessed_at=p.last_reset_at or "",
+                    last_accessed_at=p.last_accessed_at or p.last_reset_at or "",
+                    last_accessed_item_id=p.last_accessed_item_id or "",
+                    enrolled_at=p.enrolled_at or "",
+                    completed_at=p.completed_at or "",
                 )
             )
         return summaries

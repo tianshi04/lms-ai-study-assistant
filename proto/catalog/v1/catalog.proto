@@ -702,6 +702,18 @@ service CatalogService {
   rpc ListCourseAuditLogs(ListCourseAuditLogsRequest) returns (ListCourseAuditLogsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc BookmarkCourse(BookmarkCourseRequest) returns (BookmarkCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UnbookmarkCourse(UnbookmarkCourseRequest) returns (UnbookmarkCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CheckCourseBookmarked(CheckCourseBookmarkedRequest) returns (CheckCourseBookmarkedResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListMyBookmarkedCourses(ListMyBookmarkedCoursesRequest) returns (ListMyBookmarkedCoursesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message ParseScormPackageRequest {
@@ -823,4 +835,43 @@ message ListCourseAuditLogsRequest {
 
 message ListCourseAuditLogsResponse {
   repeated CourseAuditLog logs = 1;
+}
+
+message CourseBookmark {
+  string id = 1;
+  string user_id = 2;
+  string course_id = 3;
+  string created_at = 4;
+  Course course = 5;
+}
+
+message BookmarkCourseRequest {
+  string course_id = 1;
+}
+
+message BookmarkCourseResponse {
+  bool success = 1;
+  CourseBookmark bookmark = 2;
+}
+
+message UnbookmarkCourseRequest {
+  string course_id = 1;
+}
+
+message UnbookmarkCourseResponse {
+  bool success = 1;
+}
+
+message CheckCourseBookmarkedRequest {
+  string course_id = 1;
+}
+
+message CheckCourseBookmarkedResponse {
+  bool is_bookmarked = 1;
+}
+
+message ListMyBookmarkedCoursesRequest {}
+
+message ListMyBookmarkedCoursesResponse {
+  repeated CourseBookmark bookmarks = 1;
 }

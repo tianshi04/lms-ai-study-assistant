@@ -15,6 +15,7 @@ import {
   type CourseCollaboratorDetail,
   type GetCourseDetailResponse,
   type Specialization,
+  type CourseBookmark,
 } from "@/gen/catalog/v1/catalog_pb";
 
 export interface CourseFilters {
@@ -381,5 +382,86 @@ export function useListCourseAuditLogsQuery(courseId: string) {
       return res.logs;
     },
     enabled: Boolean(courseId),
+  });
+}
+
+/**
+ * Hook kiểm tra xem một khóa học đã được đánh dấu lưu chưa
+ */
+export function useIsCourseBookmarkedQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<boolean, Error>>,
+) {
+  return useQuery<boolean, Error>({
+    queryKey: ["isCourseBookmarked", courseId],
+    queryFn: async () => {
+      if (!courseId) return false;
+      const client = getRpcClient(CatalogService);
+      const res = await client.checkCourseBookmarked({ courseId });
+      return res.isBookmarked;
+    },
+    enabled: Boolean(courseId),
+    ...options,
+  });
+}
+
+/**
+ * Hook lấy danh sách tất cả các khóa học đã đánh dấu lưu của người dùng hiện tại
+ */
+export function useMyBookmarkedCoursesQuery(
+  options?: Partial<UseQueryOptions<CourseBookmark[], Error>>,
+) {
+  return useQuery<CourseBookmark[], Error>({
+    queryKey: ["myBookmarkedCourses"],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.listMyBookmarkedCourses({});
+      return res.bookmarks || [];
+    },
+    ...options,
+  });
+}
+
+/**
+ * Hook đánh dấu lưu một khóa học
+ */
+export function useBookmarkCourseMutation(
+  options?: Partial<UseMutationOptions<CourseBookmark | undefined, Error, { courseId: string }>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<CourseBookmark | undefined, Error, { courseId: string }>({
+    mutationFn: async ({ courseId }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.bookmarkCourse({ courseId });
+      return res.bookmark;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["isCourseBookmarked", variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ["myBookmarkedCourses"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+/**
+ * Hook hủy đánh dấu lưu một khóa học
+ */
+export function useUnbookmarkCourseMutation(
+  options?: Partial<UseMutationOptions<boolean, Error, { courseId: string }>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<boolean, Error, { courseId: string }>({
+    mutationFn: async ({ courseId }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.unbookmarkCourse({ courseId });
+      return res.success;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["isCourseBookmarked", variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ["myBookmarkedCourses"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }

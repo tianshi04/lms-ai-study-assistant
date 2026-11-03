@@ -16,7 +16,9 @@ from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepos
 
 @pytest.fixture
 def mock_session():
-    return AsyncMock()
+    session = AsyncMock()
+    session.add = MagicMock()
+    return session
 
 
 @pytest.fixture
@@ -367,3 +369,57 @@ async def test_validate_foundational_course_ids_rules(repo, mock_session):
         foundational_ids=["c_v1", "c_v2", "c_v1"],
     )
     assert res == ["c_v1", "c_v2"]
+
+
+@pytest.mark.asyncio
+async def test_bookmark_course_not_found(repo, mock_session):
+    repo.get_course_detail = AsyncMock(return_value=None)
+    res = await repo.bookmark_course("u1", "c_unknown")
+    assert res is None
+
+
+@pytest.mark.asyncio
+async def test_bookmark_course_success(repo, mock_session, sample_course_model):
+    from src.modules.catalog.infrastructure.repository import _model_to_domain_course
+
+    course_domain = _model_to_domain_course(sample_course_model)
+    repo.get_course_detail = AsyncMock(return_value=course_domain)
+
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
+
+    res = await repo.bookmark_course("u1", "c1")
+    assert res is not None
+    assert res.user_id == "u1"
+    assert res.course_id == "c1"
+    assert res.course.title == sample_course_model.title
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_unbookmark_course(repo, mock_session):
+    from src.modules.catalog.infrastructure.models import CourseBookmarkModel
+
+    mock_bm = CourseBookmarkModel(
+        id="bm-1", user_id="u1", course_id="c1", created_at="2026"
+    )
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = mock_bm
+    mock_session.execute.return_value = mock_res
+
+    res = await repo.unbookmark_course("u1", "c1")
+    assert res is True
+    mock_session.delete.assert_called_once_with(mock_bm)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_is_course_bookmarked(repo, mock_session):
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = "bm-1"
+    mock_session.execute.return_value = mock_res
+
+    res = await repo.is_course_bookmarked("u1", "c1")
+    assert res is True

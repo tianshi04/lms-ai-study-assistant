@@ -11,7 +11,9 @@ class ILearningRepository(ABC):
     """Abstract Repository Interface for Learning Domain (DIP)."""
 
     @abstractmethod
-    async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
+    async def get_progress(
+        self, user_id: str, course_id: str, current_item_id: str | None = None
+    ) -> LearningProgress:
         pass
 
     @abstractmethod
@@ -28,6 +30,7 @@ class ILearningRepository(ABC):
         item_id: str,
         highlighted_text: str,
         note_comment: str,
+        timestamp_seconds: int = 0,
     ) -> PersonalNote:
         pass
 

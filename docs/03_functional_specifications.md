@@ -198,13 +198,14 @@ flowchart TD
 * **Giao diện Trình phát Bài học:**
   * Cột bên trái hiển thị danh sách Tuần học (Week) và danh sách Items.
   * Khung giữa phát Video / Bài đọc / Quiz.
-* **Tính năng Interactive Transcript & Highlight Notes:**
+* **Tính năng Interactive Transcript & Highlight Notes gắn Mốc Thời gian:**
   * Phụ đề cuộn tự động theo lời nói trong video. Bấm vào dòng phụ đề để nhảy đến giây video tương ứng (dòng được bấm sáng lên ngay lập tức, không chờ trình phát báo lại).
   * Khi học viên tự cuộn khung phụ đề (lăn chuột, vuốt hoặc dùng phím cuộn), hệ thống tạm dừng tự cuộn để không giật vị trí đang đọc. Nếu dòng phụ đề đang phát nằm ngoài khung nhìn, nút **"Về vị trí hiện tại"** (mũi tên lên/xuống theo hướng của dòng đang phát) hiện ở góc dưới bên phải. Tự cuộn chạy lại khi học viên bấm nút, bấm một dòng phụ đề, hoặc tự cuộn tới vị trí đang phát.
-  * Học viên có thể bôi đen (Highlight) từ/cụm từ trong phụ đề hoặc bài đọc để lưu lại thành **Ghi chú cá nhân (Personal Notes)**.
+  * Học viên có thể bôi đen (Highlight) từ/cụm từ trong phụ đề hoặc bài đọc để lưu lại thành **Ghi chú cá nhân (Personal Notes)** kèm mốc thời gian phát video hiện tại (`timestamp_seconds`) và `updated_at`. Mỗi ghi chú hiển thị badge thời gian (ví dụ `02:45`) cho phép bấm 1-click để trình phát tự động tua tới đúng đoạn video được ghi chú.
 * **In-Video Quiz Experience:** Video tự dừng tại mốc thời gian chèn quiz. Học viên chọn đáp án và bấm "Submit" để xem giải thích và tiếp tục xem video.
-* **Theo dõi & Lưu vết Tiến độ Bài học (Granular Item Completion Tracking):**
+* **Theo dõi & Khôi phục Vị trí Bài học Gần nhất (Auto Resume & Granular Tracking):**
   * Khi học viên hoàn thành bài học (xem video, đọc bài đọc hoặc thi quiz đạt điểm Pass), hệ thống lưu vết bản ghi trạng thái hoàn thành item (`user_item_completions`) với cặp khóa duy nhất `(user_id, item_id)` và thời điểm `completed_at` để tính toán phần trăm tiến độ hoàn thành khóa học chính xác và bảo lưu lâu dài.
+  * **Tự động khôi phục vị trí học gần nhất (Auto Resume):** Hệ thống ghi nhận thời điểm truy cập gần nhất `last_accessed_at` và mã bài học đang học dở `last_accessed_item_id`. Khi học viên quay lại khóa học từ trang `/my-learning` hoặc truy cập `/learn/[courseId]`, hệ thống tự động chọn và mở ngay bài học đang học dở thay vì quay về bài đầu tiên.
 
 ### 3.2. Cơ chế Học tập Linh hoạt & Reset Deadlines (Flexible Weekly Schedule)
 * **Hạn nộp linh hoạt (Flexible Deadlines):** Mỗi tuần học có hạn nộp gợi ý (Suggested Deadlines) để học viên duy trì tiến độ.
@@ -221,6 +222,9 @@ flowchart TD
   * Tự động liên kết khóa học với Chuyên ngành tương ứng thông qua trường `specialization` trong `GetCourseDetailResponse`.
   * Trình bày trực quan Lộ trình tuần tự các môn trong Chuyên ngành (Roadmap timeline), đánh dấu vị trí môn hiện tại (`Đang xem`), môn tiên quyết và môn nâng cao kế tiếp.
   * Hỗ trợ gói mua trọn bộ Chuyên ngành (Combo Bundle) với mức ưu đãi 25%, hiển thị so sánh minh bạch giữa tổng giá lẻ từng môn và giá trọn gói tiết kiệm kèm hộp thoại xác nhận thanh toán (`SpecializationCheckoutModal`).
+* **Lưu Khóa học Yêu thích (Course Bookmarks):**
+  * Học viên có thể đánh dấu lưu khóa học thông qua nút "Lưu khóa học" trên trang chi tiết `/courses/[courseId]` (`BookmarkCourse`, `UnbookmarkCourse`, `CheckCourseBookmarked`).
+  * Danh sách các khóa học đã lưu được quản lý tập trung tại Tab "Đã lưu" trong trang cá nhân `/my-learning` (`ListMyBookmarkedCourses`), hỗ trợ điều hướng nhanh tới khóa học hoặc hủy lưu trực tiếp.
 * **Mục 2: Khóa học Đề xuất Liên quan (Smart Recommendations Grid):**
   * Hiển thị lưới 6 thẻ khóa học (3 cột x 2 hàng trên desktop) chuẩn Material Design 3.
   * Ứng dụng thuật toán chấm điểm lai (Hybrid Recommendation Algorithm): $Score = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$.

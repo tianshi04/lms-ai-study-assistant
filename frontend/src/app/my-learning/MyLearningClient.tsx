@@ -4,25 +4,34 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { BookOpen, CheckCircle2, Award, Check, Eye } from "lucide-react";
+import { BookOpen, CheckCircle2, Award, Check, Eye, Bookmark, Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
+import { IconButton } from "@/components/ui/IconButton";
 
 import { Tabs } from "@/components/ui/Tabs";
 import { Progress } from "@/components/ui/Progress";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { useMyEnrolledCoursesQuery, useMyCertificatesQuery } from "@/lib/query_hooks";
+import {
+  useMyEnrolledCoursesQuery,
+  useMyCertificatesQuery,
+  useMyBookmarkedCoursesQuery,
+  useUnbookmarkCourseMutation,
+} from "@/lib/query_hooks";
 
-type Tab = "IN_PROGRESS" | "COMPLETED" | "CERTIFICATES";
+type Tab = "IN_PROGRESS" | "COMPLETED" | "CERTIFICATES" | "BOOKMARKS";
 
 const TAB_PARAM_MAP: Record<string, Tab> = {
   "in-progress": "IN_PROGRESS",
   completed: "COMPLETED",
   certificates: "CERTIFICATES",
+  bookmarks: "BOOKMARKS",
 };
 
 const TAB_TO_PARAM: Record<Tab, string> = {
   IN_PROGRESS: "in-progress",
   COMPLETED: "completed",
   CERTIFICATES: "certificates",
+  BOOKMARKS: "bookmarks",
 };
 
 export function MyLearningClient() {
@@ -54,8 +63,30 @@ export function MyLearningClient() {
     error: certsError,
   } = useMyCertificatesQuery({ enabled: isAuthenticated });
 
-  const loading = loadingCourses || loadingCertificates;
-  const error = coursesError?.message || certsError?.message || null;
+  const {
+    data: bookmarkedList = [],
+    isLoading: loadingBookmarks,
+    error: bookmarksError,
+  } = useMyBookmarkedCoursesQuery({ enabled: isAuthenticated });
+
+  const unbookmarkMutation = useUnbookmarkCourseMutation();
+  const toast = useToast();
+
+  const loading = loadingCourses || loadingCertificates || loadingBookmarks;
+  const error = coursesError?.message || certsError?.message || bookmarksError?.message || null;
+
+  const handleRemoveBookmark = async (courseId: string, courseTitle?: string) => {
+    try {
+      await unbookmarkMutation.mutateAsync({ courseId });
+      toast.success(
+        courseTitle
+          ? `Đã xóa "${courseTitle}" khỏi danh sách lưu.`
+          : "Đã xóa khóa học khỏi danh sách lưu.",
+      );
+    } catch {
+      toast.error("Không thể xóa khóa học khỏi danh sách lưu.");
+    }
+  };
 
   const handleTabChange = (id: string) => {
     const newTab = id as Tab;
@@ -86,6 +117,9 @@ export function MyLearningClient() {
           </Tabs.Tab>
           <Tabs.Tab value="CERTIFICATES">
             <span>{"Chứng chỉ"}</span>
+          </Tabs.Tab>
+          <Tabs.Tab value="BOOKMARKS">
+            <span>{"Đã lưu"}</span>
           </Tabs.Tab>
         </Tabs.List>
 
@@ -175,7 +209,11 @@ export function MyLearningClient() {
 
                       <div className="p-4 border-t border-border bg-muted/40 rounded-b-2xl">
                         <Link
-                          href={`/learn/${course.courseId}`}
+                          href={
+                            course.lastAccessedItemId
+                              ? `/learn/${course.courseId}?item=${course.lastAccessedItemId}`
+                              : `/learn/${course.courseId}`
+                          }
                           prefetch={true}
                           className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
                         >
@@ -339,6 +377,96 @@ export function MyLearningClient() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </Tabs.Panel>
+
+            {/* Tab Panel: BOOKMARKS */}
+            <Tabs.Panel value="BOOKMARKS">
+              {bookmarkedList.length === 0 ? (
+                <div className="py-16 text-center text-muted-foreground">
+                  <Bookmark
+                    className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
+                    aria-hidden="true"
+                  />
+                  <h3 className="text-lg font-bold text-foreground mb-2">
+                    {"Chưa có khóa học nào được lưu"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {
+                      "Bạn có thể lưu các khóa học yêu thích khi duyệt danh mục để dễ dàng xem lại sau này."
+                    }
+                  </p>
+                  <Link
+                    href="/courses"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
+                  >
+                    {"Khám phá khóa học"}
+                  </Link>
+                </div>
+              ) : (
+                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
+                  {bookmarkedList.map((bm) => {
+                    const c = bm.course;
+                    const courseTitle = c?.title || "Khóa học trực tuyến";
+                    const partnerName = c?.partnerName || "Coursera Clone";
+                    return (
+                      <div
+                        key={bm.id}
+                        className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
+                      >
+                        <div className="p-6 flex-1 rounded-t-2xl">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate">
+                              {partnerName}
+                            </span>
+                            <IconButton
+                              type="button"
+                              variant="standard"
+                              size="xs"
+                              onClick={() => handleRemoveBookmark(bm.courseId, courseTitle)}
+                              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7 rounded-lg transition-colors shrink-0"
+                              title="Bỏ lưu khóa học"
+                              aria-label={`Bỏ lưu ${courseTitle}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            </IconButton>
+                          </div>
+                          <Link
+                            href={`/courses/${bm.courseId}`}
+                            prefetch={true}
+                            className="block group-hover:text-primary transition-colors"
+                          >
+                            <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
+                              {courseTitle}
+                            </h3>
+                          </Link>
+                          {c?.description && (
+                            <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 leading-relaxed">
+                              {c.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="p-4 border-t border-border bg-muted/40 rounded-b-2xl flex items-center gap-2">
+                          <Link
+                            href={`/courses/${bm.courseId}`}
+                            prefetch={true}
+                            className="flex-1 inline-flex items-center justify-center py-2 px-3 rounded-xl border border-border bg-card hover:bg-accent text-foreground text-xs font-semibold transition-colors cursor-pointer"
+                          >
+                            {"Chi tiết"}
+                          </Link>
+                          <Link
+                            href={`/learn/${bm.courseId}`}
+                            prefetch={true}
+                            className="flex-1 inline-flex items-center justify-center py-2 px-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-semibold transition-colors cursor-pointer"
+                          >
+                            {"Vào học"}
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </Tabs.Panel>

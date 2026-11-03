@@ -38,6 +38,10 @@ def _model_to_domain_progress(model: LearningProgressModel) -> LearningProgress:
         completed_item_ids=model.completed_item_ids,
         weekly_deadlines=deadlines,
         last_reset_at=model.last_reset_at,
+        last_accessed_at=model.last_accessed_at,
+        last_accessed_item_id=model.last_accessed_item_id,
+        enrolled_at=model.enrolled_at,
+        completed_at=model.completed_at,
     )
 
 
@@ -50,6 +54,8 @@ def _model_to_domain_note(model: PersonalNoteModel) -> PersonalNote:
         highlighted_text=model.highlighted_text,
         note_comment=model.note_comment,
         created_at=model.created_at,
+        timestamp_seconds=model.timestamp_seconds,
+        updated_at=model.updated_at,
     )
 
 
@@ -62,7 +68,9 @@ class SQLAlchemyLearningRepository(ILearningRepository):
     def _get_key(self, user_id: str, course_id: str) -> str:
         return f"{user_id}:{course_id}"
 
-    async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
+    async def get_progress(
+        self, user_id: str, course_id: str, current_item_id: str | None = None
+    ) -> LearningProgress:
         key = self._get_key(user_id, course_id)
         stmt = (
             select(LearningProgressModel)
@@ -71,6 +79,8 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         )
         res = await self.session.execute(stmt)
         model = res.scalar_one_or_none()
+
+        now_str = datetime.now(UTC).isoformat()
 
         if not model:
             # Atomic PostgreSQL UPSERT to prevent race conditions without exception overhead
@@ -82,6 +92,9 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                     course_id=course_id,
                     overall_progress_percent=0.0,
                     completed_item_ids=[],
+                    enrolled_at=now_str,
+                    last_accessed_at=now_str,
+                    last_accessed_item_id=current_item_id,
                 )
                 .on_conflict_do_nothing(index_elements=["id"])
             )
@@ -109,6 +122,11 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                     await self.session.rollback()
                     res = await self.session.execute(stmt)
                     model = res.scalar_one()
+        else:
+            model.last_accessed_at = now_str
+            if current_item_id:
+                model.last_accessed_item_id = current_item_id
+            await self.session.commit()
 
         return _model_to_domain_progress(model)
 
@@ -173,7 +191,9 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         item_id: str,
         highlighted_text: str,
         note_comment: str,
+        timestamp_seconds: int = 0,
     ) -> PersonalNote:
+        now_str = datetime.now(UTC).isoformat()
         note_model = PersonalNoteModel(
             id=f"note-{uuid7().hex}",
             user_id=user_id,
@@ -181,7 +201,9 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             item_id=item_id,
             highlighted_text=highlighted_text,
             note_comment=note_comment,
-            created_at=datetime.now(UTC).isoformat(),
+            timestamp_seconds=timestamp_seconds,
+            created_at=now_str,
+            updated_at=now_str,
         )
         self.session.add(note_model)
         await self.session.commit()
@@ -239,9 +261,10 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             res = await self.session.execute(stmt)
             model = res.scalar_one()
 
+        now_str = datetime.now(UTC).isoformat()
         domain_progress = _model_to_domain_progress(model)
         total_items = max(1, total_course_items)
-        domain_progress.mark_item_complete(item_id, total_items)
+        domain_progress.mark_item_complete(item_id, total_items, now_iso=now_str)
 
         if valid_item_ids is not None:
             domain_progress.completed_item_ids = [
@@ -257,6 +280,10 @@ class SQLAlchemyLearningRepository(ILearningRepository):
 
         model.completed_item_ids = list(domain_progress.completed_item_ids)
         model.overall_progress_percent = domain_progress.overall_progress_percent
+        model.last_accessed_at = now_str
+        model.last_accessed_item_id = item_id
+        if domain_progress.completed_at and not model.completed_at:
+            model.completed_at = domain_progress.completed_at
 
         await self.session.commit()
         return True, domain_progress
@@ -290,7 +317,10 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                     partner_name="",
                     progress_percent=progress,
                     status=status,
-                    last_accessed_at=lp.last_reset_at or "",
+                    last_accessed_at=lp.last_accessed_at or lp.last_reset_at or "",
+                    last_accessed_item_id=lp.last_accessed_item_id or "",
+                    enrolled_at=lp.enrolled_at or "",
+                    completed_at=lp.completed_at or "",
                 )
             )
         return summaries

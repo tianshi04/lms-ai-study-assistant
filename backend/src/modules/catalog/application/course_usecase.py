@@ -5,6 +5,7 @@ from typing import Any
 from src.modules.catalog.domain import (
     Category,
     Course,
+    CourseBookmark,
     CourseStatus,
     ICatalogRepository,
     Specialization,
@@ -483,3 +484,25 @@ class CourseUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.delete_category(category_id)
+
+    async def bookmark_course(
+        self, user_id: str, course_id: str
+    ) -> CourseBookmark | None:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.bookmark_course(user_id, course_id)
+
+    async def unbookmark_course(self, user_id: str, course_id: str) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.unbookmark_course(user_id, course_id)
+
+    async def check_course_bookmarked(self, user_id: str, course_id: str) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.is_course_bookmarked(user_id, course_id)
+
+    async def list_my_bookmarked_courses(self, user_id: str) -> list[CourseBookmark]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_user_bookmarks(user_id)

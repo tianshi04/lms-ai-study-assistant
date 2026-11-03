@@ -1217,3 +1217,76 @@ class CatalogHandler(CatalogService):
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def bookmark_course(
+        self,
+        request: pb.BookmarkCourseRequest,
+        ctx: RequestContext[pb.BookmarkCourseRequest, pb.BookmarkCourseResponse],
+    ) -> pb.BookmarkCourseResponse:
+        user = require_current_user()
+        course_id = request.course_id.strip()
+        if not course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
+        bm = await self.use_case.bookmark_course(user_id=user.id, course_id=course_id)
+        if not bm:
+            raise ConnectError(Code.NOT_FOUND, "Không tìm thấy khóa học")
+        pb_course = _to_pb_course(bm.course) if bm.course else None
+        return pb.BookmarkCourseResponse(
+            success=True,
+            bookmark=pb.CourseBookmark(
+                id=bm.id,
+                user_id=bm.user_id,
+                course_id=bm.course_id,
+                created_at=bm.created_at,
+                course=pb_course,
+            ),
+        )
+
+    async def unbookmark_course(
+        self,
+        request: pb.UnbookmarkCourseRequest,
+        ctx: RequestContext[pb.UnbookmarkCourseRequest, pb.UnbookmarkCourseResponse],
+    ) -> pb.UnbookmarkCourseResponse:
+        user = require_current_user()
+        course_id = request.course_id.strip()
+        if not course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
+        success = await self.use_case.unbookmark_course(
+            user_id=user.id, course_id=course_id
+        )
+        return pb.UnbookmarkCourseResponse(success=success)
+
+    async def check_course_bookmarked(
+        self,
+        request: pb.CheckCourseBookmarkedRequest,
+        ctx: RequestContext[
+            pb.CheckCourseBookmarkedRequest, pb.CheckCourseBookmarkedResponse
+        ],
+    ) -> pb.CheckCourseBookmarkedResponse:
+        user = require_current_user()
+        course_id = request.course_id.strip()
+        is_bookmarked = await self.use_case.check_course_bookmarked(
+            user_id=user.id, course_id=course_id
+        )
+        return pb.CheckCourseBookmarkedResponse(is_bookmarked=is_bookmarked)
+
+    async def list_my_bookmarked_courses(
+        self,
+        request: pb.ListMyBookmarkedCoursesRequest,
+        ctx: RequestContext[
+            pb.ListMyBookmarkedCoursesRequest, pb.ListMyBookmarkedCoursesResponse
+        ],
+    ) -> pb.ListMyBookmarkedCoursesResponse:
+        user = require_current_user()
+        bms = await self.use_case.list_my_bookmarked_courses(user_id=user.id)
+        pb_bms = [
+            pb.CourseBookmark(
+                id=bm.id,
+                user_id=bm.user_id,
+                course_id=bm.course_id,
+                created_at=bm.created_at,
+                course=_to_pb_course(bm.course) if bm.course else None,
+            )
+            for bm in bms
+        ]
+        return pb.ListMyBookmarkedCoursesResponse(bookmarks=pb_bms)

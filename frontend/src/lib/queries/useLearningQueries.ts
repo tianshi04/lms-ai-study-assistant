@@ -1,4 +1,10 @@
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryOptions,
+  type UseMutationOptions,
+} from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
@@ -26,13 +32,22 @@ export function useMyEnrolledCoursesQuery(
 
 export function useLearningProgressQuery(
   courseId: string,
-  options?: Partial<UseQueryOptions<LearningProgress | null, Error>>,
+  optionsOrCurrentItemId?: string | Partial<UseQueryOptions<LearningProgress | null, Error>>,
+  maybeOptions?: Partial<UseQueryOptions<LearningProgress | null, Error>>,
 ) {
+  const currentItemId =
+    typeof optionsOrCurrentItemId === "string" ? optionsOrCurrentItemId : undefined;
+  const options =
+    typeof optionsOrCurrentItemId === "object" ? optionsOrCurrentItemId : maybeOptions;
+
   return useQuery<LearningProgress | null, Error>({
-    queryKey: ["learningProgress", courseId],
+    queryKey: ["learningProgress", courseId, currentItemId],
     queryFn: async () => {
       const client = getRpcClient(LearningService);
-      const res = await client.getProgress({ courseId });
+      const res = await client.getProgress({
+        courseId,
+        currentItemId: currentItemId || "",
+      });
       return res.progress ?? null;
     },
     enabled: !!courseId,
@@ -53,5 +68,56 @@ export function usePersonalNotesQuery(
     },
     enabled: !!courseId,
     ...options,
+  });
+}
+
+export interface SavePersonalNoteInput {
+  courseId: string;
+  itemId: string;
+  highlightedText: string;
+  noteComment?: string;
+  timestampSeconds?: number;
+}
+
+export function useSavePersonalNoteMutation(
+  options?: Partial<UseMutationOptions<PersonalNote, Error, SavePersonalNoteInput>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<PersonalNote, Error, SavePersonalNoteInput>({
+    mutationFn: async (input) => {
+      const client = getRpcClient(LearningService);
+      const res = await client.savePersonalNote({
+        courseId: input.courseId,
+        itemId: input.itemId,
+        highlightedText: input.highlightedText,
+        noteComment: input.noteComment || "",
+        timestampSeconds: input.timestampSeconds ?? 0,
+      });
+      if (!res.note) throw new Error("Không thể lưu ghi chú");
+      return res.note;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["personalNotes", variables.courseId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+export function useDeletePersonalNoteMutation(
+  options?: Partial<UseMutationOptions<boolean, Error, { noteId: string; courseId: string }>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<boolean, Error, { noteId: string; courseId: string }>({
+    mutationFn: async ({ noteId }) => {
+      const client = getRpcClient(LearningService);
+      const res = await client.deletePersonalNote({ noteId });
+      return res.success;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["personalNotes", variables.courseId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }

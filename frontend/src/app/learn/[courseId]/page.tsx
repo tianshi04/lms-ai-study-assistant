@@ -376,8 +376,28 @@ function CoursePlayerContent() {
         } else {
           try {
             const learningClient = getRpcClient(LearningService);
-            const progressRes = await learningClient.getProgress({ courseId });
+            const progressRes = await learningClient.getProgress({
+              courseId,
+              currentItemId: selectedItem?.id || "",
+            });
             setProgress(progressRes.progress ?? null);
+
+            // Restore learner to last accessed lesson if no specific item was requested in URL
+            if (!previewItemId && progressRes.progress?.lastAccessedItemId && courseRes.course) {
+              const targetId = progressRes.progress.lastAccessedItemId;
+              for (const wm of courseRes.course.weekModules) {
+                let foundMatch = false;
+                for (const l of wm.lessons) {
+                  const match = l.items.find((item) => item.id === targetId);
+                  if (match) {
+                    setActiveItem(match);
+                    foundMatch = true;
+                    break;
+                  }
+                }
+                if (foundMatch) break;
+              }
+            }
 
             if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
               try {
@@ -449,6 +469,15 @@ function CoursePlayerContent() {
     setAnsweredQuizTimestamps(new Set());
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [activeItemId]);
+
+  // Track last accessed learning item in database
+  useEffect(() => {
+    if (!activeItemId || isPreviewMode) return;
+    const client = getRpcClient(LearningService);
+    client.getProgress({ courseId, currentItemId: activeItemId }).catch(() => {
+      // Ignore background tracking failure
+    });
+  }, [courseId, activeItemId, isPreviewMode]);
 
   // Mark Item as Complete is now moved above useEffect hooks.
 
@@ -561,12 +590,16 @@ function CoursePlayerContent() {
     setSavingNote(true);
     setNoteError("");
     try {
+      const currentSeconds = Math.floor(
+        playbackTimeStore.get() || videoRef.current?.currentTime || 0,
+      );
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.savePersonalNote({
         courseId,
         itemId: activeItem.id,
         highlightedText: highlightText,
         noteComment: noteComment,
+        timestampSeconds: currentSeconds,
       });
       if (res.note) {
         setNotes((prev) => [res.note!, ...prev]);

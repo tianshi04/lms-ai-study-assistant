@@ -358,3 +358,12 @@ class InstructorAnalytics(Entity):
         self.average_rating = average_rating
         self.review_count = review_count
         self.students = students or []
+
+
+@dataclass
+class CourseBookmark(Entity):
+    id: str
+    user_id: str
+    course_id: str
+    created_at: str
+    course: Course | None = None

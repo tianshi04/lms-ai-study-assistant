@@ -29,6 +29,10 @@ class LearningProgress(Entity):
         completed_item_ids: list[str] | None = None,
         weekly_deadlines: list[WeeklyDeadline] | None = None,
         last_reset_at: str | None = None,
+        last_accessed_at: str | None = None,
+        last_accessed_item_id: str | None = None,
+        enrolled_at: str = "",
+        completed_at: str | None = None,
     ) -> None:
         super().__init__(id=f"{user_id}:{course_id}")
         self.user_id = user_id
@@ -37,8 +41,17 @@ class LearningProgress(Entity):
         self.completed_item_ids = completed_item_ids or []
         self.weekly_deadlines = weekly_deadlines or []
         self.last_reset_at = last_reset_at
+        self.last_accessed_at = last_accessed_at
+        self.last_accessed_item_id = last_accessed_item_id
+        self.enrolled_at = enrolled_at
+        self.completed_at = completed_at
 
-    def mark_item_complete(self, item_id: str, total_items_count: int) -> bool:
+    def mark_item_complete(
+        self, item_id: str, total_items_count: int, now_iso: str | None = None
+    ) -> bool:
+        if now_iso:
+            self.last_accessed_at = now_iso
+            self.last_accessed_item_id = item_id
         if item_id in self.completed_item_ids:
             return False
         self.completed_item_ids.append(item_id)
@@ -47,6 +60,8 @@ class LearningProgress(Entity):
                 min(100.0, (len(self.completed_item_ids) / total_items_count) * 100.0),
                 1,
             )
+        if self.overall_progress_percent >= 100.0 and not self.completed_at:
+            self.completed_at = now_iso or datetime.now(UTC).isoformat()
         return True
 
     def can_reset_deadlines(self, now: datetime) -> bool:
@@ -83,6 +98,8 @@ class PersonalNote(Entity):
         highlighted_text: str,
         note_comment: str,
         created_at: str,
+        timestamp_seconds: int = 0,
+        updated_at: str = "",
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -91,6 +108,8 @@ class PersonalNote(Entity):
         self.highlighted_text = highlighted_text
         self.note_comment = note_comment
         self.created_at = created_at
+        self.timestamp_seconds = timestamp_seconds
+        self.updated_at = updated_at or created_at
 
 
 @dataclass(frozen=True)
@@ -101,3 +120,6 @@ class EnrolledCourseSummary(ValueObject):
     progress_percent: float
     status: str
     last_accessed_at: str
+    last_accessed_item_id: str = ""
+    enrolled_at: str = ""
+    completed_at: str = ""

@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from sqlalchemy import (
     ARRAY,
     Float,
@@ -16,6 +18,10 @@ from src.modules.learning.domain import DeadlineStatus
 from src.shared.infrastructure.database import Base
 
 
+def utc_now_str() -> str:
+    return datetime.now(UTC).isoformat()
+
+
 class LearningProgressModel(Base):
     __tablename__ = "learning_progresses"
 
@@ -29,6 +35,18 @@ class LearningProgressModel(Base):
         ARRAY(String(64)), nullable=False, default=list
     )
     last_reset_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    last_accessed_at: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, default=None
+    )
+    last_accessed_item_id: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, default=None
+    )
+    enrolled_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default=utc_now_str, server_default=""
+    )
+    completed_at: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, default=None
+    )
 
     weekly_deadlines: Mapped[list["WeeklyDeadlineModel"]] = relationship(
         "WeeklyDeadlineModel",
@@ -74,4 +92,10 @@ class PersonalNoteModel(Base):
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     highlighted_text: Mapped[str] = mapped_column(Text, nullable=False)
     note_comment: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    timestamp_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    updated_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default=utc_now_str, server_default=""
+    )

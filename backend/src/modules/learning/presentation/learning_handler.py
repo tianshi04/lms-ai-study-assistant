@@ -23,6 +23,9 @@ def _to_pb_enrolled_course_summary(
         progress_percent=s.progress_percent,
         status=s.status,
         last_accessed_at=s.last_accessed_at,
+        last_accessed_item_id=s.last_accessed_item_id,
+        enrolled_at=s.enrolled_at,
+        completed_at=s.completed_at,
     )
 
 
@@ -51,6 +54,10 @@ def _to_pb_progress(p: LearningProgress) -> pb.LearningProgress:
         overall_progress_percent=p.overall_progress_percent,
         completed_item_ids=p.completed_item_ids,
         weekly_deadlines=[_to_pb_weekly_deadline(d) for d in p.weekly_deadlines],
+        last_accessed_at=p.last_accessed_at or "",
+        last_accessed_item_id=p.last_accessed_item_id or "",
+        enrolled_at=p.enrolled_at or "",
+        completed_at=p.completed_at or "",
     )
 
 
@@ -63,6 +70,8 @@ def _to_pb_note(note: PersonalNote) -> pb.PersonalNote:
         highlighted_text=note.highlighted_text,
         note_comment=note.note_comment,
         created_at=note.created_at,
+        timestamp_seconds=note.timestamp_seconds,
+        updated_at=note.updated_at,
     )
 
 
@@ -76,8 +85,11 @@ class LearningHandler(LearningService):
         ctx: RequestContext[pb.GetProgressRequest, pb.GetProgressResponse],
     ) -> pb.GetProgressResponse:
         current_user = require_current_user()
+        current_item_id = request.current_item_id or None
         progress = await self.use_case.get_progress(
-            user_id=current_user.id, course_id=request.course_id
+            user_id=current_user.id,
+            course_id=request.course_id,
+            current_item_id=current_item_id,
         )
         return pb.GetProgressResponse(progress=_to_pb_progress(progress))
 
@@ -106,6 +118,7 @@ class LearningHandler(LearningService):
             item_id=request.item_id,
             highlighted_text=request.highlighted_text,
             note_comment=request.note_comment,
+            timestamp_seconds=request.timestamp_seconds,
         )
         return pb.SavePersonalNoteResponse(note=_to_pb_note(note))
 

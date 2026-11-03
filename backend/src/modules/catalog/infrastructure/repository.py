@@ -12,6 +12,7 @@ from src.modules.catalog.domain import (
     Category,
     Course,
     CourseAnnouncement,
+    CourseBookmark,
     CourseReview,
     CourseStatus,
     EnrolledStudent,
@@ -34,6 +35,7 @@ from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,
     CourseAuditLogModel,
+    CourseBookmarkModel,
     CourseCollaboratorModel,
     CourseEmbeddingModel,
     CourseModel,
@@ -1870,3 +1872,106 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 e,
             )
             return []
+
+    async def bookmark_course(
+        self, user_id: str, course_id: str
+    ) -> CourseBookmark | None:
+        course = await self.get_course_detail(course_id)
+        if not course:
+            return None
+
+        stmt = select(CourseBookmarkModel).where(
+            CourseBookmarkModel.user_id == user_id,
+            CourseBookmarkModel.course_id == course_id,
+        )
+        res = await self.session.execute(stmt)
+        existing = res.scalar_one_or_none()
+        if existing:
+            return CourseBookmark(
+                id=existing.id,
+                user_id=existing.user_id,
+                course_id=existing.course_id,
+                created_at=existing.created_at,
+                course=course,
+            )
+
+        bookmark_id = f"bm-{uuid7().hex}"
+        now_str = datetime.now(UTC).isoformat()
+        bookmark_model = CourseBookmarkModel(
+            id=bookmark_id,
+            user_id=user_id,
+            course_id=course_id,
+            created_at=now_str,
+        )
+        self.session.add(bookmark_model)
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            res = await self.session.execute(stmt)
+            existing = res.scalar_one_or_none()
+            if existing:
+                return CourseBookmark(
+                    id=existing.id,
+                    user_id=existing.user_id,
+                    course_id=existing.course_id,
+                    created_at=existing.created_at,
+                    course=course,
+                )
+
+        return CourseBookmark(
+            id=bookmark_id,
+            user_id=user_id,
+            course_id=course_id,
+            created_at=now_str,
+            course=course,
+        )
+
+    async def unbookmark_course(self, user_id: str, course_id: str) -> bool:
+        stmt = select(CourseBookmarkModel).where(
+            CourseBookmarkModel.user_id == user_id,
+            CourseBookmarkModel.course_id == course_id,
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return False
+        await self.session.delete(model)
+        await self.session.commit()
+        return True
+
+    async def is_course_bookmarked(self, user_id: str, course_id: str) -> bool:
+        stmt = select(CourseBookmarkModel.id).where(
+            CourseBookmarkModel.user_id == user_id,
+            CourseBookmarkModel.course_id == course_id,
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none() is not None
+
+    async def list_user_bookmarks(self, user_id: str) -> list[CourseBookmark]:
+        stmt = (
+            select(CourseBookmarkModel)
+            .where(CourseBookmarkModel.user_id == user_id)
+            .options(
+                selectinload(CourseBookmarkModel.course)
+                .selectinload(CourseModel.week_modules)
+                .selectinload(WeekModuleModel.lessons)
+                .selectinload(LessonModel.items)
+            )
+            .order_by(CourseBookmarkModel.created_at.desc())
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        bookmarks = []
+        for m in models:
+            course_domain = _model_to_domain_course(m.course) if m.course else None
+            bookmarks.append(
+                CourseBookmark(
+                    id=m.id,
+                    user_id=m.user_id,
+                    course_id=m.course_id,
+                    created_at=m.created_at,
+                    course=course_domain,
+                )
+            )
+        return bookmarks

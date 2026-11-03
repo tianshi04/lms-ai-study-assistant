@@ -9,6 +9,9 @@ import {
   useLearningProgressQuery,
   useMyCertificatesQuery,
   usePaymentAccessQuery,
+  useIsCourseBookmarkedQuery,
+  useBookmarkCourseMutation,
+  useUnbookmarkCourseMutation,
 } from "@/lib/query_hooks";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
@@ -50,6 +53,7 @@ import {
   AlertTriangle,
   Sparkles,
   Award,
+  Bookmark,
 } from "lucide-react";
 
 interface CourseDetailClientProps {
@@ -89,6 +93,34 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
     [subjects],
   );
   const levelMap = useMemo(() => new Map((levels ?? []).map((l) => [l.id, l.name])), [levels]);
+
+  const { data: isBookmarked = false, isLoading: loadingBookmark } = useIsCourseBookmarkedQuery(
+    courseId,
+    {
+      enabled: isAuthenticated && !!courseId,
+    },
+  );
+  const bookmarkMutation = useBookmarkCourseMutation();
+  const unbookmarkMutation = useUnbookmarkCourseMutation();
+  const togglingBookmark = bookmarkMutation.isPending || unbookmarkMutation.isPending;
+
+  const handleToggleBookmark = async () => {
+    if (!isAuthenticated) {
+      toast.error("Vui lòng đăng nhập để lưu khóa học vào danh sách yêu thích.");
+      return;
+    }
+    try {
+      if (isBookmarked) {
+        await unbookmarkMutation.mutateAsync({ courseId });
+        toast.success("Đã xóa khóa học khỏi danh sách lưu.");
+      } else {
+        await bookmarkMutation.mutateAsync({ courseId });
+        toast.success("Đã lưu khóa học thành công!");
+      }
+    } catch {
+      toast.error("Có lỗi xảy ra khi thao tác lưu khóa học.");
+    }
+  };
 
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
   const { data: learningProgress } = useLearningProgressQuery(courseId, {
@@ -425,6 +457,21 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </Button>
               </div>
             )}
+
+            {/* Bookmark Course Button */}
+            <Button
+              type="button"
+              variant={isBookmarked ? "tonal" : "outlined"}
+              onClick={handleToggleBookmark}
+              disabled={loadingBookmark || togglingBookmark}
+              className="w-full py-2.5 px-6 rounded-full border-border text-foreground font-semibold text-sm justify-center gap-2"
+            >
+              <Bookmark
+                aria-hidden="true"
+                className={`w-4 h-4 ${isBookmarked ? "fill-primary text-primary" : "text-muted-foreground"}`}
+              />
+              <span>{isBookmarked ? "Đã lưu vào danh sách" : "Lưu khóa học"}</span>
+            </Button>
 
             {/* Specialization Combo Anchor Callout */}
             {specialization && (

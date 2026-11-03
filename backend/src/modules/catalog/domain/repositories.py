@@ -6,6 +6,7 @@ from src.modules.catalog.domain.entities import (
     Category,
     Course,
     CourseAnnouncement,
+    CourseBookmark,
     CourseReview,
     CourseStatus,
     InstructorAnalytics,
@@ -370,4 +371,22 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def get_quiz_questions_for_export(self, quiz_matrix_id: str) -> list[dict]:
+        pass
+
+    @abstractmethod
+    async def bookmark_course(
+        self, user_id: str, course_id: str
+    ) -> CourseBookmark | None:
+        pass
+
+    @abstractmethod
+    async def unbookmark_course(self, user_id: str, course_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def is_course_bookmarked(self, user_id: str, course_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def list_user_bookmarks(self, user_id: str) -> list[CourseBookmark]:
         pass

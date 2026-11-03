@@ -23,6 +23,10 @@ message LearningProgress {
   float overall_progress_percent = 3;
   repeated string completed_item_ids = 4;
   repeated WeeklyDeadline weekly_deadlines = 5;
+  string last_accessed_at = 6;
+  string last_accessed_item_id = 7;
+  string enrolled_at = 8;
+  string completed_at = 9;
 }
 
 message PersonalNote {
@@ -33,10 +37,13 @@ message PersonalNote {
   string highlighted_text = 5;
   string note_comment = 6;
   string created_at = 7;
+  int32 timestamp_seconds = 8;
+  string updated_at = 9;
 }
 
 message GetProgressRequest {
   string course_id = 1;
+  optional string current_item_id = 2;
 }
 
 message GetProgressResponse {
@@ -57,6 +64,7 @@ message SavePersonalNoteRequest {
   string item_id = 2;
   string highlighted_text = 3;
   string note_comment = 4;
+  int32 timestamp_seconds = 5;
 }
 
 message SavePersonalNoteResponse {
@@ -98,6 +106,9 @@ message EnrolledCourseSummary {
   float progress_percent = 4;
   string status = 5; // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
   string last_accessed_at = 6;
+  string last_accessed_item_id = 7;
+  string enrolled_at = 8;
+  string completed_at = 9;
 }
 
 message ListMyEnrolledCoursesResponse {

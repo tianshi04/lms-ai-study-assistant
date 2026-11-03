@@ -383,3 +383,26 @@ class CourseEmbeddingModel(Base):
         Text, nullable=False, default="", server_default=""
     )
     updated_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class CourseBookmarkModel(Base):
+    __tablename__ = "course_bookmarks"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "course_id", name="uq_course_bookmarks_user_course"
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    course_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="", server_default=""
+    )
+
+    course: Mapped["CourseModel"] = relationship("CourseModel", lazy="selectin")
