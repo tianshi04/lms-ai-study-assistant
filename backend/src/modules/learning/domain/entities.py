@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from enum import Enum
 
 from src.modules.learning.domain.constants import DEADLINE_RESET_COOLDOWN_DAYS
@@ -123,3 +123,64 @@ class EnrolledCourseSummary(ValueObject):
     last_accessed_item_id: str = ""
     enrolled_at: str = ""
     completed_at: str = ""
+
+
+@dataclass
+class LearningItemProgress:
+    user_id: str
+    item_id: str
+    course_id: str
+    time_spent_seconds: int = 0
+    last_studied_at: str = ""
+
+
+@dataclass(frozen=True)
+class DailyStudyRecord(ValueObject):
+    date: str
+    total_seconds: int
+    is_streak_qualified: bool
+
+
+class UserLearningStreak(Entity):
+    def __init__(
+        self,
+        user_id: str,
+        current_streak: int = 0,
+        longest_streak: int = 0,
+        last_active_date: date | None = None,
+        total_study_seconds: int = 0,
+        updated_at: str = "",
+    ) -> None:
+        super().__init__(id=user_id)
+        self.user_id = user_id
+        self.current_streak = current_streak
+        self.longest_streak = longest_streak
+        self.last_active_date = last_active_date
+        self.total_study_seconds = total_study_seconds
+        self.updated_at = updated_at
+
+    def get_effective_streak(self, today: date) -> int:
+        """Return effective streak, resetting to 0 if missed yesterday and today."""
+        if not self.last_active_date:
+            return 0
+        yesterday = today - timedelta(days=1)
+        if self.last_active_date in (today, yesterday):
+            return self.current_streak
+        return 0
+
+    def advance_streak(self, today: date, now_iso: str) -> bool:
+        """Advance streak when daily goal is reached. Returns True if streak advanced."""
+        if self.last_active_date == today:
+            return False
+
+        yesterday = today - timedelta(days=1)
+        if self.last_active_date == yesterday:
+            self.current_streak += 1
+        else:
+            self.current_streak = 1
+
+        self.longest_streak = max(self.longest_streak, self.current_streak)
+
+        self.last_active_date = today
+        self.updated_at = now_iso
+        return True

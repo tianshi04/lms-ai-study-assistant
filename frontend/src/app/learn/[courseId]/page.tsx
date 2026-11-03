@@ -27,6 +27,8 @@ import { BrandLogo } from "@/components/ui/BrandLogo";
 import { usePaymentAccessQuery } from "@/lib/query_hooks";
 import { playbackTimeStore } from "@/lib/playback_time_store";
 import { CourseSyllabusDrawer } from "@/components/player/sidebar/CourseSyllabusDrawer";
+import { StreakBadge } from "@/components/player/StreakBadge";
+import { useStudyTracker } from "@/lib/hooks/useStudyTracker";
 import { Button } from "@/components/ui/Button";
 import { Menu, Sparkles, X, CheckCircle2, ChevronRight } from "lucide-react";
 
@@ -56,11 +58,20 @@ function CoursePlayerContent() {
         : "transcript",
   );
   const [isQuizActive, setIsQuizActive] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [collapsedWeeks, setCollapsedWeeks] = useState<Record<string, boolean>>({});
   const prevActiveItemIdRef = useRef<string | null>(null);
   const isInitialLoadCompletedRef = useRef(false);
+
+  // Study time tracking with heartbeat and keepalive flush
+  useStudyTracker({
+    courseId,
+    itemId: activeItem?.id || null,
+    isVideoPlaying,
+    isPreviewMode,
+  });
 
   // Default sidebars closed on mobile (< 1024px) to prevent layout shift, and open on desktop (>= 1024px).
   // Use matchMedia so virtual keyboard / address bar height resizes on mobile do not unexpectedly close open drawers.
@@ -744,6 +755,8 @@ function CoursePlayerContent() {
             </span>
           )}
 
+          {!isPreviewMode && <StreakBadge className="hidden sm:inline-flex" />}
+
           <LanguageToggle />
           <ThemeToggle />
 
@@ -900,6 +913,8 @@ function CoursePlayerContent() {
                 completedItemIds={progress?.completedItemIds || []}
                 onTimeUpdate={handleTimeUpdate}
                 onSeeking={handleSeeking}
+                onPlay={() => setIsVideoPlaying(true)}
+                onPause={() => setIsVideoPlaying(false)}
                 onSelectOption={setSelectedOption}
                 onSubmitQuiz={handleQuizSubmit}
                 onContinueVideo={handleContinueVideo}

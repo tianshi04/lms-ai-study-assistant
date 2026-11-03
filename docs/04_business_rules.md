@@ -285,6 +285,24 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     $$\text{Overall Progress \%} = \min\left(100.0, \text{round}\left(\frac{|\text{Completed Items}|}{\max(1, \text{Total Course Items})} \times 100, 1\right)\right)$$
 * **BR_LEARNING_002 (Bảo lưu Tiến độ & Ghi chú khi Nâng cấp Chế độ):**
   * Khi học viên nâng cấp từ Audit Mode sang Paid Mode (hoặc qua Financial Aid / Enterprise Key), hệ thống **bảo lưu 100% danh sách bài học đã hoàn thành (`completed_item_ids`) và các Ghi chú cá nhân (`Personal Notes`)**.
+* **BR_LEARNING_003 (Đo lường Thời gian Học Thực tế & Chuỗi Ngày Học Liên tục - Learning Time & Streaks):**
+  * *Cơ chế Heartbeat & Chống Treo máy (Anti-Idle Tracking):*
+    * Thời gian học thực tế được Frontend tích lũy mỗi giây khi thỏa mãn đồng thời: (1) Tab đang hiển thị (`document.visibilityState === 'visible'`) và (2) Video đang phát thực tế (`isVideoPlaying`) HOẶC có tương tác người dùng (chuột, phím, cuộn trang) trong vòng 120 giây (`IDLE_TIMEOUT_SECONDS = 120`).
+    * Định kỳ mỗi 30 giây (`DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30`), Frontend phát tín hiệu Heartbeat lên RPC `RecordLearningTime(course_id, item_id, delta_seconds, client_timezone)`.
+    * Khi chuyển bài hoặc thoát trang, hệ thống kích hoạt cơ chế flush an toàn bằng `fetch(url, { keepalive: true, headers: { 'Connect-Protocol-Version': '1' } })` bắt sự kiện `visibilitychange` (với `document.visibilityState === 'hidden'`).
+  * *Bảo mật & Kẹp chặn Dữ liệu (Anti-Cheating & Velocity Limit):*
+    * `delta_seconds` bị kẹp trong khoảng $[1, 120]$ giây (`MAX_HEARTBEAT_DELTA_SECONDS = 120`).
+    * Áp dụng Rate Limiting tối đa 1 heartbeat mỗi 5 giây cho mỗi `user_id` qua Redis token với cơ chế Fail-open an toàn.
+    * Bắt buộc kiểm tra Enrollment Guard: Học viên bắt buộc phải đã ghi danh khóa học (`enrolled_at != ""`) và `item_id` phải thực sự thuộc cấu trúc khóa học.
+  * *Phân giải Múi giờ Tuyệt đối (Server-Authoritative Timezone):*
+    * Server sử dụng đồng hồ UTC tuyệt đối, chuyển đổi sang ngày địa phương bằng `zoneinfo.ZoneInfo(client_timezone)` (mặc định fallback `"Asia/Ho_Chi_Minh"` / UTC+7) để xác định `study_date` (YYYY-MM-DD), triệt tiêu nguy cơ mất chuỗi streak sau nửa đêm và chống gian lận ngày từ client.
+  * *Quy tắc Tính Chuỗi Ngày Học Liên tục (Streak Engine):*
+    * Mục tiêu tối thiểu để giữ/tăng chuỗi ngày học là 300 giây (5 phút) học tích lũy trong ngày (`MIN_DAILY_STUDY_SECONDS_FOR_STREAK = 300`).
+    * Cờ `is_streak_qualified` được cập nhật nguyên tử ở cấp CSDL PostgreSQL (`update ... where is_streak_qualified = false returning ...`), đảm bảo chỉ duy nhất một nhịp ping đầu tiên vượt mốc 300s mới kích hoạt tăng `current_streak`.
+    * Nếu ngày hoạt động gần nhất `last_active_date == yesterday`: `current_streak += 1`, `longest_streak = max(longest_streak, current_streak)`.
+    * Nếu ngày hoạt động gần nhất `last_active_date == today`: Giữ nguyên `current_streak`.
+    * Nếu học viên bỏ lỡ quá 1 ngày (`last_active_date < yesterday` hoặc chưa từng học): Chuỗi bị đứt quãng, reset về `current_streak = 1` khi đạt mốc ngày mới.
+    * Khi truy vấn qua `GetLearningStreak`, hệ thống tính toán `effective_current_streak = current_streak` nếu `last_active_date` là hôm nay hoặc hôm qua; ngược lại trả về 0 để loại bỏ hoàn toàn hiện tượng hiển thị chuỗi ma (Phantom Streak).
 
 ---
 

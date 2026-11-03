@@ -115,6 +115,39 @@ message ListMyEnrolledCoursesResponse {
   repeated EnrolledCourseSummary courses = 1;
 }
 
+message RecordLearningTimeRequest {
+  string course_id = 1;
+  string item_id = 2;
+  int32 delta_seconds = 3;
+  string client_timezone = 4;
+}
+
+message RecordLearningTimeResponse {
+  int32 item_total_seconds = 1;
+  int32 today_total_seconds = 2;
+  int32 current_streak = 3;
+  bool is_streak_extended_today = 4;
+}
+
+message DailyStudyRecord {
+  string date = 1;
+  int32 total_seconds = 2;
+  bool is_streak_qualified = 3;
+}
+
+message GetLearningStreakRequest {
+  string client_timezone = 1;
+}
+
+message GetLearningStreakResponse {
+  int32 current_streak = 1;
+  int32 longest_streak = 2;
+  int32 today_study_seconds = 3;
+  int32 total_study_seconds = 4;
+  string last_active_date = 5;
+  repeated DailyStudyRecord recent_days = 6;
+}
+
 service LearningService {
   rpc GetProgress(GetProgressRequest) returns (GetProgressResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -135,6 +168,12 @@ service LearningService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListMyEnrolledCourses(ListMyEnrolledCoursesRequest) returns (ListMyEnrolledCoursesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc RecordLearningTime(RecordLearningTimeRequest) returns (RecordLearningTimeResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetLearningStreak(GetLearningStreakRequest) returns (GetLearningStreakResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

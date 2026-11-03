@@ -1,7 +1,9 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy import (
     ARRAY,
+    Boolean,
+    Date,
     Float,
     ForeignKey,
     Integer,
@@ -96,6 +98,54 @@ class PersonalNoteModel(Base):
         Integer, nullable=False, default=0, server_default="0"
     )
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    updated_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default=utc_now_str, server_default=""
+    )
+
+
+class LearningItemProgressModel(Base):
+    __tablename__ = "learning_item_progresses"
+
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    item_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    course_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    time_spent_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    last_studied_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default=utc_now_str, server_default=""
+    )
+
+
+class DailyLearningRecordModel(Base):
+    __tablename__ = "daily_learning_records"
+
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    study_date: Mapped[date] = mapped_column(Date, primary_key=True)
+    total_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    is_streak_qualified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+
+
+class UserLearningStreakModel(Base):
+    __tablename__ = "user_learning_streaks"
+
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    current_streak: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    longest_streak: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    last_active_date: Mapped[date | None] = mapped_column(
+        Date, nullable=True, default=None
+    )
+    total_study_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     updated_at: Mapped[str] = mapped_column(
         String(64), nullable=False, default=utc_now_str, server_default=""
     )

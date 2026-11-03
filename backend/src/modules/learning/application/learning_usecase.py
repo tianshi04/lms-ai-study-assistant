@@ -1,10 +1,16 @@
 import asyncio
 import logging
 from collections.abc import Callable
+from datetime import UTC, date, datetime, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.learning.domain import (
+    DEFAULT_TIMEZONE,
+    MAX_HEARTBEAT_DELTA_SECONDS,
+    MIN_HEARTBEAT_DELTA_SECONDS,
+    DailyStudyRecord,
     EnrolledCourseSummary,
     ILearningRepository,
     LearningProgress,
@@ -12,6 +18,7 @@ from src.modules.learning.domain import (
 )
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.rate_limiter import check_learning_heartbeat_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +29,21 @@ def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
     )
 
     return SQLAlchemyCatalogRepository(session)
+
+
+def _resolve_study_date(client_timezone: str = "") -> date:
+    now_utc = datetime.now(UTC)
+    if client_timezone:
+        try:
+            return now_utc.astimezone(ZoneInfo(client_timezone)).date()
+        except (KeyError, ValueError, ZoneInfoNotFoundError):
+            logger.debug(
+                "Failed to resolve client timezone %s, falling back", client_timezone
+            )
+    try:
+        return now_utc.astimezone(ZoneInfo(DEFAULT_TIMEZONE)).date()
+    except (KeyError, ValueError, ZoneInfoNotFoundError):
+        return now_utc.astimezone(timezone(timedelta(hours=7))).date()
 
 
 class LearningUseCase:
@@ -175,3 +197,89 @@ class LearningUseCase:
                 )
             )
         return summaries
+
+    async def record_learning_time(
+        self,
+        user_id: str,
+        course_id: str,
+        item_id: str,
+        delta_seconds: int,
+        client_timezone: str = "",
+    ) -> tuple[int, int, int, bool]:
+        if delta_seconds < MIN_HEARTBEAT_DELTA_SECONDS:
+            return 0, 0, 0, False
+
+        # Rate limit heartbeat ping (anti-cheating)
+        allowed = await check_learning_heartbeat_rate_limit(user_id, cooldown_seconds=5)
+        if not allowed:
+            logger.warning(
+                "Heartbeat throttled for user %s on course %s", user_id, course_id
+            )
+            return 0, 0, 0, False
+
+        # Clamping delta_seconds to prevent hacking/abnormal velocity
+        clamped_delta = min(delta_seconds, MAX_HEARTBEAT_DELTA_SECONDS)
+
+        async with async_session_scope() as session:
+            catalog_repo = self.catalog_repo_factory(session)
+            course = await catalog_repo.get_course_detail(course_id)
+
+        if not course:
+            raise ValueError(f"Khóa học {course_id} không tồn tại.")
+
+        valid_item_ids = {
+            item.id
+            for wm in course.week_modules
+            for lesson in wm.lessons
+            for item in lesson.items
+        }
+        if item_id not in valid_item_ids:
+            raise ValueError(f"Bài học {item_id} không thuộc khóa học {course_id}.")
+
+        # Enrollment guard: verify user has registered/enrolled in the course
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            progress = await repo.get_progress(user_id, course.id)
+            if not progress or not progress.enrolled_at:
+                raise PermissionError(
+                    f"Người dùng {user_id} chưa ghi danh khóa học {course_id}."
+                )
+
+        study_date = _resolve_study_date(client_timezone)
+        now_iso = datetime.now(UTC).isoformat()
+
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.record_learning_time(
+                user_id=user_id,
+                course_id=course.id,
+                item_id=item_id,
+                delta_seconds=clamped_delta,
+                study_date=study_date,
+                now_iso=now_iso,
+            )
+
+    async def get_learning_streak(
+        self, user_id: str, client_timezone: str = ""
+    ) -> tuple[int, int, int, int, str, list[DailyStudyRecord]]:
+        today = _resolve_study_date(client_timezone)
+
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            streak, today_seconds, recent_days = await repo.get_learning_streak_stats(
+                user_id=user_id, today=today
+            )
+
+        effective_streak = streak.get_effective_streak(today)
+        last_active = (
+            streak.last_active_date.isoformat() if streak.last_active_date else ""
+        )
+
+        return (
+            effective_streak,
+            streak.longest_streak,
+            today_seconds,
+            streak.total_study_seconds,
+            last_active,
+            recent_days,
+        )

@@ -12,6 +12,8 @@ import {
   type LearningProgress,
   type PersonalNote,
   type EnrolledCourseSummary,
+  type GetLearningStreakResponse,
+  type RecordLearningTimeResponse,
 } from "@/gen/learning/v1/learning_pb";
 
 export function useMyEnrolledCoursesQuery(
@@ -117,6 +119,57 @@ export function useDeletePersonalNoteMutation(
     ...options,
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["personalNotes", variables.courseId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+export function useLearningStreakQuery(
+  options?: Partial<UseQueryOptions<GetLearningStreakResponse, Error>>,
+) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<GetLearningStreakResponse, Error>({
+    queryKey: ["learningStreak"],
+    queryFn: async () => {
+      const client = getRpcClient(LearningService);
+      const clientTimezone =
+        typeof Intl !== "undefined"
+          ? Intl.DateTimeFormat().resolvedOptions().timeZone
+          : "Asia/Ho_Chi_Minh";
+      return await client.getLearningStreak({ clientTimezone });
+    },
+    enabled: isAuthenticated && (options?.enabled ?? true),
+    ...options,
+  });
+}
+
+export interface RecordLearningTimeInput {
+  courseId: string;
+  itemId: string;
+  deltaSeconds: number;
+}
+
+export function useRecordLearningTimeMutation(
+  options?: Partial<UseMutationOptions<RecordLearningTimeResponse, Error, RecordLearningTimeInput>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<RecordLearningTimeResponse, Error, RecordLearningTimeInput>({
+    mutationFn: async ({ courseId, itemId, deltaSeconds }) => {
+      const client = getRpcClient(LearningService);
+      const clientTimezone =
+        typeof Intl !== "undefined"
+          ? Intl.DateTimeFormat().resolvedOptions().timeZone
+          : "Asia/Ho_Chi_Minh";
+      return await client.recordLearningTime({
+        courseId,
+        itemId,
+        deltaSeconds,
+        clientTimezone,
+      });
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["learningStreak"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });

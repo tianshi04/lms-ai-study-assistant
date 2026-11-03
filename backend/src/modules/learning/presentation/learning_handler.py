@@ -173,3 +173,63 @@ class LearningHandler(LearningService):
         return pb.ListMyEnrolledCoursesResponse(
             courses=[_to_pb_enrolled_course_summary(s) for s in summaries]
         )
+
+    async def record_learning_time(
+        self,
+        request: pb.RecordLearningTimeRequest,
+        ctx: RequestContext[
+            pb.RecordLearningTimeRequest, pb.RecordLearningTimeResponse
+        ],
+    ) -> pb.RecordLearningTimeResponse:
+        current_user = require_current_user()
+        (
+            item_total,
+            today_total,
+            streak,
+            is_extended,
+        ) = await self.use_case.record_learning_time(
+            user_id=current_user.id,
+            course_id=request.course_id,
+            item_id=request.item_id,
+            delta_seconds=request.delta_seconds,
+            client_timezone=request.client_timezone,
+        )
+        return pb.RecordLearningTimeResponse(
+            item_total_seconds=item_total,
+            today_total_seconds=today_total,
+            current_streak=streak,
+            is_streak_extended_today=is_extended,
+        )
+
+    async def get_learning_streak(
+        self,
+        request: pb.GetLearningStreakRequest,
+        ctx: RequestContext[pb.GetLearningStreakRequest, pb.GetLearningStreakResponse],
+    ) -> pb.GetLearningStreakResponse:
+        current_user = require_current_user()
+        (
+            current_streak,
+            longest_streak,
+            today_seconds,
+            total_seconds,
+            last_active,
+            recent_days,
+        ) = await self.use_case.get_learning_streak(
+            user_id=current_user.id,
+            client_timezone=request.client_timezone,
+        )
+        return pb.GetLearningStreakResponse(
+            current_streak=current_streak,
+            longest_streak=longest_streak,
+            today_study_seconds=today_seconds,
+            total_study_seconds=total_seconds,
+            last_active_date=last_active,
+            recent_days=[
+                pb.DailyStudyRecord(
+                    date=r.date,
+                    total_seconds=r.total_seconds,
+                    is_streak_qualified=r.is_streak_qualified,
+                )
+                for r in recent_days
+            ],
+        )

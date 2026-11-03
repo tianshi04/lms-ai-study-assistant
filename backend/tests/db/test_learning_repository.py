@@ -378,3 +378,99 @@ async def test_get_progress_updates_last_accessed_item_id(repository, mock_sessi
     assert mock_model.last_accessed_item_id == "i2"
     assert res.last_accessed_item_id == "i2"
     mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_record_learning_time_repository(repository, mock_session):
+    from datetime import date
+
+    from src.modules.learning.infrastructure.models import UserLearningStreakModel
+
+    mock_item_res = MagicMock()
+    mock_item_res.scalar_one.return_value = 60
+
+    mock_daily_res = MagicMock()
+    mock_daily_res.scalar_one.return_value = 60
+
+    mock_streak_model = UserLearningStreakModel(
+        user_id="u1",
+        current_streak=1,
+        longest_streak=1,
+        last_active_date=date(2026, 11, 4),
+        total_study_seconds=60,
+    )
+    mock_init_res = MagicMock()
+    mock_streak_res = MagicMock()
+    mock_streak_res.scalar_one.return_value = mock_streak_model
+
+    mock_session.execute.side_effect = [
+        mock_item_res,
+        mock_daily_res,
+        mock_init_res,
+        mock_streak_res,
+    ]
+
+    (
+        item_total,
+        today_total,
+        streak,
+        is_extended,
+    ) = await repository.record_learning_time(
+        user_id="u1",
+        course_id="c1",
+        item_id="i1",
+        delta_seconds=30,
+        study_date=date(2026, 11, 4),
+        now_iso="2026-11-04T10:00:00Z",
+    )
+
+    assert item_total == 60
+    assert today_total == 60
+    assert streak == 1
+    assert is_extended is False
+    mock_session.commit.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_learning_streak_stats_repository(repository, mock_session):
+    from datetime import date
+
+    from src.modules.learning.infrastructure.models import (
+        DailyLearningRecordModel,
+        UserLearningStreakModel,
+    )
+
+    mock_streak_model = UserLearningStreakModel(
+        user_id="u1",
+        current_streak=3,
+        longest_streak=5,
+        last_active_date=date(2026, 11, 3),
+        total_study_seconds=1800,
+    )
+    mock_res_streak = MagicMock()
+    mock_res_streak.scalar_one_or_none.return_value = mock_streak_model
+
+    today = date(2026, 11, 4)
+    daily_rec = DailyLearningRecordModel(
+        user_id="u1",
+        study_date=today,
+        total_seconds=400,
+        is_streak_qualified=True,
+    )
+    mock_res_daily = MagicMock()
+    mock_res_daily.scalars.return_value.all.return_value = [daily_rec]
+
+    mock_session.execute.side_effect = [mock_res_streak, mock_res_daily]
+
+    streak_entity, today_sec, recent_days = await repository.get_learning_streak_stats(
+        user_id="u1", today=today
+    )
+
+    assert streak_entity.current_streak == 3
+    assert streak_entity.longest_streak == 5
+    assert today_sec == 400
+    assert len(recent_days) == 7
+    # 7th day is today
+    assert recent_days[-1].date == today.isoformat()
+    assert recent_days[-1].total_seconds == 400
+    assert recent_days[-1].is_streak_qualified is True
