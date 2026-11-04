@@ -22,12 +22,14 @@
 
 	# 3. Bộ kiểm soát tần suất truy cập tại tầng hạ tầng (Edge Rate Limiting - mholt/caddy-ratelimit)
 	rate_limit {
-		# Zone 1: Chống Brute-force & credential stuffing cho endpoint xác thực (tối đa 20 req/phút/IP)
+		# Zone 1: Chống Brute-force & credential stuffing cho endpoint xác thực nhạy cảm (tối đa 20 req/phút/IP)
+		# Chỉ áp dụng cho Login/Register/OAuth/Verification, không ảnh hưởng các truy vấn quản trị của IdentityService
 		zone auth_zone {
 			match {
-				path /rpc/identity.v1.IdentityService/* /api/auth/* /auth/*
+				path /rpc/identity.v1.IdentityService/Login* /rpc/identity.v1.IdentityService/Register* /rpc/identity.v1.IdentityService/Google* /rpc/identity.v1.IdentityService/Complete* /rpc/identity.v1.IdentityService/VerifyIdentity /api/auth/* /auth/*
 			}
 			key {client_ip}
+			ipv6_prefix 64
 			events 20
 			window 1m
 		}
@@ -38,6 +40,7 @@
 				path /copilotkit/*
 			}
 			key {client_ip}
+			ipv6_prefix 64
 			events 30
 			window 1m
 		}
@@ -48,17 +51,19 @@
 				path /rpc/* /api/*
 			}
 			key {client_ip}
+			ipv6_prefix 64
 			events 150
 			window 1m
 		}
 
-		# Zone 4: Bảo vệ toàn hệ thống chống HTTP flood / DoS (tối đa 300 req/phút/IP, trừ static assets)
+		# Zone 4: Bảo vệ toàn hệ thống chống HTTP flood / DoS (tối đa 600 req/phút/IP, trừ static assets)
 		zone global_zone {
 			match {
 				not path /_next/static/* /favicon.ico /robots.txt
 			}
 			key {client_ip}
-			events 300
+			ipv6_prefix 64
+			events 600
 			window 1m
 		}
 	}

@@ -80,7 +80,8 @@ Tất cả các thành phần được đóng gói và kết nối an toàn qua 
   - `auth_zone`: 20 requests / phút / IP cho `/rpc/identity.v1.IdentityService/*`, `/api/auth/*` (chống brute-force / credential stuffing).
   - `ai_zone`: 30 requests / phút / IP cho `/copilotkit/*` (bảo vệ hạn ngạch và chi phí LLM Gemini).
   - `api_zone`: 150 requests / phút / IP cho toàn bộ `/rpc/*` và `/api/*`.
-  - `global_zone`: 300 requests / phút / IP cho toàn hệ thống (ngoại trừ tài nguyên tĩnh `/_next/static/*`).
+  - `global_zone`: 600 requests / phút / IP cho toàn hệ thống (ngoại trừ tài nguyên tĩnh `/_next/static/*`, hỗ trợ dung sai mạng NAT).
+  - Tích hợp `ipv6_prefix 64` trên toàn bộ các zone để ngăn chặn nguy cơ xoay vòng IP trong dải IPv6 subnet.
   - Khi vượt ngưỡng, Caddy trả ngay HTTP 429 dạng JSON chuẩn (`code: resource_exhausted`) kèm header `Retry-After`.
 
 ---
@@ -140,6 +141,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 # --- 6. ĐƯỜNG DẪN DOCKER IMAGE TRÊN GHCR ---
 FRONTEND_IMAGE=ghcr.io/<your-username>/<your-repo>/frontend:latest
 BACKEND_IMAGE=ghcr.io/<your-username>/<your-repo>/backend:latest
+CADDY_IMAGE=ghcr.io/<your-username>/<your-repo>/caddy:latest
 ```
 
 > [!IMPORTANT]
@@ -173,9 +175,9 @@ docker compose exec backend python -m src.seed
 ## 5. Tự Động Hóa Triển Khai (CI/CD với GitHub Actions)
 
 File workflow `.github/workflows/deploy.yml` đã được tích hợp sẵn chu trình Continuous Deployment (CD). Mỗi khi bạn `git push origin main` trên máy tính:
-1. GitHub Actions tự động build 2 image `frontend` và `backend`.
-2. Đẩy 2 image lên GitHub Container Registry (`ghcr.io`).
-3. Dùng giao thức SCP copy đè 2 file `docker-compose.yml` và `Caddyfile` mới nhất sang `/root/lms` trên VPS.
+1. GitHub Actions tự động build 3 image `frontend`, `backend`, và `caddy`.
+2. Đẩy 3 image lên GitHub Container Registry (`ghcr.io`).
+3. Dùng giao thức SCP copy đè các file `docker-compose.yml`, `Caddyfile`, và thư mục `caddy/` mới nhất sang `/root/lms` trên VPS.
 4. Tự động SSH vào VPS chạy `docker compose pull && docker compose up -d --remove-orphans`.
 5. Tự động dọn dẹp các layer Docker cũ bằng `docker image prune -f` để chống tràn ổ cứng VPS.
 
