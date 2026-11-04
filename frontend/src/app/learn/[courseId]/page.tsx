@@ -21,6 +21,7 @@ import type { UniversalVideoRef } from "@/components/player/UniversalVideoPlayer
 import { LearnSidebarWorkspace, type SidebarTab } from "@/components/player/sidebar";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { BrandLogo } from "@/components/ui/BrandLogo";
@@ -30,15 +31,18 @@ import { CourseSyllabusDrawer } from "@/components/player/sidebar/CourseSyllabus
 import { StreakBadge } from "@/components/player/StreakBadge";
 import { useStudyTracker } from "@/lib/hooks/useStudyTracker";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 import { Menu, Sparkles, X, CheckCircle2, ChevronRight } from "lucide-react";
 
 function CoursePlayerContent() {
   const params = useParams();
   const courseId = params?.courseId as string;
+  const toast = useToast();
 
+  const { isInstructorOrAdmin } = useAuth();
   const searchParams = useSearchParams();
   const previewItemId = searchParams?.get("itemId") || null;
-  const isPreviewMode = searchParams?.get("preview") === "true";
+  const isPreviewMode = isInstructorOrAdmin && searchParams?.get("preview") === "true";
   const urlTab = searchParams?.get("tab");
   const urlThreadId = searchParams?.get("threadId");
 
@@ -116,9 +120,14 @@ function CoursePlayerContent() {
     }));
   };
 
-  const { data: paymentAccess } = usePaymentAccessQuery(courseId, {
-    enabled: !!courseId && !isPreviewMode,
-  });
+  const resolvedCourseId = course?.id || courseId;
+
+  const { data: paymentAccess, isLoading: loadingPaymentAccess } = usePaymentAccessQuery(
+    resolvedCourseId,
+    {
+      enabled: !!resolvedCourseId && !isPreviewMode,
+    },
+  );
   const isPaidAccess = isPreviewMode ? true : (paymentAccess?.hasPaidAccess ?? false);
 
   const isGradedItem = useCallback((type: number): boolean => {
@@ -289,6 +298,11 @@ function CoursePlayerContent() {
       ? allCourseItems[currentItemIndex + 1]
       : null;
 
+  const activeItemNotes = useMemo(
+    () => (activeItem ? notes.filter((n) => n.itemId === activeItem.id) : []),
+    [notes, activeItem],
+  );
+
   // Mark Item as Complete
   const handleMarkItemComplete = useCallback(
     async (itemId: string) => {
@@ -301,7 +315,7 @@ function CoursePlayerContent() {
       try {
         const learningClient = getRpcClient(LearningService);
         const res = await learningClient.markItemComplete({
-          courseId,
+          courseId: resolvedCourseId,
           itemId,
         });
         if (res.updatedProgress) {
@@ -312,7 +326,9 @@ function CoursePlayerContent() {
           ) {
             try {
               const certClient = getRpcClient(CertificateService);
-              const certRes = await certClient.getVerifiedCertificate({ courseId });
+              const certRes = await certClient.getVerifiedCertificate({
+                courseId: resolvedCourseId,
+              });
               if (certRes.certificate?.certificateId) {
                 setCertificateId(certRes.certificate.certificateId);
               } else {
@@ -338,7 +354,7 @@ function CoursePlayerContent() {
         isMarkingRef.current = false;
       }
     },
-    [course, progress, totalCourseItems, courseId, isPreviewMode],
+    [course, progress, totalCourseItems, resolvedCourseId, isPreviewMode],
   );
 
   // Load Course & Progress
@@ -377,17 +393,18 @@ function CoursePlayerContent() {
           setActiveItem(finalItem);
           setProgress({
             userId: storedUserId || "preview-user",
-            courseId,
+            courseId: courseRes.course?.id || courseId,
             overallProgressPercent: 0,
             completedItemIds: [],
             lastResetAt: "",
           } as unknown as LearningProgress);
         } else {
           try {
+            const resolvedId = courseRes.course?.id || courseId;
             const learningClient = getRpcClient(LearningService);
             // Pure query getProgress on initial load without passing currentItemId
             const progressRes = await learningClient.getProgress({
-              courseId,
+              courseId: resolvedId,
               currentItemId: "",
             });
             const loadedProgress = progressRes.progress ?? null;
@@ -426,7 +443,7 @@ function CoursePlayerContent() {
             if (loadedProgress && loadedProgress.overallProgressPercent >= 100) {
               try {
                 const certClient = getRpcClient(CertificateService);
-                const certRes = await certClient.getVerifiedCertificate({ courseId });
+                const certRes = await certClient.getVerifiedCertificate({ courseId: resolvedId });
                 if (certRes.certificate?.certificateId) {
                   setCertificateId(certRes.certificate.certificateId);
                 }
@@ -442,7 +459,7 @@ function CoursePlayerContent() {
               }
             }
 
-            const notesRes = await learningClient.listPersonalNotes({ courseId });
+            const notesRes = await learningClient.listPersonalNotes({ courseId: resolvedId });
             setNotes(notesRes.notes);
           } catch (err) {
             console.error("Failed to load user progress or notes:", err);
@@ -461,10 +478,27 @@ function CoursePlayerContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, previewItemId, isPreviewMode]);
 
-  // Adjust active item if currently active item is locked due to Audit Mode
+  // Adjust active item if currently active item is locked (Audit Mode or Locked Week)
   useEffect(() => {
-    if (!course || isPreviewMode || isPaidAccess || !activeItem) return;
-    if (isGradedItem(activeItem.type)) {
+    if (!course || isPreviewMode || loadingPaymentAccess || !progress || !activeItem) return;
+    const activeWeekIndex = course.weekModules.findIndex((wm) =>
+      wm.lessons.some((l) => l.items.some((i) => i.id === activeItem.id)),
+    );
+    if (activeWeekIndex !== -1 && isItemLocked(activeItem, activeWeekIndex)) {
+      if (!isPaidAccess && isGradedItem(activeItem.type)) {
+        setLockNotice(
+          "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode hoặc sử dụng mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính điểm.",
+        );
+      } else if (!isPaidAccess && activeWeekIndex > 0) {
+        setLockNotice(
+          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+        );
+      } else {
+        setLockNotice(
+          `Bạn cần hoàn thành tất cả các bài học ở Tuần ${activeWeekIndex} để mở khóa Tuần ${activeWeekIndex + 1}.`,
+        );
+      }
+
       let foundUnlocked = null;
       for (let wIdx = 0; wIdx < course.weekModules.length; wIdx++) {
         const wm = course.weekModules[wIdx];
@@ -483,7 +517,16 @@ function CoursePlayerContent() {
         setActiveItem(foundUnlocked);
       }
     }
-  }, [course, isPreviewMode, isPaidAccess, activeItem, isGradedItem, isItemLocked]);
+  }, [
+    course,
+    isPreviewMode,
+    loadingPaymentAccess,
+    progress,
+    isPaidAccess,
+    activeItem,
+    isGradedItem,
+    isItemLocked,
+  ]);
 
   // Reset in-video quiz state when switching learning items
   const activeItemId = activeItem?.id;
@@ -624,7 +667,7 @@ function CoursePlayerContent() {
       );
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.savePersonalNote({
-        courseId,
+        courseId: resolvedCourseId,
         itemId: activeItem.id,
         highlightedText: highlightText,
         noteComment: noteComment,
@@ -660,12 +703,18 @@ function CoursePlayerContent() {
   const handleResetDeadlines = async () => {
     try {
       const learningClient = getRpcClient(LearningService);
-      const res = await learningClient.resetDeadlines({ courseId });
+      const res = await learningClient.resetDeadlines({ courseId: resolvedCourseId });
       if (res.updatedProgress) {
         setProgress(res.updatedProgress);
       }
+      if (res.success) {
+        toast.success("Đã gia hạn thời hạn học tập thành công.");
+      } else {
+        toast.warning("Bạn chỉ có thể gia hạn thời hạn tối đa 1 lần trong 24 giờ.");
+      }
     } catch (err) {
       console.error("Failed to reset deadlines:", err);
+      toast.error("Không thể gia hạn lúc này. Vui lòng thử lại sau.");
     }
   };
 
@@ -954,11 +1003,11 @@ function CoursePlayerContent() {
 
             {/* Right Tool & AI Sidebar Workspace */}
             <LearnSidebarWorkspace
-              courseId={courseId}
+              courseId={resolvedCourseId}
               course={course}
               activeItem={activeItem}
               progress={progress}
-              notes={notes}
+              notes={activeItemNotes}
               highlightText={highlightText}
               noteComment={noteComment}
               savingNote={savingNote}
@@ -976,12 +1025,7 @@ function CoursePlayerContent() {
               onCloseAiAssistant={handleCloseAiAssistant}
               onClosePanel={() => setIsPanelOpen(false)}
               onSeekVideo={handleSeekVideo}
-              onNextLesson={() => {
-                if (nextItem) {
-                  setActiveItem(nextItem);
-                  setActiveQuiz(null);
-                }
-              }}
+              onNextLesson={handleNextLesson}
               onNoteCreated={(newNote) => setNotes((prev) => [newNote, ...prev])}
               onHighlightTextChange={(text) => {
                 setHighlightText(text);
@@ -1002,9 +1046,11 @@ function CoursePlayerContent() {
         <CourseCompletionModal
           isOpen={showCompletionModal}
           onClose={() => setShowCompletionModal(false)}
-          courseId={courseId}
+          courseId={resolvedCourseId}
           courseTitle={course?.title || "Khóa học LMS"}
-          certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
+          certificateId={
+            certificateId || `CERT-${resolvedCourseId.replace("course-", "").toUpperCase()}`
+          }
         />
       </div>
     </div>

@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.modules.catalog.domain import CourseStatus
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
     InteractiveTranscriptModel,
@@ -229,6 +230,52 @@ async def test_get_specialization_not_found(repo, mock_session):
 
     assert spec is None
     assert courses == []
+
+
+@pytest.mark.asyncio
+async def test_get_specialization_for_course_success(
+    repo, mock_session, sample_course_model
+):
+    spec_model = SpecializationModel(
+        id="s1",
+        title="Spec 1",
+        description="Desc",
+        partner_name="Partner",
+        partner_logo_url="URL",
+        course_ids=["c1"],
+    )
+    sample_course_model.status = CourseStatus.PUBLISHED
+
+    captured_stmts = []
+
+    def mock_execute(stmt):
+        captured_stmts.append(stmt)
+        res = MagicMock()
+        stmt_str = str(stmt).lower()
+        if "specializations" in stmt_str:
+            res.scalars.return_value.first.return_value = spec_model
+        else:
+            res.scalars.return_value.all.return_value = [sample_course_model]
+        return res
+
+    mock_session.execute.side_effect = mock_execute
+
+    spec = await repo.get_specialization_for_course("c1")
+
+    assert spec is not None
+    assert spec.id == "s1"
+    assert len(captured_stmts) == 2
+
+
+@pytest.mark.asyncio
+async def test_get_specialization_for_course_not_found(repo, mock_session):
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = None
+    mock_session.execute.return_value = mock_result
+
+    spec = await repo.get_specialization_for_course("c-unknown")
+
+    assert spec is None
 
 
 @pytest.mark.asyncio

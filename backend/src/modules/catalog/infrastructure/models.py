@@ -1,6 +1,5 @@
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
-    ARRAY,
     JSON,
     Boolean,
     Float,
@@ -15,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy import (
     Enum as SQLEnum,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.catalog.domain import CourseStatus, ItemType

@@ -55,6 +55,7 @@ class ILearningRepository(ABC):
         item_id: str,
         total_course_items: int,
         valid_item_ids: set[str] | None = None,
+        week_item_ids: dict[int, set[str]] | None = None,
     ) -> tuple[bool, LearningProgress]:
         pass
 

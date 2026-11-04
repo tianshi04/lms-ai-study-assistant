@@ -6,8 +6,8 @@ import {
   useCategoriesQuery,
   useCourseDetailQuery,
   useCourseReviewsQuery,
-  useLearningProgressQuery,
   useMyCertificatesQuery,
+  useMyEnrolledCoursesQuery,
   usePaymentAccessQuery,
   useIsCourseBookmarkedQuery,
   useBookmarkCourseMutation,
@@ -96,10 +96,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   );
   const levelMap = useMemo(() => new Map((levels ?? []).map((l) => [l.id, l.name])), [levels]);
 
+  const resolvedCourseId = course?.id || courseId;
+
   const { data: isBookmarked = false, isLoading: loadingBookmark } = useIsCourseBookmarkedQuery(
-    courseId,
+    resolvedCourseId,
     {
-      enabled: isAuthenticated && !!courseId,
+      enabled: isAuthenticated && !!resolvedCourseId,
     },
   );
   const bookmarkMutation = useBookmarkCourseMutation();
@@ -113,10 +115,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
     }
     try {
       if (isBookmarked) {
-        await unbookmarkMutation.mutateAsync({ courseId });
+        await unbookmarkMutation.mutateAsync({ courseId: resolvedCourseId });
         toast.success("Đã xóa khóa học khỏi danh sách lưu.");
       } else {
-        await bookmarkMutation.mutateAsync({ courseId });
+        await bookmarkMutation.mutateAsync({ courseId: resolvedCourseId });
         toast.success("Đã lưu khóa học thành công!");
       }
     } catch {
@@ -124,17 +126,24 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
     }
   };
 
-  const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
-  const { data: learningProgress } = useLearningProgressQuery(courseId, {
-    enabled: isAuthenticated && !!courseId,
+  const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(resolvedCourseId);
+  const { data: enrolledCourses = [] } = useMyEnrolledCoursesQuery({
+    enabled: isAuthenticated,
   });
-  const progressPercent = learningProgress?.overallProgressPercent ?? 0;
+  const enrolledCourse = useMemo(
+    () => enrolledCourses.find((ec) => ec.courseId === course?.id || ec.courseId === courseId),
+    [enrolledCourses, course?.id, courseId],
+  );
+  const progressPercent = enrolledCourse?.progressPercent ?? 0;
   const canReview = isAuthenticated && progressPercent >= 50;
 
   const { data: myCertificates = [], isLoading: loadingCerts } = useMyCertificatesQuery();
-  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(courseId, {
-    enabled: isAuthenticated && !!courseId,
-  });
+  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(
+    resolvedCourseId,
+    {
+      enabled: isAuthenticated && !!course?.id,
+    },
+  );
   const loadingAccess = loadingCerts || loadingPayment;
   const isPaidAccess = paymentAccess?.hasPaidAccess ?? false;
   const matchingCert = course?.title

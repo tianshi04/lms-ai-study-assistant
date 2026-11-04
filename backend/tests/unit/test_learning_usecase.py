@@ -145,9 +145,12 @@ async def test_mark_item_complete(mock_repo, mock_session_scope):
         repo_factory=lambda session: mock_repo,
         catalog_repo_factory=lambda session: mock_catalog_repo,
     )
-    result = await use_case.mark_item_complete("u1", "c1", "i1")
+    result = await use_case.mark_item_complete("u1", "course-1", "i1")
     assert result == (True, expected)
-    mock_repo.mark_item_complete.assert_awaited_once_with("u1", "c1", "i1", 1, {"i1"})
+    mock_catalog_repo.get_course_detail.assert_awaited_once_with("course-1")
+    mock_repo.mark_item_complete.assert_awaited_once_with(
+        "u1", "c1", "i1", 1, {"i1"}, {1: {"i1"}}
+    )
 
 
 @pytest.mark.asyncio

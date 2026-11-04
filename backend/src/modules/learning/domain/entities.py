@@ -38,8 +38,8 @@ class LearningProgress(Entity):
         self.user_id = user_id
         self.course_id = course_id
         self.overall_progress_percent = overall_progress_percent
-        self.completed_item_ids = completed_item_ids or []
-        self.weekly_deadlines = weekly_deadlines or []
+        self.completed_item_ids = list(completed_item_ids) if completed_item_ids else []
+        self.weekly_deadlines = list(weekly_deadlines) if weekly_deadlines else []
         self.last_reset_at = last_reset_at
         self.last_accessed_at = last_accessed_at
         self.last_accessed_item_id = last_accessed_item_id

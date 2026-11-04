@@ -207,7 +207,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * Tích hợp thanh tìm kiếm theo tên khóa học có độ trễ debounce (300ms), kết hợp lọc tức thời trên nền thuật toán xếp hạng 3 bậc.
   * **Mặc định là Mảng Rỗng & Trực quan hóa Giao diện Học viên (UI/UX Grid Presentation):**
     * **Mặc định là rỗng (`{}`):** Khóa học mới tạo không bị ép buộc môn nền tảng. Khi `foundational_course_ids` rỗng, trang chi tiết khóa học của học viên tự động ẩn hoàn toàn khu vực môn nền tảng.
-    * **Hiển thị linh hoạt theo số lượng:** Nếu cấu hình đúng 1 môn, giao diện hiển thị dạng Thẻ Hero Callout nổi bật; nếu cấu hình từ 2 môn trở lên, hệ thống tự động render lưới thẻ đáp ứng chuẩn Material Design 3 (`grid grid-cols-1 md:grid-cols-2`).
+    * **Hiển thị linh hoạt theo số lượng:** Nếu cấu hình đúng 1 môn, giao diện hiển thị dạng Thẻ Hero Callout nổi bật; nếu cấu hình từ 2 môn trở lên, hệ thống tự động render lưới thẻ đáp ứng chuẩn Design System đồng bộ (`grid grid-cols-1 md:grid-cols-2`).
   * **Ràng buộc Toàn vẹn Dữ liệu & Ngăn chặn Vòng lặp Tiên quyết:**
     * **Chống tự chọn (Self-selection):** Khóa học không thể tự chọn chính mình làm môn nền tảng ($A \leftrightarrow A$).
     * **Chống phụ thuộc vòng 2 chiều (Circular Dependency):** Nếu khóa học B đã chọn A làm môn nền tảng, hệ thống kiên quyết từ chối không cho phép A chọn B làm môn nền tảng ($A \leftrightarrow B$).
