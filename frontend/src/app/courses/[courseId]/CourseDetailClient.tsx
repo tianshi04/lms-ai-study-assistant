@@ -6,8 +6,8 @@ import {
   useCategoriesQuery,
   useCourseDetailQuery,
   useCourseReviewsQuery,
-  useLearningProgressQuery,
   useMyCertificatesQuery,
+  useMyEnrolledCoursesQuery,
   usePaymentAccessQuery,
 } from "@/lib/query_hooks";
 import Link from "next/link";
@@ -90,17 +90,25 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   );
   const levelMap = useMemo(() => new Map((levels ?? []).map((l) => [l.id, l.name])), [levels]);
 
-  const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
-  const { data: learningProgress } = useLearningProgressQuery(courseId, {
-    enabled: isAuthenticated && !!courseId,
+  const resolvedCourseId = course?.id || courseId;
+  const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(resolvedCourseId);
+  const { data: enrolledCourses = [] } = useMyEnrolledCoursesQuery({
+    enabled: isAuthenticated,
   });
-  const progressPercent = learningProgress?.overallProgressPercent ?? 0;
+  const enrolledCourse = useMemo(
+    () => enrolledCourses.find((ec) => ec.courseId === course?.id || ec.courseId === courseId),
+    [enrolledCourses, course?.id, courseId],
+  );
+  const progressPercent = enrolledCourse?.progressPercent ?? 0;
   const canReview = isAuthenticated && progressPercent >= 50;
 
   const { data: myCertificates = [], isLoading: loadingCerts } = useMyCertificatesQuery();
-  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(courseId, {
-    enabled: isAuthenticated && !!courseId,
-  });
+  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(
+    resolvedCourseId,
+    {
+      enabled: isAuthenticated && !!course?.id,
+    },
+  );
   const loadingAccess = loadingCerts || loadingPayment;
   const isPaidAccess = paymentAccess?.hasPaidAccess ?? false;
   const matchingCert = course?.title

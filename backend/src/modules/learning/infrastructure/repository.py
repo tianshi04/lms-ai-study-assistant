@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid6 import uuid7
 
+from src.modules.catalog.infrastructure.models import WeekModuleModel
 from src.modules.learning.domain import (
     DEFAULT_COHORT_EXTENSION_DAYS,
     DeadlineStatus,
@@ -35,7 +36,7 @@ def _model_to_domain_progress(model: LearningProgressModel) -> LearningProgress:
         user_id=model.user_id,
         course_id=model.course_id,
         overall_progress_percent=model.overall_progress_percent,
-        completed_item_ids=model.completed_item_ids,
+        completed_item_ids=list(model.completed_item_ids or []),
         weekly_deadlines=deadlines,
         last_reset_at=model.last_reset_at,
     )
@@ -53,6 +54,21 @@ def _model_to_domain_note(model: PersonalNoteModel) -> PersonalNote:
     )
 
 
+def _build_initial_weekly_deadlines(
+    week_numbers: list[int], now: datetime
+) -> list[WeeklyDeadlineModel]:
+    return [
+        WeeklyDeadlineModel(
+            week_number=week_num,
+            due_date=(
+                now + timedelta(days=DEFAULT_COHORT_EXTENSION_DAYS * idx)
+            ).strftime("%Y-%m-%d"),
+            status=DeadlineStatus.ON_TRACK,
+        )
+        for idx, week_num in enumerate(week_numbers, start=1)
+    ]
+
+
 class SQLAlchemyLearningRepository(ILearningRepository):
     """Async SQLAlchemy Database Repository implementing ILearningRepository."""
 
@@ -61,6 +77,18 @@ class SQLAlchemyLearningRepository(ILearningRepository):
 
     def _get_key(self, user_id: str, course_id: str) -> str:
         return f"{user_id}:{course_id}"
+
+    async def _resolve_course_week_numbers(
+        self, course_id: str, fallback_weeks: list[int] | None = None
+    ) -> list[int]:
+        week_stmt = (
+            select(WeekModuleModel.week_number)
+            .where(WeekModuleModel.course_id == course_id)
+            .order_by(WeekModuleModel.week_number)
+        )
+        week_res = await self.session.execute(week_stmt)
+        week_numbers = sorted({int(w) for w in week_res.scalars().all() if w > 0})
+        return week_numbers or fallback_weeks or [1, 2]
 
     async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
         key = self._get_key(user_id, course_id)
@@ -88,27 +116,35 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             await self.session.execute(insert_stmt)
             await self.session.commit()
 
-            res = await self.session.execute(stmt)
+            res = await self.session.execute(stmt.with_for_update())
             model = res.scalar_one()
 
             if not model.weekly_deadlines:
-                past_date = (datetime.now(UTC) - timedelta(days=3)).strftime("%Y-%m-%d")
-                future_date = (
-                    datetime.now(UTC) + timedelta(days=DEFAULT_COHORT_EXTENSION_DAYS)
-                ).strftime("%Y-%m-%d")
-                d1 = WeeklyDeadlineModel(
-                    week_number=1, due_date=past_date, status=DeadlineStatus.OVERDUE
+                week_numbers = await self._resolve_course_week_numbers(course_id)
+                now = datetime.now(UTC)
+                model.weekly_deadlines.extend(
+                    _build_initial_weekly_deadlines(week_numbers, now)
                 )
-                d2 = WeeklyDeadlineModel(
-                    week_number=2, due_date=future_date, status=DeadlineStatus.ON_TRACK
-                )
-                model.weekly_deadlines.extend([d1, d2])
                 try:
                     await self.session.commit()
                 except Exception:  # noqa: BLE001
                     await self.session.rollback()
                     res = await self.session.execute(stmt)
                     model = res.scalar_one()
+        elif model.weekly_deadlines:
+            today_str = datetime.now(UTC).strftime("%Y-%m-%d")
+            overdue_updated = False
+            for d in model.weekly_deadlines:
+                if (
+                    d.status == DeadlineStatus.ON_TRACK
+                    and len(d.due_date) >= 10
+                    and d.due_date[:4].isdigit()
+                    and d.due_date[:10] < today_str
+                ):
+                    d.status = DeadlineStatus.OVERDUE
+                    overdue_updated = True
+            if overdue_updated:
+                await self.session.commit()
 
         return _model_to_domain_progress(model)
 
@@ -136,32 +172,46 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         if not domain_progress.can_reset_deadlines(now):
             return False, domain_progress
 
-        total_weeks = max(1, len(model.weekly_deadlines))
+        existing_by_week = {d.week_number: d for d in domain_progress.weekly_deadlines}
+        week_numbers = await self._resolve_course_week_numbers(
+            course_id, fallback_weeks=sorted(existing_by_week.keys())
+        )
+        total_weeks = max(1, len(week_numbers))
         course_end_date = now + timedelta(
             days=max(180, DEFAULT_COHORT_EXTENSION_DAYS * total_weeks + 30)
         )
         new_deadlines: list[WeeklyDeadline] = []
-        for i in range(1, total_weeks + 1):
-            natural_due = now + timedelta(days=DEFAULT_COHORT_EXTENSION_DAYS * i)
-            due_str = min(natural_due, course_end_date).strftime("%Y-%m-%d")
-            new_deadlines.append(
-                WeeklyDeadline(
-                    week_number=i,
-                    due_date=due_str,
-                    status=DeadlineStatus.ON_TRACK,
+        pending_idx = 0
+        for week_num in week_numbers:
+            existing = existing_by_week.get(week_num)
+            if existing and existing.status == DeadlineStatus.COMPLETED:
+                new_deadlines.append(existing)
+            else:
+                pending_idx += 1
+                natural_due = now + timedelta(
+                    days=DEFAULT_COHORT_EXTENSION_DAYS * pending_idx
                 )
-            )
+                due_str = min(natural_due, course_end_date).strftime("%Y-%m-%d")
+                new_deadlines.append(
+                    WeeklyDeadline(
+                        week_number=week_num,
+                        due_date=due_str,
+                        status=DeadlineStatus.ON_TRACK,
+                    )
+                )
 
         domain_progress.reset_deadlines(new_deadlines, now)
 
-        model.weekly_deadlines = [
+        model.weekly_deadlines.clear()
+        await self.session.flush()
+        model.weekly_deadlines.extend(
             WeeklyDeadlineModel(
                 week_number=d.week_number,
                 due_date=d.due_date,
                 status=d.status,
             )
             for d in domain_progress.weekly_deadlines
-        ]
+        )
         model.last_reset_at = domain_progress.last_reset_at
         await self.session.commit()
         return True, domain_progress
@@ -223,6 +273,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         item_id: str,
         total_course_items: int,
         valid_item_ids: set[str] | None = None,
+        week_item_ids: dict[int, set[str]] | None = None,
     ) -> tuple[bool, LearningProgress]:
         key = self._get_key(user_id, course_id)
         stmt = (
@@ -258,8 +309,15 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         model.completed_item_ids = list(domain_progress.completed_item_ids)
         model.overall_progress_percent = domain_progress.overall_progress_percent
 
+        if week_item_ids and model.weekly_deadlines:
+            completed_set = set(model.completed_item_ids)
+            for d in model.weekly_deadlines:
+                w_items = week_item_ids.get(d.week_number)
+                if w_items and w_items.issubset(completed_set):
+                    d.status = DeadlineStatus.COMPLETED
+
         await self.session.commit()
-        return True, domain_progress
+        return True, _model_to_domain_progress(model)
 
     async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
         stmt = (
