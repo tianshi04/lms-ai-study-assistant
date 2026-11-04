@@ -149,6 +149,7 @@ message Question {
   string explanation = 6;
   repeated QuestionOption options = 7;
   string created_at = 8;
+  string topic = 9;
 }
 
 message QuestionBank {
@@ -200,6 +201,7 @@ message AddQuestionToBankRequest {
   string text = 4;
   string explanation = 5;
   repeated QuestionOption options = 6;
+  string topic = 7;
 }
 
 message AddQuestionToBankResponse {
@@ -238,6 +240,7 @@ message UpdateQuestionRequest {
   string text = 4;
   string explanation = 5;
   repeated QuestionOption options = 6;
+  string topic = 7;
 }
 
 message UpdateQuestionResponse {
@@ -305,6 +308,12 @@ service AssessmentService {
   rpc StartGradedQuizSession(StartGradedQuizSessionRequest) returns (StartGradedQuizSessionResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetQuizAttemptHistory(GetQuizAttemptHistoryRequest) returns (GetQuizAttemptHistoryResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetQuizAttemptDetail(GetQuizAttemptDetailRequest) returns (GetQuizAttemptDetailResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message StartGradedQuizSessionRequest {
@@ -323,6 +332,7 @@ message QuizSessionQuestion {
   string text = 2;
   repeated QuizSessionQuestionOption options = 3;
   string question_type = 4;
+  string topic = 5;
 }
 
 message StartGradedQuizSessionResponse {
@@ -338,4 +348,76 @@ message StartGradedQuizSessionResponse {
   int32 cooldown_hours = 10;
   bool has_previous_result = 11;
   QuizResult previous_result = 12;
+}
+
+enum TopicMasteryLevel {
+  TOPIC_MASTERY_LEVEL_UNSPECIFIED = 0;
+  TOPIC_MASTERY_LEVEL_MASTERED = 1;
+  TOPIC_MASTERY_LEVEL_NEEDS_PRACTICE = 2;
+  TOPIC_MASTERY_LEVEL_WEAK_GAP = 3;
+}
+
+message QuizAttemptSummary {
+  string submission_id = 1;
+  int32 attempt_number = 2;
+  float score_percent = 3;
+  bool passed = 4;
+  int32 total_questions = 5;
+  int32 correct_count = 6;
+  string submitted_at = 7;
+}
+
+message TopicMastery {
+  string topic = 1;
+  int32 total_questions = 2;
+  int32 correct_questions = 3;
+  float mastery_percent = 4;
+  TopicMasteryLevel mastery_level = 5;
+  string recommendation = 6;
+}
+
+message GetQuizAttemptHistoryRequest {
+  string item_id = 1;
+}
+
+message GetQuizAttemptHistoryResponse {
+  repeated QuizAttemptSummary attempts = 1;
+  repeated TopicMastery aggregate_topic_mastery = 2;
+  float highest_score_percent = 3;
+  bool has_passed = 4;
+  int32 attempts_left = 5;
+  int32 max_attempts = 6;
+  int32 cooldown_seconds_left = 7;
+  float passing_threshold_percent = 8;
+  int32 time_limit_minutes = 9;
+}
+
+message QuizAttemptAnswerDetail {
+  string question_id = 1;
+  string question_text = 2;
+  string question_type = 3;
+  string topic = 4;
+  repeated string options = 5;
+  repeated int32 selected_option_indices = 6;
+  repeated int32 correct_option_indices = 7;
+  bool is_correct = 8;
+  string explanation = 9;
+  int32 order_index = 10;
+  bool is_answer_masked = 11;
+}
+
+message GetQuizAttemptDetailRequest {
+  string submission_id = 1;
+}
+
+message GetQuizAttemptDetailResponse {
+  string submission_id = 1;
+  string item_id = 2;
+  int32 attempt_number = 3;
+  float score_percent = 4;
+  bool passed = 5;
+  string submitted_at = 6;
+  repeated QuizAttemptAnswerDetail answers = 7;
+  repeated TopicMastery topic_mastery = 8;
+  bool is_answer_masked = 9;
 }

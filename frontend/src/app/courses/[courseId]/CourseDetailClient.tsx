@@ -9,6 +9,10 @@ import {
   useMyCertificatesQuery,
   useMyEnrolledCoursesQuery,
   usePaymentAccessQuery,
+  useIsCourseBookmarkedQuery,
+  useBookmarkCourseMutation,
+  useUnbookmarkCourseMutation,
+  useToggleCourseReviewHelpfulMutation,
 } from "@/lib/query_hooks";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
@@ -50,6 +54,8 @@ import {
   AlertTriangle,
   Sparkles,
   Award,
+  Bookmark,
+  ThumbsUp,
 } from "lucide-react";
 
 interface CourseDetailClientProps {
@@ -91,6 +97,35 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const levelMap = useMemo(() => new Map((levels ?? []).map((l) => [l.id, l.name])), [levels]);
 
   const resolvedCourseId = course?.id || courseId;
+
+  const { data: isBookmarked = false, isLoading: loadingBookmark } = useIsCourseBookmarkedQuery(
+    resolvedCourseId,
+    {
+      enabled: isAuthenticated && !!resolvedCourseId,
+    },
+  );
+  const bookmarkMutation = useBookmarkCourseMutation();
+  const unbookmarkMutation = useUnbookmarkCourseMutation();
+  const togglingBookmark = bookmarkMutation.isPending || unbookmarkMutation.isPending;
+
+  const handleToggleBookmark = async () => {
+    if (!isAuthenticated) {
+      toast.error("Vui lòng đăng nhập để lưu khóa học vào danh sách yêu thích.");
+      return;
+    }
+    try {
+      if (isBookmarked) {
+        await unbookmarkMutation.mutateAsync({ courseId: resolvedCourseId });
+        toast.success("Đã xóa khóa học khỏi danh sách lưu.");
+      } else {
+        await bookmarkMutation.mutateAsync({ courseId: resolvedCourseId });
+        toast.success("Đã lưu khóa học thành công!");
+      }
+    } catch {
+      toast.error("Có lỗi xảy ra khi thao tác lưu khóa học.");
+    }
+  };
+
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(resolvedCourseId);
   const { data: enrolledCourses = [] } = useMyEnrolledCoursesQuery({
     enabled: isAuthenticated,
@@ -124,6 +159,24 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const [comment, setComment] = useState<string>("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const toast = useToast();
+
+  const toggleHelpfulMutation = useToggleCourseReviewHelpfulMutation({
+    onError: (err) => {
+      toast.error(err.message || "Đã xảy ra lỗi khi cập nhật đánh giá hữu ích");
+    },
+  });
+
+  const handleToggleHelpful = (reviewId: string, authorId: string) => {
+    if (!isAuthenticated) {
+      toast.error("Vui lòng đăng nhập để đánh giá nhận xét này là hữu ích.");
+      return;
+    }
+    if (authorId === userId) {
+      toast.error("Bạn không thể tự đánh giá nhận xét của chính mình là hữu ích.");
+      return;
+    }
+    toggleHelpfulMutation.mutate({ reviewId, courseId });
+  };
 
   // Financial Aid Modal States
   const [isFinAidModalOpen, setIsFinAidModalOpen] = useState(false);
@@ -433,6 +486,21 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </Button>
               </div>
             )}
+
+            {/* Bookmark Course Button */}
+            <Button
+              type="button"
+              variant={isBookmarked ? "tonal" : "outlined"}
+              onClick={handleToggleBookmark}
+              disabled={loadingBookmark || togglingBookmark}
+              className="w-full py-2.5 px-6 rounded-full border-border text-foreground font-semibold text-sm justify-center gap-2"
+            >
+              <Bookmark
+                aria-hidden="true"
+                className={`w-4 h-4 ${isBookmarked ? "fill-primary text-primary" : "text-muted-foreground"}`}
+              />
+              <span>{isBookmarked ? "Đã lưu vào danh sách" : "Lưu khóa học"}</span>
+            </Button>
 
             {/* Specialization Combo Anchor Callout */}
             {specialization && (
@@ -1153,6 +1221,39 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                       &ldquo;{rev.commentText}&rdquo;
                     </p>
                   )}
+                  <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                    <Button
+                      type="button"
+                      size="xs"
+                      variant="outlined"
+                      selected={rev.isHelpfulByMe}
+                      disabled={rev.userId === userId || toggleHelpfulMutation.isPending}
+                      onClick={() => handleToggleHelpful(rev.id, rev.userId)}
+                      aria-label={
+                        rev.isHelpfulByMe ? "Bỏ đánh dấu hữu ích" : "Đánh dấu nhận xét là hữu ích"
+                      }
+                      aria-pressed={rev.isHelpfulByMe}
+                      title={
+                        rev.userId === userId
+                          ? "Bạn không thể tự đánh giá nhận xét của chính mình"
+                          : rev.isHelpfulByMe
+                            ? "Bỏ đánh dấu hữu ích"
+                            : "Hữu ích"
+                      }
+                      className={
+                        rev.userId === userId ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      }
+                    >
+                      <ThumbsUp
+                        className={`size-3.5 ${rev.isHelpfulByMe ? "fill-primary" : ""}`}
+                        aria-hidden="true"
+                      />
+                      <span>{"Hữu ích"}</span>
+                      {rev.helpfulCount > 0 && (
+                        <span className="font-semibold ml-0.5">({rev.helpfulCount})</span>
+                      )}
+                    </Button>
+                  </div>
                 </Surface>
               ))}
             </div>

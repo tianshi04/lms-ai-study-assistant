@@ -9,6 +9,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { NotificationBell } from "@/components/notification/NotificationBell";
+import { StreakBadge } from "@/components/player/StreakBadge";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
@@ -127,6 +128,7 @@ export function Navbar() {
 
           {userName ? (
             <div className="flex items-center gap-2">
+              <StreakBadge className="hidden sm:inline-flex" />
               <NotificationBell />
               <UserDropdown />
             </div>

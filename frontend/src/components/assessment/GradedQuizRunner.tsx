@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
+import { QuizHistoryDialog } from "./QuizHistoryDialog";
 
 import {
   AlertTriangle,
@@ -23,6 +24,7 @@ import {
   Award,
   Target,
   Loader2,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -91,6 +93,7 @@ export function GradedQuizRunner({
   const [historicalResult, setHistoricalResult] = useState<QuizResultData | null>(null);
   // Result of the current in-progress attempt once submitted (for active quiz grading screen)
   const [activeQuizResult, setActiveQuizResult] = useState<QuizResultData | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const [isQuizActive, setIsQuizActive] = useState<boolean>(false);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -619,43 +622,54 @@ export function GradedQuizRunner({
         )}
 
         {/* Start / Continue / Retry Action Button */}
-        <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
-          {hasActiveDraft ? (
-            <>
+        <div className="pt-4 border-t border-border flex items-center justify-between gap-3 flex-wrap">
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => setIsHistoryOpen(true)}
+            className="px-5 py-2.5 rounded-full text-xs font-bold gap-1.5"
+          >
+            <History className="w-4 h-4 text-primary" />
+            Lịch sử làm bài & Phân tích
+          </Button>
+          <div className="flex items-center gap-3">
+            {hasActiveDraft ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  disabled={loading}
+                  onClick={() => handleStartQuiz()}
+                  className="px-6 py-2.5 rounded-full text-xs font-semibold"
+                >
+                  Làm bài mới từ đầu
+                </Button>
+                <Button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => setIsQuizActive(true)}
+                  className="px-8 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md flex items-center gap-2"
+                >
+                  <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+                  Tiếp tục làm bài
+                </Button>
+              </>
+            ) : (
               <Button
                 type="button"
-                variant="outlined"
                 disabled={loading}
                 onClick={() => handleStartQuiz()}
-                className="px-6 py-2.5 rounded-full text-xs font-semibold"
-              >
-                Làm bài mới từ đầu
-              </Button>
-              <Button
-                type="button"
-                disabled={loading}
-                onClick={() => setIsQuizActive(true)}
                 className="px-8 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md flex items-center gap-2"
               >
-                <Play className="w-4 h-4 fill-current" aria-hidden="true" />
-                Tiếp tục làm bài
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+                )}
+                {historicalResult ? "Làm lại bài thi" : "Bắt đầu làm bài"}
               </Button>
-            </>
-          ) : (
-            <Button
-              type="button"
-              disabled={loading}
-              onClick={() => handleStartQuiz()}
-              className="px-8 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md flex items-center gap-2"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Play className="w-4 h-4 fill-current" aria-hidden="true" />
-              )}
-              {historicalResult ? "Làm lại bài thi" : "Bắt đầu làm bài"}
-            </Button>
-          )}
+            )}
+          </div>
         </div>
       </div>
     );
@@ -852,6 +866,18 @@ export function GradedQuizRunner({
               {!isPreviewMode && (
                 <Button
                   type="button"
+                  variant="tonal"
+                  size="sm"
+                  onClick={() => setIsHistoryOpen(true)}
+                  className="rounded-full shadow-xs text-xs font-bold gap-1.5"
+                >
+                  <History aria-hidden="true" className="w-3.5 h-3.5" />
+                  Chi tiết bài làm & Lỗ hổng
+                </Button>
+              )}
+              {!isPreviewMode && (
+                <Button
+                  type="button"
                   variant="outlined"
                   size="sm"
                   onClick={handleStartQuiz}
@@ -1023,6 +1049,14 @@ export function GradedQuizRunner({
           setIsHonorModalOpen(false);
         }}
         onClose={() => setIsHonorModalOpen(false)}
+      />
+
+      <QuizHistoryDialog
+        itemId={itemId}
+        quizTitle={title}
+        open={isHistoryOpen}
+        onOpenChange={setIsHistoryOpen}
+        onRetakeQuiz={handleStartQuiz}
       />
     </div>
   );

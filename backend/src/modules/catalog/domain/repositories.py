@@ -6,6 +6,7 @@ from src.modules.catalog.domain.entities import (
     Category,
     Course,
     CourseAnnouncement,
+    CourseBookmark,
     CourseReview,
     CourseStatus,
     InstructorAnalytics,
@@ -196,8 +197,22 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def list_course_reviews(
-        self, course_id: str, page_size: int = 10, page_token: str = ""
+        self,
+        course_id: str,
+        page_size: int = 10,
+        page_token: str = "",
+        current_user_id: str | None = None,
     ) -> tuple[list[CourseReview], float, int, str]:
+        pass
+
+    @abstractmethod
+    async def get_review_by_id(self, review_id: str) -> CourseReview | None:
+        pass
+
+    @abstractmethod
+    async def toggle_course_review_helpful(
+        self, user_id: str, review_id: str
+    ) -> tuple[bool, int]:
         pass
 
     @abstractmethod
@@ -370,4 +385,32 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def get_quiz_questions_for_export(self, quiz_matrix_id: str) -> list[dict]:
+        pass
+
+    @abstractmethod
+    async def bookmark_course(
+        self, user_id: str, course_id: str
+    ) -> CourseBookmark | None:
+        pass
+
+    @abstractmethod
+    async def unbookmark_course(self, user_id: str, course_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def is_course_bookmarked(self, user_id: str, course_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def list_user_bookmarks(self, user_id: str) -> list[CourseBookmark]:
+        pass
+
+    @abstractmethod
+    async def record_search_query(
+        self,
+        user_id: str,
+        query: str,
+        filters_json: str = "",
+        result_count: int = 0,
+    ) -> bool:
         pass

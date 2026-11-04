@@ -28,6 +28,8 @@ import { BrandLogo } from "@/components/ui/BrandLogo";
 import { usePaymentAccessQuery } from "@/lib/query_hooks";
 import { playbackTimeStore } from "@/lib/playback_time_store";
 import { CourseSyllabusDrawer } from "@/components/player/sidebar/CourseSyllabusDrawer";
+import { StreakBadge } from "@/components/player/StreakBadge";
+import { useStudyTracker } from "@/lib/hooks/useStudyTracker";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Menu, Sparkles, X, CheckCircle2, ChevronRight } from "lucide-react";
@@ -60,10 +62,20 @@ function CoursePlayerContent() {
         : "transcript",
   );
   const [isQuizActive, setIsQuizActive] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [collapsedWeeks, setCollapsedWeeks] = useState<Record<string, boolean>>({});
   const prevActiveItemIdRef = useRef<string | null>(null);
+  const isInitialLoadCompletedRef = useRef(false);
+
+  // Study time tracking with heartbeat and keepalive flush
+  useStudyTracker({
+    courseId,
+    itemId: activeItem?.id || null,
+    isVideoPlaying,
+    isPreviewMode,
+  });
 
   // Default sidebars closed on mobile (< 1024px) to prevent layout shift, and open on desktop (>= 1024px).
   // Use matchMedia so virtual keyboard / address bar height resizes on mobile do not unexpectedly close open drawers.
@@ -360,28 +372,25 @@ function CoursePlayerContent() {
         const courseRes = await catalogClient.getCourseDetail({ idOrSlug: courseId });
         setCourse(courseRes.course ?? null);
 
-        // Set initial item based on previewItemId if provided
-        let selectedItem = null;
-        if (previewItemId && courseRes.course?.weekModules) {
-          for (const wm of courseRes.course.weekModules) {
-            for (const l of wm.lessons) {
-              const found = l.items.find((item) => item.id === previewItemId);
-              if (found) {
-                selectedItem = found;
-                break;
-              }
-            }
-            if (selectedItem) break;
-          }
-        }
-
-        if (!selectedItem) {
-          selectedItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0] || null;
-        }
-        setActiveItem(selectedItem);
+        let finalItem: LearningItem | null = null;
 
         if (isPreviewMode) {
-          // Set mock empty progress for preview
+          if (previewItemId && courseRes.course?.weekModules) {
+            for (const wm of courseRes.course.weekModules) {
+              for (const l of wm.lessons) {
+                const found = l.items.find((item) => item.id === previewItemId);
+                if (found) {
+                  finalItem = found;
+                  break;
+                }
+              }
+              if (finalItem) break;
+            }
+          }
+          if (!finalItem) {
+            finalItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0] || null;
+          }
+          setActiveItem(finalItem);
           setProgress({
             userId: storedUserId || "preview-user",
             courseId: courseRes.course?.id || courseId,
@@ -393,10 +402,45 @@ function CoursePlayerContent() {
           try {
             const resolvedId = courseRes.course?.id || courseId;
             const learningClient = getRpcClient(LearningService);
-            const progressRes = await learningClient.getProgress({ courseId: resolvedId });
-            setProgress(progressRes.progress ?? null);
+            // Pure query getProgress on initial load without passing currentItemId
+            const progressRes = await learningClient.getProgress({
+              courseId: resolvedId,
+              currentItemId: "",
+            });
+            const loadedProgress = progressRes.progress ?? null;
+            setProgress(loadedProgress);
 
-            if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
+            if (previewItemId && courseRes.course?.weekModules) {
+              for (const wm of courseRes.course.weekModules) {
+                for (const l of wm.lessons) {
+                  const found = l.items.find((item) => item.id === previewItemId);
+                  if (found) {
+                    finalItem = found;
+                    break;
+                  }
+                }
+                if (finalItem) break;
+              }
+            } else if (loadedProgress?.lastAccessedItemId && courseRes.course?.weekModules) {
+              const targetId = loadedProgress.lastAccessedItemId;
+              for (const wm of courseRes.course.weekModules) {
+                for (const l of wm.lessons) {
+                  const match = l.items.find((item) => item.id === targetId);
+                  if (match) {
+                    finalItem = match;
+                    break;
+                  }
+                }
+                if (finalItem) break;
+              }
+            }
+
+            if (!finalItem) {
+              finalItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0] || null;
+            }
+            setActiveItem(finalItem);
+
+            if (loadedProgress && loadedProgress.overallProgressPercent >= 100) {
               try {
                 const certClient = getRpcClient(CertificateService);
                 const certRes = await certClient.getVerifiedCertificate({ courseId: resolvedId });
@@ -419,8 +463,13 @@ function CoursePlayerContent() {
             setNotes(notesRes.notes);
           } catch (err) {
             console.error("Failed to load user progress or notes:", err);
+            if (!finalItem) {
+              finalItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0] || null;
+            }
+            setActiveItem(finalItem);
           }
         }
+        isInitialLoadCompletedRef.current = true;
       } catch (err) {
         console.error("Error loading course player data:", err);
       }
@@ -492,6 +541,15 @@ function CoursePlayerContent() {
     setAnsweredQuizTimestamps(new Set());
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [activeItemId]);
+
+  // Track last accessed learning item in database (only after initial load completes)
+  useEffect(() => {
+    if (!isInitialLoadCompletedRef.current || !activeItemId || isPreviewMode) return;
+    const client = getRpcClient(LearningService);
+    client.getProgress({ courseId, currentItemId: activeItemId }).catch(() => {
+      // Ignore background tracking failure
+    });
+  }, [courseId, activeItemId, isPreviewMode]);
 
   // Mark Item as Complete is now moved above useEffect hooks.
 
@@ -604,12 +662,16 @@ function CoursePlayerContent() {
     setSavingNote(true);
     setNoteError("");
     try {
+      const currentSeconds = Math.floor(
+        playbackTimeStore.get() || videoRef.current?.currentTime || 0,
+      );
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.savePersonalNote({
         courseId: resolvedCourseId,
         itemId: activeItem.id,
         highlightedText: highlightText,
         noteComment: noteComment,
+        timestampSeconds: currentSeconds,
       });
       if (res.note) {
         setNotes((prev) => [res.note!, ...prev]);
@@ -741,6 +803,8 @@ function CoursePlayerContent() {
               {"Xem trước học liệu"}
             </span>
           )}
+
+          {!isPreviewMode && <StreakBadge className="hidden sm:inline-flex" />}
 
           <LanguageToggle />
           <ThemeToggle />
@@ -898,6 +962,8 @@ function CoursePlayerContent() {
                 completedItemIds={progress?.completedItemIds || []}
                 onTimeUpdate={handleTimeUpdate}
                 onSeeking={handleSeeking}
+                onPlay={() => setIsVideoPlaying(true)}
+                onPause={() => setIsVideoPlaying(false)}
                 onSelectOption={setSelectedOption}
                 onSubmitQuiz={handleQuizSubmit}
                 onContinueVideo={handleContinueVideo}

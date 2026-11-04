@@ -73,6 +73,8 @@ interface VideoPlayerProps {
   completedItemIds?: string[];
   onTimeUpdate: () => void;
   onSeeking?: () => void;
+  onPlay?: () => void;
+  onPause?: () => void;
   onSelectOption: (index: number) => void;
   onSubmitQuiz: () => void;
   onContinueVideo: () => void;
@@ -95,6 +97,8 @@ export function VideoPlayer({
   completedItemIds = [],
   onTimeUpdate,
   onSeeking,
+  onPlay,
+  onPause,
   onSelectOption,
   onSubmitQuiz,
   onContinueVideo,
@@ -346,6 +350,8 @@ export function VideoPlayer({
             videoUrl={activeItem.videoUrl || ""}
             onTimeUpdate={onTimeUpdate}
             onSeeking={onSeeking}
+            onPlay={onPlay}
+            onPause={onPause}
             onEnded={() => onMarkComplete?.(activeItem.id)}
             title={activeItem.title || "Video bài giảng"}
             captionUrl={computedCaptionUrl}

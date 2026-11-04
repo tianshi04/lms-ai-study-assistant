@@ -300,6 +300,28 @@ class CourseReviewModel(Base):
     is_verified_completer: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default="false"
     )
+    helpful_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+
+
+class CourseReviewReactionModel(Base):
+    __tablename__ = "course_review_reactions"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "review_id", name="uq_course_review_reactions_user_review"
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    review_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("course_reviews.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
 class CourseAnnouncementModel(Base):
@@ -382,3 +404,48 @@ class CourseEmbeddingModel(Base):
         Text, nullable=False, default="", server_default=""
     )
     updated_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class CourseBookmarkModel(Base):
+    __tablename__ = "course_bookmarks"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "course_id", name="uq_course_bookmarks_user_course"
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    course_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="", server_default=""
+    )
+
+    course: Mapped["CourseModel"] = relationship("CourseModel", lazy="selectin")
+
+
+class UserSearchHistoryModel(Base):
+    __tablename__ = "user_search_history"
+    __table_args__ = (
+        Index("ix_user_search_history_user_created", "user_id", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    search_query: Mapped[str] = mapped_column(String(255), nullable=False)
+    filters_json: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    result_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)

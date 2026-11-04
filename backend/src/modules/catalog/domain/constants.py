@@ -5,6 +5,9 @@ MAX_RATING_STARS: int = 5
 MAX_REVIEW_COMMENT_LENGTH: int = 2000
 MIN_PROGRESS_PERCENT_FOR_REVIEW: float = 50.0
 VERIFIED_COMPLETER_PROGRESS_PERCENT: float = 100.0
+ERR_MSG_SELF_UPVOTE: str = (
+    "Bạn không thể tự đánh giá nhận xét của chính mình là hữu ích."
+)
 
 # Course Recommendation defaults
 DEFAULT_RECOMMENDED_COURSES_COUNT: int = 6
@@ -38,3 +41,7 @@ DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT: int = 25
 # Public S3 Storage Asset Folders & Prefixes (bypass JWT auth)
 PUBLIC_ASSET_FOLDERS: set[str] = {"thumbnails", "banners", "avatars"}
 PUBLIC_ASSET_PREFIXES: tuple[str, ...] = ("public/",)
+
+MIN_SEARCH_QUERY_LENGTH: int = 2
+MAX_SEARCH_QUERY_LENGTH: int = 200
+SEARCH_HISTORY_THROTTLE_SECONDS: int = 5

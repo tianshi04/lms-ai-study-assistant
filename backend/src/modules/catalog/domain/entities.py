@@ -164,6 +164,8 @@ class CourseReview(Entity):
         comment_text: str = "",
         created_at: str = "",
         is_verified_completer: bool = False,
+        helpful_count: int = 0,
+        is_helpful_by_me: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -173,6 +175,8 @@ class CourseReview(Entity):
         self.comment_text = comment_text
         self.created_at = created_at
         self.is_verified_completer = is_verified_completer
+        self.helpful_count = helpful_count
+        self.is_helpful_by_me = is_helpful_by_me
 
 
 class Course(Entity):
@@ -358,3 +362,22 @@ class InstructorAnalytics(Entity):
         self.average_rating = average_rating
         self.review_count = review_count
         self.students = students or []
+
+
+@dataclass
+class CourseBookmark(Entity):
+    id: str
+    user_id: str
+    course_id: str
+    created_at: str
+    course: Course | None = None
+
+
+@dataclass
+class UserSearchHistory(Entity):
+    id: str
+    user_id: str
+    search_query: str
+    filters_json: str
+    result_count: int
+    created_at: str

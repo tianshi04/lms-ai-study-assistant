@@ -125,6 +125,22 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_QUIZ_003 (Quy tắc Quản lý Session Đếm ngược & Auto-submit):**
   * Mọi bài thi Graded Quiz có giới hạn thời gian (Timed Quiz) được quản lý thời gian đếm ngược trực tiếp từ phía Server (Server-side Session Timer) tính từ mốc bấm nút "Start Quiz".
   * Việc tải lại trang (F5) hoặc tạm đóng trình duyệt không làm dừng đồng hồ đếm ngược. Khi hết giờ đếm ngược, Server tự động đóng phiên và thực hiện chấm điểm (Auto-submit on timeout) với các câu trả lời hiện tại.
+
+* **BR_QUIZ_004 (Lịch sử Bài làm Chi tiết, Snapshot Câu hỏi, Che Đáp án Động & Chẩn đoán Lỗ hổng Kiến thức - Detailed Attempt History, Immutability Snapshot, Adaptive Answer Masking & Topic Mastery Diagnostics):**
+  * **Snapshot Bài làm Bất biến (Immutability Snapshotting):** Mỗi lần nộp bài Quiz, hệ thống lưu vết chi tiết từng câu hỏi vào bảng `quiz_submission_answers` bao gồm: `question_id`, `question_text`, `question_type`, `topic`, `options_json` (snapshot đầy đủ các phương án sau khi xáo trộn), `selected_option_indices` (phương án học viên chọn), `is_correct`, `explanation` và `order_index`. Lịch sử bài làm hoàn toàn độc lập và không bị thay đổi kể cả khi ngân hàng câu hỏi bị cập nhật sau này.
+  * **Chính sách Che Đáp án Động (Adaptive Answer Masking - Academic Integrity):**
+    * *Practice Quiz:* Học viên luôn được mở khóa 100% đáp án đúng và lời giải chi tiết ngay sau khi nộp để củng cố kiến thức.
+    * *Graded Quiz:* Để ngăn chặn tuyệt đối tình trạng "hy sinh lượt làm bài đầu tiên để lấy toàn bộ đáp án rồi thi lại đạt 100%", hệ thống áp dụng cơ chế Masking:
+      * Chừng nào học viên **chưa đạt điểm Pass (`has_passed == False`)**, thì toàn bộ đáp án đúng (`correct_option_indices`) và lời giải chi tiết (`explanation`) **BẮT BUỘC PHẢI BỊ ẨN** đối với học viên (`is_answer_masked = True`), kể cả khi đang trong thời gian Cooldown hoặc đã hết lượt của đợt thi hiện tại. Học viên chỉ được xem câu nào đúng/sai và chẩn đoán năng lực theo chủ đề để định hướng ôn tập.
+      * Hệ thống **chỉ mở khóa đầy đủ đáp án và lời giải** khi: (1) Học viên ĐÃ ĐẠT bài thi (`has_passed == True`) HOẶC (2) Người xem là Giảng viên / Trợ giảng / Quản trị viên (`is_staff == True`).
+  * **Chẩn đoán Lỗ hổng Kiến thức (Knowledge Gap & Topic Mastery Diagnostics):**
+    * Mỗi câu hỏi được gán một chủ đề kiến thức (`topic`, mặc định "Tổng quan").
+    * Hệ thống tự động tính tỷ lệ nắm vững (`mastery_percent`) theo từng chủ đề dựa trên công thức $Score_{topic} = \frac{\text{Correct}}{\text{Total}} \times 100\%$.
+    * Phân loại 3 cấp độ:
+      * $\ge 80.0\%$: `TOPIC_MASTERY_LEVEL_MASTERED` (Đã vững kiến thức - xanh lá).
+      * $50.0\% \le \text{Score} < 80.0\%$: `TOPIC_MASTERY_LEVEL_NEEDS_PRACTICE` (Cần củng cố thêm - vàng cam).
+      * $< 50.0\%$: `TOPIC_MASTERY_LEVEL_WEAK_GAP` (Lỗ hổng trọng tâm - đỏ).
+  * **Trải nghiệm Single-Container Master-Detail Drawer/Dialog:** Cung cấp giao diện tra cứu lịch sử và xem chi tiết bài nộp trong một Dialog hợp nhất, kèm bộ lọc "Chỉ câu sai" và "Lọc theo chủ đề", hỗ trợ rèn luyện thích ứng (Adaptive Learning).
 * **BR_AUTOGRADE_001 (Quy định Sandbox Auto-Grader & Bảo mật Test Case Ẩn):**
   * **Môi trường Thực thi Cách ly (Sandbox Execution):** Mỗi bài nộp lập trình gửi tới Auto-Grader chạy trong môi trường Sandbox cách ly với Timeout mặc định 5.0 giây (tối đa 30.0 giây) và Memory Limit = 512MB.
   * **Ràng buộc Tạo bài Lab (Lab Creation Validation):** Mỗi bài Auto-Graded Lab bắt buộc có **tối thiểu 3 Test Cases** mới được phép lưu. Trình Course Builder hỗ trợ giao diện tạo/sửa/xóa Test Cases trực quan (Visual Test Case Builder) kết hợp soạn thảo Mô tả đề bài dạng Markdown (hỗ trợ Live Preview 2 cột).
@@ -234,6 +250,16 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
       * *Nguyên tắc Tính toán Tách biệt $O(1)$:* Quá trình sinh vector chỉ diễn ra 1 lần duy nhất khi Khóa học được Xuất bản (`PUBLISHED`) hoặc khi chạy CLI nạp dữ liệu (`make seed`). Khi người dùng mở trang Chi tiết Khóa học, hệ thống chỉ thực hiện phép chiếu Cosine trên các vector đã pre-computed trong Database, tuyệt đối không tính toán lại embedding on-the-fly.
   * **Số lượng và Lưới hiển thị:** Mặc định cung cấp 6 khóa học (`DEFAULT_RECOMMENDED_COURSES_COUNT = 6`), loại bỏ chính khóa học hiện tại và môn nền tảng đã hiển thị. Hiển thị dạng lưới 3 cột x 2 hàng trên desktop.
   * **Ràng buộc Trạng thái (Lifecycle Boundary):** Chỉ các khóa học ở trạng thái **`PUBLISHED`** mới tham gia vào tập ứng viên đề xuất và sinh vector embedding. Khóa học ở trạng thái `DRAFT` hoặc `PENDING_REVIEW` tuyệt đối không được hiển thị cho người học.
+* **BR_CATALOG_008 (Đánh dấu & Quản lý Khóa học Yêu thích - Course Bookmarks):**
+  * Mỗi tài khoản có thể lưu trữ danh sách các khóa học quan tâm/yêu thích (`course_bookmarks`).
+  * Khóa duy nhất `(user_id, course_id)` (`uq_user_course_bookmark`) đảm bảo tính idempotent: thao tác lưu lặp lại không tạo ra bản ghi thừa và thao tác hủy lưu xóa sạch bản ghi tương ứng.
+  * RPC `ListMyBookmarkedCourses` tự động join và tải dữ liệu thực thể `Course` mới nhất để hiển thị trực quan thông tin đối tác và khóa học.
+* **BR_SEARCH_001 (Ghi nhận Lịch sử Tìm kiếm Khóa học, Chống Spam & Tối ưu Prefix-Update Throttling - Course Search History Telemetry):**
+  * **Mục tiêu & Nguyên tắc Write-only:** Ghi nhận toàn diện hành vi tìm kiếm khóa học của học viên vào bảng `user_search_history` phục vụ phân tích dữ liệu, tuyệt đối không cung cấp API GET hoặc gợi ý tìm kiếm chưa dùng đến (Write-Only Scope).
+  * **Xác thực & Bảo mật Định danh:** RPC `RecordCourseSearch` yêu cầu chính sách `(auth.v1.policy) = AUTH_POLICY_AUTHENTICATED`. Danh tính `user_id` bắt buộc phân giải trực tiếp từ JWT Context (`require_current_user().id`), nghiêm cấm tin tưởng client payload.
+  * **Chuẩn hóa & Giới hạn Chuỗi:** Từ khóa tìm kiếm được chuẩn hóa khoảng trắng (`strip()`), độ dài tối thiểu >= 2 ký tự (`MIN_SEARCH_QUERY_LENGTH = 2`), giới hạn tối đa 200 ký tự (`MAX_SEARCH_QUERY_LENGTH = 200`), và số lượng kết quả tìm thấy `result_count` bị chặn dưới >= 0.
+  * **Cơ chế Prefix-Update Throttling (Chống Spam DB Bloat):** Khi học viên gõ phím liên tục, nếu lượt tìm kiếm mới xảy ra trong vòng 5 giây (`SEARCH_HISTORY_THROTTLE_SECONDS = 5`) kể từ lượt tìm kiếm gần nhất của cùng học viên và từ khóa mới là tiền tố/hậu tố mở rộng của từ khóa cũ (`new_query.startswith(old_query)` hoặc ngược lại), hệ thống tự động thực hiện thao tác `UPDATE` bản ghi gần nhất thay vì `INSERT` hàng mới. Điều này loại bỏ hoàn toàn hiện tượng tạo hàng loạt bản ghi rác ('p' -> 'py' -> 'pyt' -> 'python').
+  * **Tầng Cơ sở Dữ liệu:** Bảng `user_search_history` có khóa ngoại `ForeignKey("users.id", ondelete="CASCADE")`, `server_default` an toàn cho cột mới và chỉ mục phức hợp `Index("ix_user_search_history_user_created", "user_id", "created_at")` phục vụ phân tích chuỗi thời gian.
 * **BR_CATALOG_007 (Chương trình Chuyên ngành & Chính sách Ưu đãi Mua trọn gói - Specialization & Bundle Pricing):**
   * **Cấu trúc Lộ trình Chuyên ngành (Specialization Learning Path):**
     * Mỗi Chuyên ngành tập hợp chuỗi các khóa học có tính chất kế thừa và phát triển kỹ năng tuần tự (ví dụ: Khóa 1: Kinh tế học Vi mô $\to$ Khóa 2: Kinh tế lượng Ứng dụng $\to$ Khóa 3: Kinh tế học Hành vi & Định giá).
@@ -269,11 +295,36 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Tất cả các trạng thái hạn nộp tự động chuyển về `ON_TRACK` mà không trừ điểm thi hay làm mất tiến độ học tập cũ.
 * **BR_LEARNING_001 (Tính toán Tiến độ, Khử trùng lặp & Ràng buộc Bảng Completed Items):**
   * Mỗi khi hoàn thành 1 bài học (Video, Reading, Quiz), hệ thống tự động lưu vết bản ghi trạng thái hoàn thành vào cơ sở dữ liệu (`user_item_completions`) với khóa chính duy nhất `(user_id, item_id)` (`uq_user_item_completion`) và timestamp `completed_at`, đồng thời thêm `item_id` vào danh sách `completed_item_ids` (sử dụng tập hợp `set` để khử trùng lặp).
+  * *Theo dõi Thời gian & Vị trí Bài học gần nhất (Granular Resuming & Timestamps):*
+    * `enrolled_at`: Mốc thời gian ghi danh khóa học lần đầu.
+    * `completed_at`: Mốc thời gian hoàn thành 100% khóa học (chuyển sang trạng thái `COMPLETED`).
+    * `last_accessed_at` & `last_accessed_item_id`: Tự động cập nhật mỗi khi học viên truy cập hoặc đổi bài học trong khóa học qua RPC `GetProgress(course_id, current_item_id)`.
+    * Khi học viên bấm "Tiếp tục học" trên giao diện `/my-learning` hoặc mở `/learn/[courseId]`, hệ thống tự động đưa học viên tới bài học tương ứng với `last_accessed_item_id`.
+  * *Ghi chú cá nhân gắn với Mốc Thời gian Video (Video Timestamped Personal Notes):*
+    * Mỗi bản ghi `PersonalNote` lưu trữ `timestamp_seconds` (mốc giây tại thời điểm tạo ghi chú) và `updated_at`. Cho phép học viên bấm trực tiếp vào mốc thời gian để nhảy đến phân đoạn video liên quan.
   * *Xác thực danh mục Server-side (Server-side Item Validation):* Hệ thống tự động truy vấn danh mục bài học từ Catalog module (`CatalogUseCase.get_course_detail`) để lấy tập hợp bài học hợp lệ (`valid_item_ids`) và tổng số bài học thực tế (`real_total_items`). Tất cả `item_id` không nằm trong danh mục khóa học sẽ bị từ chối (`item_id in valid_item_ids`), đồng thời danh sách bài hoàn thành được lọc loại bỏ các item không còn tồn tại (`completed = completed.intersection(valid_item_ids)`). Loại bỏ hoàn toàn khả năng gửi tham số `total_course_items` tùy ý từ phía client.
   * Phần trăm tiến độ được tính toán và làm tròn 1 chữ số thập phân:
     $$\text{Overall Progress \%} = \min\left(100.0, \text{round}\left(\frac{|\text{Completed Items}|}{\max(1, \text{Total Course Items})} \times 100, 1\right)\right)$$
 * **BR_LEARNING_002 (Bảo lưu Tiến độ & Ghi chú khi Nâng cấp Chế độ):**
   * Khi học viên nâng cấp từ Audit Mode sang Paid Mode (hoặc qua Financial Aid / Enterprise Key), hệ thống **bảo lưu 100% danh sách bài học đã hoàn thành (`completed_item_ids`) và các Ghi chú cá nhân (`Personal Notes`)**.
+* **BR_LEARNING_003 (Đo lường Thời gian Học Thực tế & Chuỗi Ngày Học Liên tục - Learning Time & Streaks):**
+  * *Cơ chế Heartbeat & Chống Treo máy (Anti-Idle Tracking):*
+    * Thời gian học thực tế được Frontend tích lũy mỗi giây khi thỏa mãn đồng thời: (1) Tab đang hiển thị (`document.visibilityState === 'visible'`) và (2) Video đang phát thực tế (`isVideoPlaying`) HOẶC có tương tác người dùng (chuột, phím, cuộn trang) trong vòng 120 giây (`IDLE_TIMEOUT_SECONDS = 120`).
+    * Định kỳ mỗi 30 giây (`DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30`), Frontend phát tín hiệu Heartbeat lên RPC `RecordLearningTime(course_id, item_id, delta_seconds, client_timezone)`.
+    * Khi chuyển bài hoặc thoát trang, hệ thống kích hoạt cơ chế flush an toàn bằng `fetch(url, { keepalive: true, headers: { 'Connect-Protocol-Version': '1' } })` bắt sự kiện `visibilitychange` (với `document.visibilityState === 'hidden'`).
+  * *Bảo mật & Kẹp chặn Dữ liệu (Anti-Cheating & Velocity Limit):*
+    * `delta_seconds` bị kẹp trong khoảng $[1, 120]$ giây (`MAX_HEARTBEAT_DELTA_SECONDS = 120`).
+    * Áp dụng Rate Limiting tối đa 1 heartbeat mỗi 5 giây cho mỗi `user_id` qua Redis token với cơ chế Fail-open an toàn.
+    * Bắt buộc kiểm tra Enrollment Guard: Học viên bắt buộc phải đã ghi danh khóa học (`enrolled_at != ""`) và `item_id` phải thực sự thuộc cấu trúc khóa học.
+  * *Phân giải Múi giờ Tuyệt đối (Server-Authoritative Timezone):*
+    * Server sử dụng đồng hồ UTC tuyệt đối, chuyển đổi sang ngày địa phương bằng `zoneinfo.ZoneInfo(client_timezone)` (mặc định fallback `"Asia/Ho_Chi_Minh"` / UTC+7) để xác định `study_date` (YYYY-MM-DD), triệt tiêu nguy cơ mất chuỗi streak sau nửa đêm và chống gian lận ngày từ client.
+  * *Quy tắc Tính Chuỗi Ngày Học Liên tục (Streak Engine):*
+    * Mục tiêu tối thiểu để giữ/tăng chuỗi ngày học là 300 giây (5 phút) học tích lũy trong ngày (`MIN_DAILY_STUDY_SECONDS_FOR_STREAK = 300`).
+    * Cờ `is_streak_qualified` được cập nhật nguyên tử ở cấp CSDL PostgreSQL (`update ... where is_streak_qualified = false returning ...`), đảm bảo chỉ duy nhất một nhịp ping đầu tiên vượt mốc 300s mới kích hoạt tăng `current_streak`.
+    * Nếu ngày hoạt động gần nhất `last_active_date == yesterday`: `current_streak += 1`, `longest_streak = max(longest_streak, current_streak)`.
+    * Nếu ngày hoạt động gần nhất `last_active_date == today`: Giữ nguyên `current_streak`.
+    * Nếu học viên bỏ lỡ quá 1 ngày (`last_active_date < yesterday` hoặc chưa từng học): Chuỗi bị đứt quãng, reset về `current_streak = 1` khi đạt mốc ngày mới.
+    * Khi truy vấn qua `GetLearningStreak`, hệ thống tính toán `effective_current_streak = current_streak` nếu `last_active_date` là hôm nay hoặc hôm qua; ngược lại trả về 0 để loại bỏ hoàn toàn hiện tượng hiển thị chuỗi ma (Phantom Streak).
 
 ---
 
@@ -344,6 +395,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Văn bản bình luận `comment_text` tối đa 2,000 ký tự và bắt buộc được làm sạch (Sanitize HTML/Script tags) tại Backend để chống tấn công Stored XSS khi hiển thị công khai. Bàn nộp quá 2,000 ký tự sẽ bị từ chối với lỗi Fail-fast validation (`ValueError`).
 * **BR_REVIEW_004 (Xung đột Quyền lợi & Chống Tự đánh giá):**
   * Giảng viên, Trợ giảng hoặc Admin phụ trách tạo/quản lý khóa học bị cấm tự gửi đánh giá cho khóa học của chính mình.
+* **BR_REVIEW_005 (Phản ứng Hữu ích & Chống Gian lận Tự tương tác - Helpful Reactions & Anti-Self-Upvote):**
+  * Học viên đăng nhập có quyền đánh dấu hoặc bỏ đánh dấu nhận xét của người khác là hữu ích (toggle reaction) qua RPC `ToggleCourseReviewHelpful`.
+  * *Chống gian lận:* Tác giả của nhận xét bị nghiêm cấm tự đánh giá nhận xét của chính mình là hữu ích (`review.user_id == user_id`). Backend ném lỗi `ValueError` và trả về mã lỗi `INVALID_ARGUMENT`.
+  * *Ràng buộc cơ sở dữ liệu:* Bảng `course_review_reactions` bảo đảm ràng buộc duy nhất trên cặp `(user_id, review_id)`, khóa ngoại cascade khi nhận xét bị xóa.
+  * *Cập nhật bộ đếm nguyên tử:* Số lượt đánh giá hữu ích `helpful_count` được cộng/trừ trực tiếp ở mức câu lệnh SQL (`func.greatest(0, CourseReviewModel.helpful_count - 1)`), loại bỏ hoàn toàn race condition trong môi trường đồng thời cao.
 
 ---
 
