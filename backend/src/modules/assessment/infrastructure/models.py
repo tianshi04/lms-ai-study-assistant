@@ -74,7 +74,6 @@ class QuizSubmissionAnswerModel(Base):
         String(64),
         ForeignKey("quiz_submissions.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     question_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     question_text: Mapped[str] = mapped_column(Text, nullable=False)

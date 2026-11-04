@@ -315,7 +315,7 @@ class CourseReviewReactionModel(Base):
     )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False)
     review_id: Mapped[str] = mapped_column(
         String(64),
         ForeignKey("course_reviews.id", ondelete="CASCADE"),

@@ -4,6 +4,7 @@ import pytest
 
 from src.modules.assessment.application.quiz_usecase import QuizUseCase
 from src.modules.assessment.domain import (
+    HonorCodeAgreement,
     Question,
     QuestionOption,
     QuizMatrix,
@@ -290,3 +291,45 @@ async def test_rebac_idor_protection(mock_quiz_repo):
         await uc.get_quiz_attempt_detail(
             user_id="user_attacker", submission_id="sub_private_user", is_staff=False
         )
+
+
+@pytest.mark.asyncio
+async def test_submit_graded_quiz_adaptive_masking_on_failure(mock_quiz_repo):
+    uc = QuizUseCase(repository=mock_quiz_repo)
+    user_id = "user_fail_test"
+    item_id = "item_quiz_1"
+
+    await mock_quiz_repo.save_honor_code(
+        HonorCodeAgreement(user_id=user_id, item_id=item_id, is_agreed=True)
+    )
+
+    # Start session
+    sess = await uc.start_graded_quiz_session(user_id, item_id, force_new=True)
+    session_seed = sess["session_seed"]
+
+    # 1. Submit all wrong answers (score = 0%, passed = False)
+    res_fail = await uc.submit_graded_quiz(
+        user_id,
+        item_id,
+        question_answers=[[1], [1], [1]],  # Option index 1 is wrong
+        session_seed=session_seed,
+    )
+    assert res_fail["passed"] is False
+    assert res_fail["score_percent"] == 0.0
+    # Explanations must be masked (no " — Giải thích ...")
+    for exp in res_fail["answer_explanations"]:
+        assert "Giải thích" not in exp
+        assert exp.startswith("Câu ")
+
+    # 2. Start new session and pass (score = 100%, passed = True)
+    sess2 = await uc.start_graded_quiz_session(user_id, item_id, force_new=True)
+    res_pass = await uc.submit_graded_quiz(
+        user_id,
+        item_id,
+        question_answers=[[0], [0], [0]],  # Option index 0 is correct
+        session_seed=sess2["session_seed"],
+    )
+    assert res_pass["passed"] is True
+    assert res_pass["score_percent"] == 100.0
+    # Explanations must be revealed once passed
+    assert any("Giải thích" in exp for exp in res_pass["answer_explanations"])

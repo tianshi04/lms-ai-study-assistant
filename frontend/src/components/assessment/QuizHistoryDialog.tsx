@@ -1,18 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Chip } from "@/components/ui/Chip";
 import { Progress } from "@/components/ui/Progress";
-import { getRpcClient } from "@/lib/connect_client";
-import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
-import {
-  GetQuizAttemptHistoryResponse,
-  GetQuizAttemptDetailResponse,
-  TopicMasteryLevel,
-} from "@/gen/assessment/v1/assessment_pb";
+import { useQuizAttemptHistoryQuery, useQuizAttemptDetailQuery } from "@/lib/query_hooks";
+import { TopicMasteryLevel } from "@/gen/assessment/v1/assessment_pb";
 import {
   ArrowLeft,
   Calendar,
@@ -46,89 +41,45 @@ export function QuizHistoryDialog({
   onRetakeQuiz,
 }: QuizHistoryDialogProps) {
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
-  const [historyData, setHistoryData] = useState<GetQuizAttemptHistoryResponse | null>(null);
-  const [detailData, setDetailData] = useState<GetQuizAttemptDetailResponse | null>(null);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [loadingDetail, setLoadingDetail] = useState(false);
-  const [errorHistory, setErrorHistory] = useState<string | null>(null);
-  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   // Filters for detail view
   const [onlyIncorrectFilter, setOnlyIncorrectFilter] = useState(false);
   const [selectedTopicFilter, setSelectedTopicFilter] = useState<string>("ALL");
 
-  // Load history when dialog opens
-  useEffect(() => {
-    if (!open) {
+  // Headless TanStack Query hooks
+  const {
+    data: historyData,
+    isLoading: loadingHistory,
+    error: errorHistoryObj,
+  } = useQuizAttemptHistoryQuery(itemId, {
+    enabled: open && Boolean(itemId),
+  });
+
+  const {
+    data: detailData,
+    isLoading: loadingDetail,
+    error: errorDetailObj,
+  } = useQuizAttemptDetailQuery(selectedSubmissionId ?? "", {
+    enabled: open && Boolean(selectedSubmissionId),
+  });
+
+  const errorHistory = errorHistoryObj ? errorHistoryObj.message : null;
+  const errorDetail = errorDetailObj ? errorDetailObj.message : null;
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
       setSelectedSubmissionId(null);
-      setDetailData(null);
-      return;
+      setOnlyIncorrectFilter(false);
+      setSelectedTopicFilter("ALL");
     }
+    onOpenChange(nextOpen);
+  };
 
-    let isMounted = true;
-    async function fetchHistory() {
-      setLoadingHistory(true);
-      setErrorHistory(null);
-      try {
-        const client = getRpcClient(AssessmentService);
-        const res = await client.getQuizAttemptHistory({ itemId });
-        if (isMounted) {
-          setHistoryData(res);
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          console.error("Failed to load quiz history:", err);
-          setErrorHistory(
-            err instanceof Error ? err.message : "Không thể tải lịch sử làm bài thi.",
-          );
-        }
-      } finally {
-        if (isMounted) setLoadingHistory(false);
-      }
-    }
-
-    fetchHistory();
-    return () => {
-      isMounted = false;
-    };
-  }, [open, itemId]);
-
-  // Load detail when a submission is selected
-  useEffect(() => {
-    if (!selectedSubmissionId) {
-      setDetailData(null);
-      return;
-    }
-
-    let isMounted = true;
-    async function fetchDetail() {
-      setLoadingDetail(true);
-      setErrorDetail(null);
-      try {
-        const client = getRpcClient(AssessmentService);
-        const res = await client.getQuizAttemptDetail({
-          submissionId: selectedSubmissionId!,
-        });
-        if (isMounted) {
-          setDetailData(res);
-          setOnlyIncorrectFilter(false);
-          setSelectedTopicFilter("ALL");
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          console.error("Failed to load quiz attempt detail:", err);
-          setErrorDetail(err instanceof Error ? err.message : "Không thể tải chi tiết bài làm.");
-        }
-      } finally {
-        if (isMounted) setLoadingDetail(false);
-      }
-    }
-
-    fetchDetail();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedSubmissionId]);
+  const handleSelectSubmission = (subId: string) => {
+    setSelectedSubmissionId(subId);
+    setOnlyIncorrectFilter(false);
+    setSelectedTopicFilter("ALL");
+  };
 
   const formatDate = (isoString: string) => {
     if (!isoString) return "--";
@@ -184,7 +135,7 @@ export function QuizHistoryDialog({
   const uniqueTopics = Array.from(new Set((detailData?.answers || []).map((a) => a.topic)));
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop />
         <Dialog.Popup size="2xl" className="max-h-[88vh] flex flex-col p-0 overflow-hidden">
@@ -381,7 +332,7 @@ export function QuizHistoryDialog({
                               type="button"
                               variant="tonal"
                               size="sm"
-                              onClick={() => setSelectedSubmissionId(att.submissionId)}
+                              onClick={() => handleSelectSubmission(att.submissionId)}
                               className="rounded-full text-xs font-bold gap-1 self-end sm:self-center"
                             >
                               <Eye className="w-3.5 h-3.5" /> Xem chi tiết

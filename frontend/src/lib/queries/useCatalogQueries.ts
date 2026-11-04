@@ -397,9 +397,13 @@ export function useIsCourseBookmarkedQuery(
     queryKey: ["isCourseBookmarked", courseId],
     queryFn: async () => {
       if (!courseId) return false;
-      const client = getRpcClient(CatalogService);
-      const res = await client.checkCourseBookmarked({ courseId });
-      return res.isBookmarked;
+      try {
+        const client = getRpcClient(CatalogService);
+        const res = await client.checkCourseBookmarked({ courseId });
+        return res.isBookmarked;
+      } catch {
+        return false;
+      }
     },
     enabled: Boolean(courseId),
     ...options,

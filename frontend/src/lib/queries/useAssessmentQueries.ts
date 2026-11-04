@@ -13,6 +13,8 @@ import {
   type QuestionBank,
   type Question,
   type QuestionOption,
+  type GetQuizAttemptHistoryResponse,
+  type GetQuizAttemptDetailResponse,
 } from "@/gen/assessment/v1/assessment_pb";
 
 export function useSubmitQuizMutation(
@@ -226,6 +228,36 @@ export function useDeleteQuestionMutation(
       const res = await client.deleteQuestion({ questionId });
       return { success: res.success, message: res.message };
     },
+    ...options,
+  });
+}
+
+export function useQuizAttemptHistoryQuery(
+  itemId: string,
+  options?: Partial<UseQueryOptions<GetQuizAttemptHistoryResponse, Error>>,
+) {
+  return useQuery<GetQuizAttemptHistoryResponse, Error>({
+    queryKey: ["quizAttemptHistory", itemId],
+    queryFn: async () => {
+      const client = getRpcClient(AssessmentService);
+      return await client.getQuizAttemptHistory({ itemId });
+    },
+    enabled: !!itemId,
+    ...options,
+  });
+}
+
+export function useQuizAttemptDetailQuery(
+  submissionId: string,
+  options?: Partial<UseQueryOptions<GetQuizAttemptDetailResponse, Error>>,
+) {
+  return useQuery<GetQuizAttemptDetailResponse, Error>({
+    queryKey: ["quizAttemptDetail", submissionId],
+    queryFn: async () => {
+      const client = getRpcClient(AssessmentService);
+      return await client.getQuizAttemptDetail({ submissionId });
+    },
+    enabled: !!submissionId,
     ...options,
   });
 }

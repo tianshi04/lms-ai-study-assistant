@@ -491,7 +491,12 @@ class QuizUseCase(BaseAssessmentUseCase):
                     user_ans_set = set(answers[idx]) if idx < len(answers) else set()
 
                     is_corr = bool(user_ans_set and user_ans_set == corr_indices)
-                    clean_exp = _clean_explanation(q.get("explanation"))
+                    # Adaptive Answer Masking (Academic Integrity):
+                    # Hide detailed explanations if student hasn't passed and is not previewing
+                    if not passed and not preview:
+                        clean_exp = ""
+                    else:
+                        clean_exp = _clean_explanation(q.get("explanation"))
                     exp_suffix = f" — {clean_exp}" if clean_exp else ""
 
                     if is_corr:

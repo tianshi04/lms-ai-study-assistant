@@ -1,3 +1,5 @@
+from connectrpc.code import Code
+from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
 from src.gen.learning.v1 import learning_pb as pb
@@ -99,9 +101,12 @@ class LearningHandler(LearningService):
         ctx: RequestContext[pb.ResetDeadlinesRequest, pb.ResetDeadlinesResponse],
     ) -> pb.ResetDeadlinesResponse:
         current_user = require_current_user()
-        success, progress = await self.use_case.reset_deadlines(
-            user_id=current_user.id, course_id=request.course_id
-        )
+        try:
+            success, progress = await self.use_case.reset_deadlines(
+                user_id=current_user.id, course_id=request.course_id
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.ResetDeadlinesResponse(
             success=success, updated_progress=_to_pb_progress(progress)
         )
@@ -152,11 +157,14 @@ class LearningHandler(LearningService):
         ctx: RequestContext[pb.MarkItemCompleteRequest, pb.MarkItemCompleteResponse],
     ) -> pb.MarkItemCompleteResponse:
         current_user = require_current_user()
-        success, progress = await self.use_case.mark_item_complete(
-            user_id=current_user.id,
-            course_id=request.course_id,
-            item_id=request.item_id,
-        )
+        try:
+            success, progress = await self.use_case.mark_item_complete(
+                user_id=current_user.id,
+                course_id=request.course_id,
+                item_id=request.item_id,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.MarkItemCompleteResponse(
             success=success, updated_progress=_to_pb_progress(progress)
         )
@@ -182,18 +190,23 @@ class LearningHandler(LearningService):
         ],
     ) -> pb.RecordLearningTimeResponse:
         current_user = require_current_user()
-        (
-            item_total,
-            today_total,
-            streak,
-            is_extended,
-        ) = await self.use_case.record_learning_time(
-            user_id=current_user.id,
-            course_id=request.course_id,
-            item_id=request.item_id,
-            delta_seconds=request.delta_seconds,
-            client_timezone=request.client_timezone,
-        )
+        try:
+            (
+                item_total,
+                today_total,
+                streak,
+                is_extended,
+            ) = await self.use_case.record_learning_time(
+                user_id=current_user.id,
+                course_id=request.course_id,
+                item_id=request.item_id,
+                delta_seconds=request.delta_seconds,
+                client_timezone=request.client_timezone,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.RecordLearningTimeResponse(
             item_total_seconds=item_total,
             today_total_seconds=today_total,
