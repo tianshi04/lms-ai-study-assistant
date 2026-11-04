@@ -222,7 +222,7 @@ flowchart TD
   * Trình bày trực quan Lộ trình tuần tự các môn trong Chuyên ngành (Roadmap timeline), đánh dấu vị trí môn hiện tại (`Đang xem`), môn tiên quyết và môn nâng cao kế tiếp.
   * Hỗ trợ gói mua trọn bộ Chuyên ngành (Combo Bundle) với mức ưu đãi 25%, hiển thị so sánh minh bạch giữa tổng giá lẻ từng môn và giá trọn gói tiết kiệm kèm hộp thoại xác nhận thanh toán (`SpecializationCheckoutModal`).
 * **Mục 2: Khóa học Đề xuất Liên quan (Smart Recommendations Grid):**
-  * Hiển thị lưới 6 thẻ khóa học (3 cột x 2 hàng trên desktop) chuẩn Material Design 3.
+  * Hiển thị lưới 6 thẻ khóa học (3 cột x 2 hàng trên desktop) chuẩn Design System đồng bộ.
   * Ứng dụng thuật toán chấm điểm lai (Hybrid Recommendation Algorithm): $Score = 0.55 \cdot S_{\text{vector}} + 0.30 \cdot I_{\text{author}} + 0.15 \cdot R_{\text{norm}}$.
   * **Thành phần Vector Ngữ nghĩa 55% ($S_{\text{vector}}$):** Được sinh từ chuỗi Payload tổng hợp trích xuất đầy đủ 7 trường dữ liệu: (1) Tên khóa học, (2) Đơn vị Đối tác, (3) Lĩnh vực, (4) Cấp độ, (5) Mô tả khóa học, (6) Khung sườn các Tuần học, và (7) Tên toàn bộ các bài giảng trong từng tuần. Vector được sinh qua FastEmbed (`sentence-transformers/all-MiniLM-L6-v2`, 384 chiều) và truy vấn qua pgvector HNSW Cosine Index (`BR_CATALOG_006`).
 
