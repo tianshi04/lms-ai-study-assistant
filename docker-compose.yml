@@ -121,7 +121,7 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://openobserve:5081}
       - ZO_ROOT_USER_EMAIL=${ZO_ROOT_USER_EMAIL:-admin@coursera.local}
-      - ZO_ROOT_USER_PASSWORD=${ZO_ROOT_USER_PASSWORD:-openobserve_password123}
+      - ZO_ROOT_USER_PASSWORD=${ZO_ROOT_USER_PASSWORD:-OpenObserve@Password123!}
       - OPENOBSERVE_ORG=${OPENOBSERVE_ORG:-default}
       - OPENOBSERVE_STREAM=${OPENOBSERVE_STREAM:-default}
     expose:
@@ -240,7 +240,7 @@ services:
     environment:
       - ZO_DATA_DIR=/data
       - ZO_ROOT_USER_EMAIL=${ZO_ROOT_USER_EMAIL:-admin@coursera.local}
-      - ZO_ROOT_USER_PASSWORD=${ZO_ROOT_USER_PASSWORD:-openobserve_password123}
+      - ZO_ROOT_USER_PASSWORD=${ZO_ROOT_USER_PASSWORD:-OpenObserve@Password123!}
     ports:
       - "127.0.0.1:${OPENOBSERVE_HTTP_PORT:-5080}:5080"
     volumes:
