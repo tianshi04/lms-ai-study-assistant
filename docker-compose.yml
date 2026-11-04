@@ -3,7 +3,10 @@ services:
   # 1. REVERSE PROXY & AUTOMATIC SSL: Caddy v2
   # ------------------------------------------------------------------
   caddy:
-    image: caddy:2-alpine
+    build:
+      context: ./caddy
+      dockerfile: Dockerfile
+    image: ${CADDY_IMAGE:-coursera-caddy:latest}
     container_name: coursera_caddy
     restart: unless-stopped
     ports:

@@ -2,6 +2,9 @@
 	# Global options
 	# Điền email nếu cần nhận thông báo khi chứng chỉ SSL sắp hết hạn (Let's Encrypt / ZeroSSL)
 	# email your-email@example.com
+
+	# Định nghĩa thứ tự thực thi của plugin caddy-ratelimit trong HTTP pipeline
+	order rate_limit before basic_auth
 }
 
 # Sử dụng biến môi trường: mặc định là localhost nếu chạy dev, hoặc điền domain thực tế (vd: coursera.vn)
@@ -17,7 +20,61 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 	}
 
-	# 3. Stream Video & Media Assets (Bypass Next.js, đi thẳng vào Backend)
+	# 3. Bộ kiểm soát tần suất truy cập tại tầng hạ tầng (Edge Rate Limiting - mholt/caddy-ratelimit)
+	rate_limit {
+		# Zone 1: Chống Brute-force & credential stuffing cho endpoint xác thực nhạy cảm (tối đa 20 req/phút/IP)
+		# Chỉ áp dụng cho Login/Register/OAuth/Verification, không ảnh hưởng các truy vấn quản trị của IdentityService
+		zone auth_zone {
+			match {
+				path /rpc/identity.v1.IdentityService/Login* /rpc/identity.v1.IdentityService/Register* /rpc/identity.v1.IdentityService/Google* /rpc/identity.v1.IdentityService/Complete* /rpc/identity.v1.IdentityService/VerifyIdentity /api/auth/* /auth/*
+			}
+			key {client_ip}
+			ipv6_prefix 64
+			events 20
+			window 1m
+		}
+
+		# Zone 2: Bảo vệ Quota và chi phí cho trợ lý AI LLM CopilotKit (tối đa 30 req/phút/IP)
+		zone ai_zone {
+			match {
+				path /copilotkit/*
+			}
+			key {client_ip}
+			ipv6_prefix 64
+			events 30
+			window 1m
+		}
+
+		# Zone 3: Bảo vệ các API nghiệp vụ chính ConnectRPC & REST API (tối đa 150 req/phút/IP)
+		zone api_zone {
+			match {
+				path /rpc/* /api/*
+			}
+			key {client_ip}
+			ipv6_prefix 64
+			events 150
+			window 1m
+		}
+
+		# Zone 4: Bảo vệ toàn hệ thống chống HTTP flood / DoS (tối đa 600 req/phút/IP, trừ static assets)
+		zone global_zone {
+			match {
+				not path /_next/static/* /favicon.ico /robots.txt
+			}
+			key {client_ip}
+			ipv6_prefix 64
+			events 600
+			window 1m
+		}
+	}
+
+	# 4. Tùy biến phản hồi khi vượt quá giới hạn tần suất (HTTP 429 Too Many Requests)
+	handle_errors 429 {
+		header Content-Type "application/json; charset=utf-8"
+		respond `{"code":"resource_exhausted","message":"Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ít phút."}` 429
+	}
+
+	# 5. Stream Video & Media Assets (Bypass Next.js, đi thẳng vào Backend)
 	# Tắt buffer (flush_interval -1) để hỗ trợ HTTP 206 Partial Content (tua video HTML5)
 	handle /coursera-assets/* {
 		reverse_proxy {$BACKEND_UPSTREAM:127.0.0.1:8000} {
@@ -25,24 +82,24 @@
 		}
 	}
 
-	# 4. REST Webhooks & Toàn bộ API bên ngoài (/api/*) -> 100% đi thẳng vào Backend
+	# 6. REST Webhooks & Toàn bộ API bên ngoài (/api/*) -> 100% đi thẳng vào Backend
 	handle /api/* {
 		reverse_proxy {$BACKEND_UPSTREAM:127.0.0.1:8000}
 	}
 
-	# 5. OpenObserve Browser RUM, Logs & Session Replay Ingestion (/rum/*)
+	# 7. OpenObserve Browser RUM, Logs & Session Replay Ingestion (/rum/*)
 	# Đi thẳng vào OpenObserve nội bộ trên cùng domain (chống AdBlock & miễn cấu hình CORS)
 	handle /rum/* {
 		reverse_proxy {$OPENOBSERVE_UPSTREAM:127.0.0.1:5080}
 	}
 
-	# 6. Tối ưu bộ nhớ đệm (Cache) cho các tài nguyên tĩnh của Next.js (JS, CSS, Font)
+	# 8. Tối ưu bộ nhớ đệm (Cache) cho các tài nguyên tĩnh của Next.js (JS, CSS, Font)
 	handle /_next/static/* {
 		header Cache-Control "public, max-age=31536000, immutable"
 		reverse_proxy {$FRONTEND_UPSTREAM:127.0.0.1:3000}
 	}
 
-	# 7. Toàn bộ Giao diện Web, SSR, ConnectRPC (/rpc/*) và CopilotKit (/copilotkit/*) -> Đi vào Next.js
+	# 9. Toàn bộ Giao diện Web, SSR, ConnectRPC (/rpc/*) và CopilotKit (/copilotkit/*) -> Đi vào Next.js
 	handle {
 		reverse_proxy {$FRONTEND_UPSTREAM:127.0.0.1:3000} {
 			# Hỗ trợ Streaming SSR (React Suspense) & Server-Sent Events (AI Chat CopilotKit)
@@ -52,7 +109,7 @@
 		}
 	}
 
-	# 8. Ghi log có cấu trúc (JSON Format)
+	# 10. Ghi log có cấu trúc (JSON Format)
 	log {
 		output stdout
 		format json
