@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   experimental: {
+    agentUpgrade: "security",
     useTypeScriptCli: true,
     optimizePackageImports: ["lucide-react"],
     turbopackRustReactCompiler: true,
