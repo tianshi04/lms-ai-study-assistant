@@ -25,6 +25,12 @@
       "skillPath": "skills/copilotkit-cli/SKILL.md",
       "computedHash": "16fd56be7a4602ec100fa991bc6504b9f815ee2bff543c72523314fc3c24ea16"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "106acf230014cbb43ca34e6410371321b56ca742f9ee0442e8ec05bf02eb0384"
+    },
     "gh-stack": {
       "source": "github/gh-stack",
       "sourceType": "github",
