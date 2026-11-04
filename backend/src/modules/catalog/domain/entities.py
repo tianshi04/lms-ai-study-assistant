@@ -371,3 +371,13 @@ class CourseBookmark(Entity):
     course_id: str
     created_at: str
     course: Course | None = None
+
+
+@dataclass
+class UserSearchHistory(Entity):
+    id: str
+    user_id: str
+    search_query: str
+    filters_json: str
+    result_count: int
+    created_at: str

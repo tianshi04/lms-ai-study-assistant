@@ -543,3 +543,33 @@ export function useToggleCourseReviewHelpfulMutation(
     },
   });
 }
+
+/**
+ * Hook ghi nhận lịch sử tìm kiếm khóa học của học viên (silent background mutation)
+ */
+export function useRecordCourseSearchMutation(
+  options?: Partial<
+    UseMutationOptions<
+      boolean,
+      Error,
+      { searchQuery: string; filtersJson?: string; resultCount?: number }
+    >
+  >,
+) {
+  return useMutation<
+    boolean,
+    Error,
+    { searchQuery: string; filtersJson?: string; resultCount?: number }
+  >({
+    mutationFn: async ({ searchQuery, filtersJson, resultCount }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.recordCourseSearch({
+        searchQuery,
+        filtersJson: filtersJson || "",
+        resultCount: resultCount ?? 0,
+      });
+      return res.success;
+    },
+    ...options,
+  });
+}

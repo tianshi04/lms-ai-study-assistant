@@ -244,6 +244,22 @@ class CatalogHandler(CatalogService):
             next_page_token=next_token,
         )
 
+    async def record_course_search(
+        self,
+        request: pb.RecordCourseSearchRequest,
+        ctx: RequestContext[
+            pb.RecordCourseSearchRequest, pb.RecordCourseSearchResponse
+        ],
+    ) -> pb.RecordCourseSearchResponse:
+        current_user = require_current_user()
+        success = await self.use_case.record_course_search(
+            user_id=current_user.id,
+            query=request.search_query,
+            filters_json=request.filters_json,
+            result_count=request.result_count,
+        )
+        return pb.RecordCourseSearchResponse(success=success)
+
     async def list_instructor_courses(
         self,
         request: pb.ListInstructorCoursesRequest,

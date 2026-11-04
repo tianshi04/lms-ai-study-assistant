@@ -506,3 +506,19 @@ class CourseUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.list_user_bookmarks(user_id)
+
+    async def record_course_search(
+        self,
+        user_id: str,
+        query: str,
+        filters_json: str = "",
+        result_count: int = 0,
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.record_search_query(
+                user_id=user_id,
+                query=query,
+                filters_json=filters_json,
+                result_count=result_count,
+            )

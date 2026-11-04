@@ -428,3 +428,25 @@ class CourseBookmarkModel(Base):
     )
 
     course: Mapped["CourseModel"] = relationship("CourseModel", lazy="selectin")
+
+
+class UserSearchHistoryModel(Base):
+    __tablename__ = "user_search_history"
+    __table_args__ = (
+        Index("ix_user_search_history_user_created", "user_id", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    search_query: Mapped[str] = mapped_column(String(255), nullable=False)
+    filters_json: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    result_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)

@@ -404,3 +404,13 @@ class ICatalogRepository(ABC):
     @abstractmethod
     async def list_user_bookmarks(self, user_id: str) -> list[CourseBookmark]:
         pass
+
+    @abstractmethod
+    async def record_search_query(
+        self,
+        user_id: str,
+        query: str,
+        filters_json: str = "",
+        result_count: int = 0,
+    ) -> bool:
+        pass

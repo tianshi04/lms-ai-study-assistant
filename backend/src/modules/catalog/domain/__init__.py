@@ -2,8 +2,11 @@ from .constants import (
     ERR_MSG_SELF_UPVOTE,
     MAX_RATING_STARS,
     MAX_REVIEW_COMMENT_LENGTH,
+    MAX_SEARCH_QUERY_LENGTH,
     MIN_PROGRESS_PERCENT_FOR_REVIEW,
     MIN_RATING_STARS,
+    MIN_SEARCH_QUERY_LENGTH,
+    SEARCH_HISTORY_THROTTLE_SECONDS,
     VERIFIED_COMPLETER_PROGRESS_PERCENT,
 )
 from .entities import (
@@ -25,6 +28,7 @@ from .entities import (
     LearningItem,
     Lesson,
     Specialization,
+    UserSearchHistory,
     WeekModule,
 )
 from .events import CourseAnnouncementCreatedDomainEvent
@@ -34,8 +38,11 @@ __all__ = [
     "ERR_MSG_SELF_UPVOTE",
     "MAX_RATING_STARS",
     "MAX_REVIEW_COMMENT_LENGTH",
+    "MAX_SEARCH_QUERY_LENGTH",
     "MIN_PROGRESS_PERCENT_FOR_REVIEW",
     "MIN_RATING_STARS",
+    "MIN_SEARCH_QUERY_LENGTH",
+    "SEARCH_HISTORY_THROTTLE_SECONDS",
     "VERIFIED_COMPLETER_PROGRESS_PERCENT",
     "Category",
     "Course",
@@ -57,5 +64,6 @@ __all__ = [
     "LearningItem",
     "Lesson",
     "Specialization",
+    "UserSearchHistory",
     "WeekModule",
 ]

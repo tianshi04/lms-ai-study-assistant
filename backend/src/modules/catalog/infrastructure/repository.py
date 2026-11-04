@@ -30,6 +30,9 @@ from src.modules.catalog.domain.constants import (
     DEFAULT_RECOMMENDED_COURSES_COUNT,
     DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT,
     MAX_FOUNDATIONAL_COURSES_COUNT,
+    MAX_SEARCH_QUERY_LENGTH,
+    MIN_SEARCH_QUERY_LENGTH,
+    SEARCH_HISTORY_THROTTLE_SECONDS,
 )
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
@@ -45,6 +48,7 @@ from src.modules.catalog.infrastructure.models import (
     LearningItemModel,
     LessonModel,
     SpecializationModel,
+    UserSearchHistoryModel,
     WeekModuleModel,
 )
 from src.modules.identity.infrastructure.models import UserModel
@@ -2068,3 +2072,64 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 )
             )
         return bookmarks
+
+    async def record_search_query(
+        self,
+        user_id: str,
+        query: str,
+        filters_json: str = "",
+        result_count: int = 0,
+    ) -> bool:
+        if not user_id:
+            return False
+
+        cleaned_query = (query or "").strip()
+        if len(cleaned_query) < MIN_SEARCH_QUERY_LENGTH:
+            return False
+
+        cleaned_query = cleaned_query[:MAX_SEARCH_QUERY_LENGTH]
+        safe_result_count = max(int(result_count), 0)
+        now_dt = datetime.now(UTC)
+        now_str = now_dt.isoformat()
+
+        # Check last search entry for prefix-update throttling
+        stmt = (
+            select(UserSearchHistoryModel)
+            .where(UserSearchHistoryModel.user_id == user_id)
+            .order_by(UserSearchHistoryModel.created_at.desc())
+            .limit(1)
+        )
+        res = await self.session.execute(stmt)
+        latest = res.scalars().first()
+
+        if latest:
+            try:
+                latest_dt = datetime.fromisoformat(latest.created_at)
+                if latest_dt.tzinfo is None:
+                    latest_dt = latest_dt.replace(tzinfo=UTC)
+                elapsed = abs((now_dt - latest_dt).total_seconds())
+            except (ValueError, TypeError, OverflowError):
+                elapsed = 999999.0
+
+            old_q = latest.search_query.strip()
+            if elapsed <= SEARCH_HISTORY_THROTTLE_SECONDS and (
+                cleaned_query.startswith(old_q) or old_q.startswith(cleaned_query)
+            ):
+                latest.search_query = cleaned_query
+                latest.filters_json = filters_json or ""
+                latest.result_count = safe_result_count
+                latest.created_at = now_str
+                await self.session.commit()
+                return True
+
+        new_record = UserSearchHistoryModel(
+            id=uuid7().hex,
+            user_id=user_id,
+            search_query=cleaned_query,
+            filters_json=filters_json or "",
+            result_count=safe_result_count,
+            created_at=now_str,
+        )
+        self.session.add(new_record)
+        await self.session.commit()
+        return True

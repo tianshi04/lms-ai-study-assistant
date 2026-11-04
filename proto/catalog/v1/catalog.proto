@@ -181,6 +181,16 @@ message ListCoursesResponse {
   string next_page_token = 2;
 }
 
+message RecordCourseSearchRequest {
+  string search_query = 1;
+  string filters_json = 2;
+  int32 result_count = 3;
+}
+
+message RecordCourseSearchResponse {
+  bool success = 1;
+}
+
 message GetCourseDetailRequest {
   string id_or_slug = 1;
 }
@@ -596,6 +606,9 @@ service CatalogService {
   }
   rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc RecordCourseSearch(RecordCourseSearchRequest) returns (RecordCourseSearchResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListInstructorCourses(ListInstructorCoursesRequest) returns (ListInstructorCoursesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
