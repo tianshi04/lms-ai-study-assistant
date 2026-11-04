@@ -2,7 +2,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -40,6 +40,7 @@ from src.modules.catalog.infrastructure.models import (
     CourseEmbeddingModel,
     CourseModel,
     CourseReviewModel,
+    CourseReviewReactionModel,
     InVideoQuizModel,
     LearningItemModel,
     LessonModel,
@@ -180,7 +181,9 @@ def _model_to_domain_specialization(
     )
 
 
-def _model_to_domain_review(model: CourseReviewModel) -> CourseReview:
+def _model_to_domain_review(
+    model: CourseReviewModel, is_helpful_by_me: bool = False
+) -> CourseReview:
     return CourseReview(
         id=model.id,
         user_id=model.user_id,
@@ -190,6 +193,8 @@ def _model_to_domain_review(model: CourseReviewModel) -> CourseReview:
         comment_text=model.comment_text,
         created_at=model.created_at,
         is_verified_completer=model.is_verified_completer,
+        helpful_count=getattr(model, "helpful_count", 0) or 0,
+        is_helpful_by_me=is_helpful_by_me,
     )
 
 
@@ -1259,8 +1264,68 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         return _model_to_domain_review(model)
 
+    async def get_review_by_id(self, review_id: str) -> CourseReview | None:
+        stmt = select(CourseReviewModel).where(CourseReviewModel.id == review_id)
+        res = await self.session.execute(stmt)
+        m = res.scalar_one_or_none()
+        return _model_to_domain_review(m) if m else None
+
+    async def toggle_course_review_helpful(
+        self, user_id: str, review_id: str
+    ) -> tuple[bool, int]:
+        now_str = datetime.now(UTC).isoformat()
+        del_stmt = (
+            delete(CourseReviewReactionModel)
+            .where(
+                CourseReviewReactionModel.user_id == user_id,
+                CourseReviewReactionModel.review_id == review_id,
+            )
+            .returning(CourseReviewReactionModel.id)
+        )
+        deleted_id = (await self.session.execute(del_stmt)).scalar_one_or_none()
+
+        if deleted_id:
+            upd_stmt = (
+                update(CourseReviewModel)
+                .where(CourseReviewModel.id == review_id)
+                .values(
+                    helpful_count=func.greatest(0, CourseReviewModel.helpful_count - 1)
+                )
+                .returning(CourseReviewModel.helpful_count)
+            )
+            res = await self.session.execute(upd_stmt)
+            new_count = res.scalar_one_or_none() or 0
+            await self.session.commit()
+            return False, new_count
+        reaction = CourseReviewReactionModel(
+            id=f"rev-rx-{uuid7().hex}",
+            user_id=user_id,
+            review_id=review_id,
+            created_at=now_str,
+        )
+        self.session.add(reaction)
+        upd_stmt = (
+            update(CourseReviewModel)
+            .where(CourseReviewModel.id == review_id)
+            .values(helpful_count=CourseReviewModel.helpful_count + 1)
+            .returning(CourseReviewModel.helpful_count)
+        )
+        res = await self.session.execute(upd_stmt)
+        new_count = res.scalar_one_or_none() or 1
+        try:
+            await self.session.commit()
+            return True, new_count
+        except IntegrityError:
+            await self.session.rollback()
+            rev = await self.session.get(CourseReviewModel, review_id)
+            return True, rev.helpful_count if rev else new_count
+
     async def list_course_reviews(
-        self, course_id: str, page_size: int = 10, page_token: str = ""
+        self,
+        course_id: str,
+        page_size: int = 10,
+        page_token: str = "",
+        current_user_id: str | None = None,
     ) -> tuple[list[CourseReview], float, int, str]:
         _ = page_token
         stmt = (
@@ -1271,7 +1336,21 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
-        reviews = [_model_to_domain_review(m) for m in models]
+
+        reacted_ids: set[str] = set()
+        if current_user_id and models:
+            rev_ids = [m.id for m in models]
+            rx_stmt = select(CourseReviewReactionModel.review_id).where(
+                CourseReviewReactionModel.user_id == current_user_id,
+                CourseReviewReactionModel.review_id.in_(rev_ids),
+            )
+            rx_res = await self.session.execute(rx_stmt)
+            reacted_ids = set(rx_res.scalars().all())
+
+        reviews = [
+            _model_to_domain_review(m, is_helpful_by_me=(m.id in reacted_ids))
+            for m in models
+        ]
         avg_rating, total_count = await self.get_course_rating_stats(course_id)
         return reviews, avg_rating, total_count, ""
 

@@ -379,6 +379,18 @@ message CourseReview {
   string comment_text = 6;
   string created_at = 7;
   bool is_verified_completer = 8;
+  int32 helpful_count = 9;
+  bool is_helpful_by_me = 10;
+}
+
+message ToggleCourseReviewHelpfulRequest {
+  string review_id = 1;
+}
+
+message ToggleCourseReviewHelpfulResponse {
+  string review_id = 1;
+  bool is_helpful = 2;
+  int32 helpful_count = 3;
 }
 
 message SubmitCourseReviewRequest {
@@ -654,6 +666,9 @@ service CatalogService {
   }
   rpc ListCourseReviews(ListCourseReviewsRequest) returns (ListCourseReviewsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc ToggleCourseReviewHelpful(ToggleCourseReviewHelpfulRequest) returns (ToggleCourseReviewHelpfulResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc CreateCourseAnnouncement(CreateCourseAnnouncementRequest) returns (CreateCourseAnnouncementResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;

@@ -1,4 +1,5 @@
 from .constants import (
+    ERR_MSG_SELF_UPVOTE,
     MAX_RATING_STARS,
     MAX_REVIEW_COMMENT_LENGTH,
     MIN_PROGRESS_PERCENT_FOR_REVIEW,
@@ -30,6 +31,7 @@ from .events import CourseAnnouncementCreatedDomainEvent
 from .repositories import ICatalogRepository
 
 __all__ = [
+    "ERR_MSG_SELF_UPVOTE",
     "MAX_RATING_STARS",
     "MAX_REVIEW_COMMENT_LENGTH",
     "MIN_PROGRESS_PERCENT_FOR_REVIEW",

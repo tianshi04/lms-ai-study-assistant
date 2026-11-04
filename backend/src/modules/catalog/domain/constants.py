@@ -5,6 +5,9 @@ MAX_RATING_STARS: int = 5
 MAX_REVIEW_COMMENT_LENGTH: int = 2000
 MIN_PROGRESS_PERCENT_FOR_REVIEW: float = 50.0
 VERIFIED_COMPLETER_PROGRESS_PERCENT: float = 100.0
+ERR_MSG_SELF_UPVOTE: str = (
+    "Bạn không thể tự đánh giá nhận xét của chính mình là hữu ích."
+)
 
 # Course Recommendation defaults
 DEFAULT_RECOMMENDED_COURSES_COUNT: int = 6

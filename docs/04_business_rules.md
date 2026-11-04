@@ -389,6 +389,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Văn bản bình luận `comment_text` tối đa 2,000 ký tự và bắt buộc được làm sạch (Sanitize HTML/Script tags) tại Backend để chống tấn công Stored XSS khi hiển thị công khai. Bàn nộp quá 2,000 ký tự sẽ bị từ chối với lỗi Fail-fast validation (`ValueError`).
 * **BR_REVIEW_004 (Xung đột Quyền lợi & Chống Tự đánh giá):**
   * Giảng viên, Trợ giảng hoặc Admin phụ trách tạo/quản lý khóa học bị cấm tự gửi đánh giá cho khóa học của chính mình.
+* **BR_REVIEW_005 (Phản ứng Hữu ích & Chống Gian lận Tự tương tác - Helpful Reactions & Anti-Self-Upvote):**
+  * Học viên đăng nhập có quyền đánh dấu hoặc bỏ đánh dấu nhận xét của người khác là hữu ích (toggle reaction) qua RPC `ToggleCourseReviewHelpful`.
+  * *Chống gian lận:* Tác giả của nhận xét bị nghiêm cấm tự đánh giá nhận xét của chính mình là hữu ích (`review.user_id == user_id`). Backend ném lỗi `ValueError` và trả về mã lỗi `INVALID_ARGUMENT`.
+  * *Ràng buộc cơ sở dữ liệu:* Bảng `course_review_reactions` bảo đảm ràng buộc duy nhất trên cặp `(user_id, review_id)`, khóa ngoại cascade khi nhận xét bị xóa.
+  * *Cập nhật bộ đếm nguyên tử:* Số lượt đánh giá hữu ích `helpful_count` được cộng/trừ trực tiếp ở mức câu lệnh SQL (`func.greatest(0, CourseReviewModel.helpful_count - 1)`), loại bỏ hoàn toàn race condition trong môi trường đồng thời cao.
 
 ---
 

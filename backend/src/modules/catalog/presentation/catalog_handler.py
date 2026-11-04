@@ -21,7 +21,7 @@ from src.modules.catalog.domain import (
     WeekModule,
 )
 from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
-from src.shared.auth import CurrentUser, require_current_user
+from src.shared.auth import CurrentUser, get_current_user, require_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +192,8 @@ def _to_pb_review(review: CourseReview) -> pb.CourseReview:
         comment_text=review.comment_text,
         created_at=review.created_at,
         is_verified_completer=review.is_verified_completer,
+        helpful_count=review.helpful_count,
+        is_helpful_by_me=review.is_helpful_by_me,
     )
 
 
@@ -680,6 +682,9 @@ class CatalogHandler(CatalogService):
         if not request.course_id:
             raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
 
+        current_user = get_current_user()
+        current_user_id = current_user.id if current_user else None
+
         (
             reviews,
             avg_rating,
@@ -689,6 +694,7 @@ class CatalogHandler(CatalogService):
             course_id=request.course_id,
             page_size=request.page_size,
             page_token=request.page_token,
+            current_user_id=current_user_id,
         )
         return pb.ListCourseReviewsResponse(
             reviews=[_to_pb_review(r) for r in reviews],
@@ -696,6 +702,35 @@ class CatalogHandler(CatalogService):
             total_reviews=total_count,
             next_page_token=next_token,
         )
+
+    async def toggle_course_review_helpful(
+        self,
+        request: pb.ToggleCourseReviewHelpfulRequest,
+        ctx: RequestContext[
+            pb.ToggleCourseReviewHelpfulRequest, pb.ToggleCourseReviewHelpfulResponse
+        ],
+    ) -> pb.ToggleCourseReviewHelpfulResponse:
+        user = require_current_user()
+        if not request.review_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã đánh giá không được để trống")
+        try:
+            (
+                is_helpful,
+                helpful_count,
+            ) = await self.use_case.toggle_course_review_helpful(
+                user_id=user.id,
+                review_id=request.review_id,
+            )
+            return pb.ToggleCourseReviewHelpfulResponse(
+                review_id=request.review_id,
+                is_helpful=is_helpful,
+                helpful_count=helpful_count,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            logger.exception("Failed to toggle course review helpful")
+            raise ConnectError(Code.INTERNAL, f"Không thể cập nhật hữu ích: {e!s}")
 
     def _verify_super_admin(self) -> None:
         user = require_current_user()

@@ -16,6 +16,7 @@ import {
   type GetCourseDetailResponse,
   type Specialization,
   type CourseBookmark,
+  type ToggleCourseReviewHelpfulResponse,
 } from "@/gen/catalog/v1/catalog_pb";
 
 export interface CourseFilters {
@@ -462,6 +463,83 @@ export function useUnbookmarkCourseMutation(
       queryClient.invalidateQueries({ queryKey: ["isCourseBookmarked", variables.courseId] });
       queryClient.invalidateQueries({ queryKey: ["myBookmarkedCourses"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+export interface ToggleHelpfulContext {
+  previousReviews?: CourseReview[];
+}
+
+/**
+ * Hook đánh dấu / bỏ đánh dấu nhận xét hữu ích (optimistic UI)
+ */
+export function useToggleCourseReviewHelpfulMutation(
+  options?: Partial<
+    UseMutationOptions<
+      ToggleCourseReviewHelpfulResponse,
+      Error,
+      { reviewId: string; courseId: string },
+      ToggleHelpfulContext
+    >
+  >,
+) {
+  const queryClient = useQueryClient();
+  const { onMutate, onError, onSettled, ...restOptions } = options || {};
+
+  return useMutation<
+    ToggleCourseReviewHelpfulResponse,
+    Error,
+    { reviewId: string; courseId: string },
+    ToggleHelpfulContext
+  >({
+    ...restOptions,
+    mutationFn: async ({ reviewId }) => {
+      const client = getRpcClient(CatalogService);
+      return await client.toggleCourseReviewHelpful({ reviewId });
+    },
+    onMutate: async (variables, mutation) => {
+      await queryClient.cancelQueries({ queryKey: ["courseReviews", variables.courseId] });
+      const previousReviews = queryClient.getQueryData<CourseReview[]>([
+        "courseReviews",
+        variables.courseId,
+      ]);
+
+      if (previousReviews) {
+        queryClient.setQueryData<CourseReview[]>(
+          ["courseReviews", variables.courseId],
+          previousReviews.map((rev) => {
+            if (rev.id === variables.reviewId) {
+              const nextIsHelpful = !rev.isHelpfulByMe;
+              const nextCount = nextIsHelpful
+                ? rev.helpfulCount + 1
+                : Math.max(0, rev.helpfulCount - 1);
+              return {
+                ...rev,
+                isHelpfulByMe: nextIsHelpful,
+                helpfulCount: nextCount,
+              } as CourseReview;
+            }
+            return rev;
+          }),
+        );
+      }
+
+      const userCtx = await onMutate?.(variables, mutation);
+      return {
+        previousReviews,
+        ...(typeof userCtx === "object" && userCtx !== null ? userCtx : {}),
+      };
+    },
+    onError: (err, variables, context, mutation) => {
+      if (context?.previousReviews) {
+        queryClient.setQueryData(["courseReviews", variables.courseId], context.previousReviews);
+      }
+      onError?.(err, variables, context, mutation);
+    },
+    onSettled: (data, error, variables, context, mutation) => {
+      queryClient.invalidateQueries({ queryKey: ["courseReviews", variables.courseId] });
+      onSettled?.(data, error, variables, context, mutation);
     },
   });
 }

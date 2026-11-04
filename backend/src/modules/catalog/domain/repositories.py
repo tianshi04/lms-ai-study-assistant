@@ -197,8 +197,22 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def list_course_reviews(
-        self, course_id: str, page_size: int = 10, page_token: str = ""
+        self,
+        course_id: str,
+        page_size: int = 10,
+        page_token: str = "",
+        current_user_id: str | None = None,
     ) -> tuple[list[CourseReview], float, int, str]:
+        pass
+
+    @abstractmethod
+    async def get_review_by_id(self, review_id: str) -> CourseReview | None:
+        pass
+
+    @abstractmethod
+    async def toggle_course_review_helpful(
+        self, user_id: str, review_id: str
+    ) -> tuple[bool, int]:
         pass
 
     @abstractmethod

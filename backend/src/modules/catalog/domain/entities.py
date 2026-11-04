@@ -164,6 +164,8 @@ class CourseReview(Entity):
         comment_text: str = "",
         created_at: str = "",
         is_verified_completer: bool = False,
+        helpful_count: int = 0,
+        is_helpful_by_me: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -173,6 +175,8 @@ class CourseReview(Entity):
         self.comment_text = comment_text
         self.created_at = created_at
         self.is_verified_completer = is_verified_completer
+        self.helpful_count = helpful_count
+        self.is_helpful_by_me = is_helpful_by_me
 
 
 class Course(Entity):
