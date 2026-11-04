@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
     useTypeScriptCli: true,
     optimizePackageImports: ["lucide-react"],
     turbopackRustReactCompiler: true,
+    turbopackGc: true,
+    turbopackLazyDynamicImports: true,
+    turbopackRemoveUnusedImports: true,
   },
   images: {
     remotePatterns: [
