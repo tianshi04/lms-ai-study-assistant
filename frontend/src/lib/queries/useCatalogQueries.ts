@@ -1,5 +1,6 @@
 import {
   useQuery,
+  useQueries,
   useMutation,
   useQueryClient,
   keepPreviousData,
@@ -15,6 +16,7 @@ import {
   type CourseCollaboratorDetail,
   type GetCourseDetailResponse,
   type Specialization,
+  type InstructorAnalytics,
 } from "@/gen/catalog/v1/catalog_pb";
 
 export interface CourseFilters {
@@ -251,6 +253,49 @@ export function useInstructorCoursesQuery(
 /**
  * Hook danh sách chuyên ngành do giảng viên phụ trách (Instructor Specializations)
  */
+/**
+ * Hook thống kê chi tiết khóa học cho giảng viên (Instructor Analytics & Student Roster)
+ */
+export function useInstructorAnalyticsQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<InstructorAnalytics | null, Error>>,
+) {
+  return useQuery<InstructorAnalytics | null, Error>({
+    queryKey: ["instructorAnalytics", courseId],
+    queryFn: async () => {
+      if (!courseId || courseId === "ALL") return null;
+      const client = getRpcClient(CatalogService);
+      const res = await client.getInstructorAnalytics({ courseId });
+      return res.analytics ?? null;
+    },
+    enabled: !!courseId && courseId !== "ALL",
+    staleTime: 60 * 1000,
+    ...options,
+  });
+}
+
+/**
+ * Hook thống kê chi tiết toàn bộ các khóa học của giảng viên (Multi-Course Parallel Analytics)
+ */
+export function useAllInstructorAnalyticsQueries(
+  courses: { id: string }[],
+  options?: { enabled?: boolean },
+) {
+  return useQueries({
+    queries: courses.map((c) => ({
+      queryKey: ["instructorAnalytics", c.id],
+      queryFn: async () => {
+        if (!c.id) return null;
+        const client = getRpcClient(CatalogService);
+        const res = await client.getInstructorAnalytics({ courseId: c.id });
+        return res.analytics ?? null;
+      },
+      enabled: (options?.enabled ?? true) && !!c.id,
+      staleTime: 60 * 1000,
+    })),
+  });
+}
+
 export function useInstructorSpecializationsQuery(
   pageSize = 50,
   options?: Partial<UseQueryOptions<Specialization[], Error>>,

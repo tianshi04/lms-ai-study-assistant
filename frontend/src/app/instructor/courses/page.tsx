@@ -329,6 +329,14 @@ export default function InstructorCoursesPage() {
 
         <PageHeader.Actions>
           <Link
+            href="/instructor/dashboard"
+            className="px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 font-semibold text-sm transition-colors flex items-center gap-2"
+          >
+            <BarChart2 className="w-5 h-5" aria-hidden="true" />
+            <span>{"Bảng điều khiển"}</span>
+          </Link>
+
+          <Link
             href="/instructor/financial-aid"
             className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-colors flex items-center gap-2"
           >
