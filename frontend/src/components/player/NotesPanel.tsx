@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2, StickyNote } from "lucide-react";
+import { Trash2, StickyNote, Clock } from "lucide-react";
 import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +17,13 @@ interface NotesPanelProps {
   onNoteCommentChange: (val: string) => void;
   onSaveNote: (e: React.FormEvent) => void;
   onDeleteNote?: (noteId: string) => void;
+  onSeekVideo?: (seconds: number) => void;
+}
+
+function formatTimestamp(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
 export function NotesPanel({
@@ -29,6 +36,7 @@ export function NotesPanel({
   onNoteCommentChange,
   onSaveNote,
   onDeleteNote,
+  onSeekVideo,
 }: NotesPanelProps) {
   return (
     <div className="w-full space-y-4">
@@ -113,6 +121,21 @@ export function NotesPanel({
                   </IconButton>
                 )}
               </div>
+              {note.timestampSeconds > 0 && (
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <Button
+                    type="button"
+                    variant="tonal"
+                    size="xs"
+                    onClick={() => onSeekVideo?.(note.timestampSeconds)}
+                    className="h-6 px-2 py-0.5 rounded-md gap-1 text-[11px] font-mono font-bold"
+                    title="Nhảy tới mốc thời gian này trong video"
+                  >
+                    <Clock className="w-3 h-3" aria-hidden="true" />
+                    <span>{formatTimestamp(note.timestampSeconds)}</span>
+                  </Button>
+                </div>
+              )}
               {note.noteComment && (
                 <p className="text-on-surface text-xs pt-0.5 leading-relaxed">{note.noteComment}</p>
               )}

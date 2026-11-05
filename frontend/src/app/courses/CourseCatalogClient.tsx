@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { Button } from "@/components/ui/Button";
@@ -9,7 +9,12 @@ import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
+import {
+  useCoursesQuery,
+  useCategoriesQuery,
+  useRecordCourseSearchMutation,
+} from "@/lib/query_hooks";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { Search, RotateCcw } from "lucide-react";
 
 import type { Course, Category } from "@/gen/catalog/v1/catalog_pb";
@@ -30,6 +35,9 @@ export function CourseCatalogClient({
   const [subject, setSubject] = useState<string>("");
   const [level, setLevel] = useState<string>("");
   const [sortBy, setSortBy] = useState("");
+  const { isAuthenticated } = useAuth();
+  const { mutate: recordSearch } = useRecordCourseSearchMutation();
+  const lastRecordedKeyRef = useRef<string>("");
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
@@ -63,6 +71,41 @@ export function CourseCatalogClient({
     "LEVEL",
     initialLevels && initialLevels.length > 0 ? { initialData: initialLevels } : undefined,
   );
+
+  useEffect(() => {
+    const q = debouncedSearch.trim();
+    if (!isAuthenticated || q.length < 2 || loading || isFetching) {
+      return;
+    }
+
+    const currentKey = `${q}|${subject}|${level}|${sortBy}|${courses.length}`;
+    if (lastRecordedKeyRef.current === currentKey) {
+      return;
+    }
+
+    lastRecordedKeyRef.current = currentKey;
+    const filtersJson = JSON.stringify({
+      subject: subject || undefined,
+      level: level || undefined,
+      sortBy: sortBy || undefined,
+    });
+
+    recordSearch({
+      searchQuery: q,
+      filtersJson,
+      resultCount: courses.length,
+    });
+  }, [
+    debouncedSearch,
+    subject,
+    level,
+    sortBy,
+    loading,
+    isFetching,
+    courses.length,
+    isAuthenticated,
+    recordSearch,
+  ]);
   const error = queryError ? queryError.message : null;
 
   const getCategoryTranslation = (slug: string, fallback: string) => fallback;

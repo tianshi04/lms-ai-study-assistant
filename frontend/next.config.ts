@@ -7,9 +7,13 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   experimental: {
+    agentUpgrade: "security",
     useTypeScriptCli: true,
     optimizePackageImports: ["lucide-react"],
     turbopackRustReactCompiler: true,
+    turbopackGc: true,
+    turbopackLazyDynamicImports: true,
+    turbopackRemoveUnusedImports: true,
   },
   images: {
     remotePatterns: [

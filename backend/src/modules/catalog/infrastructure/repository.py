@@ -2,7 +2,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -12,6 +12,7 @@ from src.modules.catalog.domain import (
     Category,
     Course,
     CourseAnnouncement,
+    CourseBookmark,
     CourseReview,
     CourseStatus,
     EnrolledStudent,
@@ -29,19 +30,25 @@ from src.modules.catalog.domain.constants import (
     DEFAULT_RECOMMENDED_COURSES_COUNT,
     DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT,
     MAX_FOUNDATIONAL_COURSES_COUNT,
+    MAX_SEARCH_QUERY_LENGTH,
+    MIN_SEARCH_QUERY_LENGTH,
+    SEARCH_HISTORY_THROTTLE_SECONDS,
 )
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,
     CourseAuditLogModel,
+    CourseBookmarkModel,
     CourseCollaboratorModel,
     CourseEmbeddingModel,
     CourseModel,
     CourseReviewModel,
+    CourseReviewReactionModel,
     InVideoQuizModel,
     LearningItemModel,
     LessonModel,
     SpecializationModel,
+    UserSearchHistoryModel,
     WeekModuleModel,
 )
 from src.modules.identity.infrastructure.models import UserModel
@@ -98,20 +105,27 @@ def _model_to_domain_lesson(l_model: LessonModel) -> Lesson:
 
 
 def _model_to_domain_course(model: CourseModel) -> Course:
+    from sqlalchemy import inspect as sa_inspect
+
+    insp = sa_inspect(model)
     week_modules: list[WeekModule] = []
-    for wm in model.week_modules or []:
-        lessons: list[Lesson] = [
-            _model_to_domain_lesson(l_model) for l_model in wm.lessons or []
-        ]
-        week_modules.append(
-            WeekModule(
-                id=wm.id,
-                week_number=wm.week_number,
-                title=wm.title,
-                summary=wm.summary,
-                lessons=lessons,
+    if "week_modules" not in insp.unloaded:
+        for wm in model.week_modules or []:
+            lessons: list[Lesson] = []
+            wm_insp = sa_inspect(wm)
+            if "lessons" not in wm_insp.unloaded:
+                lessons = [
+                    _model_to_domain_lesson(l_model) for l_model in wm.lessons or []
+                ]
+            week_modules.append(
+                WeekModule(
+                    id=wm.id,
+                    week_number=wm.week_number,
+                    title=wm.title,
+                    summary=wm.summary,
+                    lessons=lessons,
+                )
             )
-        )
 
     return Course(
         id=model.id,
@@ -171,7 +185,9 @@ def _model_to_domain_specialization(
     )
 
 
-def _model_to_domain_review(model: CourseReviewModel) -> CourseReview:
+def _model_to_domain_review(
+    model: CourseReviewModel, is_helpful_by_me: bool = False
+) -> CourseReview:
     return CourseReview(
         id=model.id,
         user_id=model.user_id,
@@ -181,6 +197,8 @@ def _model_to_domain_review(model: CourseReviewModel) -> CourseReview:
         comment_text=model.comment_text,
         created_at=model.created_at,
         is_verified_completer=model.is_verified_completer,
+        helpful_count=getattr(model, "helpful_count", 0) or 0,
+        is_helpful_by_me=is_helpful_by_me,
     )
 
 
@@ -1250,8 +1268,68 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         return _model_to_domain_review(model)
 
+    async def get_review_by_id(self, review_id: str) -> CourseReview | None:
+        stmt = select(CourseReviewModel).where(CourseReviewModel.id == review_id)
+        res = await self.session.execute(stmt)
+        m = res.scalar_one_or_none()
+        return _model_to_domain_review(m) if m else None
+
+    async def toggle_course_review_helpful(
+        self, user_id: str, review_id: str
+    ) -> tuple[bool, int]:
+        now_str = datetime.now(UTC).isoformat()
+        del_stmt = (
+            delete(CourseReviewReactionModel)
+            .where(
+                CourseReviewReactionModel.user_id == user_id,
+                CourseReviewReactionModel.review_id == review_id,
+            )
+            .returning(CourseReviewReactionModel.id)
+        )
+        deleted_id = (await self.session.execute(del_stmt)).scalar_one_or_none()
+
+        if deleted_id:
+            upd_stmt = (
+                update(CourseReviewModel)
+                .where(CourseReviewModel.id == review_id)
+                .values(
+                    helpful_count=func.greatest(0, CourseReviewModel.helpful_count - 1)
+                )
+                .returning(CourseReviewModel.helpful_count)
+            )
+            res = await self.session.execute(upd_stmt)
+            new_count = res.scalar_one_or_none() or 0
+            await self.session.commit()
+            return False, new_count
+        reaction = CourseReviewReactionModel(
+            id=f"rev-rx-{uuid7().hex}",
+            user_id=user_id,
+            review_id=review_id,
+            created_at=now_str,
+        )
+        self.session.add(reaction)
+        upd_stmt = (
+            update(CourseReviewModel)
+            .where(CourseReviewModel.id == review_id)
+            .values(helpful_count=CourseReviewModel.helpful_count + 1)
+            .returning(CourseReviewModel.helpful_count)
+        )
+        res = await self.session.execute(upd_stmt)
+        new_count = res.scalar_one_or_none() or 1
+        try:
+            await self.session.commit()
+            return True, new_count
+        except IntegrityError:
+            await self.session.rollback()
+            rev = await self.session.get(CourseReviewModel, review_id)
+            return True, rev.helpful_count if rev else new_count
+
     async def list_course_reviews(
-        self, course_id: str, page_size: int = 10, page_token: str = ""
+        self,
+        course_id: str,
+        page_size: int = 10,
+        page_token: str = "",
+        current_user_id: str | None = None,
     ) -> tuple[list[CourseReview], float, int, str]:
         _ = page_token
         stmt = (
@@ -1262,7 +1340,21 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
-        reviews = [_model_to_domain_review(m) for m in models]
+
+        reacted_ids: set[str] = set()
+        if current_user_id and models:
+            rev_ids = [m.id for m in models]
+            rx_stmt = select(CourseReviewReactionModel.review_id).where(
+                CourseReviewReactionModel.user_id == current_user_id,
+                CourseReviewReactionModel.review_id.in_(rev_ids),
+            )
+            rx_res = await self.session.execute(rx_stmt)
+            reacted_ids = set(rx_res.scalars().all())
+
+        reviews = [
+            _model_to_domain_review(m, is_helpful_by_me=(m.id in reacted_ids))
+            for m in models
+        ]
         avg_rating, total_count = await self.get_course_rating_stats(course_id)
         return reviews, avg_rating, total_count, ""
 
@@ -1870,3 +1962,174 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 e,
             )
             return []
+
+    async def bookmark_course(
+        self, user_id: str, course_id: str
+    ) -> CourseBookmark | None:
+        course = await self.get_course_detail(course_id)
+        if not course:
+            return None
+        real_course_id = course.id
+
+        stmt = select(CourseBookmarkModel).where(
+            CourseBookmarkModel.user_id == user_id,
+            CourseBookmarkModel.course_id == real_course_id,
+        )
+        res = await self.session.execute(stmt)
+        existing = res.scalar_one_or_none()
+        if existing:
+            return CourseBookmark(
+                id=existing.id,
+                user_id=existing.user_id,
+                course_id=existing.course_id,
+                created_at=existing.created_at,
+                course=course,
+            )
+
+        bookmark_id = f"bm-{uuid7().hex}"
+        now_str = datetime.now(UTC).isoformat()
+        bookmark_model = CourseBookmarkModel(
+            id=bookmark_id,
+            user_id=user_id,
+            course_id=real_course_id,
+            created_at=now_str,
+        )
+        self.session.add(bookmark_model)
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            res = await self.session.execute(stmt)
+            existing = res.scalar_one_or_none()
+            if existing:
+                return CourseBookmark(
+                    id=existing.id,
+                    user_id=existing.user_id,
+                    course_id=existing.course_id,
+                    created_at=existing.created_at,
+                    course=course,
+                )
+            raise
+
+        return CourseBookmark(
+            id=bookmark_id,
+            user_id=user_id,
+            course_id=real_course_id,
+            created_at=now_str,
+            course=course,
+        )
+
+    async def unbookmark_course(self, user_id: str, course_id: str) -> bool:
+        stmt = (
+            select(CourseBookmarkModel)
+            .outerjoin(CourseModel, CourseBookmarkModel.course_id == CourseModel.id)
+            .where(
+                CourseBookmarkModel.user_id == user_id,
+                (CourseBookmarkModel.course_id == course_id)
+                | (CourseModel.slug == course_id),
+            )
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return False
+        await self.session.delete(model)
+        await self.session.commit()
+        return True
+
+    async def is_course_bookmarked(self, user_id: str, course_id: str) -> bool:
+        stmt = (
+            select(CourseBookmarkModel.id)
+            .outerjoin(CourseModel, CourseBookmarkModel.course_id == CourseModel.id)
+            .where(
+                CourseBookmarkModel.user_id == user_id,
+                (CourseBookmarkModel.course_id == course_id)
+                | (CourseModel.slug == course_id),
+            )
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none() is not None
+
+    async def list_user_bookmarks(self, user_id: str) -> list[CourseBookmark]:
+        stmt = (
+            select(CourseBookmarkModel)
+            .where(CourseBookmarkModel.user_id == user_id)
+            .options(selectinload(CourseBookmarkModel.course))
+            .order_by(CourseBookmarkModel.created_at.desc())
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        bookmarks = []
+        for m in models:
+            course_domain = _model_to_domain_course(m.course) if m.course else None
+            bookmarks.append(
+                CourseBookmark(
+                    id=m.id,
+                    user_id=m.user_id,
+                    course_id=m.course_id,
+                    created_at=m.created_at,
+                    course=course_domain,
+                )
+            )
+        return bookmarks
+
+    async def record_search_query(
+        self,
+        user_id: str,
+        query: str,
+        filters_json: str = "",
+        result_count: int = 0,
+    ) -> bool:
+        if not user_id:
+            return False
+
+        cleaned_query = (query or "").strip()
+        if len(cleaned_query) < MIN_SEARCH_QUERY_LENGTH:
+            return False
+
+        cleaned_query = cleaned_query[:MAX_SEARCH_QUERY_LENGTH]
+        safe_result_count = max(int(result_count), 0)
+        now_dt = datetime.now(UTC)
+        now_str = now_dt.isoformat()
+
+        # Check last search entry for prefix-update throttling
+        stmt = (
+            select(UserSearchHistoryModel)
+            .where(UserSearchHistoryModel.user_id == user_id)
+            .order_by(UserSearchHistoryModel.created_at.desc())
+            .limit(1)
+        )
+        res = await self.session.execute(stmt)
+        latest = res.scalars().first()
+
+        if latest:
+            try:
+                latest_dt = datetime.fromisoformat(latest.created_at)
+                if latest_dt.tzinfo is None:
+                    latest_dt = latest_dt.replace(tzinfo=UTC)
+                elapsed = abs((now_dt - latest_dt).total_seconds())
+            except (ValueError, TypeError, OverflowError):
+                elapsed = 999999.0
+
+            old_q = latest.search_query.strip()
+            if elapsed <= SEARCH_HISTORY_THROTTLE_SECONDS and (
+                cleaned_query.startswith(old_q) or old_q.startswith(cleaned_query)
+            ):
+                latest.search_query = cleaned_query
+                latest.filters_json = filters_json or ""
+                latest.result_count = safe_result_count
+                latest.created_at = now_str
+                await self.session.commit()
+                return True
+
+        new_record = UserSearchHistoryModel(
+            id=uuid7().hex,
+            user_id=user_id,
+            search_query=cleaned_query,
+            filters_json=filters_json or "",
+            result_count=safe_result_count,
+            created_at=now_str,
+        )
+        self.session.add(new_record)
+        await self.session.commit()
+        return True

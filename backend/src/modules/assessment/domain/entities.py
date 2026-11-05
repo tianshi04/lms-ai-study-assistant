@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from src.modules.assessment.domain.constants import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
@@ -9,6 +10,8 @@ from src.modules.assessment.domain.constants import (
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
     QUIZ_COOLDOWN_HOURS,
+    TOPIC_MASTERY_THRESHOLD_MASTERED,
+    TOPIC_MASTERY_THRESHOLD_NEEDS_PRACTICE,
 )
 from src.shared.domain.base import Entity, ValueObject
 
@@ -57,6 +60,34 @@ class QuizSubmission(Entity):
         self.passed = passed
         self.attempt_number = attempt_number
         self.created_at = created_at
+
+
+class QuizSubmissionAnswer(Entity):
+    def __init__(
+        self,
+        id: str,
+        submission_id: str,
+        question_id: str,
+        question_text: str,
+        question_type: str,
+        options_json: list[dict[str, Any]],
+        selected_option_indices: list[int],
+        is_correct: bool,
+        topic: str = "Tổng quan",
+        explanation: str = "",
+        order_index: int = 0,
+    ) -> None:
+        super().__init__(id=id)
+        self.submission_id = submission_id
+        self.question_id = question_id
+        self.question_text = question_text
+        self.question_type = question_type
+        self.options_json = options_json
+        self.selected_option_indices = selected_option_indices
+        self.is_correct = is_correct
+        self.topic = topic
+        self.explanation = explanation
+        self.order_index = order_index
 
 
 class QuizCooldown(Entity):
@@ -288,6 +319,7 @@ class Question(Entity):
         explanation: str = "",
         options: list[QuestionOption] | None = None,
         created_at: str | None = None,
+        topic: str = "Tổng quan",
     ) -> None:
         super().__init__(id=id)
         self.bank_id = bank_id
@@ -297,6 +329,7 @@ class Question(Entity):
         self.explanation = explanation
         self.options = options or []
         self.created_at = created_at
+        self.topic = topic
 
 
 class QuestionBank(Entity):
@@ -331,3 +364,52 @@ class QuizMatrix(ValueObject):
     shuffle_options: bool = True
     max_attempts: int = MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
     cooldown_hours: int = QUIZ_COOLDOWN_HOURS
+
+
+@dataclass(frozen=True)
+class TopicMastery(ValueObject):
+    topic: str
+    total_questions: int
+    correct_questions: int
+    mastery_percent: float
+    mastery_level: int  # 1: MASTERED, 2: NEEDS_PRACTICE, 3: WEAK_GAP
+    recommendation: str
+
+
+def calculate_topic_mastery(
+    answers: list[QuizSubmissionAnswer],
+) -> list[TopicMastery]:
+    if not answers:
+        return []
+    topic_map: dict[str, list[QuizSubmissionAnswer]] = {}
+    for ans in answers:
+        t = ans.topic or "Tổng quan"
+        topic_map.setdefault(t, []).append(ans)
+
+    result: list[TopicMastery] = []
+    for t_name, t_answers in sorted(topic_map.items()):
+        total = len(t_answers)
+        correct = sum(1 for a in t_answers if a.is_correct)
+        percent = round((correct / total) * 100.0, 1) if total > 0 else 0.0
+
+        if percent >= TOPIC_MASTERY_THRESHOLD_MASTERED:
+            level = 1  # MASTERED
+            rec = "Bạn đã nắm vững kiến thức chủ đề này."
+        elif percent >= TOPIC_MASTERY_THRESHOLD_NEEDS_PRACTICE:
+            level = 2  # NEEDS_PRACTICE
+            rec = "Độ chính xác chưa đạt mức tối ưu, hãy xem lại ví dụ và bài giảng tương ứng."
+        else:
+            level = 3  # WEAK_GAP
+            rec = "Lỗ hổng kiến thức trọng tâm! Cần dành thời gian ôn lại lý thuyết trước khi thi lại."
+
+        result.append(
+            TopicMastery(
+                topic=t_name,
+                total_questions=total,
+                correct_questions=correct,
+                mastery_percent=percent,
+                mastery_level=level,
+                recommendation=rec,
+            )
+        )
+    return result

@@ -64,3 +64,28 @@ async def clear_login_attempts(identifier: str) -> None:
         await redis.delete(key)
     except Exception as exc:  # noqa: BLE001
         logger.warning("[RATE_LIMIT] Redis error in clear_login_attempts: %s", exc)
+
+
+async def check_learning_heartbeat_rate_limit(
+    user_id: str, cooldown_seconds: int = 5
+) -> bool:
+    """Rate limit study heartbeat to prevent spam script attacks.
+
+    Returns True if allowed, False if throttled.
+    Fails open on Redis errors to prevent interrupting legitimate learning.
+    """
+    try:
+        redis = await get_redis_client()
+        key = f"rate_limit:study_hb:{user_id}"
+        acquired = await redis.set(key, "1", ex=cooldown_seconds, nx=True)
+        if not acquired:
+            logger.warning(
+                "[RATE_LIMIT] Study heartbeat throttled for user_id=%s", user_id
+            )
+            return False
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "[RATE_LIMIT] Redis error in check_learning_heartbeat_rate_limit, failing open: %s",
+            exc,
+        )
+    return True

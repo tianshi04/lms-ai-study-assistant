@@ -119,6 +119,7 @@ export function LearnNonAiTabsPanel({
             onNoteCommentChange={onNoteCommentChange}
             onSaveNote={onSaveNote}
             onDeleteNote={onDeleteNote}
+            onSeekVideo={onSeekVideo}
           />
         )}
 

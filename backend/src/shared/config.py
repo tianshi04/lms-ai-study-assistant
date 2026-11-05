@@ -115,7 +115,7 @@ class Settings(BaseSettings):
         description="OpenObserve Root User Email for OTLP ingestion authentication",
     )
     ZO_ROOT_USER_PASSWORD: str = Field(
-        default="openobserve_password123",
+        default="OpenObserve@Password123!",
         description="OpenObserve Root User Password for OTLP ingestion authentication",
     )
     OPENOBSERVE_ORG: str = Field(

@@ -30,8 +30,8 @@ async def test_list_enrolled_courses():
     courses = await learning_uc.list_enrolled_courses(user_id)
     assert len(courses) == 0
 
-    # Trigger progress creation (0%)
-    await learning_uc.get_progress(user_id, course.id)
+    # Trigger progress creation (0%) by accessing a learning item
+    await learning_uc.get_progress(user_id, course.id, current_item_id="item_1")
     courses = await learning_uc.list_enrolled_courses(user_id)
     assert len(courses) == 1
     assert courses[0].progress_percent == 0.0

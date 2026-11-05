@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.modules.catalog.domain import CourseStatus
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
     InteractiveTranscriptModel,
@@ -16,7 +17,9 @@ from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepos
 
 @pytest.fixture
 def mock_session():
-    return AsyncMock()
+    session = AsyncMock()
+    session.add = MagicMock()
+    return session
 
 
 @pytest.fixture
@@ -230,6 +233,52 @@ async def test_get_specialization_not_found(repo, mock_session):
 
 
 @pytest.mark.asyncio
+async def test_get_specialization_for_course_success(
+    repo, mock_session, sample_course_model
+):
+    spec_model = SpecializationModel(
+        id="s1",
+        title="Spec 1",
+        description="Desc",
+        partner_name="Partner",
+        partner_logo_url="URL",
+        course_ids=["c1"],
+    )
+    sample_course_model.status = CourseStatus.PUBLISHED
+
+    captured_stmts = []
+
+    def mock_execute(stmt):
+        captured_stmts.append(stmt)
+        res = MagicMock()
+        stmt_str = str(stmt).lower()
+        if "specializations" in stmt_str:
+            res.scalars.return_value.first.return_value = spec_model
+        else:
+            res.scalars.return_value.all.return_value = [sample_course_model]
+        return res
+
+    mock_session.execute.side_effect = mock_execute
+
+    spec = await repo.get_specialization_for_course("c1")
+
+    assert spec is not None
+    assert spec.id == "s1"
+    assert len(captured_stmts) == 2
+
+
+@pytest.mark.asyncio
+async def test_get_specialization_for_course_not_found(repo, mock_session):
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.first.return_value = None
+    mock_session.execute.return_value = mock_result
+
+    spec = await repo.get_specialization_for_course("c-unknown")
+
+    assert spec is None
+
+
+@pytest.mark.asyncio
 async def test_list_foundational_course_candidates(
     repo, mock_session, sample_course_model
 ):
@@ -367,3 +416,57 @@ async def test_validate_foundational_course_ids_rules(repo, mock_session):
         foundational_ids=["c_v1", "c_v2", "c_v1"],
     )
     assert res == ["c_v1", "c_v2"]
+
+
+@pytest.mark.asyncio
+async def test_bookmark_course_not_found(repo, mock_session):
+    repo.get_course_detail = AsyncMock(return_value=None)
+    res = await repo.bookmark_course("u1", "c_unknown")
+    assert res is None
+
+
+@pytest.mark.asyncio
+async def test_bookmark_course_success(repo, mock_session, sample_course_model):
+    from src.modules.catalog.infrastructure.repository import _model_to_domain_course
+
+    course_domain = _model_to_domain_course(sample_course_model)
+    repo.get_course_detail = AsyncMock(return_value=course_domain)
+
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
+
+    res = await repo.bookmark_course("u1", "c1")
+    assert res is not None
+    assert res.user_id == "u1"
+    assert res.course_id == "c1"
+    assert res.course.title == sample_course_model.title
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_unbookmark_course(repo, mock_session):
+    from src.modules.catalog.infrastructure.models import CourseBookmarkModel
+
+    mock_bm = CourseBookmarkModel(
+        id="bm-1", user_id="u1", course_id="c1", created_at="2026"
+    )
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = mock_bm
+    mock_session.execute.return_value = mock_res
+
+    res = await repo.unbookmark_course("u1", "c1")
+    assert res is True
+    mock_session.delete.assert_called_once_with(mock_bm)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_is_course_bookmarked(repo, mock_session):
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = "bm-1"
+    mock_session.execute.return_value = mock_res
+
+    res = await repo.is_course_bookmarked("u1", "c1")
+    assert res is True

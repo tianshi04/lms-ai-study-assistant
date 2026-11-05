@@ -20,6 +20,7 @@ from src.modules.assessment.domain import (
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
+    QuizSubmissionAnswer,
     RubricCriteria,
 )
 from src.modules.assessment.infrastructure.models import (
@@ -34,6 +35,7 @@ from src.modules.assessment.infrastructure.models import (
     QuizActiveSessionModel,
     QuizCooldownModel,
     QuizMatrixModel,
+    QuizSubmissionAnswerModel,
     QuizSubmissionModel,
 )
 
@@ -113,6 +115,113 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 passed=m.passed,
                 attempt_number=m.attempt_number,
                 created_at=m.created_at,
+            )
+            for m in models
+        ]
+
+    async def get_quiz_submission_by_id(
+        self, submission_id: str
+    ) -> QuizSubmission | None:
+        stmt = select(QuizSubmissionModel).where(
+            QuizSubmissionModel.id == submission_id
+        )
+        res = await self.session.execute(stmt)
+        m = res.scalar_one_or_none()
+        if not m:
+            return None
+        return QuizSubmission(
+            id=m.id,
+            user_id=m.user_id,
+            item_id=m.item_id,
+            selected_option_indexes=m.selected_option_indexes,
+            score_percent=m.score_percent,
+            passed=m.passed,
+            attempt_number=m.attempt_number,
+            created_at=m.created_at,
+        )
+
+    async def save_quiz_submission_answers(
+        self, answers: list[QuizSubmissionAnswer]
+    ) -> None:
+        if not answers:
+            return
+        for ans in answers:
+            model = QuizSubmissionAnswerModel(
+                id=ans.id,
+                submission_id=ans.submission_id,
+                question_id=ans.question_id,
+                question_text=ans.question_text,
+                question_type=ans.question_type,
+                topic=ans.topic,
+                options_json=ans.options_json,
+                selected_option_indices=ans.selected_option_indices,
+                is_correct=ans.is_correct,
+                explanation=ans.explanation,
+                order_index=ans.order_index,
+            )
+            self.session.add(model)
+        await self.session.commit()
+
+    async def get_quiz_submission_answers(
+        self, submission_id: str
+    ) -> list[QuizSubmissionAnswer]:
+        stmt = (
+            select(QuizSubmissionAnswerModel)
+            .where(QuizSubmissionAnswerModel.submission_id == submission_id)
+            .order_by(QuizSubmissionAnswerModel.order_index.asc())
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [
+            QuizSubmissionAnswer(
+                id=m.id,
+                submission_id=m.submission_id,
+                question_id=m.question_id,
+                question_text=m.question_text,
+                question_type=m.question_type,
+                options_json=m.options_json,
+                selected_option_indices=m.selected_option_indices,
+                is_correct=m.is_correct,
+                topic=m.topic,
+                explanation=m.explanation,
+                order_index=m.order_index,
+            )
+            for m in models
+        ]
+
+    async def get_quiz_submission_answers_for_user_item(
+        self, user_id: str, item_id: str
+    ) -> list[QuizSubmissionAnswer]:
+        stmt = (
+            select(QuizSubmissionAnswerModel)
+            .join(
+                QuizSubmissionModel,
+                QuizSubmissionAnswerModel.submission_id == QuizSubmissionModel.id,
+            )
+            .where(
+                QuizSubmissionModel.user_id == user_id,
+                QuizSubmissionModel.item_id == item_id,
+            )
+            .order_by(
+                QuizSubmissionModel.created_at.desc(),
+                QuizSubmissionAnswerModel.order_index.asc(),
+            )
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [
+            QuizSubmissionAnswer(
+                id=m.id,
+                submission_id=m.submission_id,
+                question_id=m.question_id,
+                question_text=m.question_text,
+                question_type=m.question_type,
+                options_json=m.options_json,
+                selected_option_indices=m.selected_option_indices,
+                is_correct=m.is_correct,
+                topic=m.topic,
+                explanation=m.explanation,
+                order_index=m.order_index,
             )
             for m in models
         ]
@@ -562,6 +671,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         difficulty: str,
         explanation: str,
         options_data: list[dict],
+        topic: str = "Tổng quan",
     ) -> Question:
         now_str = datetime.now(UTC).isoformat()
         q_id = f"q-{uuid7().hex}"
@@ -572,6 +682,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             question_type=question_type or "SINGLE_CHOICE",
             difficulty=difficulty or "EASY",
             explanation=explanation or "",
+            topic=topic or "Tổng quan",
             created_at=now_str,
         )
         self.session.add(q_model)
@@ -628,6 +739,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         difficulty: str,
         explanation: str,
         options_data: list[dict],
+        topic: str = "Tổng quan",
     ) -> Question:
         stmt = (
             select(QuestionModel)
@@ -643,6 +755,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         q_model.question_type = question_type
         q_model.difficulty = difficulty
         q_model.explanation = explanation
+        q_model.topic = topic or "Tổng quan"
 
         q_model.options.clear()
 
@@ -782,6 +895,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 question_type=q.question_type,
                 difficulty=q.difficulty,
                 explanation=q.explanation,
+                topic=getattr(q, "topic", "Tổng quan") or "Tổng quan",
                 options=[
                     QuestionOption(
                         id=opt.id,
@@ -815,6 +929,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 question_type=q.question_type,
                 difficulty=q.difficulty,
                 explanation=q.explanation,
+                topic=getattr(q, "topic", "Tổng quan") or "Tổng quan",
                 options=[
                     QuestionOption(
                         id=opt.id,

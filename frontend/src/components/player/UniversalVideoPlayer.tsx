@@ -28,6 +28,8 @@ interface UniversalVideoPlayerProps {
   onTimeUpdate?: (currentTime: number) => void;
   onSeeking?: () => void;
   onEnded?: () => void;
+  onPlay?: () => void;
+  onPause?: () => void;
   title?: string;
   artist?: string;
   album?: string;
@@ -117,6 +119,8 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
       onTimeUpdate,
       onSeeking,
       onEnded,
+      onPlay,
+      onPause,
       title = "Video bài giảng",
       artist = "Coursera AI LMS",
       album = "Khóa học trực tuyến",
@@ -144,12 +148,16 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
     const onTimeUpdateRef = useRef(onTimeUpdate);
     const onSeekingRef = useRef(onSeeking);
     const onEndedRef = useRef(onEnded);
+    const onPlayRef = useRef(onPlay);
+    const onPauseRef = useRef(onPause);
 
     useLayoutEffect(() => {
       containerIdRef.current = containerId;
       onTimeUpdateRef.current = onTimeUpdate;
       onSeekingRef.current = onSeeking;
       onEndedRef.current = onEnded;
+      onPlayRef.current = onPlay;
+      onPauseRef.current = onPause;
     });
 
     // ─── Modern Web API: Media Session Integration ───
@@ -324,6 +332,11 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
                         onTimeUpdateRef.current?.(t);
                       }
                     } catch {}
+                  }
+                  if (event.data === 1) {
+                    onPlayRef.current?.();
+                  } else if (event.data === 2 || event.data === 0) {
+                    onPauseRef.current?.();
                   }
                   if (event.data === 0) {
                     onEndedRef.current?.();
@@ -565,6 +578,8 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
           }
         }}
         onSeeking={() => onSeekingRef.current?.()}
+        onPlay={() => onPlayRef.current?.()}
+        onPause={() => onPauseRef.current?.()}
         onEnded={() => onEndedRef.current?.()}
         aria-label={title}
         className={className}

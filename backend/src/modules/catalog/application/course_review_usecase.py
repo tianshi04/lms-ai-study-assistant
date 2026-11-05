@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 from src.modules.catalog.domain import (
+    ERR_MSG_SELF_UPVOTE,
     MAX_RATING_STARS,
     MAX_REVIEW_COMMENT_LENGTH,
     MIN_PROGRESS_PERCENT_FOR_REVIEW,
@@ -171,14 +172,35 @@ class CourseReviewUseCase:
             return review
 
     async def list_course_reviews(
-        self, course_id: str, page_size: int = 10, page_token: str = ""
+        self,
+        course_id: str,
+        page_size: int = 10,
+        page_token: str = "",
+        current_user_id: str | None = None,
     ):
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             real_course_id = await repo.get_course_id_by_slug_or_id(course_id)
 
             return await repo.list_course_reviews(
-                course_id=real_course_id, page_size=page_size, page_token=page_token
+                course_id=real_course_id,
+                page_size=page_size,
+                page_token=page_token,
+                current_user_id=current_user_id,
+            )
+
+    async def toggle_course_review_helpful(
+        self, user_id: str, review_id: str
+    ) -> tuple[bool, int]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            review = await repo.get_review_by_id(review_id)
+            if not review:
+                raise ValueError("Nhận xét không tồn tại.")
+            if review.user_id == user_id:
+                raise ValueError(ERR_MSG_SELF_UPVOTE)
+            return await repo.toggle_course_review_helpful(
+                user_id=user_id, review_id=review_id
             )
 
     async def create_course_announcement(

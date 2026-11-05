@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
+from datetime import date
 
 from src.modules.learning.domain.entities import (
+    DailyStudyRecord,
     EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
+    UserLearningStreak,
 )
 
 
@@ -11,7 +14,9 @@ class ILearningRepository(ABC):
     """Abstract Repository Interface for Learning Domain (DIP)."""
 
     @abstractmethod
-    async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
+    async def get_progress(
+        self, user_id: str, course_id: str, current_item_id: str | None = None
+    ) -> LearningProgress:
         pass
 
     @abstractmethod
@@ -28,6 +33,7 @@ class ILearningRepository(ABC):
         item_id: str,
         highlighted_text: str,
         note_comment: str,
+        timestamp_seconds: int = 0,
     ) -> PersonalNote:
         pass
 
@@ -49,6 +55,7 @@ class ILearningRepository(ABC):
         item_id: str,
         total_course_items: int,
         valid_item_ids: set[str] | None = None,
+        week_item_ids: dict[int, set[str]] | None = None,
     ) -> tuple[bool, LearningProgress]:
         pass
 
@@ -59,3 +66,31 @@ class ILearningRepository(ABC):
     @abstractmethod
     async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
         pass
+
+    @abstractmethod
+    async def record_learning_time(
+        self,
+        user_id: str,
+        course_id: str,
+        item_id: str,
+        delta_seconds: int,
+        study_date: date,
+        now_iso: str,
+    ) -> tuple[int, int, int, bool]:
+        """Record study time atomically.
+
+        Returns:
+            (item_total_seconds, today_total_seconds, current_streak, is_streak_extended_today)
+        """
+
+    @abstractmethod
+    async def get_learning_streak_stats(
+        self,
+        user_id: str,
+        today: date,
+    ) -> tuple[UserLearningStreak, int, list[DailyStudyRecord]]:
+        """Get user streak stats.
+
+        Returns:
+            (UserLearningStreak, today_total_seconds, recent_7_days)
+        """

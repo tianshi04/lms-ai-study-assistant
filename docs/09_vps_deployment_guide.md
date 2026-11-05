@@ -56,7 +56,7 @@ Tất cả các thành phần được đóng gói và kết nối an toàn qua 
        │  (HTTPS :443 / HTTP :80)
        ▼
  ┌──────────────┐
- │    Caddy     │ (Tự động cấp SSL Let's Encrypt / ZeroSSL, nén zstd/gzip, HTTP/3)
+ │    Caddy     │ (Tự động cấp SSL, Edge Rate Limiter mholt/caddy-ratelimit, nén zstd/gzip, HTTP/3)
  └──────┬───────┘
         │
         ├─► /                                 ──► Next.js Frontend (:3000)
@@ -76,6 +76,13 @@ Tất cả các thành phần được đóng gói và kết nối an toàn qua 
 - **Bảo mật cơ sở dữ liệu & quản trị**: PostgreSQL, MinIO, Redis và giao diện quản trị OpenObserve (`:5080`) chỉ bind vào `127.0.0.1` trên VPS (ngăn ngừa hoàn toàn nguy cơ brute-force từ Internet; truy cập an toàn qua SSH Port Forwarding `ssh -L 5080:localhost:5080 root@<ip>`).
 - **OpenObserve All-in-One Observability (Rust)**: Giải pháp giám sát hợp nhất thu thập **Backend OpenTelemetry Traces + Metrics** (qua cổng gRPC `:5081`) và **Frontend Browser RUM, Core Web Vitals, Error Logs & Session Replay** (qua đường dẫn `/rum/*` trên cùng domain, chống AdBlock và không cần cấu hình CORS).
 - **Bảo toàn dữ liệu (Data Persistence)**: Toàn bộ dữ liệu PostgreSQL, video MinIO, cache Redis và dữ liệu giám sát OpenObserve được lưu ở Docker Named Volumes (`postgres_data`, `minio_data`, `redis_data`, `openobserve_data`). Khi cập nhật image mới hoặc khởi động lại container, **dữ liệu không bao giờ bị mất hay bị reset**.
+- **Kiểm soát Tần suất Biên (Edge Rate Limiting - mholt/caddy-ratelimit)**: Caddy được build từ `caddy/Dockerfile` tích hợp sẵn module rate-limiting theo địa chỉ IP (`{client_ip}`), chia thành 4 zones:
+  - `auth_zone`: 20 requests / phút / IP cho `/rpc/identity.v1.IdentityService/*`, `/api/auth/*` (chống brute-force / credential stuffing).
+  - `ai_zone`: 30 requests / phút / IP cho `/copilotkit/*` (bảo vệ hạn ngạch và chi phí LLM Gemini).
+  - `api_zone`: 150 requests / phút / IP cho toàn bộ `/rpc/*` và `/api/*`.
+  - `global_zone`: 600 requests / phút / IP cho toàn hệ thống (ngoại trừ tài nguyên tĩnh `/_next/static/*`, hỗ trợ dung sai mạng NAT).
+  - Tích hợp `ipv6_prefix 64` trên toàn bộ các zone để ngăn chặn nguy cơ xoay vòng IP trong dải IPv6 subnet.
+  - Khi vượt ngưỡng, Caddy trả ngay HTTP 429 dạng JSON chuẩn (`code: resource_exhausted`) kèm header `Retry-After`.
 
 ---
 
@@ -134,6 +141,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 # --- 6. ĐƯỜNG DẪN DOCKER IMAGE TRÊN GHCR ---
 FRONTEND_IMAGE=ghcr.io/<your-username>/<your-repo>/frontend:latest
 BACKEND_IMAGE=ghcr.io/<your-username>/<your-repo>/backend:latest
+CADDY_IMAGE=ghcr.io/<your-username>/<your-repo>/caddy:latest
 ```
 
 > [!IMPORTANT]
@@ -167,9 +175,9 @@ docker compose exec backend python -m src.seed
 ## 5. Tự Động Hóa Triển Khai (CI/CD với GitHub Actions)
 
 File workflow `.github/workflows/deploy.yml` đã được tích hợp sẵn chu trình Continuous Deployment (CD). Mỗi khi bạn `git push origin main` trên máy tính:
-1. GitHub Actions tự động build 2 image `frontend` và `backend`.
-2. Đẩy 2 image lên GitHub Container Registry (`ghcr.io`).
-3. Dùng giao thức SCP copy đè 2 file `docker-compose.yml` và `Caddyfile` mới nhất sang `/root/lms` trên VPS.
+1. GitHub Actions tự động build 3 image `frontend`, `backend`, và `caddy`.
+2. Đẩy 3 image lên GitHub Container Registry (`ghcr.io`).
+3. Dùng giao thức SCP copy đè các file `docker-compose.yml`, `Caddyfile`, và thư mục `caddy/` mới nhất sang `/root/lms` trên VPS.
 4. Tự động SSH vào VPS chạy `docker compose pull && docker compose up -d --remove-orphans`.
 5. Tự động dọn dẹp các layer Docker cũ bằng `docker image prune -f` để chống tràn ổ cứng VPS.
 
