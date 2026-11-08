@@ -186,8 +186,53 @@ flowchart TD
 
 ### 2.5. Bảng Phân tích & Quản lý Lớp học (Instructor Analytics & Student Roster)
 * **Báo cáo Thống kê Lớp học thời gian thực (`GetInstructorAnalytics`):** Giảng viên theo dõi tổng số học viên ghi danh (`total_enrolled_students`), tỷ lệ hoàn thành khóa học trung bình (`average_completion_rate`), điểm đánh giá sao trung bình (`average_rating`), và tổng số đánh giá.
+* **Thống kê Hoạt động Chuỗi thời gian & Bản đồ nhiệt (`GetInstructorActivityTimeline`):**
+  * Hỗ trợ thống kê thời gian thực theo khoảng thời gian linh hoạt: `today` (theo khung giờ 3h), `7d` (7 ngày gần nhất), `this_week`, `last_week`, `this_month`, `last_month`, `custom` (tùy chọn theo ngày cụ thể).
+  * Bộ lọc đối tượng học viên: `all`, `in_progress`, `completed`.
+  * Hỗ trợ xem tổng hợp toàn bộ các khóa học giảng viên phụ trách hoặc đi sâu vào từng khóa học cụ thể (`course_id`).
+  * Chuỗi thời gian (Spline Timeline): Trả về các mốc hoạt động gồm số lượng học viên truy cập/học (`active_learners`), số bài học/quiz hoàn thành (`completed_items`), và số học viên đang học dở (`in_progress`).
+  * Bản đồ nhiệt mật độ giờ học (Heatmap 7 Ngày x 4 Khung Giờ): Phân bổ lưu lượng học viên theo 7 ngày trong tuần (`T2` - `CN`) và 4 khung giờ (`Sáng (06h-12h)`, `Chiều (12h-18h)`, `Tối (18h-22h)`, `Đêm (22h-02h)`), tự động tính toán và đánh dấu khung giờ cao điểm nhất (`is_peak = True`).
 * **Danh sách Học viên (Student Roster):** Xem chi tiết thông tin và phần trăm tiến độ hoàn thành bài học của từng học viên ghi danh trong lớp.
 * **Phân tích Tỷ lệ Bỏ học (Student Drop-off Funnel):** Thống kê số lượng học viên dừng học tại từng bài học video/bài đọc để giúp Giảng viên nhận biết đoạn nội dung khó tiếp thu.
+
+### 2.6. Sổ Điểm Khóa Học & Kiểm Soát Phân Cấp Điểm Số (Course Gradebook & Score Governance)
+* **Khái niệm & Phạm vi Nghiệp vụ:** Cung cấp cho Giảng viên (`INSTRUCTOR`) và Trợ giảng (`TA`) góc nhìn toàn diện về kết quả học tập của toàn bộ học viên ghi danh vào khóa học thông qua ma trận sổ điểm tập trung (`Course Gradebook Matrix`).
+* **Cấu trúc Ma trận Điểm số (Gradebook Matrix Structure):**
+  * **Trục hàng (Học viên):** Danh sách toàn bộ học viên đã ghi danh vào khóa học (`enrolled_students`), hiển thị Họ tên, Email, Ảnh đại diện, và Trạng thái hoàn thành môn (`IN_PROGRESS`, `COMPLETED`, `AT_RISK`). Hỗ trợ tìm kiếm theo tên/email và lọc theo trạng thái điểm.
+  * **Trục cột (Bài tập & Cột điểm):** Tập hợp tất cả các bài tập tính điểm trong khóa học (`Graded Items`): Graded Quizzes, Auto-Graded Labs, Peer Review Assignments. Mỗi cột hiển thị tên bài, loại bài tập và trọng số điểm tương ứng ($w_i$).
+  * **Cột Điểm Tổng kết (Weighted Final Grade):** Tự động tính toán điểm trung bình có trọng số theo thời gian thực dựa trên các cột điểm thành phần đã công bố:
+    $$\text{Final Grade} = \sum_{i=1}^{N} \left( w_i \times \text{Score}_i \right) \quad \text{với} \quad \sum_{i=1}^{N} w_i = 100\%$$
+* **Hệ thống Nhãn Nguồn gốc Điểm số (Grading Provenance Labeling):**
+  * Mọi con điểm trong sổ điểm và trên bài làm của học viên đều bắt buộc gắn nhãn nguồn gốc xuất xứ (`Provenance Badge`) để đảm bảo tính minh bạch và truy vết sư phạm (`BR_GRADE_002`):
+    1. **`AUTO` (Tự động):** Điểm do hệ thống chấm tự động (Graded Quiz thuật toán, Auto-Grader chạy unit test trong Sandbox cách ly).
+    2. **`PEER` (Bạn học):** Điểm trung bình cộng đồng thuận được tính từ các lượt chấm chéo rubric của học viên cùng khóa (`BR_PEER_002`).
+    3. **`TA` (Trợ giảng):** Điểm do Trợ giảng chấm trực tiếp hoặc chấm giải cứu (xử lý đơn khiếu nại Grade Appeal, xử lý bài Outlier chênh lệch điểm quá 30%, hoặc xử lý thiếu bài chấm chéo sau 48h Cold Start).
+    4. **`INSTRUCTOR` (Giảng viên):** Điểm do Giảng viên phụ trách khóa học (`owner_id` hoặc `co_instructors`) chấm hoặc can thiệp ghi đè tối cao (Master Override).
+  * **Phân cấp Thẩm quyền Ghi đè:** Điểm cấp cao hơn có quyền ghi đè điểm cấp thấp hơn ($\text{AUTO} \le \text{PEER} < \text{TA} < \text{INSTRUCTOR}$). Khi có thao tác ghi đè, hệ thống lưu vết toàn bộ lịch sử điểm cũ và lý do ghi đè vào Audit Log bất biến.
+* **Chế độ Chấm Nháp & Công bố Đồng Loạt (Draft Grading & Batch Release):**
+  * **Trạng thái Chấm Nháp (`DRAFT`):** Khi Giảng viên hoặc Trợ giảng thực hiện chấm bài hoặc điều chỉnh điểm tại Grading Cockpit, điểm số mặc định được lưu ở trạng thái Nháp (`grading_status = DRAFT_GRADED`). Điểm nháp chỉ hiển thị nội bộ cho ban giảng huấn để kiểm tra đối chiếu độ lệch chuẩn và rà soát tính công bằng sư phạm, học viên hoàn toàn chưa nhìn thấy điểm này.
+  * **Công bố Đồng Loạt (`Batch Release`):** Sau khi hoàn tất việc chấm và rà soát, Giảng viên hoặc Trợ giảng kích hoạt thao tác Công bố đồng loạt theo từng cột bài tập (`Batch Release Column`) hoặc công bố toàn bộ sổ điểm khóa học (`Batch Release All`).
+  * Khi công bố thành công, trạng thái chuyển sang `PUBLISHED`, hệ thống tự động: (1) Hiển thị điểm chính thức trên giao diện của học viên, (2) Kích hoạt tính toán lại Điểm tổng kết và Phần trăm tiến độ khóa học, và (3) Gửi thông báo in-app danh mục `ACADEMIC` tới học viên để cập nhật kết quả.
+
+### 2.7. Hàng Chờ Chấm Bài & Bàn Làm Việc Sư Phạm (Grading Cockpit & Workspace)
+* **Khái niệm & Luồng Nghiệp vụ:** Cung cấp không gian làm việc chuyên biệt cho Giảng viên và Trợ giảng để quản lý hàng chờ các bài nộp cần chấm thủ công (Staff Review Queue, Peer Outlier Queue, Grade Appeal Queue) và trực tiếp chấm điểm thông qua bàn làm việc sư phạm hiện đại.
+* **Giao diện Bàn Làm Việc Sư Phạm Split-View 2 Cột (Pedagogical Dual-Pane Cockpit):**
+  * **Cột trái (60% - Submission Pane):**
+    * Trình diễn trực quan toàn bộ nội dung bài nộp của học viên: xem tệp đính kèm (PDF viewer), trình chạy mã nguồn có syntax highlighting (Code Runner Canvas), bài luận định dạng Rich-text / Markdown, và danh sách các liên kết sản phẩm ngoại vi.
+    * Thông tin bối cảnh học tập: Số thứ tự lần nộp bài (`Lần nộp X / 3`), mốc thời gian nộp bài, và lịch sử các lần nộp trước đó.
+  * **Cột phải (40% - Evaluation & Rubric Pane):**
+    * Bảng tiêu chí Rubric chuẩn hóa: Hiển thị từng tiêu chí đánh giá (Tiêu đề, Mô tả chỉ dẫn sư phạm, Điểm tối đa), cho phép người chấm chọn mức điểm trực quan qua radio button hoặc slider.
+    * Ô nhập nhận xét sư phạm (`Feedback / Pedagogical Critique`): Hỗ trợ trình soạn thảo Markdown để giảng viên viết nhận xét chi tiết, hướng dẫn sửa bài và động viên học viên.
+    * Khu vực Tham chiếu Lịch sử Chấm chéo (Peer Reviews Reference): Đối với bài nộp chuyển từ diện Outlier hoặc Appeal, cột phải hiển thị lịch sử nhận xét và điểm số của các bạn học trước đó để người chấm có góc nhìn đa chiều.
+    * Khối điều khiển hành động: Nút *"Lưu nháp"* (`Save Draft`), *"Hoàn tất chấm bài"* (`Submit Grade`), và *"Hủy & Nhả bài"* (`Release Lease`).
+* **Cơ chế Khóa Bài Có Thời Hạn (Atomic Task Lease 30 Phút):**
+  * Để ngăn chặn xung đột chấm trùng (Race Condition) khi nhiều Trợ giảng cùng làm việc trong một lớp học đông học viên, khi một nhân sự mở bài nộp trong hàng chờ, hệ thống tự động cấp phát một quyền sở hữu tạm thời gọi là **Atomic Task Lease** với thời hạn **30 phút** (`TASK_LEASE_TIMEOUT_MINUTES = 30`).
+  * Việc cấp khóa được thực hiện nguyên tử ở tầng cơ sở dữ liệu (`locked_by_user_id = current_user.id`, `lock_expires_at = now() + 30 mins`).
+  * Trong danh sách hàng chờ, bài nộp lập tức chuyển sang trạng thái `BEING_GRADED`, hiển thị avatar cùng tên của nhân sự đang chấm và đồng hồ đếm ngược thời gian lease còn lại. Các trợ giảng khác bị vô hiệu hóa nút bấm tiếp nhận bài nộp này.
+* **Gia Hạn Khóa (Lock Renewal) & Tự Động Nhả Khóa (Auto Unlock on Expiry):**
+  * **Gia hạn tự động (Heartbeat Lease Renewal):** Khi người chấm đang tích cực tương tác trên giao diện (thao tác cuộn xem bài, nhập nhận xét, chấm điểm rubric), Frontend tự động phát tín hiệu heartbeat định kỳ mỗi 5 phút hoặc cung cấp nút bấm *"Gia hạn thêm 15 phút"* để đảm bảo không bị gián đoạn giữa chừng đối với các bài luận dài.
+  * **Tự động nhả khóa khi hết hạn (Auto Unlock on Expiry):** Nếu người chấm bất ngờ tắt trình duyệt, mất kết nối internet hoặc bỏ dở bài nộp quá 30 phút mà không hoàn tất việc chấm bài, Task Lease sẽ tự động hết hạn (`lock_expires_at <= now()`). Hệ thống tự động giải phóng khóa, trả bài nộp về trạng thái sẵn sàng trong hàng chờ để các trợ giảng khác có thể nhận chấm tiếp.
+  * **Nhả khóa chủ động (Voluntary Release):** Khi người chấm bấm nút *"Hủy & Nhả bài"* hoặc điều hướng quay lại hàng chờ, hệ thống lập tức xóa khóa mềm (`locked_by_user_id = NULL`, `lock_expires_at = NULL`) để người khác tiếp quản ngay lập tức mà không cần đợi hết 30 phút.
 
 
 ---
@@ -265,10 +310,10 @@ flowchart TD
 * **Ma trận & Tinh gọn 4 Luồng Thông báo Lõi (Notification Matrix Breakdown):**
   | Danh mục | Tên Tiếng Việt | Luồng nghiệp vụ phát sinh | Ví dụ nội dung thực tế |
   | :--- | :--- | :--- | :--- |
-  | 📣 `ANNOUNCEMENT` | **Thông báo Khóa học** | **Giảng viên đăng thông báo lớp**: Cập nhật lịch livestream, dời hạn nộp bài, bài giảng mới. | *"Giảng viên đăng thông báo: Lịch Q&A tuần này dời sang tối thứ 6"*. |
-  | 💬 `COMMUNITY` | **Thảo luận Diễn đàn** | **Có phản hồi bài viết/câu hỏi**: Giảng viên hoặc học viên khác trả lời câu hỏi thảo luận. | *"Giảng viên Andrew Ng đã phản hồi câu hỏi thảo luận của bạn"*. |
-  | 🔔 `SYSTEM` | **Duyệt Giảng viên** | **Phê duyệt Hồ sơ Giảng viên**: Super Admin duyệt quyền đăng ký làm Giảng viên. | *"Chúc mừng! Hồ sơ thẩm định năng lực giảng dạy của bạn đã được Super Admin phê duyệt"*. |
-  | 📖 `ACADEMIC` | **Duyệt Hỗ trợ Tài chính** | **Kết quả duyệt Financial Aid**: Yêu cầu trợ cấp học bổng được chấp thuận. | *"Yêu cầu xin trợ cấp học bổng 100% cho khóa học Machine Learning đã được chấp thuận"*. |
+  | `ANNOUNCEMENT` | **Thông báo Khóa học** | **Giảng viên đăng thông báo lớp**: Cập nhật lịch livestream, dời hạn nộp bài, bài giảng mới. | *"Giảng viên đăng thông báo: Lịch Q&A tuần này dời sang tối thứ 6"*. |
+  | `COMMUNITY` | **Thảo luận Diễn đàn** | **Có phản hồi bài viết/câu hỏi**: Giảng viên hoặc học viên khác trả lời câu hỏi thảo luận. | *"Giảng viên Andrew Ng đã phản hồi câu hỏi thảo luận của bạn"*. |
+  | `SYSTEM` | **Duyệt Giảng viên** | **Phê duyệt Hồ sơ Giảng viên**: Super Admin duyệt quyền đăng ký làm Giảng viên. | *"Chúc mừng! Hồ sơ thẩm định năng lực giảng dạy của bạn đã được Super Admin phê duyệt"*. |
+  | `ACADEMIC` | **Duyệt Hỗ trợ Tài chính** | **Kết quả duyệt Financial Aid**: Yêu cầu trợ cấp học bổng được chấp thuận. | *"Yêu cầu xin trợ cấp học bổng 100% cho khóa học Machine Learning đã được chấp thuận"*. |
 * **Vòng đời Thông báo (Notification Lifecycle & Retention):**
   * *Khởi tạo:* Gắn liền với sự kiện nguồn và CHỈ ĐƯỢC TẠO khi giao dịch cơ sở dữ liệu gốc commit thành công (`BR_NOTIF_012`). Khởi tạo với `is_read = false`, `read_at = NULL`.
   * *Chưa đọc -> Đã đọc:* Khi người dùng nhấp vào thẻ thông báo hoặc nút "Đã đọc", cờ `is_read` cập nhật thành `true` và lưu lại thời điểm `read_at = UTC NOW` (`BR_NOTIF_007`).
@@ -281,10 +326,10 @@ flowchart TD
   * *Phân trang Token-based:* Tải dữ liệu theo trang qua con trỏ `page_token` và `page_size` (mặc định 20, tối đa 50) để tối ưu trải nghiệm và tải dữ liệu siêu tốc (`BR_NOTIF_010`).
 * **Quy tắc Điều hướng Deep Link & An toàn liên kết:**
   * Mỗi thông báo chứa đường dẫn `action_url` trỏ chính xác tới đối tượng / bài duyệt gốc:
-    * 📣 `ANNOUNCEMENT`: `/courses/[courseId]` (Trang tổng quan khóa học).
-    * 💬 `COMMUNITY`: `/learn/[courseId]?tab=forum&threadId=[threadId]` (Bài viết thảo luận trên diễn đàn).
-    * 🔔 `SYSTEM`: `/become-an-instructor` (Trang xem kết quả Phê duyệt Hồ sơ Giảng viên).
-    * 📖 `ACADEMIC`: `/financial-aid` (Trang quản lý & xem Đơn xin Hỗ trợ Tài chính đã được chấp thuận).
+    * `ANNOUNCEMENT`: `/courses/[courseId]` (Trang tổng quan khóa học).
+    * `COMMUNITY`: `/learn/[courseId]?tab=forum&threadId=[threadId]` (Bài viết thảo luận trên diễn đàn).
+    * `SYSTEM`: `/become-an-instructor` (Trang xem kết quả Phê duyệt Hồ sơ Giảng viên).
+    * `ACADEMIC`: `/financial-aid` (Trang quản lý & xem Đơn xin Hỗ trợ Tài chính đã được chấp thuận).
   * *Xử lý liên kết hỏng (Broken Link Graceful Fallback):* Nếu nội dung gốc đã bị gỡ bỏ hoặc xóa khỏi hệ thống, Frontend tự động điều hướng về màn hình danh sách tổng tương ứng kèm thông báo cảnh báo Toast: *"Nội dung này không còn tồn tại hoặc đã bị gỡ bỏ."*
 * **Kiến trúc Kỹ thuật Điều phối Sự kiện (In-Memory Domain Event Bus & UUIDv7):**
   * *Tách rời Bounded Context (DDD Decoupling):* Các module nghiệp vụ (`assessment`, `catalog`, `certificate`, `identity`, `forum`) tuyệt đối không import trực tiếp `NotificationUseCase`. Sau khi commit transaction chính thành công, Use Case chỉ phát sinh `DomainEvent` (`QuizSubmittedDomainEvent`, `CertificateIssuedDomainEvent`, `InvitationSentDomainEvent`...) ra `EventBus` chung.
