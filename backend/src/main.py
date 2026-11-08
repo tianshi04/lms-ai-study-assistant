@@ -66,12 +66,16 @@ logger = logging.getLogger("main")
 async def lifespan(_app: Starlette):
     """Lifespan context manager for AuthPolicy and EventBus pre-initialization, plus graceful shutdown."""
     try:
+        from src.modules.learning.application.learning_event_handler import (
+            register_learning_event_handlers,
+        )
         from src.modules.notification.application.event_handlers import (
             register_notification_event_handlers,
         )
         from src.shared.auth_policy import AuthPolicyRegistry
 
         register_notification_event_handlers()
+        register_learning_event_handlers()
         AuthPolicyRegistry.initialize()
         logger.info(
             "[STARTUP] Pre-initialized AuthPolicyRegistry and EventBus handlers successfully."

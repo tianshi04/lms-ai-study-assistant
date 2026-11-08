@@ -1,12 +1,14 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from sqlalchemy import select, text
+from sqlalchemy import func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
+    GRADING_LOCK_TIMEOUT_MINUTES,
     AssessmentRepositoryInterface,
     GradeAppeal,
     HonorCodeAgreement,
@@ -353,6 +355,32 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             for m in models
         ]
 
+    @staticmethod
+    def _to_peer_submission_entity(
+        model: PeerAssignmentSubmissionModel,
+    ) -> PeerAssignmentSubmission:
+        return PeerAssignmentSubmission(
+            id=model.id,
+            user_id=model.user_id,
+            item_id=model.item_id,
+            submission_url=model.submission_url,
+            text_content=model.text_content,
+            created_at=model.created_at,
+            final_score=model.final_score,
+            graded_by_staff=model.graded_by_staff,
+            attempt_number=model.attempt_number,
+            staff_feedback=model.staff_feedback,
+            graded_by_user_id=model.graded_by_user_id,
+            grader_role=model.grader_role,
+            grade_source=model.grade_source,
+            locked_by_user_id=model.locked_by_user_id,
+            locked_at=model.locked_at,
+            rubric_scores_json=model.rubric_scores_json,
+            is_draft=model.is_draft,
+            published_at=model.published_at,
+            status=model.status,
+        )
+
     async def save_peer_submission(self, submission: PeerAssignmentSubmission) -> None:
         model = await self.session.get(PeerAssignmentSubmissionModel, submission.id)
         if not model:
@@ -368,6 +396,17 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             model.text_content = submission.text_content
             model.final_score = submission.final_score
             model.graded_by_staff = submission.graded_by_staff
+            model.attempt_number = submission.attempt_number
+            model.staff_feedback = submission.staff_feedback
+            model.graded_by_user_id = submission.graded_by_user_id
+            model.grader_role = submission.grader_role
+            model.grade_source = submission.grade_source
+            model.locked_by_user_id = submission.locked_by_user_id
+            model.locked_at = submission.locked_at
+            model.rubric_scores_json = submission.rubric_scores_json
+            model.is_draft = submission.is_draft
+            model.published_at = submission.published_at
+            model.status = submission.status
         else:
             model = PeerAssignmentSubmissionModel(
                 id=submission.id,
@@ -378,6 +417,17 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 created_at=submission.created_at,
                 final_score=submission.final_score,
                 graded_by_staff=submission.graded_by_staff,
+                attempt_number=submission.attempt_number,
+                staff_feedback=submission.staff_feedback,
+                graded_by_user_id=submission.graded_by_user_id,
+                grader_role=submission.grader_role,
+                grade_source=submission.grade_source,
+                locked_by_user_id=submission.locked_by_user_id,
+                locked_at=submission.locked_at,
+                rubric_scores_json=submission.rubric_scores_json,
+                is_draft=submission.is_draft,
+                published_at=submission.published_at,
+                status=submission.status,
             )
             self.session.add(model)
         await self.session.commit()
@@ -388,16 +438,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         model = await self.session.get(PeerAssignmentSubmissionModel, submission_id)
         if not model:
             return None
-        return PeerAssignmentSubmission(
-            id=model.id,
-            user_id=model.user_id,
-            item_id=model.item_id,
-            submission_url=model.submission_url,
-            text_content=model.text_content,
-            created_at=model.created_at,
-            final_score=model.final_score,
-            graded_by_staff=model.graded_by_staff,
-        )
+        return self._to_peer_submission_entity(model)
 
     async def get_user_peer_submission(
         self, user_id: str, item_id: str
@@ -410,16 +451,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         model = res.scalar_one_or_none()
         if not model:
             return None
-        return PeerAssignmentSubmission(
-            id=model.id,
-            user_id=model.user_id,
-            item_id=model.item_id,
-            submission_url=model.submission_url,
-            text_content=model.text_content,
-            created_at=model.created_at,
-            final_score=model.final_score,
-            graded_by_staff=model.graded_by_staff,
-        )
+        return self._to_peer_submission_entity(model)
 
     async def get_peer_submissions_for_item(
         self, item_id: str, exclude_user_id: str = ""
@@ -431,19 +463,127 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             stmt = stmt.where(PeerAssignmentSubmissionModel.user_id != exclude_user_id)
         res = await self.session.execute(stmt)
         models = res.scalars().all()
-        return [
-            PeerAssignmentSubmission(
-                id=m.id,
-                user_id=m.user_id,
-                item_id=m.item_id,
-                submission_url=m.submission_url,
-                text_content=m.text_content,
-                created_at=m.created_at,
-                final_score=m.final_score,
-                graded_by_staff=m.graded_by_staff,
+        return [self._to_peer_submission_entity(m) for m in models]
+
+    async def claim_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        now = datetime.now(UTC)
+        expired_threshold = (now - timedelta(minutes=timeout_minutes)).isoformat()
+        stmt = (
+            update(PeerAssignmentSubmissionModel)
+            .where(
+                PeerAssignmentSubmissionModel.id == submission_id,
+                or_(
+                    PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
+                    PeerAssignmentSubmissionModel.locked_by_user_id == user_id,
+                    PeerAssignmentSubmissionModel.locked_at < expired_threshold,
+                ),
             )
-            for m in models
-        ]
+            .values(
+                locked_by_user_id=user_id,
+                locked_at=now.isoformat(),
+            )
+        )
+        res = await self.session.execute(stmt)
+        await self.session.commit()
+        return int(getattr(res, "rowcount", 0) or 0) > 0
+
+    async def renew_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        now = datetime.now(UTC)
+        expired_threshold = (now - timedelta(minutes=timeout_minutes)).isoformat()
+        stmt = (
+            update(PeerAssignmentSubmissionModel)
+            .where(
+                PeerAssignmentSubmissionModel.id == submission_id,
+                PeerAssignmentSubmissionModel.locked_by_user_id == user_id,
+                PeerAssignmentSubmissionModel.locked_at >= expired_threshold,
+            )
+            .values(
+                locked_at=now.isoformat(),
+            )
+        )
+        res = await self.session.execute(stmt)
+        await self.session.commit()
+        return int(getattr(res, "rowcount", 0) or 0) > 0
+
+    async def release_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str | None = None,
+    ) -> bool:
+        where_conditions = [PeerAssignmentSubmissionModel.id == submission_id]
+        if user_id:
+            where_conditions.append(
+                or_(
+                    PeerAssignmentSubmissionModel.locked_by_user_id == user_id,
+                    PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
+                )
+            )
+        stmt = (
+            update(PeerAssignmentSubmissionModel)
+            .where(*where_conditions)
+            .values(
+                locked_by_user_id=None,
+                locked_at=None,
+            )
+        )
+        res = await self.session.execute(stmt)
+        await self.session.commit()
+        return int(getattr(res, "rowcount", 0) or 0) > 0
+
+    async def publish_all_draft_grades(
+        self,
+        course_id: str,
+        item_id: str | None = None,
+    ) -> list[PeerAssignmentSubmission]:
+        from src.modules.catalog.infrastructure.models import (
+            LearningItemModel,
+            LessonModel,
+            WeekModuleModel,
+        )
+
+        now_iso = datetime.now(UTC).isoformat()
+        if item_id:
+            item_ids = [item_id]
+        else:
+            item_stmt = (
+                select(LearningItemModel.id)
+                .join(LessonModel, LessonModel.id == LearningItemModel.lesson_id)
+                .join(WeekModuleModel, WeekModuleModel.id == LessonModel.week_module_id)
+                .where(WeekModuleModel.course_id == course_id)
+            )
+            item_res = await self.session.execute(item_stmt)
+            item_ids = [str(r[0]) for r in item_res.fetchall()]
+
+        if not item_ids:
+            return []
+
+        select_stmt = select(PeerAssignmentSubmissionModel).where(
+            PeerAssignmentSubmissionModel.item_id.in_(item_ids),
+            PeerAssignmentSubmissionModel.is_draft.is_(True),
+        )
+        res = await self.session.execute(select_stmt)
+        models = res.scalars().all()
+        if not models:
+            return []
+
+        updated_submissions: list[PeerAssignmentSubmission] = []
+        for m in models:
+            m.is_draft = False
+            m.published_at = now_iso
+            m.status = "PUBLISHED"
+            updated_submissions.append(self._to_peer_submission_entity(m))
+        await self.session.commit()
+        return updated_submissions
 
     async def save_peer_review(self, review: PeerReview) -> None:
         rubric_data = [
@@ -975,3 +1115,277 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         )
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
+
+    async def get_course_gradebook_data(
+        self,
+        course_id: str,
+        search_query: str = "",
+        status_filter: str = "",
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> dict[str, Any]:
+        from src.modules.catalog.infrastructure.models import (
+            CourseModel,
+            LearningItemModel,
+            LessonModel,
+            WeekModuleModel,
+        )
+        from src.modules.identity.infrastructure.models import UserModel
+        from src.modules.learning.infrastructure.models import LearningProgressModel
+
+        # 1. Course title
+        course_stmt = select(CourseModel).where(CourseModel.id == course_id)
+        course_res = await self.session.execute(course_stmt)
+        course = course_res.scalar_one_or_none()
+        course_title = course.title if course else f"Khóa học #{course_id}"
+
+        # 2. Query graded items
+        items_stmt = (
+            select(LearningItemModel)
+            .join(LessonModel, LessonModel.id == LearningItemModel.lesson_id)
+            .join(WeekModuleModel, WeekModuleModel.id == LessonModel.week_module_id)
+            .where(WeekModuleModel.course_id == course_id)
+            .order_by(
+                WeekModuleModel.week_number.asc(),
+                LessonModel.order_index.asc(),
+                LearningItemModel.order_index.asc(),
+            )
+        )
+        items_res = await self.session.execute(items_stmt)
+        all_items = items_res.scalars().all()
+
+        graded_types = {
+            "GRADED_QUIZ",
+            "ITEM_TYPE_GRADED_QUIZ",
+            "4",
+            "AUTO_GRADED_LAB",
+            "CODING_LAB",
+            "ITEM_TYPE_CODING_LAB",
+            "5",
+            "PEER_REVIEW",
+            "PEER_ASSIGNMENT",
+            "ITEM_TYPE_PEER_REVIEW",
+            "6",
+        }
+        graded_items = [
+            item
+            for item in all_items
+            if getattr(item, "is_graded", False)
+            or (item.type and item.type.upper() in graded_types)
+            or "GRADED" in (item.type or "").upper()
+            or "PEER" in (item.type or "").upper()
+            or "LAB" in (item.type or "").upper()
+        ]
+
+        graded_item_ids = [item.id for item in graded_items]
+        draft_counts_by_item: dict[str, int] = {}
+        if graded_item_ids:
+            draft_stmt = (
+                select(
+                    PeerAssignmentSubmissionModel.item_id,
+                    func.count(PeerAssignmentSubmissionModel.id),
+                )
+                .where(
+                    PeerAssignmentSubmissionModel.item_id.in_(graded_item_ids),
+                    PeerAssignmentSubmissionModel.is_draft.is_(True),
+                )
+                .group_by(PeerAssignmentSubmissionModel.item_id)
+            )
+            draft_res = await self.session.execute(draft_stmt)
+            for item_id_val, count_val in draft_res.fetchall():
+                draft_counts_by_item[str(item_id_val)] = int(count_val)
+
+        num_graded = len(graded_items)
+        default_weight = round(1.0 / num_graded, 4) if num_graded > 0 else 0.0
+
+        columns: list[dict[str, Any]] = [
+            {
+                "item_id": item.id,
+                "item_title": item.title,
+                "item_type": item.type,
+                "weight": default_weight,
+                "max_score": 100.0,
+                "draft_grades_count": draft_counts_by_item.get(item.id, 0),
+            }
+            for item in graded_items
+        ]
+        total_pending_drafts = sum(draft_counts_by_item.values())
+
+        # 3. Query enrolled students
+        progress_query = (
+            select(LearningProgressModel, UserModel)
+            .join(UserModel, UserModel.id == LearningProgressModel.user_id)
+            .where(LearningProgressModel.course_id == course_id)
+        )
+
+        if search_query and search_query.strip():
+            term = f"%{search_query.strip()}%"
+            progress_query = progress_query.where(
+                or_(
+                    UserModel.full_name.ilike(term),
+                    UserModel.email.ilike(term),
+                )
+            )
+
+        total_count_res = await self.session.execute(
+            select(func.count(LearningProgressModel.id)).where(
+                LearningProgressModel.course_id == course_id
+            )
+        )
+        total_students = total_count_res.scalar() or 0
+
+        offset = int(page_token) if (page_token and page_token.isdigit()) else 0
+        limit = max(1, min(page_size, 100))
+
+        progress_query = (
+            progress_query.order_by(LearningProgressModel.enrolled_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        rows_res = await self.session.execute(progress_query)
+        student_progress_rows = rows_res.all()
+
+        user_ids = [row[0].user_id for row in student_progress_rows]
+
+        # 4. Batch query submissions
+        quiz_scores: dict[tuple[str, str], float] = {}
+        quiz_timestamps: dict[tuple[str, str], str] = {}
+        lab_scores: dict[tuple[str, str], float] = {}
+        lab_timestamps: dict[tuple[str, str], str] = {}
+        peer_submissions_map: dict[tuple[str, str], Any] = {}
+
+        if user_ids and graded_item_ids:
+            quiz_stmt = select(QuizSubmissionModel).where(
+                QuizSubmissionModel.item_id.in_(graded_item_ids),
+                QuizSubmissionModel.user_id.in_(user_ids),
+            )
+            quiz_rows = (await self.session.execute(quiz_stmt)).scalars().all()
+            for q in quiz_rows:
+                key = (q.user_id, q.item_id)
+                score = float(q.score_percent or 0.0)
+                if key not in quiz_scores or score > quiz_scores[key]:
+                    quiz_scores[key] = score
+                    quiz_timestamps[key] = q.created_at or ""
+
+            lab_stmt = select(LabSubmissionModel).where(
+                LabSubmissionModel.item_id.in_(graded_item_ids),
+                LabSubmissionModel.user_id.in_(user_ids),
+            )
+            lab_rows = (await self.session.execute(lab_stmt)).scalars().all()
+            for lab in lab_rows:
+                key = (lab.user_id, lab.item_id)
+                score = float(lab.score_percent or 0.0)
+                if key not in lab_scores or score > lab_scores[key]:
+                    lab_scores[key] = score
+                    lab_timestamps[key] = lab.created_at or ""
+
+            peer_stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.item_id.in_(graded_item_ids),
+                PeerAssignmentSubmissionModel.user_id.in_(user_ids),
+            )
+            peer_rows = (await self.session.execute(peer_stmt)).scalars().all()
+            for p_sub in peer_rows:
+                key = (p_sub.user_id, p_sub.item_id)
+                peer_submissions_map[key] = p_sub
+
+        # 5. Build rows and cells
+        rows: list[dict[str, Any]] = []
+        for lp, user in student_progress_rows:
+            cells: list[dict[str, Any]] = []
+            total_weighted_grade = 0.0
+
+            for col in columns:
+                item_id_val = str(col["item_id"])
+                item_weight = float(col["weight"])
+                key: tuple[str, str] = (str(lp.user_id), item_id_val)
+
+                score = 0.0
+                is_passed = False
+                provenance = "AUTO"
+                is_draft = False
+                graded_at = ""
+                submission_id = ""
+
+                if key in peer_submissions_map:
+                    p_sub = peer_submissions_map[key]
+                    submission_id = p_sub.id
+                    score = float(p_sub.final_score or 0.0)
+                    is_passed = score >= 80.0
+                    is_draft = bool(p_sub.is_draft)
+                    graded_at = p_sub.published_at or p_sub.created_at or ""
+                    source = p_sub.grade_source or "PEER_REVIEW"
+                    if "INSTRUCTOR" in source.upper():
+                        provenance = "INSTRUCTOR"
+                    elif "TA" in source.upper():
+                        provenance = "TA"
+                    else:
+                        provenance = "PEER"
+                elif key in quiz_scores:
+                    score = quiz_scores[key]
+                    is_passed = score >= 80.0
+                    provenance = "AUTO"
+                    is_draft = False
+                    graded_at = quiz_timestamps.get(key, "")
+                elif key in lab_scores:
+                    score = lab_scores[key]
+                    is_passed = score >= 80.0
+                    provenance = "AUTO"
+                    is_draft = False
+                    graded_at = lab_timestamps.get(key, "")
+
+                if not is_draft:
+                    total_weighted_grade += item_weight * score
+
+                cells.append(
+                    {
+                        "item_id": item_id_val,
+                        "score": round(score, 2),
+                        "is_passed": is_passed,
+                        "provenance": provenance,
+                        "is_draft": is_draft,
+                        "graded_at": graded_at,
+                        "submission_id": submission_id,
+                    }
+                )
+
+            final_grade = round(total_weighted_grade, 2)
+            is_completed = lp.overall_progress_percent >= 100.0 or final_grade >= 80.0
+            enrollment_status = (
+                "COMPLETED"
+                if is_completed
+                else ("IN_PROGRESS" if lp.overall_progress_percent > 0 else "ACTIVE")
+            )
+
+            if (
+                status_filter
+                and status_filter.upper() != "ALL"
+                and enrollment_status.upper() != status_filter.upper()
+            ):
+                continue
+
+            rows.append(
+                {
+                    "user_id": user.id,
+                    "full_name": user.full_name or "Học viên",
+                    "email": user.email,
+                    "avatar_url": user.avatar_url or "",
+                    "enrollment_status": enrollment_status,
+                    "final_weighted_grade": final_grade,
+                    "is_course_completed": is_completed,
+                    "cells": cells,
+                }
+            )
+
+        next_page_token = (
+            str(offset + limit) if (offset + limit) < total_students else ""
+        )
+
+        return {
+            "course_id": course_id,
+            "course_title": course_title,
+            "columns": columns,
+            "rows": rows,
+            "total_students": total_students,
+            "next_page_token": next_page_token,
+            "pending_draft_count": total_pending_drafts,
+        }

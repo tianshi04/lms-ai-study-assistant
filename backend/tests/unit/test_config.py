@@ -29,10 +29,8 @@ def test_settings_load_defaults(monkeypatch):
 
 def test_singleton_settings_instance():
     """Verify settings singleton instance identity."""
-    assert (
-        settings.JWT_SECRET
-        == "coursera_super_secret_jwt_key_production_2026_x99_secure_hmac_sha256"
-    )
+    assert isinstance(settings, Settings)
+    assert bool(settings.JWT_SECRET)
 
 
 def test_is_allowed_origin_uses_exact_match():

@@ -46,6 +46,7 @@ from .entities import (
 )
 from .events import (
     LabSubmittedDomainEvent,
+    PeerAssignmentGradedDomainEvent,
     PeerReviewSubmittedDomainEvent,
     QuizSubmittedDomainEvent,
 )
@@ -81,6 +82,7 @@ __all__ = [
     "HonorCodeAgreement",
     "LabSubmission",
     "LabSubmittedDomainEvent",
+    "PeerAssignmentGradedDomainEvent",
     "PeerAssignmentSubmission",
     "PeerReview",
     "PeerReviewSubmittedDomainEvent",

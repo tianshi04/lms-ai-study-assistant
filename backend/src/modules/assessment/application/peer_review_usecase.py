@@ -5,10 +5,14 @@ from typing import Any
 from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
+    GRADING_LOCK_TIMEOUT_MINUTES,
+    MAX_APPEAL_WINDOW_DAYS,
+    MAX_PEER_SUBMISSION_ATTEMPTS,
     OUTLIER_SCORE_DELTA_THRESHOLD,
     PEER_REVIEW_COLD_START_HOURS,
     REQUIRED_PEER_REVIEWS_COUNT,
     GradeAppeal,
+    PeerAssignmentGradedDomainEvent,
     PeerAssignmentSubmission,
     PeerReview,
     RubricCriteria,
@@ -16,6 +20,7 @@ from src.modules.assessment.domain import (
 from src.shared.access_policy import require_paid_access
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.event_bus import EventBus
 
 from .base_usecase import BaseAssessmentUseCase
 
@@ -34,8 +39,16 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             repo = await self._get_repo(session)
             existing = await repo.get_user_peer_submission(user_id, item_id)
             if existing:
+                if existing.attempt_number >= MAX_PEER_SUBMISSION_ATTEMPTS:
+                    raise ValueError(
+                        f"Bạn đã đạt giới hạn tối đa {MAX_PEER_SUBMISSION_ATTEMPTS} lần nộp bài."
+                    )
+                existing.attempt_number += 1
                 existing.submission_url = submission_url
                 existing.text_content = text_content
+                existing.created_at = now_iso
+                existing.status = "SUBMITTED"
+                existing.is_draft = False
                 await repo.save_peer_submission(existing)
                 sub_id = existing.id
             else:
@@ -47,6 +60,8 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     submission_url=submission_url,
                     text_content=text_content,
                     created_at=now_iso,
+                    attempt_number=1,
+                    status="SUBMITTED",
                 )
                 await repo.save_peer_submission(submission)
 
@@ -153,13 +168,297 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     avg_score = round(
                         sum(r.total_score for r in all_revs) / len(all_revs), 2
                     )
-                    sub.assign_grade(avg_score, is_staff=False)
+                    effective_score = (
+                        max(avg_score, sub.final_score)
+                        if sub.final_score is not None
+                        else avg_score
+                    )
+                    sub.assign_grade(
+                        effective_score, is_staff=False, grade_source="PEER_REVIEW"
+                    )
+                    sub.publish_grade(now=datetime.now(UTC))
                     await repo.save_peer_submission(sub)
+
+                    course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
+                    await EventBus.publish(
+                        PeerAssignmentGradedDomainEvent(
+                            user_id=sub.user_id,
+                            course_id=course_id,
+                            item_id=sub.item_id,
+                            submission_id=sub.id,
+                            final_score=effective_score,
+                            passed=effective_score >= 80.0,
+                            grader_id="peer",
+                            is_draft=False,
+                        )
+                    )
 
         msg = "Peer review graded successfully."
         if is_outlier:
             msg += f" (Outlier Flagged: Score variation exceeds {int(OUTLIER_SCORE_DELTA_THRESHOLD)}%, TA notified)."
         return True, msg
+
+    async def submit_grade_appeal(
+        self, user_id: str, submission_id: str, appeal_reason: str
+    ) -> tuple[bool, str]:
+        """Submits a grade appeal for a peer review submission (BR_PEER_007)."""
+        if not appeal_reason or not appeal_reason.strip():
+            raise ValueError("Lý do khiếu nại không được để trống.")
+
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                raise ValueError(f"Bài nộp {submission_id} không tồn tại.")
+            if sub.user_id != user_id:
+                logger.warning(
+                    "User %s attempted to submit grade appeal for submission %s belonging to another user",
+                    user_id,
+                    submission_id,
+                )
+                raise PermissionError(
+                    "Bạn chỉ có quyền gửi khiếu nại điểm đối với bài nộp của chính mình."
+                )
+
+            # Constraint 1: Only 1 appeal per submission
+            existing_appeal = await repo.get_grade_appeal(submission_id)
+            if existing_appeal:
+                raise ValueError(
+                    "Bài nộp này đã có đơn khiếu nại trước đó (Mỗi bài chỉ được khiếu nại tối đa 1 lần)."
+                )
+
+            # Constraint 2: Appeal window (MAX_APPEAL_WINDOW_DAYS = 7)
+            ref_date_str = sub.published_at or sub.created_at
+            if ref_date_str:
+                ref_dt = None
+                try:
+                    ref_dt = datetime.fromisoformat(ref_date_str)
+                except (ValueError, TypeError):
+                    pass
+                if ref_dt is not None:
+                    if ref_dt.tzinfo is None:
+                        ref_dt = ref_dt.replace(tzinfo=UTC)
+                    now = datetime.now(UTC)
+                    if now > ref_dt + timedelta(days=MAX_APPEAL_WINDOW_DAYS):
+                        raise ValueError(
+                            f"Đã quá thời hạn khiếu nại {MAX_APPEAL_WINDOW_DAYS} ngày kể từ khi công bố điểm."
+                        )
+
+            appeal_id = f"appeal-{uuid7().hex}"
+            now_iso = datetime.now(UTC).isoformat()
+            appeal = GradeAppeal(
+                id=appeal_id,
+                user_id=user_id,
+                submission_id=submission_id,
+                appeal_reason=appeal_reason.strip(),
+                status="PENDING",
+                created_at=now_iso,
+            )
+            await repo.save_grade_appeal(appeal)
+
+        return True, "PENDING"
+
+    async def submit_staff_grading(
+        self,
+        submission_id: str,
+        staff_user_id: str,
+        graded_criteria: list[RubricCriteria],
+        total_score: float,
+        feedback: str = "",
+        is_draft: bool = True,
+        resolve_appeal: bool = False,
+        appeal_resolution_notes: str = "",
+        provenance: str = "TA",
+        current_user: CurrentUser | None = None,
+    ) -> tuple[bool, str, float, bool, str]:
+        """TA / Instructor Grading at Cockpit (BR_GRADE_003, BR_GRADE_004).
+
+        Supports saving as draft or instant publish, atomic lock release,
+        Highest Score Wins policy, and event dispatch.
+        """
+        self._verify_staff(current_user)
+        if total_score < 0.0 or total_score > 100.0:
+            raise ValueError("Điểm số phải nằm trong khoảng từ 0 đến 100.")
+
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                raise ValueError(f"Không tìm thấy bài nộp {submission_id}")
+
+            now = datetime.now(UTC)
+            if not sub.can_claim_lock(staff_user_id, now):
+                raise PermissionError("Bài nộp đang được nhân sự khác khóa để chấm.")
+
+            # BR_PEER_008: Highest Score Wins
+            effective_score = (
+                max(total_score, sub.final_score)
+                if sub.final_score is not None
+                else total_score
+            )
+            rubric_json = {c.criteria_id: c.score_given for c in graded_criteria}
+            grader_role = current_user.role if current_user else "TA"
+
+            sub.assign_grade(
+                score=effective_score,
+                is_staff=True,
+                graded_by_user_id=staff_user_id,
+                grader_role=grader_role,
+                grade_source=provenance,
+                staff_feedback=feedback,
+                rubric_scores_json=rubric_json,
+                is_draft=is_draft,
+            )
+
+            if not is_draft:
+                sub.publish_grade(now=now)
+
+            # BR_GRADE_003: Active lock release on save
+            sub.release_lock(staff_user_id)
+            await repo.release_submission_lock(submission_id, staff_user_id)
+
+            if resolve_appeal:
+                appeal = await repo.get_grade_appeal(submission_id)
+                if appeal:
+                    appeal.approve(
+                        reviewer_id=staff_user_id, final_score=effective_score
+                    )
+                    appeal.status = "RESOLVED"
+                    if appeal_resolution_notes:
+                        appeal.rejection_reason = appeal_resolution_notes
+                    await repo.save_grade_appeal(appeal)
+
+            await repo.save_peer_submission(sub)
+
+            course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
+            if not is_draft:
+                await EventBus.publish(
+                    PeerAssignmentGradedDomainEvent(
+                        user_id=sub.user_id,
+                        course_id=course_id,
+                        item_id=sub.item_id,
+                        submission_id=sub.id,
+                        final_score=effective_score,
+                        passed=effective_score >= 80.0,
+                        grader_id=staff_user_id,
+                        is_draft=False,
+                    )
+                )
+
+        graded_at_str = sub.published_at or now.isoformat()
+        msg = (
+            "Đã lưu nháp kết quả chấm bài."
+            if is_draft
+            else "Đã công bố điểm bài nộp thành công."
+        )
+        return True, msg, effective_score, is_draft, graded_at_str
+
+    async def claim_grading_task(
+        self,
+        submission_id: str,
+        staff_user_id: str,
+        current_user: CurrentUser | None = None,
+    ) -> tuple[bool, str, dict[str, Any]]:
+        """Claims exclusive 30-min soft lock on a submission for grading (BR_GRADE_003)."""
+        self._verify_staff(current_user)
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            success = await repo.claim_submission_lock(submission_id, staff_user_id)
+            if not success:
+                return (
+                    False,
+                    "Bài nộp đang được nhân sự khác chấm hoặc đã có khóa hiệu lực.",
+                    {},
+                )
+            now = datetime.now(UTC)
+            expires_at = (
+                now + timedelta(minutes=GRADING_LOCK_TIMEOUT_MINUTES)
+            ).isoformat()
+            return (
+                True,
+                "Đã nhận chấm bài thành công (Khóa 30 phút).",
+                {
+                    "locked_by_user_id": staff_user_id,
+                    "lock_expires_at": expires_at,
+                    "lease_duration_seconds": GRADING_LOCK_TIMEOUT_MINUTES * 60,
+                },
+            )
+
+    async def renew_grading_task_lock(
+        self,
+        submission_id: str,
+        staff_user_id: str,
+        extend_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+        current_user: CurrentUser | None = None,
+    ) -> tuple[bool, str, dict[str, Any]]:
+        """Renews an existing grading lock held by the same user (BR_GRADE_003)."""
+        self._verify_staff(current_user)
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            success = await repo.renew_submission_lock(
+                submission_id, staff_user_id, timeout_minutes=extend_minutes
+            )
+            if not success:
+                return (
+                    False,
+                    "Không thể gia hạn khóa (Bạn không sở hữu khóa hoặc khóa đã hết hạn).",
+                    {},
+                )
+            now = datetime.now(UTC)
+            expires_at = (now + timedelta(minutes=extend_minutes)).isoformat()
+            return (
+                True,
+                f"Đã gia hạn khóa thêm {extend_minutes} phút thành công.",
+                {
+                    "lock_expires_at": expires_at,
+                    "remaining_seconds": extend_minutes * 60,
+                },
+            )
+
+    async def release_grading_task(
+        self,
+        submission_id: str,
+        staff_user_id: str,
+        current_user: CurrentUser | None = None,
+    ) -> tuple[bool, str]:
+        """Actively releases a grading soft lock (BR_GRADE_003)."""
+        self._verify_staff(current_user)
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            success = await repo.release_submission_lock(submission_id, staff_user_id)
+            if not success:
+                return (
+                    False,
+                    "Không thể nhả khóa (Bài nộp không tồn tại hoặc do người khác khóa).",
+                )
+            return True, "Đã nhả khóa chấm bài thành công."
+
+    async def release_course_grades(
+        self,
+        course_id: str,
+        item_id: str | None = None,
+        current_user: CurrentUser | None = None,
+    ) -> tuple[bool, str, int]:
+        """Batch releases all draft grades for a course or specific item (BR_GRADE_004)."""
+        self._verify_staff(current_user)
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            published_list = await repo.publish_all_draft_grades(course_id, item_id)
+            count = len(published_list)
+            for sub in published_list:
+                await EventBus.publish(
+                    PeerAssignmentGradedDomainEvent(
+                        user_id=sub.user_id,
+                        course_id=course_id,
+                        item_id=sub.item_id,
+                        submission_id=sub.id,
+                        final_score=sub.final_score or 0.0,
+                        passed=(sub.final_score or 0.0) >= 80.0,
+                        grader_id=sub.graded_by_user_id or "staff",
+                        is_draft=False,
+                    )
+                )
+        return True, f"Đã công bố thành công {count} bài nộp.", count
 
     async def regrade_peer_submission_by_staff(
         self,
@@ -178,14 +477,40 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             if not sub:
                 return False, "Không tìm thấy bài nộp dự án"
 
-            sub.assign_grade(ta_score, is_staff=True)
+            # BR_PEER_008: Highest Score Wins
+            effective_score = (
+                max(ta_score, sub.final_score)
+                if sub.final_score is not None
+                else ta_score
+            )
+            sub.assign_grade(
+                effective_score,
+                is_staff=True,
+                grade_source="TA",
+                graded_by_user_id=staff_user_id,
+            )
+            sub.publish_grade(now=datetime.now(UTC))
             await repo.save_peer_submission(sub)
 
             appeal = await repo.get_grade_appeal(submission_id)
             if appeal:
-                appeal.approve(reviewer_id=staff_user_id, final_score=ta_score)
+                appeal.approve(reviewer_id=staff_user_id, final_score=effective_score)
                 appeal.status = "RESOLVED"
                 await repo.save_grade_appeal(appeal)
+
+            course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
+            await EventBus.publish(
+                PeerAssignmentGradedDomainEvent(
+                    user_id=sub.user_id,
+                    course_id=course_id,
+                    item_id=sub.item_id,
+                    submission_id=sub.id,
+                    final_score=effective_score,
+                    passed=effective_score >= 80.0,
+                    grader_id=staff_user_id,
+                    is_draft=False,
+                )
+            )
 
             return (
                 True,
