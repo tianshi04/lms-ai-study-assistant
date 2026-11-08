@@ -15,6 +15,15 @@ import {
   type QuestionOption,
   type GetQuizAttemptHistoryResponse,
   type GetQuizAttemptDetailResponse,
+  GradingQueueStatus,
+  type GradingProvenance,
+  type ListGradingQueueResponse,
+  type GetGradingSubmissionDetailResponse,
+  type ClaimGradingTaskResponse,
+  type RenewGradingTaskLockResponse,
+  type ReleaseGradingTaskResponse,
+  type SubmitStaffGradingResponse,
+  type RubricCriteria,
 } from "@/gen/assessment/v1/assessment_pb";
 
 export function useSubmitQuizMutation(
@@ -258,6 +267,161 @@ export function useQuizAttemptDetailQuery(
       return await client.getQuizAttemptDetail({ submissionId });
     },
     enabled: !!submissionId,
+    ...options,
+  });
+}
+
+export interface GradingQueueQueryParams {
+  courseId?: string;
+  itemId?: string;
+  status?: GradingQueueStatus;
+  pageSize?: number;
+  pageToken?: string;
+  searchQuery?: string;
+}
+
+export function useGradingQueueQuery(
+  params: GradingQueueQueryParams,
+  options?: Partial<UseQueryOptions<ListGradingQueueResponse, Error>>,
+) {
+  return useQuery<ListGradingQueueResponse, Error>({
+    queryKey: ["gradingQueue", params],
+    queryFn: async () => {
+      const client = getRpcClient(AssessmentService);
+      return await client.listGradingQueue({
+        courseId: params.courseId || "",
+        itemId: params.itemId || "",
+        status: params.status ?? GradingQueueStatus.ALL,
+        pageSize: params.pageSize || 50,
+        pageToken: params.pageToken || "",
+        searchQuery: params.searchQuery || "",
+      });
+    },
+    enabled: !!params.courseId || !!params.itemId,
+    ...options,
+  });
+}
+
+export function useGradingSubmissionDetailQuery(
+  submissionId: string,
+  options?: Partial<UseQueryOptions<GetGradingSubmissionDetailResponse, Error>>,
+) {
+  return useQuery<GetGradingSubmissionDetailResponse, Error>({
+    queryKey: ["gradingSubmissionDetail", submissionId],
+    queryFn: async () => {
+      const client = getRpcClient(AssessmentService);
+      return await client.getGradingSubmissionDetail({ submissionId });
+    },
+    enabled: !!submissionId,
+    ...options,
+  });
+}
+
+export function useClaimGradingTaskMutation(
+  options?: Partial<UseMutationOptions<ClaimGradingTaskResponse, Error, { submissionId: string }>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<ClaimGradingTaskResponse, Error, { submissionId: string }>({
+    mutationFn: async ({ submissionId }) => {
+      const client = getRpcClient(AssessmentService);
+      return await client.claimGradingTask({ submissionId });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["gradingQueue"] });
+      queryClient.invalidateQueries({
+        queryKey: ["gradingSubmissionDetail", vars.submissionId],
+      });
+    },
+    ...options,
+  });
+}
+
+export function useRenewGradingTaskLockMutation(
+  options?: Partial<
+    UseMutationOptions<
+      RenewGradingTaskLockResponse,
+      Error,
+      { submissionId: string; extendMinutes?: number }
+    >
+  >,
+) {
+  return useMutation<
+    RenewGradingTaskLockResponse,
+    Error,
+    { submissionId: string; extendMinutes?: number }
+  >({
+    mutationFn: async ({ submissionId, extendMinutes = 15 }) => {
+      const client = getRpcClient(AssessmentService);
+      return await client.renewGradingTaskLock({ submissionId, extendMinutes });
+    },
+    ...options,
+  });
+}
+
+export function useReleaseGradingTaskMutation(
+  options?: Partial<
+    UseMutationOptions<ReleaseGradingTaskResponse, Error, { submissionId: string }>
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<ReleaseGradingTaskResponse, Error, { submissionId: string }>({
+    mutationFn: async ({ submissionId }) => {
+      const client = getRpcClient(AssessmentService);
+      return await client.releaseGradingTask({ submissionId });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["gradingQueue"] });
+      queryClient.invalidateQueries({
+        queryKey: ["gradingSubmissionDetail", vars.submissionId],
+      });
+    },
+    ...options,
+  });
+}
+
+export function useSubmitStaffGradingMutation(
+  options?: Partial<
+    UseMutationOptions<
+      SubmitStaffGradingResponse,
+      Error,
+      {
+        submissionId: string;
+        gradedCriteria: RubricCriteria[];
+        totalScore: number;
+        feedback?: string;
+        resolveAppeal?: boolean;
+        appealResolutionNotes?: string;
+        provenance?: GradingProvenance;
+      }
+    >
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    SubmitStaffGradingResponse,
+    Error,
+    {
+      submissionId: string;
+      gradedCriteria: RubricCriteria[];
+      totalScore: number;
+      feedback?: string;
+      resolveAppeal?: boolean;
+      appealResolutionNotes?: string;
+      provenance?: GradingProvenance;
+    }
+  >({
+    mutationFn: async (payload) => {
+      const client = getRpcClient(AssessmentService);
+      return await client.submitStaffGrading(payload);
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["gradingQueue"] });
+      queryClient.invalidateQueries({
+        queryKey: ["gradingSubmissionDetail", vars.submissionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["courseGradebook"] });
+      queryClient.invalidateQueries({ queryKey: ["instructorActionTasks"] });
+    },
     ...options,
   });
 }

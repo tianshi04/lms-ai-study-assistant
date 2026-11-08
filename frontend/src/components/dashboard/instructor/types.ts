@@ -1,3 +1,5 @@
+import type { Course, EnrolledStudent } from "@/gen/catalog/v1/catalog_pb";
+
 export interface TimeDataPoint {
   day: string;
   date: string;
@@ -63,3 +65,33 @@ export interface OverviewData {
   recentReviews: OverviewReview[];
   mockCertificates: OverviewCertificate[];
 }
+
+export type EnrichedCourseComparisonItem = Course & {
+  totalStudents: number;
+  compRate: number;
+  completedCount: number;
+  inProgressCount: number;
+  rating: number;
+  reviewCount: number;
+  pendingAssignments: number;
+  pendingQuestions: number;
+  weekCount: number;
+  itemCount: number;
+};
+
+export interface CalculatedWeek {
+  id: string;
+  weekNumber: number;
+  title: string;
+  summary: string;
+  reachedCount: number;
+  completedCount: number;
+  passRate: number;
+  dropRate: number;
+}
+
+export type StudentWithPacing = EnrolledStudent & {
+  pace: "AHEAD" | "ON_TRACK" | "BEHIND";
+  paceLabel: string;
+  paceDesc: string;
+};

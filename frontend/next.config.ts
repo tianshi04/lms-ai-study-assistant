@@ -13,7 +13,6 @@ const nextConfig: NextConfig = {
     turbopackRustReactCompiler: true,
     turbopackGc: true,
     turbopackLazyDynamicImports: true,
-    turbopackRemoveUnusedImports: true,
   },
   images: {
     remotePatterns: [

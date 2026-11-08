@@ -17,8 +17,11 @@ import {
   type GetCourseDetailResponse,
   type Specialization,
   type InstructorAnalytics,
+  type GetInstructorActivityTimelineResponse,
   type CourseBookmark,
   type ToggleCourseReviewHelpfulResponse,
+  type GetCourseGradebookResponse,
+  type GetInstructorActionTasksResponse,
 } from "@/gen/catalog/v1/catalog_pb";
 
 export interface CourseFilters {
@@ -295,6 +298,51 @@ export function useAllInstructorAnalyticsQueries(
       enabled: (options?.enabled ?? true) && !!c.id,
       staleTime: 60 * 1000,
     })),
+  });
+}
+
+/**
+ * Hook truy vấn dữ liệu chuỗi thời gian hoạt động và biểu đồ heatmap của học viên theo khóa học
+ */
+export function useInstructorActivityTimelineQuery(
+  params: {
+    courseId?: string;
+    dateRange?: string;
+    startDate?: string;
+    endDate?: string;
+    learnerFilter?: string;
+  },
+  options?: Partial<UseQueryOptions<GetInstructorActivityTimelineResponse, Error>>,
+) {
+  const {
+    courseId = "",
+    dateRange = "7d",
+    startDate = "",
+    endDate = "",
+    learnerFilter = "all",
+  } = params;
+
+  return useQuery<GetInstructorActivityTimelineResponse, Error>({
+    queryKey: [
+      "instructorActivityTimeline",
+      courseId,
+      dateRange,
+      startDate,
+      endDate,
+      learnerFilter,
+    ],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return await client.getInstructorActivityTimeline({
+        courseId,
+        dateRange,
+        startDate,
+        endDate,
+        learnerFilter,
+      });
+    },
+    staleTime: 60 * 1000,
+    ...options,
   });
 }
 
@@ -619,6 +667,51 @@ export function useRecordCourseSearchMutation(
       });
       return res.success;
     },
+    ...options,
+  });
+}
+
+export interface CourseGradebookQueryParams {
+  courseId: string;
+  searchQuery?: string;
+  statusFilter?: string;
+  pageSize?: number;
+  pageToken?: string;
+}
+
+export function useCourseGradebookQuery(
+  params: CourseGradebookQueryParams,
+  options?: Partial<UseQueryOptions<GetCourseGradebookResponse, Error>>,
+) {
+  return useQuery<GetCourseGradebookResponse, Error>({
+    queryKey: ["courseGradebook", params],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return await client.getCourseGradebook({
+        courseId: params.courseId,
+        searchQuery: params.searchQuery || "",
+        statusFilter: params.statusFilter || "",
+        pageSize: params.pageSize || 50,
+        pageToken: params.pageToken || "",
+      });
+    },
+    enabled: !!params.courseId,
+    placeholderData: keepPreviousData,
+    ...options,
+  });
+}
+
+export function useInstructorActionTasksQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<GetInstructorActionTasksResponse, Error>>,
+) {
+  return useQuery<GetInstructorActionTasksResponse, Error>({
+    queryKey: ["instructorActionTasks", courseId],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return await client.getInstructorActionTasks({ courseId });
+    },
+    enabled: !!courseId,
     ...options,
   });
 }

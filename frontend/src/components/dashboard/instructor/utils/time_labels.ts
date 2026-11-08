@@ -20,8 +20,10 @@ export function generateTimeLabels(
   range: string,
   customStart?: string,
   customEnd?: string,
+  baseDate?: Date,
 ): TimeDataPoint[] {
-  const now = new Date();
+  const now =
+    baseDate ?? (typeof window !== "undefined" ? new Date() : new Date("2026-11-01T00:00:00Z"));
   const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
   const dayFullNames = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
 

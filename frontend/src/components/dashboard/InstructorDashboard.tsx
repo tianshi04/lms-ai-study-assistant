@@ -248,6 +248,14 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     return list;
   }, [courses, analyticsByCourseId, activeCourse?.id, analytics, compareSortBy]);
 
+  const courseStudentCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    enrichedCoursesForComparison.forEach((c) => {
+      map[c.id] = c.totalStudents;
+    });
+    return map;
+  }, [enrichedCoursesForComparison]);
+
   // Danh sách học viên thực tế của môn đang chọn
   const rawStudents = useMemo(() => analytics?.students || [], [analytics]);
 
@@ -668,6 +676,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           selectedCourseId={selectedCourseId}
           onSelectCourse={handleSelectCourse}
           onOpenOrgModal={() => setIsOrgModalOpen(true)}
+          courseStudentCounts={courseStudentCounts}
         />
 
         {/* TẦNG 2: KPI RIBBON */}

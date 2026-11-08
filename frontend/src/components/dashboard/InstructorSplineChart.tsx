@@ -18,6 +18,7 @@ interface InstructorSplineChartProps {
   height?: number;
   onSelectDay?: (item: SplineDataPoint) => void;
   selectedDay?: string | null;
+  isLoading?: boolean;
 }
 
 function calculateNiceYTicks(maxVal: number): number[] {
@@ -56,6 +57,7 @@ function InstructorSplineChartComponent({
   height = 215,
   onSelectDay,
   selectedDay,
+  isLoading = false,
 }: InstructorSplineChartProps) {
   const gradientId = useId();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -152,7 +154,9 @@ function InstructorSplineChartComponent({
   const isDenseData = activePoints.length > 12;
 
   return (
-    <div className="relative w-full rounded-2xl bg-surface border border-outline-variant/60 p-3 select-none">
+    <div
+      className={`relative w-full rounded-2xl bg-surface border border-outline-variant/60 p-3 select-none ${isLoading ? "opacity-60 pointer-events-none transition-opacity" : ""}`}
+    >
       <svg
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}

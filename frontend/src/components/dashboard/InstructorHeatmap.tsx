@@ -8,6 +8,9 @@ export interface InstructorHeatmapProps {
   learnerFilter?: "all" | "in_progress" | "completed";
   currentMonthNumber?: number;
   lastMonthNumber?: number;
+  heatmapData?: Array<{ day: string; timeSlot: string; count: number; isPeak?: boolean }>;
+  totalActiveInPeriod?: number;
+  isLoading?: boolean;
 }
 
 interface HeatmapCell {
@@ -217,13 +220,25 @@ export function InstructorHeatmap({
   learnerFilter: _learnerFilter = "all",
   currentMonthNumber = 11,
   lastMonthNumber = 10,
+  heatmapData,
+  totalActiveInPeriod,
+  isLoading = false,
 }: InstructorHeatmapProps) {
   const [hoveredCell, setHoveredCell] = useState<HeatmapCell | null>(null);
 
   const isAverageMode = dateRange === "this_month" || dateRange === "last_month";
 
-  // Chọn bộ dữ liệu theo mốc thời gian từ props đồng bộ
+  // Chọn bộ dữ liệu theo mốc thời gian từ API hoặc fallback
   const currentData = useMemo(() => {
+    if (heatmapData && heatmapData.length > 0) {
+      return heatmapData.map((d) => ({
+        day: d.day,
+        timeSlot: d.timeSlot,
+        count: d.count,
+        isPeak: d.isPeak,
+        isFuture: false,
+      }));
+    }
     switch (dateRange) {
       case "this_week":
       case "today":
@@ -238,14 +253,18 @@ export function InstructorHeatmap({
       default:
         return DATA_7D;
     }
-  }, [dateRange]);
+  }, [dateRange, heatmapData]);
 
   // Tổng số lượt học trong kỳ
   const totalInteractions = useMemo(() => {
+    if (totalActiveInPeriod !== undefined) return totalActiveInPeriod;
+    if (heatmapData && heatmapData.length > 0) {
+      return currentData.reduce((acc, c) => acc + c.count, 0);
+    }
     if (dateRange === "this_month") return 2150;
     if (dateRange === "last_month") return 1980;
     return currentData.reduce((acc, c) => acc + c.count, 0);
-  }, [currentData, dateRange]);
+  }, [currentData, dateRange, heatmapData, totalActiveInPeriod]);
 
   // Nhãn thời gian hiển thị
   const timeRangeLabel = useMemo(() => {
@@ -289,7 +308,9 @@ export function InstructorHeatmap({
   };
 
   return (
-    <div className="space-y-3 rounded-2xl bg-surface border border-outline-variant/60 p-4">
+    <div
+      className={`space-y-3 rounded-2xl bg-surface border border-outline-variant/60 p-4 ${isLoading ? "opacity-60 pointer-events-none transition-opacity" : ""}`}
+    >
       {/* Header Heatmap: Không còn nút thời gian trùng lặp vì đã đồng bộ với bộ lọc phía trên */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-outline-variant/40">
         <div className="flex items-center gap-2">
