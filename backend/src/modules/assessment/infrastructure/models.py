@@ -143,6 +143,36 @@ class PeerAssignmentSubmissionModel(Base):
     graded_by_staff: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+    attempt_number: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
+    staff_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    graded_by_user_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    grader_role: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    grade_source: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="PEER_REVIEW", server_default="PEER_REVIEW"
+    )
+    locked_by_user_id: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, index=True
+    )
+    locked_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    rubric_scores_json: Mapped[dict[str, Any]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+    is_draft: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    published_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="SUBMITTED",
+        server_default="SUBMITTED",
+        index=True,
+    )
 
 
 class PeerReviewModel(Base):
