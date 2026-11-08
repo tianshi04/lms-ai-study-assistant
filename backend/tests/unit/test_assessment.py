@@ -376,6 +376,55 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
                 published.append(s)
         return published
 
+    async def list_grading_queue_items(
+        self,
+        course_id: str = "",
+        item_id: str = "",
+    ) -> list[dict[str, Any]]:
+        results = []
+        for s in self.peer_submissions:
+            if item_id and s.item_id != item_id:
+                continue
+            is_appeal = s.id in self.grade_appeals
+            appeal = self.grade_appeals.get(s.id)
+            appeal_reason = appeal.appeal_reason if appeal else ""
+            revs = [r for r in self.peer_reviews if r.submission_id == s.id]
+            is_outlier = any(r.is_outlier for r in revs)
+            status_str = "PENDING"
+            if s.locked_by_user_id:
+                status_str = "CLAIMED"
+            elif is_appeal:
+                status_str = "APPEALED"
+            elif s.final_score is not None and not s.is_draft:
+                status_str = "GRADED"
+
+            results.append(
+                {
+                    "submission_id": s.id,
+                    "item_id": s.item_id,
+                    "item_title": f"Item {s.item_id}",
+                    "course_id": course_id or "course_test_1",
+                    "course_title": "Test Course",
+                    "student_id": s.user_id,
+                    "student_name": f"Student {s.user_id}",
+                    "student_avatar_url": "",
+                    "submitted_at": s.created_at,
+                    "is_outlier": is_outlier,
+                    "is_appeal": is_appeal,
+                    "appeal_reason": appeal_reason,
+                    "locked_by_user_id": s.locked_by_user_id or "",
+                    "locked_by_name": s.locked_by_user_id or "",
+                    "lock_expires_at": "",
+                    "grade_source": s.grade_source or "PEER_REVIEW",
+                    "staff_score": float(s.final_score or 0.0),
+                    "is_draft": s.is_draft,
+                    "status": status_str,
+                    "peer_score": 0.0,
+                    "peer_reviews_count": len(revs),
+                }
+            )
+        return results
+
     async def get_course_gradebook_data(
         self,
         course_id: str,

@@ -254,6 +254,14 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def list_grading_queue_items(
+        self,
+        course_id: str = "",
+        item_id: str = "",
+    ) -> list[dict[str, Any]]:
+        """Lists grading queue items for peer assignments across course or specific item."""
+
+    @abstractmethod
     async def get_course_gradebook_data(
         self,
         course_id: str,

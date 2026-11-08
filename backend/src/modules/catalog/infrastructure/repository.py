@@ -1,5 +1,5 @@
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import case, delete, func, select, update
@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from uuid6 import uuid7
 
 from src.modules.catalog.domain import (
+    ActivityDataPoint,
     Category,
     Course,
     CourseAnnouncement,
@@ -16,7 +17,9 @@ from src.modules.catalog.domain import (
     CourseReview,
     CourseStatus,
     EnrolledStudent,
+    HeatmapCell,
     ICatalogRepository,
+    InstructorActivityTimeline,
     InstructorAnalytics,
     InteractiveTranscript,
     InVideoQuiz,
@@ -29,10 +32,14 @@ from src.modules.catalog.domain import (
 from src.modules.catalog.domain.constants import (
     DEFAULT_RECOMMENDED_COURSES_COUNT,
     DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT,
+    DEFAULT_TIMELINE_DATE_RANGE,
+    HEATMAP_DAYS,
+    HEATMAP_TIME_SLOTS,
     MAX_FOUNDATIONAL_COURSES_COUNT,
     MAX_SEARCH_QUERY_LENGTH,
     MIN_SEARCH_QUERY_LENGTH,
     SEARCH_HISTORY_THROTTLE_SECONDS,
+    VALID_TIMELINE_DATE_RANGES,
 )
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
@@ -1674,6 +1681,358 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             )
             for m in models
         ]
+
+    async def get_instructor_activity_timeline(
+        self,
+        course_ids: list[str],
+        date_range: str,
+        start_date: str = "",
+        end_date: str = "",
+        learner_filter: str = "all",
+    ) -> InstructorActivityTimeline:
+        def _parse_iso_dt(ts_str: str | None) -> datetime | None:
+            if not ts_str:
+                return None
+            try:
+                clean = ts_str.replace("Z", "+00:00")
+                dt = datetime.fromisoformat(clean)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=UTC)
+                return dt.astimezone(UTC)
+            except (ValueError, TypeError, OverflowError):
+                return None
+
+        now = datetime.now(UTC)
+        today_start = datetime(now.year, now.month, now.day, 0, 0, 0, tzinfo=UTC)
+        today_end = datetime(
+            now.year, now.month, now.day, 23, 59, 59, 999999, tzinfo=UTC
+        )
+
+        normalized_range = (
+            date_range
+            if date_range in VALID_TIMELINE_DATE_RANGES
+            else DEFAULT_TIMELINE_DATE_RANGE
+        )
+
+        buckets: list[tuple[datetime, datetime, str, str]] = []
+        range_start: datetime
+        range_end: datetime
+
+        if normalized_range == "today":
+            range_start = today_start
+            range_end = today_end
+            today_str = today_start.date().isoformat()
+            hour_intervals = [
+                (0, 3),
+                (3, 6),
+                (6, 9),
+                (9, 12),
+                (12, 15),
+                (15, 18),
+                (18, 21),
+                (21, 24),
+            ]
+            for sh, eh in hour_intervals:
+                b_start = today_start + timedelta(hours=sh)
+                b_end = today_start + timedelta(hours=eh)
+                ts_str = f"{today_str}T{sh:02d}:00:00Z"
+                lbl = f"{sh:02d}h"
+                buckets.append((b_start, b_end, ts_str, lbl))
+        elif normalized_range == "7d":
+            range_start = today_start - timedelta(days=6)
+            range_end = today_end
+            day_names = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+            for i in range(7):
+                b_start = range_start + timedelta(days=i)
+                b_end = b_start + timedelta(days=1)
+                ts_str = b_start.date().isoformat()
+                lbl = "Hôm nay" if i == 6 else day_names[b_start.weekday()]
+                buckets.append((b_start, b_end, ts_str, lbl))
+        elif normalized_range == "this_week":
+            monday = today_start - timedelta(days=today_start.weekday())
+            range_start = monday
+            range_end = monday + timedelta(days=7) - timedelta(microseconds=1)
+            day_names = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+            for i in range(7):
+                b_start = monday + timedelta(days=i)
+                b_end = b_start + timedelta(days=1)
+                ts_str = b_start.date().isoformat()
+                lbl = day_names[i]
+                buckets.append((b_start, b_end, ts_str, lbl))
+        elif normalized_range == "last_week":
+            last_monday = today_start - timedelta(days=today_start.weekday() + 7)
+            range_start = last_monday
+            range_end = last_monday + timedelta(days=7) - timedelta(microseconds=1)
+            day_names = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+            for i in range(7):
+                b_start = last_monday + timedelta(days=i)
+                b_end = b_start + timedelta(days=1)
+                ts_str = b_start.date().isoformat()
+                lbl = day_names[i]
+                buckets.append((b_start, b_end, ts_str, lbl))
+        elif normalized_range == "this_month":
+            first_day = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=UTC)
+            next_month_year = now.year + 1 if now.month == 12 else now.year
+            next_month_num = 1 if now.month == 12 else now.month + 1
+            next_month = datetime(
+                next_month_year, next_month_num, 1, 0, 0, 0, tzinfo=UTC
+            )
+            range_start = first_day
+            range_end = next_month - timedelta(microseconds=1)
+            curr = first_day
+            while curr < next_month:
+                b_start = curr
+                b_end = curr + timedelta(days=1)
+                ts_str = b_start.date().isoformat()
+                lbl = f"{b_start.day:02d}/{b_start.month:02d}"
+                buckets.append((b_start, b_end, ts_str, lbl))
+                curr += timedelta(days=1)
+        elif normalized_range == "last_month":
+            lm_year = now.year - 1 if now.month == 1 else now.year
+            lm_month = 12 if now.month == 1 else now.month - 1
+            first_day = datetime(lm_year, lm_month, 1, 0, 0, 0, tzinfo=UTC)
+            next_month = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=UTC)
+            range_start = first_day
+            range_end = next_month - timedelta(microseconds=1)
+            curr = first_day
+            while curr < next_month:
+                b_start = curr
+                b_end = curr + timedelta(days=1)
+                ts_str = b_start.date().isoformat()
+                lbl = f"{b_start.day:02d}/{b_start.month:02d}"
+                buckets.append((b_start, b_end, ts_str, lbl))
+                curr += timedelta(days=1)
+        elif normalized_range == "custom" and start_date and end_date:
+            try:
+                s_parts = [int(p) for p in start_date.split("-")]
+                e_parts = [int(p) for p in end_date.split("-")]
+                s_dt = datetime(s_parts[0], s_parts[1], s_parts[2], 0, 0, 0, tzinfo=UTC)
+                e_dt = datetime(
+                    e_parts[0], e_parts[1], e_parts[2], 23, 59, 59, 999999, tzinfo=UTC
+                )
+                if s_dt <= e_dt and (e_dt - s_dt).days <= 90:
+                    range_start = s_dt
+                    range_end = e_dt
+                    curr = s_dt
+                    while curr <= e_dt:
+                        b_start = curr
+                        b_end = curr + timedelta(days=1)
+                        ts_str = b_start.date().isoformat()
+                        lbl = f"{b_start.day:02d}/{b_start.month:02d}"
+                        buckets.append((b_start, b_end, ts_str, lbl))
+                        curr += timedelta(days=1)
+                else:
+                    normalized_range = "7d"
+                    range_start = today_start - timedelta(days=6)
+                    range_end = today_end
+                    day_names = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+                    for i in range(7):
+                        b_start = range_start + timedelta(days=i)
+                        b_end = b_start + timedelta(days=1)
+                        ts_str = b_start.date().isoformat()
+                        lbl = "Hôm nay" if i == 6 else day_names[b_start.weekday()]
+                        buckets.append((b_start, b_end, ts_str, lbl))
+            except (ValueError, TypeError, OverflowError):
+                normalized_range = "7d"
+                range_start = today_start - timedelta(days=6)
+                range_end = today_end
+                day_names = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+                for i in range(7):
+                    b_start = range_start + timedelta(days=i)
+                    b_end = b_start + timedelta(days=1)
+                    ts_str = b_start.date().isoformat()
+                    lbl = "Hôm nay" if i == 6 else day_names[b_start.weekday()]
+                    buckets.append((b_start, b_end, ts_str, lbl))
+        else:
+            range_start = today_start - timedelta(days=6)
+            range_end = today_end
+            day_names = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+            for i in range(7):
+                b_start = range_start + timedelta(days=i)
+                b_end = b_start + timedelta(days=1)
+                ts_str = b_start.date().isoformat()
+                lbl = "Hôm nay" if i == 6 else day_names[b_start.weekday()]
+                buckets.append((b_start, b_end, ts_str, lbl))
+
+        if not course_ids:
+            empty_timeline = [
+                ActivityDataPoint(
+                    timestamp=b[2],
+                    label=b[3],
+                    active_learners=0,
+                    completed_items=0,
+                    in_progress=0,
+                )
+                for b in buckets
+            ]
+            empty_heatmap = [
+                HeatmapCell(
+                    day=d,
+                    time_slot=ts,
+                    count=0,
+                    is_peak=False,
+                )
+                for d in HEATMAP_DAYS
+                for ts in HEATMAP_TIME_SLOTS
+            ]
+            return InstructorActivityTimeline(
+                timeline=empty_timeline,
+                heatmap=empty_heatmap,
+                total_active_in_period=0,
+            )
+
+        learning_progress_model = __import__(
+            "src.modules.learning.infrastructure.models",
+            fromlist=[
+                "LearningProgressModel",
+                "PersonalNoteModel",
+                "LearningItemProgressModel",
+            ],
+        ).LearningProgressModel
+        personal_note_model = __import__(
+            "src.modules.learning.infrastructure.models",
+            fromlist=["PersonalNoteModel"],
+        ).PersonalNoteModel
+        learning_item_progress_model = __import__(
+            "src.modules.learning.infrastructure.models",
+            fromlist=["LearningItemProgressModel"],
+        ).LearningItemProgressModel
+
+        lp_stmt = select(learning_progress_model).where(
+            learning_progress_model.course_id.in_(course_ids)
+        )
+        if learner_filter == "in_progress":
+            lp_stmt = lp_stmt.where(
+                learning_progress_model.overall_progress_percent < 100.0
+            )
+        elif learner_filter == "completed":
+            lp_stmt = lp_stmt.where(
+                learning_progress_model.overall_progress_percent >= 100.0
+            )
+
+        lp_res = await self.session.execute(lp_stmt)
+        progresses = lp_res.scalars().all()
+
+        note_stmt = select(personal_note_model).where(
+            personal_note_model.course_id.in_(course_ids)
+        )
+        note_res = await self.session.execute(note_stmt)
+        notes = note_res.scalars().all()
+
+        item_stmt = select(learning_item_progress_model).where(
+            learning_item_progress_model.course_id.in_(course_ids)
+        )
+        item_res = await self.session.execute(item_stmt)
+        item_progresses = item_res.scalars().all()
+
+        valid_user_ids = {p.user_id for p in progresses}
+        user_is_completed = {
+            p.user_id: (p.overall_progress_percent >= 100.0) for p in progresses
+        }
+        user_completed_items_count = {
+            p.user_id: len(p.completed_item_ids or []) for p in progresses
+        }
+
+        user_events: list[tuple[str, datetime]] = []
+        for p in progresses:
+            dt_acc = _parse_iso_dt(p.last_accessed_at)
+            if dt_acc:
+                user_events.append((p.user_id, dt_acc))
+            dt_comp = _parse_iso_dt(p.completed_at)
+            if dt_comp:
+                user_events.append((p.user_id, dt_comp))
+            dt_enr = _parse_iso_dt(p.enrolled_at)
+            if dt_enr:
+                user_events.append((p.user_id, dt_enr))
+
+        for n in notes:
+            if n.user_id in valid_user_ids:
+                dt_c = _parse_iso_dt(n.created_at)
+                if dt_c:
+                    user_events.append((n.user_id, dt_c))
+                dt_u = _parse_iso_dt(n.updated_at)
+                if dt_u:
+                    user_events.append((n.user_id, dt_u))
+
+        for ip in item_progresses:
+            if ip.user_id in valid_user_ids:
+                dt_s = _parse_iso_dt(ip.last_studied_at)
+                if dt_s:
+                    user_events.append((ip.user_id, dt_s))
+
+        timeline_points: list[ActivityDataPoint] = []
+        period_active_users: set[str] = set()
+
+        for b_start, b_end, ts_str, lbl in buckets:
+            bucket_users: set[str] = set()
+            for uid, dt in user_events:
+                if b_start <= dt < b_end:
+                    bucket_users.add(uid)
+                    period_active_users.add(uid)
+
+            active_count = len(bucket_users)
+            completed_items_in_bucket = sum(
+                user_completed_items_count.get(uid, 0)
+                for uid in bucket_users
+                if user_is_completed.get(uid, False)
+            )
+            in_prog_count = sum(
+                1 for uid in bucket_users if not user_is_completed.get(uid, False)
+            )
+            timeline_points.append(
+                ActivityDataPoint(
+                    timestamp=ts_str,
+                    label=lbl,
+                    active_learners=active_count,
+                    completed_items=completed_items_in_bucket,
+                    in_progress=in_prog_count,
+                )
+            )
+
+        day_labels = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+        heatmap_counts: dict[tuple[str, str], set[str]] = {
+            (d, s): set() for d in HEATMAP_DAYS for s in HEATMAP_TIME_SLOTS
+        }
+
+        for uid, dt in user_events:
+            if range_start <= dt <= range_end:
+                day_str = day_labels[dt.weekday()]
+                h = dt.hour
+                if 6 <= h < 12:
+                    slot = "Sáng (06h-12h)"
+                elif 12 <= h < 18:
+                    slot = "Chiều (12h-18h)"
+                elif 18 <= h < 22:
+                    slot = "Tối (18h-22h)"
+                else:
+                    slot = "Đêm (22h-02h)"
+                heatmap_counts[(day_str, slot)].add(uid)
+
+        max_count = 0
+        for d in HEATMAP_DAYS:
+            for s in HEATMAP_TIME_SLOTS:
+                cnt = len(heatmap_counts[(d, s)])
+                max_count = max(max_count, cnt)
+
+        heatmap_cells: list[HeatmapCell] = []
+        for d in HEATMAP_DAYS:
+            for s in HEATMAP_TIME_SLOTS:
+                cnt = len(heatmap_counts[(d, s)])
+                is_peak = cnt > 0 and cnt == max_count
+                heatmap_cells.append(
+                    HeatmapCell(
+                        day=d,
+                        time_slot=s,
+                        count=cnt,
+                        is_peak=is_peak,
+                    )
+                )
+
+        return InstructorActivityTimeline(
+            timeline=timeline_points,
+            heatmap=heatmap_cells,
+            total_active_in_period=len(period_active_users),
+        )
 
     async def get_instructor_analytics(self, course_id: str) -> InstructorAnalytics:
         real_id = await self.get_course_id_by_slug_or_id(course_id)

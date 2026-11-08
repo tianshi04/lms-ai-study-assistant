@@ -39,8 +39,15 @@ class CurrentUserContext:
         return "INSTRUCTOR" in r or self.role in ("2", "USER_ROLE_INSTRUCTOR")
 
     @property
+    def is_ta(self) -> bool:
+        if not self.role:
+            return False
+        r = self.role.upper()
+        return "TA" in r or "TEACHING_ASSISTANT" in r
+
+    @property
     def is_staff(self) -> bool:
-        return self.is_admin or self.is_instructor
+        return self.is_admin or self.is_instructor or self.is_ta
 
 
 CurrentUser = CurrentUserContext

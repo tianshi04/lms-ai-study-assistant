@@ -1116,6 +1116,142 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
 
+    async def list_grading_queue_items(
+        self,
+        course_id: str = "",
+        item_id: str = "",
+    ) -> list[dict[str, Any]]:
+        from src.modules.catalog.infrastructure.models import (
+            CourseModel,
+            LearningItemModel,
+            LessonModel,
+            WeekModuleModel,
+        )
+        from src.modules.identity.infrastructure.models import UserModel
+
+        stmt = (
+            select(
+                PeerAssignmentSubmissionModel,
+                LearningItemModel.title.label("item_title"),
+                CourseModel.id.label("course_id"),
+                CourseModel.title.label("course_title"),
+                UserModel.full_name.label("student_name"),
+                UserModel.avatar_url.label("student_avatar_url"),
+            )
+            .join(
+                LearningItemModel,
+                LearningItemModel.id == PeerAssignmentSubmissionModel.item_id,
+            )
+            .join(LessonModel, LessonModel.id == LearningItemModel.lesson_id)
+            .join(WeekModuleModel, WeekModuleModel.id == LessonModel.week_module_id)
+            .join(CourseModel, CourseModel.id == WeekModuleModel.course_id)
+            .join(UserModel, UserModel.id == PeerAssignmentSubmissionModel.user_id)
+        )
+        if course_id:
+            stmt = stmt.where(CourseModel.id == course_id)
+        if item_id:
+            stmt = stmt.where(PeerAssignmentSubmissionModel.item_id == item_id)
+
+        stmt = stmt.order_by(PeerAssignmentSubmissionModel.created_at.desc())
+        res = await self.session.execute(stmt)
+        rows = res.all()
+
+        results: list[dict[str, Any]] = []
+        now = datetime.now(UTC)
+
+        for row in rows:
+            sub = row[0]
+            item_title = row[1] or ""
+            c_id = row[2] or ""
+            c_title = row[3] or ""
+            student_name = row[4] or ""
+            student_avatar_url = row[5] or ""
+
+            # Check locker name and lock expiration
+            locked_by_name = ""
+            lock_expires_at = ""
+            is_currently_locked = False
+            if sub.locked_by_user_id and sub.locked_at:
+                try:
+                    lock_dt = datetime.fromisoformat(sub.locked_at)
+                    exp_dt = lock_dt + timedelta(minutes=GRADING_LOCK_TIMEOUT_MINUTES)
+                    if now < exp_dt:
+                        is_currently_locked = True
+                        lock_expires_at = exp_dt.isoformat()
+                        user_stmt = select(UserModel.full_name).where(
+                            UserModel.id == sub.locked_by_user_id
+                        )
+                        u_res = await self.session.execute(user_stmt)
+                        locked_by_name = (
+                            u_res.scalar_one_or_none() or sub.locked_by_user_id
+                        )
+                except (ValueError, TypeError):
+                    pass
+
+            # Check appeals
+            appeal_stmt = select(GradeAppealModel).where(
+                GradeAppealModel.submission_id == sub.id
+            )
+            app_res = await self.session.execute(appeal_stmt)
+            appeal = app_res.scalar_one_or_none()
+            is_appeal = bool(appeal and appeal.status != "RESOLVED")
+            appeal_reason = appeal.appeal_reason if appeal else ""
+
+            # Check reviews
+            rev_stmt = select(PeerReviewModel).where(
+                PeerReviewModel.submission_id == sub.id
+            )
+            rev_res = await self.session.execute(rev_stmt)
+            reviews = rev_res.scalars().all()
+            reviews_count = len(reviews)
+            is_outlier = any(r.is_outlier for r in reviews)
+            peer_score = (
+                round(sum(r.total_score for r in reviews) / reviews_count, 2)
+                if reviews_count > 0
+                else 0.0
+            )
+
+            # Determine status
+            if is_currently_locked:
+                status_str = "CLAIMED"
+            elif is_appeal:
+                status_str = "APPEALED"
+            elif sub.final_score is not None and not sub.is_draft:
+                status_str = "GRADED"
+            else:
+                status_str = "PENDING"
+
+            results.append(
+                {
+                    "submission_id": sub.id,
+                    "item_id": sub.item_id,
+                    "item_title": item_title,
+                    "course_id": c_id,
+                    "course_title": c_title,
+                    "student_id": sub.user_id,
+                    "student_name": student_name,
+                    "student_avatar_url": student_avatar_url,
+                    "submitted_at": sub.created_at,
+                    "is_outlier": is_outlier,
+                    "is_appeal": is_appeal,
+                    "appeal_reason": appeal_reason,
+                    "locked_by_user_id": sub.locked_by_user_id or ""
+                    if is_currently_locked
+                    else "",
+                    "locked_by_name": locked_by_name,
+                    "lock_expires_at": lock_expires_at,
+                    "grade_source": sub.grade_source or "PEER_REVIEW",
+                    "staff_score": float(sub.final_score)
+                    if sub.final_score is not None and sub.graded_by_staff
+                    else 0.0,
+                    "is_draft": sub.is_draft,
+                    "status": status_str,
+                    "peer_score": float(peer_score),
+                    "peer_reviews_count": reviews_count,
+                }
+            )
+        return results
+
     async def get_course_gradebook_data(
         self,
         course_id: str,

@@ -196,6 +196,7 @@ class Course(Entity):
         level: str = "",
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
+        ta_ids: list[str] | None = None,
         financial_aid_enabled: bool = True,
         status: CourseStatus = CourseStatus.DRAFT,
         rejection_reason: str = "",
@@ -217,6 +218,7 @@ class Course(Entity):
         self.level = level
         self.owner_id = owner_id
         self.co_instructor_ids = co_instructor_ids or []
+        self.ta_ids = ta_ids or []
         self.financial_aid_enabled = financial_aid_enabled
         self.status = status
         self.rejection_reason = rejection_reason
@@ -282,6 +284,7 @@ class Course(Entity):
         return bool(
             (self.owner_id and user.id == self.owner_id)
             or (self.co_instructor_ids and user.id in self.co_instructor_ids)
+            or (getattr(self, "ta_ids", None) and user.id in self.ta_ids)
         )
 
 
@@ -381,3 +384,32 @@ class UserSearchHistory(Entity):
     filters_json: str
     result_count: int
     created_at: str
+
+
+@dataclass(frozen=True)
+class ActivityDataPoint(ValueObject):
+    timestamp: str
+    label: str
+    active_learners: int
+    completed_items: int
+    in_progress: int
+
+
+@dataclass(frozen=True)
+class HeatmapCell(ValueObject):
+    day: str
+    time_slot: str
+    count: int
+    is_peak: bool
+
+
+class InstructorActivityTimeline(ValueObject):
+    def __init__(
+        self,
+        timeline: list[ActivityDataPoint] | None = None,
+        heatmap: list[HeatmapCell] | None = None,
+        total_active_in_period: int = 0,
+    ) -> None:
+        self.timeline = timeline or []
+        self.heatmap = heatmap or []
+        self.total_active_in_period = total_active_in_period

@@ -581,3 +581,240 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 True,
                 "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Review Queue). Bài nộp chuyển sang trạng thái PENDING_STAFF_REVIEW.",
             )
+
+    async def list_grading_queue(
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        status_filter: str = "ALL",
+        search_query: str = "",
+        page_size: int = 50,
+        page_token: str = "",
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, Any]:
+        """Lists grading queue items for peer assignments across course or specific item."""
+        self._verify_staff(current_user)
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            items = await repo.list_grading_queue_items(
+                course_id=course_id, item_id=item_id
+            )
+
+        sq = (search_query or "").strip().lower()
+        sf = (status_filter or "").strip().upper()
+
+        total_count = len(items)
+        pending_count = sum(1 for i in items if i["status"] == "PENDING")
+        claimed_count = sum(1 for i in items if i["status"] == "CLAIMED")
+        appealed_count = sum(1 for i in items if i["status"] == "APPEALED")
+        graded_count = sum(1 for i in items if i["status"] == "GRADED")
+
+        filtered = []
+        for i in items:
+            if sf and sf not in (
+                "ALL",
+                "GRADING_QUEUE_STATUS_ALL",
+                "0",
+                "1",
+                "UNSPECIFIED",
+                "",
+            ):
+                item_status = i["status"].upper()
+                if sf.endswith(item_status) or sf == item_status:
+                    pass
+                else:
+                    continue
+
+            if sq:
+                name_match = sq in i["student_name"].lower()
+                id_match = sq in i["student_id"].lower()
+                title_match = sq in i["item_title"].lower()
+                if not (name_match or id_match or title_match):
+                    continue
+
+            filtered.append(i)
+
+        offset = 0
+        if page_token:
+            try:
+                offset = int(page_token)
+            except ValueError:
+                offset = 0
+
+        paginated = filtered[offset : offset + page_size]
+        next_token = (
+            str(offset + page_size) if (offset + page_size) < len(filtered) else ""
+        )
+
+        return {
+            "items": paginated,
+            "next_page_token": next_token,
+            "total_count": total_count,
+            "pending_count": pending_count,
+            "claimed_count": claimed_count,
+            "appealed_count": appealed_count,
+            "graded_count": graded_count,
+        }
+
+    async def get_grading_submission_detail(
+        self,
+        submission_id: str,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, Any]:
+        """Gets full details of a peer assignment submission for grading workspace."""
+        self._verify_staff(current_user)
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                raise ValueError(f"Không tìm thấy bài nộp {submission_id}")
+
+            queue_items = await repo.list_grading_queue_items(item_id=sub.item_id)
+            matching_item = next(
+                (i for i in queue_items if i["submission_id"] == sub.id), None
+            )
+            if not matching_item:
+                matching_item = {
+                    "submission_id": sub.id,
+                    "item_id": sub.item_id,
+                    "item_title": "",
+                    "course_id": "",
+                    "course_title": "",
+                    "student_id": sub.user_id,
+                    "student_name": "",
+                    "student_avatar_url": "",
+                    "submitted_at": sub.created_at,
+                    "is_outlier": False,
+                    "is_appeal": False,
+                    "appeal_reason": "",
+                    "locked_by_user_id": sub.locked_by_user_id or "",
+                    "locked_by_name": "",
+                    "lock_expires_at": "",
+                    "grade_source": sub.grade_source or "PEER_REVIEW",
+                    "staff_score": float(sub.final_score or 0.0),
+                    "is_draft": sub.is_draft,
+                    "status": "PENDING",
+                    "peer_score": 0.0,
+                    "peer_reviews_count": 0,
+                }
+
+            reviews = await repo.get_peer_reviews_for_submission(sub.id)
+            peer_reviews_data = [
+                {
+                    "review_id": r.id,
+                    "reviewer_id": r.reviewer_user_id,
+                    "reviewer_name": f"Học viên #{r.reviewer_user_id[:6]}",
+                    "total_score": float(r.total_score),
+                    "graded_criteria": r.rubric_criteria or [],
+                    "feedback": "",
+                    "reviewed_at": r.created_at,
+                }
+                for r in reviews
+            ]
+
+            staff_grading = None
+            if sub.graded_by_staff or sub.rubric_scores_json or sub.is_draft:
+                staff_grading = {
+                    "staff_id": sub.graded_by_user_id or "",
+                    "staff_name": "Trợ giảng"
+                    if sub.grader_role == "TA"
+                    else "Giảng viên",
+                    "score": float(sub.final_score or 0.0),
+                    "graded_criteria": [
+                        RubricCriteria(
+                            criteria_id=k, title=k, max_score=10.0, score_given=float(v)
+                        )
+                        for k, v in (sub.rubric_scores_json or {}).items()
+                    ],
+                    "feedback": sub.staff_feedback or "",
+                    "is_draft": sub.is_draft,
+                    "graded_at": sub.published_at or sub.created_at,
+                    "provenance": sub.grade_source or "TA",
+                    "appeal_resolution_notes": "",
+                }
+
+            default_rubrics = [
+                RubricCriteria(
+                    criteria_id="c1", title="Code Quality & Structure", max_score=10.0
+                ),
+                RubricCriteria(
+                    criteria_id="c2", title="Documentation & Comments", max_score=10.0
+                ),
+                RubricCriteria(criteria_id="c3", title="Test Coverage", max_score=10.0),
+            ]
+
+            return {
+                "submission": matching_item,
+                "submission_url": sub.submission_url,
+                "text_content": sub.text_content,
+                "attempt_number": sub.attempt_number,
+                "rubric_criteria": default_rubrics,
+                "peer_reviews": peer_reviews_data,
+                "current_staff_grading": staff_grading,
+            }
+
+    async def get_instructor_action_tasks(
+        self,
+        course_id: str,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, Any]:
+        """Gets urgent action tasks (overdue > 48h, appeals) for instructor cockpit."""
+        self._verify_staff(current_user)
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            items = await repo.list_grading_queue_items(course_id=course_id)
+
+        now = datetime.now(UTC)
+        tasks = []
+        overdue_count = 0
+
+        for i in items:
+            is_overdue = False
+            try:
+                sub_dt = datetime.fromisoformat(i["submitted_at"])
+                if (now - sub_dt) > timedelta(hours=48):
+                    is_overdue = True
+                    overdue_count += 1
+            except (ValueError, TypeError):
+                pass
+
+            if i["is_appeal"]:
+                tasks.append(
+                    {
+                        "id": f"task-appeal-{i['submission_id']}",
+                        "type": "APPEAL",
+                        "title": f"Khiếu nại điểm: {i['item_title']}",
+                        "lesson_title": i["item_title"],
+                        "student_name": i["student_name"],
+                        "course_title": i["course_title"],
+                        "time_ago": "Cần xử lý",
+                        "action_text": "Xem khiếu nại",
+                        "action_url": f"/instructor/courses/{course_id}/grading-cockpit?submission={i['submission_id']}",
+                        "course_id": course_id,
+                        "priority": "HIGH",
+                        "created_at": i["submitted_at"],
+                    }
+                )
+            elif is_overdue and i["status"] == "PENDING":
+                tasks.append(
+                    {
+                        "id": f"task-overdue-{i['submission_id']}",
+                        "type": "OVERDUE_GRADING",
+                        "title": f"Bài nộp quá hạn 48h: {i['item_title']}",
+                        "lesson_title": i["item_title"],
+                        "student_name": i["student_name"],
+                        "course_title": i["course_title"],
+                        "time_ago": "Quá 48h",
+                        "action_text": "Chấm ngay",
+                        "action_url": f"/instructor/courses/{course_id}/grading-cockpit?submission={i['submission_id']}",
+                        "course_id": course_id,
+                        "priority": "HIGH",
+                        "created_at": i["submitted_at"],
+                    }
+                )
+
+        return {
+            "tasks": tasks,
+            "total_pending": len(tasks),
+            "overdue_count": overdue_count,
+        }

@@ -46,11 +46,15 @@ class AssessmentUseCase(
         repository: AssessmentRepositoryInterface | None = None,
         repo_factory: Callable[[Any], AssessmentRepositoryInterface] | None = None,
         sandbox_executor: PythonCodeSandboxExecutor | None = None,
+        catalog_repo_factory: Callable[[Any], Any] | None = None,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             repository=repository,
             repo_factory=repo_factory,
             sandbox_executor=sandbox_executor,
+            catalog_repo_factory=catalog_repo_factory,
+            **kwargs,
         )
 
         # Composition sub-usecases for direct modular access

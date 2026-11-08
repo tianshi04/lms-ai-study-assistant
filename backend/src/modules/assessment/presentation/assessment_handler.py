@@ -1,3 +1,5 @@
+from typing import Any
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -10,7 +12,8 @@ from src.modules.assessment.domain import (
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
     RubricCriteria,
 )
-from src.shared.auth import CurrentUser, require_current_user
+from src.shared.auth import CurrentUser, CurrentUserContext, require_current_user
+from src.shared.permissions import CoursePermission, enforce_course_ownership
 
 
 class AssessmentHandler(AssessmentService):
@@ -649,3 +652,496 @@ class AssessmentHandler(AssessmentService):
             topic_mastery=pb_mastery,
             is_answer_masked=res["is_answer_masked"],
         )
+
+    def _to_pb_queue_status(self, status_str: str) -> pb.GradingQueueStatus:
+        mapping = {
+            "ALL": pb.GradingQueueStatus.ALL,
+            "PENDING": pb.GradingQueueStatus.PENDING,
+            "CLAIMED": pb.GradingQueueStatus.CLAIMED,
+            "APPEALED": pb.GradingQueueStatus.APPEALED,
+            "GRADED": pb.GradingQueueStatus.GRADED,
+        }
+        return mapping.get(status_str.upper(), pb.GradingQueueStatus.UNSPECIFIED)
+
+    def _to_pb_provenance(self, prov_str: str | None) -> pb.GradingProvenance:
+        if not prov_str:
+            return pb.GradingProvenance.UNSPECIFIED
+        mapping = {
+            "AUTO": pb.GradingProvenance.AUTO,
+            "PEER": pb.GradingProvenance.PEER,
+            "PEER_REVIEW": pb.GradingProvenance.PEER,
+            "TA": pb.GradingProvenance.TA,
+            "TA_OVERRIDE": pb.GradingProvenance.TA,
+            "INSTRUCTOR": pb.GradingProvenance.INSTRUCTOR,
+        }
+        return mapping.get(prov_str.upper(), pb.GradingProvenance.UNSPECIFIED)
+
+    async def list_grading_queue(
+        self,
+        request: pb.ListGradingQueueRequest,
+        ctx: RequestContext[pb.ListGradingQueueRequest, pb.ListGradingQueueResponse],
+    ) -> pb.ListGradingQueueResponse:
+        current_user = require_current_user()
+        try:
+            if request.course_id:
+                course = await self.use_case.get_course_for_item_or_submission(
+                    course_id=request.course_id
+                )
+                user_ctx = CurrentUserContext(
+                    id=current_user.id, role=current_user.role, email=current_user.email
+                )
+                enforce_course_ownership(
+                    course=course,
+                    user=user_ctx,
+                    required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                    action_name="xem danh sách bài chấm",
+                )
+
+            res = await self.use_case.list_grading_queue(
+                course_id=request.course_id,
+                item_id=request.item_id,
+                status_filter=str(request.status),
+                search_query=request.search_query,
+                page_size=request.page_size or 50,
+                page_token=request.page_token,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        items = [
+            pb.GradingQueueItem(
+                submission_id=i["submission_id"],
+                item_id=i["item_id"],
+                item_title=i["item_title"],
+                course_id=i["course_id"],
+                course_title=i["course_title"],
+                student_id=i["student_id"],
+                student_name=i["student_name"],
+                student_avatar_url=i["student_avatar_url"],
+                submitted_at=i["submitted_at"],
+                is_outlier=i["is_outlier"],
+                is_appeal=i["is_appeal"],
+                appeal_reason=i["appeal_reason"],
+                locked_by_user_id=i["locked_by_user_id"],
+                locked_by_name=i["locked_by_name"],
+                lock_expires_at=i["lock_expires_at"],
+                grade_source=self._to_pb_provenance(i.get("grade_source")),
+                staff_score=float(i["staff_score"]),
+                is_draft=i["is_draft"],
+                status=self._to_pb_queue_status(i["status"]),
+                peer_score=float(i["peer_score"]),
+                peer_reviews_count=i["peer_reviews_count"],
+            )
+            for i in res["items"]
+        ]
+
+        return pb.ListGradingQueueResponse(
+            items=items,
+            next_page_token=res["next_page_token"],
+            total_count=res["total_count"],
+            pending_count=res["pending_count"],
+            claimed_count=res["claimed_count"],
+            appealed_count=res["appealed_count"],
+            graded_count=res["graded_count"],
+        )
+
+    async def claim_grading_task(
+        self,
+        request: pb.ClaimGradingTaskRequest,
+        ctx: RequestContext[pb.ClaimGradingTaskRequest, pb.ClaimGradingTaskResponse],
+    ) -> pb.ClaimGradingTaskResponse:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                submission_id=request.submission_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="nhận bài chấm",
+            )
+            success, msg, info = await self.use_case.claim_grading_task(
+                submission_id=request.submission_id,
+                staff_user_id=current_user.id,
+                current_user=current_user,
+            )
+            if not success:
+                raise ConnectError(Code.FAILED_PRECONDITION, msg)
+            return pb.ClaimGradingTaskResponse(
+                success=True,
+                message=msg,
+                locked_by_user_id=info.get("locked_by_user_id", current_user.id),
+                locked_by_name=current_user.full_name or current_user.id,
+                lock_expires_at=info.get("lock_expires_at", ""),
+                lease_duration_seconds=info.get("lease_duration_seconds", 1800),
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+
+    async def renew_grading_task_lock(
+        self,
+        request: pb.RenewGradingTaskLockRequest,
+        ctx: RequestContext[
+            pb.RenewGradingTaskLockRequest, pb.RenewGradingTaskLockResponse
+        ],
+    ) -> pb.RenewGradingTaskLockResponse:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                submission_id=request.submission_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="gia hạn khóa bài chấm",
+            )
+            success, msg, info = await self.use_case.renew_grading_task_lock(
+                submission_id=request.submission_id,
+                staff_user_id=current_user.id,
+                extend_minutes=request.extend_minutes or 30,
+                current_user=current_user,
+            )
+            if not success:
+                raise ConnectError(Code.FAILED_PRECONDITION, msg)
+            return pb.RenewGradingTaskLockResponse(
+                success=True,
+                message=msg,
+                lock_expires_at=info.get("lock_expires_at", ""),
+                remaining_seconds=info.get("remaining_seconds", 1800),
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+
+    async def release_grading_task(
+        self,
+        request: pb.ReleaseGradingTaskRequest,
+        ctx: RequestContext[
+            pb.ReleaseGradingTaskRequest, pb.ReleaseGradingTaskResponse
+        ],
+    ) -> pb.ReleaseGradingTaskResponse:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                submission_id=request.submission_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="giải phóng khóa bài chấm",
+            )
+            success, msg = await self.use_case.release_grading_task(
+                submission_id=request.submission_id,
+                staff_user_id=current_user.id,
+                current_user=current_user,
+            )
+            if not success:
+                raise ConnectError(Code.FAILED_PRECONDITION, msg)
+            return pb.ReleaseGradingTaskResponse(success=True, message=msg)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+
+    async def get_grading_submission_detail(
+        self,
+        request: pb.GetGradingSubmissionDetailRequest,
+        ctx: RequestContext[
+            pb.GetGradingSubmissionDetailRequest,
+            pb.GetGradingSubmissionDetailResponse,
+        ],
+    ) -> pb.GetGradingSubmissionDetailResponse:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                submission_id=request.submission_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="xem chi tiết bài chấm",
+            )
+            res = await self.use_case.get_grading_submission_detail(
+                submission_id=request.submission_id,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+
+        sub_dict = res["submission"]
+        sub_pb = pb.GradingQueueItem(
+            submission_id=sub_dict["submission_id"],
+            item_id=sub_dict["item_id"],
+            item_title=sub_dict["item_title"],
+            course_id=sub_dict["course_id"],
+            course_title=sub_dict["course_title"],
+            student_id=sub_dict["student_id"],
+            student_name=sub_dict["student_name"],
+            student_avatar_url=sub_dict["student_avatar_url"],
+            submitted_at=sub_dict["submitted_at"],
+            is_outlier=sub_dict["is_outlier"],
+            is_appeal=sub_dict["is_appeal"],
+            appeal_reason=sub_dict["appeal_reason"],
+            locked_by_user_id=sub_dict["locked_by_user_id"],
+            locked_by_name=sub_dict["locked_by_name"],
+            lock_expires_at=sub_dict["lock_expires_at"],
+            grade_source=self._to_pb_provenance(sub_dict.get("grade_source")),
+            staff_score=float(sub_dict["staff_score"]),
+            is_draft=sub_dict["is_draft"],
+            status=self._to_pb_queue_status(sub_dict["status"]),
+            peer_score=float(sub_dict["peer_score"]),
+            peer_reviews_count=sub_dict["peer_reviews_count"],
+        )
+
+        rubric_pbs = [
+            pb.RubricCriteria(
+                criteria_id=c.criteria_id,
+                title=c.title,
+                max_score=c.max_score,
+                score_given=c.score_given,
+            )
+            for c in res["rubric_criteria"]
+        ]
+
+        peer_review_pbs = [
+            pb.PeerReviewHistoryItem(
+                review_id=r["review_id"],
+                reviewer_id=r["reviewer_id"],
+                reviewer_name=r["reviewer_name"],
+                total_score=float(r["total_score"]),
+                graded_criteria=[
+                    pb.RubricCriteria(
+                        criteria_id=c.criteria_id,
+                        title=c.title,
+                        max_score=c.max_score,
+                        score_given=c.score_given,
+                    )
+                    for c in r.get("graded_criteria", [])
+                ],
+                feedback=r["feedback"],
+                reviewed_at=r["reviewed_at"],
+            )
+            for r in res["peer_reviews"]
+        ]
+
+        staff_grading_pb = None
+        if res.get("current_staff_grading"):
+            sg = res["current_staff_grading"]
+            staff_grading_pb = pb.StaffGradingDetail(
+                staff_id=sg["staff_id"],
+                staff_name=sg["staff_name"],
+                score=float(sg["score"]),
+                graded_criteria=[
+                    pb.RubricCriteria(
+                        criteria_id=c.criteria_id,
+                        title=c.title,
+                        max_score=c.max_score,
+                        score_given=c.score_given,
+                    )
+                    for c in sg.get("graded_criteria", [])
+                ],
+                feedback=sg["feedback"],
+                is_draft=sg["is_draft"],
+                graded_at=sg["graded_at"],
+                provenance=self._to_pb_provenance(sg.get("provenance")),
+                appeal_resolution_notes=sg.get("appeal_resolution_notes", ""),
+            )
+
+        return pb.GetGradingSubmissionDetailResponse(
+            submission=sub_pb,
+            submission_url=res["submission_url"],
+            text_content=res["text_content"],
+            attempt_number=res["attempt_number"],
+            rubric_criteria=rubric_pbs,
+            peer_reviews=peer_review_pbs,
+            current_staff_grading=staff_grading_pb,
+        )
+
+    async def submit_staff_grading(
+        self,
+        request: pb.SubmitStaffGradingRequest,
+        ctx: RequestContext[
+            pb.SubmitStaffGradingRequest, pb.SubmitStaffGradingResponse
+        ],
+    ) -> pb.SubmitStaffGradingResponse:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                submission_id=request.submission_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="chấm điểm bài tập",
+            )
+
+            criteria_list = [
+                RubricCriteria(
+                    criteria_id=c.criteria_id,
+                    title=c.title,
+                    max_score=c.max_score,
+                    score_given=c.score_given,
+                )
+                for c in request.graded_criteria
+            ]
+            provenance_str = "INSTRUCTOR" if current_user.role == "INSTRUCTOR" else "TA"
+
+            total_score = (
+                request.total_score
+                if request.total_score > 0
+                else sum(c.score_given for c in criteria_list)
+            )
+            (
+                success,
+                msg,
+                final_score,
+                is_draft,
+                graded_at,
+            ) = await self.use_case.submit_staff_grading(
+                submission_id=request.submission_id,
+                staff_user_id=current_user.id,
+                graded_criteria=criteria_list,
+                total_score=float(total_score),
+                feedback=request.feedback,
+                is_draft=request.is_draft,
+                resolve_appeal=request.resolve_appeal,
+                appeal_resolution_notes=request.appeal_resolution_notes,
+                provenance=provenance_str,
+                current_user=current_user,
+            )
+            return pb.SubmitStaffGradingResponse(
+                success=success,
+                message=msg,
+                final_score=float(final_score),
+                is_draft=is_draft,
+                graded_at=graded_at,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+    async def release_course_grades(
+        self,
+        request: pb.ReleaseCourseGradesRequest,
+        ctx: RequestContext[
+            pb.ReleaseCourseGradesRequest, pb.ReleaseCourseGradesResponse
+        ],
+    ) -> pb.ReleaseCourseGradesResponse:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                course_id=request.course_id, item_id=request.item_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="công bố điểm toàn khóa",
+            )
+
+            success, msg, count = await self.use_case.release_course_grades(
+                course_id=request.course_id,
+                item_id=request.item_id,
+                current_user=current_user,
+            )
+            return pb.ReleaseCourseGradesResponse(
+                success=success,
+                message=msg,
+                released_count=count,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+    async def get_course_gradebook(
+        self,
+        request: Any,
+        ctx: Any = None,
+    ) -> Any:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                course_id=request.course_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="truy cập Sổ điểm (Course Gradebook)",
+            )
+            return await self.use_case.get_course_gradebook(
+                course_id=request.course_id,
+                search_query=getattr(request, "search_query", ""),
+                status_filter=getattr(request, "status_filter", ""),
+                page_size=getattr(request, "page_size", 50) or 50,
+                page_token=getattr(request, "page_token", ""),
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+    async def get_instructor_action_tasks(
+        self,
+        request: Any,
+        ctx: Any = None,
+    ) -> Any:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                course_id=request.course_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="xem danh sách việc cần xử lý",
+            )
+            return await self.use_case.get_instructor_action_tasks(
+                course_id=request.course_id,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
