@@ -512,6 +512,35 @@ message GetInstructorAnalyticsResponse {
   InstructorAnalytics analytics = 1;
 }
 
+message ActivityDataPoint {
+  string timestamp = 1;
+  string label = 2;
+  int32 active_learners = 3;
+  int32 completed_items = 4;
+  int32 in_progress = 5;
+}
+
+message HeatmapCell {
+  string day = 1;
+  string time_slot = 2;
+  int32 count = 3;
+  bool is_peak = 4;
+}
+
+message GetInstructorActivityTimelineRequest {
+  string course_id = 1;
+  string date_range = 2;
+  string start_date = 3;
+  string end_date = 4;
+  string learner_filter = 5;
+}
+
+message GetInstructorActivityTimelineResponse {
+  repeated ActivityDataPoint timeline = 1;
+  repeated HeatmapCell heatmap = 2;
+  int32 total_active_in_period = 3;
+}
+
 message ReorderWeekModulesRequest {
   string course_id = 1;
   repeated string ordered_week_module_ids = 2;
@@ -692,6 +721,9 @@ service CatalogService {
   rpc GetInstructorAnalytics(GetInstructorAnalyticsRequest) returns (GetInstructorAnalyticsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetInstructorActivityTimeline(GetInstructorActivityTimelineRequest) returns (GetInstructorActivityTimelineResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 
   // Category Admin endpoints
   rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse) {
@@ -740,6 +772,12 @@ service CatalogService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListMyBookmarkedCourses(ListMyBookmarkedCoursesRequest) returns (ListMyBookmarkedCoursesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetCourseGradebook(GetCourseGradebookRequest) returns (GetCourseGradebookResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetInstructorActionTasks(GetInstructorActionTasksRequest) returns (GetInstructorActionTasksResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }
@@ -902,4 +940,78 @@ message ListMyBookmarkedCoursesRequest {}
 
 message ListMyBookmarkedCoursesResponse {
   repeated CourseBookmark bookmarks = 1;
+}
+
+message GradebookColumn {
+  string item_id = 1;
+  string item_title = 2;
+  string item_type = 3;
+  float weight = 4;
+  float max_score = 5;
+  int32 draft_grades_count = 6;
+}
+
+message GradebookCell {
+  string item_id = 1;
+  float score = 2;
+  bool is_passed = 3;
+  string provenance = 4;
+  bool is_draft = 5;
+  string graded_at = 6;
+  string submission_id = 7;
+}
+
+message GradebookStudentRow {
+  string user_id = 1;
+  string full_name = 2;
+  string email = 3;
+  string avatar_url = 4;
+  string enrollment_status = 5;
+  float final_weighted_grade = 6;
+  bool is_course_completed = 7;
+  repeated GradebookCell cells = 8;
+}
+
+message GetCourseGradebookRequest {
+  string course_id = 1;
+  string search_query = 2;
+  string status_filter = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+}
+
+message GetCourseGradebookResponse {
+  string course_id = 1;
+  string course_title = 2;
+  repeated GradebookColumn columns = 3;
+  repeated GradebookStudentRow rows = 4;
+  int32 total_students = 5;
+  string next_page_token = 6;
+  int32 pending_draft_count = 7;
+}
+
+message InstructorActionTask {
+  string id = 1;
+  string type = 2;
+  string title = 3;
+  string lesson_title = 4;
+  string student_name = 5;
+  string course_title = 6;
+  string time_ago = 7;
+  string action_text = 8;
+  string action_url = 9;
+  string course_id = 10;
+  string priority = 11;
+  string created_at = 12;
+}
+
+message GetInstructorActionTasksRequest {
+  string course_id = 1;
+}
+
+message GetInstructorActionTasksResponse {
+  repeated InstructorActionTask tasks = 1;
+  int32 pending_grading_count = 2;
+  int32 pending_appeals_count = 3;
+  int32 pending_qa_count = 4;
 }

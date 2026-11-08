@@ -314,6 +314,27 @@ service AssessmentService {
   rpc GetQuizAttemptDetail(GetQuizAttemptDetailRequest) returns (GetQuizAttemptDetailResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc ListGradingQueue(ListGradingQueueRequest) returns (ListGradingQueueResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ClaimGradingTask(ClaimGradingTaskRequest) returns (ClaimGradingTaskResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc RenewGradingTaskLock(RenewGradingTaskLockRequest) returns (RenewGradingTaskLockResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReleaseGradingTask(ReleaseGradingTaskRequest) returns (ReleaseGradingTaskResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetGradingSubmissionDetail(GetGradingSubmissionDetailRequest) returns (GetGradingSubmissionDetailResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitStaffGrading(SubmitStaffGradingRequest) returns (SubmitStaffGradingResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReleaseCourseGrades(ReleaseCourseGradesRequest) returns (ReleaseCourseGradesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message StartGradedQuizSessionRequest {
@@ -420,4 +441,164 @@ message GetQuizAttemptDetailResponse {
   repeated QuizAttemptAnswerDetail answers = 7;
   repeated TopicMastery topic_mastery = 8;
   bool is_answer_masked = 9;
+}
+
+enum GradingQueueStatus {
+  GRADING_QUEUE_STATUS_UNSPECIFIED = 0;
+  GRADING_QUEUE_STATUS_ALL = 1;
+  GRADING_QUEUE_STATUS_PENDING = 2;
+  GRADING_QUEUE_STATUS_CLAIMED = 3;
+  GRADING_QUEUE_STATUS_APPEALED = 4;
+  GRADING_QUEUE_STATUS_GRADED = 5;
+}
+
+enum GradingProvenance {
+  GRADING_PROVENANCE_UNSPECIFIED = 0;
+  GRADING_PROVENANCE_AUTO = 1;
+  GRADING_PROVENANCE_PEER = 2;
+  GRADING_PROVENANCE_TA = 3;
+  GRADING_PROVENANCE_INSTRUCTOR = 4;
+}
+
+message GradingQueueItem {
+  string submission_id = 1;
+  string item_id = 2;
+  string item_title = 3;
+  string course_id = 4;
+  string course_title = 5;
+  string student_id = 6;
+  string student_name = 7;
+  string student_avatar_url = 8;
+  string submitted_at = 9;
+  bool is_outlier = 10;
+  bool is_appeal = 11;
+  string appeal_reason = 12;
+  string locked_by_user_id = 13;
+  string locked_by_name = 14;
+  string lock_expires_at = 15;
+  GradingProvenance grade_source = 16;
+  float staff_score = 17;
+  bool is_draft = 18;
+  GradingQueueStatus status = 19;
+  float peer_score = 20;
+  int32 peer_reviews_count = 21;
+}
+
+message ListGradingQueueRequest {
+  string course_id = 1;
+  string item_id = 2;
+  GradingQueueStatus status = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+  string search_query = 6;
+}
+
+message ListGradingQueueResponse {
+  repeated GradingQueueItem items = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+  int32 pending_count = 4;
+  int32 claimed_count = 5;
+  int32 appealed_count = 6;
+  int32 graded_count = 7;
+}
+
+message ClaimGradingTaskRequest {
+  string submission_id = 1;
+}
+
+message ClaimGradingTaskResponse {
+  bool success = 1;
+  string message = 2;
+  string locked_by_user_id = 3;
+  string locked_by_name = 4;
+  string lock_expires_at = 5;
+  int32 lease_duration_seconds = 6;
+}
+
+message RenewGradingTaskLockRequest {
+  string submission_id = 1;
+  int32 extend_minutes = 2;
+}
+
+message RenewGradingTaskLockResponse {
+  bool success = 1;
+  string message = 2;
+  string lock_expires_at = 3;
+  int32 remaining_seconds = 4;
+}
+
+message ReleaseGradingTaskRequest {
+  string submission_id = 1;
+}
+
+message ReleaseGradingTaskResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message PeerReviewHistoryItem {
+  string review_id = 1;
+  string reviewer_id = 2;
+  string reviewer_name = 3;
+  float total_score = 4;
+  repeated RubricCriteria graded_criteria = 5;
+  string feedback = 6;
+  string reviewed_at = 7;
+}
+
+message StaffGradingDetail {
+  string staff_id = 1;
+  string staff_name = 2;
+  float score = 3;
+  repeated RubricCriteria graded_criteria = 4;
+  string feedback = 5;
+  bool is_draft = 6;
+  string graded_at = 7;
+  GradingProvenance provenance = 8;
+  string appeal_resolution_notes = 9;
+}
+
+message GetGradingSubmissionDetailRequest {
+  string submission_id = 1;
+}
+
+message GetGradingSubmissionDetailResponse {
+  GradingQueueItem submission = 1;
+  string submission_url = 2;
+  string text_content = 3;
+  int32 attempt_number = 4;
+  repeated RubricCriteria rubric_criteria = 5;
+  repeated PeerReviewHistoryItem peer_reviews = 6;
+  StaffGradingDetail current_staff_grading = 7;
+}
+
+message SubmitStaffGradingRequest {
+  string submission_id = 1;
+  repeated RubricCriteria graded_criteria = 2;
+  float total_score = 3;
+  string feedback = 4;
+  bool is_draft = 5;
+  bool resolve_appeal = 6;
+  string appeal_resolution_notes = 7;
+  GradingProvenance provenance = 8;
+}
+
+message SubmitStaffGradingResponse {
+  bool success = 1;
+  string message = 2;
+  float final_score = 3;
+  bool is_draft = 4;
+  string graded_at = 5;
+}
+
+message ReleaseCourseGradesRequest {
+  string course_id = 1;
+  string item_id = 2;
+}
+
+message ReleaseCourseGradesResponse {
+  bool success = 1;
+  string message = 2;
+  int32 released_count = 3;
 }
