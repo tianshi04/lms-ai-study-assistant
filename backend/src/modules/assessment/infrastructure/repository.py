@@ -376,7 +376,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             locked_by_user_id=model.locked_by_user_id,
             locked_at=model.locked_at,
             rubric_scores_json=model.rubric_scores_json,
-            is_draft=model.is_draft,
             published_at=model.published_at,
             status=model.status,
         )
@@ -404,7 +403,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             model.locked_by_user_id = submission.locked_by_user_id
             model.locked_at = submission.locked_at
             model.rubric_scores_json = submission.rubric_scores_json
-            model.is_draft = submission.is_draft
             model.published_at = submission.published_at
             model.status = submission.status
         else:
@@ -425,7 +423,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 locked_by_user_id=submission.locked_by_user_id,
                 locked_at=submission.locked_at,
                 rubric_scores_json=submission.rubric_scores_json,
-                is_draft=submission.is_draft,
                 published_at=submission.published_at,
                 status=submission.status,
             )
@@ -539,51 +536,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         res = await self.session.execute(stmt)
         await self.session.commit()
         return int(getattr(res, "rowcount", 0) or 0) > 0
-
-    async def publish_all_draft_grades(
-        self,
-        course_id: str,
-        item_id: str | None = None,
-    ) -> list[PeerAssignmentSubmission]:
-        from src.modules.catalog.infrastructure.models import (
-            LearningItemModel,
-            LessonModel,
-            WeekModuleModel,
-        )
-
-        now_iso = datetime.now(UTC).isoformat()
-        if item_id:
-            item_ids = [item_id]
-        else:
-            item_stmt = (
-                select(LearningItemModel.id)
-                .join(LessonModel, LessonModel.id == LearningItemModel.lesson_id)
-                .join(WeekModuleModel, WeekModuleModel.id == LessonModel.week_module_id)
-                .where(WeekModuleModel.course_id == course_id)
-            )
-            item_res = await self.session.execute(item_stmt)
-            item_ids = [str(r[0]) for r in item_res.fetchall()]
-
-        if not item_ids:
-            return []
-
-        select_stmt = select(PeerAssignmentSubmissionModel).where(
-            PeerAssignmentSubmissionModel.item_id.in_(item_ids),
-            PeerAssignmentSubmissionModel.is_draft.is_(True),
-        )
-        res = await self.session.execute(select_stmt)
-        models = res.scalars().all()
-        if not models:
-            return []
-
-        updated_submissions: list[PeerAssignmentSubmission] = []
-        for m in models:
-            m.is_draft = False
-            m.published_at = now_iso
-            m.status = "PUBLISHED"
-            updated_submissions.append(self._to_peer_submission_entity(m))
-        await self.session.commit()
-        return updated_submissions
 
     async def save_peer_review(self, review: PeerReview) -> None:
         rubric_data = [
@@ -1216,7 +1168,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 status_str = "CLAIMED"
             elif is_appeal:
                 status_str = "APPEALED"
-            elif sub.final_score is not None and not sub.is_draft:
+            elif sub.final_score is not None:
                 status_str = "GRADED"
             else:
                 status_str = "PENDING"
@@ -1244,7 +1196,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                     "staff_score": float(sub.final_score)
                     if sub.final_score is not None and sub.graded_by_staff
                     else 0.0,
-                    "is_draft": sub.is_draft,
                     "status": status_str,
                     "peer_score": float(peer_score),
                     "peer_reviews_count": reviews_count,
@@ -1314,23 +1265,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         ]
 
         graded_item_ids = [item.id for item in graded_items]
-        draft_counts_by_item: dict[str, int] = {}
-        if graded_item_ids:
-            draft_stmt = (
-                select(
-                    PeerAssignmentSubmissionModel.item_id,
-                    func.count(PeerAssignmentSubmissionModel.id),
-                )
-                .where(
-                    PeerAssignmentSubmissionModel.item_id.in_(graded_item_ids),
-                    PeerAssignmentSubmissionModel.is_draft.is_(True),
-                )
-                .group_by(PeerAssignmentSubmissionModel.item_id)
-            )
-            draft_res = await self.session.execute(draft_stmt)
-            for item_id_val, count_val in draft_res.fetchall():
-                draft_counts_by_item[str(item_id_val)] = int(count_val)
-
         num_graded = len(graded_items)
         default_weight = round(1.0 / num_graded, 4) if num_graded > 0 else 0.0
 
@@ -1341,11 +1275,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 "item_type": item.type,
                 "weight": default_weight,
                 "max_score": 100.0,
-                "draft_grades_count": draft_counts_by_item.get(item.id, 0),
             }
             for item in graded_items
         ]
-        total_pending_drafts = sum(draft_counts_by_item.values())
 
         # 3. Query enrolled students
         progress_query = (
@@ -1438,7 +1370,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 score = 0.0
                 is_passed = False
                 provenance = "AUTO"
-                is_draft = False
                 graded_at = ""
                 submission_id = ""
 
@@ -1447,7 +1378,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                     submission_id = p_sub.id
                     score = float(p_sub.final_score or 0.0)
                     is_passed = score >= 80.0
-                    is_draft = bool(p_sub.is_draft)
                     graded_at = p_sub.published_at or p_sub.created_at or ""
                     source = p_sub.grade_source or "PEER_REVIEW"
                     if "INSTRUCTOR" in source.upper():
@@ -1460,17 +1390,14 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                     score = quiz_scores[key]
                     is_passed = score >= 80.0
                     provenance = "AUTO"
-                    is_draft = False
                     graded_at = quiz_timestamps.get(key, "")
                 elif key in lab_scores:
                     score = lab_scores[key]
                     is_passed = score >= 80.0
                     provenance = "AUTO"
-                    is_draft = False
                     graded_at = lab_timestamps.get(key, "")
 
-                if not is_draft:
-                    total_weighted_grade += item_weight * score
+                total_weighted_grade += item_weight * score
 
                 cells.append(
                     {
@@ -1478,7 +1405,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                         "score": round(score, 2),
                         "is_passed": is_passed,
                         "provenance": provenance,
-                        "is_draft": is_draft,
                         "graded_at": graded_at,
                         "submission_id": submission_id,
                     }
@@ -1523,5 +1449,4 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             "rows": rows,
             "total_students": total_students,
             "next_page_token": next_page_token,
-            "pending_draft_count": total_pending_drafts,
         }

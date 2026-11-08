@@ -19,14 +19,6 @@ async def handle_peer_assignment_graded(
 
     and automatically triggers OpenBadges 2.0 certificate issuance if 100% complete.
     """
-    if event.is_draft:
-        logger.debug(
-            "Ignored draft grade event for user %s on item %s",
-            event.user_id,
-            event.item_id,
-        )
-        return
-
     if not event.passed:
         logger.debug(
             "User %s did not pass peer assignment %s (Score: %s)",

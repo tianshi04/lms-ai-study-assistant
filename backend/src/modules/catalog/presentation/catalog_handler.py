@@ -1434,7 +1434,6 @@ class CatalogHandler(CatalogService):
                     item_type=c["item_type"],
                     weight=float(c["weight"]),
                     max_score=float(c["max_score"]),
-                    draft_grades_count=int(c.get("draft_grades_count", 0)),
                 )
                 for c in res.get("columns", [])
             ]
@@ -1453,7 +1452,6 @@ class CatalogHandler(CatalogService):
                             score=float(cell["score"]),
                             is_passed=cell["is_passed"],
                             provenance=cell["provenance"],
-                            is_draft=cell["is_draft"],
                             graded_at=cell.get("graded_at", ""),
                             submission_id=cell.get("submission_id", ""),
                         )
@@ -1469,7 +1467,6 @@ class CatalogHandler(CatalogService):
                 rows=rows,
                 total_students=res.get("total_students", len(rows)),
                 next_page_token=res.get("next_page_token", ""),
-                pending_draft_count=res.get("pending_draft_count", 0),
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e

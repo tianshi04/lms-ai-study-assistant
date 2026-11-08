@@ -730,7 +730,6 @@ class AssessmentHandler(AssessmentService):
                 lock_expires_at=i["lock_expires_at"],
                 grade_source=self._to_pb_provenance(i.get("grade_source")),
                 staff_score=float(i["staff_score"]),
-                is_draft=i["is_draft"],
                 status=self._to_pb_queue_status(i["status"]),
                 peer_score=float(i["peer_score"]),
                 peer_reviews_count=i["peer_reviews_count"],
@@ -911,7 +910,6 @@ class AssessmentHandler(AssessmentService):
             lock_expires_at=sub_dict["lock_expires_at"],
             grade_source=self._to_pb_provenance(sub_dict.get("grade_source")),
             staff_score=float(sub_dict["staff_score"]),
-            is_draft=sub_dict["is_draft"],
             status=self._to_pb_queue_status(sub_dict["status"]),
             peer_score=float(sub_dict["peer_score"]),
             peer_reviews_count=sub_dict["peer_reviews_count"],
@@ -965,7 +963,6 @@ class AssessmentHandler(AssessmentService):
                     for c in sg.get("graded_criteria", [])
                 ],
                 feedback=sg["feedback"],
-                is_draft=sg["is_draft"],
                 graded_at=sg["graded_at"],
                 provenance=self._to_pb_provenance(sg.get("provenance")),
                 appeal_resolution_notes=sg.get("appeal_resolution_notes", ""),
@@ -1023,7 +1020,6 @@ class AssessmentHandler(AssessmentService):
                 success,
                 msg,
                 final_score,
-                is_draft,
                 graded_at,
             ) = await self.use_case.submit_staff_grading(
                 submission_id=request.submission_id,
@@ -1031,7 +1027,6 @@ class AssessmentHandler(AssessmentService):
                 graded_criteria=criteria_list,
                 total_score=float(total_score),
                 feedback=request.feedback,
-                is_draft=request.is_draft,
                 resolve_appeal=request.resolve_appeal,
                 appeal_resolution_notes=request.appeal_resolution_notes,
                 provenance=provenance_str,
@@ -1041,45 +1036,7 @@ class AssessmentHandler(AssessmentService):
                 success=success,
                 message=msg,
                 final_score=float(final_score),
-                is_draft=is_draft,
                 graded_at=graded_at,
-            )
-        except PermissionError as e:
-            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
-        except ValueError as e:
-            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
-
-    async def release_course_grades(
-        self,
-        request: pb.ReleaseCourseGradesRequest,
-        ctx: RequestContext[
-            pb.ReleaseCourseGradesRequest, pb.ReleaseCourseGradesResponse
-        ],
-    ) -> pb.ReleaseCourseGradesResponse:
-        current_user = require_current_user()
-        try:
-            course = await self.use_case.get_course_for_item_or_submission(
-                course_id=request.course_id, item_id=request.item_id
-            )
-            user_ctx = CurrentUserContext(
-                id=current_user.id, role=current_user.role, email=current_user.email
-            )
-            enforce_course_ownership(
-                course=course,
-                user=user_ctx,
-                required_permission=CoursePermission.GRADE_ASSESSMENTS,
-                action_name="công bố điểm toàn khóa",
-            )
-
-            success, msg, count = await self.use_case.release_course_grades(
-                course_id=request.course_id,
-                item_id=request.item_id,
-                current_user=current_user,
-            )
-            return pb.ReleaseCourseGradesResponse(
-                success=success,
-                message=msg,
-                released_count=count,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e

@@ -359,23 +359,6 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         sub.locked_at = None
         return True
 
-    async def publish_all_draft_grades(
-        self, course_id: str, item_id: str | None = None
-    ) -> list[PeerAssignmentSubmission]:
-        from datetime import UTC, datetime
-
-        now_iso = datetime.now(UTC).isoformat()
-        published = []
-        for s in self.peer_submissions:
-            if item_id and s.item_id != item_id:
-                continue
-            if s.is_draft:
-                s.is_draft = False
-                s.published_at = now_iso
-                s.status = "PUBLISHED"
-                published.append(s)
-        return published
-
     async def list_grading_queue_items(
         self,
         course_id: str = "",
@@ -395,7 +378,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
                 status_str = "CLAIMED"
             elif is_appeal:
                 status_str = "APPEALED"
-            elif s.final_score is not None and not s.is_draft:
+            elif s.final_score is not None:
                 status_str = "GRADED"
 
             results.append(
@@ -417,7 +400,6 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
                     "lock_expires_at": "",
                     "grade_source": s.grade_source or "PEER_REVIEW",
                     "staff_score": float(s.final_score or 0.0),
-                    "is_draft": s.is_draft,
                     "status": status_str,
                     "peer_score": 0.0,
                     "peer_reviews_count": len(revs),
@@ -443,9 +425,6 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
                 "item_type": "PEER_ASSIGNMENT",
                 "weight": w,
                 "max_score": 100.0,
-                "draft_grades_count": sum(
-                    1 for s in self.peer_submissions if s.item_id == i and s.is_draft
-                ),
             }
             for i in items
         ]
@@ -464,20 +443,17 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
                     None,
                 )
                 score = float(matching.final_score or 0.0) if matching else 0.0
-                is_draft = bool(matching.is_draft) if matching else False
                 cells.append(
                     {
                         "item_id": col["item_id"],
                         "score": score,
                         "is_passed": score >= 80.0,
                         "provenance": matching.grade_source if matching else "PEER",
-                        "is_draft": is_draft,
                         "graded_at": matching.published_at if matching else "",
                         "submission_id": matching.id if matching else "",
                     }
                 )
-                if not is_draft:
-                    total_score += float(col["weight"]) * score
+                total_score += float(col["weight"]) * score
             rows.append(
                 {
                     "user_id": uid,
@@ -497,9 +473,6 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             "rows": rows,
             "total_students": len(rows),
             "next_page_token": "",
-            "pending_draft_count": sum(
-                int(col["draft_grades_count"]) for col in columns
-            ),
         }
 
 
@@ -1368,7 +1341,6 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
         staff_user_id="instructor-1",
         graded_criteria=criteria,
         total_score=85.0,
-        is_draft=False,
         current_user=staff,
     )
     sub1_graded = await repo.get_peer_submission(sub_id1)
@@ -1386,12 +1358,11 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
 
     # Staff grades attempt 2 with lower score (70.0) -> Highest Score Wins maintains 85.0!
     criteria_low = [RubricCriteria("c1", "Quality", 10.0, 7.0)]
-    _, _, final_s, _, _ = await usecase.submit_staff_grading(
+    _, _, final_s, _ = await usecase.submit_staff_grading(
         submission_id=sub_id2,
         staff_user_id="instructor-1",
         graded_criteria=criteria_low,
         total_score=70.0,
-        is_draft=False,
         current_user=staff,
     )
     assert final_s == 85.0  # Preserved highest score!
@@ -1415,7 +1386,7 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
 
 
 @pytest.mark.asyncio
-async def test_staff_grading_draft_and_batch_release():
+async def test_staff_grading_immediate_publish_and_event():
     from src.shared.auth import CurrentUser
     from src.shared.infrastructure.event_bus import EventBus
 
@@ -1424,11 +1395,11 @@ async def test_staff_grading_draft_and_batch_release():
     staff = CurrentUser(id="instructor-1", email="inst@example.com", role="INSTRUCTOR")
 
     sub = PeerAssignmentSubmission(
-        id="sub-draft-test",
-        user_id="student-draft",
+        id="sub-publish-test",
+        user_id="student-publish",
         item_id="item-batch-test",
         submission_url="http://example.com",
-        text_content="Draft submission",
+        text_content="Direct submission",
         created_at="2026-08-18T10:00:00Z",
     )
     await repo.save_peer_submission(sub)
@@ -1440,42 +1411,27 @@ async def test_staff_grading_draft_and_batch_release():
 
     EventBus.subscribe(PeerAssignmentGradedDomainEvent, _tracker)
 
-    # 1. Submit staff grading as DRAFT (is_draft=True)
+    # Submit staff grading -> Publishes immediately
     criteria = [RubricCriteria("c1", "Quality", 10.0, 9.0)]
-    ok, msg, _score, is_draft, _ = await usecase.submit_staff_grading(
-        submission_id="sub-draft-test",
+    ok, msg, final_s, _ = await usecase.submit_staff_grading(
+        submission_id="sub-publish-test",
         staff_user_id="instructor-1",
         graded_criteria=criteria,
         total_score=90.0,
-        is_draft=True,
         current_user=staff,
     )
     assert ok is True
-    assert is_draft is True
-    assert "nháp" in msg
+    assert final_s == 90.0
+    assert "công bố" in msg
 
-    sub_in_db = await repo.get_peer_submission("sub-draft-test")
+    sub_in_db = await repo.get_peer_submission("sub-publish-test")
     assert sub_in_db is not None
-    assert sub_in_db.is_draft is True
     assert sub_in_db.final_score == 90.0
-    # Crucial: Draft grading MUST NOT fire published event!
-    assert len(received_events) == 0
+    assert sub_in_db.published_at is not None
 
-    # 2. Batch Release grades for course
-    ok_rel, msg_rel, count = await usecase.release_course_grades(
-        "course-1", item_id="item-batch-test", current_user=staff
-    )
-    assert ok_rel is True
-    assert count == 1
-    assert "1" in msg_rel
-
-    sub_published = await repo.get_peer_submission("sub-draft-test")
-    assert sub_published is not None
-    assert sub_published.is_draft is False
-    assert sub_published.published_at is not None
-    # Now published event was dispatched!
+    # Immediate published event was dispatched!
     assert len(received_events) == 1
-    assert received_events[0].user_id == "student-draft"
+    assert received_events[0].user_id == "student-publish"
     assert received_events[0].final_score == 90.0
     assert received_events[0].passed is True
 
@@ -1516,7 +1472,6 @@ async def test_eventbus_auto_progress_and_certificate_flow():
             final_score=95.0,
             passed=True,
             grader_id="ta-1",
-            is_draft=False,
         )
 
         await handle_peer_assignment_graded(event)
@@ -1550,7 +1505,6 @@ async def test_course_gradebook_matrix_usecase():
         created_at="2026-08-18T10:00:00Z",
         final_score=90.0,
         grade_source="TA",
-        is_draft=False,
         published_at="2026-08-18T11:00:00Z",
     )
     sub2 = PeerAssignmentSubmission(
@@ -1562,7 +1516,6 @@ async def test_course_gradebook_matrix_usecase():
         created_at="2026-08-18T10:00:00Z",
         final_score=70.0,
         grade_source="PEER_REVIEW",
-        is_draft=False,
         published_at="2026-08-18T11:00:00Z",
     )
     await repo.save_peer_submission(sub1)

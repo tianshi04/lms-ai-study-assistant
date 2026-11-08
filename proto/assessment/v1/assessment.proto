@@ -332,9 +332,6 @@ service AssessmentService {
   rpc SubmitStaffGrading(SubmitStaffGradingRequest) returns (SubmitStaffGradingResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
-  rpc ReleaseCourseGrades(ReleaseCourseGradesRequest) returns (ReleaseCourseGradesResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
-  }
 }
 
 message StartGradedQuizSessionRequest {
@@ -478,10 +475,9 @@ message GradingQueueItem {
   string lock_expires_at = 15;
   GradingProvenance grade_source = 16;
   float staff_score = 17;
-  bool is_draft = 18;
-  GradingQueueStatus status = 19;
-  float peer_score = 20;
-  int32 peer_reviews_count = 21;
+  GradingQueueStatus status = 18;
+  float peer_score = 19;
+  int32 peer_reviews_count = 20;
 }
 
 message ListGradingQueueRequest {
@@ -553,10 +549,9 @@ message StaffGradingDetail {
   float score = 3;
   repeated RubricCriteria graded_criteria = 4;
   string feedback = 5;
-  bool is_draft = 6;
-  string graded_at = 7;
-  GradingProvenance provenance = 8;
-  string appeal_resolution_notes = 9;
+  string graded_at = 6;
+  GradingProvenance provenance = 7;
+  string appeal_resolution_notes = 8;
 }
 
 message GetGradingSubmissionDetailRequest {
@@ -578,27 +573,14 @@ message SubmitStaffGradingRequest {
   repeated RubricCriteria graded_criteria = 2;
   float total_score = 3;
   string feedback = 4;
-  bool is_draft = 5;
-  bool resolve_appeal = 6;
-  string appeal_resolution_notes = 7;
-  GradingProvenance provenance = 8;
+  bool resolve_appeal = 5;
+  string appeal_resolution_notes = 6;
+  GradingProvenance provenance = 7;
 }
 
 message SubmitStaffGradingResponse {
   bool success = 1;
   string message = 2;
   float final_score = 3;
-  bool is_draft = 4;
-  string graded_at = 5;
-}
-
-message ReleaseCourseGradesRequest {
-  string course_id = 1;
-  string item_id = 2;
-}
-
-message ReleaseCourseGradesResponse {
-  bool success = 1;
-  string message = 2;
-  int32 released_count = 3;
+  string graded_at = 4;
 }

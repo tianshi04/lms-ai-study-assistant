@@ -207,22 +207,12 @@ async def test_rebac_guard_blocks_unauthorized_ta(test_setup):
             )
         assert exc.value.code == Code.PERMISSION_DENIED
 
-        # 4. release_course_grades
-        with pytest.raises(ConnectError) as exc:
-            await handler.release_course_grades(
-                pb.ReleaseCourseGradesRequest(course_id="course_test_1"), None
-            )
-        assert exc.value.code == Code.PERMISSION_DENIED
-
 
 @pytest.mark.asyncio
-async def test_staff_grading_draft_vs_batch_release(test_setup):
-    """Test saving grade as draft (no event dispatched) vs batch release (triggers event chain)."""
+async def test_staff_grading_immediate_publish_and_eventbus(test_setup):
+    """Test TA submitting grade publishes immediately and triggers EventBus event chain."""
     handler = test_setup["handler"]
     ta_1 = CurrentUser(id="ta_assigned_1", role="TA", full_name="Trợ giảng 1")
-    owner = CurrentUser(
-        id="instructor_owner", role="INSTRUCTOR", full_name="Giảng viên Phụ trách"
-    )
 
     dispatched_events: list[Any] = []
 
@@ -244,46 +234,30 @@ async def test_staff_grading_draft_vs_batch_release(test_setup):
         ),
     ]
 
-    with patch.object(EventBus, "publish", side_effect=mock_publish):
-        # 1. TA 1 submits draft grade
-        with patch(
+    with (
+        patch.object(EventBus, "publish", side_effect=mock_publish),
+        patch(
             "src.modules.assessment.presentation.assessment_handler.require_current_user",
             return_value=ta_1,
-        ):
-            submit_req = pb.SubmitStaffGradingRequest(
-                submission_id="sub_test_001",
-                graded_criteria=criteria,
-                total_score=90.0,
-                feedback="Kiến trúc tốt, cần thêm integration test",
-                is_draft=True,
-            )
-            submit_resp = await handler.submit_staff_grading(submit_req, None)
-            assert submit_resp.success is True
-            assert submit_resp.is_draft is True
-            assert submit_resp.final_score == 90.0
-            # Ensure NO domain event dispatched on draft
-            assert len(dispatched_events) == 0
+        ),
+    ):
+        submit_req = pb.SubmitStaffGradingRequest(
+            submission_id="sub_test_001",
+            graded_criteria=criteria,
+            total_score=90.0,
+            feedback="Kiến trúc tốt, cần thêm integration test",
+        )
+        submit_resp = await handler.submit_staff_grading(submit_req, None)
+        assert submit_resp.success is True
+        assert submit_resp.final_score == 90.0
 
-        # 2. Instructor calls release_course_grades to batch release
-        with patch(
-            "src.modules.assessment.presentation.assessment_handler.require_current_user",
-            return_value=owner,
-        ):
-            rel_req = pb.ReleaseCourseGradesRequest(
-                course_id="course_test_1", item_id="item_peer_1"
-            )
-            rel_resp = await handler.release_course_grades(rel_req, None)
-            assert rel_resp.success is True
-            assert rel_resp.released_count == 1
-
-            # EventBus MUST have received PeerAssignmentGradedDomainEvent
-            assert len(dispatched_events) == 1
-            event = dispatched_events[0]
-            assert isinstance(event, PeerAssignmentGradedDomainEvent)
-            assert event.user_id == "student_1"
-            assert event.final_score == 90.0
-            assert event.passed is True
-            assert event.is_draft is False
+        # EventBus MUST have received PeerAssignmentGradedDomainEvent immediately
+        assert len(dispatched_events) == 1
+        event = dispatched_events[0]
+        assert isinstance(event, PeerAssignmentGradedDomainEvent)
+        assert event.user_id == "student_1"
+        assert event.final_score == 90.0
+        assert event.passed is True
 
 
 @pytest.mark.asyncio
@@ -314,7 +288,6 @@ async def test_eventbus_triggers_certificate_on_full_completion():
             final_score=95.0,
             passed=True,
             grader_id="ta_1",
-            is_draft=False,
         )
 
         await handle_peer_assignment_graded(event)

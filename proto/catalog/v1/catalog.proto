@@ -948,7 +948,6 @@ message GradebookColumn {
   string item_type = 3;
   float weight = 4;
   float max_score = 5;
-  int32 draft_grades_count = 6;
 }
 
 message GradebookCell {
@@ -956,9 +955,8 @@ message GradebookCell {
   float score = 2;
   bool is_passed = 3;
   string provenance = 4;
-  bool is_draft = 5;
-  string graded_at = 6;
-  string submission_id = 7;
+  string graded_at = 5;
+  string submission_id = 6;
 }
 
 message GradebookStudentRow {
@@ -987,7 +985,6 @@ message GetCourseGradebookResponse {
   repeated GradebookStudentRow rows = 4;
   int32 total_students = 5;
   string next_page_token = 6;
-  int32 pending_draft_count = 7;
 }
 
 message InstructorActionTask {

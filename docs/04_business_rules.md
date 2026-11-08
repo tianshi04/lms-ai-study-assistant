@@ -194,10 +194,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Gia hạn khóa (Lease Renewal):* Cho phép gửi heartbeat ngầm gia hạn khi người chấm đang tích cực tương tác hoặc bấm nút *"Gia hạn thêm 15 phút"*.
   * *Tự động nhả khóa khi hết hạn:* Nếu phiên làm việc bị bỏ dở hoặc quá 30 phút không hoàn tất (`now() >= lock_expires_at`), hệ thống tự động giải phóng khóa, trả bài nộp về hàng chờ công khai.
   * *Nhả khóa chủ động:* Khi người chấm bấm *"Hủy & Nhả bài"* hoặc điều hướng quay lại, khóa được gỡ bỏ ngay lập tức (`locked_by_user_id = NULL`, `lock_expires_at = NULL`).
-* **BR_GRADE_004 (Quy định Công bố điểm - Draft vs Batch Release Policy):**
-  * *Trạng thái Chấm nháp (`DRAFT`):* Mọi điểm số do TA hoặc Giảng viên chấm thủ công tại Cockpit khởi tạo ở trạng thái Nháp (`grading_status = DRAFT_GRADED`). Điểm nháp chỉ hiển thị nội bộ cho ban giảng huấn nhằm phục vụ rà soát đối chiếu, học viên hoàn toàn chưa nhìn thấy điểm này.
-  * *Thẩm quyền Công bố:* Chỉ Giảng viên sở hữu khóa học (`owner_id`), Giảng viên đồng hành (`co_instructor_ids`) hoặc Trưởng trợ giảng mới có quyền kích hoạt lệnh Công bố điểm đồng loạt (`Batch Release`).
-  * *Công bố đồng loạt (`Batch Release`):* Hỗ trợ công bố theo từng bài tập hoặc toàn bộ khóa học. Khi công bố, trạng thái chuyển sang `PUBLISHED`. Điểm chính thức hiển thị cho học viên, kích hoạt cập nhật điểm tổng kết, cập nhật tiến độ hoàn thành môn và tự động gửi thông báo in-app `ACADEMIC` cho học viên.
+* **BR_GRADE_004 (Quy định Chấm & Công bố Điểm Tức Thì - Immediate Publishing on Staff Grading):**
+  * *Chấm & Công bố Trực tiếp (Direct Final Grading):* Khi Trợ giảng (`TA`) hoặc Giảng viên (`INSTRUCTOR`) hoàn tất biểu mẫu chấm điểm tại Cockpit và bấm *"Hoàn tất chấm bài"*, điểm số lập tức có giá trị chính thức (`published_at = now()`) và không qua bước phê duyệt trung gian, giúp giải phóng hoàn toàn thời gian cho Giảng viên chính.
+  * *Tự động kích hoạt chuỗi sự kiện:* Ngay khi điểm được công bố: (1) Bắn sự kiện `PeerAssignmentGradedDomainEvent` lên `EventBus`, (2) Tự động tính toán lại Điểm tổng kết và Phần trăm tiến độ hoàn thành môn (`overall_progress_percent`), (3) Nếu học viên đạt 100% tiến độ, tự động kích hoạt cấp Chứng chỉ số hóa OpenBadges 2.0, và (4) Gửi thông báo in-app `ACADEMIC` cho học viên.
+  * *Giải phóng khóa mềm:* Ngay khi điểm được lưu và công bố thành công, khóa mềm (`locked_by_user_id`) tự động được giải phóng để dọn sạch trạng thái hàng chờ.
 
 ---
 

@@ -48,7 +48,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 existing.text_content = text_content
                 existing.created_at = now_iso
                 existing.status = "SUBMITTED"
-                existing.is_draft = False
                 await repo.save_peer_submission(existing)
                 sub_id = existing.id
             else:
@@ -176,7 +175,8 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     sub.assign_grade(
                         effective_score, is_staff=False, grade_source="PEER_REVIEW"
                     )
-                    sub.publish_grade(now=datetime.now(UTC))
+                    sub.published_at = datetime.now(UTC).isoformat()
+                    sub.status = "PUBLISHED"
                     await repo.save_peer_submission(sub)
 
                     course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
@@ -189,7 +189,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                             final_score=effective_score,
                             passed=effective_score >= 80.0,
                             grader_id="peer",
-                            is_draft=False,
                         )
                     )
 
@@ -265,16 +264,15 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         graded_criteria: list[RubricCriteria],
         total_score: float,
         feedback: str = "",
-        is_draft: bool = True,
         resolve_appeal: bool = False,
         appeal_resolution_notes: str = "",
         provenance: str = "TA",
         current_user: CurrentUser | None = None,
-    ) -> tuple[bool, str, float, bool, str]:
+    ) -> tuple[bool, str, float, str]:
         """TA / Instructor Grading at Cockpit (BR_GRADE_003, BR_GRADE_004).
 
-        Supports saving as draft or instant publish, atomic lock release,
-        Highest Score Wins policy, and event dispatch.
+        Grades and publishes immediately, releases atomic lock,
+        enforces Highest Score Wins policy, and dispatches domain event.
         """
         self._verify_staff(current_user)
         if total_score < 0.0 or total_score > 100.0:
@@ -307,11 +305,9 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 grade_source=provenance,
                 staff_feedback=feedback,
                 rubric_scores_json=rubric_json,
-                is_draft=is_draft,
             )
-
-            if not is_draft:
-                sub.publish_grade(now=now)
+            sub.published_at = now.isoformat()
+            sub.status = "PUBLISHED"
 
             # BR_GRADE_003: Active lock release on save
             sub.release_lock(staff_user_id)
@@ -331,27 +327,25 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             await repo.save_peer_submission(sub)
 
             course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
-            if not is_draft:
-                await EventBus.publish(
-                    PeerAssignmentGradedDomainEvent(
-                        user_id=sub.user_id,
-                        course_id=course_id,
-                        item_id=sub.item_id,
-                        submission_id=sub.id,
-                        final_score=effective_score,
-                        passed=effective_score >= 80.0,
-                        grader_id=staff_user_id,
-                        is_draft=False,
-                    )
+            await EventBus.publish(
+                PeerAssignmentGradedDomainEvent(
+                    user_id=sub.user_id,
+                    course_id=course_id,
+                    item_id=sub.item_id,
+                    submission_id=sub.id,
+                    final_score=effective_score,
+                    passed=effective_score >= 80.0,
+                    grader_id=staff_user_id,
                 )
+            )
 
         graded_at_str = sub.published_at or now.isoformat()
-        msg = (
-            "Đã lưu nháp kết quả chấm bài."
-            if is_draft
-            else "Đã công bố điểm bài nộp thành công."
+        return (
+            True,
+            "Đã công bố điểm bài nộp thành công.",
+            effective_score,
+            graded_at_str,
         )
-        return True, msg, effective_score, is_draft, graded_at_str
 
     async def claim_grading_task(
         self,
@@ -433,33 +427,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 )
             return True, "Đã nhả khóa chấm bài thành công."
 
-    async def release_course_grades(
-        self,
-        course_id: str,
-        item_id: str | None = None,
-        current_user: CurrentUser | None = None,
-    ) -> tuple[bool, str, int]:
-        """Batch releases all draft grades for a course or specific item (BR_GRADE_004)."""
-        self._verify_staff(current_user)
-        async with async_session_scope() as session:
-            repo = await self._get_repo(session)
-            published_list = await repo.publish_all_draft_grades(course_id, item_id)
-            count = len(published_list)
-            for sub in published_list:
-                await EventBus.publish(
-                    PeerAssignmentGradedDomainEvent(
-                        user_id=sub.user_id,
-                        course_id=course_id,
-                        item_id=sub.item_id,
-                        submission_id=sub.id,
-                        final_score=sub.final_score or 0.0,
-                        passed=(sub.final_score or 0.0) >= 80.0,
-                        grader_id=sub.graded_by_user_id or "staff",
-                        is_draft=False,
-                    )
-                )
-        return True, f"Đã công bố thành công {count} bài nộp.", count
-
     async def regrade_peer_submission_by_staff(
         self,
         submission_id: str,
@@ -489,7 +456,8 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 grade_source="TA",
                 graded_by_user_id=staff_user_id,
             )
-            sub.publish_grade(now=datetime.now(UTC))
+            sub.published_at = datetime.now(UTC).isoformat()
+            sub.status = "PUBLISHED"
             await repo.save_peer_submission(sub)
 
             appeal = await repo.get_grade_appeal(submission_id)
@@ -508,7 +476,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     final_score=effective_score,
                     passed=effective_score >= 80.0,
                     grader_id=staff_user_id,
-                    is_draft=False,
                 )
             )
 
@@ -692,7 +659,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     "lock_expires_at": "",
                     "grade_source": sub.grade_source or "PEER_REVIEW",
                     "staff_score": float(sub.final_score or 0.0),
-                    "is_draft": sub.is_draft,
                     "status": "PENDING",
                     "peer_score": 0.0,
                     "peer_reviews_count": 0,
@@ -713,7 +679,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             ]
 
             staff_grading = None
-            if sub.graded_by_staff or sub.rubric_scores_json or sub.is_draft:
+            if sub.graded_by_staff or sub.rubric_scores_json:
                 staff_grading = {
                     "staff_id": sub.graded_by_user_id or "",
                     "staff_name": "Trợ giảng"
@@ -727,7 +693,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         for k, v in (sub.rubric_scores_json or {}).items()
                     ],
                     "feedback": sub.staff_feedback or "",
-                    "is_draft": sub.is_draft,
                     "graded_at": sub.published_at or sub.created_at,
                     "provenance": sub.grade_source or "TA",
                     "appeal_resolution_notes": "",

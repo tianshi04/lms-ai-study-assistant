@@ -40,4 +40,3 @@ class PeerAssignmentGradedDomainEvent(DomainEvent):
     final_score: float = 0.0
     passed: bool = False
     grader_id: str = ""
-    is_draft: bool = False

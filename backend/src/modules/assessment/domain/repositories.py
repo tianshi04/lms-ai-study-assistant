@@ -142,14 +142,6 @@ class AssessmentRepositoryInterface(ABC):
         """Releases the soft lock on a submission."""
 
     @abstractmethod
-    async def publish_all_draft_grades(
-        self,
-        course_id: str,
-        item_id: str | None = None,
-    ) -> list[PeerAssignmentSubmission]:
-        """Publishes all draft grades for a course or specific item."""
-
-    @abstractmethod
     async def save_peer_review(self, review: PeerReview) -> None:
         pass
 

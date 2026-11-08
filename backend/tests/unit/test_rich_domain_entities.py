@@ -164,7 +164,6 @@ def test_peer_assignment_submission_constants_and_locking():
     assert sub.attempt_number == 1
     assert sub.grade_source == "PEER_REVIEW"
     assert sub.status == "SUBMITTED"
-    assert sub.is_draft is False
     assert sub.rubric_scores_json == {}
     assert not sub.is_lock_active(now)
     assert sub.can_claim_lock("ta-1", now)
@@ -201,7 +200,7 @@ def test_peer_assignment_submission_constants_and_locking():
     assert sub.locked_by_user_id is None
     assert sub.locked_at is None
 
-    # Draft grading & Publish
+    # Staff grading
     sub.assign_grade(
         score=95.0,
         is_staff=True,
@@ -210,22 +209,13 @@ def test_peer_assignment_submission_constants_and_locking():
         grade_source="INSTRUCTOR",
         staff_feedback="Xuất sắc",
         rubric_scores_json={"criteria_1": 10},
-        is_draft=True,
     )
-    assert sub.is_draft is True
     assert sub.final_score == 95.0
     assert sub.graded_by_user_id == "instructor-1"
     assert sub.grader_role == "INSTRUCTOR"
     assert sub.grade_source == "INSTRUCTOR"
     assert sub.staff_feedback == "Xuất sắc"
-    assert sub.status == "SUBMITTED"  # Not changed to GRADED when draft
-
-    # Publish grade
-    pub_time = now + timedelta(hours=1)
-    sub.publish_grade(pub_time)
-    assert sub.is_draft is False
-    assert sub.published_at == pub_time.isoformat()
-    assert sub.status == "PUBLISHED"
+    assert sub.status == "GRADED"
 
 
 def test_peer_assignment_submission_grading():

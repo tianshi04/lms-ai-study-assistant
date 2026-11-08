@@ -239,7 +239,6 @@ class PeerAssignmentSubmission(Entity):
         locked_by_user_id: str | None = None,
         locked_at: str | None = None,
         rubric_scores_json: dict[str, Any] | None = None,
-        is_draft: bool = False,
         published_at: str | None = None,
         status: str = "SUBMITTED",
     ) -> None:
@@ -259,7 +258,6 @@ class PeerAssignmentSubmission(Entity):
         self.locked_by_user_id = locked_by_user_id
         self.locked_at = locked_at
         self.rubric_scores_json = rubric_scores_json or {}
-        self.is_draft = is_draft
         self.published_at = published_at
         self.status = status
 
@@ -272,7 +270,6 @@ class PeerAssignmentSubmission(Entity):
         grade_source: str = "PEER_REVIEW",
         staff_feedback: str | None = None,
         rubric_scores_json: dict[str, Any] | None = None,
-        is_draft: bool = False,
     ) -> None:
         if score < 0.0 or score > 100.0:
             raise ValueError("Điểm số phải nằm trong khoảng từ 0 đến 100.")
@@ -287,9 +284,7 @@ class PeerAssignmentSubmission(Entity):
             self.staff_feedback = staff_feedback
         if rubric_scores_json is not None:
             self.rubric_scores_json = rubric_scores_json
-        self.is_draft = is_draft
-        if not is_draft:
-            self.status = "GRADED"
+        self.status = "GRADED"
 
     def is_lock_active(
         self, now: datetime, timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES
@@ -332,11 +327,6 @@ class PeerAssignmentSubmission(Entity):
             raise PermissionError("Bạn không thể nhả khóa của người khác.")
         self.locked_by_user_id = None
         self.locked_at = None
-
-    def publish_grade(self, now: datetime) -> None:
-        self.is_draft = False
-        self.published_at = now.isoformat()
-        self.status = "PUBLISHED"
 
 
 class PeerReview(Entity):

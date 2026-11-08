@@ -209,10 +209,14 @@ flowchart TD
     3. **`TA` (Trợ giảng):** Điểm do Trợ giảng chấm trực tiếp hoặc chấm giải cứu (xử lý đơn khiếu nại Grade Appeal, xử lý bài Outlier chênh lệch điểm quá 30%, hoặc xử lý thiếu bài chấm chéo sau 48h Cold Start).
     4. **`INSTRUCTOR` (Giảng viên):** Điểm do Giảng viên phụ trách khóa học (`owner_id` hoặc `co_instructors`) chấm hoặc can thiệp ghi đè tối cao (Master Override).
   * **Phân cấp Thẩm quyền Ghi đè:** Điểm cấp cao hơn có quyền ghi đè điểm cấp thấp hơn ($\text{AUTO} \le \text{PEER} < \text{TA} < \text{INSTRUCTOR}$). Khi có thao tác ghi đè, hệ thống lưu vết toàn bộ lịch sử điểm cũ và lý do ghi đè vào Audit Log bất biến.
-* **Chế độ Chấm Nháp & Công bố Đồng Loạt (Draft Grading & Batch Release):**
-  * **Trạng thái Chấm Nháp (`DRAFT`):** Khi Giảng viên hoặc Trợ giảng thực hiện chấm bài hoặc điều chỉnh điểm tại Grading Cockpit, điểm số mặc định được lưu ở trạng thái Nháp (`grading_status = DRAFT_GRADED`). Điểm nháp chỉ hiển thị nội bộ cho ban giảng huấn để kiểm tra đối chiếu độ lệch chuẩn và rà soát tính công bằng sư phạm, học viên hoàn toàn chưa nhìn thấy điểm này.
-  * **Công bố Đồng Loạt (`Batch Release`):** Sau khi hoàn tất việc chấm và rà soát, Giảng viên hoặc Trợ giảng kích hoạt thao tác Công bố đồng loạt theo từng cột bài tập (`Batch Release Column`) hoặc công bố toàn bộ sổ điểm khóa học (`Batch Release All`).
-  * Khi công bố thành công, trạng thái chuyển sang `PUBLISHED`, hệ thống tự động: (1) Hiển thị điểm chính thức trên giao diện của học viên, (2) Kích hoạt tính toán lại Điểm tổng kết và Phần trăm tiến độ khóa học, và (3) Gửi thông báo in-app danh mục `ACADEMIC` tới học viên để cập nhật kết quả.
+* **Chế độ Chấm & Công bố Điểm Tức Thì (Immediate Publishing on Staff Grading):**
+  * **Công bố Tức Thì & Giải phóng Giảng viên (`BR_GRADE_003`):** Khi Trợ giảng (`TA`) hoặc Giảng viên thực hiện chấm bài tại Grading Cockpit và nhấn *"Hoàn tất chấm bài"*, điểm số lập tức được ghi nhận và công bố chính thức (`published_at = now()`) mà không qua bước phê duyệt thủ công trung gian của Giảng viên chính.
+  * Khi chấm bài thành công, hệ thống tự động:
+    1. Hiển thị điểm chính thức kèm nhận xét sư phạm trên giao diện của học viên.
+    2. Bắn sự kiện nghiệp vụ `PeerAssignmentGradedDomainEvent` lên `EventBus`.
+    3. Tự động tính toán lại Điểm tổng kết và Phần trăm tiến độ khóa học (`overall_progress_percent`).
+    4. Nếu học viên đạt 100% tiến độ, hệ thống tự động kích hoạt tiến trình cấp Chứng chỉ số hóa OpenBadges 2.0.
+    5. Gửi thông báo in-app danh mục `ACADEMIC` tới học viên để cập nhật kết quả.
 
 ### 2.7. Hàng Chờ Chấm Bài & Bàn Làm Việc Sư Phạm (Grading Cockpit & Workspace)
 * **Khái niệm & Luồng Nghiệp vụ:** Cung cấp không gian làm việc chuyên biệt cho Giảng viên và Trợ giảng để quản lý hàng chờ các bài nộp cần chấm thủ công (Staff Review Queue, Peer Outlier Queue, Grade Appeal Queue) và trực tiếp chấm điểm thông qua bàn làm việc sư phạm hiện đại.
@@ -224,7 +228,7 @@ flowchart TD
     * Bảng tiêu chí Rubric chuẩn hóa: Hiển thị từng tiêu chí đánh giá (Tiêu đề, Mô tả chỉ dẫn sư phạm, Điểm tối đa), cho phép người chấm chọn mức điểm trực quan qua radio button hoặc slider.
     * Ô nhập nhận xét sư phạm (`Feedback / Pedagogical Critique`): Hỗ trợ trình soạn thảo Markdown để giảng viên viết nhận xét chi tiết, hướng dẫn sửa bài và động viên học viên.
     * Khu vực Tham chiếu Lịch sử Chấm chéo (Peer Reviews Reference): Đối với bài nộp chuyển từ diện Outlier hoặc Appeal, cột phải hiển thị lịch sử nhận xét và điểm số của các bạn học trước đó để người chấm có góc nhìn đa chiều.
-    * Khối điều khiển hành động: Nút *"Lưu nháp"* (`Save Draft`), *"Hoàn tất chấm bài"* (`Submit Grade`), và *"Hủy & Nhả bài"* (`Release Lease`).
+    * Khối điều khiển hành động: Nút *"Hoàn tất chấm bài"* (`Submit Grade`) và *"Hủy & Nhả bài"* (`Release Lease`).
 * **Cơ chế Khóa Bài Có Thời Hạn (Atomic Task Lease 30 Phút):**
   * Để ngăn chặn xung đột chấm trùng (Race Condition) khi nhiều Trợ giảng cùng làm việc trong một lớp học đông học viên, khi một nhân sự mở bài nộp trong hàng chờ, hệ thống tự động cấp phát một quyền sở hữu tạm thời gọi là **Atomic Task Lease** với thời hạn **30 phút** (`TASK_LEASE_TIMEOUT_MINUTES = 30`).
   * Việc cấp khóa được thực hiện nguyên tử ở tầng cơ sở dữ liệu (`locked_by_user_id = current_user.id`, `lock_expires_at = now() + 30 mins`).
