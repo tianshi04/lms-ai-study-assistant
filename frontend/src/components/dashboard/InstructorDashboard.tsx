@@ -747,10 +747,10 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             {/* CỘT TRÁI (8/12 - 67%): BIỂU ĐỒ TOÀN HỆ THỐNG & BẢNG SO SÁNH KHÓA HỌC */}
             <div className="lg:col-span-8 space-y-5">
               {/* Card 1: Khung Biểu Đồ Hoạt Động Toàn Sàn */}
-              <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4">
-                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-3 border-b border-outline-variant/60">
+              <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
+                <div className="space-y-3 pb-3 border-b border-outline-variant/60">
                   {/* Tabs biểu đồ toàn sàn */}
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar shrink-0">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
                     <button
                       type="button"
                       onClick={() => setAllChartTab("trend")}
@@ -820,67 +820,82 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     </button>
                   </div>
 
+                  {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
                   {allChartTab === "trend" || allChartTab === "heatmap" ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={chartDateRange}
-                        onChange={(e) => setChartDateRange(e.target.value)}
-                        className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                        aria-label="Chọn khoảng thời gian biểu đồ toàn sàn"
-                      >
-                        <option value="today">Hôm nay (24h)</option>
-                        <option value="this_week">Tuần này (T2 - CN)</option>
-                        <option value="7d">7 ngày gần nhất (Mặc định)</option>
-                        <option value="last_week">Tuần trước</option>
-                        <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
-                        <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
-                        {allChartTab === "trend" && (
-                          <option value="custom">Tùy chọn khoảng ngày...</option>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                        <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                        <span>Bộ lọc hiển thị:</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={chartDateRange}
+                          onChange={(e) => setChartDateRange(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                          aria-label="Chọn khoảng thời gian biểu đồ toàn sàn"
+                        >
+                          <option value="today">Hôm nay (24h)</option>
+                          <option value="this_week">Tuần này (T2 - CN)</option>
+                          <option value="7d">7 ngày gần nhất (Mặc định)</option>
+                          <option value="last_week">Tuần trước</option>
+                          <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
+                          <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
+                          {allChartTab === "trend" && (
+                            <option value="custom">Tùy chọn khoảng ngày...</option>
+                          )}
+                        </select>
+
+                        {allChartTab === "trend" && chartDateRange === "custom" && (
+                          <InstructorDateRangeForm
+                            startDate={customStartDate}
+                            endDate={customEndDate}
+                            onChange={(s, e) => {
+                              setCustomStartDate(s);
+                              setCustomEndDate(e);
+                            }}
+                          />
                         )}
-                      </select>
 
-                      {allChartTab === "trend" && chartDateRange === "custom" && (
-                        <InstructorDateRangeForm
-                          startDate={customStartDate}
-                          endDate={customEndDate}
-                          onChange={(s, e) => {
-                            setCustomStartDate(s);
-                            setCustomEndDate(e);
-                          }}
-                        />
-                      )}
-
-                      <select
-                        value={chartLearnerFilter}
-                        onChange={(e) =>
-                          setChartLearnerFilter(
-                            e.target.value as "all" | "in_progress" | "completed",
-                          )
-                        }
-                        className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                        aria-label="Phân khúc đối tượng học viên vĩ mô"
-                        title="Lọc xu hướng phân tích theo nhóm đối tượng học viên trên toàn hệ thống"
-                      >
-                        <option value="all">Nhóm: Tất cả học viên</option>
-                        <option value="in_progress">Nhóm: Đang học</option>
-                        <option value="completed">Nhóm: Đã tốt nghiệp</option>
-                      </select>
+                        <select
+                          value={chartLearnerFilter}
+                          onChange={(e) =>
+                            setChartLearnerFilter(
+                              e.target.value as "all" | "in_progress" | "completed",
+                            )
+                          }
+                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                          aria-label="Phân khúc đối tượng học viên vĩ mô"
+                          title="Lọc xu hướng phân tích theo nhóm đối tượng học viên trên toàn hệ thống"
+                        >
+                          <option value="all">Nhóm: Tất cả học viên</option>
+                          <option value="in_progress">Nhóm: Đang học</option>
+                          <option value="completed">Nhóm: Đã tốt nghiệp</option>
+                        </select>
+                      </div>
                     </div>
                   ) : allChartTab === "certs" ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={certCourseFilter}
-                        onChange={(e) => setCertCourseFilter(e.target.value)}
-                        className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                        aria-label="Lọc chứng chỉ theo khóa học"
-                      >
-                        <option value="all">
-                          Tất cả khóa học ({allCompletedStudentsList.length})
-                        </option>
-                        <option value="Vi mô">Kinh tế học Vi mô Căn bản</option>
-                        <option value="Hành vi">Kinh tế học Hành vi &amp; Định giá</option>
-                        <option value="Kinh tế lượng">Kinh tế lượng Ứng dụng</option>
-                      </select>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                        <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                        <span>Khóa học cấp chứng chỉ:</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={certCourseFilter}
+                          onChange={(e) => setCertCourseFilter(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                          aria-label="Lọc chứng chỉ theo khóa học"
+                        >
+                          <option value="all">
+                            Tất cả khóa học ({allCompletedStudentsList.length})
+                          </option>
+                          <option value="Vi mô">Kinh tế học Vi mô Căn bản</option>
+                          <option value="Hành vi">Kinh tế học Hành vi &amp; Định giá</option>
+                          <option value="Kinh tế lượng">Kinh tế lượng Ứng dụng</option>
+                        </select>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -1171,15 +1186,16 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             {/* CỘT TRÁI (8/12 - 67%): BIỂU ĐỒ MÔN HỌC & BẢNG HỌC VIÊN TƯƠNG TÁC */}
             <div className="lg:col-span-8 space-y-5">
               {/* Card 1: Khung Biểu Đồ & Tab Phân Tích Lớp Học */}
-              <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/60">
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60">
+              <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
+                <div className="space-y-3 pb-3 border-b border-outline-variant/60">
+                  {/* Hàng 1: Tabs biểu đồ môn học */}
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
                     <button
                       type="button"
                       onClick={() => setChartTab("bar")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         chartTab === "bar"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -1206,9 +1222,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setChartTab("funnel")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         chartTab === "funnel"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -1219,9 +1235,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setChartTab("certs")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         chartTab === "certs"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -1230,8 +1246,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     </button>
                   </div>
 
-                  {/* Thanh điều khiển góc phải Card 1: Tìm kiếm & Lọc học viên / Thời gian */}
-                  <div className="flex flex-wrap items-center gap-2">
+                  {/* Hàng 2: Thanh điều khiển: Tìm kiếm sinh viên & Lọc thời gian / Nhóm */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                     {/* 1. Ô tìm kiếm sinh viên trong lớp học trực diện */}
                     <div className="relative min-w-[170px] max-w-[220px]">
                       <Search
