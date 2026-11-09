@@ -18,6 +18,8 @@ import { GradingQueueStatus } from "@/gen/assessment/v1/assessment_pb";
 
 interface InstructorActionTasksCardProps {
   tasks?: OverviewActionTask[];
+  totalPendingCount?: number;
+  primaryActionUrl?: string;
   courseId?: string;
   courseTitle?: string;
   behindCount?: number;
@@ -26,6 +28,8 @@ interface InstructorActionTasksCardProps {
 
 export function InstructorActionTasksCard({
   tasks,
+  totalPendingCount,
+  primaryActionUrl,
   courseId,
   courseTitle = "Khóa học",
   behindCount = 0,
@@ -242,6 +246,8 @@ export function InstructorActionTasksCard({
 
   // Chế độ 2: Xem tổng quan toàn trường (Overview mode tasks list)
   const overviewTasks = tasks || [];
+  const displayTotalCount = totalPendingCount ?? overviewTasks.length;
+
   return (
     <div className="p-4.5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-3">
       {/* Header */}
@@ -254,13 +260,29 @@ export function InstructorActionTasksCard({
             Việc Cần Xử Lý
           </h3>
         </div>
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-warning/15 text-warning border border-warning/20">
-          {overviewTasks.length} nhiệm vụ
+        <span
+          className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+            displayTotalCount > 0
+              ? "bg-warning/15 text-warning border border-warning/20"
+              : "bg-success/15 text-success border border-success/20"
+          }`}
+        >
+          {displayTotalCount > 0 ? `${displayTotalCount} việc chờ` : "Hoàn thành"}
         </span>
       </div>
 
-      {/* Danh sách nhiệm vụ có gắn chỉ số thời gian SLA */}
-      <div className="space-y-2">
+      {/* Chú thích giới hạn hiển thị nếu có nhiều việc tồn đọng */}
+      {overviewTasks.length > 0 && displayTotalCount > overviewTasks.length && (
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground px-0.5">
+          <span>Ưu tiên {overviewTasks.length} việc khẩn cấp theo SLA:</span>
+          <span className="font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded">
+            Còn {displayTotalCount - overviewTasks.length} việc khác
+          </span>
+        </div>
+      )}
+
+      {/* Danh sách nhiệm vụ có gắn chỉ số thời gian SLA - Khóa max-height chống tràn dọc trang */}
+      <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
         {overviewTasks.length === 0 ? (
           <div className="p-4 rounded-2xl bg-surface border border-outline-variant/60 text-center space-y-1">
             <CheckSquare className="w-5 h-5 text-success mx-auto" aria-hidden="true" />
@@ -320,6 +342,23 @@ export function InstructorActionTasksCard({
           })
         )}
       </div>
+
+      {/* Footer CTA chuyển hướng đến Bàn làm việc toàn diện */}
+      {overviewTasks.length > 0 && (
+        <div className="pt-2 border-t border-outline-variant/40">
+          <Link
+            href={primaryActionUrl || overviewTasks[0]?.actionUrl || "/instructor/courses"}
+            className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-primary hover:bg-primary/5 hover:border-primary/30 border border-transparent transition-all flex items-center justify-center gap-1.5 group"
+          >
+            <span>
+              {displayTotalCount > overviewTasks.length
+                ? `Xem tất cả ${displayTotalCount} nhiệm vụ trong Bàn làm việc`
+                : "Mở Bàn làm việc chấm bài & thảo luận"}
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

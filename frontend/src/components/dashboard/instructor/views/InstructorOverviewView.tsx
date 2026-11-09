@@ -28,6 +28,7 @@ export interface InstructorOverviewViewProps {
   pendingGradingByCourseId: Map<string, number>;
   pendingQaByCourseId: Map<string, number>;
   overviewActionTasks: OverviewActionTask[];
+  totalPendingTasksCount?: number;
   overviewReviews: OverviewReview[];
   avgRatingAllCourses: string | number;
   totalStudentsAllCourses: number;
@@ -56,6 +57,7 @@ export function InstructorOverviewView({
   pendingGradingByCourseId,
   pendingQaByCourseId,
   overviewActionTasks,
+  totalPendingTasksCount,
   overviewReviews,
   avgRatingAllCourses,
   totalStudentsAllCourses,
@@ -451,7 +453,13 @@ export function InstructorOverviewView({
       {/* CỘT PHẢI (4/12 - 33%): ACTION CENTER & ĐIỀU HÀNH GIẢNG DẠY */}
       <div className="lg:col-span-4 space-y-4">
         {/* Box 1: Việc Cần Xử Lý */}
-        <InstructorActionTasksCard tasks={overviewActionTasks} />
+        <InstructorActionTasksCard
+          tasks={overviewActionTasks}
+          totalPendingCount={totalPendingTasksCount}
+          primaryActionUrl={
+            courses[0]?.id ? `/instructor/courses/${courses[0].id}/grading` : "/instructor/courses"
+          }
+        />
 
         {/* Box 2: Phản Hồi Sinh Viên */}
         <InstructorRecentReviewsCard

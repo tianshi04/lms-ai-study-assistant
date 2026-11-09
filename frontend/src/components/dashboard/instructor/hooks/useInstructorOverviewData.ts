@@ -366,6 +366,33 @@ export function useInstructorOverviewData({
     };
   }, [allPacingStudents]);
 
+  const totalPendingGradingCount = useMemo(() => {
+    return (allGradingData?.items || []).filter((i) => i.status !== GradingQueueStatus.GRADED)
+      .length;
+  }, [allGradingData]);
+
+  const totalPendingQaCount = useMemo(() => {
+    return allThreads.filter((th) => {
+      const r = (th.authorRole || "").toUpperCase();
+      const isStaff =
+        r.includes("INSTRUCTOR") ||
+        r.includes("GIẢNG VIÊN") ||
+        r === "2" ||
+        r.includes("TA") ||
+        r === "3" ||
+        r.includes("ADMIN");
+      const titleLower = th.title.trim().toLowerCase();
+      const isAnnouncement =
+        titleLower.startsWith("[thông báo]") ||
+        titleLower.startsWith("[thong bao]") ||
+        titleLower.startsWith("[announcement]");
+      const hasStaffReply = th.replies?.some((reply) => reply.isStaffAnswer);
+      return !th.isStaffPinned && !isStaff && !isAnnouncement && !hasStaffReply;
+    }).length;
+  }, [allThreads]);
+
+  const totalPendingTasksCount = totalPendingGradingCount + totalPendingQaCount;
+
   return {
     analyticsByCourseId,
     courseStudentCounts,
@@ -380,6 +407,7 @@ export function useInstructorOverviewData({
     totalLearningHoursAllCourses,
     growthPercent,
     overviewActionTasks,
+    totalPendingTasksCount,
     pendingGradingByCourseId,
     pendingQaByCourseId,
     allPacingStudents,
