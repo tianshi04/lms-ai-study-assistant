@@ -38,6 +38,12 @@ class IForumRepository(ABC):
         """Pin a reply as staff answer."""
 
     @abstractmethod
+    async def pin_thread(
+        self, thread_id: str, is_pinned: bool
+    ) -> ForumThreadEntity | None:
+        """Pin or unpin a thread."""
+
+    @abstractmethod
     async def get_reply_by_id(self, reply_id: str) -> ForumReplyEntity | None:
         """Get a reply by its ID."""
 

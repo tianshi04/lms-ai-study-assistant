@@ -11,6 +11,7 @@ import {
   Reply,
   AlertTriangle,
   BookOpen,
+  Pin,
 } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
@@ -468,9 +469,32 @@ function ForumPageContent() {
     try {
       const client = getRpcClient(ForumService);
       await client.pinStaffAnswer({ replyId });
+      toast.success("Đã cập nhật trạng thái ghim câu trả lời!");
       fetchThreads();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to pin staff answer:", err);
+      toast.error(err instanceof Error ? err.message : "Không thể ghim câu trả lời.");
+    }
+  };
+
+  const handleTogglePinThread = async (thread: ForumThread) => {
+    try {
+      const client = getRpcClient(ForumService);
+      await client.pinThread({
+        threadId: thread.id,
+        isPinned: !thread.isStaffPinned,
+      });
+      toast.success(
+        thread.isStaffPinned
+          ? "Đã bỏ ghim bài viết khỏi đầu diễn đàn!"
+          : "Đã ghim bài viết lên đầu diễn đàn!",
+      );
+      fetchThreads();
+    } catch (err: unknown) {
+      console.error("Failed to pin/unpin thread:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Không thể thay đổi trạng thái ghim bài viết.",
+      );
     }
   };
 
@@ -663,30 +687,48 @@ function ForumPageContent() {
                           </span>
                         )}
 
-                        {(isThreadAuthor || canDeleteThread) && (
-                          <div className="ml-auto flex items-center gap-2">
-                            {isThreadAuthor && (
-                              <Button
-                                variant="text"
-                                size="sm"
-                                onClick={() => openEditThreadModal(thread)}
-                                className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
-                              >
-                                {"Sửa"}
-                              </Button>
-                            )}
-                            {canDeleteThread && (
-                              <Button
-                                variant="text"
-                                size="sm"
-                                onClick={() => handleDeleteThread(thread.id)}
-                                className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
-                              >
-                                {"Xóa"}
-                              </Button>
-                            )}
-                          </div>
-                        )}
+                        <div className="ml-auto flex items-center gap-2">
+                          {isCourseModerator(thread.courseId) && (
+                            <Button
+                              variant="text"
+                              size="sm"
+                              onClick={() => handleTogglePinThread(thread)}
+                              className="text-xs text-muted-foreground hover:text-warning h-auto p-1 gap-1"
+                              title={
+                                thread.isStaffPinned
+                                  ? "Bỏ ghim bài viết này"
+                                  : "Ghim bài viết lên đầu diễn đàn"
+                              }
+                            >
+                              <Pin
+                                className={`w-3.5 h-3.5 ${
+                                  thread.isStaffPinned ? "fill-warning text-warning" : ""
+                                }`}
+                              />
+                              <span>{thread.isStaffPinned ? "Bỏ ghim" : "Ghim"}</span>
+                            </Button>
+                          )}
+                          {isThreadAuthor && (
+                            <Button
+                              variant="text"
+                              size="sm"
+                              onClick={() => openEditThreadModal(thread)}
+                              className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
+                            >
+                              {"Sửa"}
+                            </Button>
+                          )}
+                          {canDeleteThread && (
+                            <Button
+                              variant="text"
+                              size="sm"
+                              onClick={() => handleDeleteThread(thread.id)}
+                              className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
+                            >
+                              {"Xóa"}
+                            </Button>
+                          )}
+                        </div>
                       </div>
 
                       <Button
@@ -733,8 +775,8 @@ function ForumPageContent() {
                     >
                       <span>
                         {isExpanded
-                          ? "Hide replies"
-                          : `Show (${thread.replies.length}) ${"phản hồi"}`}
+                          ? "Ẩn phản hồi"
+                          : `Xem tất cả (${thread.replies.length}) phản hồi`}
                       </span>
                       <ChevronDown
                         aria-hidden="true"
@@ -1072,6 +1114,10 @@ function ForumPageContent() {
         onDeleteThread={handleDeleteThread}
         onDeleteReply={handleDeleteReply}
         onPinStaffAnswer={handlePinStaffAnswer}
+        onTogglePinThread={(threadId) => {
+          const t = threads.find((x) => x.id === threadId);
+          if (t) handleTogglePinThread(t);
+        }}
         isNotificationTarget={urlThreadId === selectedModalThreadId}
       />
 

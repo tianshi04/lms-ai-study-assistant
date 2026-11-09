@@ -87,8 +87,15 @@ class MockForumRepository:
     async def pin_staff_answer(self, reply_id: str, ta_user_id: str):
         r = self.replies.get(reply_id)
         if r:
-            r.is_staff_answer = True
+            r.is_staff_answer = not r.is_staff_answer
         return True
+
+    async def pin_thread(self, thread_id: str, is_pinned: bool):
+        t = self.threads.get(thread_id)
+        if not t:
+            return None
+        t.is_staff_pinned = is_pinned
+        return t
 
 
 class MockCatalogRepository:
@@ -486,3 +493,61 @@ async def test_list_threads_scoped_to_teaching_and_enrolled_courses():
     bob_user = CurrentUser(id="bob", role="USER_ROLE_LEARNER", email="bob@test.com")
     bob_threads = await use_case.list_threads(course_id="", user=bob_user)
     assert len(bob_threads) == 0
+
+
+@pytest.mark.asyncio
+async def test_pin_thread_permissions(monkeypatch):
+    from contextlib import asynccontextmanager
+
+    repo = MockForumRepository()
+    mock_catalog = MockCatalogRepository()
+    mock_learning = MockLearningRepository()
+
+    course_ai = Course(id="c_ai", title="AI", slug="ai", owner_id="prof_andrew")
+    mock_catalog.courses["c_ai"] = course_ai
+
+    t = ForumThreadEntity(
+        id="t1",
+        course_id="c_ai",
+        item_id="",
+        title="Question",
+        content="Details",
+        author_name="Alice",
+        author_role="Learner",
+        author_user_id="learner_alice",
+    )
+    await repo.create_thread(t)
+
+    use_case = ForumUseCase(
+        repo_factory=lambda _: repo,
+        catalog_repo_factory=lambda _: mock_catalog,
+        learning_repo_factory=lambda _: mock_learning,
+    )
+
+    @asynccontextmanager
+    async def mock_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.forum.application.forum_usecase.async_session_scope",
+        mock_scope,
+    )
+
+    andrew = CurrentUser(
+        id="prof_andrew", role="USER_ROLE_INSTRUCTOR", email="a@ai.edu"
+    )
+    alice = CurrentUser(
+        id="learner_alice", role="USER_ROLE_LEARNER", email="alice@test.com"
+    )
+
+    # Learner cannot pin thread -> PermissionError
+    with pytest.raises(PermissionError):
+        await use_case.pin_thread("t1", is_pinned=True, user=alice)
+
+    # Instructor can pin thread
+    updated = await use_case.pin_thread("t1", is_pinned=True, user=andrew)
+    assert updated.is_staff_pinned is True
+
+    # Instructor can unpin thread
+    unpinned = await use_case.pin_thread("t1", is_pinned=False, user=andrew)
+    assert unpinned.is_staff_pinned is False

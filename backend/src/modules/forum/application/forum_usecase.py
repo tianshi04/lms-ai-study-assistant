@@ -367,6 +367,24 @@ class ForumUseCase:
                 )
             return await repo.pin_staff_answer(reply_id, ta_user_id)
 
+    async def pin_thread(
+        self, thread_id: str, is_pinned: bool, user: CurrentUser | None = None
+    ) -> ForumThreadEntity:
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            thread = await repo.get_thread_by_id(thread_id)
+            if not thread:
+                raise ValueError("Chủ đề không tồn tại.")
+
+            if user:
+                await self._verify_staff_course_moderation(
+                    session, thread.course_id, user
+                )
+            updated = await repo.pin_thread(thread_id, is_pinned)
+            if not updated:
+                raise ValueError("Không thể cập nhật trạng thái ghim bài viết này.")
+            return updated
+
     async def update_thread(
         self,
         thread_id: str,

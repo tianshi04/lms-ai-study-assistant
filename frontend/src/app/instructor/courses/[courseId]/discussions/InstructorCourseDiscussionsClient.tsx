@@ -198,6 +198,26 @@ export function InstructorCourseDiscussionsClient({
     }
   };
 
+  const handleTogglePinThread = async (thread: ForumThread) => {
+    try {
+      const client = getRpcClient(ForumService);
+      await client.pinThread({
+        threadId: thread.id,
+        isPinned: !thread.isStaffPinned,
+      });
+      toast.success(
+        thread.isStaffPinned
+          ? "Đã bỏ ghim bài viết khỏi đầu chủ đề!"
+          : "Đã ghim bài viết lên đầu chủ đề!",
+      );
+      await loadData();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : "Không thể thay đổi trạng thái ghim bài viết.",
+      );
+    }
+  };
+
   // Vote upvote
   const handleVote = async (postId: string, isUpvote: boolean) => {
     try {
@@ -557,12 +577,18 @@ export function InstructorCourseDiscussionsClient({
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
-                      {thread.isStaffPinned && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
-                          <Pin className="w-2.5 h-2.5 text-primary" />
-                          <span>Đã ghim</span>
-                        </span>
-                      )}
+                      <Button
+                        variant={thread.isStaffPinned ? "filled" : "outlined"}
+                        size="sm"
+                        onClick={() => handleTogglePinThread(thread)}
+                        className="h-6 px-2 text-[10px] gap-1 font-bold rounded-full"
+                        title={thread.isStaffPinned ? "Bỏ ghim bài viết" : "Ghim bài viết lên đầu"}
+                      >
+                        <Pin
+                          className={`w-2.5 h-2.5 ${thread.isStaffPinned ? "fill-current" : ""}`}
+                        />
+                        <span>{thread.isStaffPinned ? "Đã ghim" : "Ghim"}</span>
+                      </Button>
 
                       {!isAnswered ? (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-warning/15 text-warning border border-warning/20 flex items-center gap-1">
@@ -691,6 +717,10 @@ export function InstructorCourseDiscussionsClient({
             }
           }}
           onPinStaffAnswer={handlePinAnswer}
+          onTogglePinThread={(threadId) => {
+            const t = threads.find((x) => x.id === threadId);
+            if (t) handleTogglePinThread(t);
+          }}
         />
       )}
     </div>

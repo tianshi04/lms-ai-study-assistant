@@ -290,16 +290,29 @@ class ForumRepository(IForumRepository):
         if not reply_orm:
             return False
 
-        reply_orm.is_staff_answer = True
+        reply_orm.is_staff_answer = not reply_orm.is_staff_answer
 
-        # Mark thread as staff pinned
-        thread_stmt = select(ForumThreadORM).where(
-            ForumThreadORM.id == reply_orm.thread_id
-        )
-        t_res = await self.session.execute(thread_stmt)
-        thread_orm = t_res.scalar_one_or_none()
-        if thread_orm:
-            thread_orm.is_staff_pinned = True
+        if reply_orm.is_staff_answer:
+            thread_stmt = select(ForumThreadORM).where(
+                ForumThreadORM.id == reply_orm.thread_id
+            )
+            t_res = await self.session.execute(thread_stmt)
+            thread_orm = t_res.scalar_one_or_none()
+            if thread_orm:
+                thread_orm.is_staff_pinned = True
 
         await self.session.commit()
         return True
+
+    async def pin_thread(
+        self, thread_id: str, is_pinned: bool
+    ) -> ForumThreadEntity | None:
+        stmt = select(ForumThreadORM).where(ForumThreadORM.id == thread_id)
+        res = await self.session.execute(stmt)
+        thread_orm = res.scalar_one_or_none()
+        if not thread_orm:
+            return None
+
+        thread_orm.is_staff_pinned = is_pinned
+        await self.session.commit()
+        return await self.get_thread_by_id(thread_id)

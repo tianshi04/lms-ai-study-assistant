@@ -178,6 +178,25 @@ class ForumHandler(ForumService):
 
         return pb.PinStaffAnswerResponse(success=success)
 
+    async def pin_thread(
+        self,
+        request: pb.PinThreadRequest,
+        ctx: RequestContext[pb.PinThreadRequest, pb.PinThreadResponse],
+    ) -> pb.PinThreadResponse:
+        current_user = require_current_user()
+        try:
+            thread = await self.use_case.pin_thread(
+                thread_id=request.thread_id,
+                is_pinned=request.is_pinned,
+                user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+        return pb.PinThreadResponse(thread=_to_pb_thread(thread))
+
     async def update_thread(
         self,
         request: pb.UpdateThreadRequest,

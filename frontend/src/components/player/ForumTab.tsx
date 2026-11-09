@@ -226,6 +226,26 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     }
   };
 
+  const handlePinStaffAnswer = async (replyId: string) => {
+    try {
+      const client = getRpcClient(ForumService);
+      await client.pinStaffAnswer({ replyId });
+      fetchThreads();
+    } catch (err) {
+      console.error("Failed to pin staff answer:", err);
+    }
+  };
+
+  const handleTogglePinThread = async (threadId: string, isPinned: boolean) => {
+    try {
+      const client = getRpcClient(ForumService);
+      await client.pinThread({ threadId, isPinned });
+      fetchThreads();
+    } catch (err) {
+      console.error("Failed to pin thread:", err);
+    }
+  };
+
   const handleVote = async (postId: string, isUpvote: boolean) => {
     if (votingPostIds.has(postId)) return;
     setVotingPostIds((prev) => new Set(prev).add(postId));
@@ -542,6 +562,8 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         }}
         onDeleteThread={handleDeleteThread}
         onDeleteReply={handleDeleteReply}
+        onPinStaffAnswer={handlePinStaffAnswer}
+        onTogglePinThread={handleTogglePinThread}
         isNotificationTarget={targetThreadId === selectedModalThreadId}
       />
 
