@@ -2349,7 +2349,12 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               />
 
               {/* Box 2: AI Teaching Copilot (Agent Cố Vấn & Phân Tích Sư Phạm) */}
-              <InstructorAIAssistantCard />
+              <InstructorAIAssistantCard
+                courseId={activeCourse?.id}
+                courseTitle={activeCourse?.title}
+                behindStudents={rawStudentsWithPacing.filter((s) => s.pace === "BEHIND")}
+                bottleneckWeek={bottleneckWeek}
+              />
 
               {/* Box 2: Cảnh Báo Điểm Nghẽn */}
               {bottleneckWeek ? (
