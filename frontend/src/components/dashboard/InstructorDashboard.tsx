@@ -305,12 +305,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     );
   }, [allCompletedStudentsList, certCourseFilter]);
 
-  const avgRatingAllCourses = useMemo(() => {
-    const ratings = courses.map((c) => c.averageRating).filter((r) => r > 0);
-    if (ratings.length === 0) return "5.0";
-    return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
-  }, [courses]);
-
   const totalReviewsAllCourses = useMemo(() => {
     let count = 0;
     courses.forEach((c) => {
@@ -373,6 +367,16 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     });
     return list;
   }, [courses, allReviewsQueries]);
+
+  const avgRatingAllCourses = useMemo(() => {
+    if (overviewReviews.length > 0) {
+      const sum = overviewReviews.reduce((acc, r) => acc + r.rating, 0);
+      return (sum / overviewReviews.length).toFixed(1);
+    }
+    const ratings = courses.map((c) => c.averageRating).filter((r) => r > 0);
+    if (ratings.length === 0) return "5.0";
+    return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+  }, [overviewReviews, courses]);
 
   // Truy vấn hàng đợi bài chấm thi trên toàn bộ các môn học phụ trách
   const { data: allGradingData } = useGradingQueueQuery(

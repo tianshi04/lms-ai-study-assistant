@@ -21,7 +21,12 @@ export function InstructorRecentReviewsCard({
 
   // Chỉ hiển thị tối đa 3 đánh giá tiêu biểu trên widget để giữ layout cân đối
   const displayReviews = reviews.slice(0, 3);
-  const numericAvg = typeof avgRating === "number" ? avgRating : parseFloat(avgRating) || 5.0;
+  const calculatedAvg =
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : typeof avgRating === "number"
+        ? avgRating
+        : parseFloat(avgRating) || 5.0;
 
   const handleOpenReview = (reviewId?: string) => {
     setSelectedReviewId(reviewId || null);
@@ -48,7 +53,7 @@ export function InstructorRecentReviewsCard({
             title="Xem chi tiết điểm đánh giá"
           >
             <Star className="w-3.5 h-3.5 fill-warning text-warning" />
-            <span>{numericAvg.toFixed(1)} TB</span>
+            <span>{calculatedAvg.toFixed(1)} TB</span>
             <span className="text-[10px] text-muted-foreground font-sans font-normal">
               ({reviews.length})
             </span>

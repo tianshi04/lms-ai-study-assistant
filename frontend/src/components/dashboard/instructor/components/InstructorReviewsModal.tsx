@@ -78,7 +78,14 @@ export function InstructorReviewsModal({
     });
   }, [reviews, ratingFilter, courseFilter, searchQuery]);
 
-  const numericAvg = typeof avgRating === "number" ? avgRating : parseFloat(avgRating) || 5.0;
+  // Tính điểm trung bình trực tiếp từ danh sách đánh giá thực tế
+  const calculatedAvg = useMemo(() => {
+    if (reviews.length === 0) {
+      return typeof avgRating === "number" ? avgRating : parseFloat(avgRating) || 5.0;
+    }
+    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+    return sum / reviews.length;
+  }, [reviews, avgRating]);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -105,11 +112,11 @@ export function InstructorReviewsModal({
         <div className="py-3 px-4 bg-muted/30 rounded-2xl border border-border/60 my-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground font-mono flex items-center gap-1.5">
-              <span>{numericAvg.toFixed(1)}</span>
+              <span>{calculatedAvg.toFixed(1)}</span>
               <Star className="w-5 h-5 fill-warning text-warning" aria-hidden="true" />
             </div>
             <div>
-              <RatingStars rating={numericAvg} size="sm" />
+              <RatingStars rating={calculatedAvg} size="sm" />
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 Điểm đánh giá trung bình từ <strong>{stats.total}</strong> lượt phản hồi
               </p>
