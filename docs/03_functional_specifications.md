@@ -182,7 +182,10 @@ flowchart TD
   * Trợ giảng/Giảng viên/Quản trị viên có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
   * Tác giả bài viết (`author_user_id == current_user.id`) có quyền cập nhật (`UpdateThread`, `UpdateReply`) hoặc xóa bài đăng của mình. Khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động đánh dấu `is_edited = True` và ghi nhận timestamp `edited_at` để người xem dễ dàng phân biệt bài viết đã qua chỉnh sửa.
   * Ban kiểm duyệt (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền xóa bài viết/bình luận vi phạm quy chuẩn cộng đồng của bất kỳ người dùng nào.
-* **Hỗ trợ Giải đáp:** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) để giải thích kiến thức nâng cao cho học viên.
+* **Hỗ trợ Giải đáp & Bàn làm việc Q&A Giảng viên (`/instructor/courses/[courseId]/discussions`):** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) và toàn bộ khóa học để giải thích kiến thức nâng cao cho học viên:
+  * **Bộ lọc phân loại ưu tiên (Triage Filters):** Lọc theo các chủ đề *Cần giải đáp gấp (chưa có phản hồi từ Giảng viên)*, *Đã giải đáp*, và *Lời giải đã ghim*.
+  * **Hộp phản hồi nhanh (Quick Staff Reply):** Cho phép Giảng viên nhập câu trả lời chính thức trực tiếp trên danh sách câu hỏi hoặc thông qua Modal chi tiết.
+  * **Điều hướng tập trung:** Tích hợp trực tiếp từ Chip điều hướng Khóa học (`CourseHeaderBanner`), thẻ *Việc cần xử lý* trên Bảng điều khiển Giảng viên (`InstructorDashboard`), và thanh điều hướng chính (`Navbar`).
 
 ### 2.5. Bảng Phân tích & Quản lý Lớp học (Instructor Analytics & Student Roster)
 * **Báo cáo Thống kê Lớp học thời gian thực (`GetInstructorAnalytics`):** Giảng viên theo dõi tổng số học viên ghi danh (`total_enrolled_students`), tỷ lệ hoàn thành khóa học trung bình (`average_completion_rate`), điểm đánh giá sao trung bình (`average_rating`), và tổng số đánh giá.

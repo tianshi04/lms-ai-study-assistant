@@ -182,6 +182,31 @@ export function InstructorActionTasksCard({
             </Link>
           </div>
 
+          {/* Item 3: Hỏi đáp & Thảo luận môn học */}
+          <div className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all flex items-center justify-between gap-2 group">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="p-1 rounded-md shrink-0 bg-warning/10 text-warning">
+                <MessageSquare className="w-3.5 h-3.5" />
+              </span>
+              <div>
+                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                  Hỏi Đáp & Thảo Luận
+                </h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Giải đáp thắc mắc và hỗ trợ sinh viên trong lớp
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href={`/instructor/courses/${courseId}/discussions`}
+              className="font-bold text-primary hover:underline text-xs flex items-center gap-0.5 shrink-0"
+            >
+              <span>Vào thảo luận</span>
+              <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+
           {/* Item 3: Sinh viên chậm tiến độ */}
           {behindCount > 0 && (
             <div className="p-3 rounded-2xl bg-destructive/5 border border-destructive/20 transition-all flex items-center justify-between gap-2">
