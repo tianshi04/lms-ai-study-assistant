@@ -403,7 +403,23 @@ export function InstructorDashboard({ userName }: { userName: string }) {
       });
     });
 
-    const openThreads = (allThreadsData || []).filter((th) => !th.isStaffPinned);
+    const openThreads = (allThreadsData || []).filter((th) => {
+      const r = (th.authorRole || "").toUpperCase();
+      const isStaff =
+        r.includes("INSTRUCTOR") ||
+        r.includes("GIẢNG VIÊN") ||
+        r === "2" ||
+        r.includes("TA") ||
+        r === "3" ||
+        r.includes("ADMIN");
+      const titleLower = th.title.trim().toLowerCase();
+      const isAnnouncement =
+        titleLower.startsWith("[thông báo]") ||
+        titleLower.startsWith("[thong bao]") ||
+        titleLower.startsWith("[announcement]");
+      const hasStaffReply = th.replies?.some((r) => r.isStaffAnswer);
+      return !th.isStaffPinned && !isStaff && !isAnnouncement && !hasStaffReply;
+    });
     openThreads.slice(0, 3).forEach((th) => {
       const course = courses.find((c) => c.id === th.courseId);
       tasks.push({

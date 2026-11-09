@@ -651,8 +651,17 @@ function ForumPageContent() {
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
-                        {isTargetThread && <Badge variant="primary">📌 TB</Badge>}
+                        {isTargetThread && <Badge variant="primary">📌 Bài từ thông báo</Badge>}
                         {thread.isStaffPinned && <Badge variant="warning">GHIM</Badge>}
+                        {Boolean(
+                          thread.title.trim().toLowerCase().startsWith("[thông báo]") ||
+                          thread.title.trim().toLowerCase().startsWith("[thong bao]") ||
+                          (thread.authorRole || "").toUpperCase().includes("INSTRUCTOR"),
+                        ) && (
+                          <Badge variant="primary" className="text-[11px] font-bold">
+                            📢 Thông báo GV
+                          </Badge>
+                        )}
                         {(() => {
                           const courseObj = courses.find((c) => c.id === thread.courseId);
                           const courseTitle = courseObj?.title || thread.courseId;

@@ -107,6 +107,15 @@ export function ThreadDetailModal({
                     <span>📌 Bài viết từ thông báo</span>
                   </Badge>
                 )}
+                {Boolean(
+                  thread.title.trim().toLowerCase().startsWith("[thông báo]") ||
+                  thread.title.trim().toLowerCase().startsWith("[thong bao]") ||
+                  (thread.authorRole || "").toUpperCase().includes("INSTRUCTOR"),
+                ) && (
+                  <Badge variant="primary" className="gap-1 px-3 py-1 shadow-xs font-bold text-xs">
+                    <span>📢 Thông báo từ Giảng viên</span>
+                  </Badge>
+                )}
                 {thread.isStaffPinned && (
                   <Badge
                     variant="warning"

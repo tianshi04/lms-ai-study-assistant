@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   MessageSquare,
   CheckCircle2,
+  Megaphone,
   Clock,
   Pin,
   ThumbsUp,
@@ -31,7 +32,7 @@ interface InstructorCourseDiscussionsClientProps {
   courseId: string;
 }
 
-type DiscussionTriageFilter = "all" | "unanswered" | "answered" | "pinned";
+type DiscussionTriageFilter = "all" | "unanswered" | "answered" | "announcements" | "pinned";
 
 export function InstructorCourseDiscussionsClient({
   courseId,
@@ -92,6 +93,44 @@ export function InstructorCourseDiscussionsClient({
     return thread.replies.some((r) => r.isStaffAnswer);
   };
 
+  // Check xem thread có phải thông báo hoặc do Giảng viên / BQT đăng không
+  const isAnnouncementOrStaffThread = useCallback(
+    (thread: ForumThread) => {
+      const titleLower = thread.title.trim().toLowerCase();
+      if (
+        titleLower.startsWith("[thông báo]") ||
+        titleLower.startsWith("[thong bao]") ||
+        titleLower.startsWith("[announcement]")
+      ) {
+        return true;
+      }
+
+      const r = (thread.authorRole || "").toUpperCase();
+      if (
+        r.includes("INSTRUCTOR") ||
+        r.includes("GIẢNG VIÊN") ||
+        r.includes("GIANG VIEN") ||
+        r === "2" ||
+        r.includes("TA") ||
+        r.includes("TEACHING ASSISTANT") ||
+        r.includes("TRỢ GIẢNG") ||
+        r === "3" ||
+        r.includes("ADMIN")
+      ) {
+        return true;
+      }
+
+      if (course && thread.authorUserId) {
+        if (course.ownerId && thread.authorUserId === course.ownerId) return true;
+        if (course.coInstructorIds && course.coInstructorIds.includes(thread.authorUserId))
+          return true;
+      }
+
+      return false;
+    },
+    [course],
+  );
+
   // Check quyền sở hữu/giảng dạy của Giảng viên đối với khóa học này
   const isCourseStaff = useMemo(() => {
     if (!course) return false;
@@ -103,25 +142,41 @@ export function InstructorCourseDiscussionsClient({
     return isOwner || isCoInstructor;
   }, [course, userId, userRole]);
 
-  // KPI counts
+  // KPI counts: Tách bạch rõ câu hỏi học viên vs thông báo giảng viên
   const kpis = useMemo(() => {
     const total = threads.length;
-    const unanswered = threads.filter((t) => !hasStaffAnswer(t)).length;
-    const answered = threads.filter((t) => hasStaffAnswer(t)).length;
+    const unanswered = threads.filter(
+      (t) => !isAnnouncementOrStaffThread(t) && !hasStaffAnswer(t),
+    ).length;
+    const answered = threads.filter(
+      (t) => !isAnnouncementOrStaffThread(t) && hasStaffAnswer(t),
+    ).length;
+    const announcements = threads.filter((t) => isAnnouncementOrStaffThread(t)).length;
     const pinned = threads.filter(
       (t) => t.isStaffPinned || t.replies.some((r) => r.isStaffAnswer),
     ).length;
 
-    return { total, unanswered, answered, pinned };
-  }, [threads]);
+    return { total, unanswered, answered, announcements, pinned };
+  }, [threads, isAnnouncementOrStaffThread]);
 
   // Danh sách threads sau lọc
   const filteredThreads = useMemo(() => {
     return threads.filter((thread) => {
+      const isAnnouncement = isAnnouncementOrStaffThread(thread);
+
       // 1. Triage filter
-      if (triageFilter === "unanswered" && hasStaffAnswer(thread)) return false;
-      if (triageFilter === "answered" && !hasStaffAnswer(thread)) return false;
-      if (triageFilter === "pinned" && !thread.isStaffPinned) return false;
+      if (triageFilter === "unanswered") {
+        if (isAnnouncement || hasStaffAnswer(thread)) return false;
+      }
+      if (triageFilter === "answered") {
+        if (isAnnouncement || !hasStaffAnswer(thread)) return false;
+      }
+      if (triageFilter === "announcements") {
+        if (!isAnnouncement) return false;
+      }
+      if (triageFilter === "pinned") {
+        if (!thread.isStaffPinned && !thread.replies.some((r) => r.isStaffAnswer)) return false;
+      }
 
       // 2. Search query filter
       if (searchQuery.trim()) {
@@ -134,7 +189,7 @@ export function InstructorCourseDiscussionsClient({
 
       return true;
     });
-  }, [threads, triageFilter, searchQuery]);
+  }, [threads, triageFilter, searchQuery, isAnnouncementOrStaffThread]);
 
   // Selected thread object for modal
   const activeModalThread = useMemo(() => {
@@ -394,9 +449,17 @@ export function InstructorCourseDiscussionsClient({
           </div>
         </div>
 
-        {/* KPI Summary Ribbon (4 Cards) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-          <div className="p-4 rounded-2xl bg-surface border border-outline-variant/60 shadow-xs space-y-1">
+        {/* KPI Summary Ribbon (5 Cards: Tổng, Chưa trả lời, Đã trả lời, Thông báo GV, Đã ghim) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+          <button
+            type="button"
+            onClick={() => setTriageFilter("all")}
+            className={`p-4 rounded-2xl border shadow-xs space-y-1 transition-all cursor-pointer text-left ${
+              triageFilter === "all"
+                ? "bg-muted/80 border-foreground/40 ring-2 ring-foreground/20"
+                : "bg-surface border-outline-variant/60 hover:border-foreground/30"
+            }`}
+          >
             <span className="text-xs text-muted-foreground font-medium block">
               Tổng số thảo luận
             </span>
@@ -404,7 +467,7 @@ export function InstructorCourseDiscussionsClient({
               <span className="text-2xl font-black font-mono text-foreground">{kpis.total}</span>
               <span className="text-[11px] text-muted-foreground">chủ đề</span>
             </div>
-          </div>
+          </button>
 
           <button
             type="button"
@@ -423,7 +486,7 @@ export function InstructorCourseDiscussionsClient({
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-black font-mono text-warning">{kpis.unanswered}</span>
-              <span className="text-[11px] text-muted-foreground">chưa trả lời</span>
+              <span className="text-[11px] text-muted-foreground">học viên hỏi</span>
             </div>
           </button>
 
@@ -446,15 +509,36 @@ export function InstructorCourseDiscussionsClient({
           <button
             type="button"
             className={`p-4 rounded-2xl border shadow-xs space-y-1 transition-all cursor-pointer text-left ${
-              triageFilter === "pinned"
+              triageFilter === "announcements"
                 ? "bg-primary/15 border-primary ring-2 ring-primary/30"
                 : "bg-surface border-outline-variant/60 hover:border-primary/50"
             }`}
+            onClick={() => setTriageFilter("announcements")}
+          >
+            <div className="flex items-center gap-1.5">
+              <Megaphone className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-bold text-primary block">Thông báo Giảng viên</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-black font-mono text-primary">
+                {kpis.announcements}
+              </span>
+              <span className="text-[11px] text-muted-foreground">thông báo</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className={`p-4 rounded-2xl border shadow-xs space-y-1 transition-all cursor-pointer text-left ${
+              triageFilter === "pinned"
+                ? "bg-warning/20 border-warning ring-2 ring-warning/30"
+                : "bg-surface border-outline-variant/60 hover:border-warning/50"
+            }`}
             onClick={() => setTriageFilter("pinned")}
           >
-            <span className="text-xs font-bold text-primary block">Lời giải đã ghim mẫu</span>
+            <span className="text-xs font-bold text-foreground block">Đã ghim lên đầu</span>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black font-mono text-primary">{kpis.pinned}</span>
+              <span className="text-2xl font-black font-mono text-foreground">{kpis.pinned}</span>
               <span className="text-[11px] text-muted-foreground">đã ghim</span>
             </div>
           </button>
@@ -504,6 +588,19 @@ export function InstructorCourseDiscussionsClient({
 
             <button
               type="button"
+              onClick={() => setTriageFilter("announcements")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                triageFilter === "announcements"
+                  ? "bg-surface text-foreground shadow-xs font-black"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Megaphone className="w-3.5 h-3.5 text-primary" />
+              <span>Thông báo GV ({kpis.announcements})</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setTriageFilter("pinned")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
                 triageFilter === "pinned"
@@ -546,6 +643,7 @@ export function InstructorCourseDiscussionsClient({
             </div>
           ) : (
             filteredThreads.map((thread) => {
+              const isAnnouncement = isAnnouncementOrStaffThread(thread);
               const isAnswered = hasStaffAnswer(thread);
               const sending = sendingReplyIds.has(thread.id);
               const staffReplies = thread.replies.filter((r) => r.isStaffAnswer);
@@ -554,9 +652,11 @@ export function InstructorCourseDiscussionsClient({
                 <div
                   key={thread.id}
                   className={`p-5 rounded-3xl bg-surface border transition-all space-y-4 ${
-                    !isAnswered
-                      ? "border-warning/50 hover:border-warning shadow-xs"
-                      : "border-outline-variant/60 hover:border-primary/40 shadow-xs"
+                    isAnnouncement
+                      ? "border-primary/40 hover:border-primary shadow-xs"
+                      : !isAnswered
+                        ? "border-warning/50 hover:border-warning shadow-xs"
+                        : "border-outline-variant/60 hover:border-primary/40 shadow-xs"
                   }`}
                 >
                   {/* Top Bar: Author, Badges, Time */}
@@ -590,7 +690,12 @@ export function InstructorCourseDiscussionsClient({
                         <span>{thread.isStaffPinned ? "Đã ghim" : "Ghim"}</span>
                       </Button>
 
-                      {!isAnswered ? (
+                      {isAnnouncement ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/20 flex items-center gap-1">
+                          <Megaphone className="w-3 h-3 text-primary" />
+                          <span>Thông báo Giảng viên</span>
+                        </span>
+                      ) : !isAnswered ? (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-warning/15 text-warning border border-warning/20 flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3 text-warning" />
                           <span>Chưa có câu trả lời GV</span>
