@@ -362,6 +362,16 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         models = res.scalars().all()
         return [_model_to_domain_progress(m) for m in models]
 
+    async def check_enrollment(self, user_id: str, course_id: str) -> bool:
+        key = self._get_key(user_id, course_id)
+        stmt = select(LearningProgressModel.id).where(
+            LearningProgressModel.id == key,
+            LearningProgressModel.enrolled_at.isnot(None),
+            LearningProgressModel.enrolled_at != "",
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none() is not None
+
     async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
         progresses = await self.list_user_progresses(user_id)
         summaries = []

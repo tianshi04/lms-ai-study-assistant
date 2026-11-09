@@ -36,7 +36,7 @@ type DiscussionTriageFilter = "all" | "unanswered" | "answered" | "pinned";
 export function InstructorCourseDiscussionsClient({
   courseId,
 }: InstructorCourseDiscussionsClientProps) {
-  const { userId, isInstructorOrAdmin, userName } = useAuth();
+  const { userId, isInstructorOrAdmin, userName, userRole } = useAuth();
   const toast = useToast();
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -91,6 +91,17 @@ export function InstructorCourseDiscussionsClient({
   const hasStaffAnswer = (thread: ForumThread) => {
     return thread.replies.some((r) => r.isStaffAnswer);
   };
+
+  // Check quyền sở hữu/giảng dạy của Giảng viên đối với khóa học này
+  const isCourseStaff = useMemo(() => {
+    if (!course) return false;
+    if (userRole === "USER_ROLE_ADMIN" || userRole === "3") return true;
+    const isOwner = Boolean(userId && course.ownerId === userId);
+    const isCoInstructor = Boolean(
+      userId && course.coInstructorIds && course.coInstructorIds.includes(userId),
+    );
+    return isOwner || isCoInstructor;
+  }, [course, userId, userRole]);
 
   // KPI counts
   const kpis = useMemo(() => {
@@ -206,6 +217,75 @@ export function InstructorCourseDiscussionsClient({
           <p className="text-sm font-medium text-muted-foreground">
             Đang tải bàn làm việc hỏi đáp...
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-card border border-border rounded-3xl p-6 sm:p-8 text-center space-y-5 shadow-lg">
+          <div className="w-16 h-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto border border-destructive/20">
+            <AlertTriangle aria-hidden="true" className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-black text-foreground tracking-tight">
+              Khóa học không tồn tại
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Không thể tìm thấy thông tin khóa học hoặc khóa học đã bị xóa.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/instructor/courses"
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors shadow-xs"
+            >
+              <span>Về danh sách Khóa học</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isCourseStaff) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-card border border-border rounded-3xl p-6 sm:p-8 text-center space-y-5 shadow-lg">
+          <div className="w-16 h-16 rounded-2xl bg-warning/10 text-warning flex items-center justify-center mx-auto border border-warning/20">
+            <AlertTriangle aria-hidden="true" className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-black text-foreground tracking-tight">
+              Không có quyền quản lý khóa học này
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Bàn làm việc Q&amp;A chỉ dành riêng cho Giảng viên phụ trách hoặc Trợ giảng được phân
+              công của khóa học{" "}
+              <span className="font-semibold text-foreground">{course.title}</span>.
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Nếu bạn đang theo học khóa học này, bạn có thể tham gia thảo luận và trao đổi thắc mắc
+              tại Diễn đàn học tập chung.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2.5 pt-2">
+            <Link
+              href={`/forum?courseId=${course.id}`}
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors shadow-xs"
+            >
+              <MessageSquare aria-hidden="true" className="w-4 h-4" />
+              <span>Chuyển sang Diễn đàn học tập</span>
+            </Link>
+            <Link
+              href="/instructor/courses"
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-colors"
+            >
+              <span>Về danh sách Khóa học của tôi</span>
+            </Link>
+          </div>
         </div>
       </div>
     );

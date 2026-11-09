@@ -412,7 +412,10 @@ export function InstructorAIAssistantCard({
 
             <form onSubmit={handleSendBroadcast} className="space-y-3">
               <div>
-                <label htmlFor="broadcast-title" className="text-[11px] font-bold text-foreground block mb-1">
+                <label
+                  htmlFor="broadcast-title"
+                  className="text-[11px] font-bold text-foreground block mb-1"
+                >
                   Tiêu đề thông báo
                 </label>
                 <input
@@ -426,7 +429,10 @@ export function InstructorAIAssistantCard({
               </div>
 
               <div>
-                <label htmlFor="broadcast-body" className="text-[11px] font-bold text-foreground block mb-1">
+                <label
+                  htmlFor="broadcast-body"
+                  className="text-[11px] font-bold text-foreground block mb-1"
+                >
                   Nội dung AI gợi ý (Giảng viên có thể chỉnh sửa tự do)
                 </label>
                 <textarea

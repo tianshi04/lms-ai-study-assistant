@@ -403,12 +403,16 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_FORUM_001 (Ràng buộc 1 Vote/User & Idempotent Toggle):**
   * Mỗi `user_id` chỉ được vote 1 lượt trên mỗi bài/câu trả lời. Bấm Upvote lần đầu sẽ tăng +1 điểm; bấm lại lần nữa sẽ hủy vote (Un-vote) và giảm -1 điểm.
 * **BR_FORUM_002 (Phân quyền & Tự động Ghim Thread khi Pin Staff Answer):**
-  * Chỉ tài khoản có vai trò `INSTRUCTOR`, `TA`, hoặc `SUPER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`).
+  * Chỉ Giảng viên phụ trách (`owner_id`), Đồng giảng viên (`co_instructor_ids`), Trợ giảng (`ta_ids`) của chính khóa học đó, hoặc `SUPER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`). Giảng viên của khóa học khác không có quyền can thiệp vào khóa học không thuộc phạm vi quản lý của mình.
   * Khi một câu trả lời được ghim làm `is_staff_answer = True`, bài thảo luận gốc (Thread) cũng tự động được đánh dấu `is_staff_pinned = True` để ưu tiên hiển thị trên đầu danh sách diễn đàn.
 * **BR_FORUM_003 (Phân quyền Tác giả/Moderation & Chỉ báo Bài viết đã Chỉnh sửa):**
   * *Quyền Chỉnh sửa & Xóa:* Tác giả bài viết (`author_user_id == current_user.id`) có quyền Cập nhật (`UpdateThread`, `UpdateReply`) hoặc Xóa (`DeleteThread`, `DeleteReply`) bài viết/bình luận của chính mình.
   * *Chỉ báo đã Chỉnh sửa (Edit State Indicator):* Ngay khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động cập nhật cờ `is_edited = True` và ghi lại mốc thời gian `edited_at` để tất cả người xem phân biệt được nội dung đã qua chỉnh sửa.
-  * *Ban kiểm duyệt (Staff Moderation):* Trợ giảng và Giảng viên (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền Xóa (Delete) bài viết hoặc bình luận vi phạm của bất kỳ người dùng nào nhưng không được quyền thay đổi nội dung (Update) bài đăng của người khác.
+  * *Ban kiểm duyệt (Staff Moderation):* Trợ giảng và Giảng viên phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`, `ADMIN`) có quyền Xóa (Delete) bài viết hoặc bình luận vi phạm của bất kỳ người dùng nào nhưng không được quyền thay đổi nội dung (Update) bài đăng của người khác.
+* **BR_FORUM_004 (Ràng buộc Vai trò theo Ngữ cảnh Khóa học & Ghi danh Thảo luận - Contextual Role Resolution & Enrollment Guard):**
+  * *Phân giải vai trò theo ngữ cảnh (Contextual Role Resolution):* Vai trò của người dùng trên diễn đàn được xác định động theo từng khóa học cụ thể thay vì lấy vai trò tài khoản toàn cục (`user.role`). Nếu một tài khoản Giảng viên tham gia vào khóa học của người khác (nơi họ không phải chủ sở hữu hay đồng giảng dạy), họ bắt buộc tham gia với tư cách **Học viên (`Learner`)**, các câu trả lời không được tự động gắn cờ `is_staff_answer`, và không được phép ghim bài.
+  * *Ràng buộc Ghi danh (Enrollment Guard):* Người dùng (ngoại trừ Đội ngũ giảng dạy phụ trách khóa và Admin) bắt buộc phải có bản ghi ghi danh/đăng ký khóa học (`LearningProgressModel.enrolled_at`) mới được phép tạo chủ đề (`create_thread`) hoặc gửi phản hồi (`post_reply`). Nếu chưa đăng ký, hệ thống từ chối với lỗi `PermissionError` (ConnectRPC `PERMISSION_DENIED`).
+  * *Kiểm soát Bàn làm việc Q&A Giảng viên (`/instructor/courses/[courseId]/discussions`):* Chỉ chủ sở hữu (`owner_id`), đồng giảng viên (`co_instructor_ids`), hoặc Admin mới có quyền truy cập màn hình quản trị hỏi đáp Q&A của khóa học. Các giảng viên khác khi truy cập sẽ nhận màn hình từ chối quyền truy cập (403 Bounded Context Guard) và nút chuyển hướng sang Diễn đàn học viên nếu họ đang theo học.
 
 ---
 
