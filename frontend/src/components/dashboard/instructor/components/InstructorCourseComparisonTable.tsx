@@ -139,16 +139,16 @@ export function InstructorCourseComparisonTable({
       <Table>
         <Table.Header className="bg-muted/40">
           <Table.Row className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
-            <Table.Head className="py-2.5 px-3.5">Khóa học & Đối tác</Table.Head>
-            <Table.Head className="py-2.5 px-2 text-center whitespace-nowrap w-[90px]">
+            <Table.Head className="py-2.5 px-3">Khóa học & Đối tác</Table.Head>
+            <Table.Head className="py-2.5 px-1.5 text-center whitespace-nowrap w-[80px]">
               Trạng thái
             </Table.Head>
-            <Table.Head className="py-2.5 px-2 text-right whitespace-nowrap w-[65px]">
+            <Table.Head className="py-2.5 px-1.5 text-right whitespace-nowrap w-[55px]">
               Học viên
             </Table.Head>
-            <Table.Head className="py-2.5 px-2 whitespace-nowrap w-[95px]">Tiến độ TB</Table.Head>
-            <Table.Head className="py-2.5 px-2 whitespace-nowrap w-[130px]">Nhiệm vụ</Table.Head>
-            <Table.Head className="py-2.5 px-3 text-right whitespace-nowrap w-[110px]">
+            <Table.Head className="py-2.5 px-1.5 whitespace-nowrap w-[80px]">Tiến độ TB</Table.Head>
+            <Table.Head className="py-2.5 px-1.5 whitespace-nowrap w-[110px]">Nhiệm vụ</Table.Head>
+            <Table.Head className="py-2.5 px-2 text-right whitespace-nowrap w-[90px]">
               Đánh giá
             </Table.Head>
           </Table.Row>
@@ -171,8 +171,8 @@ export function InstructorCourseComparisonTable({
                   className="text-xs hover:bg-muted/30 cursor-pointer transition-colors group border-b border-border/50"
                 >
                   {/* 1. Tên môn học & Đối tác */}
-                  <Table.Cell className="py-3 px-3.5 min-w-[170px]">
-                    <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-2">
+                  <Table.Cell className="py-2.5 px-3 min-w-[140px]">
+                    <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-1 sm:line-clamp-2">
                       {course.title}
                     </div>
                     <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -191,12 +191,12 @@ export function InstructorCourseComparisonTable({
                   </Table.Cell>
 
                   {/* 2. Trạng thái thực tế */}
-                  <Table.Cell className="text-center py-3 px-2 whitespace-nowrap">
+                  <Table.Cell className="text-center py-2.5 px-1.5 whitespace-nowrap">
                     {renderCourseStatusBadge(course.status)}
                   </Table.Cell>
 
                   {/* 3. Số học viên thật */}
-                  <Table.Cell className="text-right py-3 px-2 whitespace-nowrap">
+                  <Table.Cell className="text-right py-2.5 px-1.5 whitespace-nowrap">
                     <span className="font-mono font-bold text-xs sm:text-sm text-foreground">
                       {totalStudents}{" "}
                       <span className="text-[10px] font-sans font-medium text-muted-foreground">
@@ -206,12 +206,12 @@ export function InstructorCourseComparisonTable({
                   </Table.Cell>
 
                   {/* 4. Tiến độ TB kết hợp thanh mini trực quan */}
-                  <Table.Cell className="py-3 px-2 whitespace-nowrap">
+                  <Table.Cell className="py-2.5 px-1.5 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-mono font-bold text-foreground w-7 shrink-0">
+                      <span className="text-xs font-mono font-bold text-foreground w-6 shrink-0">
                         {compRate}%
                       </span>
-                      <div className="w-10 sm:w-12 h-1.5 rounded-full bg-muted overflow-hidden shrink-0">
+                      <div className="w-8 sm:w-10 h-1.5 rounded-full bg-muted overflow-hidden shrink-0">
                         <div
                           className="h-full bg-success rounded-full transition-all duration-300"
                           style={{ width: `${compRate}%` }}
@@ -221,7 +221,7 @@ export function InstructorCourseComparisonTable({
                   </Table.Cell>
 
                   {/* 5. Nhiệm vụ cần xử lý có số liệu thật */}
-                  <Table.Cell className="py-3 px-2 whitespace-nowrap">
+                  <Table.Cell className="py-2.5 px-1.5 whitespace-nowrap">
                     {pendingGrading > 0 || pendingQa > 0 ? (
                       <div className="flex items-center gap-1 flex-wrap">
                         {pendingGrading > 0 && (
@@ -232,7 +232,7 @@ export function InstructorCourseComparisonTable({
                             title="Mở Bàn làm việc chấm bài"
                           >
                             <ClipboardCheck className="w-3 h-3 text-warning" aria-hidden="true" />
-                            <span>{pendingGrading} bài chờ</span>
+                            <span>{pendingGrading} bài</span>
                           </Link>
                         )}
                         {pendingQa > 0 && (
@@ -256,8 +256,8 @@ export function InstructorCourseComparisonTable({
                   </Table.Cell>
 
                   {/* 6. Đánh giá & Xem chi tiết */}
-                  <Table.Cell className="text-right py-3 px-3.5 whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                  <Table.Cell className="text-right py-2.5 px-2.5 whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                       <span className="font-mono font-bold text-warning text-xs flex items-center gap-0.5">
                         <span>{rating.toFixed(1)}</span>
                         <span className="text-amber-400">★</span>
@@ -268,7 +268,7 @@ export function InstructorCourseComparisonTable({
                         className="inline-flex items-center gap-0.5 text-xs font-bold text-primary hover:text-primary-hover hover:underline transition-colors cursor-pointer group/btn"
                       >
                         <span>Chi tiết</span>
-                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-0.5" />
+                        <ArrowRight className="w-3 h-3 transition-transform group-hover/btn:translate-x-0.5" />
                       </button>
                     </div>
                   </Table.Cell>

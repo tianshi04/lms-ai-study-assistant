@@ -67,6 +67,16 @@ export interface OverviewData {
   mockCertificates: OverviewCertificate[];
 }
 
+export interface ComparisonCourseCardItem {
+  id: string;
+  title: string;
+  subject?: string;
+  rating: number;
+  totalStudents: number;
+  weekCount: number;
+  compRate: number;
+}
+
 export type EnrichedCourseComparisonItem = Course & {
   totalStudents: number;
   compRate: number;

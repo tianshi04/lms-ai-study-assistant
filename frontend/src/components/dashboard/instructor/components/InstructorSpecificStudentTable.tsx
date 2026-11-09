@@ -36,7 +36,7 @@ export interface InstructorSpecificStudentTableProps {
   onChangeStudentSearchQuery: (query: string) => void;
   selectedDayFilter: { day: string; date: string } | null;
   selectedWeekFilter: number | null;
-  selectedStudentId: string | null;
+  selectedStudentId?: string | null;
   onClearFilters: () => void;
   activeCourse: Course | null;
   calculatedWeeks: CalculatedWeek[];
