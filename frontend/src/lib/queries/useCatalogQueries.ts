@@ -302,6 +302,28 @@ export function useAllInstructorAnalyticsQueries(
 }
 
 /**
+ * Hook truy vấn danh sách đánh giá của toàn bộ các khóa học của giảng viên (Multi-Course Reviews)
+ */
+export function useAllCourseReviewsQueries(
+  courses: { id: string }[],
+  options?: { enabled?: boolean },
+) {
+  return useQueries({
+    queries: courses.map((c) => ({
+      queryKey: ["courseReviews", c.id],
+      queryFn: async () => {
+        if (!c.id) return [];
+        const client = getRpcClient(CatalogService);
+        const res = await client.listCourseReviews({ courseId: c.id });
+        return res.reviews || [];
+      },
+      enabled: (options?.enabled ?? true) && !!c.id,
+      staleTime: 60 * 1000,
+    })),
+  });
+}
+
+/**
  * Hook truy vấn dữ liệu chuỗi thời gian hoạt động và biểu đồ heatmap của học viên theo khóa học
  */
 export function useInstructorActivityTimelineQuery(

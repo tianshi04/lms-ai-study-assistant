@@ -297,7 +297,8 @@ export function useGradingQueueQuery(
         searchQuery: params.searchQuery || "",
       });
     },
-    enabled: !!params.courseId || !!params.itemId,
+    enabled:
+      options?.enabled !== undefined ? options.enabled : !!params.courseId || !!params.itemId,
     ...options,
   });
 }

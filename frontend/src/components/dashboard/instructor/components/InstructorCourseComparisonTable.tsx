@@ -5,49 +5,64 @@ import Link from "next/link";
 import { MessageSquare, ArrowRight, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
-import type { Course } from "@/gen/catalog/v1/catalog_pb";
+import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import type { OverviewCourseStat } from "../types";
 
 interface EnrichedCourseItem {
   course: Course;
-  stats?: OverviewCourseStat;
+  totalStudents: number;
+  compRate: number;
+  rating: number;
   code: string;
   credits: number;
 }
 
 interface InstructorCourseComparisonTableProps {
   courses: Course[];
-  courseStats: OverviewCourseStat[];
+  courseStats?: OverviewCourseStat[];
+  analyticsByCourseId?: Map<string, InstructorAnalytics | null | undefined>;
   onSelectCourse: (courseId: string) => void;
 }
 
 export function InstructorCourseComparisonTable({
   courses,
   courseStats,
+  analyticsByCourseId,
   onSelectCourse,
 }: InstructorCourseComparisonTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Làm giàu thông tin khóa học với mã môn và dữ liệu thống kê
+  // Làm giàu thông tin khóa học với mã môn và dữ liệu thống kê thật từ database
   const enrichedCourses: EnrichedCourseItem[] = useMemo(() => {
     return courses.map((course, idx) => {
-      const stats = courseStats.find(
+      const an = analyticsByCourseId?.get(course.id);
+      const stats = courseStats?.find(
         (s) =>
           course.id.toLowerCase().includes(s.keyword) ||
           course.title.toLowerCase().includes(s.keyword),
       );
+
+      const totalStudents =
+        an?.totalEnrolledStudents ?? an?.students?.length ?? stats?.totalStudents ?? 0;
+      const compRate =
+        an?.averageCompletionRate != null
+          ? Math.round(an.averageCompletionRate)
+          : (stats?.compRate ?? 0);
+      const rating = an?.averageRating || course.averageRating || stats?.rating || 5.0;
 
       const codes = ["ECO101", "BEH201", "MET301", "FIN401", "MGT501"];
       const code = codes[idx % codes.length];
 
       return {
         course,
-        stats,
+        totalStudents,
+        compRate,
+        rating,
         code,
         credits: 3,
       };
     });
-  }, [courses, courseStats]);
+  }, [courses, courseStats, analyticsByCourseId]);
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return enrichedCourses;
@@ -114,11 +129,7 @@ export function InstructorCourseComparisonTable({
               </Table.Row>
             ) : (
               filtered.map((item) => {
-                const { course, stats, code, credits } = item;
-                const totalStudents = stats?.totalStudents ?? 45;
-                const compRate = stats?.compRate ?? 50;
-                const pendingAssignments = stats?.pendingAssignments ?? 1;
-                const pendingQuestions = stats?.pendingQuestions ?? 1;
+                const { course, totalStudents, compRate, rating, code, credits } = item;
 
                 return (
                   <Table.Row
@@ -171,28 +182,30 @@ export function InstructorCourseComparisonTable({
                     {/* Nhiệm vụ chờ */}
                     <Table.Cell className="py-3 px-3">
                       <div className="flex items-center gap-2">
-                        {pendingAssignments > 0 && (
-                          <Link
-                            href={`/instructor/courses/${course.id}/grading`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline p-1 rounded-lg hover:bg-primary/10 transition-colors"
-                            title="Mở Bàn làm việc chấm bài"
-                          >
-                            <ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>{pendingAssignments} bài chấm</span>
-                          </Link>
-                        )}
-                        {pendingQuestions > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-warning">
-                            <MessageSquare className="w-3 h-3" /> {pendingQuestions} Q&A
-                          </span>
-                        )}
+                        <Link
+                          href={`/instructor/courses/${course.id}/grading`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline p-1 rounded-lg hover:bg-primary/10 transition-colors"
+                          title="Mở Bàn làm việc chấm bài"
+                        >
+                          <ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Chấm bài</span>
+                        </Link>
+                        <Link
+                          href={`/instructor/courses/${course.id}/discussions`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-warning hover:underline p-1 rounded-lg hover:bg-warning/10 transition-colors"
+                          title="Mở diễn đàn thảo luận & Q&A"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>Hỏi đáp</span>
+                        </Link>
                       </div>
                     </Table.Cell>
 
                     {/* Đánh giá */}
                     <Table.Cell className="text-right font-mono font-bold text-warning py-3 px-3">
-                      {stats?.rating ? stats.rating.toFixed(1) : "5.0"} ★
+                      {rating.toFixed(1)} ★
                     </Table.Cell>
 
                     {/* Thao tác */}

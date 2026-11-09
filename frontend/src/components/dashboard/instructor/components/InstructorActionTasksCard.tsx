@@ -261,54 +261,64 @@ export function InstructorActionTasksCard({
 
       {/* Danh sách nhiệm vụ có gắn chỉ số thời gian SLA */}
       <div className="space-y-2">
-        {overviewTasks.map((task) => {
-          const isGrading = task.type === "grading";
+        {overviewTasks.length === 0 ? (
+          <div className="p-4 rounded-2xl bg-surface border border-outline-variant/60 text-center space-y-1">
+            <CheckSquare className="w-5 h-5 text-success mx-auto" aria-hidden="true" />
+            <p className="text-xs font-bold text-foreground">Không có nhiệm vụ tồn đọng</p>
+            <p className="text-[11px] text-muted-foreground">
+              Tất cả bài tập đã được chấm và mọi thắc mắc của sinh viên đã được giải đáp.
+            </p>
+          </div>
+        ) : (
+          overviewTasks.map((task) => {
+            const isGrading = task.type === "grading";
 
-          return (
-            <div
-              key={task.id}
-              className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all space-y-1.5 group"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span
-                    className={`p-1 rounded-md shrink-0 ${
-                      isGrading ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"
-                    }`}
-                  >
-                    {isGrading ? (
-                      <CheckSquare className="w-3 h-3" />
-                    ) : (
-                      <MessageSquare className="w-3 h-3" />
-                    )}
+            return (
+              <div
+                key={task.id}
+                className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all space-y-1.5 group"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span
+                      className={`p-1 rounded-md shrink-0 ${
+                        isGrading ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"
+                      }`}
+                    >
+                      {isGrading ? (
+                        <CheckSquare className="w-3 h-3" />
+                      ) : (
+                        <MessageSquare className="w-3 h-3" />
+                      )}
+                    </span>
+                    <h4 className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                      {task.title}
+                    </h4>
+                  </div>
+
+                  <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" />
+                    {task.timeAgo}
                   </span>
-                  <h4 className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                    {task.title}
-                  </h4>
                 </div>
 
-                <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap flex items-center gap-1">
-                  <Clock className="w-2.5 h-2.5" />
-                  {task.timeAgo}
-                </span>
-              </div>
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span className="truncate max-w-[180px]">
+                    {task.studentName} • {task.courseTitle}
+                  </span>
 
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                <span className="truncate max-w-[180px]">
-                  {task.studentName} • {task.courseTitle}
-                </span>
-
-                <Link
-                  href={task.actionUrl}
-                  className="font-bold text-primary hover:underline flex items-center gap-0.5 shrink-0"
-                >
-                  <span>{task.actionText}</span>
-                  <ChevronRight className="w-3 h-3" />
-                </Link>
+                  <Link
+                    href={task.actionUrl}
+                    className="font-bold text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                  >
+                    <span>{task.actionText}</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );
