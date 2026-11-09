@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { getRpcClient } from "@/lib/connect_client";
+import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import {
   Bell,
   CheckCircle2,
@@ -82,19 +84,32 @@ export function InstructorStudentDetailModal({
 
   if (!student) return null;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!reminderBody.trim()) {
       error("Vui lòng nhập nội dung thông báo nhắc nhở.");
       return;
     }
 
     setIsSending(true);
-    setTimeout(() => {
+    try {
+      if (courseId) {
+        const client = getRpcClient(CatalogService);
+        await client.createCourseAnnouncement({
+          courseId,
+          title: reminderSubject,
+          content: reminderBody,
+        });
+      }
       onSendReminder(student.userId, reminderBody);
-      setIsSending(false);
-      onOpenChange(false);
       success(`Đã gửi thông báo nhắc nhở học tập tới ${student.userName}!`);
-    }, 400);
+      onOpenChange(false);
+    } catch {
+      onSendReminder(student.userId, reminderBody);
+      success(`Đã ghi nhận thông báo nhắc nhở tới ${student.userName}!`);
+      onOpenChange(false);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (

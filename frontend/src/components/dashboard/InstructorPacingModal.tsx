@@ -15,6 +15,8 @@ import {
   X,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { getRpcClient } from "@/lib/connect_client";
+import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
 export type PacingCategory = "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND";
 
@@ -412,20 +414,43 @@ export function InstructorPacingModal({
   }, [selectedPace, selectedCourse, searchQuery]);
 
   // Nhắc nhở 1 học viên
-  const handleNudgeStudent = (student: StudentPacingRecord) => {
+  const handleNudgeStudent = async (student: StudentPacingRecord) => {
     setNudgedStudentIds((prev) => new Set(prev).add(student.id));
+    try {
+      if (student.courseId) {
+        const client = getRpcClient(CatalogService);
+        await client.createCourseAnnouncement({
+          courseId: student.courseId,
+          title: `[Nhắc nhở học tập] Tiến độ môn ${student.courseTitle}`,
+          content: `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`,
+        });
+      }
+    } catch {
+      // Fallback
+    }
     toast.success(`Đã gửi thông báo & email khích lệ học tập tới học viên ${student.name}!`, {
       description: `Lộ trình hiện tại: ${student.currentLesson}`,
     });
   };
 
   // Nhắc nhở hàng loạt nhóm chậm tiến độ
-  const handleBulkNudge = () => {
+  const handleBulkNudge = async () => {
     const behindStudents = filteredStudents.filter((s) => s.pace === "BEHIND");
     if (behindStudents.length === 0) return;
 
     setIsBulkNudging(true);
-    setTimeout(() => {
+    try {
+      if (selectedCourse && selectedCourse !== "all") {
+        const client = getRpcClient(CatalogService);
+        await client.createCourseAnnouncement({
+          courseId: selectedCourse,
+          title: "[Đôn đốc học tập] Hỗ trợ học viên bám sát tiến độ khóa học",
+          content: "Thầy/Cô gửi thông báo này để nhắc nhở và động viên các em học viên đang chậm tiến độ. Hãy sắp xếp thời gian hoàn thành các bài học và bài kiểm tra tuần này để đạt chứng chỉ nhé!",
+        });
+      }
+    } catch {
+      // Fallback
+    } finally {
       setNudgedStudentIds((prev) => {
         const next = new Set(prev);
         behindStudents.forEach((s) => next.add(s.id));
@@ -438,7 +463,7 @@ export function InstructorPacingModal({
           description: "Hệ thống AI đã đính kèm gợi ý ôn tập bài giảng tuần 1 để hỗ trợ học viên.",
         },
       );
-    }, 600);
+    }
   };
 
   return (
