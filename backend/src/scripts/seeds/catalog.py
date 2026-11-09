@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.catalog.infrastructure.models import (
     CategoryModel,
     CourseAnnouncementModel,
+    CourseCollaboratorModel,
     CourseModel,
     CourseReviewModel,
     InteractiveTranscriptModel,
@@ -361,19 +362,28 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
 
     sample_rubric = [
         {
-            "criterion": "1. Model Architecture & Mathematical Formulations",
-            "max_points": 40,
-            "description": "Clear explanation of linear/logistic regression hypotheses, cost functions, and gradient equations.",
+            "criteria_id": "crit-ml-1",
+            "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+            "criterion": "Kiến trúc Mô hình & Nền tảng Toán học",
+            "max_score": 40.0,
+            "max_points": 40.0,
+            "description": "Giải thích rõ ràng giả thuyết Linear/Logistic Regression, hàm mục tiêu mất mát (Cost function) và công thức đạo hàm Gradient Descent.",
         },
         {
-            "criterion": "2. Feature Engineering & Preprocessing Strategy",
-            "max_points": 30,
-            "description": "Evaluation of feature scaling (Standardization/MinMax) and missing value handling techniques.",
+            "criteria_id": "crit-ml-2",
+            "title": "Chiến lược Tiền xử lý & Feature Engineering",
+            "criterion": "Chiến lược Tiền xử lý & Feature Engineering",
+            "max_score": 30.0,
+            "max_points": 30.0,
+            "description": "Đánh giá các kỹ thuật co giãn đặc trưng (Feature Scaling: Standardization/MinMax) và xử lý giá trị khuyết thiếu (Missing Values).",
         },
         {
-            "criterion": "3. Code Organization & Documentation",
-            "max_points": 30,
-            "description": "Clean modular Python code with type annotations, docstrings, and comprehensive Markdown reports.",
+            "criteria_id": "crit-ml-3",
+            "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+            "criterion": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+            "max_score": 30.0,
+            "max_points": 30.0,
+            "description": "Mã nguồn Python dạng module sạch sẽ, có type hint, docstring giải thích và báo cáo phân tích Markdown chi tiết kèm biểu đồ.",
         },
     ]
 
@@ -518,6 +528,15 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
     week2.lessons.append(lesson2)
     course1.week_modules.extend([week1, week2])
 
+    collab_ml_ta = CourseCollaboratorModel(
+        id="collab-ml-ta",
+        course_id=course1.id,
+        user_id="user_ta_01",
+        role="COLLABORATOR",
+        created_at="2026-07-20T00:00:00Z",
+    )
+    course1.collaborators.append(collab_ml_ta)
+
     # Course 2: Modern Fullstack Web Development
     course2 = CourseModel(
         id="course-web-dev",
@@ -526,11 +545,27 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         description="Master modern Web Development using Next.js 15 App Router, TypeScript, ConnectRPC gRPC web, and Tailwind CSS v4.",
         partner_name="Meta",
         partner_logo_url=meta_logo,
-        owner_id="user_instructor_02",
+        owner_id="user_instructor_01",
         subject="cat-subj-it",
         level="cat-lvl-beg",
         status="PUBLISHED",
     )
+
+    collab_web_dung = CourseCollaboratorModel(
+        id="collab-web-dung",
+        course_id=course2.id,
+        user_id="user_instructor_02",
+        role="CO_INSTRUCTOR",
+        created_at="2026-07-20T00:00:00Z",
+    )
+    collab_web_ta = CourseCollaboratorModel(
+        id="collab-web-ta",
+        course_id=course2.id,
+        user_id="user_ta_01",
+        role="COLLABORATOR",
+        created_at="2026-07-20T00:00:00Z",
+    )
+    course2.collaborators.extend([collab_web_dung, collab_web_ta])
 
     week_web1 = WeekModuleModel(
         id="week-1-web",
@@ -672,7 +707,43 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         type=ItemType.AUTO_GRADED_LAB,
         estimated_minutes=30,
     )
-    lesson_web2.items.append(item_web3)
+
+    sample_web_rubric = [
+        {
+            "criteria_id": "crit-web-1",
+            "title": "Kiến trúc Frontend Next.js App Router & Server Components",
+            "criterion": "Kiến trúc Frontend Next.js App Router & Server Components",
+            "max_score": 35.0,
+            "max_points": 35.0,
+            "description": "Sử dụng đúng React Server Components (RSC) kết hợp Client Components hợp lý, tổ chức thư mục src/app rõ ràng, tối ưu hóa bundle size.",
+        },
+        {
+            "criteria_id": "crit-web-2",
+            "title": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+            "criterion": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+            "max_score": 35.0,
+            "max_points": 35.0,
+            "description": "Gọi API bằng ConnectRPC clients type-safe, cấu hình query hooks chuẩn xác, xử lý loading/error state và optimistic updates mượt mà.",
+        },
+        {
+            "criteria_id": "crit-web-3",
+            "title": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+            "criterion": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+            "max_score": 30.0,
+            "max_points": 30.0,
+            "description": "Áp dụng 3-tier Semantic Design Tokens (bg-background, text-foreground, border-border), hỗ trợ Dark/Light mode, responsive hoàn hảo trên Mobile và Desktop.",
+        },
+    ]
+
+    item_web_peer = LearningItemModel(
+        id="item-web-peer-1",
+        lesson_id=lesson_web2.id,
+        title="Peer-Graded Capstone: Xây dựng Dashboard Quản lý Khóa học Fullstack",
+        type=ItemType.PEER_REVIEW,
+        estimated_minutes=60,
+        rubric_criteria_json=json.dumps(sample_web_rubric),
+    )
+    lesson_web2.items.extend([item_web3, item_web_peer])
     week_web2.lessons.append(lesson_web2)
     course2.week_modules.extend([week_web1, week_web2])
 
@@ -1347,11 +1418,38 @@ Tại Việt Nam, Bộ Giao thông Vận tải quy định khung giá trần vé
     )
     lesson3_micro.items = [item6_micro_v3, item7_micro_r3]
 
+    sample_micro_rubric = [
+        {
+            "criteria_id": "crit-micro-1",
+            "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+            "criterion": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+            "max_score": 30.0,
+            "max_points": 30.0,
+            "description": "Xác định chính xác hàm Cung, hàm Cầu từ dữ liệu thực tiễn; vẽ đồ thị và tính toán điểm cân bằng thị trường P*, Q*.",
+        },
+        {
+            "criteria_id": "crit-micro-2",
+            "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+            "criterion": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+            "max_score": 35.0,
+            "max_points": 35.0,
+            "description": "Tính toán hệ số co giãn PED theo phương pháp trung điểm; phân loại nhóm co giãn và chứng minh tác động tới tổng doanh thu (TR).",
+        },
+        {
+            "criteria_id": "crit-micro-3",
+            "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+            "criterion": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+            "max_score": 35.0,
+            "max_points": 35.0,
+            "description": "Đo lường biến thiên Thặng dư Người tiêu dùng (CS), Thặng dư Nhà sản xuất (PS); tính diện tích Tổn thất Vô ích (DWL) và đề xuất giải pháp khả thi.",
+        },
+    ]
+
     lesson4_micro = LessonModel(
         id="lesson-micro-exam",
         week_module_id=week2_micro.id,
         title="Bài 4: Tổng kết Khóa học & Đề thi Hoàn thành Khóa",
-        estimated_minutes=30,
+        estimated_minutes=75,
     )
     item8_micro_q2 = LearningItemModel(
         id="item-micro-q2",
@@ -1361,10 +1459,34 @@ Tại Việt Nam, Bộ Giao thông Vận tải quy định khung giá trần vé
         estimated_minutes=30,
         quiz_matrix_id="qb-micro-02",
     )
-    lesson4_micro.items = [item8_micro_q2]
+    item9_micro_peer = LearningItemModel(
+        id="item-micro-peer-1",
+        lesson_id=lesson4_micro.id,
+        title="Peer-Graded Case Study: Phân tích Thị trường & Đề xuất Chính sách Giá vé Máy bay / Nông sản",
+        type=ItemType.PEER_REVIEW,
+        estimated_minutes=45,
+        rubric_criteria_json=json.dumps(sample_micro_rubric),
+    )
+    lesson4_micro.items = [item8_micro_q2, item9_micro_peer]
     week2_micro.lessons = [lesson3_micro, lesson4_micro]
 
     course4.week_modules = [week1_micro, week2_micro]
+
+    collab_micro_andrew = CourseCollaboratorModel(
+        id="collab-micro-andrew",
+        course_id=course4.id,
+        user_id="user_instructor_01",
+        role="CO_INSTRUCTOR",
+        created_at="2026-07-20T00:00:00Z",
+    )
+    collab_micro_ta = CourseCollaboratorModel(
+        id="collab-micro-ta",
+        course_id=course4.id,
+        user_id="user_ta_01",
+        role="COLLABORATOR",
+        created_at="2026-07-20T00:00:00Z",
+    )
+    course4.collaborators.extend([collab_micro_andrew, collab_micro_ta])
 
     # =========================================================================
     # Course 5: Applied Econometrics & Business Data Analytics (Intermediate)

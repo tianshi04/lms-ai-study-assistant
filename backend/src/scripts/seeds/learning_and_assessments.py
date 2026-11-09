@@ -1,5 +1,7 @@
 """Seed data for Learning Progress, Deadlines, Notes, and Assessments (Quizzes, Question Banks, Labs, Peer Reviews)."""
 
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.assessment.infrastructure.models import (
@@ -16,8 +18,11 @@ from src.modules.assessment.infrastructure.models import (
 )
 from src.modules.learning.domain import DeadlineStatus
 from src.modules.learning.infrastructure.models import (
+    DailyLearningRecordModel,
+    LearningItemProgressModel,
     LearningProgressModel,
     PersonalNoteModel,
+    UserLearningStreakModel,
     WeeklyDeadlineModel,
 )
 
@@ -43,26 +48,54 @@ async def _seed_question_with_options(
 
 async def seed_learning_and_assessments(session: AsyncSession) -> None:
     """Seed learning progress, deadlines, personal notes, submissions, question banks, and quiz matrices."""
+    now = datetime.now(UTC)
+    d4_ago = (now - timedelta(days=4)).isoformat()
+    d3_ago = (now - timedelta(days=3)).isoformat()
+    d2_ago = (now - timedelta(days=2)).isoformat()
+    d1_ago = (now - timedelta(days=1)).isoformat()
+    h6_ago = (now - timedelta(hours=6)).isoformat()
+    m5_ago = (now - timedelta(minutes=5)).isoformat()
+
+    enrolled_date = (now - timedelta(days=14)).isoformat()
+    d1_ago_comp = (now - timedelta(days=1)).isoformat()
+
     progresses = [
+        # Student Demo (Nguyễn Văn A)
         LearningProgressModel(
             id="user_learner_demo:course-python-ai",
             user_id="user_learner_demo",
             course_id="course-python-ai",
-            overall_progress_percent=71.4,
+            overall_progress_percent=100.0,
             completed_item_ids=[
                 "item-ml-intro-video",
                 "item-ml-reading-1",
                 "item-ml-quiz-1",
                 "item-ml-lab-1",
                 "item-ml-peer-1",
+                "item-ml-video-2",
+                "item-ml-quiz-2",
             ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=h6_ago,
+            last_accessed_item_id="item-ml-quiz-2",
+            completed_at=d1_ago_comp,
         ),
         LearningProgressModel(
             id="user_learner_demo:course-web-dev",
             user_id="user_learner_demo",
             course_id="course-web-dev",
-            overall_progress_percent=50.0,
-            completed_item_ids=["item-web-video-1", "item-web-reading-1"],
+            overall_progress_percent=100.0,
+            completed_item_ids=[
+                "item-web-video-1",
+                "item-web-reading-1",
+                "item-web-quiz-1",
+                "item-web-lab-2",
+                "item-web-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=h6_ago,
+            last_accessed_item_id="item-web-peer-1",
+            completed_at=d1_ago_comp,
         ),
         LearningProgressModel(
             id="user_learner_demo:course-deep-learning",
@@ -70,6 +103,9 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
             course_id="course-deep-learning",
             overall_progress_percent=33.3,
             completed_item_ids=["item-dl-video-1"],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d2_ago,
+            last_accessed_item_id="item-dl-video-1",
         ),
         LearningProgressModel(
             id="user_learner_demo:course-microeconomics-foundations",
@@ -81,13 +117,16 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
                 "item-micro-r1",
                 "item-micro-v2",
                 "item-micro-r2",
-                "item-micro-quiz-1",
+                "item-micro-q1",
                 "item-micro-v3",
                 "item-micro-r3",
-                "item-micro-v4",
-                "item-micro-r4",
-                "item-micro-quiz-2",
+                "item-micro-q2",
+                "item-micro-peer-1",
             ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=h6_ago,
+            last_accessed_item_id="item-micro-peer-1",
+            completed_at=d1_ago_comp,
         ),
         LearningProgressModel(
             id="user_learner_demo:course-applied-econometrics",
@@ -100,6 +139,9 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
                 "item-econ-v2",
                 "item-econ-r2",
             ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d4_ago,
+            last_accessed_item_id="item-econ-r2",
         ),
         LearningProgressModel(
             id="user_learner_demo:course-behavioral-pricing-strategy",
@@ -107,27 +149,487 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
             course_id="course-behavioral-pricing-strategy",
             overall_progress_percent=0.0,
             completed_item_ids=[],
+            enrolled_at=enrolled_date,
+        ),
+        # Student 02 (Trần Thu Hà)
+        LearningProgressModel(
+            id="user_learner_02:course-python-ai",
+            user_id="user_learner_02",
+            course_id="course-python-ai",
+            overall_progress_percent=85.7,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+                "item-ml-peer-1",
+                "item-ml-video-2",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=h6_ago,
+            last_accessed_item_id="item-ml-video-2",
+        ),
+        LearningProgressModel(
+            id="user_learner_02:course-web-dev",
+            user_id="user_learner_02",
+            course_id="course-web-dev",
+            overall_progress_percent=100.0,
+            completed_item_ids=[
+                "item-web-video-1",
+                "item-web-reading-1",
+                "item-web-quiz-1",
+                "item-web-lab-2",
+                "item-web-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d1_ago,
+            last_accessed_item_id="item-web-peer-1",
+            completed_at=d1_ago_comp,
+        ),
+        # Student 03 (Phạm Quốc Bảo)
+        LearningProgressModel(
+            id="user_learner_03:course-python-ai",
+            user_id="user_learner_03",
+            course_id="course-python-ai",
+            overall_progress_percent=71.4,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+                "item-ml-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d1_ago,
+            last_accessed_item_id="item-ml-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_03:course-web-dev",
+            user_id="user_learner_03",
+            course_id="course-web-dev",
+            overall_progress_percent=80.0,
+            completed_item_ids=[
+                "item-web-video-1",
+                "item-web-reading-1",
+                "item-web-quiz-1",
+                "item-web-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d2_ago,
+            last_accessed_item_id="item-web-peer-1",
+        ),
+        # Student 04 (Lê Thị Mai Linh)
+        LearningProgressModel(
+            id="user_learner_04:course-python-ai",
+            user_id="user_learner_04",
+            course_id="course-python-ai",
+            overall_progress_percent=71.4,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+                "item-ml-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d1_ago,
+            last_accessed_item_id="item-ml-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_04:course-web-dev",
+            user_id="user_learner_04",
+            course_id="course-web-dev",
+            overall_progress_percent=60.0,
+            completed_item_ids=[
+                "item-web-video-1",
+                "item-web-reading-1",
+                "item-web-lab-2",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d2_ago,
+            last_accessed_item_id="item-web-lab-2",
+        ),
+        # Student 05 (Hoàng Minh Đức)
+        LearningProgressModel(
+            id="user_learner_05:course-python-ai",
+            user_id="user_learner_05",
+            course_id="course-python-ai",
+            overall_progress_percent=71.4,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+                "item-ml-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d2_ago,
+            last_accessed_item_id="item-ml-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_05:course-web-dev",
+            user_id="user_learner_05",
+            course_id="course-web-dev",
+            overall_progress_percent=40.0,
+            completed_item_ids=["item-web-video-1", "item-web-reading-1"],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d3_ago,
+            last_accessed_item_id="item-web-reading-1",
+        ),
+        # Student 06 (Vũ Hải Đăng - OVERDUE GRADING ON ML)
+        LearningProgressModel(
+            id="user_learner_06:course-python-ai",
+            user_id="user_learner_06",
+            course_id="course-python-ai",
+            overall_progress_percent=71.4,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+                "item-ml-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d3_ago,
+            last_accessed_item_id="item-ml-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_06:course-web-dev",
+            user_id="user_learner_06",
+            course_id="course-web-dev",
+            overall_progress_percent=40.0,
+            completed_item_ids=["item-web-video-1", "item-web-reading-1"],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d3_ago,
+            last_accessed_item_id="item-web-reading-1",
+        ),
+        # Student 07 (Đỗ Thùy Trang - OVERDUE GRADING ON WEB)
+        LearningProgressModel(
+            id="user_learner_07:course-python-ai",
+            user_id="user_learner_07",
+            course_id="course-python-ai",
+            overall_progress_percent=71.4,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+                "item-ml-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d3_ago,
+            last_accessed_item_id="item-ml-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_07:course-web-dev",
+            user_id="user_learner_07",
+            course_id="course-web-dev",
+            overall_progress_percent=80.0,
+            completed_item_ids=[
+                "item-web-video-1",
+                "item-web-reading-1",
+                "item-web-quiz-1",
+                "item-web-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d3_ago,
+            last_accessed_item_id="item-web-peer-1",
+        ),
+        # Student 08 (Bùi Thanh Tùng - APPEAL ON WEB)
+        LearningProgressModel(
+            id="user_learner_08:course-python-ai",
+            user_id="user_learner_08",
+            course_id="course-python-ai",
+            overall_progress_percent=57.1,
+            completed_item_ids=[
+                "item-ml-intro-video",
+                "item-ml-reading-1",
+                "item-ml-quiz-1",
+                "item-ml-lab-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d1_ago,
+            last_accessed_item_id="item-ml-lab-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_08:course-web-dev",
+            user_id="user_learner_08",
+            course_id="course-web-dev",
+            overall_progress_percent=80.0,
+            completed_item_ids=[
+                "item-web-video-1",
+                "item-web-reading-1",
+                "item-web-quiz-1",
+                "item-web-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d1_ago,
+            last_accessed_item_id="item-web-peer-1",
+        ),
+        # Microeconomics Foundations - Other Students
+        LearningProgressModel(
+            id="user_learner_02:course-microeconomics-foundations",
+            user_id="user_learner_02",
+            course_id="course-microeconomics-foundations",
+            overall_progress_percent=100.0,
+            completed_item_ids=[
+                "item-micro-v1",
+                "item-micro-r1",
+                "item-micro-v2",
+                "item-micro-r2",
+                "item-micro-q1",
+                "item-micro-v3",
+                "item-micro-r3",
+                "item-micro-q2",
+                "item-micro-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=h6_ago,
+            last_accessed_item_id="item-micro-peer-1",
+            completed_at=d1_ago_comp,
+        ),
+        LearningProgressModel(
+            id="user_learner_03:course-microeconomics-foundations",
+            user_id="user_learner_03",
+            course_id="course-microeconomics-foundations",
+            overall_progress_percent=88.9,
+            completed_item_ids=[
+                "item-micro-v1",
+                "item-micro-r1",
+                "item-micro-v2",
+                "item-micro-r2",
+                "item-micro-q1",
+                "item-micro-v3",
+                "item-micro-r3",
+                "item-micro-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d1_ago,
+            last_accessed_item_id="item-micro-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_04:course-microeconomics-foundations",
+            user_id="user_learner_04",
+            course_id="course-microeconomics-foundations",
+            overall_progress_percent=88.9,
+            completed_item_ids=[
+                "item-micro-v1",
+                "item-micro-r1",
+                "item-micro-v2",
+                "item-micro-r2",
+                "item-micro-q1",
+                "item-micro-v3",
+                "item-micro-r3",
+                "item-micro-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d1_ago,
+            last_accessed_item_id="item-micro-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_05:course-microeconomics-foundations",
+            user_id="user_learner_05",
+            course_id="course-microeconomics-foundations",
+            overall_progress_percent=77.8,
+            completed_item_ids=[
+                "item-micro-v1",
+                "item-micro-r1",
+                "item-micro-v2",
+                "item-micro-r2",
+                "item-micro-q1",
+                "item-micro-v3",
+                "item-micro-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d2_ago,
+            last_accessed_item_id="item-micro-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_06:course-microeconomics-foundations",
+            user_id="user_learner_06",
+            course_id="course-microeconomics-foundations",
+            overall_progress_percent=77.8,
+            completed_item_ids=[
+                "item-micro-v1",
+                "item-micro-r1",
+                "item-micro-v2",
+                "item-micro-r2",
+                "item-micro-q1",
+                "item-micro-v3",
+                "item-micro-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d3_ago,
+            last_accessed_item_id="item-micro-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_07:course-microeconomics-foundations",
+            user_id="user_learner_07",
+            course_id="course-microeconomics-foundations",
+            overall_progress_percent=77.8,
+            completed_item_ids=[
+                "item-micro-v1",
+                "item-micro-r1",
+                "item-micro-v2",
+                "item-micro-r2",
+                "item-micro-q1",
+                "item-micro-v3",
+                "item-micro-peer-1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d2_ago,
+            last_accessed_item_id="item-micro-peer-1",
+        ),
+        LearningProgressModel(
+            id="user_learner_08:course-microeconomics-foundations",
+            user_id="user_learner_08",
+            course_id="course-microeconomics-foundations",
+            overall_progress_percent=55.6,
+            completed_item_ids=[
+                "item-micro-v1",
+                "item-micro-r1",
+                "item-micro-v2",
+                "item-micro-r2",
+                "item-micro-q1",
+            ],
+            enrolled_at=enrolled_date,
+            last_accessed_at=d2_ago,
+            last_accessed_item_id="item-micro-q1",
         ),
     ]
     for prog in progresses:
         await session.merge(prog)
 
-    deadlines = [
-        WeeklyDeadlineModel(
-            id=1,
-            progress_id="user_learner_demo:course-python-ai",
-            week_number=1,
-            due_date="2026-07-20T23:59:59Z",
-            status=DeadlineStatus.COMPLETED,
-        ),
-        WeeklyDeadlineModel(
-            id=2,
-            progress_id="user_learner_demo:course-python-ai",
-            week_number=2,
-            due_date="2026-07-27T23:59:59Z",
-            status=DeadlineStatus.ON_TRACK,
-        ),
+    # -------------------------------------------------------------------------
+    # Learning Streaks, Daily Records & Item Progresses (Dashboard Analytics)
+    # -------------------------------------------------------------------------
+    today_date = now.date()
+    learners_streak_info = [
+        ("user_learner_demo", 5, 12, 28800),
+        ("user_learner_02", 7, 15, 36000),
+        ("user_learner_03", 4, 6, 18000),
+        ("user_learner_04", 3, 8, 14400),
+        ("user_learner_05", 6, 9, 21600),
+        ("user_learner_06", 2, 5, 10800),
+        ("user_learner_07", 4, 7, 16200),
+        ("user_learner_08", 3, 4, 12600),
     ]
+
+    for uid, c_streak, l_streak, tot_secs in learners_streak_info:
+        await session.merge(
+            UserLearningStreakModel(
+                user_id=uid,
+                current_streak=c_streak,
+                longest_streak=l_streak,
+                last_active_date=today_date,
+                total_study_seconds=tot_secs,
+                updated_at=now.isoformat(),
+            )
+        )
+        for day_offset in range(7):
+            d = today_date - timedelta(days=6 - day_offset)
+            secs = (
+                1800
+                + ((day_offset + int(uid[-1] if uid[-1].isdigit() else 0)) * 300) % 2400
+            )
+            await session.merge(
+                DailyLearningRecordModel(
+                    user_id=uid,
+                    study_date=d,
+                    total_seconds=secs,
+                    is_streak_qualified=True,
+                )
+            )
+
+    # Item-level study records
+    item_time_map = {
+        "item-ml-intro-video": (900, "course-python-ai"),
+        "item-ml-reading-1": (600, "course-python-ai"),
+        "item-ml-quiz-1": (1200, "course-python-ai"),
+        "item-ml-lab-1": (2400, "course-python-ai"),
+        "item-ml-peer-1": (3600, "course-python-ai"),
+        "item-ml-video-2": (1000, "course-python-ai"),
+        "item-ml-quiz-2": (1500, "course-python-ai"),
+        "item-web-video-1": (950, "course-web-dev"),
+        "item-web-reading-1": (650, "course-web-dev"),
+        "item-web-quiz-1": (1200, "course-web-dev"),
+        "item-web-lab-2": (2700, "course-web-dev"),
+        "item-web-peer-1": (3900, "course-web-dev"),
+        "item-micro-v1": (900, "course-microeconomics-foundations"),
+        "item-micro-r1": (1200, "course-microeconomics-foundations"),
+        "item-micro-v2": (900, "course-microeconomics-foundations"),
+        "item-micro-r2": (1000, "course-microeconomics-foundations"),
+        "item-micro-q1": (1500, "course-microeconomics-foundations"),
+        "item-micro-v3": (900, "course-microeconomics-foundations"),
+        "item-micro-r3": (1400, "course-microeconomics-foundations"),
+        "item-micro-q2": (1800, "course-microeconomics-foundations"),
+        "item-micro-peer-1": (2700, "course-microeconomics-foundations"),
+    }
+    for p in progresses:
+        for i_id in p.completed_item_ids:
+            if i_id in item_time_map:
+                secs, c_id = item_time_map[i_id]
+                await session.merge(
+                    LearningItemProgressModel(
+                        user_id=p.user_id,
+                        item_id=i_id,
+                        course_id=c_id,
+                        time_spent_seconds=secs,
+                        last_studied_at=p.last_accessed_at or h6_ago,
+                    )
+                )
+
+        deadlines = [
+            WeeklyDeadlineModel(
+                id=1,
+                progress_id="user_learner_demo:course-python-ai",
+                week_number=1,
+                due_date=d4_ago,
+                status=DeadlineStatus.COMPLETED,
+            ),
+            WeeklyDeadlineModel(
+                id=2,
+                progress_id="user_learner_demo:course-python-ai",
+                week_number=2,
+                due_date=(now + timedelta(days=7)).isoformat(),
+                status=DeadlineStatus.ON_TRACK,
+            ),
+            WeeklyDeadlineModel(
+                id=3,
+                progress_id="user_learner_06:course-python-ai",
+                week_number=1,
+                due_date=d2_ago,
+                status=DeadlineStatus.OVERDUE,
+            ),
+            WeeklyDeadlineModel(
+                id=4,
+                progress_id="user_learner_07:course-web-dev",
+                week_number=2,
+                due_date=d3_ago,
+                status=DeadlineStatus.OVERDUE,
+            ),
+            WeeklyDeadlineModel(
+                id=5,
+                progress_id="user_learner_demo:course-microeconomics-foundations",
+                week_number=1,
+                due_date=d4_ago,
+                status=DeadlineStatus.COMPLETED,
+            ),
+            WeeklyDeadlineModel(
+                id=6,
+                progress_id="user_learner_demo:course-microeconomics-foundations",
+                week_number=2,
+                due_date=d2_ago,
+                status=DeadlineStatus.COMPLETED,
+            ),
+            WeeklyDeadlineModel(
+                id=7,
+                progress_id="user_learner_06:course-microeconomics-foundations",
+                week_number=2,
+                due_date=d3_ago,
+                status=DeadlineStatus.OVERDUE,
+            ),
+        ]
     for dl in deadlines:
         await session.merge(dl)
 
@@ -139,7 +641,7 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
             item_id="item-ml-intro-video",
             highlighted_text="Mean Squared Error (MSE)",
             note_comment="Formula: J(w,b) = (1/2m) * sum((h(x) - y)^2). Standard loss function for regression.",
-            created_at="2026-07-22T09:15:00Z",
+            created_at=d4_ago,
         ),
         PersonalNoteModel(
             id="note-demo-02",
@@ -148,101 +650,1756 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
             item_id="item-ml-reading-1",
             highlighted_text="Learning Rate (alpha)",
             note_comment="If alpha is too large, gradient descent may fail to converge or even diverge.",
-            created_at="2026-07-22T09:40:00Z",
+            created_at=d3_ago,
         ),
     ]
     for note in notes:
         await session.merge(note)
 
-    # Assessment Submissions & Appeals
-    await session.merge(
+    # Honor Code Agreements
+    honor_codes = [
         HonorCodeModel(
             id="user_learner_demo:item-ml-quiz-1",
             user_id="user_learner_demo",
             item_id="item-ml-quiz-1",
             is_agreed=True,
-            agreed_at="2026-07-22T09:00:00Z",
-        )
-    )
-    await session.merge(
-        QuizSubmissionModel(
-            id="quiz_sub_demo_01",
+            agreed_at=d4_ago,
+        ),
+        HonorCodeModel(
+            id="user_learner_demo:item-ml-peer-1",
             user_id="user_learner_demo",
-            item_id="item-ml-quiz-1",
-            selected_option_indexes=[1, 0, 2],
-            score_percent=100.0,
-            passed=True,
-            attempt_number=1,
-            created_at="2026-07-22T09:30:00Z",
+            item_id="item-ml-peer-1",
+            is_agreed=True,
+            agreed_at=d4_ago,
+        ),
+        HonorCodeModel(
+            id="user_learner_02:item-ml-peer-1",
+            user_id="user_learner_02",
+            item_id="item-ml-peer-1",
+            is_agreed=True,
+            agreed_at=d4_ago,
+        ),
+        HonorCodeModel(
+            id="user_learner_03:item-ml-peer-1",
+            user_id="user_learner_03",
+            item_id="item-ml-peer-1",
+            is_agreed=True,
+            agreed_at=d4_ago,
+        ),
+        HonorCodeModel(
+            id="user_learner_06:item-ml-peer-1",
+            user_id="user_learner_06",
+            item_id="item-ml-peer-1",
+            is_agreed=True,
+            agreed_at=d4_ago,
+        ),
+        HonorCodeModel(
+            id="user_learner_07:item-web-peer-1",
+            user_id="user_learner_07",
+            item_id="item-web-peer-1",
+            is_agreed=True,
+            agreed_at=d3_ago,
+        ),
+    ]
+    for hc in honor_codes:
+        await session.merge(hc)
+
+    # Quizzes and Labs (Seeded for Gradebook and Syllabus completeness)
+    quiz_specs = [
+        # ML Quiz 1
+        (
+            "quiz_sub_demo_01",
+            "user_learner_demo",
+            "item-ml-quiz-1",
+            100.0,
+            True,
+            1,
+            d4_ago,
+        ),
+        (
+            "quiz_sub_02_ml_1",
+            "user_learner_02",
+            "item-ml-quiz-1",
+            95.0,
+            True,
+            1,
+            d4_ago,
+        ),
+        (
+            "quiz_sub_03_ml_1",
+            "user_learner_03",
+            "item-ml-quiz-1",
+            85.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_04_ml_1",
+            "user_learner_04",
+            "item-ml-quiz-1",
+            90.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_05_ml_1",
+            "user_learner_05",
+            "item-ml-quiz-1",
+            80.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_06_ml_1",
+            "user_learner_06",
+            "item-ml-quiz-1",
+            85.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_07_ml_1",
+            "user_learner_07",
+            "item-ml-quiz-1",
+            90.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_08_ml_1",
+            "user_learner_08",
+            "item-ml-quiz-1",
+            85.0,
+            True,
+            1,
+            d2_ago,
+        ),
+        # ML Quiz 2
+        (
+            "quiz_sub_demo_ml_2",
+            "user_learner_demo",
+            "item-ml-quiz-2",
+            100.0,
+            True,
+            1,
+            d2_ago,
+        ),
+        (
+            "quiz_sub_02_ml_2",
+            "user_learner_02",
+            "item-ml-quiz-2",
+            90.0,
+            True,
+            1,
+            d2_ago,
+        ),
+        # Web Quiz 1
+        (
+            "quiz_sub_demo_web_1",
+            "user_learner_demo",
+            "item-web-quiz-1",
+            100.0,
+            True,
+            1,
+            d4_ago,
+        ),
+        (
+            "quiz_sub_02_web_1",
+            "user_learner_02",
+            "item-web-quiz-1",
+            95.0,
+            True,
+            1,
+            d4_ago,
+        ),
+        (
+            "quiz_sub_03_web_1",
+            "user_learner_03",
+            "item-web-quiz-1",
+            85.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_07_web_1",
+            "user_learner_07",
+            "item-web-quiz-1",
+            90.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_08_web_1",
+            "user_learner_08",
+            "item-web-quiz-1",
+            85.0,
+            True,
+            1,
+            d2_ago,
+        ),
+        # Microeconomics Quiz 1
+        (
+            "quiz_sub_demo_micro_1",
+            "user_learner_demo",
+            "item-micro-q1",
+            100.0,
+            True,
+            1,
+            d4_ago,
+        ),
+        (
+            "quiz_sub_02_micro_1",
+            "user_learner_02",
+            "item-micro-q1",
+            95.0,
+            True,
+            1,
+            d4_ago,
+        ),
+        (
+            "quiz_sub_03_micro_1",
+            "user_learner_03",
+            "item-micro-q1",
+            90.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_04_micro_1",
+            "user_learner_04",
+            "item-micro-q1",
+            90.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_05_micro_1",
+            "user_learner_05",
+            "item-micro-q1",
+            85.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_06_micro_1",
+            "user_learner_06",
+            "item-micro-q1",
+            85.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_07_micro_1",
+            "user_learner_07",
+            "item-micro-q1",
+            90.0,
+            True,
+            1,
+            d3_ago,
+        ),
+        (
+            "quiz_sub_08_micro_1",
+            "user_learner_08",
+            "item-micro-q1",
+            80.0,
+            True,
+            1,
+            d2_ago,
+        ),
+        # Microeconomics Final Quiz 2
+        (
+            "quiz_sub_demo_micro_2",
+            "user_learner_demo",
+            "item-micro-q2",
+            100.0,
+            True,
+            1,
+            d2_ago,
+        ),
+        (
+            "quiz_sub_02_micro_2",
+            "user_learner_02",
+            "item-micro-q2",
+            95.0,
+            True,
+            1,
+            d2_ago,
+        ),
+        (
+            "quiz_sub_03_micro_2",
+            "user_learner_03",
+            "item-micro-q2",
+            90.0,
+            True,
+            1,
+            d2_ago,
+        ),
+        (
+            "quiz_sub_04_micro_2",
+            "user_learner_04",
+            "item-micro-q2",
+            90.0,
+            True,
+            1,
+            d2_ago,
+        ),
+    ]
+    for q_id, q_uid, q_item, q_score, q_passed, q_att, q_created in quiz_specs:
+        await session.merge(
+            QuizSubmissionModel(
+                id=q_id,
+                user_id=q_uid,
+                item_id=q_item,
+                selected_option_indexes=[0, 1, 0],
+                score_percent=q_score,
+                passed=q_passed,
+                attempt_number=q_att,
+                created_at=q_created,
+            )
         )
-    )
-    await session.merge(
-        LabSubmissionModel(
-            id="lab_sub_demo_01",
-            user_id="user_learner_demo",
-            item_id="item-ml-lab-1",
-            source_code="def array_sum(arr):\n    return sum(arr)",
-            language="python",
-            score_percent=100.0,
-            passed=True,
-            total_test_cases=3,
-            passed_test_cases=3,
-            test_logs="[PASS] Test 1: Array sum positive integers\n[PASS] Test 2: Empty array\n[PASS] Test 3: Array sum with negative values",
-            created_at="2026-07-22T10:00:00Z",
+
+    # Lab submissions
+    lab_specs = [
+        # ML Lab 1
+        ("lab_sub_demo_01", "user_learner_demo", "item-ml-lab-1", 100.0, True, d4_ago),
+        ("lab_sub_02_ml_1", "user_learner_02", "item-ml-lab-1", 100.0, True, d4_ago),
+        ("lab_sub_03_ml_1", "user_learner_03", "item-ml-lab-1", 90.0, True, d3_ago),
+        ("lab_sub_04_ml_1", "user_learner_04", "item-ml-lab-1", 95.0, True, d3_ago),
+        ("lab_sub_05_ml_1", "user_learner_05", "item-ml-lab-1", 85.0, True, d3_ago),
+        ("lab_sub_06_ml_1", "user_learner_06", "item-ml-lab-1", 90.0, True, d3_ago),
+        ("lab_sub_07_ml_1", "user_learner_07", "item-ml-lab-1", 90.0, True, d3_ago),
+        ("lab_sub_08_ml_1", "user_learner_08", "item-ml-lab-1", 85.0, True, d2_ago),
+        # Web Lab 2
+        (
+            "lab_sub_demo_web_2",
+            "user_learner_demo",
+            "item-web-lab-2",
+            100.0,
+            True,
+            d4_ago,
+        ),
+        ("lab_sub_02_web_2", "user_learner_02", "item-web-lab-2", 100.0, True, d4_ago),
+        ("lab_sub_04_web_2", "user_learner_04", "item-web-lab-2", 90.0, True, d3_ago),
+        ("lab_sub_05_web_2", "user_learner_05", "item-web-lab-2", 85.0, True, d3_ago),
+    ]
+    for l_id, l_uid, l_item, l_score, l_passed, l_created in lab_specs:
+        await session.merge(
+            LabSubmissionModel(
+                id=l_id,
+                user_id=l_uid,
+                item_id=l_item,
+                source_code="""def solve(): return True""",
+                language="python" if "ml" in l_item else "typescript",
+                score_percent=l_score,
+                passed=l_passed,
+                total_test_cases=4,
+                passed_test_cases=4 if l_passed else 3,
+                test_logs="""[PASS] Test 1: Initialization
+[PASS] Test 2: Execution validation
+[PASS] Test 3: Edge cases handled
+[PASS] Test 4: Performance within limits""",
+                created_at=l_created,
+            )
         )
-    )
+
+    # -------------------------------------------------------------------------
+    # Peer Assignment Submissions & Reviews: COURSE 1 (item-ml-peer-1)
+    # -------------------------------------------------------------------------
+
+    # 1. Nguyễn Văn A: Graded by Staff (Andrew Ng) -> STATUS: GRADED (INSTRUCTOR)
     await session.merge(
         PeerAssignmentSubmissionModel(
             id="peer_sub_demo_01",
             user_id="user_learner_demo",
             item_id="item-ml-peer-1",
-            submission_url="https://github.com/learner-demo/housing-price-regression",
-            text_content="Supervised ML model architecture design for housing price prediction.",
-            created_at="2026-07-22T10:30:00Z",
+            submission_url="https://github.com/nguyenvana/housing-price-regression-ml",
+            text_content="Báo cáo thiết kế kiến trúc mô hình học máy có giám sát (Supervised ML) dự đoán giá nhà ở. Đã triển khai chuẩn hóa dữ liệu Z-Score, hàm mất mát MSE với regularization L2, và thuật toán Gradient Descent tự cài đặt bằng NumPy thuần.",
+            created_at=d4_ago,
+            final_score=96.0,
+            graded_by_staff=True,
+            staff_feedback="Giải pháp xuất sắc! Trình bày đạo hàm toán học rất trực quan, code NumPy vector hóa tối ưu và phân tích độ hội tụ chi tiết.",
+            graded_by_user_id="user_instructor_01",
+            grader_role="INSTRUCTOR",
+            grade_source="INSTRUCTOR",
+            rubric_scores_json={
+                "crit-ml-1": 39.0,
+                "crit-ml-2": 29.0,
+                "crit-ml-3": 28.0,
+            },
+            status="GRADED",
+            attempt_number=1,
+            published_at=d3_ago,
         )
     )
 
+    # 2. Trần Thu Hà: Graded by Peers (3 reviews, avg 88.0) -> STATUS: GRADED (PEER)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_ml_02",
+            user_id="user_learner_02",
+            item_id="item-ml-peer-1",
+            submission_url="https://github.com/tranthuha/linear-regression-from-scratch",
+            text_content="Triển khai Linear Regression đa biến dự đoán mức tiêu thụ năng lượng. Đã thử nghiệm Learning Rate từ 0.001 đến 0.1 và phân tích hiện tượng Overfitting.",
+            created_at=d4_ago,
+            final_score=88.0,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            status="GRADED",
+            attempt_number=1,
+            published_at=d3_ago,
+        )
+    )
+
+    # 3. Phạm Quốc Bảo: Appealed after low peer grade -> STATUS: APPEALED
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_ml_03",
+            user_id="user_learner_03",
+            item_id="item-ml-peer-1",
+            submission_url="https://github.com/phamquocbao/california-housing-ml",
+            text_content="Dự án phân tích và dự báo giá bất động sản California Housing Dataset. Sử dụng kỹ thuật Polynomial Regression bậc 2 kết hợp Ridge Regularization.",
+            created_at=d3_ago,
+            final_score=62.5,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            status="APPEALED",
+            attempt_number=1,
+        )
+    )
+
+    # 4. Lê Thị Mai Linh: Claimed/Locked by TA (ThS. Nguyễn Hoàng Nam) -> STATUS: CLAIMED
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_ml_04",
+            user_id="user_learner_04",
+            item_id="item-ml-peer-1",
+            submission_url="https://github.com/mailinh-le/patient-heart-disease-prediction",
+            text_content="Mô hình phân loại nhị phân Logistic Regression dự đoán nguy cơ bệnh tim mạch dựa trên chỉ số lâm sàng. Tối ưu hóa F1-Score và Precision.",
+            created_at=d2_ago,
+            final_score=None,
+            locked_by_user_id="user_ta_01",
+            locked_at=m5_ago,
+            status="CLAIMED",
+            attempt_number=1,
+        )
+    )
+
+    # 5. Hoàng Minh Đức: Review variance outlier (40 vs 95, 92) -> STATUS: PENDING (OUTLIER)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_ml_05",
+            user_id="user_learner_05",
+            item_id="item-ml-peer-1",
+            submission_url="https://github.com/duc-hoang/credit-card-fraud-detection",
+            text_content="Xây dựng hệ thống phát hiện gian lận thẻ tín dụng bằng hồi quy Logistic và kỹ thuật SMOTE Oversampling.",
+            created_at=d3_ago,
+            final_score=None,
+            status="PENDING",
+            attempt_number=1,
+        )
+    )
+
+    # 6. Vũ Hải Đăng: OVERDUE > 48h (Nộp 4 ngày trước chưa có bạn chấm) -> STATUS: PENDING (OVERDUE!)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_ml_06",
+            user_id="user_learner_06",
+            item_id="item-ml-peer-1",
+            submission_url="https://github.com/haidang-vu/car-price-regression-analysis",
+            text_content="Mô hình hồi quy dự đoán giá xe ô tô cũ theo số dặm đã đi, năm sản xuất và hãng xe. Đã nộp từ 4 ngày trước nhưng chưa có bạn học nào chấm bài, cần Giảng viên can thiệp chấm.",
+            created_at=d4_ago,
+            final_score=None,
+            status="PENDING",
+            attempt_number=1,
+        )
+    )
+
+    # 7. Đỗ Thùy Trang: Mới nộp gần đây, 1 review -> STATUS: PENDING
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_ml_07",
+            user_id="user_learner_07",
+            item_id="item-ml-peer-1",
+            submission_url="https://github.com/thuytrang-do/telecom-customer-churn",
+            text_content="Dự đoán tỷ lệ khách hàng rời bỏ mạng viễn thông (Customer Churn) bằng mô hình Logistic Regression chuẩn hóa.",
+            created_at=h6_ago,
+            final_score=None,
+            status="PENDING",
+            attempt_number=1,
+        )
+    )
+
+    # -------------------------------------------------------------------------
+    # Peer Assignment Submissions & Reviews: COURSE 2 (item-web-peer-1)
+    # -------------------------------------------------------------------------
+
+    # 8. Nguyễn Văn A: Graded by Staff (Lê Quang Dũng / Andrew Ng) -> STATUS: GRADED
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_web_demo",
+            user_id="user_learner_demo",
+            item_id="item-web-peer-1",
+            submission_url="https://github.com/nguyenvana/nextjs-lms-dashboard-connectrpc",
+            text_content="Dashboard quản lý khóa học fullstack sử dụng Next.js 15 App Router, TypeScript và ConnectRPC. Tích hợp TanStack Query quản lý cache server-state, giao diện thiết kế chuẩn 3-tier Semantic Tokens Tailwind CSS v4.",
+            created_at=d4_ago,
+            final_score=95.0,
+            graded_by_staff=True,
+            staff_feedback="Dự án hoàn thiện rất cao. Cấu trúc component rõ ràng, áp dụng đúng pattern TanStack Query và ConnectRPC.",
+            graded_by_user_id="user_instructor_01",
+            grader_role="INSTRUCTOR",
+            grade_source="INSTRUCTOR",
+            rubric_scores_json={
+                "crit-web-1": 34.0,
+                "crit-web-2": 33.0,
+                "crit-web-3": 28.0,
+            },
+            status="GRADED",
+            attempt_number=1,
+            published_at=d3_ago,
+        )
+    )
+
+    # 9. Trần Thu Hà: Peer graded (avg 91.0) -> STATUS: GRADED (PEER)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_web_02",
+            user_id="user_learner_02",
+            item_id="item-web-peer-1",
+            submission_url="https://github.com/tranthuha/nextjs-cockpit-connectrpc",
+            text_content="Bản nộp đồ án Capstone: Xây dựng Cockpit Chấm bài cho Trợ giảng với giao diện 2 cột Dual-Pane Modal.",
+            created_at=d4_ago,
+            final_score=91.0,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            status="GRADED",
+            attempt_number=1,
+            published_at=d3_ago,
+        )
+    )
+
+    # 10. Phạm Quốc Bảo: Đang chờ hoàn tất chấm -> STATUS: PENDING
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_web_03",
+            user_id="user_learner_03",
+            item_id="item-web-peer-1",
+            submission_url="https://github.com/phamquocbao/web-dev-capstone",
+            text_content="Đồ án kết thúc khóa học: Tối ưu hiệu năng Web Vitals với Next.js 15 và Tailwind CSS v4.",
+            created_at=d1_ago,
+            final_score=None,
+            status="PENDING",
+            attempt_number=1,
+        )
+    )
+
+    # 11. Đỗ Thùy Trang: OVERDUE > 48h (Nộp 3 ngày trước chưa ai chấm) -> STATUS: PENDING (OVERDUE!)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_web_07",
+            user_id="user_learner_07",
+            item_id="item-web-peer-1",
+            submission_url="https://github.com/thuytrang-do/e-learning-platform-capstone",
+            text_content="Ứng dụng web học tập trực tuyến tích hợp streaming video bài giảng, danh sách tuần học và nộp bài kiểm tra. Đã nộp 3 ngày trước nhưng chưa đủ đánh giá.",
+            created_at=d3_ago,
+            final_score=None,
+            status="PENDING",
+            attempt_number=1,
+        )
+    )
+
+    # 12. Bùi Thanh Tùng: Appealed on responsive mobile review -> STATUS: APPEALED
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_web_08",
+            user_id="user_learner_08",
+            item_id="item-web-peer-1",
+            submission_url="https://github.com/thanhtung-bui/coursera-clone-fullstack",
+            text_content="Capstone dự án LMS Clone: Thiết kế Responsive Mobile-first, Dark/Light mode tự động chuyển theo hệ thống, API ConnectRPC endpoint an toàn với JWT Interceptor.",
+            created_at=d3_ago,
+            final_score=69.0,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            status="APPEALED",
+            attempt_number=1,
+        )
+    )
+
+    # -------------------------------------------------------------------------
+    # Peer Reviews (Detailed Rubric Items with Feedback in Vietnamese)
+    # -------------------------------------------------------------------------
     peer_reviews = [
+        # Reviews for peer_sub_demo_01 (Nguyễn Văn A)
         PeerReviewModel(
-            id="peer_rev_01",
+            id="peer_rev_ml_01_a",
             submission_id="peer_sub_demo_01",
             reviewer_user_id="user_learner_02",
             item_id="item-ml-peer-1",
             rubric_criteria_json={
-                "problem_formulation": 5,
-                "feature_selection": 5,
-                "model_evaluation": 4,
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 38.0,
+                        "feedback": "Phân tích giả thuyết và hàm mất mát rất chi tiết, có biểu đồ minh họa rõ ràng.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 28.0,
+                        "feedback": "Kỹ thuật chuẩn hóa MinMax áp dụng chính xác.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 28.0,
+                        "feedback": "Code sạch, Markdown trình bày đẹp.",
+                    },
+                ]
             },
-            total_score=93.3,
+            total_score=94.0,
             is_outlier=False,
-            created_at="2026-07-22T11:00:00Z",
+            created_at=d4_ago,
         ),
         PeerReviewModel(
-            id="peer_rev_02",
+            id="peer_rev_ml_01_b",
             submission_id="peer_sub_demo_01",
-            reviewer_user_id="user_ta_01",
+            reviewer_user_id="user_learner_03",
             item_id="item-ml-peer-1",
             rubric_criteria_json={
-                "problem_formulation": 5,
-                "feature_selection": 5,
-                "model_evaluation": 5,
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 39.0,
+                        "feedback": "Công thức toán Latex trực quan và lập luận chặt chẽ.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 29.0,
+                        "feedback": "Xử lý missing value bằng median rất chuẩn.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Tài liệu hướng dẫn dễ hiểu.",
+                    },
+                ]
             },
-            total_score=100.0,
+            total_score=95.0,
             is_outlier=False,
-            created_at="2026-07-22T11:20:00Z",
+            created_at=d4_ago,
+        ),
+        # Reviews for peer_sub_ml_02 (Trần Thu Hà)
+        PeerReviewModel(
+            id="peer_rev_ml_02_a",
+            submission_id="peer_sub_ml_02",
+            reviewer_user_id="user_learner_demo",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 35.0,
+                        "feedback": "Hàm cost function cài đặt đúng, nên giải thích thêm về learning rate.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Đầy đủ các bước tiền xử lý cơ bản.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 26.0,
+                        "feedback": "Code rõ ràng.",
+                    },
+                ]
+            },
+            total_score=88.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        PeerReviewModel(
+            id="peer_rev_ml_02_b",
+            submission_id="peer_sub_ml_02",
+            reviewer_user_id="user_learner_04",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 36.0,
+                        "feedback": "Lập luận logic, biểu đồ contour loss trực quan.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Chuẩn hóa Z-score chuẩn xác.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Code có type annotations đầy đủ.",
+                    },
+                ]
+            },
+            total_score=90.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        PeerReviewModel(
+            id="peer_rev_ml_02_c",
+            submission_id="peer_sub_ml_02",
+            reviewer_user_id="user_learner_05",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 34.0,
+                        "feedback": "Bài làm đạt yêu cầu.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 26.0,
+                        "feedback": "Có phân chia tập train/test hợp lý.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 26.0,
+                        "feedback": "Trình bày dễ hiểu.",
+                    },
+                ]
+            },
+            total_score=86.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        # Reviews for peer_sub_ml_03 (Phạm Quốc Bảo - Khiếu nại)
+        PeerReviewModel(
+            id="peer_rev_ml_03_a",
+            submission_id="peer_sub_ml_03",
+            reviewer_user_id="user_learner_02",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 28.0,
+                        "feedback": "Phần toán hơi sơ sài, thiếu chứng minh đạo hàm.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 22.0,
+                        "feedback": "Chưa thấy giải thích chọn biến đặc trưng.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 15.0,
+                        "feedback": "Không thấy file README hướng dẫn chạy dự án.",
+                    },
+                ]
+            },
+            total_score=65.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        PeerReviewModel(
+            id="peer_rev_ml_03_b",
+            submission_id="peer_sub_ml_03",
+            reviewer_user_id="user_learner_06",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 26.0,
+                        "feedback": "Nên bổ sung thêm đồ án phân tích sâu hơn.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 20.0,
+                        "feedback": "Tiền xử lý còn thiếu bước kiểm tra ngoại lai (outliers).",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 14.0,
+                        "feedback": "Chưa thấy file requirements.txt cài đặt thư viện.",
+                    },
+                ]
+            },
+            total_score=60.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        # Reviews for peer_sub_ml_04 (Lê Thị Mai Linh - Đang chấm)
+        PeerReviewModel(
+            id="peer_rev_ml_04_a",
+            submission_id="peer_sub_ml_04",
+            reviewer_user_id="user_learner_demo",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 34.0,
+                        "feedback": "Phân tích Logistic Regression tốt.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 26.0,
+                        "feedback": "Xử lý mất cân bằng dữ liệu bằng kỹ thuật thích hợp.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 25.0,
+                        "feedback": "Bố cục đẹp, code mạch lạc.",
+                    },
+                ]
+            },
+            total_score=85.0,
+            is_outlier=False,
+            created_at=d2_ago,
+        ),
+        # Reviews for peer_sub_ml_05 (Hoàng Minh Đức - Outlier)
+        PeerReviewModel(
+            id="peer_rev_ml_05_a",
+            submission_id="peer_sub_ml_05",
+            reviewer_user_id="user_learner_demo",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 38.0,
+                        "feedback": "Bài làm xuất sắc, AUC-ROC curve rất đẹp.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 29.0,
+                        "feedback": "SMOTE áp dụng chuẩn chỉ.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 28.0,
+                        "feedback": "Tài liệu rất chi tiết.",
+                    },
+                ]
+            },
+            total_score=95.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        PeerReviewModel(
+            id="peer_rev_ml_05_b",
+            submission_id="peer_sub_ml_05",
+            reviewer_user_id="user_learner_02",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 37.0,
+                        "feedback": "Mô hình rất công phu, tính toán chi tiết.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 28.0,
+                        "feedback": "Tách train/val/test cẩn thận.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Code sạch sẽ theo chuẩn PEP8.",
+                    },
+                ]
+            },
+            total_score=92.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        PeerReviewModel(
+            id="peer_rev_ml_05_c",
+            submission_id="peer_sub_ml_05",
+            reviewer_user_id="user_learner_08",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 16.0,
+                        "feedback": "Chưa thích cách tiếp cận này.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 12.0,
+                        "feedback": "Không đồng ý với SMOTE.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 12.0,
+                        "feedback": "Tài liệu dài quá.",
+                    },
+                ]
+            },
+            total_score=40.0,
+            is_outlier=True,  # Outlier trigger!
+            created_at=d2_ago,
+        ),
+        # Review for peer_sub_ml_07 (Đỗ Thùy Trang)
+        PeerReviewModel(
+            id="peer_rev_ml_07_a",
+            submission_id="peer_sub_ml_07",
+            reviewer_user_id="user_learner_04",
+            item_id="item-ml-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-ml-1",
+                        "title": "Kiến trúc Mô hình & Nền tảng Toán học",
+                        "max_score": 40.0,
+                        "score_given": 35.0,
+                        "feedback": "Phân tích Logistic Regression tốt.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-2",
+                        "title": "Chiến lược Tiền xử lý & Feature Engineering",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Xử lý dữ liệu phân loại bằng One-Hot Encoding rất chuẩn.",
+                    },
+                    {
+                        "criteria_id": "crit-ml-3",
+                        "title": "Chất lượng Mã nguồn, Trình bày & Tài liệu",
+                        "max_score": 30.0,
+                        "score_given": 26.0,
+                        "feedback": "Code dễ theo dõi.",
+                    },
+                ]
+            },
+            total_score=88.0,
+            is_outlier=False,
+            created_at=h6_ago,
+        ),
+        # Reviews for peer_sub_web_demo (Nguyễn Văn A - Web Capstone)
+        PeerReviewModel(
+            id="peer_rev_web_demo_a",
+            submission_id="peer_sub_web_demo",
+            reviewer_user_id="user_learner_02",
+            item_id="item-web-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-web-1",
+                        "title": "Kiến trúc Frontend Next.js App Router & Server Components",
+                        "max_score": 35.0,
+                        "score_given": 33.0,
+                        "feedback": "Sử dụng RSC rất mượt, tách client boundary chuẩn xác.",
+                    },
+                    {
+                        "criteria_id": "crit-web-2",
+                        "title": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+                        "max_score": 35.0,
+                        "score_given": 32.0,
+                        "feedback": "Gọi rpc client chuẩn, xử lý cache query hook rất tốt.",
+                    },
+                    {
+                        "criteria_id": "crit-web-3",
+                        "title": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Dark/Light mode mượt mà, không dùng màu hex cứng.",
+                    },
+                ]
+            },
+            total_score=92.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        PeerReviewModel(
+            id="peer_rev_web_demo_b",
+            submission_id="peer_sub_web_demo",
+            reviewer_user_id="user_learner_03",
+            item_id="item-web-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-web-1",
+                        "title": "Kiến trúc Frontend Next.js App Router & Server Components",
+                        "max_score": 35.0,
+                        "score_given": 34.0,
+                        "feedback": "Cấu trúc thư mục module cực kỳ chuyên nghiệp.",
+                    },
+                    {
+                        "criteria_id": "crit-web-2",
+                        "title": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+                        "max_score": 35.0,
+                        "score_given": 33.0,
+                        "feedback": "Xử lý loading và toast thông báo rất chỉn chu.",
+                    },
+                    {
+                        "criteria_id": "crit-web-3",
+                        "title": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Giao diện đẹp mắt, tương thích mobile tốt.",
+                    },
+                ]
+            },
+            total_score=94.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        # Reviews for peer_sub_web_02 (Trần Thu Hà - Web Capstone)
+        PeerReviewModel(
+            id="peer_rev_web_02_a",
+            submission_id="peer_sub_web_02",
+            reviewer_user_id="user_learner_demo",
+            item_id="item-web-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-web-1",
+                        "title": "Kiến trúc Frontend Next.js App Router & Server Components",
+                        "max_score": 35.0,
+                        "score_given": 32.0,
+                        "feedback": "Modal chấm bài 2 cột thiết kế xuất sắc.",
+                    },
+                    {
+                        "criteria_id": "crit-web-2",
+                        "title": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+                        "max_score": 35.0,
+                        "score_given": 32.0,
+                        "feedback": "Mutation lock task hoạt động trơn tru.",
+                    },
+                    {
+                        "criteria_id": "crit-web-3",
+                        "title": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+                        "max_score": 30.0,
+                        "score_given": 28.0,
+                        "feedback": "Tailwind v4 tokens được áp dụng triệt để.",
+                    },
+                ]
+            },
+            total_score=92.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        PeerReviewModel(
+            id="peer_rev_web_02_b",
+            submission_id="peer_sub_web_02",
+            reviewer_user_id="user_learner_04",
+            item_id="item-web-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-web-1",
+                        "title": "Kiến trúc Frontend Next.js App Router & Server Components",
+                        "max_score": 35.0,
+                        "score_given": 32.0,
+                        "feedback": "Tổ chức code tốt.",
+                    },
+                    {
+                        "criteria_id": "crit-web-2",
+                        "title": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+                        "max_score": 35.0,
+                        "score_given": 31.0,
+                        "feedback": "Tích hợp API chuẩn xác.",
+                    },
+                    {
+                        "criteria_id": "crit-web-3",
+                        "title": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Responsive rất tốt trên iPad và điện thoại.",
+                    },
+                ]
+            },
+            total_score=90.0,
+            is_outlier=False,
+            created_at=d3_ago,
+        ),
+        # Review for peer_sub_web_03 (Phạm Quốc Bảo - Web Capstone)
+        PeerReviewModel(
+            id="peer_rev_web_03_a",
+            submission_id="peer_sub_web_03",
+            reviewer_user_id="user_learner_02",
+            item_id="item-web-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-web-1",
+                        "title": "Kiến trúc Frontend Next.js App Router & Server Components",
+                        "max_score": 35.0,
+                        "score_given": 31.0,
+                        "feedback": "Tối ưu Web Vitals tốt.",
+                    },
+                    {
+                        "criteria_id": "crit-web-2",
+                        "title": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+                        "max_score": 35.0,
+                        "score_given": 30.0,
+                        "feedback": "ConnectRPC hoạt động ổn định.",
+                    },
+                    {
+                        "criteria_id": "crit-web-3",
+                        "title": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Giao diện trực quan.",
+                    },
+                ]
+            },
+            total_score=88.0,
+            is_outlier=False,
+            created_at=d1_ago,
+        ),
+        # Reviews for peer_sub_web_08 (Bùi Thanh Tùng - Web Capstone Khiếu nại)
+        PeerReviewModel(
+            id="peer_rev_web_08_a",
+            submission_id="peer_sub_web_08",
+            reviewer_user_id="user_learner_02",
+            item_id="item-web-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-web-1",
+                        "title": "Kiến trúc Frontend Next.js App Router & Server Components",
+                        "max_score": 35.0,
+                        "score_given": 28.0,
+                        "feedback": "Code Next.js viết ổn định.",
+                    },
+                    {
+                        "criteria_id": "crit-web-2",
+                        "title": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+                        "max_score": 35.0,
+                        "score_given": 26.0,
+                        "feedback": "Có kết nối RPC backend.",
+                    },
+                    {
+                        "criteria_id": "crit-web-3",
+                        "title": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+                        "max_score": 30.0,
+                        "score_given": 16.0,
+                        "feedback": "Giao diện hiển thị trên màn hình nhỏ chưa tối ưu, các nút bấm bị tràn mép.",
+                    },
+                ]
+            },
+            total_score=70.0,
+            is_outlier=False,
+            created_at=d2_ago,
+        ),
+        PeerReviewModel(
+            id="peer_rev_web_08_b",
+            submission_id="peer_sub_web_08",
+            reviewer_user_id="user_learner_03",
+            item_id="item-web-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-web-1",
+                        "title": "Kiến trúc Frontend Next.js App Router & Server Components",
+                        "max_score": 35.0,
+                        "score_given": 27.0,
+                        "feedback": "Bố cục các trang khá đầy đủ.",
+                    },
+                    {
+                        "criteria_id": "crit-web-2",
+                        "title": "Tích hợp ConnectRPC & Quản lý Server State với TanStack Query",
+                        "max_score": 35.0,
+                        "score_given": 25.0,
+                        "feedback": "Cần thêm xử lý lỗi mạng khi mất kết nối.",
+                    },
+                    {
+                        "criteria_id": "crit-web-3",
+                        "title": "Giao diện Responsive & Chuẩn Semantic Design Tokens Tailwind v4",
+                        "max_score": 30.0,
+                        "score_given": 16.0,
+                        "feedback": "Cỡ chữ mobile quá to gây tràn ngang (horizontal overflow).",
+                    },
+                ]
+            },
+            total_score=68.0,
+            is_outlier=False,
+            created_at=d2_ago,
         ),
     ]
     for rev in peer_reviews:
         await session.merge(rev)
 
+    # Grade Appeals
+    appeals = [
+        GradeAppealModel(
+            id="appeal_ml_03",
+            user_id="user_learner_03",
+            submission_id="peer_sub_ml_03",
+            appeal_reason="Kính gửi Thầy/Cô: Bạn cùng lớp chấm bài nhận xét thiếu file README và requirements.txt, nhưng thực tế em đã gom tất cả cấu hình môi trường vào file pyproject.toml và Dockerfile ở nhánh main. Điểm số bị trừ 25 điểm chưa thỏa đáng. Em xin gửi khiếu nại kính mong Thầy/Cô xem xét và chấm lại giúp em!",
+            status="PENDING",
+            created_at=d2_ago,
+        ),
+        GradeAppealModel(
+            id="appeal_web_08",
+            user_id="user_learner_08",
+            submission_id="peer_sub_web_08",
+            appeal_reason="Bạn học chấm điểm nhận xét giao diện bị vỡ trên điện thoại và trừ 14 điểm mục Responsive. Nhưng em đã test kỹ bằng Chrome DevTools trên iPhone 14 Pro và iPad Pro đều hiển thị hoàn hảo. Kính mong thầy cô kiểm tra lại trên thiết bị thực tế giúp em.",
+            status="PENDING",
+            created_at=d1_ago,
+        ),
+    ]
+    for appeal in appeals:
+        await session.merge(appeal)
+
+    # -------------------------------------------------------------------------
+    # Peer Assignment Submissions & Reviews: COURSE 3 (item-micro-peer-1)
+    # -------------------------------------------------------------------------
+
+    # 15. Nguyễn Văn A: Graded by Instructor (PGS. TS. Trần Minh Tuấn) -> STATUS: GRADED (INSTRUCTOR)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_demo_micro",
+            user_id="user_learner_demo",
+            item_id="item-micro-peer-1",
+            submission_url="https://github.com/nguyenvana/airline-pricing-microeconomics",
+            text_content="Báo cáo Phân tích Thực nghiệm: Đánh giá Tác động của Chính sách Giá trần Vé Máy bay Nội địa & Mô hình Hóa Tổn thất Vô ích (DWL). Số liệu chuyến bay chặng TP.HCM - Hà Nội dịp Tết cho hàm Cầu Qd = 1200 - 0.2P và hàm Cung Qs = -200 + 0.15P. Điểm cân bằng tự do đạt P* = 4.000.000 VNĐ với Q* = 400.000 lượt ghế. Hệ số co giãn theo phương pháp trung điểm |PED| = 0.65 (nhu cầu kém co giãn vào mùa Tết). Việc áp giá trần P_max = 3.500.000 VNĐ dẫn tới lượng cung sụt giảm còn Qs = 325.000 vé trong khi lượng cầu Qd = 500.000 vé, gây thiếu hụt 175.000 chỗ ngồi và tổn thất vô ích 18.75 tỷ đồng.",
+            created_at=d4_ago,
+            final_score=96.0,
+            graded_by_staff=True,
+            staff_feedback="Bài làm xuất sắc! Mô hình toán học về thặng dư tiêu dùng (CS) và tổn thất vô ích (DWL) được tính toán chuẩn xác, viện dẫn số liệu thực tế thuyết phục.",
+            graded_by_user_id="user_instructor_econ",
+            grader_role="INSTRUCTOR",
+            grade_source="INSTRUCTOR",
+            rubric_scores_json={
+                "crit-micro-1": 29.0,
+                "crit-micro-2": 34.0,
+                "crit-micro-3": 33.0,
+            },
+            status="GRADED",
+            published_at=d1_ago,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_demo_01",
+            submission_id="peer_sub_demo_micro",
+            reviewer_user_id="user_instructor_econ",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 29.0,
+                        "feedback": "Mô hình hóa hàm cung cầu xuất sắc.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 34.0,
+                        "feedback": "Tính toán hệ số co giãn PED chuẩn xác theo phương pháp trung điểm.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 33.0,
+                        "feedback": "Phân tích DWL 18.75 tỷ đồng rất thuyết phục.",
+                    },
+                ]
+            },
+            total_score=96.0,
+            is_outlier=False,
+            created_at=d1_ago,
+        )
+    )
+
+    # 16. Trần Thu Hà: Graded by Peers -> STATUS: GRADED (PEER)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_02_micro",
+            user_id="user_learner_02",
+            item_id="item-micro-peer-1",
+            submission_url="https://github.com/tranthuha/swine-fever-market-analysis",
+            text_content="Case Study: Tác động của Dịch tả Lợn Châu Phi tới Cân bằng Cung Cầu Thịt Heo & Khuyến nghị Chính sách Bình ổn Giá. Dịch tả lợn làm sụt giảm 25% đàn nái, dịch chuyển đường Cung sang trái S -> S'. Mức giá cân bằng nhảy vọt từ 45.000đ lên 90.000đ/kg. Hệ số co giãn |PED| = 0.58. Nhu cầu thịt heo là thực phẩm thiết yếu khó thay thế hoàn toàn trong ngắn hạn. Giải pháp nhập khẩu thịt heo đông lạnh giúp bổ sung lượng cung kịp thời, thu hẹp DWL khoảng 42% sau 6 tháng.",
+            created_at=d3_ago,
+            final_score=91.0,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            rubric_scores_json={
+                "crit-micro-1": 27.5,
+                "crit-micro-2": 32.5,
+                "crit-micro-3": 31.0,
+            },
+            status="GRADED",
+            published_at=d1_ago,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_02_a",
+            submission_id="peer_sub_02_micro",
+            reviewer_user_id="user_learner_demo",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 28.0,
+                        "feedback": "Mô hình dịch chuyển đường cung rõ ràng.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 32.0,
+                        "feedback": "Giải thích tính co giãn thiết yếu rất chuẩn.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 30.0,
+                        "feedback": "Đề xuất mở hạn ngạch nhập khẩu thịt heo khả thi.",
+                    },
+                ]
+            },
+            total_score=90.0,
+            is_outlier=False,
+            created_at=d1_ago,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_02_b",
+            submission_id="peer_sub_02_micro",
+            reviewer_user_id="user_learner_03",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Bài làm tốt, có phân tích thực tế sinh động.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 33.0,
+                        "feedback": "Hệ số co giãn tính đúng công thức trung điểm.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 32.0,
+                        "feedback": "Khuyến nghị chính sách hay.",
+                    },
+                ]
+            },
+            total_score=92.0,
+            is_outlier=False,
+            created_at=d1_ago,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_02_c",
+            submission_id="peer_sub_02_micro",
+            reviewer_user_id="user_learner_05",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 27.5,
+                        "feedback": "Phần phân tích đường cung rõ ràng, logic.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 32.5,
+                        "feedback": "Tính toán độ co giãn chuẩn xác.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 31.0,
+                        "feedback": "Đề xuất chính sách rất thực tế.",
+                    },
+                ]
+            },
+            total_score=91.0,
+            is_outlier=False,
+            created_at=d1_ago,
+        )
+    )
+
+    # 17. Phạm Quốc Bảo: Harsh Graded -> STATUS: APPEALED
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_03_micro",
+            user_id="user_learner_03",
+            item_id="item-micro-peer-1",
+            submission_url="https://github.com/bao-pham/grab-surge-pricing-analysis",
+            text_content="Đo lường Độ co giãn của Cầu đối với Dịch vụ Gọi xe Công nghệ Grab/Be & Phân tích Thuật toán Surge Pricing. Thuật toán Surge Pricing điều chỉnh giá tự động theo thời gian thực khi cung thiếu hụt cục bộ vào giờ cao điểm mưa gió. Hệ số PED giờ cao điểm đạt |PED| = 0.42 (ít co giãn do nhu cầu khẩn cấp), trong khi giờ thấp điểm |PED| = 1.45.",
+            created_at=d2_ago,
+            final_score=64.0,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            rubric_scores_json={
+                "crit-micro-1": 20.0,
+                "crit-micro-2": 15.0,
+                "crit-micro-3": 29.0,
+            },
+            status="APPEALED",
+            published_at=d1_ago,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_03_a",
+            submission_id="peer_sub_03_micro",
+            reviewer_user_id="user_learner_04",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 20.0,
+                        "feedback": "Mô hình surge pricing cần thêm đồ thị so sánh hai trạng thái thời tiết.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 15.0,
+                        "feedback": "Phần tính toán hệ số co giãn PED chưa nêu rõ nguồn thu thập mẫu dữ liệu thực nghiệm, trừ điểm mục 2.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 29.0,
+                        "feedback": "Phân tích thặng dư tài xế và hành khách khá tốt.",
+                    },
+                ]
+            },
+            total_score=64.0,
+            is_outlier=False,
+            created_at=d1_ago,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_03_b",
+            submission_id="peer_sub_03_micro",
+            reviewer_user_id="user_learner_demo",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 20.0,
+                        "feedback": "Cần vẽ rõ đường cung hơn.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 16.0,
+                        "feedback": "Chấm theo barem thì mục 2 chưa đủ dẫn chứng.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 28.0,
+                        "feedback": "Đề xuất tương đối ổn.",
+                    },
+                ]
+            },
+            total_score=64.0,
+            is_outlier=False,
+            created_at=d1_ago,
+        )
+    )
     await session.merge(
         GradeAppealModel(
-            id="appeal_demo_01",
+            id="appeal_micro_03",
             user_id="user_learner_03",
-            submission_id="peer_sub_demo_01",
-            appeal_reason="The reviewer marked point deduction for missing documentation, but inline comments were included in code blocks.",
+            submission_id="peer_sub_03_micro",
+            appeal_reason="Em đã phân tích rất chi tiết cả 2 trường hợp hệ số co giãn giờ cao điểm và giờ thấp điểm từ khảo sát 200 cuốc xe thực tế tại Hà Nội. Bạn chấm chỉ cho 15/35 điểm ở tiêu chí 2 là quá khắt khe và thiếu công bằng. Kính mong thầy cô thẩm định lại giúp em.",
             status="PENDING",
-            created_at="2026-07-22T14:00:00Z",
+            created_at=d1_ago,
+        )
+    )
+
+    # 18. Lê Thị Mai Linh: Discrepant Grading -> STATUS: PENDING (OUTLIER 95 vs 55)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_04_micro",
+            user_id="user_learner_04",
+            item_id="item-micro-peer-1",
+            submission_url="https://github.com/mailinh-le/coffee-export-surplus",
+            text_content="Phân tích Thặng dư Người Tiêu dùng và Tổn thất Xã hội trong Thị trường Cà phê Xuất khẩu Đắk Lắk. Khảo sát thị trường cà phê Robusta với biến động sản lượng do hiện tượng El Nino và cơ chế thu mua của các thương lái. Độ co giãn cung dài hạn Es = 1.2 cao hơn nhiều so với ngắn hạn Es = 0.2.",
+            created_at=d2_ago,
+            final_score=None,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            rubric_scores_json={
+                "crit-micro-1": 24.0,
+                "crit-micro-2": 25.5,
+                "crit-micro-3": 25.5,
+            },
+            status="PENDING",
+            published_at=None,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_04_a",
+            submission_id="peer_sub_04_micro",
+            reviewer_user_id="user_learner_demo",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 30.0,
+                        "feedback": "Bài viết phân tích chuyên sâu, hiểu rõ bản chất co giãn cung cầu trong nông sản.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 33.0,
+                        "feedback": "Số liệu thống kê xuất khẩu thuyết phục.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 32.0,
+                        "feedback": "Kiến nghị hỗ trợ vốn bảo hiểm mùa màng rất hay.",
+                    },
+                ]
+            },
+            total_score=95.0,
+            is_outlier=True,
+            created_at=d1_ago,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_04_b",
+            submission_id="peer_sub_04_micro",
+            reviewer_user_id="user_learner_05",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 18.0,
+                        "feedback": "Nội dung trình bày còn sơ sài.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 18.0,
+                        "feedback": "Chưa có công thức toán chi tiết.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 19.0,
+                        "feedback": "Đề xuất chưa rõ ràng.",
+                    },
+                ]
+            },
+            total_score=55.0,
+            is_outlier=True,
+            created_at=d1_ago,
+        )
+    )
+
+    # 19. Hoàng Minh Đức: Claimed by TA Nam -> STATUS: CLAIMED
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_05_micro",
+            user_id="user_learner_05",
+            item_id="item-micro-peer-1",
+            submission_url="https://github.com/duc-hoang/evn-progressive-tariff",
+            text_content="Nghiên cứu Tính nhạy cảm Giá Điện sinh hoạt theo Biểu giá Bậc thang tại TP.HCM. Đánh giá chính sách định giá bậc thang lũy tiến của EVN và phản ứng tiêu dùng của các nhóm hộ gia đình có mức thu nhập khác nhau. Đề xuất cải tiến bậc 1 và bậc 2 để bảo đảm an sinh xã hội.",
+            created_at=d2_ago,
+            final_score=None,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            locked_by_user_id="user_ta_01",
+            locked_at=m5_ago,
+            status="CLAIMED",
+            published_at=None,
+        )
+    )
+
+    # 20. Vũ Hải Đăng: Overdue >48h awaiting grading -> STATUS: PENDING (OVERDUE)
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_06_micro",
+            user_id="user_learner_06",
+            item_id="item-micro-peer-1",
+            submission_url="https://github.com/dangvu/sugar-tax-deadweight-loss",
+            text_content="Chính sách Thuế Tiêu thụ Đặc biệt với Đồ uống có Đường & Ước tính Tổn thất Vô ích (DWL). Đánh giá đề xuất đánh thuế 10% với nước ngọt có ga và tác động chuyển dịch tiêu dùng sang trà đóng chai hoặc nước tinh khiết. Tính toán tổn thất vô ích tam giác Harberger khi áp thuế.",
+            created_at=d3_ago,
+            final_score=None,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            status="PENDING",
+            published_at=None,
+        )
+    )
+
+    # 21. Đỗ Thùy Trang: 1 Review received -> STATUS: PENDING
+    await session.merge(
+        PeerAssignmentSubmissionModel(
+            id="peer_sub_07_micro",
+            user_id="user_learner_07",
+            item_id="item-micro-peer-1",
+            submission_url="https://github.com/trangdo/water-utility-pricing-welfare",
+            text_content="Định giá Nước sạch Đô thị và Bài toán Phân bổ Phúc lợi Xã hội tại Hà Nội. Phân tích đặc thù độc quyền tự nhiên trong ngành cấp nước sạch đô thị. Đánh giá hai phương án định giá: Định giá theo chi phí cận biên MC kết hợp trợ cấp ngân sách vs Định giá theo chi phí trung bình AC.",
+            created_at=d2_ago,
+            final_score=None,
+            graded_by_staff=False,
+            grade_source="PEER_REVIEW",
+            status="PENDING",
+            published_at=None,
+        )
+    )
+    await session.merge(
+        PeerReviewModel(
+            id="peer_rev_micro_07_a",
+            submission_id="peer_sub_07_micro",
+            reviewer_user_id="user_learner_02",
+            item_id="item-micro-peer-1",
+            rubric_criteria_json={
+                "items": [
+                    {
+                        "criteria_id": "crit-micro-1",
+                        "title": "Mô hình Hóa Cung - Cầu & Điểm Cân Bằng Thị Trường",
+                        "max_score": 30.0,
+                        "score_given": 27.0,
+                        "feedback": "Phân tích độc quyền tự nhiên và đường AC dốc xuống chuẩn xác.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-2",
+                        "title": "Lượng Hóa Độ Co Giãn Của Cầu (PED) & Tác Động Doanh Thu",
+                        "max_score": 35.0,
+                        "score_given": 31.0,
+                        "feedback": "Độ co giãn nước sinh hoạt ít co giãn hơn nước kinh doanh.",
+                    },
+                    {
+                        "criteria_id": "crit-micro-3",
+                        "title": "Đánh Giá Phúc Lợi Xã Hội, Tổn Thất Vô Ích (DWL) & Đề Xuất Chính Sách",
+                        "max_score": 35.0,
+                        "score_given": 30.0,
+                        "feedback": "Phương án định giá hai phần (Two-part tariff) rất khả thi.",
+                    },
+                ]
+            },
+            total_score=88.0,
+            is_outlier=False,
+            created_at=d1_ago,
         )
     )
 
