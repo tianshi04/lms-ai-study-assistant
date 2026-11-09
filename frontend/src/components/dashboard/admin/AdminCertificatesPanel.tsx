@@ -1,99 +1,132 @@
 "use client";
 
-import { useState } from "react";
-import type { AdminCertificateSummary } from "@/gen/identity/v1/identity_pb";
+import { useMemo, useState } from "react";
+import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
+import {
+  AdminCertificateStatusFilter,
+  type AdminCertificateSummary,
+} from "@/gen/identity/v1/identity_pb";
 import { Button } from "@/components/ui/Button";
-import { Table } from "@/components/ui/Table";
 import { useAdminCertificatesQuery } from "@/lib/queries/useIdentityQueries";
+import { AdminDataTable } from "./AdminDataTable";
 import { AdminPagination } from "./AdminPagination";
 import { EmptyState } from "./AdminSection";
+import { AdminTableFilters, type FilterOption } from "./AdminTableFilters";
 import { PagedQueryStatus } from "./PagedQueryStatus";
 import { RevokeCertificateDialog } from "./RevokeCertificateDialog";
 import { StatusBadge } from "./StatusBadge";
+import { useAdminTableState } from "./useAdminTableState";
 
 const PAGE_SIZE = 10;
+const NO_CERTIFICATES: AdminCertificateSummary[] = [];
 
-function CertificatesTable({
-  certificates,
-  onRevoke,
-}: {
-  certificates: AdminCertificateSummary[];
-  onRevoke: (certificate: AdminCertificateSummary) => void;
-}) {
-  return (
-    <Table>
-      <Table.Header>
-        <Table.Row>
-          <Table.Head>Mã chứng chỉ</Table.Head>
-          <Table.Head>Học viên</Table.Head>
-          <Table.Head>Khóa học</Table.Head>
-          <Table.Head>Ngày cấp</Table.Head>
-          <Table.Head>Trạng thái</Table.Head>
-          <Table.Head className="text-right">Thao tác</Table.Head>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {certificates.map((certificate) => (
-          <Table.Row key={certificate.certificateId}>
-            <Table.Cell className="font-mono text-xs font-bold text-primary">
-              {certificate.certificateId}
-            </Table.Cell>
-            <Table.Cell>{certificate.learnerName}</Table.Cell>
-            <Table.Cell>
-              <p className="font-semibold">{certificate.courseTitle}</p>
-              <p className="text-xs text-muted-foreground">{certificate.partnerName}</p>
-            </Table.Cell>
-            <Table.Cell className="text-xs whitespace-nowrap">{certificate.issueDate}</Table.Cell>
-            <Table.Cell>
-              {certificate.isRevoked ? (
-                <div className="space-y-1">
-                  <StatusBadge tone="destructive">Đã thu hồi</StatusBadge>
-                  {certificate.revokedReason && (
-                    <p className="text-xs text-muted-foreground">{certificate.revokedReason}</p>
-                  )}
-                </div>
-              ) : (
-                <StatusBadge tone="success">Hợp lệ</StatusBadge>
-              )}
-            </Table.Cell>
-            <Table.Cell className="text-right">
-              {!certificate.isRevoked && (
-                <Button
-                  size="sm"
-                  variant="outlined"
-                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
-                  onClick={() => onRevoke(certificate)}
-                >
-                  Thu hồi
-                </Button>
-              )}
-            </Table.Cell>
-          </Table.Row>
-        ))}
-      </Table.Body>
-    </Table>
-  );
+const STATUS_OPTIONS: FilterOption[] = [
+  { value: String(AdminCertificateStatusFilter.UNSPECIFIED), label: "Tất cả trạng thái" },
+  { value: String(AdminCertificateStatusFilter.VALID), label: "Hợp lệ" },
+  { value: String(AdminCertificateStatusFilter.REVOKED), label: "Đã thu hồi" },
+];
+
+const COLUMN_CLASS_NAMES = {
+  id: { cell: "font-mono text-xs font-bold text-primary" },
+  issueDate: { cell: "text-xs whitespace-nowrap" },
+  actions: { head: "text-right", cell: "text-right" },
+};
+
+function createColumns(
+  onRevoke: (certificate: AdminCertificateSummary) => void,
+): ColumnDef<AdminCertificateSummary>[] {
+  return [
+    { id: "id", header: "Mã chứng chỉ", cell: ({ row }) => row.original.certificateId },
+    { id: "learner", header: "Học viên", cell: ({ row }) => row.original.learnerName },
+    {
+      id: "course",
+      header: "Khóa học",
+      cell: ({ row }) => (
+        <>
+          <p className="font-semibold">{row.original.courseTitle}</p>
+          <p className="text-xs text-muted-foreground">{row.original.partnerName}</p>
+        </>
+      ),
+    },
+    { id: "issueDate", header: "Ngày cấp", cell: ({ row }) => row.original.issueDate },
+    {
+      id: "status",
+      header: "Trạng thái",
+      cell: ({ row }) =>
+        row.original.isRevoked ? (
+          <div className="space-y-1">
+            <StatusBadge tone="destructive">Đã thu hồi</StatusBadge>
+            {row.original.revokedReason && (
+              <p className="text-xs text-muted-foreground">{row.original.revokedReason}</p>
+            )}
+          </div>
+        ) : (
+          <StatusBadge tone="success">Hợp lệ</StatusBadge>
+        ),
+    },
+    {
+      id: "actions",
+      header: "Thao tác",
+      cell: ({ row }) =>
+        row.original.isRevoked ? null : (
+          <Button
+            size="sm"
+            variant="outlined"
+            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+            onClick={() => onRevoke(row.original)}
+          >
+            Thu hồi
+          </Button>
+        ),
+    },
+  ];
 }
 
-/** Paginated certificate list with the revoke flow, shown as a tab of the quality alerts. */
+/** Paginated certificate list with search, status filter and the revoke flow. */
 export function AdminCertificatesPanel() {
-  const [page, setPage] = useState(1);
+  const tableState = useAdminTableState(PAGE_SIZE);
+  const { pagination } = tableState;
   const [revoking, setRevoking] = useState<AdminCertificateSummary | null>(null);
+  const columns = useMemo(() => createColumns(setRevoking), []);
   const { data, isLoading, isError, error, refetch, isPlaceholderData } = useAdminCertificatesQuery(
-    page,
-    PAGE_SIZE,
+    {
+      page: pagination.pageIndex + 1,
+      pageSize: pagination.pageSize,
+      searchQuery: tableState.searchQuery,
+      status: tableState.status,
+    },
   );
 
-  const certificates = data?.certificates ?? [];
+  const certificates = data?.certificates ?? NO_CERTIFICATES;
   const totalCount = data?.totalCount ?? 0;
-  const pageSize = data?.pageSize || PAGE_SIZE;
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const table = useReactTable({
+    data: certificates,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (certificate) => certificate.certificateId,
+    manualPagination: true,
+    rowCount: totalCount,
+    state: { pagination },
+    onPaginationChange: tableState.setPagination,
+  });
+
   // The requested page can fall past the end if certificates were removed while it was open.
   const isPastLastPage =
-    !isPlaceholderData && certificates.length === 0 && totalCount > 0 && page > 1;
+    !isPlaceholderData && certificates.length === 0 && totalCount > 0 && pagination.pageIndex > 0;
 
   return (
     <div className="space-y-4">
+      <AdminTableFilters
+        searchValue={tableState.searchInput}
+        onSearchChange={tableState.onSearchChange}
+        searchLabel="Tìm chứng chỉ"
+        searchPlaceholder="Tìm theo mã chứng chỉ, học viên hoặc khóa học…"
+        statusValue={String(tableState.status)}
+        onStatusChange={tableState.onStatusChange}
+        statusLabel="Lọc theo trạng thái"
+        statusOptions={STATUS_OPTIONS}
+      />
+
       <PagedQueryStatus
         isLoading={isLoading}
         loadingLabel="Đang tải danh sách chứng chỉ…"
@@ -102,30 +135,30 @@ export function AdminCertificatesPanel() {
         errorMessage={error?.message}
         onRetry={() => refetch()}
         isPastLastPage={isPastLastPage}
-        onGoToFirstPage={() => setPage(1)}
+        onGoToFirstPage={tableState.goToFirstPage}
       />
 
-      {data && totalCount === 0 && <EmptyState message="Chưa có chứng chỉ nào được phát hành." />}
+      {data && totalCount === 0 && (
+        <EmptyState
+          message={
+            tableState.hasActiveFilters
+              ? "Không có chứng chỉ nào khớp với bộ lọc."
+              : "Chưa có chứng chỉ nào được phát hành."
+          }
+        />
+      )}
 
       {certificates.length > 0 && (
         <div
           className={isPlaceholderData ? "opacity-60 transition-opacity" : "transition-opacity"}
           aria-busy={isPlaceholderData}
         >
-          <CertificatesTable certificates={certificates} onRevoke={setRevoking} />
+          <AdminDataTable table={table} columnClassNames={COLUMN_CLASS_NAMES} />
         </div>
       )}
 
-      {totalPages > 1 && (
-        <AdminPagination
-          page={page}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          pageSize={pageSize}
-          itemLabel="chứng chỉ"
-          ariaLabel="Phân trang chứng chỉ"
-          onPageChange={setPage}
-        />
+      {table.getPageCount() > 1 && (
+        <AdminPagination table={table} itemLabel="chứng chỉ" ariaLabel="Phân trang chứng chỉ" />
       )}
 
       <RevokeCertificateDialog certificate={revoking} onClose={() => setRevoking(null)} />

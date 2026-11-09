@@ -18,11 +18,20 @@ from src.modules.identity.domain.entities import (
 class IAdminDashboardRepository(Protocol):
     async def get_dashboard_stats(self) -> AdminDashboardStats: ...
     async def list_course_metrics(
-        self, page: int, page_size: int
+        self,
+        page: int,
+        page_size: int,
+        search_query: str = "",
+        status: str | None = None,
     ) -> AdminCourseMetricsPage: ...
     async def list_certificates(
-        self, page: int, page_size: int
+        self,
+        page: int,
+        page_size: int,
+        search_query: str = "",
+        is_revoked: bool | None = None,
     ) -> AdminCertificatesPage: ...
+    async def acknowledge_low_review(self, review_id: str, admin_id: str) -> bool: ...
 
 
 class IIdentityRepository(Protocol):

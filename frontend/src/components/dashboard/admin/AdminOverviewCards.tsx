@@ -84,7 +84,7 @@ export function AdminOverviewCards({ overview }: { overview: AdminOverviewMetric
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <KpiCard
           icon={Users}
-          iconClassName="bg-primary-container text-on-primary-container"
+          iconClassName="bg-primary/10 text-primary"
           label="Tổng người dùng"
           value={formatNumber(overview.totalUsers)}
           details={[

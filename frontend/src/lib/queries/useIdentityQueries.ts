@@ -20,6 +20,8 @@ import {
   type UserOrganizationDetail,
   type Invitation,
   type GetAdminDashboardStatsResponse,
+  type AdminCertificateStatusFilter,
+  type AdminCourseStatusFilter,
   type ListAdminCertificatesResponse,
   type ListAdminCourseMetricsResponse,
 } from "@/gen/identity/v1/identity_pb";
@@ -44,17 +46,63 @@ export function useAdminDashboardStatsQuery(
   });
 }
 
+export interface AdminCourseMetricsParams {
+  /** 1-based page number. */
+  page: number;
+  pageSize: number;
+  searchQuery: string;
+  status: AdminCourseStatusFilter;
+}
+
 /**
- * Paginated per-course metrics for the Super Admin dashboard, highest revenue first.
- * `page` is 1-based. The previous page stays on screen while the next one loads.
+ * Paginated per-course metrics for the Super Admin dashboard, highest revenue first,
+ * with optional search (title / partner) and status filter.
+ * The previous page stays on screen while the next one loads.
  */
-export function useAdminCourseMetricsQuery(page: number, pageSize: number) {
+export function useAdminCourseMetricsQuery({
+  page,
+  pageSize,
+  searchQuery,
+  status,
+}: AdminCourseMetricsParams) {
   const { isAuthenticated, isSuperAdmin } = useAuth();
   return useQuery<ListAdminCourseMetricsResponse, Error>({
-    queryKey: ["adminCourseMetrics", page, pageSize],
+    queryKey: ["adminCourseMetrics", page, pageSize, searchQuery, status],
     queryFn: async () => {
       const client = getRpcClient(IdentityService);
-      return client.listAdminCourseMetrics({ page, pageSize });
+      return client.listAdminCourseMetrics({ page, pageSize, searchQuery, status });
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    enabled: isAuthenticated && isSuperAdmin,
+  });
+}
+
+export interface AdminCertificatesParams {
+  /** 1-based page number. */
+  page: number;
+  pageSize: number;
+  searchQuery: string;
+  status: AdminCertificateStatusFilter;
+}
+
+/**
+ * Paginated certificates for the Super Admin dashboard (valid first, then revoked),
+ * with optional search (id / learner / course) and valid-or-revoked filter.
+ * The previous page stays on screen while the next one loads.
+ */
+export function useAdminCertificatesQuery({
+  page,
+  pageSize,
+  searchQuery,
+  status,
+}: AdminCertificatesParams) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<ListAdminCertificatesResponse, Error>({
+    queryKey: ["adminCertificates", page, pageSize, searchQuery, status],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      return client.listAdminCertificates({ page, pageSize, searchQuery, status });
     },
     placeholderData: keepPreviousData,
     staleTime: 60 * 1000,
@@ -63,20 +111,24 @@ export function useAdminCourseMetricsQuery(page: number, pageSize: number) {
 }
 
 /**
- * Paginated certificates for the Super Admin dashboard (valid first, then revoked).
- * `page` is 1-based. The previous page stays on screen while the next one loads.
+ * Marks a low-rating review as looked at so it leaves the dashboard alert list.
+ * The review returns to the list if its author edits it afterwards.
  */
-export function useAdminCertificatesQuery(page: number, pageSize: number) {
-  const { isAuthenticated, isSuperAdmin } = useAuth();
-  return useQuery<ListAdminCertificatesResponse, Error>({
-    queryKey: ["adminCertificates", page, pageSize],
-    queryFn: async () => {
+export function useAcknowledgeLowReviewMutation(
+  options?: Partial<UseMutationOptions<{ success: boolean; message: string }, Error, string>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<{ success: boolean; message: string }, Error, string>({
+    mutationFn: async (reviewId) => {
       const client = getRpcClient(IdentityService);
-      return client.listAdminCertificates({ page, pageSize });
+      const res = await client.acknowledgeLowReview({ reviewId });
+      return { success: res.success, message: res.message };
     },
-    placeholderData: keepPreviousData,
-    staleTime: 60 * 1000,
-    enabled: isAuthenticated && isSuperAdmin,
+    ...options,
+    onSuccess: (data, variables, context, mutationContext) => {
+      queryClient.invalidateQueries({ queryKey: ["adminDashboardStats"] });
+      options?.onSuccess?.(data, variables, context, mutationContext);
+    },
   });
 }
 

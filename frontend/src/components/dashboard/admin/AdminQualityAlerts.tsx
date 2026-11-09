@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Table } from "@/components/ui/Table";
 import { Tabs } from "@/components/ui/Tabs";
+import { useToast } from "@/components/ui/Toast";
+import { useAcknowledgeLowReviewMutation } from "@/lib/queries/useIdentityQueries";
 import { AdminCertificatesPanel } from "./AdminCertificatesPanel";
 import { AdminSection, EmptyState } from "./AdminSection";
 import { formatDateTime, formatNumber } from "./formatters";
@@ -75,6 +77,22 @@ function AssessmentAlertsTable({ alerts }: { alerts: AdminAssessmentAlert[] }) {
 }
 
 function LowReviewsTable({ reviews }: { reviews: AdminLowReviewAlert[] }) {
+  const toast = useToast();
+  const acknowledge = useAcknowledgeLowReviewMutation();
+
+  const handleAcknowledge = (reviewId: string) => {
+    acknowledge.mutate(reviewId, {
+      onSuccess: (res) => {
+        if (res.success) {
+          toast.success(res.message || "Đã đánh dấu đánh giá là đã xem xét.");
+        } else {
+          toast.error(res.message || "Không thể đánh dấu đánh giá là đã xem xét.");
+        }
+      },
+      onError: (err) => toast.error(err.message || "Không thể đánh dấu đánh giá là đã xem xét."),
+    });
+  };
+
   return (
     <Table>
       <Table.Header>
@@ -98,9 +116,23 @@ function LowReviewsTable({ reviews }: { reviews: AdminLowReviewAlert[] }) {
               {formatDateTime(review.createdAt)}
             </Table.Cell>
             <Table.Cell className="text-right">
-              <Button size="sm" variant="outlined" render={<Link href="/admin/courses/review" />}>
-                Kiểm duyệt khóa
-              </Button>
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="outlined"
+                  render={<Link href={`/courses/${review.courseId}`} />}
+                >
+                  Xem khóa học
+                </Button>
+                <Button
+                  size="sm"
+                  variant="tonal"
+                  disabled={acknowledge.isPending && acknowledge.variables === review.reviewId}
+                  onClick={() => handleAcknowledge(review.reviewId)}
+                >
+                  Đã xem xét
+                </Button>
+              </div>
             </Table.Cell>
           </Table.Row>
         ))}

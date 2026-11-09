@@ -58,14 +58,14 @@ export function RevokeCertificateDialog({ certificate, onClose }: RevokeCertific
           <Dialog.Title>Thu hồi chứng chỉ</Dialog.Title>
         </Dialog.Header>
         <div className="space-y-4 pt-2">
-          <p className="text-xs text-on-surface-variant">
+          <p className="text-xs text-muted-foreground">
             Chứng chỉ{" "}
             <strong className="font-mono text-foreground">{certificate?.certificateId}</strong> của{" "}
             <strong className="text-foreground">{certificate?.learnerName}</strong> sẽ không còn hợp
             lệ khi xác minh công khai. Vui lòng nhập lý do thu hồi.
           </p>
           <div>
-            <label htmlFor="revoke-reason" className="block text-xs font-bold mb-1 text-on-surface">
+            <label htmlFor="revoke-reason" className="block text-xs font-bold mb-1 text-foreground">
               Lý do thu hồi *
             </label>
             <Textarea

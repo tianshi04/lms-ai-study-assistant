@@ -7,7 +7,8 @@ cases stay free of raw SQL.
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.assessment.infrastructure.models import (
@@ -42,6 +43,7 @@ from src.modules.identity.domain import (
 )
 from src.modules.identity.infrastructure.models import (
     InstructorApplicationModel,
+    LowReviewAcknowledgementModel,
     UserModel,
 )
 from src.modules.learning.infrastructure.models import LearningProgressModel
@@ -51,6 +53,8 @@ from src.modules.payment.infrastructure.models import (
     PaymentOrderModel,
     UserSubscriptionModel,
 )
+from src.shared.auth import get_current_user
+from src.shared.infrastructure.scopes import apply_organization_scope
 
 _COMPLETED = "COMPLETED"
 _ACTIVE = "ACTIVE"
@@ -62,6 +66,17 @@ _PENDING_APPEAL_STATUSES = (_PENDING, "PENDING_STAFF_REVIEW")
 _REPORTED_REVIEW_PREFIX = "[REPORT_REVIEW:"
 _APPROVED_AID_STATUSES = ("APPROVED", "AUTO_APPROVED")
 _ISO_SECONDS_LENGTH = 19  # "YYYY-MM-DDTHH:MM:SS"
+
+
+def _contains_pattern(term: str) -> str:
+    """Build an ILIKE pattern that matches ``term`` literally (wildcards escaped)."""
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
+def _scope_courses(stmt: Any) -> Any:
+    """Push the caller's organization scope down to every statement touching courses."""
+    return apply_organization_scope(stmt, CourseModel, get_current_user())
 
 
 class AdminDashboardRepository(IAdminDashboardRepository):
@@ -114,7 +129,9 @@ class AdminDashboardRepository(IAdminDashboardRepository):
 
     async def _fill_course_metrics(self, metrics: AdminOverviewMetrics) -> None:
         status_rows = await self._session.execute(
-            select(CourseModel.status, func.count()).group_by(CourseModel.status)
+            _scope_courses(
+                select(CourseModel.status, func.count()).group_by(CourseModel.status)
+            )
         )
         status_counts = dict(status_rows.all())
         metrics.published_courses = status_counts.get(CourseStatus.PUBLISHED, 0)
@@ -130,15 +147,19 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         # keeping this total equal to the sum of the per-course table.
         enrollment_row = (
             await self._session.execute(
-                select(
-                    func.count(LearningProgressModel.id),
-                    func.count(LearningProgressModel.id).filter(
-                        LearningProgressModel.overall_progress_percent
-                        >= _COMPLETION_PERCENT
-                    ),
+                _scope_courses(
+                    select(
+                        func.count(LearningProgressModel.id),
+                        func.count(LearningProgressModel.id).filter(
+                            LearningProgressModel.overall_progress_percent
+                            >= _COMPLETION_PERCENT
+                        ),
+                    )
+                    .select_from(LearningProgressModel)
+                    .join(
+                        CourseModel, CourseModel.id == LearningProgressModel.course_id
+                    )
                 )
-                .select_from(LearningProgressModel)
-                .join(CourseModel, CourseModel.id == LearningProgressModel.course_id)
             )
         ).one()
         metrics.total_enrollments = int(enrollment_row[0] or 0)
@@ -238,13 +259,30 @@ class AdminDashboardRepository(IAdminDashboardRepository):
     # ------------------------------------------------------------------
 
     async def list_course_metrics(
-        self, page: int, page_size: int
+        self,
+        page: int,
+        page_size: int,
+        search_query: str = "",
+        status: str | None = None,
     ) -> AdminCourseMetricsPage:
         """Return one page of per-course metrics, highest revenue first.
 
-        ``page`` is 1-based and both arguments are expected to be validated by the
-        caller (see ``AdminDashboardUseCase``).
+        ``page`` is 1-based and the arguments are expected to be validated by the
+        caller (see ``AdminDashboardUseCase``). ``search_query`` matches the course
+        title or partner name; ``status`` is a ``CourseStatus`` value or ``None``.
         """
+        filters: list[Any] = []
+        if search_query:
+            pattern = _contains_pattern(search_query)
+            filters.append(
+                or_(
+                    CourseModel.title.ilike(pattern, escape="\\"),
+                    CourseModel.partner_name.ilike(pattern, escape="\\"),
+                )
+            )
+        if status is not None:
+            filters.append(CourseModel.status == CourseStatus(status))
+
         enrollment_sq = (
             select(
                 LearningProgressModel.course_id.label("course_id"),
@@ -270,7 +308,7 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         )
         revenue_expr = func.coalesce(revenue_sq.c.revenue, 0.0)
         enrolled_expr = func.coalesce(enrollment_sq.c.enrolled, 0)
-        stmt = (
+        stmt = _scope_courses(
             select(
                 CourseModel.id,
                 CourseModel.title,
@@ -284,6 +322,7 @@ class AdminDashboardRepository(IAdminDashboardRepository):
             )
             .outerjoin(enrollment_sq, CourseModel.id == enrollment_sq.c.course_id)
             .outerjoin(revenue_sq, CourseModel.id == revenue_sq.c.course_id)
+            .where(*filters)
             # CourseModel.id is the final tie-breaker so pages never overlap.
             .order_by(
                 revenue_expr.desc(),
@@ -295,7 +334,11 @@ class AdminDashboardRepository(IAdminDashboardRepository):
             .offset((page - 1) * page_size)
         )
         rows = (await self._session.execute(stmt)).all()
-        total_count = await self._count(select(func.count()).select_from(CourseModel))
+        total_count = await self._count(
+            _scope_courses(
+                select(func.count()).select_from(CourseModel).where(*filters)
+            )
+        )
         return AdminCourseMetricsPage(
             courses=[
                 AdminCourseQualityMetric(
@@ -331,8 +374,20 @@ class AdminDashboardRepository(IAdminDashboardRepository):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _low_review_filter() -> Any:
-        return CourseReviewModel.rating_stars <= ADMIN_DASHBOARD_LOW_RATING_MAX_STARS
+    def _open_low_review_filters() -> tuple[Any, ...]:
+        """Low-rating reviews an admin still has to look at.
+
+        An acknowledged review stays hidden until its author edits it again (an edit
+        refreshes ``created_at`` so it postdates ``acknowledged_at``).
+        """
+        return (
+            CourseReviewModel.rating_stars <= ADMIN_DASHBOARD_LOW_RATING_MAX_STARS,
+            or_(
+                LowReviewAcknowledgementModel.review_id.is_(None),
+                CourseReviewModel.created_at
+                > LowReviewAcknowledgementModel.acknowledged_at,
+            ),
+        )
 
     @staticmethod
     def _pending_appeal_filter() -> Any:
@@ -347,10 +402,14 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         )
 
     async def _get_low_reviews(self) -> list[AdminLowReviewAlert]:
-        stmt = (
+        stmt = _scope_courses(
             select(CourseReviewModel, CourseModel.title)
             .join(CourseModel, CourseModel.id == CourseReviewModel.course_id)
-            .where(self._low_review_filter())
+            .outerjoin(
+                LowReviewAcknowledgementModel,
+                LowReviewAcknowledgementModel.review_id == CourseReviewModel.id,
+            )
+            .where(*self._open_low_review_filters())
             .order_by(CourseReviewModel.created_at.desc())
             .limit(ADMIN_DASHBOARD_ALERT_LIMIT)
         )
@@ -358,6 +417,7 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         return [
             AdminLowReviewAlert(
                 review_id=review.id,
+                course_id=review.course_id,
                 course_title=course_title,
                 user_name=review.user_name,
                 rating_stars=review.rating_stars,
@@ -369,10 +429,47 @@ class AdminDashboardRepository(IAdminDashboardRepository):
 
     async def _count_low_reviews(self) -> int:
         return await self._count(
-            select(func.count())
-            .select_from(CourseReviewModel)
-            .where(self._low_review_filter())
+            _scope_courses(
+                select(func.count())
+                .select_from(CourseReviewModel)
+                .join(CourseModel, CourseModel.id == CourseReviewModel.course_id)
+                .outerjoin(
+                    LowReviewAcknowledgementModel,
+                    LowReviewAcknowledgementModel.review_id == CourseReviewModel.id,
+                )
+                .where(*self._open_low_review_filters())
+            )
         )
+
+    async def acknowledge_low_review(self, review_id: str, admin_id: str) -> bool:
+        """Mark a review as looked at. Returns ``False`` when the review is unknown.
+
+        Idempotent: acknowledging again only refreshes who did it and when.
+        """
+        exists = await self._count(
+            _scope_courses(
+                select(func.count())
+                .select_from(CourseReviewModel)
+                .join(CourseModel, CourseModel.id == CourseReviewModel.course_id)
+                .where(CourseReviewModel.id == review_id)
+            )
+        )
+        if not exists:
+            return False
+        acknowledged_at = datetime.now(UTC).isoformat()
+        await self._session.execute(
+            pg_insert(LowReviewAcknowledgementModel)
+            .values(
+                review_id=review_id,
+                acknowledged_by=admin_id,
+                acknowledged_at=acknowledged_at,
+            )
+            .on_conflict_do_update(
+                index_elements=[LowReviewAcknowledgementModel.review_id],
+                set_={"acknowledged_by": admin_id, "acknowledged_at": acknowledged_at},
+            )
+        )
+        return True
 
     async def _get_assessment_alerts(self) -> list[AdminAssessmentAlert]:
         appeal_stmt = (
@@ -462,24 +559,44 @@ class AdminDashboardRepository(IAdminDashboardRepository):
     # ------------------------------------------------------------------
 
     async def list_certificates(
-        self, page: int, page_size: int
+        self,
+        page: int,
+        page_size: int,
+        search_query: str = "",
+        is_revoked: bool | None = None,
     ) -> AdminCertificatesPage:
         """Return one page of certificates: valid ones first, then revoked.
 
-        ``page`` is 1-based and both arguments are expected to be validated by the
-        caller (see ``AdminDashboardUseCase``). Certificates have no reliable sortable
-        issue timestamp (``issue_date`` is free text), so ``certificate_id`` gives a
-        stable order.
+        ``page`` is 1-based and the arguments are expected to be validated by the
+        caller (see ``AdminDashboardUseCase``). ``search_query`` matches the
+        certificate id, learner name or course title; ``is_revoked`` keeps only
+        revoked (``True``) or valid (``False``) certificates. Certificates have no
+        reliable sortable issue timestamp (``issue_date`` is free text), so
+        ``certificate_id`` gives a stable order.
         """
+        filters: list[Any] = []
+        if search_query:
+            pattern = _contains_pattern(search_query)
+            filters.append(
+                or_(
+                    CertificateModel.certificate_id.ilike(pattern, escape="\\"),
+                    CertificateModel.learner_name.ilike(pattern, escape="\\"),
+                    CertificateModel.course_title.ilike(pattern, escape="\\"),
+                )
+            )
+        if is_revoked is not None:
+            filters.append(CertificateModel.is_revoked.is_(is_revoked))
+
         stmt = (
             select(CertificateModel)
+            .where(*filters)
             .order_by(CertificateModel.is_revoked, CertificateModel.certificate_id)
             .limit(page_size)
             .offset((page - 1) * page_size)
         )
         certificates = (await self._session.execute(stmt)).scalars().all()
         total_count = await self._count(
-            select(func.count()).select_from(CertificateModel)
+            select(func.count()).select_from(CertificateModel).where(*filters)
         )
         return AdminCertificatesPage(
             certificates=[

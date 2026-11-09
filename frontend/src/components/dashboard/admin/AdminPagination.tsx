@@ -1,34 +1,34 @@
 "use client";
 
+import type { Table as TanstackTable } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { buildPageWindow, formatNumber } from "./formatters";
 
-interface AdminPaginationProps {
-  /** 1-based current page. */
-  page: number;
-  totalPages: number;
-  totalCount: number;
-  pageSize: number;
+interface AdminPaginationProps<TData> {
+  /** TanStack Table instance configured with `manualPagination` and `rowCount`. */
+  table: TanstackTable<TData>;
   /** Plural noun for the paged items, e.g. "khóa học". */
   itemLabel: string;
   /** Accessible name of the navigation landmark. */
   ariaLabel: string;
-  onPageChange: (page: number) => void;
 }
 
 /** Numbered pager (prev / 1 … n / next) with a "showing X–Y of Z" summary. */
-export function AdminPagination({
-  page,
-  totalPages,
-  totalCount,
-  pageSize,
+export function AdminPagination<TData>({
+  table,
   itemLabel,
   ariaLabel,
-  onPageChange,
-}: AdminPaginationProps) {
-  const firstItem = (page - 1) * pageSize + 1;
+}: AdminPaginationProps<TData>) {
+  // The TanStack `table` instance keeps the same identity while its state changes, so a
+  // compiler-memoized child would keep showing the previous page.
+  "use no memo";
+
+  const { pageIndex, pageSize } = table.getState().pagination;
+  const page = pageIndex + 1;
+  const totalCount = table.getRowCount();
+  const firstItem = pageIndex * pageSize + 1;
   const lastItem = Math.min(page * pageSize, totalCount);
 
   return (
@@ -44,12 +44,12 @@ export function AdminPagination({
         <IconButton
           size="xs"
           aria-label="Trang trước"
-          disabled={page <= 1}
-          onClick={() => onPageChange(page - 1)}
+          disabled={!table.getCanPreviousPage()}
+          onClick={() => table.previousPage()}
         >
           <ChevronLeft aria-hidden="true" />
         </IconButton>
-        {buildPageWindow(page, totalPages).map((item) =>
+        {buildPageWindow(page, table.getPageCount()).map((item) =>
           typeof item === "number" ? (
             <Button
               key={item}
@@ -57,7 +57,7 @@ export function AdminPagination({
               variant={item === page ? "tonal" : "text"}
               aria-label={`Trang ${item}`}
               aria-current={item === page ? "page" : undefined}
-              onClick={() => onPageChange(item)}
+              onClick={() => table.setPageIndex(item - 1)}
               className="min-w-8 px-2 font-mono"
             >
               {item}
@@ -71,8 +71,8 @@ export function AdminPagination({
         <IconButton
           size="xs"
           aria-label="Trang sau"
-          disabled={page >= totalPages}
-          onClick={() => onPageChange(page + 1)}
+          disabled={!table.getCanNextPage()}
+          onClick={() => table.nextPage()}
         >
           <ChevronRight aria-hidden="true" />
         </IconButton>

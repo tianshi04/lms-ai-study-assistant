@@ -31,6 +31,7 @@ from src.modules.identity.infrastructure.admin_dashboard_repository import (
 )
 from src.modules.identity.infrastructure.models import (
     InstructorApplicationModel,
+    LowReviewAcknowledgementModel,
     UserModel,
 )
 from src.modules.learning.infrastructure.models import LearningProgressModel
@@ -39,9 +40,19 @@ from src.modules.payment.infrastructure.models import (
     PaymentOrderModel,
     UserSubscriptionModel,
 )
+from src.shared.auth import CurrentUser, set_current_user
 from src.shared.infrastructure import database
 
 FUTURE_TS = "9999-12-31T00:00:00+00:00"
+PAST_TS = "2000-01-01T00:00:00+00:00"
+
+
+@pytest.fixture(autouse=True)
+def _admin_context():
+    """The repository pushes the caller's organization scope down to course queries."""
+    set_current_user(CurrentUser(id="dash-admin", role="USER_ROLE_ADMIN"))
+    yield
+    set_current_user(None)
 
 
 def _uid(prefix: str) -> str:
@@ -467,6 +478,7 @@ async def test_dashboard_stats_reflect_seeded_rows():
 
     low = next(r for r in after.low_reviews if r.review_id == review_id)
     assert low.rating_stars == 1
+    assert low.course_id == course_id
     assert low.course_title == "Dash Course"
 
     kinds = {
@@ -490,3 +502,253 @@ async def test_dashboard_stats_reflect_seeded_rows():
     assert after.low_review_total == before.low_review_total + 1
     # One reported peer review (appeal) + one outlier; the resolved appeal is excluded.
     assert after.assessment_alert_total == before.assessment_alert_total + 2
+
+
+# ---------------------------------------------------------------------------
+# Low-review acknowledgement, search / status filters, organization scope
+# ---------------------------------------------------------------------------
+
+
+def _course(course_id: str, title: str, **fields) -> CourseModel:
+    return CourseModel(
+        id=course_id,
+        title=title,
+        slug=course_id,
+        status=fields.pop("status", CourseStatus.PUBLISHED),
+        **fields,
+    )
+
+
+def _user(user_id: str, role: UserRole = UserRole.LEARNER) -> UserModel:
+    return UserModel(
+        id=user_id,
+        email=f"{user_id}@example.com",
+        full_name=f"User {user_id}",
+        role=role,
+        password_hash="x",
+    )
+
+
+@pytest.mark.asyncio
+async def test_acknowledged_low_review_leaves_alerts_until_it_is_edited():
+    async with database.async_session_scope() as session:
+        repo = AdminDashboardRepository(session)
+        before = await repo.get_dashboard_stats()
+
+        learner_id, admin_id = _uid("ack-learner"), _uid("ack-admin")
+        course_id, review_id = _uid("ack-course"), _uid("ack-review")
+        session.add_all([_user(learner_id), _user(admin_id, UserRole.ADMIN)])
+        session.add(_course(course_id, "Ack Course"))
+        await session.flush()
+        review = CourseReviewModel(
+            id=review_id,
+            user_id=learner_id,
+            user_name="Ack Learner",
+            course_id=course_id,
+            rating_stars=1,
+            comment_text="Tệ",
+            created_at=PAST_TS,
+        )
+        session.add(review)
+        await session.flush()
+
+        opened = await repo.get_dashboard_stats()
+
+        assert await repo.acknowledge_low_review(review_id, admin_id) is True
+        acknowledged = await repo.get_dashboard_stats()
+        ack_row = await session.get(LowReviewAcknowledgementModel, review_id)
+
+        # Acknowledging again is idempotent (no duplicate row, still hidden).
+        assert await repo.acknowledge_low_review(review_id, admin_id) is True
+        acknowledged_again = await repo.get_dashboard_stats()
+
+        # The author edits the review afterwards: it must come back.
+        review.created_at = FUTURE_TS
+        await session.flush()
+        reopened = await repo.get_dashboard_stats()
+
+        unknown = await repo.acknowledge_low_review("no-such-review", admin_id)
+
+    assert opened.low_review_total == before.low_review_total + 1
+    assert acknowledged.low_review_total == before.low_review_total
+    assert acknowledged_again.low_review_total == before.low_review_total
+    assert reopened.low_review_total == before.low_review_total + 1
+    assert review_id not in {r.review_id for r in acknowledged.low_reviews}
+    assert review_id in {r.review_id for r in reopened.low_reviews}
+    assert ack_row is not None
+    assert ack_row.acknowledged_by == admin_id
+    assert unknown is False
+
+
+@pytest.mark.asyncio
+async def test_course_metrics_search_and_status_filters():
+    token = uuid.uuid4().hex[:10]
+    async with database.async_session_scope() as session:
+        repo = AdminDashboardRepository(session)
+        published = _uid("flt-pub")
+        draft = _uid("flt-draft")
+        by_partner = _uid("flt-partner")
+        unrelated = _uid("flt-other")
+        session.add_all(
+            [
+                _course(published, f"Zeta {token} Basics"),
+                _course(draft, f"Draft {token}", status=CourseStatus.DRAFT),
+                _course(by_partner, "Plain title", partner_name=f"Partner {token}"),
+                _course(unrelated, "Totally unrelated"),
+            ]
+        )
+        await session.flush()
+
+        everything = await repo.list_course_metrics(1, 50, token)
+        upper = await repo.list_course_metrics(1, 50, token.upper())
+        only_published = await repo.list_course_metrics(1, 50, token, "PUBLISHED")
+        only_draft = await repo.list_course_metrics(1, 50, token, "DRAFT")
+        no_match = await repo.list_course_metrics(1, 50, f"nope-{token}")
+        paged = await repo.list_course_metrics(2, 1, token)
+
+    ids = {c.course_id for c in everything.courses}
+    assert ids == {published, draft, by_partner}
+    assert everything.total_count == 3
+    assert {c.course_id for c in upper.courses} == ids  # case-insensitive
+    assert {c.course_id for c in only_published.courses} == {published, by_partner}
+    assert only_published.total_count == 2
+    assert [c.course_id for c in only_draft.courses] == [draft]
+    assert no_match.courses == []
+    assert no_match.total_count == 0
+    # total_count reflects the filtered set while paging still works on it.
+    assert paged.total_count == 3
+    assert len(paged.courses) == 1
+
+
+@pytest.mark.asyncio
+async def test_search_treats_like_wildcards_literally():
+    token = uuid.uuid4().hex[:10]
+    async with database.async_session_scope() as session:
+        repo = AdminDashboardRepository(session)
+        percent, underscore, lookalike = (
+            _uid("wild-pct"),
+            _uid("wild-us"),
+            _uid("wild-x"),
+        )
+        session.add_all(
+            [
+                _course(percent, f"Save 100%{token}"),
+                _course(underscore, f"snake_case{token}"),
+                _course(lookalike, f"snakeXcase{token}"),
+            ]
+        )
+        await session.flush()
+
+        pct = await repo.list_course_metrics(1, 50, f"100%{token}")
+        under = await repo.list_course_metrics(1, 50, f"snake_case{token}")
+        lone_percent = await repo.list_course_metrics(1, 50, f"%{token}")
+
+    assert [c.course_id for c in pct.courses] == [percent]
+    # An unescaped "_" would also match "snakeXcase...".
+    assert [c.course_id for c in under.courses] == [underscore]
+    # "%" must not act as a wildcard: no title has a literal "%<token>" except one.
+    assert [c.course_id for c in lone_percent.courses] == [percent]
+
+
+@pytest.mark.asyncio
+async def test_certificate_search_and_status_filters():
+    token = uuid.uuid4().hex[:8].upper()
+    async with database.async_session_scope() as session:
+        repo = AdminDashboardRepository(session)
+        learner_id = _uid("cflt-learner")
+        session.add(_user(learner_id))
+        course_ids = [_uid("cflt-course") for _ in range(3)]
+        session.add_all([_course(cid, f"Cert course {cid}") for cid in course_ids])
+        await session.flush()
+
+        by_id, by_learner, by_course = (f"CERT-{token}-{n}" for n in "ABC")
+        session.add_all(
+            [
+                CertificateModel(
+                    certificate_id=by_id,
+                    user_id=learner_id,
+                    course_id=course_ids[0],
+                    learner_name="Someone",
+                    course_title="Plain A",
+                    partner_name="P",
+                    issue_date="22/07/2026",
+                    verification_url=f"/verify/{by_id}",
+                ),
+                CertificateModel(
+                    certificate_id=by_learner,
+                    user_id=learner_id,
+                    course_id=course_ids[1],
+                    learner_name=f"Nguyen {token}",
+                    course_title="Plain B",
+                    partner_name="P",
+                    issue_date="22/07/2026",
+                    verification_url=f"/verify/{by_learner}",
+                    is_revoked=True,
+                    revoked_reason="fraud",
+                ),
+                CertificateModel(
+                    certificate_id=by_course,
+                    user_id=learner_id,
+                    course_id=course_ids[2],
+                    learner_name="Other",
+                    course_title=f"Deep {token} Learning",
+                    partner_name="P",
+                    issue_date="22/07/2026",
+                    verification_url=f"/verify/{by_course}",
+                ),
+            ]
+        )
+        await session.flush()
+
+        matches = await repo.list_certificates(1, 50, token.lower())
+        valid_only = await repo.list_certificates(1, 50, token, False)
+        revoked_only = await repo.list_certificates(1, 50, token, True)
+        by_id_fragment = await repo.list_certificates(1, 50, f"cert-{token}-b")
+        no_match = await repo.list_certificates(1, 50, f"zzz{token}")
+
+    assert {c.certificate_id for c in matches.certificates} == {
+        by_id,
+        by_learner,
+        by_course,
+    }
+    assert matches.total_count == 3
+    assert {c.certificate_id for c in valid_only.certificates} == {by_id, by_course}
+    assert [c.certificate_id for c in revoked_only.certificates] == [by_learner]
+    assert revoked_only.total_count == 1
+    assert [c.certificate_id for c in by_id_fragment.certificates] == [by_learner]
+    assert no_match.certificates == []
+    assert no_match.total_count == 0
+
+
+@pytest.mark.asyncio
+async def test_course_queries_respect_organization_scope():
+    token = uuid.uuid4().hex[:10]
+    async with database.async_session_scope() as session:
+        repo = AdminDashboardRepository(session)
+        internal, foreign = _uid("org-internal"), _uid("org-foreign")
+        session.add_all(
+            [
+                _course(internal, f"Scope {token} internal"),
+                _course(
+                    foreign,
+                    f"Scope {token} foreign",
+                    organization_id=_uid("some-other-org"),
+                ),
+            ]
+        )
+        await session.flush()
+
+        as_admin = await repo.list_course_metrics(1, 50, token)
+
+        set_current_user(CurrentUser(id="plain-user", role="USER_ROLE_LEARNER"))
+        as_learner = await repo.list_course_metrics(1, 50, token)
+
+        set_current_user(None)
+        anonymous = await repo.list_course_metrics(1, 50, token)
+
+    assert {c.course_id for c in as_admin.courses} == {internal, foreign}
+    assert as_admin.total_count == 2
+    # Non-admin and anonymous callers only ever see the platform's internal org.
+    assert [c.course_id for c in as_learner.courses] == [internal]
+    assert as_learner.total_count == 1
+    assert [c.course_id for c in anonymous.courses] == [internal]

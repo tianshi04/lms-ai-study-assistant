@@ -206,18 +206,33 @@ class IdentityUseCase:
         return await self.admin_dashboard.get_dashboard_stats(current_user)
 
     async def list_admin_course_metrics(
-        self, current_user: CurrentUser, page: int = 1, page_size: int = 0
+        self,
+        current_user: CurrentUser,
+        page: int = 1,
+        page_size: int = 0,
+        search_query: str = "",
+        status: str | None = None,
     ) -> AdminCourseMetricsPage:
         return await self.admin_dashboard.list_course_metrics(
-            current_user, page, page_size
+            current_user, page, page_size, search_query, status
         )
 
     async def list_admin_certificates(
-        self, current_user: CurrentUser, page: int = 1, page_size: int = 0
+        self,
+        current_user: CurrentUser,
+        page: int = 1,
+        page_size: int = 0,
+        search_query: str = "",
+        is_revoked: bool | None = None,
     ) -> AdminCertificatesPage:
         return await self.admin_dashboard.list_certificates(
-            current_user, page, page_size
+            current_user, page, page_size, search_query, is_revoked
         )
+
+    async def acknowledge_low_review(
+        self, current_user: CurrentUser, review_id: str
+    ) -> None:
+        await self.admin_dashboard.acknowledge_low_review(current_user, review_id)
 
     # -------------------------------------------------------------------------
     # Organization Management (OrganizationUseCase)

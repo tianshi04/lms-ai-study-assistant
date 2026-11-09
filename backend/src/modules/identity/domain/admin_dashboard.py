@@ -71,6 +71,7 @@ class AdminCourseQualityMetric:
 @dataclass
 class AdminLowReviewAlert:
     review_id: str
+    course_id: str
     course_title: str
     user_name: str
     rating_stars: int

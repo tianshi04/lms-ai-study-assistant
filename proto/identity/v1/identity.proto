@@ -399,6 +399,7 @@ message AdminLowReviewAlert {
   int32 rating_stars = 4;
   string comment_text = 5;
   string created_at = 6;
+  string course_id = 7;
 }
 
 enum AdminAssessmentAlertKind {
@@ -443,11 +444,29 @@ message GetAdminDashboardStatsResponse {
   int32 assessment_alert_total = 5;
 }
 
+enum AdminCourseStatusFilter {
+  ADMIN_COURSE_STATUS_FILTER_UNSPECIFIED = 0;
+  ADMIN_COURSE_STATUS_FILTER_DRAFT = 1;
+  ADMIN_COURSE_STATUS_FILTER_PENDING_REVIEW = 2;
+  ADMIN_COURSE_STATUS_FILTER_PUBLISHED = 3;
+  ADMIN_COURSE_STATUS_FILTER_REJECTED = 4;
+}
+
+enum AdminCertificateStatusFilter {
+  ADMIN_CERTIFICATE_STATUS_FILTER_UNSPECIFIED = 0;
+  ADMIN_CERTIFICATE_STATUS_FILTER_VALID = 1;
+  ADMIN_CERTIFICATE_STATUS_FILTER_REVOKED = 2;
+}
+
 message ListAdminCourseMetricsRequest {
   // 1-based page number. Values below 1 are treated as the first page.
   int32 page = 1;
   // Rows per page. Defaults to 10 when unset and is capped at 50.
   int32 page_size = 2;
+  // Case-insensitive match on course title or partner name. Empty means no search.
+  string search_query = 3;
+  // Restricts the list to one lifecycle status. UNSPECIFIED means all statuses.
+  AdminCourseStatusFilter status = 4;
 }
 
 message ListAdminCourseMetricsResponse {
@@ -465,6 +484,11 @@ message ListAdminCertificatesRequest {
   int32 page = 1;
   // Rows per page. Defaults to 10 when unset and is capped at 50.
   int32 page_size = 2;
+  // Case-insensitive match on certificate id, learner name or course title.
+  // Empty means no search.
+  string search_query = 3;
+  // Restricts the list to valid or revoked certificates. UNSPECIFIED means both.
+  AdminCertificateStatusFilter status = 4;
 }
 
 message ListAdminCertificatesResponse {
@@ -475,6 +499,15 @@ message ListAdminCertificatesResponse {
   // Effective page number and page size applied by the server.
   int32 page = 3;
   int32 page_size = 4;
+}
+
+message AcknowledgeLowReviewRequest {
+  string review_id = 1;
+}
+
+message AcknowledgeLowReviewResponse {
+  bool success = 1;
+  string message = 2;
 }
 
 service IdentityService {
@@ -542,6 +575,9 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListAdminCertificates(ListAdminCertificatesRequest) returns (ListAdminCertificatesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc AcknowledgeLowReview(AcknowledgeLowReviewRequest) returns (AcknowledgeLowReviewResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc AddOrganizationMember(AddOrganizationMemberRequest) returns (AddOrganizationMemberResponse) {

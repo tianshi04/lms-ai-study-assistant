@@ -104,7 +104,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
           <QuickAction
             href="/instructor/financial-aid"
             icon={CircleDollarSign}
-            iconClassName="bg-tertiary-container text-on-tertiary-container"
+            iconClassName="bg-primary/10 text-primary"
             title="Duyệt Hỗ Trợ Tài Chính"
             description="Xét duyệt đơn xin học bổng của học viên"
             count={overview?.pendingFinancialAids}

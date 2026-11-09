@@ -5,6 +5,7 @@ from typing import Any
 from src.modules.identity.domain import (
     ADMIN_DASHBOARD_PAGE_SIZE_DEFAULT,
     ADMIN_DASHBOARD_PAGE_SIZE_MAX,
+    ADMIN_DASHBOARD_SEARCH_MAX_LENGTH,
     AdminCertificatesPage,
     AdminCourseMetricsPage,
     AdminDashboardStats,
@@ -43,6 +44,11 @@ def _normalize_paging(page: int, page_size: int) -> tuple[int, int]:
     return effective_page, effective_page_size
 
 
+def _normalize_search(search_query: str) -> str:
+    """Trim a client-supplied search term and cap its length."""
+    return search_query.strip()[:ADMIN_DASHBOARD_SEARCH_MAX_LENGTH]
+
+
 class AdminDashboardUseCase:
     """Platform-wide statistics for the Super Admin dashboard."""
 
@@ -65,21 +71,65 @@ class AdminDashboardUseCase:
             return await repo.get_dashboard_stats()
 
     async def list_course_metrics(
-        self, current_user: CurrentUser, page: int = 1, page_size: int = 0
+        self,
+        current_user: CurrentUser,
+        page: int = 1,
+        page_size: int = 0,
+        search_query: str = "",
+        status: str | None = None,
     ) -> AdminCourseMetricsPage:
-        """Return one page of per-course metrics, highest revenue first."""
+        """Return one page of per-course metrics, highest revenue first.
+
+        ``status`` is an optional course lifecycle status (``None`` means all).
+        """
         self._require_admin(current_user)
         effective_page, effective_page_size = _normalize_paging(page, page_size)
         async with database.async_session_scope() as session:
             repo = self.repo_factory(session)
-            return await repo.list_course_metrics(effective_page, effective_page_size)
+            return await repo.list_course_metrics(
+                effective_page,
+                effective_page_size,
+                _normalize_search(search_query),
+                status,
+            )
 
     async def list_certificates(
-        self, current_user: CurrentUser, page: int = 1, page_size: int = 0
+        self,
+        current_user: CurrentUser,
+        page: int = 1,
+        page_size: int = 0,
+        search_query: str = "",
+        is_revoked: bool | None = None,
     ) -> AdminCertificatesPage:
-        """Return one page of certificates (valid first, then revoked)."""
+        """Return one page of certificates (valid first, then revoked).
+
+        ``is_revoked`` keeps only revoked (``True``) or valid (``False``)
+        certificates; ``None`` returns both.
+        """
         self._require_admin(current_user)
         effective_page, effective_page_size = _normalize_paging(page, page_size)
         async with database.async_session_scope() as session:
             repo = self.repo_factory(session)
-            return await repo.list_certificates(effective_page, effective_page_size)
+            return await repo.list_certificates(
+                effective_page,
+                effective_page_size,
+                _normalize_search(search_query),
+                is_revoked,
+            )
+
+    async def acknowledge_low_review(
+        self, current_user: CurrentUser, review_id: str
+    ) -> None:
+        """Mark a low-rating review as looked at so it leaves the alert list.
+
+        The review comes back to the list if its author edits it afterwards.
+        """
+        self._require_admin(current_user)
+        clean_review_id = review_id.strip()
+        if not clean_review_id:
+            raise ValueError("Thiếu mã đánh giá cần xác nhận.")
+        async with database.async_session_scope() as session:
+            repo = self.repo_factory(session)
+            found = await repo.acknowledge_low_review(clean_review_id, current_user.id)
+        if not found:
+            raise ValueError("Không tìm thấy đánh giá cần xác nhận.")

@@ -6,6 +6,7 @@ from connectrpc.request import RequestContext
 
 from src.gen.identity.v1 import identity_pb as pb
 from src.gen.identity.v1.identity_connect import IdentityService
+from src.modules.catalog.domain import CourseStatus
 from src.modules.identity.application import IdentityUseCase
 from src.modules.identity.domain import (
     AdminAssessmentAlertKind,
@@ -97,6 +98,29 @@ _ASSESSMENT_ALERT_KIND_TO_PB = {
     ),
 }
 
+# UNSPECIFIED means "no filter" (None).
+_COURSE_STATUS_FILTER_TO_VALUE: dict[Any, str | None] = {
+    pb.AdminCourseStatusFilter.UNSPECIFIED: None,
+    pb.AdminCourseStatusFilter.DRAFT: CourseStatus.DRAFT.value,
+    pb.AdminCourseStatusFilter.PENDING_REVIEW: CourseStatus.PENDING_REVIEW.value,
+    pb.AdminCourseStatusFilter.PUBLISHED: CourseStatus.PUBLISHED.value,
+    pb.AdminCourseStatusFilter.REJECTED: CourseStatus.REJECTED.value,
+}
+
+_CERTIFICATE_STATUS_FILTER_TO_IS_REVOKED: dict[Any, bool | None] = {
+    pb.AdminCertificateStatusFilter.UNSPECIFIED: None,
+    pb.AdminCertificateStatusFilter.VALID: False,
+    pb.AdminCertificateStatusFilter.REVOKED: True,
+}
+
+
+def _resolve_filter[T](mapping: dict[Any, T], value: Any) -> T:
+    """Translate a protobuf filter enum, rejecting values this server does not know."""
+    try:
+        return mapping[value]
+    except KeyError:
+        raise ConnectError(Code.INVALID_ARGUMENT, "Bộ lọc không hợp lệ.") from None
+
 
 def _to_pb_admin_course_metrics_page(
     result: AdminCourseMetricsPage,
@@ -179,6 +203,7 @@ def _to_pb_admin_dashboard_stats(
         low_reviews=[
             pb.AdminLowReviewAlert(
                 review_id=r.review_id,
+                course_id=r.course_id,
                 course_title=r.course_title,
                 user_name=r.user_name,
                 rating_stars=r.rating_stars,
@@ -642,11 +667,14 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ListAdminCourseMetricsResponse:
         current_user = require_current_user()
+        status = _resolve_filter(_COURSE_STATUS_FILTER_TO_VALUE, request.status)
         try:
             result = await self._use_case.list_admin_course_metrics(
                 current_user=current_user,
                 page=request.page,
                 page_size=request.page_size,
+                search_query=request.search_query,
+                status=status,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
@@ -661,15 +689,41 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ListAdminCertificatesResponse:
         current_user = require_current_user()
+        is_revoked = _resolve_filter(
+            _CERTIFICATE_STATUS_FILTER_TO_IS_REVOKED, request.status
+        )
         try:
             result = await self._use_case.list_admin_certificates(
                 current_user=current_user,
                 page=request.page,
                 page_size=request.page_size,
+                search_query=request.search_query,
+                is_revoked=is_revoked,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         return _to_pb_admin_certificates_page(result)
+
+    async def acknowledge_low_review(
+        self,
+        request: pb.AcknowledgeLowReviewRequest,
+        ctx: RequestContext[
+            pb.AcknowledgeLowReviewRequest,
+            pb.AcknowledgeLowReviewResponse,
+        ],
+    ) -> pb.AcknowledgeLowReviewResponse:
+        current_user = require_current_user()
+        try:
+            await self._use_case.acknowledge_low_review(
+                current_user=current_user, review_id=request.review_id
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+        return pb.AcknowledgeLowReviewResponse(
+            success=True, message="Đã đánh dấu đánh giá là đã xem xét."
+        )
 
     async def add_organization_member(
         self,
