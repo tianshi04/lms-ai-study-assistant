@@ -275,7 +275,9 @@ export function InstructorActionTasksCard({
             <>
               <AlertTriangle className="w-2.5 h-2.5" />
               <span>
-                {displayTotalCount} việc chờ • {totalOverdueCount} quá hạn SLA
+                {totalOverdueCount >= displayTotalCount
+                  ? `${displayTotalCount} việc quá hạn`
+                  : `${displayTotalCount} việc chờ (${totalOverdueCount} quá hạn)`}
               </span>
             </>
           ) : displayTotalCount > 0 ? (
@@ -289,7 +291,7 @@ export function InstructorActionTasksCard({
       {/* Chú thích giới hạn hiển thị nếu có nhiều việc tồn đọng */}
       {overviewTasks.length > 0 && displayTotalCount > overviewTasks.length && (
         <div className="flex items-center justify-between text-[11px] text-muted-foreground px-0.5">
-          <span>Ưu tiên {overviewTasks.length} việc khẩn cấp theo SLA:</span>
+          <span>Ưu tiên {overviewTasks.length} việc cần xử lý trước:</span>
           <span className="font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded">
             Còn {displayTotalCount - overviewTasks.length} việc khác
           </span>
