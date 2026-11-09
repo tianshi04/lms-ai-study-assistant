@@ -82,7 +82,7 @@ export const MOCK_OVERVIEW_DATA: OverviewData = {
       courseTitle: "Kinh tế lượng Ứng dụng & Phân tích Dữ liệu",
       timeAgo: "5 giờ trước",
       actionText: "Trả lời ngay",
-      actionUrl: "/forum",
+      actionUrl: "/instructor/courses/course-applied-econometrics/discussions",
     },
     {
       id: "task-4",
@@ -93,7 +93,7 @@ export const MOCK_OVERVIEW_DATA: OverviewData = {
       courseTitle: "Kinh tế học Vi mô Căn bản",
       timeAgo: "6 giờ trước",
       actionText: "Trả lời ngay",
-      actionUrl: "/forum",
+      actionUrl: "/instructor/courses/course-microeconomics-foundations/discussions",
     },
   ],
   recentReviews: [
