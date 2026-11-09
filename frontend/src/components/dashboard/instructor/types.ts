@@ -40,6 +40,7 @@ export interface OverviewReview {
   userName: string;
   rating: number;
   courseTitle: string;
+  courseId?: string;
   comment: string;
   timeAgo: string;
 }

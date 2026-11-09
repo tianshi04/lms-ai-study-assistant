@@ -365,6 +365,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           userName: r.userName || "Học viên",
           rating: r.ratingStars || 5,
           courseTitle: c.title,
+          courseId: c.id,
           comment: r.commentText || "Khóa học rất hay và bổ ích!",
           timeAgo: r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN") : "Gần đây",
         });
