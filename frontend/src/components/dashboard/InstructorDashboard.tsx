@@ -99,7 +99,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   const [selectedStudentForDetail, setSelectedStudentForDetail] =
     useState<StudentDetailRecord | null>(null);
   const [isStudentDetailModalOpen, setIsStudentDetailModalOpen] = useState(false);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   // Sắp xếp của Sơ đồ So sánh tỷ lệ hoàn thành theo môn
   const [compareSortBy, setCompareSortBy] = useState<"rate" | "students" | "rating">("rate");
@@ -636,8 +635,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         if (!matchName && !matchEmail && !matchId) return false;
       }
 
-      if (selectedStudentId && st.userId !== selectedStudentId) return false;
-
       // Lọc theo nhịp độ học tập (Pacing)
       if (studentPacingFilter === "AHEAD" && st.pace !== "AHEAD") return false;
       if (studentPacingFilter === "ON_TRACK" && st.pace !== "ON_TRACK") return false;
@@ -673,7 +670,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     studentPacingFilter,
     studentStatusFilter,
     selectedWeekFilter,
-    selectedStudentId,
     activeCourse,
   ]);
 
@@ -1246,138 +1242,70 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     </button>
                   </div>
 
-                  {/* Hàng 2: Thanh điều khiển: Tìm kiếm sinh viên & Lọc thời gian / Nhóm */}
+                  {/* Hàng 2: Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                    {/* 1. Ô tìm kiếm sinh viên trong lớp học trực diện */}
-                    <div className="relative min-w-[170px] max-w-[220px]">
-                      <Search
-                        className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                        aria-hidden="true"
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Tìm học viên trong lớp…"
-                        value={studentSearchQuery}
-                        onChange={(e) => {
-                          setStudentSearchQuery(e.target.value);
-                          if (selectedStudentId) setSelectedStudentId(null);
-                        }}
-                        className="w-full pl-8 pr-7 py-1 text-[11px] rounded-lg bg-surface border-outline-variant focus:ring-1 focus:ring-primary"
-                        aria-label="Tìm kiếm sinh viên trong khóa học"
-                      />
-                      {studentSearchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setStudentSearchQuery("")}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer text-xs p-0.5"
-                          aria-label="Xóa tìm kiếm"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                      <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                      <span>Bộ lọc hiển thị:</span>
                     </div>
 
-                    {/* 2. Bộ chọn khoảng thời gian (Khi ở Tab Biểu đồ) */}
-                    {chartTab === "bar" && (
-                      <>
-                        <select
-                          value={chartDateRange}
-                          onChange={(e) => setChartDateRange(e.target.value)}
-                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                          aria-label="Chọn khoảng thời gian biểu đồ"
-                        >
-                          <option value="today">Hôm nay (24h)</option>
-                          <option value="this_week">Tuần này (T2 - CN)</option>
-                          <option value="7d">7 ngày qua (Mặc định)</option>
-                          <option value="last_week">Tuần trước</option>
-                          <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
-                          <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
-                          <option value="custom">Tùy chọn khoảng ngày...</option>
-                        </select>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Bộ chọn khoảng thời gian (Khi ở Tab Biểu đồ) */}
+                      {chartTab === "bar" && (
+                        <>
+                          <select
+                            value={chartDateRange}
+                            onChange={(e) => setChartDateRange(e.target.value)}
+                            className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                            aria-label="Chọn khoảng thời gian biểu đồ"
+                          >
+                            <option value="today">Hôm nay (24h)</option>
+                            <option value="this_week">Tuần này (T2 - CN)</option>
+                            <option value="7d">7 ngày qua (Mặc định)</option>
+                            <option value="last_week">Tuần trước</option>
+                            <option value="this_month">
+                              Tháng này (Tháng {currentMonthNumber})
+                            </option>
+                            <option value="last_month">
+                              Tháng trước (Tháng {lastMonthNumber})
+                            </option>
+                            <option value="custom">Tùy chọn khoảng ngày...</option>
+                          </select>
 
-                        {chartDateRange === "custom" && (
-                          <InstructorDateRangeForm
-                            startDate={customStartDate}
-                            endDate={customEndDate}
-                            onChange={(s, e) => {
-                              setCustomStartDate(s);
-                              setCustomEndDate(e);
-                            }}
-                          />
-                        )}
-                      </>
-                    )}
+                          {chartDateRange === "custom" && (
+                            <InstructorDateRangeForm
+                              startDate={customStartDate}
+                              endDate={customEndDate}
+                              onChange={(s, e) => {
+                                setCustomStartDate(s);
+                                setCustomEndDate(e);
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
 
-                    {/* 3. Dropdown Học viên thông minh: Chọn nhóm hoặc chọn đích danh sinh viên trong lớp */}
-                    <select
-                      value={
-                        selectedStudentId ? `student-${selectedStudentId}` : chartLearnerFilter
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.startsWith("student-")) {
-                          const sId = val.replace("student-", "");
-                          setSelectedStudentId(sId);
-                          const found = rawStudentsWithPacing.find((s) => s.userId === sId);
-                          if (found) {
-                            const studentWeekNum =
-                              found.progressPercent >= 100
-                                ? calculatedWeeks.length || 1
-                                : Math.min(
-                                    calculatedWeeks.length || 1,
-                                    Math.floor(
-                                      (found.progressPercent / 100) * (calculatedWeeks.length || 1),
-                                    ) + 1,
-                                  );
-                            const currentWeekTitle =
-                              calculatedWeeks.find((w) => w.weekNumber === studentWeekNum)?.title ||
-                              `Tuần ${studentWeekNum}`;
-                            setSelectedStudentForDetail({
-                              userId: found.userId,
-                              userName: found.userName,
-                              userEmail: found.userEmail,
-                              progressPercent: found.progressPercent,
-                              pace: found.pace,
-                              currentWeekNumber: studentWeekNum,
-                              currentWeekTitle,
-                              currentLessonTitle:
-                                found.pace === "BEHIND"
-                                  ? "Chưa hoàn thành video và bài quiz tuần"
-                                  : "Đang xem video bài giảng",
-                              quizScore: 8.5,
-                              lastActiveTime: found.pace === "BEHIND" ? "4 ngày trước" : "Hôm nay",
-                              isCompleted: found.progressPercent >= 100,
-                            });
-                            setIsStudentDetailModalOpen(true);
-                          }
-                        } else {
-                          setSelectedStudentId(null);
-                          setChartLearnerFilter(val as "all" | "in_progress" | "completed");
+                      {/* Dropdown lọc theo nhóm học viên */}
+                      <select
+                        value={chartLearnerFilter}
+                        onChange={(e) =>
+                          setChartLearnerFilter(
+                            e.target.value as "all" | "in_progress" | "completed",
+                          )
                         }
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer max-w-[190px] truncate"
-                      aria-label="Chọn nhóm hoặc sinh viên cụ thể trong lớp"
-                      title="Chọn phân loại hoặc chọn trực tiếp học viên trong lớp để xem chi tiết"
-                    >
-                      <optgroup label="── Phân loại chung ──">
-                        <option value="all">Tất cả học viên ({rawStudents.length})</option>
+                        className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                        aria-label="Chọn nhóm học viên trong lớp"
+                        title="Lọc biểu đồ theo nhóm đối tượng học viên"
+                      >
+                        <option value="all">Nhóm: Tất cả học viên ({rawStudents.length})</option>
                         <option value="in_progress">
-                          Đang học ({coursePacingCounts.all - completedStudents.length})
+                          Nhóm: Đang học ({coursePacingCounts.all - completedStudents.length})
                         </option>
                         <option value="completed">
-                          Đã hoàn thành ({completedStudents.length})
+                          Nhóm: Đã hoàn thành ({completedStudents.length})
                         </option>
-                      </optgroup>
-                      {rawStudents.length > 0 && (
-                        <optgroup label={`── Từng học viên trong lớp (${rawStudents.length}) ──`}>
-                          {rawStudentsWithPacing.map((st) => (
-                            <option key={st.userId} value={`student-${st.userId}`}>
-                              👤 {st.userName} ({st.progressPercent}%)
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </select>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -1932,26 +1860,23 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 {(selectedDayFilter ||
                   selectedWeekFilter !== null ||
                   studentPacingFilter !== "ALL" ||
-                  selectedStudentId !== null ||
                   studentSearchQuery.trim() !== "") && (
                   <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary flex items-center justify-between">
                     <span className="flex items-center gap-1.5 font-semibold">
                       <Filter className="w-3.5 h-3.5" aria-hidden="true" />
                       Đang lọc theo:{" "}
                       <strong>
-                        {selectedStudentId
-                          ? `👤 ${rawStudentsWithPacing.find((s) => s.userId === selectedStudentId)?.userName}`
-                          : studentSearchQuery.trim()
-                            ? `Tìm kiếm "${studentSearchQuery}"`
-                            : studentPacingFilter === "AHEAD"
-                              ? "🚀 Học viên Vượt tiến độ"
-                              : studentPacingFilter === "ON_TRACK"
-                                ? "⏱️ Học viên Đúng tiến độ"
-                                : studentPacingFilter === "BEHIND"
-                                  ? "⚠️ Học viên Chậm tiến độ"
-                                  : selectedDayFilter
-                                    ? `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`
-                                    : `Tuần học thứ ${selectedWeekFilter}`}
+                        {studentSearchQuery.trim()
+                          ? `Tìm kiếm "${studentSearchQuery}"`
+                          : studentPacingFilter === "AHEAD"
+                            ? "🚀 Học viên Vượt tiến độ"
+                            : studentPacingFilter === "ON_TRACK"
+                              ? "⏱️ Học viên Đúng tiến độ"
+                              : studentPacingFilter === "BEHIND"
+                                ? "⚠️ Học viên Chậm tiến độ"
+                                : selectedDayFilter
+                                  ? `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`
+                                  : `Tuần học thứ ${selectedWeekFilter}`}
                       </strong>
                     </span>
                     <div className="flex items-center gap-2">
@@ -1971,7 +1896,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                           setSelectedDayFilter(null);
                           setSelectedWeekFilter(null);
                           setStudentPacingFilter("ALL");
-                          setSelectedStudentId(null);
                           setStudentSearchQuery("");
                         }}
                         className="text-xs underline hover:opacity-80 flex items-center gap-1 cursor-pointer font-bold"
