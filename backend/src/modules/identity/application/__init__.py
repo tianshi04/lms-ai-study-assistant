@@ -1,3 +1,4 @@
+from .admin_dashboard_usecase import AdminDashboardUseCase
 from .auth_usecase import (
     AuthUseCase,
     hash_password,
@@ -13,6 +14,7 @@ from .submit_application_usecase import SubmitInstructorApplicationUseCase
 from .user_profile_usecase import UserProfileUseCase
 
 __all__ = [
+    "AdminDashboardUseCase",
     "AuthUseCase",
     "EnterpriseLicenseUseCase",
     "IdentityUseCase",

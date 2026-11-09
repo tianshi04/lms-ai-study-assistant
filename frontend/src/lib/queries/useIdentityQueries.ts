@@ -2,6 +2,7 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
+  keepPreviousData,
   type UseQueryOptions,
   type UseMutationOptions,
 } from "@tanstack/react-query";
@@ -18,7 +19,66 @@ import {
   type OrganizationMemberDetail,
   type UserOrganizationDetail,
   type Invitation,
+  type GetAdminDashboardStatsResponse,
+  type ListAdminCertificatesResponse,
+  type ListAdminCourseMetricsResponse,
 } from "@/gen/identity/v1/identity_pb";
+
+/**
+ * Custom TanStack Query hook for the Super Admin dashboard aggregates.
+ * Only fires for Super Admin sessions; the backend enforces the same rule.
+ */
+export function useAdminDashboardStatsQuery(
+  options?: Partial<UseQueryOptions<GetAdminDashboardStatsResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminDashboardStatsResponse, Error>({
+    queryKey: ["adminDashboardStats"],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      return client.getAdminDashboardStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
+
+/**
+ * Paginated per-course metrics for the Super Admin dashboard, highest revenue first.
+ * `page` is 1-based. The previous page stays on screen while the next one loads.
+ */
+export function useAdminCourseMetricsQuery(page: number, pageSize: number) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<ListAdminCourseMetricsResponse, Error>({
+    queryKey: ["adminCourseMetrics", page, pageSize],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      return client.listAdminCourseMetrics({ page, pageSize });
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    enabled: isAuthenticated && isSuperAdmin,
+  });
+}
+
+/**
+ * Paginated certificates for the Super Admin dashboard (valid first, then revoked).
+ * `page` is 1-based. The previous page stays on screen while the next one loads.
+ */
+export function useAdminCertificatesQuery(page: number, pageSize: number) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<ListAdminCertificatesResponse, Error>({
+    queryKey: ["adminCertificates", page, pageSize],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      return client.listAdminCertificates({ page, pageSize });
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    enabled: isAuthenticated && isSuperAdmin,
+  });
+}
 
 /**
  * Custom TanStack Query hook for fetching current user profile.

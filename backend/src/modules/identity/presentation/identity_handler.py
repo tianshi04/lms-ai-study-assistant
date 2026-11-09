@@ -8,6 +8,10 @@ from src.gen.identity.v1 import identity_pb as pb
 from src.gen.identity.v1.identity_connect import IdentityService
 from src.modules.identity.application import IdentityUseCase
 from src.modules.identity.domain import (
+    AdminAssessmentAlertKind,
+    AdminCertificatesPage,
+    AdminCourseMetricsPage,
+    AdminDashboardStats,
     ApplicationStatus,
     InstructorApplication,
     User,
@@ -80,6 +84,124 @@ def _to_pb_user(user: User) -> pb.User:
         signature_image_url=user.signature_image_url,
         title=user.title,
         is_identity_verified=user.is_identity_verified,
+    )
+
+
+_ASSESSMENT_ALERT_KIND_TO_PB = {
+    AdminAssessmentAlertKind.GRADE_APPEAL: pb.AdminAssessmentAlertKind.GRADE_APPEAL,
+    AdminAssessmentAlertKind.REPORTED_PEER_REVIEW: (
+        pb.AdminAssessmentAlertKind.REPORTED_PEER_REVIEW
+    ),
+    AdminAssessmentAlertKind.OUTLIER_PEER_REVIEW: (
+        pb.AdminAssessmentAlertKind.OUTLIER_PEER_REVIEW
+    ),
+}
+
+
+def _to_pb_admin_course_metrics_page(
+    result: AdminCourseMetricsPage,
+) -> pb.ListAdminCourseMetricsResponse:
+    return pb.ListAdminCourseMetricsResponse(
+        courses=[
+            pb.AdminCourseQualityMetric(
+                course_id=c.course_id,
+                title=c.title,
+                partner_name=c.partner_name,
+                status=c.status,
+                enrolled_count=c.enrolled_count,
+                completed_count=c.completed_count,
+                average_rating=c.average_rating,
+                review_count=c.review_count,
+                revenue=c.revenue,
+            )
+            for c in result.courses
+        ],
+        total_count=result.total_count,
+        page=result.page,
+        page_size=result.page_size,
+    )
+
+
+def _to_pb_admin_certificates_page(
+    result: AdminCertificatesPage,
+) -> pb.ListAdminCertificatesResponse:
+    return pb.ListAdminCertificatesResponse(
+        certificates=[
+            pb.AdminCertificateSummary(
+                certificate_id=c.certificate_id,
+                learner_name=c.learner_name,
+                course_title=c.course_title,
+                partner_name=c.partner_name,
+                issue_date=c.issue_date,
+                is_revoked=c.is_revoked,
+                revoked_reason=c.revoked_reason,
+            )
+            for c in result.certificates
+        ],
+        total_count=result.total_count,
+        page=result.page,
+        page_size=result.page_size,
+    )
+
+
+def _to_pb_admin_dashboard_stats(
+    stats: AdminDashboardStats,
+) -> pb.GetAdminDashboardStatsResponse:
+    o = stats.overview
+    return pb.GetAdminDashboardStatsResponse(
+        overview=pb.AdminOverviewMetrics(
+            total_users=o.total_users,
+            learner_count=o.learner_count,
+            instructor_count=o.instructor_count,
+            admin_count=o.admin_count,
+            verified_user_count=o.verified_user_count,
+            total_courses=o.total_courses,
+            published_courses=o.published_courses,
+            pending_review_courses=o.pending_review_courses,
+            draft_courses=o.draft_courses,
+            rejected_courses=o.rejected_courses,
+            total_enrollments=o.total_enrollments,
+            completed_enrollments=o.completed_enrollments,
+            total_reviews=o.total_reviews,
+            average_rating=o.average_rating,
+            rating_distribution=o.rating_distribution,
+            total_revenue=o.total_revenue,
+            course_purchase_count=o.course_purchase_count,
+            active_subscriptions=o.active_subscriptions,
+            certificates_issued=o.certificates_issued,
+            certificates_revoked=o.certificates_revoked,
+            approved_financial_aids=o.approved_financial_aids,
+            pending_instructor_applications=o.pending_instructor_applications,
+            pending_financial_aids=o.pending_financial_aids,
+            partner_count=o.partner_count,
+            category_count=o.category_count,
+        ),
+        low_reviews=[
+            pb.AdminLowReviewAlert(
+                review_id=r.review_id,
+                course_title=r.course_title,
+                user_name=r.user_name,
+                rating_stars=r.rating_stars,
+                comment_text=r.comment_text,
+                created_at=r.created_at,
+            )
+            for r in stats.low_reviews
+        ],
+        assessment_alerts=[
+            pb.AdminAssessmentAlert(
+                alert_id=a.alert_id,
+                kind=_ASSESSMENT_ALERT_KIND_TO_PB[a.kind],
+                submission_id=a.submission_id,
+                user_id=a.user_id,
+                user_name=a.user_name,
+                reason=a.reason,
+                total_score=a.total_score,
+                created_at=a.created_at,
+            )
+            for a in stats.assessment_alerts
+        ],
+        low_review_total=stats.low_review_total,
+        assessment_alert_total=stats.assessment_alert_total,
     )
 
 
@@ -493,6 +615,61 @@ class IdentityHandler(IdentityService):
             )
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def get_admin_dashboard_stats(
+        self,
+        request: pb.GetAdminDashboardStatsRequest,
+        ctx: RequestContext[
+            pb.GetAdminDashboardStatsRequest,
+            pb.GetAdminDashboardStatsResponse,
+        ],
+    ) -> pb.GetAdminDashboardStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self._use_case.get_admin_dashboard_stats(
+                current_user=current_user
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return _to_pb_admin_dashboard_stats(stats)
+
+    async def list_admin_course_metrics(
+        self,
+        request: pb.ListAdminCourseMetricsRequest,
+        ctx: RequestContext[
+            pb.ListAdminCourseMetricsRequest,
+            pb.ListAdminCourseMetricsResponse,
+        ],
+    ) -> pb.ListAdminCourseMetricsResponse:
+        current_user = require_current_user()
+        try:
+            result = await self._use_case.list_admin_course_metrics(
+                current_user=current_user,
+                page=request.page,
+                page_size=request.page_size,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return _to_pb_admin_course_metrics_page(result)
+
+    async def list_admin_certificates(
+        self,
+        request: pb.ListAdminCertificatesRequest,
+        ctx: RequestContext[
+            pb.ListAdminCertificatesRequest,
+            pb.ListAdminCertificatesResponse,
+        ],
+    ) -> pb.ListAdminCertificatesResponse:
+        current_user = require_current_user()
+        try:
+            result = await self._use_case.list_admin_certificates(
+                current_user=current_user,
+                page=request.page,
+                page_size=request.page_size,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return _to_pb_admin_certificates_page(result)
 
     async def add_organization_member(
         self,

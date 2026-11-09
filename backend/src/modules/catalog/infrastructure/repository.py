@@ -1892,7 +1892,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 UserModel.id.in_(list(user_ids))
             )
             user_res = await self.session.execute(user_stmt)
-            user_names = dict(user_res.tuples().all())
+            user_names = dict(user_res.all())
 
         return [
             {

@@ -1,5 +1,10 @@
 from typing import Any, Protocol
 
+from src.modules.identity.domain.admin_dashboard import (
+    AdminCertificatesPage,
+    AdminCourseMetricsPage,
+    AdminDashboardStats,
+)
 from src.modules.identity.domain.entities import (
     EnterpriseLicense,
     InstructorApplication,
@@ -8,6 +13,16 @@ from src.modules.identity.domain.entities import (
     OrganizationMember,
     User,
 )
+
+
+class IAdminDashboardRepository(Protocol):
+    async def get_dashboard_stats(self) -> AdminDashboardStats: ...
+    async def list_course_metrics(
+        self, page: int, page_size: int
+    ) -> AdminCourseMetricsPage: ...
+    async def list_certificates(
+        self, page: int, page_size: int
+    ) -> AdminCertificatesPage: ...
 
 
 class IIdentityRepository(Protocol):
