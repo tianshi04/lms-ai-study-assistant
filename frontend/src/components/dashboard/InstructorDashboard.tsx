@@ -181,9 +181,11 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               onSelectCourse={handleSelectCourse}
               analyticsByCourseId={overviewData.analyticsByCourseId}
               pendingGradingByCourseId={overviewData.pendingGradingByCourseId}
+              overdueGradingByCourseId={overviewData.overdueGradingByCourseId}
               pendingQaByCourseId={overviewData.pendingQaByCourseId}
               overviewActionTasks={overviewData.overviewActionTasks}
               totalPendingTasksCount={overviewData.totalPendingTasksCount}
+              totalOverdueTasksCount={overviewData.totalOverdueTasksCount}
               overviewReviews={overviewData.overviewReviews}
               avgRatingAllCourses={overviewData.avgRatingAllCourses}
               totalStudentsAllCourses={overviewData.totalStudentsAllCourses}

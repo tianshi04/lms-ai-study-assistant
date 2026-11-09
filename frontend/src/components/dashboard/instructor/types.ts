@@ -33,6 +33,10 @@ export interface OverviewActionTask {
   timeAgo: string;
   actionText: string;
   actionUrl: string;
+  urgencyLevel?: "critical" | "warning" | "normal";
+  urgencyLabel?: string;
+  isAppeal?: boolean;
+  isOverdue?: boolean;
 }
 
 export interface OverviewReview {

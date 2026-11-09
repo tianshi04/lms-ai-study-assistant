@@ -19,6 +19,7 @@ import { GradingQueueStatus } from "@/gen/assessment/v1/assessment_pb";
 interface InstructorActionTasksCardProps {
   tasks?: OverviewActionTask[];
   totalPendingCount?: number;
+  totalOverdueCount?: number;
   primaryActionUrl?: string;
   courseId?: string;
   courseTitle?: string;
@@ -29,6 +30,7 @@ interface InstructorActionTasksCardProps {
 export function InstructorActionTasksCard({
   tasks,
   totalPendingCount,
+  totalOverdueCount = 0,
   primaryActionUrl,
   courseId,
   courseTitle = "Khóa học",
@@ -261,13 +263,26 @@ export function InstructorActionTasksCard({
           </h3>
         </div>
         <span
-          className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
-            displayTotalCount > 0
-              ? "bg-warning/15 text-warning border border-warning/20"
-              : "bg-success/15 text-success border border-success/20"
+          className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono flex items-center gap-1 ${
+            totalOverdueCount > 0
+              ? "bg-destructive/15 text-destructive border border-destructive/20"
+              : displayTotalCount > 0
+                ? "bg-warning/15 text-warning border border-warning/20"
+                : "bg-success/15 text-success border border-success/20"
           }`}
         >
-          {displayTotalCount > 0 ? `${displayTotalCount} việc chờ` : "Hoàn thành"}
+          {totalOverdueCount > 0 ? (
+            <>
+              <AlertTriangle className="w-2.5 h-2.5" />
+              <span>
+                {displayTotalCount} việc chờ • {totalOverdueCount} quá hạn SLA
+              </span>
+            </>
+          ) : displayTotalCount > 0 ? (
+            `${displayTotalCount} việc chờ`
+          ) : (
+            "Hoàn thành"
+          )}
         </span>
       </div>
 
@@ -294,20 +309,39 @@ export function InstructorActionTasksCard({
         ) : (
           overviewTasks.map((task) => {
             const isGrading = task.type === "grading";
+            const isCritical = task.urgencyLevel === "critical";
+            const isWarning = task.urgencyLevel === "warning";
+            const isAppeal = task.isAppeal;
 
             return (
               <div
                 key={task.id}
-                className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all space-y-1.5 group"
+                className={`p-3 rounded-2xl bg-surface border transition-all space-y-1.5 group ${
+                  isCritical
+                    ? "border-destructive/30 border-l-4 border-l-destructive bg-destructive/[0.02]"
+                    : isWarning
+                      ? "border-warning/30 border-l-4 border-l-warning bg-warning/[0.02]"
+                      : "border-outline-variant/60 hover:border-primary/40"
+                }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span
                       className={`p-1 rounded-md shrink-0 ${
-                        isGrading ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"
+                        isAppeal
+                          ? "bg-purple-500/15 text-purple-700 dark:text-purple-300"
+                          : isCritical
+                            ? "bg-destructive/15 text-destructive"
+                            : isWarning
+                              ? "bg-warning/15 text-warning"
+                              : isGrading
+                                ? "bg-primary/10 text-primary"
+                                : "bg-warning/10 text-warning"
                       }`}
                     >
-                      {isGrading ? (
+                      {isAppeal ? (
+                        <AlertTriangle className="w-3 h-3" />
+                      ) : isGrading ? (
                         <CheckSquare className="w-3 h-3" />
                       ) : (
                         <MessageSquare className="w-3 h-3" />
@@ -318,10 +352,28 @@ export function InstructorActionTasksCard({
                     </h4>
                   </div>
 
-                  <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap flex items-center gap-1">
-                    <Clock className="w-2.5 h-2.5" />
-                    {task.timeAgo}
-                  </span>
+                  {/* Badge cảnh báo SLA theo 3 mức độ */}
+                  {isAppeal ? (
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25 shrink-0 whitespace-nowrap flex items-center gap-1">
+                      <AlertTriangle className="w-2.5 h-2.5" />
+                      Khiếu nại
+                    </span>
+                  ) : isCritical ? (
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-destructive/15 text-destructive border border-destructive/25 shrink-0 whitespace-nowrap flex items-center gap-1">
+                      <AlertTriangle className="w-2.5 h-2.5" />
+                      {task.urgencyLabel || task.timeAgo}
+                    </span>
+                  ) : isWarning ? (
+                    <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-warning/15 text-warning border border-warning/25 shrink-0 whitespace-nowrap flex items-center gap-1">
+                      <Clock className="w-2.5 h-2.5" />
+                      {task.urgencyLabel || task.timeAgo}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono text-muted-foreground whitespace-nowrap flex items-center gap-1 shrink-0">
+                      <Clock className="w-2.5 h-2.5" />
+                      {task.urgencyLabel || task.timeAgo}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -331,7 +383,9 @@ export function InstructorActionTasksCard({
 
                   <Link
                     href={task.actionUrl}
-                    className="font-bold text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                    className={`font-bold hover:underline flex items-center gap-0.5 shrink-0 ${
+                      isCritical ? "text-destructive" : "text-primary"
+                    }`}
                   >
                     <span>{task.actionText}</span>
                     <ChevronRight className="w-3 h-3" />

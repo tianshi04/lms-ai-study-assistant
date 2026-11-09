@@ -2,7 +2,14 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { MessageSquare, ArrowRight, BookOpen, ClipboardCheck, CheckCircle2 } from "lucide-react";
+import {
+  MessageSquare,
+  ArrowRight,
+  BookOpen,
+  ClipboardCheck,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -14,6 +21,7 @@ interface EnrichedCourseItem {
   compRate: number;
   rating: number;
   pendingGrading: number;
+  overdueGrading: number;
   pendingQa: number;
 }
 
@@ -21,6 +29,7 @@ interface InstructorCourseComparisonTableProps {
   courses: Course[];
   analyticsByCourseId?: Map<string, InstructorAnalytics | null | undefined>;
   pendingGradingByCourseId?: Map<string, number>;
+  overdueGradingByCourseId?: Map<string, number>;
   pendingQaByCourseId?: Map<string, number>;
   onSelectCourse: (courseId: string) => void;
 }
@@ -64,6 +73,7 @@ export function InstructorCourseComparisonTable({
   courses,
   analyticsByCourseId,
   pendingGradingByCourseId,
+  overdueGradingByCourseId,
   pendingQaByCourseId,
   onSelectCourse,
 }: InstructorCourseComparisonTableProps) {
@@ -79,6 +89,7 @@ export function InstructorCourseComparisonTable({
       const rating = an?.averageRating || course.averageRating || 5.0;
 
       const pendingGrading = pendingGradingByCourseId?.get(course.id) || 0;
+      const overdueGrading = overdueGradingByCourseId?.get(course.id) || 0;
       const pendingQa = pendingQaByCourseId?.get(course.id) || 0;
 
       return {
@@ -87,10 +98,17 @@ export function InstructorCourseComparisonTable({
         compRate,
         rating,
         pendingGrading,
+        overdueGrading,
         pendingQa,
       };
     });
-  }, [courses, analyticsByCourseId, pendingGradingByCourseId, pendingQaByCourseId]);
+  }, [
+    courses,
+    analyticsByCourseId,
+    pendingGradingByCourseId,
+    overdueGradingByCourseId,
+    pendingQaByCourseId,
+  ]);
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return enrichedCourses;
@@ -162,7 +180,15 @@ export function InstructorCourseComparisonTable({
             </Table.Row>
           ) : (
             filtered.map((item) => {
-              const { course, totalStudents, compRate, rating, pendingGrading, pendingQa } = item;
+              const {
+                course,
+                totalStudents,
+                compRate,
+                rating,
+                pendingGrading,
+                overdueGrading,
+                pendingQa,
+              } = item;
 
               return (
                 <Table.Row
@@ -222,9 +248,23 @@ export function InstructorCourseComparisonTable({
 
                   {/* 5. Nhiệm vụ cần xử lý có số liệu thật */}
                   <Table.Cell className="py-2.5 px-1.5 whitespace-nowrap">
-                    {pendingGrading > 0 || pendingQa > 0 ? (
+                    {overdueGrading > 0 || pendingGrading > 0 || pendingQa > 0 ? (
                       <div className="flex items-center gap-1 flex-wrap">
-                        {pendingGrading > 0 && (
+                        {overdueGrading > 0 && (
+                          <Link
+                            href={`/instructor/courses/${course.id}/grading`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
+                            title="Có bài tập quá hạn 48h SLA cần chấm ngay"
+                          >
+                            <AlertTriangle
+                              className="w-3 h-3 text-destructive"
+                              aria-hidden="true"
+                            />
+                            <span>{overdueGrading} quá hạn</span>
+                          </Link>
+                        )}
+                        {pendingGrading > 0 && overdueGrading === 0 && (
                           <Link
                             href={`/instructor/courses/${course.id}/grading`}
                             onClick={(e) => e.stopPropagation()}
@@ -232,7 +272,7 @@ export function InstructorCourseComparisonTable({
                             title="Mở Bàn làm việc chấm bài"
                           >
                             <ClipboardCheck className="w-3 h-3 text-warning" aria-hidden="true" />
-                            <span>{pendingGrading} bài</span>
+                            <span>{pendingGrading} bài chờ chấm</span>
                           </Link>
                         )}
                         {pendingQa > 0 && (

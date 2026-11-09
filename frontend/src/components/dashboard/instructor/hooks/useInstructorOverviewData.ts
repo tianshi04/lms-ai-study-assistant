@@ -192,28 +192,75 @@ export function useInstructorOverviewData({
     enabled,
   });
 
-  const overviewActionTasks = useMemo<OverviewActionTask[]>(() => {
-    const tasks: OverviewActionTask[] = [];
+  const { overviewActionTasks, totalOverdueTasksCount, overdueGradingByCourseId } = useMemo(() => {
     const instructorCourseIds = new Set(courses.map((c) => c.id));
+    const nowMs = currentTimeMs > 0 ? currentTimeMs : Date.now();
 
+    const overdueByCourse = new Map<string, number>();
+
+    type ScoredTask = OverviewActionTask & { score: number };
+    const allScoredTasks: ScoredTask[] = [];
+
+    // 1. Bàn chấm bài tập tự luận (Grading Queue Items)
     const pendingGrading = (allGradingData?.items || []).filter(
       (i) =>
         i.status !== GradingQueueStatus.GRADED &&
         (courses.length === 0 || instructorCourseIds.has(i.courseId)),
     );
-    pendingGrading.slice(0, 3).forEach((item) => {
-      tasks.push({
+
+    pendingGrading.forEach((item) => {
+      const submittedMs = item.submittedAt ? new Date(item.submittedAt).getTime() : 0;
+      const hoursElapsed = submittedMs > 0 ? Math.floor((nowMs - submittedMs) / (3600 * 1000)) : 0;
+      const isPast48h = hoursElapsed >= 48;
+
+      if (isPast48h && item.courseId) {
+        overdueByCourse.set(item.courseId, (overdueByCourse.get(item.courseId) || 0) + 1);
+      }
+
+      let urgencyLevel: "critical" | "warning" | "normal" = "normal";
+      let urgencyLabel = "Chờ chấm";
+      let score = 50;
+
+      if (item.isAppeal) {
+        urgencyLevel = "critical";
+        urgencyLabel = "Khiếu nại";
+        score = 1000;
+      } else if (isPast48h) {
+        urgencyLevel = "critical";
+        urgencyLabel = `Quá hạn ${hoursElapsed}h`;
+        score = 800 + Math.min(hoursElapsed, 100);
+      } else if (item.isOutlier) {
+        urgencyLevel = "warning";
+        urgencyLabel = "Lệch điểm";
+        score = 600;
+      } else if (hoursElapsed >= 24) {
+        urgencyLevel = "warning";
+        urgencyLabel = `Sắp trễ (${hoursElapsed}h)`;
+        score = 400 + hoursElapsed;
+      } else if (hoursElapsed > 0) {
+        urgencyLevel = "normal";
+        urgencyLabel = `Mới nộp (${hoursElapsed}h)`;
+        score = 100 + hoursElapsed;
+      }
+
+      allScoredTasks.push({
         id: `task-grading-${item.submissionId}`,
         type: "grading",
         title: item.itemTitle || "Bài nộp đánh giá ngang hàng",
         studentName: item.studentName || "Sinh viên",
         courseTitle: item.courseTitle || "Khóa học",
-        timeAgo: "Chờ chấm",
+        timeAgo: urgencyLabel,
         actionText: "Chấm ngay",
         actionUrl: `/instructor/courses/${item.courseId}/grading?submissionId=${item.submissionId}`,
+        urgencyLevel,
+        urgencyLabel,
+        isAppeal: item.isAppeal,
+        isOverdue: isPast48h,
+        score,
       });
     });
 
+    // 2. Diễn đàn thảo luận & Q&A (Forum Threads)
     const pendingQA = allThreads.filter((th) => {
       if (courses.length > 0 && !instructorCourseIds.has(th.courseId)) return false;
       const r = (th.authorRole || "").toUpperCase();
@@ -233,23 +280,64 @@ export function useInstructorOverviewData({
       return !th.isStaffPinned && !isStaff && !isAnnouncement && !hasStaffReply;
     });
 
-    pendingQA.slice(0, 3).forEach((thread) => {
+    pendingQA.forEach((thread) => {
       const course = courses.find((c) => c.id === thread.courseId);
-      tasks.push({
+      const createdMs = thread.createdAt ? new Date(thread.createdAt).getTime() : 0;
+      const hoursElapsed = createdMs > 0 ? Math.floor((nowMs - createdMs) / (3600 * 1000)) : 0;
+
+      let urgencyLevel: "critical" | "warning" | "normal" = "normal";
+      let urgencyLabel = "Cần phản hồi";
+      let score = 50;
+      let isOverdue = false;
+
+      if (hoursElapsed >= 24) {
+        urgencyLevel = "critical";
+        urgencyLabel = `Chờ >24h`;
+        isOverdue = true;
+        score = 750 + Math.min(hoursElapsed, 100);
+      } else if (hoursElapsed >= 12 || thread.upvoteCount >= 2) {
+        urgencyLevel = "warning";
+        urgencyLabel = `Chờ ${hoursElapsed}h`;
+        score = 350 + hoursElapsed;
+      } else if (hoursElapsed > 0) {
+        urgencyLevel = "normal";
+        urgencyLabel = `Mới hỏi (${hoursElapsed}h)`;
+        score = 100 + hoursElapsed;
+      }
+
+      allScoredTasks.push({
         id: `task-qa-${thread.id}`,
         type: "video_qa",
         title: thread.title,
         lessonTitle: "Hỏi đáp thảo luận",
         studentName: thread.authorName || "Sinh viên",
         courseTitle: course?.title || "Khóa học",
-        timeAgo: "Cần phản hồi",
+        timeAgo: urgencyLabel,
         actionText: "Trả lời",
         actionUrl: `/instructor/courses/${thread.courseId}/discussions?threadId=${thread.id}`,
+        urgencyLevel,
+        urgencyLabel,
+        isOverdue,
+        score,
       });
     });
 
-    return tasks;
-  }, [allGradingData, allThreads, courses]);
+    // Sắp xếp ưu tiên việc Khẩn cấp (Critical) -> Cảnh báo (Warning) -> Bình thường
+    allScoredTasks.sort((a, b) => b.score - a.score);
+
+    const totalOverdue = allScoredTasks.filter((t) => t.urgencyLevel === "critical").length;
+
+    // Lấy top 5 việc ưu tiên cao nhất theo chuẩn SLA
+    const tasks: OverviewActionTask[] = allScoredTasks
+      .slice(0, 5)
+      .map(({ score: _score, ...rest }) => rest);
+
+    return {
+      overviewActionTasks: tasks,
+      totalOverdueTasksCount: totalOverdue,
+      overdueGradingByCourseId: overdueByCourse,
+    };
+  }, [allGradingData, allThreads, courses, currentTimeMs]);
 
   const pendingGradingByCourseId = useMemo(() => {
     const map = new Map<string, number>();
@@ -418,6 +506,8 @@ export function useInstructorOverviewData({
     growthPercent,
     overviewActionTasks,
     totalPendingTasksCount,
+    totalOverdueTasksCount,
+    overdueGradingByCourseId,
     pendingGradingByCourseId,
     pendingQaByCourseId,
     allPacingStudents,
