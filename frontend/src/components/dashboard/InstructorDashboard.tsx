@@ -27,7 +27,6 @@ import {
   TrendingDown,
   BarChart3,
   Award,
-  LayoutGrid,
   GitCommit,
   Zap,
 } from "lucide-react";
@@ -43,6 +42,7 @@ import { InstructorKpiRibbon } from "./instructor/components/InstructorKpiRibbon
 import { InstructorPacingCohortsCard } from "./instructor/components/InstructorPacingCohortsCard";
 import { InstructorActionTasksCard } from "./instructor/components/InstructorActionTasksCard";
 import { InstructorCourseComparisonTable } from "./instructor/components/InstructorCourseComparisonTable";
+import { InstructorDateRangeForm } from "./instructor/components/InstructorDateRangeForm";
 import { InstructorRecentReviewsCard } from "./instructor/components/InstructorRecentReviewsCard";
 
 export type { TimeDataPoint } from "./instructor/types";
@@ -99,8 +99,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   const [isStudentDetailModalOpen, setIsStudentDetailModalOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
-  // Kiểu hiển thị của Sơ đồ 2 (So sánh tỷ lệ hoàn thành): "bars" (Biểu đồ thước đo) | "cards" (Thẻ chỉ số lưới)
-  const [compareViewType, setCompareViewType] = useState<"bars" | "cards">("bars");
+  // Sắp xếp của Sơ đồ So sánh tỷ lệ hoàn thành theo môn
   const [compareSortBy, setCompareSortBy] = useState<"rate" | "students" | "rating">("rate");
 
   // Kiểu hiển thị của Sơ đồ phễu chi tiết: "pipeline" (Dòng chảy tuần) | "bars" (Cột tỷ lệ)
@@ -747,15 +746,15 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             <div className="lg:col-span-8 space-y-5">
               {/* Card 1: Khung Biểu Đồ Hoạt Động Toàn Sàn */}
               <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/60">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-3 border-b border-outline-variant/60">
                   {/* Tabs biểu đồ toàn sàn */}
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar shrink-0">
                     <button
                       type="button"
                       onClick={() => setAllChartTab("trend")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         allChartTab === "trend"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -782,7 +781,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setAllChartTab("heatmap")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         allChartTab === "heatmap"
                           ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
@@ -795,9 +794,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setAllChartTab("compare")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         allChartTab === "compare"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -808,9 +807,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setAllChartTab("certs")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         allChartTab === "certs"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -839,28 +838,14 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                       </select>
 
                       {allChartTab === "trend" && chartDateRange === "custom" && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-primary/40 text-xs animate-in fade-in duration-150">
-                          <span className="text-[10px] text-muted-foreground font-semibold">
-                            Từ:
-                          </span>
-                          <input
-                            type="date"
-                            value={customStartDate}
-                            onChange={(e) => setCustomStartDate(e.target.value)}
-                            className="px-1.5 py-0.5 rounded bg-muted/50 border border-outline-variant/60 text-[11px] font-mono text-foreground outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                            aria-label="Từ ngày"
-                          />
-                          <span className="text-[10px] text-muted-foreground font-semibold">
-                            Đến:
-                          </span>
-                          <input
-                            type="date"
-                            value={customEndDate}
-                            onChange={(e) => setCustomEndDate(e.target.value)}
-                            className="px-1.5 py-0.5 rounded bg-muted/50 border border-outline-variant/60 text-[11px] font-mono text-foreground outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                            aria-label="Đến ngày"
-                          />
-                        </div>
+                        <InstructorDateRangeForm
+                          startDate={customStartDate}
+                          endDate={customEndDate}
+                          onChange={(s, e) => {
+                            setCustomStartDate(s);
+                            setCustomEndDate(e);
+                          }}
+                        />
                       )}
 
                       <select
@@ -875,8 +860,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                         title="Lọc xu hướng phân tích theo nhóm đối tượng học viên trên toàn hệ thống"
                       >
                         <option value="all">Nhóm: Tất cả học viên</option>
-                        <option value="in_progress">Nhóm: Đang học (&lt; 100%)</option>
-                        <option value="completed">Nhóm: Đã tốt nghiệp (100%)</option>
+                        <option value="in_progress">Nhóm: Đang học</option>
+                        <option value="completed">Nhóm: Đã tốt nghiệp</option>
                       </select>
                     </div>
                   ) : allChartTab === "certs" ? (
@@ -955,36 +940,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {/* Toggle 2 chế độ hiển thị Sơ đồ 2 */}
-                        <div className="p-0.5 rounded-lg bg-muted flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setCompareViewType("bars")}
-                            className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                              compareViewType === "bars"
-                                ? "bg-surface text-primary shadow-xs font-black"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                            aria-label="Xem dạng thước đo đối sánh"
-                          >
-                            <BarChart3 className="w-3 h-3" aria-hidden="true" />
-                            <span>Thước đo</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCompareViewType("cards")}
-                            className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                              compareViewType === "cards"
-                                ? "bg-surface text-primary shadow-xs font-black"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                            aria-label="Xem dạng thẻ vòng tròn"
-                          >
-                            <LayoutGrid className="w-3 h-3" aria-hidden="true" />
-                            <span>Thẻ tròn</span>
-                          </button>
-                        </div>
-
                         {/* Bộ sắp xếp */}
                         <select
                           value={compareSortBy}
@@ -1001,212 +956,103 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                       </div>
                     </div>
 
-                    {/* CÁCH 1: BIỂU ĐỒ THƯỚC ĐO ĐỐI SÁNH (BENCHMARK SCALE MATRIX) */}
-                    {compareViewType === "bars" ? (
-                      <div className="space-y-3">
-                        {/* Thước đo tỷ lệ 0% - 100% */}
-                        <div className="relative pt-2 pb-1 px-3 text-[10px] font-mono text-muted-foreground border-b border-outline-variant/40 flex justify-between">
-                          <span className="w-8">0%</span>
-                          <span className="w-8 text-center">25%</span>
-                          <span className="w-8 text-center">50%</span>
-                          <span className="w-8 text-center">75%</span>
-                          <span className="w-8 text-right">100%</span>
-                        </div>
+                    {/* LƯỚI THẺ VÒNG TRÒN TỶ LỆ (RADIAL RING CARDS) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                      {enrichedCoursesForComparison.map((course) => {
+                        const isCurrentActive = course.id === activeCourse?.id;
+                        const radius = 32;
+                        const circumference = 2 * Math.PI * radius;
+                        const strokeDashoffset =
+                          circumference - (course.compRate / 100) * circumference;
 
-                        {/* Danh sách các thanh đối sánh */}
-                        <div className="space-y-3">
-                          {enrichedCoursesForComparison.map((course) => {
-                            const isCurrentActive = course.id === activeCourse?.id;
-                            return (
-                              <button
-                                type="button"
-                                key={course.id}
-                                onClick={() => handleSelectCourse(course.id)}
-                                className={`w-full text-left group p-3.5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                  isCurrentActive
-                                    ? "bg-primary/5 border-primary ring-1 ring-primary/30"
-                                    : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-xs"
-                                }`}
-                              >
-                                {/* Header hàng: Tên môn, Trạng thái & Rating */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground uppercase font-mono shrink-0">
-                                      {course.subject || "Khóa học"}
-                                    </span>
-                                    <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                                      {course.title}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-3 shrink-0 text-xs font-mono">
-                                    <span className="text-muted-foreground text-[11px]">
-                                      {course.weekCount} tuần • {course.totalStudents} SV
-                                    </span>
-                                    <span className="text-warning font-bold flex items-center gap-1">
-                                      <Star
-                                        className="w-3 h-3 fill-warning text-warning"
-                                        aria-hidden="true"
-                                      />
-                                      {course.rating.toFixed(1)}
-                                    </span>
-                                    <span
-                                      className={`font-black text-xs px-2 py-0.5 rounded-md ${
-                                        course.compRate >= 70
-                                          ? "bg-success/15 text-success"
-                                          : course.compRate >= 30
-                                            ? "bg-primary/15 text-primary"
-                                            : "bg-muted text-muted-foreground"
-                                      }`}
-                                    >
-                                      {course.compRate}% TB
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* Thanh tiến độ đa màu (Xanh lá: Hoàn thành, Xanh dương: Đang học) */}
-                                <div className="w-full h-3 rounded-full overflow-hidden bg-muted flex relative">
-                                  {/* Đường chuẩn mờ 50% benchmark */}
-                                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-foreground/20 z-10 pointer-events-none" />
-
-                                  {/* Phần đã tốt nghiệp */}
-                                  <div
-                                    style={{
-                                      width: `${course.totalStudents > 0 ? (course.completedCount / course.totalStudents) * 100 : 0}%`,
-                                    }}
-                                    className="h-full bg-success transition-all"
-                                    title={`Đã hoàn thành: ${course.completedCount} SV`}
+                        return (
+                          <button
+                            type="button"
+                            key={course.id}
+                            onClick={() => handleSelectCourse(course.id)}
+                            className={`w-full text-left group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                              isCurrentActive
+                                ? "bg-primary/5 border-primary ring-1 ring-primary/30"
+                                : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-sm"
+                            }`}
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground uppercase font-mono">
+                                  {course.subject || "Khóa học"}
+                                </span>
+                                <span className="text-warning font-bold text-xs flex items-center gap-1 font-mono">
+                                  <Star
+                                    className="w-3 h-3 fill-warning text-warning"
+                                    aria-hidden="true"
                                   />
-                                  {/* Phần đang học */}
-                                  <div
-                                    style={{
-                                      width: `${course.totalStudents > 0 ? (course.inProgressCount / course.totalStudents) * 100 : 0}%`,
-                                    }}
-                                    className="h-full bg-primary transition-all"
-                                    title={`Đang học tích cực: ${course.inProgressCount} SV`}
+                                  {course.rating.toFixed(1)}
+                                </span>
+                              </div>
+
+                              <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[32px]">
+                                {course.title}
+                              </h4>
+                            </div>
+
+                            {/* Vòng tròn SVG Radial Donut */}
+                            <div className="my-3 flex items-center justify-center">
+                              <div className="relative w-24 h-24 flex items-center justify-center">
+                                <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+                                  <circle
+                                    cx="40"
+                                    cy="40"
+                                    r={radius}
+                                    stroke="currentColor"
+                                    strokeWidth="6"
+                                    fill="transparent"
+                                    className="text-muted/40"
                                   />
-                                </div>
-
-                                {/* Footer hàng: Chú thích & Nút xem chi tiết */}
-                                <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-2">
-                                  <div className="flex items-center gap-3">
-                                    <span className="flex items-center gap-1">
-                                      <span className="w-2 h-2 rounded-full bg-success" />{" "}
-                                      {course.completedCount} đã cấp chứng chỉ
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <span className="w-2 h-2 rounded-full bg-primary" />{" "}
-                                      {course.inProgressCount} đang tiến hành
-                                    </span>
-                                  </div>
-                                  <span className="text-primary font-bold inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                                    Xem phân tích môn này →
+                                  <circle
+                                    cx="40"
+                                    cy="40"
+                                    r={radius}
+                                    stroke="currentColor"
+                                    strokeWidth="6"
+                                    strokeDasharray={circumference}
+                                    strokeDashoffset={strokeDashoffset}
+                                    strokeLinecap="round"
+                                    fill="transparent"
+                                    className={
+                                      course.compRate >= 70
+                                        ? "text-success transition-all duration-700"
+                                        : course.compRate >= 30
+                                          ? "text-primary transition-all duration-700"
+                                          : "text-muted-foreground transition-all duration-700"
+                                    }
+                                  />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                  <span className="text-base font-black font-mono text-foreground leading-none">
+                                    {course.compRate}%
+                                  </span>
+                                  <span className="text-[9px] text-muted-foreground uppercase tracking-tight mt-0.5">
+                                    Hoàn thành
                                   </span>
                                 </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      /* CÁCH 2: LƯỚI THẺ VÒNG TRÒN TỶ LỆ (RADIAL RING CARDS) */
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                        {enrichedCoursesForComparison.map((course) => {
-                          const isCurrentActive = course.id === activeCourse?.id;
-                          const radius = 32;
-                          const circumference = 2 * Math.PI * radius;
-                          const strokeDashoffset =
-                            circumference - (course.compRate / 100) * circumference;
-
-                          return (
-                            <button
-                              type="button"
-                              key={course.id}
-                              onClick={() => handleSelectCourse(course.id)}
-                              className={`w-full text-left group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                isCurrentActive
-                                  ? "bg-primary/5 border-primary ring-1 ring-primary/30"
-                                  : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-sm"
-                              }`}
-                            >
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground uppercase font-mono">
-                                    {course.subject || "Khóa học"}
-                                  </span>
-                                  <span className="text-warning font-bold text-xs flex items-center gap-1 font-mono">
-                                    <Star
-                                      className="w-3 h-3 fill-warning text-warning"
-                                      aria-hidden="true"
-                                    />
-                                    {course.rating.toFixed(1)}
-                                  </span>
-                                </div>
-
-                                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[32px]">
-                                  {course.title}
-                                </h4>
                               </div>
+                            </div>
 
-                              {/* Vòng tròn SVG Radial Donut */}
-                              <div className="my-3 flex items-center justify-center">
-                                <div className="relative w-24 h-24 flex items-center justify-center">
-                                  <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
-                                    <circle
-                                      cx="40"
-                                      cy="40"
-                                      r={radius}
-                                      stroke="currentColor"
-                                      strokeWidth="6"
-                                      fill="transparent"
-                                      className="text-muted/40"
-                                    />
-                                    <circle
-                                      cx="40"
-                                      cy="40"
-                                      r={radius}
-                                      stroke="currentColor"
-                                      strokeWidth="6"
-                                      strokeDasharray={circumference}
-                                      strokeDashoffset={strokeDashoffset}
-                                      strokeLinecap="round"
-                                      fill="transparent"
-                                      className={
-                                        course.compRate >= 70
-                                          ? "text-success transition-all duration-700"
-                                          : course.compRate >= 30
-                                            ? "text-primary transition-all duration-700"
-                                            : "text-muted-foreground transition-all duration-700"
-                                      }
-                                    />
-                                  </svg>
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                                    <span className="text-base font-black font-mono text-foreground leading-none">
-                                      {course.compRate}%
-                                    </span>
-                                    <span className="text-[9px] text-muted-foreground uppercase tracking-tight mt-0.5">
-                                      Hoàn thành
-                                    </span>
-                                  </div>
-                                </div>
+                            {/* Thông số dưới chân thẻ */}
+                            <div className="pt-2.5 border-t border-outline-variant/40 space-y-2 w-full">
+                              <div className="grid grid-cols-2 text-[11px] font-mono text-muted-foreground">
+                                <span>👥 {course.totalStudents} học viên</span>
+                                <span className="text-right">📚 {course.weekCount} tuần học</span>
                               </div>
-
-                              {/* Thông số dưới chân thẻ */}
-                              <div className="pt-2.5 border-t border-outline-variant/40 space-y-2 w-full">
-                                <div className="grid grid-cols-2 text-[11px] font-mono text-muted-foreground">
-                                  <span>👥 {course.totalStudents} học viên</span>
-                                  <span className="text-right">📚 {course.weekCount} tuần học</span>
-                                </div>
-                                <div className="text-[11px] font-bold text-primary flex items-center justify-between group-hover:underline">
-                                  <span>Mở chi tiết lớp</span>
-                                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                                </div>
+                              <div className="text-[11px] font-bold text-primary flex items-center justify-between group-hover:underline">
+                                <span>Mở chi tiết lớp</span>
+                                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                               </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -1432,28 +1278,14 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                         </select>
 
                         {chartDateRange === "custom" && (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-primary/40 text-xs animate-in fade-in duration-150">
-                            <span className="text-[10px] text-muted-foreground font-semibold">
-                              Từ:
-                            </span>
-                            <input
-                              type="date"
-                              value={customStartDate}
-                              onChange={(e) => setCustomStartDate(e.target.value)}
-                              className="px-1.5 py-0.5 rounded bg-muted/50 border border-outline-variant/60 text-[11px] font-mono text-foreground outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                              aria-label="Từ ngày"
-                            />
-                            <span className="text-[10px] text-muted-foreground font-semibold">
-                              Đến:
-                            </span>
-                            <input
-                              type="date"
-                              value={customEndDate}
-                              onChange={(e) => setCustomEndDate(e.target.value)}
-                              className="px-1.5 py-0.5 rounded bg-muted/50 border border-outline-variant/60 text-[11px] font-mono text-foreground outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                              aria-label="Đến ngày"
-                            />
-                          </div>
+                          <InstructorDateRangeForm
+                            startDate={customStartDate}
+                            endDate={customEndDate}
+                            onChange={(s, e) => {
+                              setCustomStartDate(s);
+                              setCustomEndDate(e);
+                            }}
+                          />
                         )}
                       </>
                     )}
