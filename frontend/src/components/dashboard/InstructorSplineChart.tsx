@@ -165,6 +165,7 @@ function InstructorSplineChartComponent({
         role="region"
         aria-label="Biểu đồ xu hướng học tập đối sánh"
         tabIndex={0}
+        suppressHydrationWarning
         onMouseMove={handleMouseMove}
         onMouseLeave={handlePointerLeave}
         onTouchMove={handleTouchMove}

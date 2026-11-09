@@ -319,7 +319,7 @@ export function InstructorSpecificStudentTable({
                   ? new Date(st.enrolledAt)
                   : currentTimeMs > 0
                     ? new Date(currentTimeMs)
-                    : new Date("2026-11-01");
+                    : new Date();
                 const deadlineDate = new Date(enrolledDate.getTime() + 30 * 24 * 60 * 60 * 1000);
                 const daysLeft =
                   currentTimeMs > 0

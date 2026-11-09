@@ -69,12 +69,12 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   }, []);
 
   const currentMonthNumber = useMemo(() => {
-    const d = currentTimeMs > 0 ? new Date(currentTimeMs) : new Date("2026-11-01");
+    const d = currentTimeMs > 0 ? new Date(currentTimeMs) : new Date();
     return d.getMonth() + 1;
   }, [currentTimeMs]);
 
   const lastMonthNumber = useMemo(() => {
-    const d = currentTimeMs > 0 ? new Date(currentTimeMs) : new Date("2026-11-01");
+    const d = currentTimeMs > 0 ? new Date(currentTimeMs) : new Date();
     d.setMonth(d.getMonth() - 1);
     return d.getMonth() + 1;
   }, [currentTimeMs]);
