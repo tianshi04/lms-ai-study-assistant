@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Table } from "@/components/ui/Table";
 import {
@@ -38,305 +38,13 @@ export interface StudentPacingRecord {
   bottleneckStuck?: boolean;
 }
 
-// 25 mẫu học viên chân thực trên cả 3 khóa học của PGS. TS. Trần Minh Tuấn
-const MOCK_PACING_STUDENTS: StudentPacingRecord[] = [
-  // --- VƯỢT TIẾN ĐỘ (AHEAD) ---
-  {
-    id: "st-01",
-    name: "Hoàng Văn Nam",
-    email: "nam.hoang@student.neu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 100,
-    currentLesson: "Đã hoàn thành toàn bộ khóa học",
-    currentWeekNumber: 2,
-    lastActive: "Hôm qua lúc 14:30",
-    daysInactive: 1,
-    pace: "AHEAD",
-    paceDescription: "Hoàn thành trước hạn 6 ngày, chuẩn bị cấp chứng chỉ",
-  },
-  {
-    id: "st-02",
-    name: "Lê Thu Thảo",
-    email: "thao.le@fpt.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 100,
-    currentLesson: "Đã hoàn thành toàn bộ khóa học",
-    currentWeekNumber: 2,
-    lastActive: "2 ngày trước",
-    daysInactive: 2,
-    pace: "AHEAD",
-    paceDescription: "Nộp bài kiểm định giả thuyết F đạt 100% điểm",
-  },
-  {
-    id: "st-03",
-    name: "Nguyễn Quốc Anh",
-    email: "quocanh.ng@hcmut.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 88,
-    currentLesson: "Bài 4: Tối ưu hóa Doanh thu Đa kênh",
-    currentWeekNumber: 2,
-    lastActive: "3 giờ trước",
-    daysInactive: 0,
-    pace: "AHEAD",
-    paceDescription: "Học vượt 2 bài trước lịch trình đề xuất",
-  },
-  {
-    id: "st-04",
-    name: "Trần Bảo Ngọc",
-    email: "ngoc.tran@neu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 92,
-    currentLesson: "Bài 5: Thặng dư Xã hội & Cân bằng Thị trường",
-    currentWeekNumber: 2,
-    lastActive: "Hôm nay lúc 09:15",
-    daysInactive: 0,
-    pace: "AHEAD",
-    paceDescription: "Tốc độ học gấp 1.8 lần tốc độ trung bình lớp",
-  },
-  {
-    id: "st-05",
-    name: "Vũ Minh Quân",
-    email: "quan.vm@rmit.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 85,
-    currentLesson: "Bài 3: Hiệu ứng Chim mồi & Mỏ neo",
-    currentWeekNumber: 2,
-    lastActive: "Hôm qua lúc 21:00",
-    daysInactive: 1,
-    pace: "AHEAD",
-    paceDescription: "Điểm quiz trung bình đạt 9.5/10",
-  },
-  {
-    id: "st-06",
-    name: "Phạm Hải Đăng",
-    email: "dang.ph@hust.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 82,
-    currentLesson: "Bài 3: Khắc phục Hiện tượng Phương sai Sai số Thay đổi",
-    currentWeekNumber: 2,
-    lastActive: "4 giờ trước",
-    daysInactive: 0,
-    pace: "AHEAD",
-    paceDescription: "Chủ động làm trước bài tập thực hành Stata/R",
-  },
-
-  // --- ĐÚNG TIẾN ĐỘ (ON_TRACK) ---
-  {
-    id: "st-07",
-    name: "Nguyễn Văn An",
-    email: "an.nguyen@ftu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 65,
-    currentLesson: "Bài 3: Hệ số Co giãn Cung - Cầu theo Giá",
-    currentWeekNumber: 1,
-    lastActive: "Hôm nay lúc 11:20",
-    daysInactive: 0,
-    pace: "ON_TRACK",
-    paceDescription: "Học đều đặn 45 phút/ngày, bám sát lịch học tuần 1",
-  },
-  {
-    id: "st-08",
-    name: "Trần Thị Mai",
-    email: "mai.tran@ueh.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 55,
-    currentLesson: "Bài 2: Tâm lý Học Cài cắm Giá (Psychological Pricing)",
-    currentWeekNumber: 1,
-    lastActive: "Hôm qua lúc 18:40",
-    daysInactive: 1,
-    pace: "ON_TRACK",
-    paceDescription: "Vừa hoàn thành bài tập trắc nghiệm chương 1",
-  },
-  {
-    id: "st-09",
-    name: "Lê Quốc Huy",
-    email: "huy.le@tdtu.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 50,
-    currentLesson: "Bài 2: Hồi quy Đa biến & Đa cộng tuyến",
-    currentWeekNumber: 1,
-    lastActive: "2 ngày trước",
-    daysInactive: 2,
-    pace: "ON_TRACK",
-    paceDescription: "Tham gia thảo luận diễn đàn tích cực",
-  },
-  {
-    id: "st-10",
-    name: "Đỗ Bích Thủy",
-    email: "thuy.do@neu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 58,
-    currentLesson: "Bài 2: Cung Cầu & Tác động Thuế quan",
-    currentWeekNumber: 1,
-    lastActive: "Hôm qua lúc 20:10",
-    daysInactive: 1,
-    pace: "ON_TRACK",
-    paceDescription: "Nộp bài đúng hạn, tiến độ hoàn thành ổn định",
-  },
-  {
-    id: "st-11",
-    name: "Bùi Tuấn Kiệt",
-    email: "kiet.bt@vnu.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 48,
-    currentLesson: "Bài 2: Chiến lược Định giá Phiến diện",
-    currentWeekNumber: 1,
-    lastActive: "Hôm nay lúc 08:30",
-    daysInactive: 0,
-    pace: "ON_TRACK",
-    paceDescription: "Xem video bài giảng đạt 95% thời lượng",
-  },
-  {
-    id: "st-12",
-    name: "Phan Ánh Nguyệt",
-    email: "nguyet.pa@buv.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 60,
-    currentLesson: "Bài 2: Mô hình Hồi quy Tuyến tính Đơn",
-    currentWeekNumber: 1,
-    lastActive: "3 ngày trước",
-    daysInactive: 3,
-    pace: "ON_TRACK",
-    paceDescription: "Đã làm xong bài thực hành số liệu doanh nghiệp",
-  },
-  {
-    id: "st-13",
-    name: "Hà Minh Trí",
-    email: "tri.hm@uel.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 70,
-    currentLesson: "Bài 4: Thị trường Cạnh tranh Hoàn hảo",
-    currentWeekNumber: 2,
-    lastActive: "Hôm nay lúc 10:00",
-    daysInactive: 0,
-    pace: "ON_TRACK",
-    paceDescription: "Bắt đầu học nội dung Tuần 2 theo đúng tiến độ kế hoạch",
-  },
-  {
-    id: "st-14",
-    name: "Ngô Thanh Hằng",
-    email: "hang.ngo@dav.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 52,
-    currentLesson: "Bài 2: Ma trận Định giá Giá trị Khách hàng",
-    currentWeekNumber: 1,
-    lastActive: "Hôm qua lúc 15:20",
-    daysInactive: 1,
-    pace: "ON_TRACK",
-    paceDescription: "Nhịp học ổn định, chưa có bài tập nộp trễ",
-  },
-
-  // --- CHẬM TIẾN ĐỘ / CẦN CAN THIỆP (BEHIND) ---
-  {
-    id: "st-15",
-    name: "Đặng Khánh Linh",
-    email: "linh.dk@student.neu.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 12,
-    currentLesson: "Bài 1: Giới thiệu Tâm lý Học Hành vi",
-    currentWeekNumber: 1,
-    lastActive: "8 ngày trước",
-    daysInactive: 8,
-    pace: "BEHIND",
-    paceDescription: "Dừng học tại Tuần 1, không đăng nhập 8 ngày liên tiếp",
-    bottleneckStuck: true,
-  },
-  {
-    id: "st-16",
-    name: "Võ Thành Long",
-    email: "long.vt@hust.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 18,
-    currentLesson: "Bài 1: Ôn tập Xác suất Thống kê cho Kinh tế lượng",
-    currentWeekNumber: 1,
-    lastActive: "11 ngày trước",
-    daysInactive: 11,
-    pace: "BEHIND",
-    paceDescription: "Chưa nộp bài tập Tuần 1, có nguy cơ bỏ dở khóa học",
-    bottleneckStuck: true,
-  },
-  {
-    id: "st-17",
-    name: "Phạm Thu Hà",
-    email: "ha.pham@ftu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 20,
-    currentLesson: "Bài 1: Giới thiệu Cơ chế Thị trường",
-    currentWeekNumber: 1,
-    lastActive: "6 ngày trước",
-    daysInactive: 6,
-    pace: "BEHIND",
-    paceDescription: "Tiến độ đạt 20%, đang xin hỗ trợ tài chính",
-  },
-  {
-    id: "st-18",
-    name: "Dương Minh Đức",
-    email: "duc.dm@hcmussh.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 15,
-    currentLesson: "Bài 1: Định giá Theo Chi phí vs Theo Giá trị",
-    currentWeekNumber: 1,
-    lastActive: "9 ngày trước",
-    daysInactive: 9,
-    pace: "BEHIND",
-    paceDescription: "Bị kẹt tại điểm nghẽn Tuần 1, chưa xem xong video 2",
-    bottleneckStuck: true,
-  },
-  {
-    id: "st-19",
-    name: "Lâm Gia Hân",
-    email: "han.lg@vanlanguni.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 22,
-    currentLesson: "Bài 1: Cài đặt và Làm quen Giao diện Stata/R",
-    currentWeekNumber: 1,
-    lastActive: "7 ngày trước",
-    daysInactive: 7,
-    pace: "BEHIND",
-    paceDescription: "Gặp khó khăn kỹ thuật khi cài đặt phần mềm phân tích",
-    bottleneckStuck: true,
-  },
-  {
-    id: "st-20",
-    name: "Trịnh Hoàng Yến",
-    email: "yen.th@hub.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 25,
-    currentLesson: "Bài 1: Đường Giới hạn Khả năng Sản xuất (PPF)",
-    currentWeekNumber: 1,
-    lastActive: "5 ngày trước",
-    daysInactive: 5,
-    pace: "BEHIND",
-    paceDescription: "Tỷ lệ làm quiz lần đầu chỉ đạt 4/10 điểm, cần ôn tập",
-  },
-];
-
-interface InstructorPacingModalProps {
+export interface InstructorPacingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialCategory?: PacingCategory;
   initialCourseId?: string;
   coursesList?: { id: string; title: string }[];
+  students?: StudentPacingRecord[];
 }
 
 export function InstructorPacingModal({
@@ -344,20 +52,8 @@ export function InstructorPacingModal({
   onOpenChange,
   initialCategory = "ALL",
   initialCourseId = "ALL",
-  coursesList = [
-    {
-      id: "course-microeconomics-foundations",
-      title: "Kinh tế học Vi mô Căn bản: Nguyên lý Thị trường & Quyết định Giá cả",
-    },
-    {
-      id: "course-behavioral-pricing-strategy",
-      title: "Kinh tế học Hành vi & Chiến lược Định giá Doanh nghiệp",
-    },
-    {
-      id: "course-applied-econometrics",
-      title: "Kinh tế lượng Ứng dụng & Phân tích Dữ liệu Kinh doanh",
-    },
-  ],
+  coursesList = [],
+  students = [],
 }: InstructorPacingModalProps) {
   const toast = useToast();
   const [selectedPace, setSelectedPace] = useState<PacingCategory>(initialCategory);
@@ -366,7 +62,14 @@ export function InstructorPacingModal({
   const [nudgedStudentIds, setNudgedStudentIds] = useState<Set<string>>(new Set());
   const [isBulkReminderModalOpen, setIsBulkReminderModalOpen] = useState(false);
 
-  // Sync state when dialog opens or initialCategory/initialCourseId changes
+  // Phân trang & Tải động (Progressive Loading: Mặc định 25 học viên, lướt xuống tải thêm)
+  const [visibleCount, setVisibleCount] = useState(25);
+
+  useEffect(() => {
+    setVisibleCount(25);
+  }, [searchQuery, selectedPace, selectedCourse]);
+
+  // Đồng bộ state khi mở hộp thoại hoặc bộ lọc ban đầu thay đổi
   const [prevOpenState, setPrevOpenState] = useState({ open, initialCategory, initialCourseId });
   if (
     prevOpenState.open !== open ||
@@ -380,19 +83,19 @@ export function InstructorPacingModal({
     }
   }
 
-  // Bộ đếm phân loại trên toàn hệ thống
+  // Bộ đếm phân loại trên toàn hệ thống dựa trên dữ liệu thật
   const counts = useMemo(() => {
     return {
-      all: MOCK_PACING_STUDENTS.length,
-      ahead: MOCK_PACING_STUDENTS.filter((s) => s.pace === "AHEAD").length,
-      onTrack: MOCK_PACING_STUDENTS.filter((s) => s.pace === "ON_TRACK").length,
-      behind: MOCK_PACING_STUDENTS.filter((s) => s.pace === "BEHIND").length,
+      all: students.length,
+      ahead: students.filter((s) => s.pace === "AHEAD").length,
+      onTrack: students.filter((s) => s.pace === "ON_TRACK").length,
+      behind: students.filter((s) => s.pace === "BEHIND").length,
     };
-  }, []);
+  }, [students]);
 
-  // Lọc danh sách học viên
+  // Lọc danh sách học viên theo Pace, Môn học và Từ khóa tìm kiếm
   const filteredStudents = useMemo(() => {
-    return MOCK_PACING_STUDENTS.filter((st) => {
+    return students.filter((st) => {
       // 1. Lọc theo pace
       if (selectedPace === "AHEAD" && st.pace !== "AHEAD") return false;
       if (selectedPace === "ON_TRACK" && st.pace !== "ON_TRACK") return false;
@@ -412,7 +115,24 @@ export function InstructorPacingModal({
 
       return true;
     });
-  }, [selectedPace, selectedCourse, searchQuery]);
+  }, [students, selectedPace, selectedCourse, searchQuery]);
+
+  // Giới hạn số học viên hiển thị theo phân trang 25 mục
+  const pagedStudents = useMemo(() => {
+    return filteredStudents.slice(0, visibleCount);
+  }, [filteredStudents, visibleCount]);
+
+  const hasMore = visibleCount < filteredStudents.length;
+
+  // Lướt xuống gần đáy tự động tải thêm 25 học viên tiếp theo
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 80) {
+      if (hasMore) {
+        setVisibleCount((prev) => Math.min(prev + 25, filteredStudents.length));
+      }
+    }
+  };
 
   // Nhắc nhở 1 học viên
   const handleNudgeStudent = async (student: StudentPacingRecord) => {
@@ -452,7 +172,8 @@ export function InstructorPacingModal({
                   </Dialog.Title>
                 </div>
                 <Dialog.Description className="text-xs text-muted-foreground mt-1">
-                  Theo dõi 200 học viên, phát hiện sớm người học chậm để can thiệp sư phạm kịp thời
+                  Theo dõi {counts.all} học viên, phát hiện sớm người học chậm để can thiệp sư phạm
+                  kịp thời
                 </Dialog.Description>
               </div>
             </div>
@@ -476,7 +197,9 @@ export function InstructorPacingModal({
               <div className="text-lg font-black text-foreground font-mono mt-0.5">
                 {counts.all} SV
               </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">Toàn bộ 3 khóa học</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">
+                Toàn bộ các khóa phụ trách
+              </div>
             </button>
 
             {/* Vượt tiến độ */}
@@ -494,7 +217,7 @@ export function InstructorPacingModal({
                   <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-success/20 text-success font-bold">
-                  {Math.round((counts.ahead / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.ahead / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-success font-mono mt-0.5">
@@ -518,7 +241,7 @@ export function InstructorPacingModal({
                   <Clock className="w-3 h-3" /> Đúng tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-bold">
-                  {Math.round((counts.onTrack / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.onTrack / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-primary font-mono mt-0.5">
@@ -542,7 +265,7 @@ export function InstructorPacingModal({
                   <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-destructive/20 text-destructive font-bold">
-                  {Math.round((counts.behind / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.behind / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-destructive font-mono mt-0.5">
@@ -573,7 +296,7 @@ export function InstructorPacingModal({
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -613,8 +336,11 @@ export function InstructorPacingModal({
             ) : null}
           </div>
 
-          {/* Bảng Danh Sách Học Viên Chi Tiết */}
-          <div className="flex-1 overflow-y-auto rounded-2xl border border-outline-variant/60 bg-surface min-h-[300px]">
+          {/* Bảng Danh Sách Học Viên Chi Tiết với Thanh cuộn tải động 25 SV */}
+          <div
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto rounded-2xl border border-outline-variant/60 bg-surface min-h-[300px]"
+          >
             <Table>
               <Table.Header className="sticky top-0 z-10 bg-surface shadow-xs">
                 <Table.Row className="text-[11px] text-muted-foreground border-b border-outline-variant/60">
@@ -636,11 +362,14 @@ export function InstructorPacingModal({
                     </Table.Cell>
                   </Table.Row>
                 ) : (
-                  filteredStudents.map((st) => {
+                  pagedStudents.map((st) => {
                     const isNudged = nudgedStudentIds.has(st.id);
 
                     return (
-                      <Table.Row key={st.id} className="text-xs hover:bg-muted/30">
+                      <Table.Row
+                        key={`${st.courseId}-${st.id}`}
+                        className="text-xs hover:bg-muted/30"
+                      >
                         {/* Cột 1: Thông tin học viên */}
                         <Table.Cell>
                           <div className="font-bold text-foreground">{st.name}</div>
@@ -722,25 +451,24 @@ export function InstructorPacingModal({
                           )}
                         </Table.Cell>
 
-                        {/* Cột 5: Hành động sư phạm */}
+                        {/* Cột 5: Nút thao tác sư phạm */}
                         <Table.Cell className="text-right">
                           <button
                             type="button"
                             disabled={isNudged}
                             onClick={() => handleNudgeStudent(st)}
-                            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
                               isNudged
-                                ? "bg-muted text-muted-foreground opacity-60 cursor-default"
+                                ? "bg-success/15 text-success border border-success/30 cursor-default"
                                 : st.pace === "BEHIND"
-                                  ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/30"
-                                  : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30"
+                                  ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 shadow-xs"
+                                  : "bg-surface-container-high hover:bg-primary hover:text-on-primary text-foreground border border-outline-variant"
                             }`}
-                            title="Gửi email và thông báo nhắc nhở học tập"
                           >
                             {isNudged ? (
                               <>
                                 <CheckCircle2 className="w-3 h-3 text-success" />
-                                <span>Đã gửi nhắc</span>
+                                <span>Đã nhắc</span>
                               </>
                             ) : (
                               <>
@@ -756,27 +484,50 @@ export function InstructorPacingModal({
                 )}
               </Table.Body>
             </Table>
+
+            {/* Thanh trạng thái tải trang & Nút tải thêm 25 */}
+            {filteredStudents.length > 0 && (
+              <div className="p-3 border-t border-outline-variant/60 bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground px-4">
+                <span>
+                  Đang hiển thị <strong className="text-foreground">{pagedStudents.length}</strong>{" "}
+                  trên tổng số{" "}
+                  <strong className="text-foreground">{filteredStudents.length}</strong> học viên
+                </span>
+                {hasMore && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleCount((prev) => Math.min(prev + 25, filteredStudents.length))
+                    }
+                    className="px-3 py-1 rounded-xl text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors cursor-pointer"
+                  >
+                    Tải thêm 25 học viên
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Footer Modal: Tổng kết & Hướng dẫn */}
-          <div className="pt-3 border-t border-outline-variant/60 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Đang hiển thị <strong>{filteredStudents.length}</strong> học viên
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="px-4 py-1.5 rounded-xl bg-surface hover:bg-muted text-foreground border border-outline-variant font-bold cursor-pointer"
-              >
-                Đóng
-              </button>
+          {/* Footer thông số tóm tắt */}
+          <div className="pt-3 border-t border-outline-variant/60 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-success" /> Vượt: {counts.ahead}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-primary" /> Đúng hạn: {counts.onTrack}
+              </span>
+              <span className="flex items-center gap-1.5 font-bold text-destructive">
+                <span className="w-2 h-2 rounded-full bg-destructive" /> Cần can thiệp:{" "}
+                {counts.behind}
+              </span>
             </div>
+            <span>Dữ liệu nhịp độ được tính toán thời gian thực từ cơ sở dữ liệu</span>
           </div>
         </Dialog.Content>
       </Dialog>
 
-      {/* Modal Tùy chỉnh & Xác nhận nhắc nhở hàng loạt theo điểm nghẽn */}
+      {/* Modal Nhắc nhở hàng loạt học viên chậm tiến độ */}
       {isBulkReminderModalOpen && (
         <InstructorBulkReminderModal
           key={`pacing-bulk-${isBulkReminderModalOpen}`}

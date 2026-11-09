@@ -36,6 +36,7 @@ import {
 import { InstructorSplineChart } from "./InstructorSplineChart";
 import { InstructorHeatmap } from "./InstructorHeatmap";
 import type { StudentDetailRecord } from "./InstructorStudentDetailModal";
+import type { StudentPacingRecord } from "./InstructorPacingModal";
 
 import { generateTimeLabels } from "./instructor/utils/time_labels";
 import type { OverviewActionTask, OverviewReview, OverviewCertificate } from "./instructor/types";
@@ -419,6 +420,90 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
     return tasks;
   }, [allGradingData, allThreadsData, courses]);
+
+  // Danh sách toàn bộ học viên kèm nhịp độ học tập trên TẤT CẢ các khóa học phụ trách (Dữ liệu thật từ DB)
+  const allPacingStudents = useMemo<StudentPacingRecord[]>(() => {
+    const result: StudentPacingRecord[] = [];
+    const nowMs = currentTimeMs > 0 ? currentTimeMs : 0;
+
+    courses.forEach((course) => {
+      const an = analyticsByCourseId.get(course.id);
+      if (!an?.students || an.students.length === 0) return;
+
+      const totalWeeks = course.weekModules?.length || 2;
+      const courseDurationDays = Math.max(14, totalWeeks * 7);
+
+      an.students.forEach((st) => {
+        let pace: "AHEAD" | "ON_TRACK" | "BEHIND" = "ON_TRACK";
+        let paceDescription = "Bám sát tiến độ tuần học";
+
+        const enrolledMs = st.enrolledAt ? new Date(st.enrolledAt).getTime() : nowMs;
+        const daysElapsed = Math.max(0, Math.floor((nowMs - enrolledMs) / (1000 * 60 * 60 * 24)));
+        const expectedProgressPct = Math.min(
+          100,
+          Math.round((daysElapsed / courseDurationDays) * 100),
+        );
+
+        if (st.progressPercent >= 100) {
+          pace = "AHEAD";
+          paceDescription = "Đã hoàn thành toàn diện khóa học";
+        } else if (st.progressPercent >= 80 || st.progressPercent >= expectedProgressPct + 20) {
+          pace = "AHEAD";
+          paceDescription = "Học nhanh hơn tiến độ đề xuất";
+        } else if (
+          st.progressPercent < Math.max(25, expectedProgressPct - 25) ||
+          (daysElapsed > courseDurationDays && st.progressPercent < 75)
+        ) {
+          pace = "BEHIND";
+          paceDescription = "Có nguy cơ chậm tiến độ, cần khích lệ học";
+        }
+
+        const currentWeekNumber = Math.max(
+          1,
+          Math.min(totalWeeks, Math.ceil((st.progressPercent / 100) * totalWeeks)),
+        );
+
+        result.push({
+          id: st.userId,
+          name: st.userName || "Học viên",
+          email: st.userEmail || "",
+          courseId: course.id,
+          courseTitle: course.title,
+          progressPercent: Math.round(st.progressPercent),
+          currentLesson:
+            st.progressPercent >= 100
+              ? "Đã hoàn thành toàn bộ khóa học"
+              : `Tiến độ ${Math.round(st.progressPercent)}% đề cương`,
+          currentWeekNumber,
+          lastActive: "Gần đây",
+          daysInactive: Math.min(daysElapsed, 7),
+          pace,
+          paceDescription,
+          bottleneckStuck: pace === "BEHIND",
+        });
+      });
+    });
+
+    return result;
+  }, [courses, analyticsByCourseId, currentTimeMs]);
+
+  // Bộ chỉ số tổng hợp tỷ trọng nhịp độ học tập toàn hệ thống từ dữ liệu thật
+  const pacingCohortSummary = useMemo(() => {
+    const total = allPacingStudents.length;
+    const ahead = allPacingStudents.filter((s) => s.pace === "AHEAD").length;
+    const onTrack = allPacingStudents.filter((s) => s.pace === "ON_TRACK").length;
+    const behind = allPacingStudents.filter((s) => s.pace === "BEHIND").length;
+
+    return {
+      total,
+      aheadCount: ahead,
+      aheadPercent: total > 0 ? Math.round((ahead / total) * 100) : 0,
+      onTrackCount: onTrack,
+      onTrackPercent: total > 0 ? Math.round((onTrack / total) * 100) : 0,
+      behindCount: behind,
+      behindPercent: total > 0 ? Math.round((behind / total) * 100) : 0,
+    };
+  }, [allPacingStudents]);
 
   // Tổng số bài học thực tế trong khóa học đang chọn
   const totalItemsInActiveCourse = useMemo(() => {
@@ -1250,13 +1335,13 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
               {/* Card 1.5: Kiểm Soát Nhịp Độ Học Tập Toàn Hệ Thống */}
               <InstructorPacingCohortsCard
-                totalStudents={totalStudentsAllCourses}
-                aheadCount={52}
-                aheadPercent={26}
-                onTrackCount={114}
-                onTrackPercent={57}
-                behindCount={34}
-                behindPercent={17}
+                totalStudents={pacingCohortSummary.total || totalStudentsAllCourses}
+                aheadCount={pacingCohortSummary.aheadCount}
+                aheadPercent={pacingCohortSummary.aheadPercent}
+                onTrackCount={pacingCohortSummary.onTrackCount}
+                onTrackPercent={pacingCohortSummary.onTrackPercent}
+                behindCount={pacingCohortSummary.behindCount}
+                behindPercent={pacingCohortSummary.behindPercent}
                 onOpenModal={(cat) => {
                   setPacingModalCategory(cat || "ALL");
                   setIsPacingModalOpen(true);
@@ -2289,6 +2374,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           onOpenChange={setIsPacingModalOpen}
           initialCategory={pacingModalCategory}
           coursesList={courses.map((c) => ({ id: c.id, title: c.title }))}
+          students={allPacingStudents}
         />
       )}
 
