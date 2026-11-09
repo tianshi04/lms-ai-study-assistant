@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -70,6 +71,64 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             f"Assignment submitted successfully. Please complete {REQUIRED_PEER_REVIEWS_COUNT} peer reviews to view your score.",
         )
 
+    def _parse_rubric_criteria(
+        self, rubric_json_str: str | None
+    ) -> list[RubricCriteria]:
+        if rubric_json_str:
+            try:
+                raw_items = json.loads(rubric_json_str)
+                if isinstance(raw_items, list) and len(raw_items) > 0:
+                    parsed = []
+                    for idx, r in enumerate(raw_items):
+                        crit_id = str(
+                            r.get("criteria_id") or r.get("id") or f"c{idx + 1}"
+                        )
+                        title = str(
+                            r.get("title")
+                            or r.get("criterion")
+                            or f"Tiêu chí {idx + 1}"
+                        )
+                        max_score = float(
+                            r.get("max_score") or r.get("max_points") or 10.0
+                        )
+                        description = str(r.get("description") or "")
+                        parsed.append(
+                            RubricCriteria(
+                                criteria_id=crit_id,
+                                title=title,
+                                max_score=max_score,
+                                description=description,
+                            )
+                        )
+                    if parsed:
+                        return parsed
+            except (json.JSONDecodeError, TypeError, ValueError, KeyError) as exc:
+                logger.warning(
+                    "Failed to parse rubric criteria JSON: %s, falling back to default",
+                    exc,
+                )
+
+        return [
+            RubricCriteria(
+                criteria_id="c1",
+                title="Chất lượng nội dung & Giải pháp",
+                max_score=10.0,
+                description="Mức độ hoàn thiện, tính chính xác và logic của giải pháp nộp.",
+            ),
+            RubricCriteria(
+                criteria_id="c2",
+                title="Bố cục, Trình bày & Minh chứng",
+                max_score=10.0,
+                description="Cấu trúc rõ ràng, diễn đạt mạch lạc, kèm đầy đủ tài liệu/minh chứng.",
+            ),
+            RubricCriteria(
+                criteria_id="c3",
+                title="Tính ứng dụng & Đóng góp",
+                max_score=10.0,
+                description="Khả năng áp dụng vào thực tiễn hoặc mức độ sáng tạo.",
+            ),
+        ]
+
     async def get_peer_reviews_to_grade(
         self, user_id: str, item_id: str
     ) -> list[dict[str, Any]]:
@@ -78,19 +137,11 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             submissions = await repo.get_peer_submissions_for_item(
                 item_id, exclude_user_id=user_id
             )
+            rubric_json_str = await repo.get_item_rubric_criteria_json(item_id)
 
         selected = submissions[:REQUIRED_PEER_REVIEWS_COUNT]
         result: list[dict[str, Any]] = []
-
-        default_rubric = [
-            RubricCriteria(
-                criteria_id="c1", title="Code Quality & Structure", max_score=10.0
-            ),
-            RubricCriteria(
-                criteria_id="c2", title="Documentation & Comments", max_score=10.0
-            ),
-            RubricCriteria(criteria_id="c3", title="Test Coverage", max_score=10.0),
-        ]
+        rubric_criteria = self._parse_rubric_criteria(rubric_json_str)
 
         for s in selected:
             review_id = f"rev-{s.id[:6]}"
@@ -99,7 +150,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     "review_id": review_id,
                     "submission_url": s.submission_url,
                     "text_content": s.text_content,
-                    "rubric_criteria": default_rubric,
+                    "rubric_criteria": rubric_criteria,
                 }
             )
 
@@ -698,22 +749,15 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     "appeal_resolution_notes": "",
                 }
 
-            default_rubrics = [
-                RubricCriteria(
-                    criteria_id="c1", title="Code Quality & Structure", max_score=10.0
-                ),
-                RubricCriteria(
-                    criteria_id="c2", title="Documentation & Comments", max_score=10.0
-                ),
-                RubricCriteria(criteria_id="c3", title="Test Coverage", max_score=10.0),
-            ]
+            rubric_json_str = await repo.get_item_rubric_criteria_json(sub.item_id)
+            rubric_criteria = self._parse_rubric_criteria(rubric_json_str)
 
             return {
                 "submission": matching_item,
                 "submission_url": sub.submission_url,
                 "text_content": sub.text_content,
                 "attempt_number": sub.attempt_number,
-                "rubric_criteria": default_rubrics,
+                "rubric_criteria": rubric_criteria,
                 "peer_reviews": peer_reviews_data,
                 "current_staff_grading": staff_grading,
             }

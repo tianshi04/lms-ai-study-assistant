@@ -1068,6 +1068,15 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
 
+    async def get_item_rubric_criteria_json(self, item_id: str) -> str | None:
+        from src.modules.catalog.infrastructure.models import LearningItemModel
+
+        stmt = select(LearningItemModel.rubric_criteria_json).where(
+            LearningItemModel.id == item_id
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
     async def list_grading_queue_items(
         self,
         course_id: str = "",

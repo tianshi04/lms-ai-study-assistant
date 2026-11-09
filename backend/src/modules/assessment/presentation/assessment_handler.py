@@ -139,6 +139,7 @@ class AssessmentHandler(AssessmentService):
                     max_score=c.max_score,
                     score_given=c.score_given,
                     feedback=c.feedback,
+                    description=getattr(c, "description", ""),
                 )
                 for c in item["rubric_criteria"]
             ]
@@ -167,6 +168,7 @@ class AssessmentHandler(AssessmentService):
                 max_score=c.max_score,
                 score_given=c.score_given,
                 feedback=c.feedback,
+                description=getattr(c, "description", ""),
             )
             for c in request.graded_criteria
         ]
@@ -921,6 +923,7 @@ class AssessmentHandler(AssessmentService):
                 title=c.title,
                 max_score=c.max_score,
                 score_given=c.score_given,
+                description=getattr(c, "description", ""),
             )
             for c in res["rubric_criteria"]
         ]
@@ -1006,6 +1009,7 @@ class AssessmentHandler(AssessmentService):
                     title=c.title,
                     max_score=c.max_score,
                     score_given=c.score_given,
+                    description=getattr(c, "description", ""),
                 )
                 for c in request.graded_criteria
             ]

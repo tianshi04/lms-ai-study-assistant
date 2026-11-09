@@ -24,6 +24,7 @@ class RubricCriteria(ValueObject):
     max_score: float
     score_given: float = 0.0
     feedback: str = ""
+    description: str = ""
 
 
 class HonorCodeAgreement(Entity):

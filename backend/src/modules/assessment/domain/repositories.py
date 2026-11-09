@@ -246,6 +246,10 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_item_rubric_criteria_json(self, item_id: str) -> str | None:
+        pass
+
+    @abstractmethod
     async def list_grading_queue_items(
         self,
         course_id: str = "",
