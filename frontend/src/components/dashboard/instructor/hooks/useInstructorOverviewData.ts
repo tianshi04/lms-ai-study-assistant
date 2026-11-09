@@ -194,9 +194,12 @@ export function useInstructorOverviewData({
 
   const overviewActionTasks = useMemo<OverviewActionTask[]>(() => {
     const tasks: OverviewActionTask[] = [];
+    const instructorCourseIds = new Set(courses.map((c) => c.id));
 
     const pendingGrading = (allGradingData?.items || []).filter(
-      (i) => i.status !== GradingQueueStatus.GRADED,
+      (i) =>
+        i.status !== GradingQueueStatus.GRADED &&
+        (courses.length === 0 || instructorCourseIds.has(i.courseId)),
     );
     pendingGrading.slice(0, 3).forEach((item) => {
       tasks.push({
@@ -212,6 +215,7 @@ export function useInstructorOverviewData({
     });
 
     const pendingQA = allThreads.filter((th) => {
+      if (courses.length > 0 && !instructorCourseIds.has(th.courseId)) return false;
       const r = (th.authorRole || "").toUpperCase();
       const isStaff =
         r.includes("INSTRUCTOR") ||
@@ -367,12 +371,18 @@ export function useInstructorOverviewData({
   }, [allPacingStudents]);
 
   const totalPendingGradingCount = useMemo(() => {
-    return (allGradingData?.items || []).filter((i) => i.status !== GradingQueueStatus.GRADED)
-      .length;
-  }, [allGradingData]);
+    const instructorCourseIds = new Set(courses.map((c) => c.id));
+    return (allGradingData?.items || []).filter(
+      (i) =>
+        i.status !== GradingQueueStatus.GRADED &&
+        (courses.length === 0 || instructorCourseIds.has(i.courseId)),
+    ).length;
+  }, [allGradingData, courses]);
 
   const totalPendingQaCount = useMemo(() => {
+    const instructorCourseIds = new Set(courses.map((c) => c.id));
     return allThreads.filter((th) => {
+      if (courses.length > 0 && !instructorCourseIds.has(th.courseId)) return false;
       const r = (th.authorRole || "").toUpperCase();
       const isStaff =
         r.includes("INSTRUCTOR") ||
@@ -389,7 +399,7 @@ export function useInstructorOverviewData({
       const hasStaffReply = th.replies?.some((reply) => reply.isStaffAnswer);
       return !th.isStaffPinned && !isStaff && !isAnnouncement && !hasStaffReply;
     }).length;
-  }, [allThreads]);
+  }, [allThreads, courses]);
 
   const totalPendingTasksCount = totalPendingGradingCount + totalPendingQaCount;
 

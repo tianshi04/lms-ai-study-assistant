@@ -363,6 +363,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self,
         course_id: str = "",
         item_id: str = "",
+        instructor_id: str = "",
     ) -> list[dict[str, Any]]:
         results = []
         for s in self.peer_submissions:

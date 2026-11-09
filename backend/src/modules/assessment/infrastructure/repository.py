@@ -1072,6 +1072,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         self,
         course_id: str = "",
         item_id: str = "",
+        instructor_id: str = "",
     ) -> list[dict[str, Any]]:
         from src.modules.catalog.infrastructure.models import (
             CourseModel,
@@ -1101,6 +1102,22 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         )
         if course_id:
             stmt = stmt.where(CourseModel.id == course_id)
+        elif instructor_id:
+            from src.modules.catalog.infrastructure.models import (
+                CourseCollaboratorModel,
+            )
+
+            collab_subq = (
+                select(CourseCollaboratorModel.course_id)
+                .where(CourseCollaboratorModel.user_id == instructor_id)
+                .scalar_subquery()
+            )
+            stmt = stmt.where(
+                or_(
+                    CourseModel.owner_id == instructor_id,
+                    CourseModel.id.in_(collab_subq),
+                )
+            )
         if item_id:
             stmt = stmt.where(PeerAssignmentSubmissionModel.item_id == item_id)
 

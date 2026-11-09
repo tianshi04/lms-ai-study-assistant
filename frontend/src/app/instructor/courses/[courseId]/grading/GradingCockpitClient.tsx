@@ -45,7 +45,7 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
 
   // Fetch grading queue using TanStack Query
-  const { data, isLoading, isError, refetch } = useGradingQueueQuery({
+  const { data, isLoading, isError, error, refetch } = useGradingQueueQuery({
     courseId,
     status: activeTab,
     searchQuery,
@@ -406,19 +406,35 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
             <div className="p-16 text-center space-y-3">
               <AlertTriangle className="w-10 h-10 text-destructive mx-auto" aria-hidden="true" />
               <h3 className="text-base font-bold text-foreground">
-                Không thể tải dữ liệu hàng chờ
+                {error?.message?.includes("quyền") ||
+                error?.message?.includes("permission") ||
+                error?.message?.includes("PERMISSION_DENIED")
+                  ? "Không có quyền truy cập khóa học này"
+                  : "Không thể tải dữ liệu hàng chờ"}
               </h3>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                Đã xảy ra lỗi khi kết nối với máy chủ chấm bài. Vui lòng kiểm tra lại đường truyền.
+                {error?.message?.includes("quyền") ||
+                error?.message?.includes("permission") ||
+                error?.message?.includes("PERMISSION_DENIED")
+                  ? "Bạn không phải là giảng viên hoặc trợ giảng phụ trách khóa học này. Vui lòng quay lại danh sách khóa học của bạn."
+                  : "Đã xảy ra lỗi khi kết nối với máy chủ chấm bài. Vui lòng kiểm tra lại đường truyền."}
               </p>
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={() => refetch()}
-                className="text-xs font-bold"
-              >
-                Thử lại
-              </Button>
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <Link
+                  href="/instructor/dashboard"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs transition-colors"
+                >
+                  Quay về Tổng quan
+                </Link>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => refetch()}
+                  className="text-xs font-bold"
+                >
+                  Thử lại
+                </Button>
+              </div>
             </div>
           ) : queueItems.length === 0 ? (
             <div className="p-16 text-center space-y-3">

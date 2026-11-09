@@ -561,10 +561,14 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
     ) -> dict[str, Any]:
         """Lists grading queue items for peer assignments across course or specific item."""
         self._verify_staff(current_user)
+        instructor_id = ""
+        if current_user and not current_user.is_admin and not course_id:
+            instructor_id = current_user.id
+
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             items = await repo.list_grading_queue_items(
-                course_id=course_id, item_id=item_id
+                course_id=course_id, item_id=item_id, instructor_id=instructor_id
             )
 
         sq = (search_query or "").strip().lower()

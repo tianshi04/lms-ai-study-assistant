@@ -250,6 +250,7 @@ class AssessmentRepositoryInterface(ABC):
         self,
         course_id: str = "",
         item_id: str = "",
+        instructor_id: str = "",
     ) -> list[dict[str, Any]]:
         """Lists grading queue items for peer assignments across course or specific item."""
 
