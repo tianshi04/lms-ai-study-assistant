@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   CheckSquare,
   MessageSquare,
-  FileText,
   ChevronRight,
   Clock,
   ClipboardList,
@@ -239,7 +238,6 @@ export function InstructorActionTasksCard({
       <div className="space-y-2">
         {overviewTasks.map((task) => {
           const isGrading = task.type === "grading";
-          const isQA = task.type === "video_qa";
 
           return (
             <div
@@ -250,19 +248,13 @@ export function InstructorActionTasksCard({
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span
                     className={`p-1 rounded-md shrink-0 ${
-                      isGrading
-                        ? "bg-primary/10 text-primary"
-                        : isQA
-                          ? "bg-warning/10 text-warning"
-                          : "bg-success/10 text-success"
+                      isGrading ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"
                     }`}
                   >
                     {isGrading ? (
                       <CheckSquare className="w-3 h-3" />
-                    ) : isQA ? (
-                      <MessageSquare className="w-3 h-3" />
                     ) : (
-                      <FileText className="w-3 h-3" />
+                      <MessageSquare className="w-3 h-3" />
                     )}
                   </span>
                   <h4 className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">

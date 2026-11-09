@@ -25,7 +25,7 @@ export interface OverviewCourseStat {
 
 export interface OverviewActionTask {
   id: string;
-  type: "grading" | "video_qa" | "aid";
+  type: "grading" | "video_qa";
   title: string;
   lessonTitle?: string;
   studentName: string;
