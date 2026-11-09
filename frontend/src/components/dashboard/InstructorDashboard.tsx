@@ -121,103 +121,106 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* TẦNG 1: EXECUTIVE TOOLBAR */}
-      <InstructorExecutiveToolbar
-        userName={userName}
-        viewMode={viewMode}
-        onSelectViewMode={(mode) => setViewMode(mode)}
-        courses={courses}
-        selectedCourseId={selectedCourseId}
-        onSelectCourse={handleSelectCourse}
-        onOpenOrgModal={() => setIsOrgModalOpen(true)}
-        courseStudentCounts={overviewData.courseStudentCounts}
-      />
+    <div className="w-full flex-1 bg-background text-foreground min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* TẦNG 1: EXECUTIVE TOOLBAR */}
+        <InstructorExecutiveToolbar
+          userName={userName}
+          viewMode={viewMode}
+          onSelectViewMode={(mode) => setViewMode(mode)}
+          courses={courses}
+          selectedCourseId={selectedCourseId}
+          onSelectCourse={handleSelectCourse}
+          onOpenOrgModal={() => setIsOrgModalOpen(true)}
+          courseStudentCounts={overviewData.courseStudentCounts}
+        />
 
-      {/* TẦNG 2: KPI RIBBON */}
-      <InstructorKpiRibbon
-        viewMode={viewMode}
-        totalStudents={
-          viewMode === "all" ? overviewData.totalStudentsAllCourses : courseData.rawStudents.length
-        }
-        growthPercent={overviewData.growthPercent}
-        avgCompletionRate={
-          viewMode === "all"
-            ? overviewData.avgCompletionRateAllCourses
-            : analytics?.averageCompletionRate != null
-              ? analytics.averageCompletionRate
-              : 0
-        }
-        avgRating={
-          viewMode === "all"
-            ? overviewData.avgRatingAllCourses
-            : analytics?.averageRating
-              ? analytics.averageRating
-              : activeCourse?.averageRating
-                ? activeCourse.averageRating
-                : 5.0
-        }
-        reviewCount={
-          viewMode === "all" ? overviewData.totalReviewsAllCourses : analytics?.reviewCount || 0
-        }
-        totalCertificates={
-          viewMode === "all"
-            ? overviewData.totalCertificatesAllCourses
-            : courseData.completedStudents.length
-        }
-        totalLearningHours={overviewData.totalLearningHoursAllCourses}
-        loading={loadingAnalytics}
-      />
+        {/* TẦNG 2: KPI RIBBON */}
+        <InstructorKpiRibbon
+          viewMode={viewMode}
+          totalStudents={
+            viewMode === "all"
+              ? overviewData.totalStudentsAllCourses
+              : courseData.rawStudents.length
+          }
+          growthPercent={overviewData.growthPercent}
+          avgCompletionRate={
+            viewMode === "all"
+              ? overviewData.avgCompletionRateAllCourses
+              : analytics?.averageCompletionRate != null
+                ? analytics.averageCompletionRate
+                : 0
+          }
+          avgRating={
+            viewMode === "all"
+              ? overviewData.avgRatingAllCourses
+              : analytics?.averageRating
+                ? analytics.averageRating
+                : activeCourse?.averageRating
+                  ? activeCourse.averageRating
+                  : 5.0
+          }
+          reviewCount={
+            viewMode === "all" ? overviewData.totalReviewsAllCourses : analytics?.reviewCount || 0
+          }
+          totalCertificates={
+            viewMode === "all"
+              ? overviewData.totalCertificatesAllCourses
+              : courseData.completedStudents.length
+          }
+          totalLearningHours={overviewData.totalLearningHoursAllCourses}
+          loading={loadingAnalytics}
+        />
 
-      {/* TẦNG 3: BỐ CỤC 2 CỘT CHUYÊN BIỆT (PHÂN RÃ SẠCH THEO VIEW) */}
-      <main>
-        {viewMode === "all" ? (
-          <InstructorOverviewView
-            courses={courses}
-            activeCourse={activeCourse}
-            onSelectCourse={handleSelectCourse}
-            analyticsByCourseId={overviewData.analyticsByCourseId}
-            pendingGradingByCourseId={overviewData.pendingGradingByCourseId}
-            pendingQaByCourseId={overviewData.pendingQaByCourseId}
-            overviewActionTasks={overviewData.overviewActionTasks}
-            overviewReviews={overviewData.overviewReviews}
-            avgRatingAllCourses={overviewData.avgRatingAllCourses}
-            totalStudentsAllCourses={overviewData.totalStudentsAllCourses}
-            totalCertificatesAllCourses={overviewData.totalCertificatesAllCourses}
-            allCompletedStudentsList={overviewData.allCompletedStudentsList}
-            pacingCohortSummary={overviewData.pacingCohortSummary}
-            onOpenPacingModal={(cat) => {
-              setPacingModalCategory(cat || "ALL");
-              setIsPacingModalOpen(true);
-            }}
-            enrichedCoursesForComparison={overviewData.enrichedCoursesForComparison}
-            currentMonthNumber={currentMonthNumber}
-            lastMonthNumber={lastMonthNumber}
-          />
-        ) : (
-          <InstructorCourseDeepDiveView
-            activeCourse={activeCourse}
-            rawStudents={courseData.rawStudents}
-            rawStudentsWithPacing={courseData.rawStudentsWithPacing}
-            coursePacingCounts={courseData.coursePacingCounts}
-            calculatedWeeks={courseData.calculatedWeeks}
-            bottleneckWeek={courseData.bottleneckWeek}
-            completedStudents={courseData.completedStudents}
-            totalItemsInActiveCourse={courseData.totalItemsInActiveCourse}
-            currentTimeMs={currentTimeMs}
-            currentMonthNumber={currentMonthNumber}
-            lastMonthNumber={lastMonthNumber}
-            nudgedSpecificStudentIds={nudgedSpecificStudentIds}
-            onNudgeStudent={handleNudgeStudent}
-            onNudgeAllBehind={() => setIsBulkReminderModalOpen(true)}
-            onSelectStudentForDetail={(record) => {
-              setSelectedStudentForDetail(record);
-              setIsStudentDetailModalOpen(true);
-            }}
-          />
-        )}
-      </main>
-
+        {/* TẦNG 3: BỐ CỤC 2 CỘT CHUYÊN BIỆT (PHÂN RÃ SẠCH THEO VIEW) */}
+        <div>
+          {viewMode === "all" ? (
+            <InstructorOverviewView
+              courses={courses}
+              activeCourse={activeCourse}
+              onSelectCourse={handleSelectCourse}
+              analyticsByCourseId={overviewData.analyticsByCourseId}
+              pendingGradingByCourseId={overviewData.pendingGradingByCourseId}
+              pendingQaByCourseId={overviewData.pendingQaByCourseId}
+              overviewActionTasks={overviewData.overviewActionTasks}
+              overviewReviews={overviewData.overviewReviews}
+              avgRatingAllCourses={overviewData.avgRatingAllCourses}
+              totalStudentsAllCourses={overviewData.totalStudentsAllCourses}
+              totalCertificatesAllCourses={overviewData.totalCertificatesAllCourses}
+              allCompletedStudentsList={overviewData.allCompletedStudentsList}
+              pacingCohortSummary={overviewData.pacingCohortSummary}
+              onOpenPacingModal={(cat) => {
+                setPacingModalCategory(cat || "ALL");
+                setIsPacingModalOpen(true);
+              }}
+              enrichedCoursesForComparison={overviewData.enrichedCoursesForComparison}
+              currentMonthNumber={currentMonthNumber}
+              lastMonthNumber={lastMonthNumber}
+            />
+          ) : (
+            <InstructorCourseDeepDiveView
+              activeCourse={activeCourse}
+              rawStudents={courseData.rawStudents}
+              rawStudentsWithPacing={courseData.rawStudentsWithPacing}
+              coursePacingCounts={courseData.coursePacingCounts}
+              calculatedWeeks={courseData.calculatedWeeks}
+              bottleneckWeek={courseData.bottleneckWeek}
+              completedStudents={courseData.completedStudents}
+              totalItemsInActiveCourse={courseData.totalItemsInActiveCourse}
+              currentTimeMs={currentTimeMs}
+              currentMonthNumber={currentMonthNumber}
+              lastMonthNumber={lastMonthNumber}
+              nudgedSpecificStudentIds={nudgedSpecificStudentIds}
+              onNudgeStudent={handleNudgeStudent}
+              onNudgeAllBehind={() => setIsBulkReminderModalOpen(true)}
+              onSelectStudentForDetail={(record) => {
+                setSelectedStudentForDetail(record);
+                setIsStudentDetailModalOpen(true);
+              }}
+            />
+          )}
+        </div>
+      </div>
       {/* ===================================================================== */}
       {/* CÁC DIALOG MODAL QUẢN LÝ (DYNAMIC)                                     */}
       {/* ===================================================================== */}
