@@ -64,7 +64,11 @@ class ForumRepository(IForumRepository):
         )
 
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = ""
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        course_ids: Sequence[str] | None = None,
     ) -> Sequence[ForumThreadEntity]:
         voted_post_ids: set[str] = set()
         if current_user_id:
@@ -77,6 +81,10 @@ class ForumRepository(IForumRepository):
         query = select(ForumThreadORM).options(selectinload(ForumThreadORM.replies))
         if course_id and course_id.upper() != "ALL":
             query = query.where(ForumThreadORM.course_id == course_id)
+        elif course_ids is not None:
+            if not course_ids:
+                return []
+            query = query.where(ForumThreadORM.course_id.in_(list(course_ids)))
         if item_id:
             query = query.where(ForumThreadORM.item_id == item_id)
 

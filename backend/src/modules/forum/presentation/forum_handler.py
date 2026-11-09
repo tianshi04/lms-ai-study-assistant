@@ -78,6 +78,7 @@ class ForumHandler(ForumService):
             course_id=request.course_id,
             item_id=request.item_id,
             current_user_id=current_user.id,
+            user=current_user,
         )
         return pb.ListThreadsResponse(threads=[_to_pb_thread(t) for t in threads])
 

@@ -36,7 +36,7 @@ type DiscussionTriageFilter = "all" | "unanswered" | "answered" | "pinned";
 export function InstructorCourseDiscussionsClient({
   courseId,
 }: InstructorCourseDiscussionsClientProps) {
-  const { userId, isInstructorOrAdmin, userName, userRole } = useAuth();
+  const { userId, userName, userRole } = useAuth();
   const toast = useToast();
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -680,7 +680,7 @@ export function InstructorCourseDiscussionsClient({
           onClose={() => setSelectedThreadId(null)}
           thread={activeModalThread}
           currentUserId={userId || ""}
-          isStaffOrAdmin={isInstructorOrAdmin}
+          isStaffOrAdmin={isCourseStaff}
           onVote={handleVote}
           onPostReply={async (threadId, content) => {
             const client = getRpcClient(ForumService);

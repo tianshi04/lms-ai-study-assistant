@@ -1,8 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { MessageSquare, Plus, ChevronUp, ChevronDown, Reply, AlertTriangle } from "lucide-react";
+import {
+  MessageSquare,
+  Plus,
+  ChevronUp,
+  ChevronDown,
+  Reply,
+  AlertTriangle,
+  BookOpen,
+} from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -12,7 +21,8 @@ import {
   type ForumThread,
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
-import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { LearningService } from "@/gen/learning/v1/learning_pb";
 import { Dialog } from "@/components/ui/Dialog";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -24,6 +34,11 @@ import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { Select } from "@/components/ui/Select";
+
+interface ForumCourseItem {
+  id: string;
+  title: string;
+}
 
 function formatRoleName(role: string): string {
   if (!role) return "Học viên";
@@ -37,14 +52,24 @@ function formatRoleName(role: string): string {
 function ForumPageContent() {
   const locale = "vi";
   const toast = useToast();
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<ForumCourseItem[]>([]);
+  const [teachingCourseIds, setTeachingCourseIds] = useState<Set<string>>(new Set());
   const [selectedCourseId, setSelectedCourseId] = useState<string>("ALL");
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { userId: authUserId, isStaff: isStaffOrAdmin } = useAuth();
+  const { userId: authUserId, isStaff: isStaffOrAdmin, isSuperAdmin, isAuthenticated } = useAuth();
   const currentUserId = authUserId || "";
+
+  const isCourseModerator = useCallback(
+    (courseId: string) => {
+      if (isSuperAdmin) return true;
+      if (!courseId) return false;
+      return teachingCourseIds.has(courseId);
+    },
+    [isSuperAdmin, teachingCourseIds],
+  );
 
   // New Thread Form State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -81,22 +106,72 @@ function ForumPageContent() {
   const [isDeletingThread, setIsDeletingThread] = useState(false);
   const [isDeletingReply, setIsDeletingReply] = useState(false);
 
-  // Fetch Courses Catalog
+  // Fetch Accessible Courses (Enrolled for learners, Teaching for instructors, All for Super Admins)
   useEffect(() => {
-    async function fetchCatalog() {
+    let cancelled = false;
+
+    async function fetchAccessibleCourses() {
       try {
-        const client = getRpcClient(CatalogService);
-        const res = await client.listCourses({});
-        setCourses(res.courses);
-        if (res.courses.length > 0 && !newCourseId) {
-          setNewCourseId(res.courses[0].id);
+        const catalogClient = getRpcClient(CatalogService);
+        const teachingSet = new Set<string>();
+        const combinedMap = new Map<string, ForumCourseItem>();
+
+        if (isSuperAdmin) {
+          const res = await catalogClient.listCourses({});
+          res.courses.forEach((c) => {
+            combinedMap.set(c.id, { id: c.id, title: c.title });
+          });
+        } else {
+          // 1. Fetch Enrolled Courses
+          if (isAuthenticated || authUserId) {
+            try {
+              const learningClient = getRpcClient(LearningService);
+              const enrolledRes = await learningClient.listMyEnrolledCourses({});
+              enrolledRes.courses.forEach((c) => {
+                combinedMap.set(c.courseId, { id: c.courseId, title: c.courseTitle });
+              });
+            } catch (err) {
+              console.error("Error fetching enrolled courses for forum:", err);
+            }
+          }
+
+          // 2. Fetch Teaching Courses if Instructor or Staff
+          if (isStaffOrAdmin) {
+            try {
+              const teachingRes = await catalogClient.listInstructorCourses({ pageSize: 100 });
+              teachingRes.courses.forEach((c) => {
+                teachingSet.add(c.id);
+                combinedMap.set(c.id, { id: c.id, title: c.title });
+              });
+            } catch (err) {
+              console.error("Error fetching instructor courses for forum:", err);
+            }
+          }
+        }
+
+        if (!cancelled) {
+          const accessibleCourses = Array.from(combinedMap.values());
+          setCourses(accessibleCourses);
+          setTeachingCourseIds(teachingSet);
+          if (accessibleCourses.length > 0) {
+            setNewCourseId((prev) =>
+              prev && combinedMap.has(prev) ? prev : accessibleCourses[0].id,
+            );
+          }
         }
       } catch (err) {
-        console.error("Error fetching courses catalog for forum:", err);
+        if (!cancelled) {
+          console.error("Error fetching accessible courses for forum:", err);
+        }
       }
     }
-    fetchCatalog();
-  }, [newCourseId]);
+
+    fetchAccessibleCourses();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, authUserId, isSuperAdmin, isStaffOrAdmin]);
 
   // Fetch Forum Threads
   const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
@@ -424,7 +499,15 @@ function ForumPageContent() {
           <div className="flex items-center gap-3">
             <Button
               variant="filled"
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => {
+                if (courses.length === 0) {
+                  toast.error(
+                    "Bạn cần đăng ký hoặc phụ trách ít nhất một khóa học để tạo chủ đề thảo luận.",
+                  );
+                  return;
+                }
+                setShowCreateModal(true);
+              }}
               className="px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-primary/20 gap-2"
             >
               <Plus aria-hidden="true" className="w-4 h-4" />
@@ -489,6 +572,25 @@ function ForumPageContent() {
           <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
             <p className="font-semibold">{error}</p>
           </div>
+        ) : courses.length === 0 ? (
+          <div className="text-center py-16 bg-card rounded-2xl border border-border p-8 space-y-4">
+            <BookOpen aria-hidden="true" className="w-12 h-12 text-primary mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-foreground">
+              {"Bạn chưa tham gia khóa học nào"}
+            </h3>
+            <p className="text-muted-foreground font-medium max-w-md mx-auto text-sm">
+              {
+                "Diễn đàn thảo luận được phân chia theo từng khóa học để đảm bảo tính tập trung và quyền riêng tư lớp học. Vui lòng đăng ký tham gia khóa học để bắt đầu trao đổi cùng Giảng viên."
+              }
+            </p>
+            <div>
+              <Link href="/catalog">
+                <Button variant="filled" size="md">
+                  {"Khám phá khóa học"}
+                </Button>
+              </Link>
+            </div>
+          </div>
         ) : threads.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-2xl border border-border p-8">
             <MessageSquare
@@ -506,7 +608,7 @@ function ForumPageContent() {
               const isThreadAuthor = Boolean(
                 currentUserId && thread.authorUserId === currentUserId,
               );
-              const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
+              const canDeleteThread = isThreadAuthor || isCourseModerator(thread.courseId);
               const isTargetThread = urlThreadId === thread.id;
 
               return (
@@ -648,7 +750,7 @@ function ForumPageContent() {
                         const isReplyAuthor = Boolean(
                           currentUserId && reply.authorUserId === currentUserId,
                         );
-                        const canDeleteReply = isReplyAuthor || isStaffOrAdmin;
+                        const canDeleteReply = isReplyAuthor || isCourseModerator(thread.courseId);
                         const isEditingThisReply = editingReplyId === reply.id;
 
                         return (
@@ -698,14 +800,14 @@ function ForumPageContent() {
                                   </Button>
                                 )}
 
-                                {isStaffOrAdmin && !reply.isStaffAnswer && (
+                                {isCourseModerator(thread.courseId) && !reply.isStaffAnswer && (
                                   <Button
                                     variant="outlined"
                                     size="sm"
                                     onClick={() => handlePinStaffAnswer(reply.id)}
                                     className="text-xs text-warning bg-warning/10 hover:bg-warning/20 border-warning/30 px-3 py-1 rounded-full h-auto"
                                   >
-                                    Pin Answer
+                                    {"Ghim câu trả lời"}
                                   </Button>
                                 )}
 
@@ -957,7 +1059,10 @@ function ForumPageContent() {
         onClose={() => setSelectedModalThreadId(null)}
         thread={threads.find((t) => t.id === selectedModalThreadId) || null}
         currentUserId={currentUserId}
-        isStaffOrAdmin={isStaffOrAdmin}
+        isStaffOrAdmin={Boolean(
+          selectedModalThreadId &&
+          isCourseModerator(threads.find((t) => t.id === selectedModalThreadId)?.courseId || ""),
+        )}
         onVote={handleVote}
         onPostReply={async (threadId, content) => {
           const client = getRpcClient(ForumService);

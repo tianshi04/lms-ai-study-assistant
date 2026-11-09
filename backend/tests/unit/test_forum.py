@@ -15,8 +15,21 @@ class MockForumRepository:
         self.threads: dict[str, ForumThreadEntity] = {}
         self.replies: dict[str, ForumReplyEntity] = {}
 
-    async def list_threads(self, course_id="", item_id="", current_user_id=""):
-        return list(self.threads.values())
+    async def list_threads(
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        course_ids: list[str] | None = None,
+    ):
+        res = list(self.threads.values())
+        if course_id:
+            res = [t for t in res if t.course_id == course_id]
+        elif course_ids is not None:
+            res = [t for t in res if t.course_id in course_ids]
+        if item_id:
+            res = [t for t in res if t.item_id == item_id]
+        return res
 
     async def get_thread_by_id(self, thread_id: str):
         return self.threads.get(thread_id)
@@ -85,6 +98,14 @@ class MockCatalogRepository:
     async def get_course_detail(self, course_id: str):
         return self.courses.get(course_id)
 
+    async def list_instructor_courses(self, instructor_id: str, page_size: int = 200):
+        matched = [
+            c
+            for c in self.courses.values()
+            if c.owner_id == instructor_id or instructor_id in c.co_instructor_ids
+        ]
+        return matched, len(matched)
+
 
 class MockLearningRepository:
     def __init__(self):
@@ -92,6 +113,17 @@ class MockLearningRepository:
 
     async def check_enrollment(self, user_id: str, course_id: str) -> bool:
         return (user_id, course_id) in self.enrolled_pairs
+
+    async def list_enrolled_courses(self, user_id: str):
+        class EnrolledCourse:
+            def __init__(self, c_id: str):
+                self.course_id = c_id
+
+        return [
+            EnrolledCourse(c_id)
+            for (u_id, c_id) in self.enrolled_pairs
+            if u_id == user_id
+        ]
 
 
 @pytest.mark.asyncio
@@ -349,3 +381,108 @@ async def test_forum_repository_vote_post_integrity_error():
     count = await repo.vote_post(post_id="thread-dl-01", user_id="user_learner_demo")
     assert count == 5
     mock_session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_threads_scoped_to_teaching_and_enrolled_courses():
+    """Verify that users can only view threads from courses they teach or are enrolled in."""
+    mock_forum_repo = MockForumRepository()
+    mock_catalog_repo = MockCatalogRepository()
+    mock_learning_repo = MockLearningRepository()
+
+    # Course 1: Owned by Prof Tuan
+    course_econ = Course(
+        id="course_econ",
+        title="Microeconomics",
+        slug="microeconomics",
+        owner_id="prof_tuan",
+    )
+    mock_catalog_repo.courses["course_econ"] = course_econ
+
+    # Course 2: Owned by Prof Andrew
+    course_ai = Course(
+        id="course_ai",
+        title="Deep Learning",
+        slug="deep-learning",
+        owner_id="prof_andrew",
+    )
+    mock_catalog_repo.courses["course_ai"] = course_ai
+
+    # Create thread in each course
+    thread_econ = ForumThreadEntity(
+        id="t_econ",
+        course_id="course_econ",
+        item_id="i1",
+        title="Econ Thread",
+        content="Discussion on Econ",
+        author_user_id="prof_tuan",
+        author_name="Prof Tuan",
+        author_role="Instructor",
+    )
+    thread_ai = ForumThreadEntity(
+        id="t_ai",
+        course_id="course_ai",
+        item_id="i2",
+        title="AI Thread",
+        content="Discussion on AI",
+        author_user_id="prof_andrew",
+        author_name="Prof Andrew",
+        author_role="Instructor",
+    )
+    mock_forum_repo.threads["t_econ"] = thread_econ
+    mock_forum_repo.threads["t_ai"] = thread_ai
+
+    use_case = ForumUseCase(
+        repo_factory=lambda session: mock_forum_repo,
+        catalog_repo_factory=lambda session: mock_catalog_repo,
+        learning_repo_factory=lambda session: mock_learning_repo,
+    )
+
+    tuan_user = CurrentUser(
+        id="prof_tuan", role="USER_ROLE_INSTRUCTOR", email="tuan@uni.edu"
+    )
+    andrew_user = CurrentUser(
+        id="prof_andrew", role="USER_ROLE_INSTRUCTOR", email="andrew@ai.edu"
+    )
+    alice_learner = CurrentUser(
+        id="learner_alice", role="USER_ROLE_LEARNER", email="alice@test.com"
+    )
+    admin_user = CurrentUser(
+        id="admin_01", role="USER_ROLE_ADMIN", email="admin@system.local"
+    )
+
+    # 1. Prof Tuan (teaches econ, enrolled in 0 courses):
+    # Viewing all courses -> sees ONLY econ thread
+    tuan_threads = await use_case.list_threads(course_id="", user=tuan_user)
+    assert len(tuan_threads) == 1
+    assert tuan_threads[0].id == "t_econ"
+
+    # Prof Tuan tries to view course_ai explicitly -> denied (returns [])
+    tuan_ai_threads = await use_case.list_threads(course_id="course_ai", user=tuan_user)
+    assert len(tuan_ai_threads) == 0
+
+    # Prof Andrew (teaches AI, enrolled in 0 courses) -> sees ONLY AI thread
+    andrew_threads = await use_case.list_threads(course_id="", user=andrew_user)
+    assert len(andrew_threads) == 1
+    assert andrew_threads[0].id == "t_ai"
+
+    # 2. Learner Alice enrolled ONLY in course_ai
+    mock_learning_repo.enrolled_pairs.add(("learner_alice", "course_ai"))
+    alice_threads = await use_case.list_threads(course_id="", user=alice_learner)
+    assert len(alice_threads) == 1
+    assert alice_threads[0].id == "t_ai"
+
+    # Alice viewing course_econ explicitly -> denied (returns [])
+    alice_econ_threads = await use_case.list_threads(
+        course_id="course_econ", user=alice_learner
+    )
+    assert len(alice_econ_threads) == 0
+
+    # 3. Super Admin -> views all threads across all courses
+    admin_threads = await use_case.list_threads(course_id="", user=admin_user)
+    assert len(admin_threads) == 2
+
+    # 4. New user with no enrollments and no teaching courses -> returns []
+    bob_user = CurrentUser(id="bob", role="USER_ROLE_LEARNER", email="bob@test.com")
+    bob_threads = await use_case.list_threads(course_id="", user=bob_user)
+    assert len(bob_threads) == 0

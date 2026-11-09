@@ -131,17 +131,74 @@ class ForumUseCase:
         return DEFAULT_FORUM_AUTHOR_ROLE, False
 
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = ""
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        user: CurrentUser | None = None,
     ) -> Sequence[ForumThreadEntity]:
         normalized_course_id = (
             "" if not course_id or course_id.upper() == "ALL" else course_id
         )
+
         async with async_session_scope() as session:
+            # 1. Super Admin bypasses scope filtering
+            if user and getattr(user, "is_admin", False):
+                repo = self._get_repo(session)
+                return await repo.list_threads(
+                    course_id=normalized_course_id,
+                    item_id=item_id,
+                    current_user_id=current_user_id or user.id,
+                )
+
+            # 2. For non-admin users, resolve their accessible courses
+            actual_user_id = (user.id if user else "") or current_user_id
+            accessible_course_ids: set[str] = set()
+
+            if actual_user_id:
+                learning_repo: ILearningRepository = self.learning_repo_factory(session)
+                enrolled = await learning_repo.list_enrolled_courses(actual_user_id)
+                accessible_course_ids.update(s.course_id for s in enrolled)
+
+                # If instructor or staff, include their teaching courses
+                if user and (
+                    getattr(user, "is_staff", False)
+                    or getattr(user, "role", "") == "USER_ROLE_INSTRUCTOR"
+                ):
+                    catalog_repo: ICatalogRepository = self.catalog_repo_factory(
+                        session
+                    )
+                    teaching_courses, _ = await catalog_repo.list_instructor_courses(
+                        instructor_id=actual_user_id, page_size=200
+                    )
+                    accessible_course_ids.update(c.id for c in teaching_courses)
+
+            # If user explicitly requests a specific course
+            if normalized_course_id:
+                if normalized_course_id not in accessible_course_ids:
+                    logger.info(
+                        "User %s attempted to list threads for inaccessible course %s",
+                        actual_user_id,
+                        normalized_course_id,
+                    )
+                    return []
+                repo = self._get_repo(session)
+                return await repo.list_threads(
+                    course_id=normalized_course_id,
+                    item_id=item_id,
+                    current_user_id=actual_user_id,
+                )
+
+            # If viewing all courses (feed), restrict strictly to accessible_course_ids
+            if not accessible_course_ids:
+                return []
+
             repo = self._get_repo(session)
             return await repo.list_threads(
-                course_id=normalized_course_id,
+                course_id="",
                 item_id=item_id,
-                current_user_id=current_user_id,
+                current_user_id=actual_user_id,
+                course_ids=list(accessible_course_ids),
             )
 
     async def create_thread(

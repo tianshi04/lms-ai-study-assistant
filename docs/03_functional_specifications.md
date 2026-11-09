@@ -181,7 +181,10 @@ flowchart TD
 * **Điều phối & Kiểm duyệt Diễn đàn (Forum Moderation, Editing & Pinning):** 
   * Trợ giảng/Giảng viên phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`) hoặc Admin có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
   * Tác giả bài viết (`author_user_id == current_user.id`) có quyền cập nhật (`UpdateThread`, `UpdateReply`) hoặc xóa bài đăng của mình. Khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động đánh dấu `is_edited = True` và ghi nhận timestamp `edited_at` để người xem dễ dàng phân biệt bài viết đã qua chỉnh sửa.
-  * Ban kiểm duyệt phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`, `ADMIN`) có quyền xóa bài viết/bình luận vi phạm quy chuẩn cộng đồng của bất kỳ người dùng nào.
+  * Ban kiểm duyệt phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`, `ADMIN`) có quyền xóa bài viết/bình luận vi phạm quy chuẩn cộng đồng của bất kỳ người dùng nào trong phạm vi khóa học mình phụ trách.
+* **Cách ly Luồng Thảo luận Lớp học & Phạm vi Truy cập (Class-Scoped Discussion Feed & Access Boundary):**
+  * *Cách ly Nguồn cấp Thảo luận:* API `ListThreads` tự động giới hạn phạm vi truy vấn theo danh sách các khóa học mà người dùng thực sự tham gia (`accessible_course_ids = enrolled_course_ids | teaching_course_ids`). Người dùng không thể xem thảo luận của các lớp học mình không tham gia. Super Admin giữ quyền truy cập toàn diện.
+  * *Bộ lọc Khóa học Scoped:* Dropdown lựa chọn khóa học trên Diễn đàn chỉ hiển thị các khóa học mà người dùng đã đăng ký hoặc đang giảng dạy.
 * **Ràng buộc Vai trò theo Ngữ cảnh & Ghi danh (Contextual Role Resolution & Enrollment Guard):**
   * *Ngữ cảnh vai trò khóa học:* Nếu một tài khoản là Giảng viên tham gia vào khóa học của người khác, họ tham gia với tư cách **Học viên (`Learner`)**; phản hồi của họ không tự động gắn cờ `is_staff_answer` và không thể ghim bài.
   * *Ràng buộc Ghi danh:* Người dùng (ngoại trừ Đội ngũ giảng dạy phụ trách và Admin) bắt buộc phải ghi danh vào khóa học mới được phép tạo chủ đề (`CreateThread`) hoặc gửi câu trả lời (`PostReply`).
