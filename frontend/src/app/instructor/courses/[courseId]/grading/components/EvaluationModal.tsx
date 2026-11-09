@@ -652,6 +652,11 @@ export function EvaluationModal({
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 <h4 className="text-sm font-bold text-foreground">{c.title}</h4>
+                                {c.description && (
+                                  <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                                    {c.description}
+                                  </p>
+                                )}
                                 <span className="text-[11px] text-muted-foreground">
                                   Tối đa: {c.maxScore} điểm
                                 </span>
