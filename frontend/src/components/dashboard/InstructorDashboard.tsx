@@ -355,7 +355,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   const rawStudentsWithPacing = useMemo(() => {
     const totalWeeks = calculatedWeeks.length || 2;
     const courseDurationDays = Math.max(14, totalWeeks * 7);
-    const nowMs = currentTimeMs > 0 ? currentTimeMs : Date.now();
+    const nowMs = currentTimeMs > 0 ? currentTimeMs : 0;
 
     return rawStudents.map((st) => {
       let pace: "AHEAD" | "ON_TRACK" | "BEHIND" = "ON_TRACK";
@@ -365,7 +365,10 @@ export function InstructorDashboard({ userName }: { userName: string }) {
       // Lấy thời điểm nhập học thực tế
       const enrolledMs = st.enrolledAt ? new Date(st.enrolledAt).getTime() : nowMs;
       const daysElapsed = Math.max(0, Math.floor((nowMs - enrolledMs) / (1000 * 60 * 60 * 24)));
-      const expectedProgressPct = Math.min(100, Math.round((daysElapsed / courseDurationDays) * 100));
+      const expectedProgressPct = Math.min(
+        100,
+        Math.round((daysElapsed / courseDurationDays) * 100),
+      );
 
       if (st.progressPercent >= 100) {
         pace = "AHEAD";
@@ -2335,9 +2338,17 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </div>
             </div>
 
-            {/* CỘT PHẢI (4/12 - 33%): AI COPILOT & CẢNH BÁO ĐIỂM NGHẼN */}
+            {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN LÀM & AI COPILOT & ĐIỂM NGHẼN */}
             <div className="lg:col-span-4 space-y-4">
-              {/* Box 1: AI Teaching Copilot (Agent Cố Vấn & Phân Tích Sư Phạm) */}
+              {/* Box 1: Việc Cần Xử Lý (Hàng chờ chấm bài, Khiếu nại & Link Cockpit) */}
+              <InstructorActionTasksCard
+                courseId={activeCourse?.id}
+                courseTitle={activeCourse?.title}
+                behindCount={coursePacingCounts.behind}
+                onFilterBehind={() => setStudentPacingFilter("BEHIND")}
+              />
+
+              {/* Box 2: AI Teaching Copilot (Agent Cố Vấn & Phân Tích Sư Phạm) */}
               <InstructorAIAssistantCard />
 
               {/* Box 2: Cảnh Báo Điểm Nghẽn */}
