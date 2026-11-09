@@ -133,10 +133,15 @@ class ForumUseCase:
     async def list_threads(
         self, course_id: str = "", item_id: str = "", current_user_id: str = ""
     ) -> Sequence[ForumThreadEntity]:
+        normalized_course_id = (
+            "" if not course_id or course_id.upper() == "ALL" else course_id
+        )
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.list_threads(
-                course_id=course_id, item_id=item_id, current_user_id=current_user_id
+                course_id=normalized_course_id,
+                item_id=item_id,
+                current_user_id=current_user_id,
             )
 
     async def create_thread(

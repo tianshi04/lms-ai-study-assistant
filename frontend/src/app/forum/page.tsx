@@ -38,7 +38,7 @@ function ForumPageContent() {
   const locale = "vi";
   const toast = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("ALL");
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +110,7 @@ function ForumPageContent() {
       try {
         const client = getRpcClient(ForumService);
         const res = await client.listThreads({
-          courseId: selectedCourseId,
+          courseId: selectedCourseId === "ALL" ? "" : selectedCourseId,
           itemId: "",
         });
         if (!cancelled) {
@@ -149,10 +149,10 @@ function ForumPageContent() {
   const [selectedModalThreadId, setSelectedModalThreadId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (urlCourseId && !selectedCourseId) {
+    if (urlCourseId && urlCourseId !== "ALL") {
       setSelectedCourseId(urlCourseId);
     }
-  }, [urlCourseId, selectedCourseId]);
+  }, [urlCourseId]);
 
   useEffect(() => {
     if (urlThreadId && !loading && threads.length > 0) {
@@ -179,7 +179,9 @@ function ForumPageContent() {
     try {
       const client = getRpcClient(ForumService);
       const targetCourseId =
-        newCourseId || selectedCourseId || (courses[0]?.id ?? "course-web-dev");
+        newCourseId ||
+        (selectedCourseId !== "ALL" ? selectedCourseId : "") ||
+        (courses[0]?.id ?? "course-web-dev");
 
       await client.createThread({
         courseId: targetCourseId,
@@ -194,8 +196,8 @@ function ForumPageContent() {
       toast.success(
         locale === "vi" ? "Đã đăng chủ đề thảo luận mới!" : "New discussion thread created!",
       );
-      if (selectedCourseId && selectedCourseId !== targetCourseId) {
-        setSelectedCourseId("");
+      if (selectedCourseId !== "ALL" && selectedCourseId !== targetCourseId) {
+        setSelectedCourseId("ALL");
       } else {
         fetchThreads();
       }
@@ -447,12 +449,12 @@ function ForumPageContent() {
                 if (val) setSelectedCourseId(val as string);
               }}
             >
-              <Select.Trigger className="w-[200px] text-xs font-semibold">
+              <Select.Trigger className="w-full sm:w-[280px] text-xs font-semibold">
                 <Select.Value placeholder="Tất cả khóa học">
                   {(() => {
-                    if (selectedCourseId === "ALL") return "Tất cả khóa học";
+                    if (!selectedCourseId || selectedCourseId === "ALL") return "Tất cả khóa học";
                     const c = courses.find((course) => course.id === selectedCourseId);
-                    return c ? c.title : selectedCourseId;
+                    return c ? c.title : "Tất cả khóa học";
                   })()}
                 </Select.Value>
               </Select.Trigger>
@@ -525,6 +527,21 @@ function ForumPageContent() {
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         {isTargetThread && <Badge variant="primary">📌 TB</Badge>}
                         {thread.isStaffPinned && <Badge variant="warning">GHIM</Badge>}
+                        {(() => {
+                          const courseObj = courses.find((c) => c.id === thread.courseId);
+                          const courseTitle = courseObj?.title || thread.courseId;
+                          if (!courseTitle) return null;
+                          return (
+                            <Badge
+                              variant="secondary"
+                              className="text-[11px] font-semibold cursor-pointer hover:opacity-85 transition-opacity"
+                              onClick={() => setSelectedCourseId(thread.courseId)}
+                              title={`Lọc chỉ xem khóa học: ${courseTitle}`}
+                            >
+                              📚 {courseTitle}
+                            </Badge>
+                          );
+                        })()}
                         <span className="text-xs font-medium text-muted-foreground">
                           By{" "}
                           <strong className="text-foreground">

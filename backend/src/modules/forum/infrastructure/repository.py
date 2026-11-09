@@ -75,7 +75,7 @@ class ForumRepository(IForumRepository):
             voted_post_ids = set(v_res.scalars().all())
 
         query = select(ForumThreadORM).options(selectinload(ForumThreadORM.replies))
-        if course_id:
+        if course_id and course_id.upper() != "ALL":
             query = query.where(ForumThreadORM.course_id == course_id)
         if item_id:
             query = query.where(ForumThreadORM.item_id == item_id)
