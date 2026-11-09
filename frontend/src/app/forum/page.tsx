@@ -577,7 +577,9 @@ function ForumPageContent() {
           </div>
 
           <div className="text-xs text-muted-foreground">
-            Total <span className="font-bold text-foreground">{threads.length}</span> threads
+            {"Tổng cộng "}
+            <span className="font-bold text-foreground">{threads.length}</span>
+            {" chủ đề thảo luận"}
           </div>
         </Surface>
 
