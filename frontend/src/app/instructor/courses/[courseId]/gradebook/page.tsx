@@ -11,9 +11,12 @@ interface GradebookPageProps {
   params: Promise<{ courseId: string }>;
 }
 
-export default async function GradebookPage({ params }: GradebookPageProps) {
+async function GradebookContent({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params;
+  return <CourseGradebookClient courseId={courseId} />;
+}
 
+export default function GradebookPage({ params }: GradebookPageProps) {
   return (
     <Suspense
       fallback={
@@ -25,7 +28,7 @@ export default async function GradebookPage({ params }: GradebookPageProps) {
         </div>
       }
     >
-      <CourseGradebookClient courseId={courseId} />
+      <GradebookContent params={params} />
     </Suspense>
   );
 }

@@ -12,9 +12,12 @@ interface GradingPageProps {
   params: Promise<{ courseId: string }>;
 }
 
-export default async function GradingPage({ params }: GradingPageProps) {
+async function GradingContent({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params;
+  return <GradingCockpitClient courseId={courseId} />;
+}
 
+export default function GradingPage({ params }: GradingPageProps) {
   return (
     <Suspense
       fallback={
@@ -28,7 +31,7 @@ export default async function GradingPage({ params }: GradingPageProps) {
         </div>
       }
     >
-      <GradingCockpitClient courseId={courseId} />
+      <GradingContent params={params} />
     </Suspense>
   );
 }
