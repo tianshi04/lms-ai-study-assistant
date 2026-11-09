@@ -2,67 +2,95 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { MessageSquare, ArrowRight, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
+import { MessageSquare, ArrowRight, BookOpen, ClipboardCheck, CheckCircle2 } from "lucide-react";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
-import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
-import type { OverviewCourseStat } from "../types";
+import { Badge } from "@/components/ui/Badge";
+import { CourseStatus, type Course, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 
 interface EnrichedCourseItem {
   course: Course;
   totalStudents: number;
   compRate: number;
   rating: number;
-  code: string;
-  credits: number;
+  pendingGrading: number;
+  pendingQa: number;
 }
 
 interface InstructorCourseComparisonTableProps {
   courses: Course[];
-  courseStats?: OverviewCourseStat[];
   analyticsByCourseId?: Map<string, InstructorAnalytics | null | undefined>;
+  pendingGradingByCourseId?: Map<string, number>;
+  pendingQaByCourseId?: Map<string, number>;
   onSelectCourse: (courseId: string) => void;
+}
+
+function renderCourseStatusBadge(status?: CourseStatus) {
+  switch (status) {
+    case CourseStatus.PUBLISHED:
+      return (
+        <Badge variant="success" className="whitespace-nowrap text-[10px] font-bold px-2 py-0.5">
+          Đã xuất bản
+        </Badge>
+      );
+    case CourseStatus.DRAFT:
+      return (
+        <Badge variant="secondary" className="whitespace-nowrap text-[10px] font-bold px-2 py-0.5">
+          Bản nháp
+        </Badge>
+      );
+    case CourseStatus.PENDING_REVIEW:
+      return (
+        <Badge variant="warning" className="whitespace-nowrap text-[10px] font-bold px-2 py-0.5">
+          Đang duyệt
+        </Badge>
+      );
+    case CourseStatus.REJECTED:
+      return (
+        <Badge variant="error" className="whitespace-nowrap text-[10px] font-bold px-2 py-0.5">
+          Từ chối
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="success" className="whitespace-nowrap text-[10px] font-bold px-2 py-0.5">
+          Đã xuất bản
+        </Badge>
+      );
+  }
 }
 
 export function InstructorCourseComparisonTable({
   courses,
-  courseStats,
   analyticsByCourseId,
+  pendingGradingByCourseId,
+  pendingQaByCourseId,
   onSelectCourse,
 }: InstructorCourseComparisonTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Làm giàu thông tin khóa học với mã môn và dữ liệu thống kê thật từ database
+  // Làm giàu thông tin khóa học với số liệu thật từ analytics và hàng đợi
   const enrichedCourses: EnrichedCourseItem[] = useMemo(() => {
-    return courses.map((course, idx) => {
+    return courses.map((course) => {
       const an = analyticsByCourseId?.get(course.id);
-      const stats = courseStats?.find(
-        (s) =>
-          course.id.toLowerCase().includes(s.keyword) ||
-          course.title.toLowerCase().includes(s.keyword),
-      );
 
-      const totalStudents =
-        an?.totalEnrolledStudents ?? an?.students?.length ?? stats?.totalStudents ?? 0;
-      const compRate =
-        an?.averageCompletionRate != null
-          ? Math.round(an.averageCompletionRate)
-          : (stats?.compRate ?? 0);
-      const rating = an?.averageRating || course.averageRating || stats?.rating || 5.0;
+      const totalStudents = an?.totalEnrolledStudents ?? an?.students?.length ?? 0;
+      const compRate = an?.averageCompletionRate != null ? Math.round(an.averageCompletionRate) : 0;
+      const rating = an?.averageRating || course.averageRating || 5.0;
 
-      const codes = ["ECO101", "BEH201", "MET301", "FIN401", "MGT501"];
-      const code = codes[idx % codes.length];
+      const pendingGrading = pendingGradingByCourseId?.get(course.id) || 0;
+      const pendingQa = pendingQaByCourseId?.get(course.id) || 0;
 
       return {
         course,
         totalStudents,
         compRate,
         rating,
-        code,
-        credits: 3,
+        pendingGrading,
+        pendingQa,
       };
     });
-  }, [courses, courseStats, analyticsByCourseId]);
+  }, [courses, analyticsByCourseId, pendingGradingByCourseId, pendingQaByCourseId]);
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return enrichedCourses;
@@ -70,13 +98,14 @@ export function InstructorCourseComparisonTable({
     return enrichedCourses.filter(
       (item) =>
         item.course.title.toLowerCase().includes(q) ||
-        item.code.toLowerCase().includes(q) ||
+        (item.course.slug && item.course.slug.toLowerCase().includes(q)) ||
+        (item.course.partnerName && item.course.partnerName.toLowerCase().includes(q)) ||
         item.course.id.toLowerCase().includes(q),
     );
   }, [enrichedCourses, searchQuery]);
 
   return (
-    <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4">
+    <div className="p-5 rounded-3xl bg-surface border border-outline-variant/60 shadow-xs space-y-4">
       {/* Header Bảng so sánh */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -106,70 +135,83 @@ export function InstructorCourseComparisonTable({
         </div>
       </div>
 
-      {/* Container bảng co giãn tự nhiên: Không khóa cứng max-h để tránh thanh cuộn nhân tạo */}
+      {/* Container bảng co giãn tự nhiên 100% không tràn cuộn ngang */}
       <div className="overflow-x-auto rounded-2xl border border-outline-variant/60 bg-surface">
         <Table>
-          <Table.Header className="bg-surface-container-high/60">
-            <Table.Row className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              <Table.Head className="py-2.5 px-3">Tên khóa học & Mã HP</Table.Head>
-              <Table.Head className="py-2.5 px-3 text-center">Trạng thái</Table.Head>
-              <Table.Head className="py-2.5 px-3 text-right">Học viên</Table.Head>
-              <Table.Head className="py-2.5 px-3">Tiến độ TB</Table.Head>
-              <Table.Head className="py-2.5 px-3">Nhiệm vụ chờ</Table.Head>
-              <Table.Head className="py-2.5 px-3 text-right">Đánh giá</Table.Head>
-              <Table.Head className="py-2.5 px-3 text-right">Thao tác</Table.Head>
+          <Table.Header className="bg-muted/40">
+            <Table.Row className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
+              <Table.Head className="py-3 px-4">Tên khóa học & Đối tác</Table.Head>
+              <Table.Head className="py-3 px-3 text-center whitespace-nowrap w-[110px]">
+                Trạng thái
+              </Table.Head>
+              <Table.Head className="py-3 px-3 text-right whitespace-nowrap w-[90px]">
+                Học viên
+              </Table.Head>
+              <Table.Head className="py-3 px-3 whitespace-nowrap w-[130px]">Tiến độ TB</Table.Head>
+              <Table.Head className="py-3 px-3 whitespace-nowrap w-[180px]">
+                Nhiệm vụ cần xử lý
+              </Table.Head>
+              <Table.Head className="py-3 px-4 text-right whitespace-nowrap w-[130px]">
+                Đánh giá & Chi tiết
+              </Table.Head>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {filtered.length === 0 ? (
               <Table.Row>
-                <Table.Cell colSpan={7} className="text-center py-8 text-xs text-muted-foreground">
+                <Table.Cell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
                   Không tìm thấy khóa học nào khớp với từ khóa tìm kiếm.
                 </Table.Cell>
               </Table.Row>
             ) : (
               filtered.map((item) => {
-                const { course, totalStudents, compRate, rating, code, credits } = item;
+                const { course, totalStudents, compRate, rating, pendingGrading, pendingQa } = item;
 
                 return (
                   <Table.Row
                     key={course.id}
                     onClick={() => onSelectCourse(course.id)}
-                    className="text-xs hover:bg-muted/30 cursor-pointer transition-colors group"
+                    className="text-xs hover:bg-muted/30 cursor-pointer transition-colors group border-b border-border/50"
                   >
-                    {/* Tên môn học & Metadata sư phạm thay vì ID thô */}
-                    <Table.Cell className="py-3 px-3">
-                      <div className="font-bold text-foreground group-hover:text-primary transition-colors max-w-[280px] truncate">
+                    {/* 1. Tên môn học & Đối tác thực tế */}
+                    <Table.Cell className="py-3.5 px-4 min-w-[200px]">
+                      <div className="font-bold text-sm text-foreground group-hover:text-primary transition-colors leading-snug">
                         {course.title}
                       </div>
-                      <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                        <span className="font-mono font-bold text-primary">{code}</span>
-                        <span>•</span>
-                        <span>{credits} Tín chỉ</span>
-                        <span>•</span>
-                        <span className="truncate max-w-[150px]">
-                          {course.partnerName || "NEU Business School"}
+                      <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span className="font-mono font-bold text-primary text-[11px]">
+                          {course.slug || course.id.slice(0, 8)}
                         </span>
+                        {course.partnerName && (
+                          <>
+                            <span>•</span>
+                            <span className="text-muted-foreground font-medium">
+                              {course.partnerName}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </Table.Cell>
 
-                    {/* Trạng thái */}
-                    <Table.Cell className="text-center py-3 px-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
-                        Đã xuất bản
+                    {/* 2. Trạng thái thực tế từ database */}
+                    <Table.Cell className="text-center py-3.5 px-3 whitespace-nowrap">
+                      {renderCourseStatusBadge(course.status)}
+                    </Table.Cell>
+
+                    {/* 3. Số học viên thật */}
+                    <Table.Cell className="text-right py-3.5 px-3 whitespace-nowrap">
+                      <span className="font-mono font-bold text-sm text-foreground">
+                        {totalStudents}{" "}
+                        <span className="text-xs font-sans font-medium text-muted-foreground">
+                          SV
+                        </span>
                       </span>
                     </Table.Cell>
 
-                    {/* Số học viên */}
-                    <Table.Cell className="text-right font-mono font-bold text-foreground py-3 px-3">
-                      {totalStudents} SV
-                    </Table.Cell>
-
-                    {/* Thanh tiến độ TB */}
-                    <Table.Cell className="py-3 px-3 min-w-[140px]">
-                      <div className="flex items-center justify-between text-[11px] font-mono mb-1">
-                        <span className="font-bold text-foreground">{compRate}%</span>
-                        <span className="text-muted-foreground text-[10px]">Khoảng 2 tuần</span>
+                    {/* 4. Thanh tiến độ TB thật từ analytics (bỏ hardcode "Khoảng 2 tuần") */}
+                    <Table.Cell className="py-3.5 px-3 whitespace-nowrap">
+                      <div className="flex items-center justify-between text-xs font-mono font-bold text-foreground mb-1">
+                        <span>{compRate}%</span>
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
                         <div
@@ -179,59 +221,55 @@ export function InstructorCourseComparisonTable({
                       </div>
                     </Table.Cell>
 
-                    {/* Nhiệm vụ chờ */}
-                    <Table.Cell className="py-3 px-3">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/instructor/courses/${course.id}/grading`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline p-1 rounded-lg hover:bg-primary/10 transition-colors"
-                          title="Mở Bàn làm việc chấm bài"
-                        >
-                          <ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Chấm bài</span>
-                        </Link>
-                        <Link
-                          href={`/instructor/courses/${course.id}/discussions`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-[11px] font-medium text-warning hover:underline p-1 rounded-lg hover:bg-warning/10 transition-colors"
-                          title="Mở diễn đàn thảo luận & Q&A"
-                        >
-                          <MessageSquare className="w-3 h-3" />
-                          <span>Hỏi đáp</span>
-                        </Link>
-                      </div>
+                    {/* 5. Nhiệm vụ cần xử lý có số liệu thật */}
+                    <Table.Cell className="py-3.5 px-3 whitespace-nowrap">
+                      {pendingGrading > 0 || pendingQa > 0 ? (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {pendingGrading > 0 && (
+                            <Link
+                              href={`/instructor/courses/${course.id}/grading`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-warning bg-warning/10 hover:bg-warning/20 border border-warning/20 px-2 py-0.5 rounded-lg whitespace-nowrap transition-colors"
+                              title="Mở Bàn làm việc chấm bài"
+                            >
+                              <ClipboardCheck className="w-3 h-3 text-warning" aria-hidden="true" />
+                              <span>{pendingGrading} bài chờ chấm</span>
+                            </Link>
+                          )}
+                          {pendingQa > 0 && (
+                            <Link
+                              href={`/instructor/courses/${course.id}/discussions`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-2 py-0.5 rounded-lg whitespace-nowrap transition-colors"
+                              title="Mở diễn đàn thảo luận & Q&A"
+                            >
+                              <MessageSquare className="w-3 h-3 text-primary" aria-hidden="true" />
+                              <span>{pendingQa} hỏi đáp</span>
+                            </Link>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground whitespace-nowrap">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success" aria-hidden="true" />
+                          <span>Hoàn thành</span>
+                        </span>
+                      )}
                     </Table.Cell>
 
-                    {/* Đánh giá */}
-                    <Table.Cell className="text-right font-mono font-bold text-warning py-3 px-3">
-                      {rating.toFixed(1)} ★
-                    </Table.Cell>
-
-                    {/* Thao tác */}
-                    <Table.Cell className="text-right whitespace-nowrap py-3 px-3">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          href={`/instructor/courses/${course.id}/grading`}
-                          title="Trung tâm Chấm bài"
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        >
-                          <ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                        </Link>
-                        <Link
-                          href={`/instructor/courses/${course.id}/gradebook`}
-                          title="Sổ điểm Khóa học"
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        >
-                          <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
-                        </Link>
+                    {/* 6. Đánh giá & Xem chi tiết */}
+                    <Table.Cell className="text-right py-3.5 px-4 whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-3 whitespace-nowrap">
+                        <span className="font-mono font-bold text-warning text-xs flex items-center gap-0.5">
+                          <span>{rating.toFixed(1)}</span>
+                          <span className="text-amber-400">★</span>
+                        </span>
                         <button
                           type="button"
                           onClick={() => onSelectCourse(course.id)}
-                          className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline pl-1 cursor-pointer"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-hover hover:underline transition-colors cursor-pointer group/btn"
                         >
                           <span>Chi tiết</span>
-                          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-0.5" />
                         </button>
                       </div>
                     </Table.Cell>

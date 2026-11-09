@@ -437,6 +437,42 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     return tasks;
   }, [allGradingData, allThreadsData, courses]);
 
+  // Bản đồ đếm số bài chấm chờ xử lý theo từng khóa học
+  const pendingGradingByCourseId = useMemo(() => {
+    const map = new Map<string, number>();
+    (allGradingData?.items || []).forEach((item) => {
+      if (item.status !== GradingQueueStatus.GRADED && item.courseId) {
+        map.set(item.courseId, (map.get(item.courseId) || 0) + 1);
+      }
+    });
+    return map;
+  }, [allGradingData]);
+
+  // Bản đồ đếm số câu hỏi học viên chưa giải đáp theo từng khóa học
+  const pendingQaByCourseId = useMemo(() => {
+    const map = new Map<string, number>();
+    (allThreadsData || []).forEach((th) => {
+      const r = (th.authorRole || "").toUpperCase();
+      const isStaff =
+        r.includes("INSTRUCTOR") ||
+        r.includes("GIẢNG VIÊN") ||
+        r === "2" ||
+        r.includes("TA") ||
+        r === "3" ||
+        r.includes("ADMIN");
+      const titleLower = th.title.trim().toLowerCase();
+      const isAnnouncement =
+        titleLower.startsWith("[thông báo]") ||
+        titleLower.startsWith("[thong bao]") ||
+        titleLower.startsWith("[announcement]");
+      const hasStaffReply = th.replies?.some((reply) => reply.isStaffAnswer);
+      if (!isStaff && !isAnnouncement && !hasStaffReply && th.courseId) {
+        map.set(th.courseId, (map.get(th.courseId) || 0) + 1);
+      }
+    });
+    return map;
+  }, [allThreadsData]);
+
   // Danh sách toàn bộ học viên kèm nhịp độ học tập trên TẤT CẢ các khóa học phụ trách (Dữ liệu thật từ DB)
   const allPacingStudents = useMemo<StudentPacingRecord[]>(() => {
     const result: StudentPacingRecord[] = [];
@@ -1368,6 +1404,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               <InstructorCourseComparisonTable
                 courses={courses}
                 analyticsByCourseId={analyticsByCourseId}
+                pendingGradingByCourseId={pendingGradingByCourseId}
+                pendingQaByCourseId={pendingQaByCourseId}
                 onSelectCourse={(courseId) => {
                   handleSelectCourse(courseId);
                   setViewMode("specific");
