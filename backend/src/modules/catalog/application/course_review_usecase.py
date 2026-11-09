@@ -13,6 +13,7 @@ from src.modules.catalog.domain import (
     CourseAnnouncementCreatedDomainEvent,
     CourseStatus,
     ICatalogRepository,
+    StudentReminderSentDomainEvent,
 )
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.learning.domain import ILearningRepository
@@ -63,22 +64,23 @@ class CourseReviewUseCase:
     ) -> None:
         if user and course_id:
             course = await repo.get_course_detail(course_id)
-            if course:
-                enforce_course_ownership(
-                    course,
-                    user,
-                    required_permission=required_permission,
-                    action_name=action_name,
-                    allow_read_only_pending=allow_read_only_pending,
+            if not course:
+                raise ValueError("Khóa học không tồn tại")
+            enforce_course_ownership(
+                course,
+                user,
+                required_permission=required_permission,
+                action_name=action_name,
+                allow_read_only_pending=allow_read_only_pending,
+            )
+            if (
+                disallow_published_mutation
+                and course.status == CourseStatus.PUBLISHED
+                and not getattr(user, "is_admin", False)
+            ):
+                raise PermissionError(
+                    f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
                 )
-                if (
-                    disallow_published_mutation
-                    and course.status == CourseStatus.PUBLISHED
-                    and not getattr(user, "is_admin", False)
-                ):
-                    raise PermissionError(
-                        f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
-                    )
 
     async def submit_course_review(
         self,
@@ -247,3 +249,35 @@ class CourseReviewUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.list_course_announcements(course_id=course_id)
+
+    async def send_student_reminder(
+        self,
+        course_id: str,
+        student_ids: list[str],
+        title: str,
+        content: str,
+        current_user: CurrentUser | None = None,
+    ) -> int:
+        if not student_ids:
+            return 0
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "gửi thông báo nhắc nhở học viên"
+            )
+            author_name = (
+                current_user.email.split("@")[0]
+                if current_user and current_user.email
+                else "Giảng viên"
+            )
+            await EventBus.publish(
+                StudentReminderSentDomainEvent(
+                    course_id=course_id,
+                    instructor_id=current_user.id if current_user else "",
+                    instructor_name=author_name,
+                    student_ids=list(student_ids),
+                    title=title,
+                    content=content,
+                )
+            )
+            return len(student_ids)

@@ -34,7 +34,10 @@ from .entities import (
     UserSearchHistory,
     WeekModule,
 )
-from .events import CourseAnnouncementCreatedDomainEvent
+from .events import (
+    CourseAnnouncementCreatedDomainEvent,
+    StudentReminderSentDomainEvent,
+)
 from .repositories import ICatalogRepository
 
 __all__ = [
@@ -70,6 +73,7 @@ __all__ = [
     "LearningItem",
     "Lesson",
     "Specialization",
+    "StudentReminderSentDomainEvent",
     "UserSearchHistory",
     "WeekModule",
 ]

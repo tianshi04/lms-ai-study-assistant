@@ -419,18 +419,19 @@ export function InstructorPacingModal({
     try {
       if (student.courseId) {
         const client = getRpcClient(CatalogService);
-        await client.createCourseAnnouncement({
+        await client.sendStudentReminder({
           courseId: student.courseId,
+          studentIds: [student.id],
           title: `[Nhắc nhở học tập] Tiến độ môn ${student.courseTitle}`,
           content: `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`,
         });
       }
-    } catch {
-      // Fallback
+      toast.success(`Đã gửi thông báo & email khích lệ học tập tới học viên ${student.name}!`, {
+        description: `Lộ trình hiện tại: ${student.currentLesson}`,
+      });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Không thể gửi nhắc nhở học viên.");
     }
-    toast.success(`Đã gửi thông báo & email khích lệ học tập tới học viên ${student.name}!`, {
-      description: `Lộ trình hiện tại: ${student.currentLesson}`,
-    });
   };
 
   // Nhắc nhở hàng loạt nhóm chậm tiến độ
@@ -442,27 +443,29 @@ export function InstructorPacingModal({
     try {
       if (selectedCourse && selectedCourse !== "all") {
         const client = getRpcClient(CatalogService);
-        await client.createCourseAnnouncement({
+        await client.sendStudentReminder({
           courseId: selectedCourse,
+          studentIds: behindStudents.map((s) => s.id),
           title: "[Đôn đốc học tập] Hỗ trợ học viên bám sát tiến độ khóa học",
-          content: "Thầy/Cô gửi thông báo này để nhắc nhở và động viên các em học viên đang chậm tiến độ. Hãy sắp xếp thời gian hoàn thành các bài học và bài kiểm tra tuần này để đạt chứng chỉ nhé!",
+          content:
+            "Thầy/Cô gửi thông báo này để nhắc nhở và động viên các em học viên đang chậm tiến độ. Hãy sắp xếp thời gian hoàn thành các bài học và bài kiểm tra tuần này để đạt chứng chỉ nhé!",
         });
       }
-    } catch {
-      // Fallback
-    } finally {
       setNudgedStudentIds((prev) => {
         const next = new Set(prev);
         behindStudents.forEach((s) => next.add(s.id));
         return next;
       });
-      setIsBulkNudging(false);
       toast.success(
         `Đã gửi thông báo & email khích lệ đồng loạt tới ${behindStudents.length} học viên chậm tiến độ!`,
         {
           description: "Hệ thống AI đã đính kèm gợi ý ôn tập bài giảng tuần 1 để hỗ trợ học viên.",
         },
       );
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Không thể gửi thông báo hàng loạt.");
+    } finally {
+      setIsBulkNudging(false);
     }
   };
 

@@ -94,8 +94,9 @@ export function InstructorStudentDetailModal({
     try {
       if (courseId) {
         const client = getRpcClient(CatalogService);
-        await client.createCourseAnnouncement({
+        await client.sendStudentReminder({
           courseId,
+          studentIds: [student.userId],
           title: reminderSubject,
           content: reminderBody,
         });
@@ -103,10 +104,8 @@ export function InstructorStudentDetailModal({
       onSendReminder(student.userId, reminderBody);
       success(`Đã gửi thông báo nhắc nhở học tập tới ${student.userName}!`);
       onOpenChange(false);
-    } catch {
-      onSendReminder(student.userId, reminderBody);
-      success(`Đã ghi nhận thông báo nhắc nhở tới ${student.userName}!`);
-      onOpenChange(false);
+    } catch (err: unknown) {
+      error(err instanceof Error ? err.message : "Không thể gửi thông báo nhắc nhở.");
     } finally {
       setIsSending(false);
     }

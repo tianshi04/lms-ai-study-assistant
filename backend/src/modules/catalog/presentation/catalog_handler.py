@@ -968,6 +968,31 @@ class CatalogHandler(CatalogService):
             ]
         )
 
+    async def send_student_reminder(
+        self,
+        request: pb.SendStudentReminderRequest,
+        ctx: RequestContext[
+            pb.SendStudentReminderRequest, pb.SendStudentReminderResponse
+        ],
+    ) -> pb.SendStudentReminderResponse:
+        user = self._verify_instructor_permission()
+        try:
+            sent_count = await self.use_case.send_student_reminder(
+                course_id=request.course_id,
+                student_ids=list(request.student_ids),
+                title=request.title,
+                content=request.content,
+                current_user=user,
+            )
+            return pb.SendStudentReminderResponse(
+                sent_count=sent_count,
+                success=True,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
     async def get_instructor_activity_timeline(
         self,
         request: pb.GetInstructorActivityTimelineRequest,

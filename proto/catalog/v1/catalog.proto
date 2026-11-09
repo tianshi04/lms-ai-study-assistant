@@ -487,6 +487,18 @@ message ListCourseAnnouncementsResponse {
   repeated CourseAnnouncement announcements = 1;
 }
 
+message SendStudentReminderRequest {
+  string course_id = 1;
+  repeated string student_ids = 2;
+  string title = 3;
+  string content = 4;
+}
+
+message SendStudentReminderResponse {
+  int32 sent_count = 1;
+  bool success = 2;
+}
+
 message EnrolledStudent {
   string user_id = 1;
   string user_name = 2;
@@ -717,6 +729,9 @@ service CatalogService {
   }
   rpc ListCourseAnnouncements(ListCourseAnnouncementsRequest) returns (ListCourseAnnouncementsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc SendStudentReminder(SendStudentReminderRequest) returns (SendStudentReminderResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetInstructorAnalytics(GetInstructorAnalyticsRequest) returns (GetInstructorAnalyticsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;

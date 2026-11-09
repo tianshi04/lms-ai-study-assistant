@@ -8,7 +8,8 @@ import {
   useAllInstructorAnalyticsQueries,
 } from "@/lib/query_hooks";
 import dynamic from "next/dynamic";
-import type { Course } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { getRpcClient } from "@/lib/connect_client";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
@@ -93,6 +94,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND"
   >("ALL");
   const [nudgedSpecificStudentIds, setNudgedSpecificStudentIds] = useState<Set<string>>(new Set());
+  const [isNudgingBehind, setIsNudgingBehind] = useState(false);
   // Modal xem chi tiết tiến độ sinh viên & gửi thông báo nhắc nhở
   const [selectedStudentForDetail, setSelectedStudentForDetail] =
     useState<StudentDetailRecord | null>(null);
@@ -1720,21 +1722,47 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                   {coursePacingCounts.behind > 0 && (
                     <button
                       type="button"
-                      onClick={() => {
-                        rawStudentsWithPacing
-                          .filter((s) => s.pace === "BEHIND")
-                          .forEach((s) =>
+                      disabled={isNudgingBehind}
+                      onClick={async () => {
+                        if (!activeCourse?.id) return;
+                        const behindStudents = rawStudentsWithPacing.filter(
+                          (s) => s.pace === "BEHIND",
+                        );
+                        if (behindStudents.length === 0) return;
+                        setIsNudgingBehind(true);
+                        try {
+                          const client = getRpcClient(CatalogService);
+                          await client.sendStudentReminder({
+                            courseId: activeCourse.id,
+                            studentIds: behindStudents.map((s) => s.userId),
+                            title: `[Đôn đốc học tập] Hỗ trợ học viên bám sát tiến độ môn ${activeCourse.title}`,
+                            content: `Thầy/Cô gửi lời nhắc nhở tới các em học viên đang chậm tiến độ môn "${activeCourse.title}". Hãy sắp xếp thời gian hoàn thành các bài học và bài tập tuần này để bám sát lộ trình nhé!`,
+                          });
+                          behindStudents.forEach((s) =>
                             setNudgedSpecificStudentIds((prev) => new Set(prev).add(s.userId)),
                           );
-                        toast.success(
-                          `Đã gửi thông báo & email nhắc nhở tới ${coursePacingCounts.behind} học viên chậm tiến độ!`,
-                          { description: `Môn: ${activeCourse?.title}` },
-                        );
+                          toast.success(
+                            `Đã gửi thông báo nhắc nhở tới ${behindStudents.length} học viên chậm tiến độ!`,
+                            { description: `Môn: ${activeCourse.title}` },
+                          );
+                        } catch (err: unknown) {
+                          toast.error(
+                            err instanceof Error
+                              ? err.message
+                              : "Không thể gửi thông báo nhắc nhở.",
+                          );
+                        } finally {
+                          setIsNudgingBehind(false);
+                        }
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
+                      className="px-3 py-1.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 shrink-0 self-start sm:self-auto"
                     >
                       <Zap className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Nhắc nhở {coursePacingCounts.behind} SV chậm</span>
+                      <span>
+                        {isNudgingBehind
+                          ? "Đang gửi..."
+                          : `Nhắc nhở ${coursePacingCounts.behind} SV chậm`}
+                      </span>
                     </button>
                   )}
                 </div>
