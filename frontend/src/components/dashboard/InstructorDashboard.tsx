@@ -353,16 +353,32 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
   // Làm giàu danh sách học viên của môn đang chọn với phân loại nhịp độ học tập (Pacing)
   const rawStudentsWithPacing = useMemo(() => {
+    const totalWeeks = calculatedWeeks.length || 2;
+    const courseDurationDays = Math.max(14, totalWeeks * 7);
+    const nowMs = currentTimeMs > 0 ? currentTimeMs : Date.now();
+
     return rawStudents.map((st) => {
       let pace: "AHEAD" | "ON_TRACK" | "BEHIND" = "ON_TRACK";
       let paceLabel = "Đúng tiến độ";
-      let paceDesc = "Học ổn định theo tuần";
+      let paceDesc = "Bám sát tuần học";
 
-      if (st.progressPercent >= 80) {
+      // Lấy thời điểm nhập học thực tế
+      const enrolledMs = st.enrolledAt ? new Date(st.enrolledAt).getTime() : nowMs;
+      const daysElapsed = Math.max(0, Math.floor((nowMs - enrolledMs) / (1000 * 60 * 60 * 24)));
+      const expectedProgressPct = Math.min(100, Math.round((daysElapsed / courseDurationDays) * 100));
+
+      if (st.progressPercent >= 100) {
+        pace = "AHEAD";
+        paceLabel = "Vượt tiến độ";
+        paceDesc = "Đã hoàn thành khóa";
+      } else if (st.progressPercent >= 80 || st.progressPercent >= expectedProgressPct + 20) {
         pace = "AHEAD";
         paceLabel = "Vượt tiến độ";
         paceDesc = "Học nhanh hơn hạn dự kiến";
-      } else if (st.progressPercent < 35) {
+      } else if (
+        st.progressPercent < Math.max(25, expectedProgressPct - 25) ||
+        (daysElapsed > courseDurationDays && st.progressPercent < 75)
+      ) {
         pace = "BEHIND";
         paceLabel = "Chậm tiến độ";
         paceDesc =
@@ -378,7 +394,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         paceDesc,
       };
     });
-  }, [rawStudents, bottleneckWeek]);
+  }, [rawStudents, calculatedWeeks.length, currentTimeMs, bottleneckWeek]);
 
   // Bộ đếm nhịp độ học viên trong môn đang chọn
   const coursePacingCounts = useMemo(() => {
@@ -2113,21 +2129,23 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                       ) : (
                         filteredStudents.map((st) => {
                           const isDone = st.progressPercent >= 100;
+                          const totalWeeks = calculatedWeeks.length || 2;
+                          const courseDurationDays = Math.max(14, totalWeeks * 7);
                           const enrolledDate = st.enrolledAt
                             ? new Date(st.enrolledAt)
                             : currentTimeMs > 0
                               ? new Date(currentTimeMs)
                               : new Date("2026-11-01");
                           const deadlineDate = new Date(
-                            enrolledDate.getTime() + 30 * 24 * 60 * 60 * 1000,
+                            enrolledDate.getTime() + courseDurationDays * 24 * 60 * 60 * 1000,
                           );
                           const daysLeft =
                             currentTimeMs > 0
                               ? Math.ceil(
                                   (deadlineDate.getTime() - currentTimeMs) / (1000 * 60 * 60 * 24),
                                 )
-                              : 30;
-                          const isNearDeadline = !isDone && daysLeft <= 3;
+                              : courseDurationDays;
+                          const isNearDeadline = !isDone && daysLeft <= 3 && daysLeft > 0;
                           const isNudged = nudgedSpecificStudentIds.has(st.userId);
 
                           const studentWeekNum =
@@ -2235,19 +2253,21 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                                   <div>
                                     <div
                                       className={`text-[11px] font-mono ${
-                                        daysLeft <= 0
+                                        daysLeft <= 0 && st.pace === "BEHIND"
                                           ? "text-destructive font-semibold"
                                           : isNearDeadline
                                             ? "text-warning font-semibold"
-                                            : "text-foreground"
+                                            : "text-foreground font-semibold"
                                       }`}
                                     >
                                       {daysLeft > 0
                                         ? `${deadlineDate.toLocaleDateString("vi-VN")} (Còn ${daysLeft} ngày)`
-                                        : `Quá hạn chuẩn (${Math.abs(daysLeft)} ngày)`}
+                                        : st.progressPercent >= 80
+                                          ? `${deadlineDate.toLocaleDateString("vi-VN")} (Đang hoàn thành)`
+                                          : `Quá hạn chuẩn (${Math.abs(daysLeft)} ngày)`}
                                     </div>
                                     <div className="text-[10px] text-muted-foreground">
-                                      Lộ trình chuẩn theo ngày mua
+                                      {`Lộ trình chuẩn ${courseDurationDays} ngày`}
                                     </div>
                                   </div>
                                 )}

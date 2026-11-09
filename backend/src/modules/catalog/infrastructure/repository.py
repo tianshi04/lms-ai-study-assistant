@@ -2063,11 +2063,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             sum_progress += p.overall_progress_percent
             user_entity = await identity_repo.get_by_id(p.user_id)
             u_name = (
-                user_entity.email.split("@")[0]
-                if user_entity and user_entity.email
-                else f"Học viên #{p.user_id[:6]}"
+                user_entity.full_name
+                if user_entity and user_entity.full_name
+                else (
+                    user_entity.email.split("@")[0]
+                    if user_entity and user_entity.email
+                    else f"Học viên #{p.user_id[:6]}"
+                )
             )
             u_email = user_entity.email if user_entity else ""
+            enrolled_at_str = p.enrolled_at or "2026-10-25T00:00:00Z"
 
             students.append(
                 EnrolledStudent(
@@ -2075,7 +2080,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     user_name=u_name,
                     user_email=u_email,
                     progress_percent=round(p.overall_progress_percent, 1),
-                    enrolled_at="2026-07-25T00:00:00Z",
+                    enrolled_at=enrolled_at_str,
                 )
             )
 
