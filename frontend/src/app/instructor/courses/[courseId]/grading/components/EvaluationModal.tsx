@@ -12,6 +12,7 @@ import {
   UserCheck,
   ShieldCheck,
   RotateCcw,
+  Lock,
 } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Input } from "@/components/ui/Input";
 import { Slider } from "@/components/ui/Slider";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useGradingSubmissionDetailQuery,
   useRenewGradingTaskLockMutation,
@@ -30,6 +32,7 @@ import {
 import { create } from "@bufbuild/protobuf";
 import {
   GradingProvenance,
+  GradingQueueStatus,
   RubricCriteriaSchema,
   type RubricCriteria,
 } from "@/gen/assessment/v1/assessment_pb";
@@ -48,6 +51,7 @@ export function EvaluationModal({
   onGradedSuccessfully,
 }: EvaluationModalProps) {
   const { toast } = useToast();
+  const { userId: currentUserId } = useAuth();
 
   const {
     data: detail,
@@ -69,6 +73,30 @@ export function EvaluationModal({
 
   // Countdown timer state
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+
+  const isLockActive = useMemo(() => {
+    if (!detail?.submission?.lockExpiresAt) return false;
+    const expiresAt = new Date(detail.submission.lockExpiresAt).getTime();
+    return expiresAt > Date.now();
+  }, [detail?.submission?.lockExpiresAt, remainingSeconds]);
+
+  const isLockedByOther = Boolean(
+    detail?.submission?.lockedByUserId &&
+    detail.submission.lockedByUserId !== currentUserId &&
+    isLockActive,
+  );
+
+  const isOverdue = Boolean(
+    !isLockedByOther &&
+    !detail?.submission?.lockedByUserId &&
+    !detail?.submission?.isAppeal &&
+    !detail?.submission?.isOutlier &&
+    detail?.submission?.status !== GradingQueueStatus.GRADED &&
+    detail?.submission?.submittedAt &&
+    Date.now() - new Date(detail.submission.submittedAt).getTime() > 48 * 3600 * 1000 &&
+    !detail?.submission?.staffScore &&
+    (detail?.peerReviews?.length ?? 0) < 3,
+  );
 
   // Sync initial rubric criteria scores and existing staff grading when detail loads
   useEffect(() => {
@@ -263,35 +291,51 @@ export function EvaluationModal({
 
           <div className="flex items-center gap-3 shrink-0">
             {/* Soft Lock Countdown Timer */}
-            {remainingSeconds !== null && (
+            {isLockActive && (
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
-                  remainingSeconds <= 300
-                    ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse"
-                    : remainingSeconds <= 600
-                      ? "bg-warning/10 text-warning border-warning/20"
-                      : "bg-muted text-muted-foreground border-border"
+                  isLockedByOther
+                    ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30"
+                    : remainingSeconds !== null && remainingSeconds <= 300
+                      ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse"
+                      : remainingSeconds !== null && remainingSeconds <= 600
+                        ? "bg-warning/10 text-warning border-warning/20"
+                        : "bg-muted text-muted-foreground border-border"
                 }`}
               >
-                <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>
-                  {remainingSeconds > 0 ? `Khóa: ${formatTime(remainingSeconds)}` : "Hết hạn khóa"}
-                </span>
-                {remainingSeconds > 0 && remainingSeconds <= 600 && (
-                  <Button
-                    type="button"
-                    variant="tonal"
-                    onClick={handleRenewLock}
-                    disabled={renewLockMutation.isPending}
-                    className="h-6 px-2 text-[10px] font-bold ml-1 rounded-lg"
-                  >
-                    <RefreshCw
-                      className={`w-3 h-3 mr-1 ${renewLockMutation.isPending ? "animate-spin" : ""}`}
-                      aria-hidden="true"
-                    />
-                    +15p
-                  </Button>
+                {isLockedByOther ? (
+                  <Lock
+                    className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
                 )}
+                <span>
+                  {isLockedByOther
+                    ? `${detail?.submission?.lockedByName ? `Đang giữ: ${detail.submission.lockedByName}` : "Đang được chấm"}${remainingSeconds !== null ? `: ${formatTime(remainingSeconds)}` : ""}`
+                    : remainingSeconds !== null && remainingSeconds > 0
+                      ? `Khóa: ${formatTime(remainingSeconds)}`
+                      : "Hết hạn khóa"}
+                </span>
+                {!isLockedByOther &&
+                  remainingSeconds !== null &&
+                  remainingSeconds > 0 &&
+                  remainingSeconds <= 600 && (
+                    <Button
+                      type="button"
+                      variant="tonal"
+                      onClick={handleRenewLock}
+                      disabled={renewLockMutation.isPending}
+                      className="h-6 px-2 text-[10px] font-bold ml-1 rounded-lg"
+                    >
+                      <RefreshCw
+                        className={`w-3 h-3 mr-1 ${renewLockMutation.isPending ? "animate-spin" : ""}`}
+                        aria-hidden="true"
+                      />
+                      +15p
+                    </Button>
+                  )}
               </div>
             )}
           </div>
@@ -358,30 +402,97 @@ export function EvaluationModal({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {detail.submission?.isAppeal && (
-                      <Badge variant="error" className="font-bold text-xs">
-                        Khiếu nại điểm
-                      </Badge>
-                    )}
-                    {detail.submission?.isOutlier && (
+                    {isLockedByOther ? (
                       <Badge
                         variant="warning"
-                        className="font-bold text-xs bg-warning/10 text-warning border-warning/20"
+                        className="font-bold text-xs bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30 gap-1"
                       >
-                        Điểm lệch chuẩn
+                        <Lock
+                          className="w-3 h-3 text-amber-600 dark:text-amber-400"
+                          aria-hidden="true"
+                        />
+                        Đang giữ: {detail.submission?.lockedByName || "Đồng nghiệp"}
                       </Badge>
+                    ) : (
+                      <>
+                        {isOverdue && (
+                          <Badge
+                            variant="error"
+                            className="font-bold text-xs bg-destructive/10 text-destructive border-destructive/20 gap-1"
+                          >
+                            <Clock className="w-3 h-3 text-destructive" aria-hidden="true" />
+                            Quá hạn 48h
+                          </Badge>
+                        )}
+                        {detail.submission?.isAppeal && (
+                          <Badge
+                            variant="outlined"
+                            className="font-bold text-xs bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30"
+                          >
+                            Khiếu nại điểm
+                          </Badge>
+                        )}
+                        {detail.submission?.isOutlier && (
+                          <Badge
+                            variant="warning"
+                            className="font-bold text-xs bg-warning/10 text-warning border-warning/20"
+                          >
+                            Điểm lệch chuẩn
+                          </Badge>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
 
-                {/* Appeal Reason Callout (if appealed) */}
-                {detail.submission?.isAppeal && detail.submission?.appealReason && (
+                {/* Read-Only Callout (when locked by another staff member) */}
+                {isLockedByOther && (
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-sm">
+                      <Lock
+                        className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"
+                        aria-hidden="true"
+                      />
+                      <span>
+                        Bài nộp đang được {detail.submission?.lockedByName || "đồng nghiệp"} tiếp
+                        nhận chấm
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+                      Bạn đang ở <strong>Chế độ Xem (Chỉ đọc)</strong> để bảo đảm tính toàn vẹn và
+                      tránh chấm trùng lặp trong ban giảng dạy. Tất cả các tiêu chí điểm số và nhận
+                      xét đã bị khóa cho đến khi người chấm hiện tại hoàn tất hoặc phiên giữ bài kết
+                      thúc.
+                    </p>
+                  </div>
+                )}
+
+                {/* Overdue Alert Callout (if overdue > 48h) */}
+                {isOverdue && (
                   <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive space-y-1">
                     <div className="flex items-center gap-2 font-bold text-sm">
-                      <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      <span>Lý do sinh viên khiếu nại phúc khảo:</span>
+                      <Clock className="w-4 h-4 shrink-0 text-destructive" aria-hidden="true" />
+                      <span>Bài nộp quá hạn 48 giờ — Cần can thiệp sư phạm</span>
                     </div>
                     <p className="text-xs text-destructive/90 leading-relaxed pl-6">
+                      Bài nộp đã quá 48 giờ nhưng chưa nhận đủ đánh giá từ đồng học. Giảng viên hoặc
+                      Trợ giảng vui lòng trực tiếp đánh giá tiêu chí Rubric bên phải và công bố điểm
+                      cho học viên.
+                    </p>
+                  </div>
+                )}
+
+                {/* Appeal Reason Callout (if appealed) */}
+                {detail.submission?.isAppeal && detail.submission?.appealReason && (
+                  <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-900 dark:text-purple-200 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-sm">
+                      <AlertTriangle
+                        className="w-4 h-4 shrink-0 text-purple-600 dark:text-purple-400"
+                        aria-hidden="true"
+                      />
+                      <span>Lý do sinh viên khiếu nại phúc khảo:</span>
+                    </div>
+                    <p className="text-xs text-purple-800/90 dark:text-purple-300/90 leading-relaxed pl-6">
                       {detail.submission.appealReason}
                     </p>
                   </div>
@@ -479,7 +590,7 @@ export function EvaluationModal({
                   <div className="p-5 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between">
                     <div>
                       <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-                        Tổng điểm đạt được
+                        {isLockedByOther ? "Điểm dự thảo / Xem bài" : "Tổng điểm đạt được"}
                       </span>
                       <div className="flex items-baseline gap-1 mt-0.5">
                         <span className="text-3xl font-extrabold text-foreground">
@@ -491,16 +602,31 @@ export function EvaluationModal({
                       </div>
                     </div>
                     <div className="text-right">
-                      <Badge variant="primary" className="font-mono text-xs">
-                        {((currentTotalScore / (maxPossibleScore || 1)) * 100).toFixed(0)}%
-                      </Badge>
-                      <p className="text-[11px] text-muted-foreground mt-1">
-                        {currentTotalScore >= maxPossibleScore * 0.8
-                          ? "Xuất sắc"
-                          : currentTotalScore >= maxPossibleScore * 0.65
-                            ? "Đạt yêu cầu"
-                            : "Cần cải thiện"}
-                      </p>
+                      {isLockedByOther ? (
+                        <Badge
+                          variant="warning"
+                          className="text-xs font-semibold bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30 gap-1"
+                        >
+                          <Lock
+                            className="w-3 h-3 text-amber-600 dark:text-amber-400"
+                            aria-hidden="true"
+                          />
+                          Chế độ Chỉ đọc
+                        </Badge>
+                      ) : (
+                        <>
+                          <Badge variant="primary" className="font-mono text-xs">
+                            {((currentTotalScore / (maxPossibleScore || 1)) * 100).toFixed(0)}%
+                          </Badge>
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            {currentTotalScore >= maxPossibleScore * 0.8
+                              ? "Xuất sắc"
+                              : currentTotalScore >= maxPossibleScore * 0.65
+                                ? "Đạt yêu cầu"
+                                : "Cần cải thiện"}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -537,7 +663,9 @@ export function EvaluationModal({
                                   max={c.maxScore}
                                   step={0.5}
                                   value={currentScore}
+                                  disabled={isLockedByOther}
                                   onChange={(e) => {
+                                    if (isLockedByOther) return;
                                     const val = Math.max(
                                       0,
                                       Math.min(c.maxScore, Number(e.target.value) || 0),
@@ -547,7 +675,11 @@ export function EvaluationModal({
                                       [c.criteriaId]: val,
                                     }));
                                   }}
-                                  className="w-16 h-8 text-center text-xs font-bold"
+                                  className={`w-16 h-8 text-center text-xs font-bold ${
+                                    isLockedByOther
+                                      ? "bg-muted text-muted-foreground cursor-not-allowed opacity-80"
+                                      : ""
+                                  }`}
                                 />
                                 <span className="text-xs text-muted-foreground font-medium">
                                   /{c.maxScore}
@@ -561,7 +693,9 @@ export function EvaluationModal({
                               max={c.maxScore}
                               step={0.5}
                               value={[currentScore]}
+                              disabled={isLockedByOther}
                               onValueChange={(vals) => {
+                                if (isLockedByOther) return;
                                 const val = Array.isArray(vals) ? (vals[0] ?? 0) : Number(vals);
                                 setCriteriaScores((prev) => ({
                                   ...prev,
@@ -586,13 +720,24 @@ export function EvaluationModal({
                     <Textarea
                       id="pedagogical-feedback-input"
                       rows={4}
-                      placeholder="Ghi nhận ưu điểm và hướng dẫn chi tiết những điểm cần cải thiện..."
+                      placeholder={
+                        isLockedByOther
+                          ? "Bài nộp đang được đồng nghiệp tiếp nhận chấm (Chế độ chỉ đọc)..."
+                          : "Ghi nhận ưu điểm và hướng dẫn chi tiết những điểm cần cải thiện..."
+                      }
                       value={feedback}
+                      disabled={isLockedByOther}
                       onChange={(e) => setFeedback(e.target.value)}
-                      className="text-xs"
+                      className={`text-xs ${
+                        isLockedByOther
+                          ? "bg-muted text-muted-foreground cursor-not-allowed opacity-80"
+                          : ""
+                      }`}
                     />
                     <p className="text-[11px] text-muted-foreground">
-                      Nhận xét này sẽ hiển thị ngay cho sinh viên cùng với điểm số đã công bố.
+                      {isLockedByOther
+                        ? "Bạn chỉ có thể xem nội dung nhận xét này, không thể sửa đổi."
+                        : "Nhận xét này sẽ hiển thị ngay cho sinh viên cùng với điểm số đã công bố."}
                     </p>
                   </div>
 
@@ -604,8 +749,9 @@ export function EvaluationModal({
                           type="checkbox"
                           id="resolve-appeal"
                           checked={resolveAppeal}
+                          disabled={isLockedByOther}
                           onChange={(e) => setResolveAppeal(e.target.checked)}
-                          className="rounded border-input text-primary focus:ring-primary h-4 w-4"
+                          className="rounded border-input text-primary focus:ring-primary h-4 w-4 disabled:opacity-50"
                         />
                         <label
                           htmlFor="resolve-appeal"
@@ -615,10 +761,19 @@ export function EvaluationModal({
                         </label>
                       </div>
                       <Input
-                        placeholder="Ghi chú phản hồi khiếu nại cho học viên..."
+                        placeholder={
+                          isLockedByOther
+                            ? "Ghi chú phản hồi khiếu nại (Chế độ chỉ đọc)..."
+                            : "Ghi chú phản hồi khiếu nại cho học viên..."
+                        }
                         value={appealNotes}
+                        disabled={isLockedByOther}
                         onChange={(e) => setAppealNotes(e.target.value)}
-                        className="text-xs"
+                        className={`text-xs ${
+                          isLockedByOther
+                            ? "bg-muted text-muted-foreground cursor-not-allowed opacity-80"
+                            : ""
+                        }`}
                       />
                     </div>
                   )}
@@ -626,16 +781,21 @@ export function EvaluationModal({
 
                 {/* Footer Action Buttons */}
                 <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={handleReleaseTask}
-                    disabled={releaseLockMutation.isPending || submitGradingMutation.isPending}
-                    className="w-full sm:w-auto text-xs font-bold border-border text-muted-foreground hover:text-foreground"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
-                    Hủy & Nhả bài
-                  </Button>
+                  {/* Only lock owner can release lock */}
+                  {!isLockedByOther && detail?.submission?.lockedByUserId ? (
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={handleReleaseTask}
+                      disabled={releaseLockMutation.isPending || submitGradingMutation.isPending}
+                      className="w-full sm:w-auto text-xs font-bold border-border text-muted-foreground hover:text-foreground"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+                      Hủy & Nhả bài
+                    </Button>
+                  ) : (
+                    <div />
+                  )}
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button
@@ -647,17 +807,31 @@ export function EvaluationModal({
                     >
                       Đóng
                     </Button>
-                    <Button
-                      type="button"
-                      onClick={handleSubmitGrading}
-                      disabled={submitGradingMutation.isPending}
-                      className="w-full sm:w-auto text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-lg shadow-primary/20"
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                      {submitGradingMutation.isPending
-                        ? "Đang công bố..."
-                        : "Chấm & Công bố Điểm Ngay"}
-                    </Button>
+                    {isLockedByOther ? (
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        disabled
+                        className="w-full sm:w-auto text-xs font-semibold bg-muted text-muted-foreground border-border cursor-not-allowed gap-1.5 opacity-80"
+                      >
+                        <Lock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                        <span>
+                          Đang khóa bởi {detail?.submission?.lockedByName || "đồng nghiệp"}
+                        </span>
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={handleSubmitGrading}
+                        disabled={submitGradingMutation.isPending}
+                        className="w-full sm:w-auto text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-lg shadow-primary/20"
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                        {submitGradingMutation.isPending
+                          ? "Đang công bố..."
+                          : "Chấm & Công bố Điểm Ngay"}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

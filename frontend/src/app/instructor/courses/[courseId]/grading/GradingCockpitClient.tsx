@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Table } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { cn } from "@/lib/utils";
 import { useGradingQueueQuery, useClaimGradingTaskMutation } from "@/lib/query_hooks";
 import {
   GradingProvenance,
@@ -35,6 +37,7 @@ interface GradingCockpitClientProps {
 
 export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   const { toast } = useToast();
+  const { userId: currentUserId } = useAuth();
 
   const [activeTab, setActiveTab] = useState<GradingQueueStatus>(GradingQueueStatus.ALL);
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,18 +51,105 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
     searchQuery,
   });
 
+  const queueItems = data?.items || [];
   const claimTaskMutation = useClaimGradingTaskMutation();
 
+  const isSubmissionOverdue = (item: GradingQueueItem) => {
+    // Only items that are NOT graded, NOT appealed, NOT outlier, NOT claimed, and past 48h
+    if (item.status === GradingQueueStatus.GRADED) return false;
+    if (item.isAppeal) return false;
+    if (item.isOutlier) return false;
+    if (item.lockedByUserId) return false;
+    if (!item.submittedAt) return false;
+    const isPast48h = Date.now() - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
+    return isPast48h && !item.staffScore && item.peerReviewsCount < 3;
+  };
+
+  const overdueCount = queueItems.filter(isSubmissionOverdue).length;
+
+  const getActionConfig = (item: GradingQueueItem, isOverdue: boolean) => {
+    if (item.isAppeal) {
+      return {
+        label: "Giải quyết khiếu nại",
+        className:
+          "bg-purple-600 hover:bg-purple-700 text-white shadow-sm font-bold border border-purple-600",
+        icon: AlertTriangle,
+      };
+    }
+    if (item.isOutlier) {
+      return {
+        label: "Xử lý lệch điểm",
+        className:
+          "bg-amber-600 hover:bg-amber-700 text-white shadow-sm font-bold border border-amber-600",
+        icon: AlertTriangle,
+      };
+    }
+    if (isOverdue) {
+      return {
+        label: "Quá hạn",
+        className:
+          "bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-sm font-bold border border-destructive",
+        icon: Clock,
+      };
+    }
+    if (item.lockedByUserId) {
+      if (item.lockedByUserId === currentUserId) {
+        return {
+          label: "Tiếp tục chấm",
+          className:
+            "bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm font-bold border border-primary",
+          icon: ArrowRight,
+        };
+      }
+      return {
+        label: "Xem bài đang chấm",
+        className:
+          "bg-muted/70 hover:bg-muted text-muted-foreground border border-border font-medium",
+        icon: Lock,
+      };
+    }
+    if (item.status === GradingQueueStatus.GRADED) {
+      return {
+        label: "Xem / Chấm lại",
+        className:
+          "bg-card hover:bg-muted/50 text-foreground border border-border font-semibold shadow-none",
+        icon: ArrowRight,
+      };
+    }
+    return {
+      label: "Tiếp nhận & Chấm",
+      className:
+        "bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm font-bold border border-primary",
+      icon: ArrowRight,
+    };
+  };
+
+  const getRowBorderClass = (item: GradingQueueItem, isOverdue: boolean) => {
+    if (item.isAppeal) return "border-l-4 border-l-purple-600 bg-purple-500/[0.04]";
+    if (item.isOutlier) return "border-l-4 border-l-amber-500 bg-amber-500/[0.03]";
+    if (isOverdue) return "border-l-4 border-l-destructive bg-destructive/[0.03]";
+    if (item.lockedByUserId) return "border-l-4 border-l-muted-foreground/30";
+    if (item.status === GradingQueueStatus.GRADED) return "border-l-4 border-l-success/30";
+    return "border-l-4 border-l-transparent";
+  };
+
   // Helper render provenance badge
-  const renderProvenanceBadge = (provenance: GradingProvenance, score: number) => {
+  const renderProvenanceBadge = (
+    provenance: GradingProvenance,
+    score: number,
+    status: GradingQueueStatus,
+  ) => {
+    if (status !== GradingQueueStatus.GRADED && (!score || score <= 0)) {
+      return <span className="text-xs text-muted-foreground italic">Chưa có điểm</span>;
+    }
     switch (provenance) {
       case GradingProvenance.AUTO:
         return (
           <Badge
             variant="outlined"
-            className="text-[11px] font-semibold bg-muted text-muted-foreground gap-1"
+            className="text-[11px] font-semibold bg-muted text-muted-foreground gap-1 px-2.5 py-0.5"
           >
-            <Cpu className="w-3 h-3" aria-hidden="true" />
+            <Cpu className="w-3.5 h-3.5" aria-hidden="true" />
             Tự động: {score.toFixed(1)}
           </Badge>
         );
@@ -67,9 +157,9 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
         return (
           <Badge
             variant="outlined"
-            className="text-[11px] font-semibold bg-primary/10 text-primary border-primary/20 gap-1"
+            className="text-[11px] font-semibold bg-primary/10 text-primary border-primary/20 gap-1 px-2.5 py-0.5"
           >
-            <UserCheck className="w-3 h-3" aria-hidden="true" />
+            <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
             Đồng học: {score.toFixed(1)}
           </Badge>
         );
@@ -77,9 +167,9 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
         return (
           <Badge
             variant="success"
-            className="text-[11px] font-semibold bg-success text-success-foreground gap-1"
+            className="text-[11px] font-semibold bg-success text-success-foreground gap-1 px-2.5 py-0.5"
           >
-            <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
+            <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
             Trợ giảng: {score.toFixed(1)}
           </Badge>
         );
@@ -87,14 +177,23 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
         return (
           <Badge
             variant="primary"
-            className="text-[11px] font-semibold bg-primary text-primary-foreground gap-1"
+            className="text-[11px] font-semibold bg-primary text-primary-foreground gap-1 px-2.5 py-0.5"
           >
-            <ShieldCheck className="w-3 h-3" aria-hidden="true" />
+            <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
             Giảng viên: {score.toFixed(1)}
           </Badge>
         );
       default:
-        return <span className="text-xs text-muted-foreground italic">Chưa có điểm</span>;
+        return score > 0 ? (
+          <Badge
+            variant="outlined"
+            className="text-[11px] font-semibold bg-muted text-muted-foreground gap-1 px-2.5 py-0.5"
+          >
+            Điểm: {score.toFixed(1)}
+          </Badge>
+        ) : (
+          <span className="text-xs text-muted-foreground italic">Chưa có điểm</span>
+        );
     }
   };
 
@@ -115,8 +214,6 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
       });
     }
   };
-
-  const queueItems = data?.items || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors pb-16">
@@ -168,26 +265,32 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
           </div>
 
           {/* Quick Stats Pill */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto">
-            <div className="p-3.5 rounded-2xl bg-background border border-border text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full md:w-auto">
+            <div className="p-3 rounded-2xl bg-background border border-border text-center">
               <span className="text-xl font-black text-foreground block">
                 {data?.totalCount ?? 0}
               </span>
               <span className="text-[11px] font-medium text-muted-foreground">Tổng bài</span>
             </div>
-            <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-center">
+            <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20 text-center">
               <span className="text-xl font-black text-primary block">
                 {data?.pendingCount ?? 0}
               </span>
               <span className="text-[11px] font-bold text-primary">Chờ chấm</span>
             </div>
-            <div className="p-3.5 rounded-2xl bg-destructive/10 border border-destructive/20 text-center">
-              <span className="text-xl font-black text-destructive block">
+            <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-center">
+              <span className="text-xl font-black text-destructive block">{overdueCount}</span>
+              <span className="text-[11px] font-bold text-destructive">Quá hạn</span>
+            </div>
+            <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-center">
+              <span className="text-xl font-black text-purple-600 dark:text-purple-400 block">
                 {data?.appealedCount ?? 0}
               </span>
-              <span className="text-[11px] font-bold text-destructive">Khiếu nại</span>
+              <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400">
+                Khiếu nại
+              </span>
             </div>
-            <div className="p-3.5 rounded-2xl bg-success/10 border border-success/20 text-center">
+            <div className="p-3 rounded-2xl bg-success/10 border border-success/20 text-center">
               <span className="text-xl font-black text-success block">
                 {data?.gradedCount ?? 0}
               </span>
@@ -195,6 +298,23 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
             </div>
           </div>
         </div>
+
+        {/* Overdue Warning Alert Banner */}
+        {overdueCount > 0 && (
+          <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <AlertTriangle
+                className="w-5 h-5 text-destructive flex-shrink-0"
+                aria-hidden="true"
+              />
+              <span>
+                <strong>{overdueCount} bài nộp đã quá hạn 48 giờ</strong> chưa hoàn thành đánh giá
+                đồng học. Cần Giảng viên / Trợ giảng can thiệp chấm bài ngay để giải phóng điểm cho
+                sinh viên.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Toolbar & Filters */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -312,131 +432,182 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               </p>
             </div>
           ) : (
-            <Table>
-              <Table.Header className="bg-muted/30">
-                <Table.Row>
-                  <Table.Head className="text-xs font-bold text-muted-foreground">
-                    Sinh viên & Thời gian
-                  </Table.Head>
-                  <Table.Head className="text-xs font-bold text-muted-foreground">
-                    Bài tập / Nội dung
-                  </Table.Head>
-                  <Table.Head className="text-xs font-bold text-muted-foreground">
-                    Trạng thái & Cảnh báo
-                  </Table.Head>
-                  <Table.Head className="text-xs font-bold text-muted-foreground">
-                    Điểm hiện tại
-                  </Table.Head>
-                  <Table.Head className="text-xs font-bold text-muted-foreground text-right">
-                    Thao tác
-                  </Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {queueItems.map((item) => (
-                  <Table.Row
-                    key={item.submissionId}
-                    className="hover:bg-muted/20 transition-colors"
-                  >
-                    {/* Student info */}
-                    <Table.Cell className="py-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-9 h-9 border border-border">
-                          <Avatar.Image src={item.studentAvatarUrl} alt={item.studentName} />
-                          <Avatar.Fallback className="bg-primary/10 text-primary text-xs font-bold">
-                            {item.studentName.slice(0, 2).toUpperCase()}
-                          </Avatar.Fallback>
-                        </Avatar>
-                        <div>
-                          <span className="font-bold text-foreground text-sm block">
-                            {item.studentName}
-                          </span>
-                          <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                            <Clock className="w-3 h-3" aria-hidden="true" />
-                            {item.submittedAt
-                              ? new Date(item.submittedAt).toLocaleDateString("vi-VN", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                })
-                              : "N/A"}
-                          </span>
-                        </div>
-                      </div>
-                    </Table.Cell>
-
-                    {/* Item Title */}
-                    <Table.Cell className="py-4">
-                      <div>
-                        <span className="font-bold text-foreground text-sm block">
-                          {item.itemTitle}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground truncate max-w-xs block">
-                          {item.courseTitle}
-                        </span>
-                      </div>
-                    </Table.Cell>
-
-                    {/* Badges / Warnings */}
-                    <Table.Cell className="py-4">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {item.isAppeal && (
-                          <Badge variant="error" className="text-[11px] font-bold">
-                            Khiếu nại điểm
-                          </Badge>
-                        )}
-                        {item.isOutlier && (
-                          <Badge
-                            variant="warning"
-                            className="text-[11px] font-bold bg-warning/10 text-warning border-warning/20"
-                          >
-                            Lệch điểm chuẩn
-                          </Badge>
-                        )}
-                        {item.lockedByUserId && (
-                          <Badge
-                            variant="outlined"
-                            className="text-[11px] font-medium bg-muted text-muted-foreground gap-1"
-                          >
-                            <Lock className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
-                            {item.lockedByName
-                              ? `Đang giữ: ${item.lockedByName}`
-                              : "Đang được chấm"}
-                          </Badge>
-                        )}
-                        {!item.isAppeal && !item.isOutlier && !item.lockedByUserId && (
-                          <Badge
-                            variant="outlined"
-                            className="text-[11px] font-medium text-muted-foreground"
-                          >
-                            Chờ xử lý
-                          </Badge>
-                        )}
-                      </div>
-                    </Table.Cell>
-
-                    {/* Current Score / Provenance */}
-                    <Table.Cell className="py-4">
-                      {renderProvenanceBadge(item.gradeSource, item.staffScore || item.peerScore)}
-                    </Table.Cell>
-
-                    {/* Action Button */}
-                    <Table.Cell className="py-4 text-right">
-                      <Button
-                        type="button"
-                        onClick={() => handleOpenEvaluation(item)}
-                        disabled={claimTaskMutation.isPending}
-                        className="text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground gap-1.5 shadow-sm"
-                      >
-                        <span>{item.staffScore > 0 ? "Chấm lại" : "Tiếp nhận & Chấm"}</span>
-                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                      </Button>
-                    </Table.Cell>
+            <div className="overflow-x-auto">
+              <Table>
+                <Table.Header className="bg-muted/30">
+                  <Table.Row>
+                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[200px]">
+                      Sinh viên & Thời gian
+                    </Table.Head>
+                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[240px]">
+                      Bài tập / Nội dung
+                    </Table.Head>
+                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[220px]">
+                      Trạng thái & Cảnh báo
+                    </Table.Head>
+                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[150px]">
+                      Điểm hiện tại
+                    </Table.Head>
+                    <Table.Head className="text-xs font-bold text-muted-foreground text-right min-w-[150px]">
+                      Thao tác
+                    </Table.Head>
                   </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
+                </Table.Header>
+                <Table.Body>
+                  {queueItems.map((item) => {
+                    const isItemOverdue = isSubmissionOverdue(item);
+                    const action = getActionConfig(item, isItemOverdue);
+                    const ActionIcon = action.icon;
+
+                    return (
+                      <Table.Row
+                        key={item.submissionId}
+                        className={cn(
+                          "hover:bg-muted/20 transition-all border-b border-border/60",
+                          getRowBorderClass(item, isItemOverdue),
+                        )}
+                      >
+                        {/* Student info */}
+                        <Table.Cell className="py-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-9 h-9 border border-border">
+                              <Avatar.Image src={item.studentAvatarUrl} alt={item.studentName} />
+                              <Avatar.Fallback className="bg-primary/10 text-primary text-xs font-bold">
+                                {item.studentName.slice(0, 2).toUpperCase()}
+                              </Avatar.Fallback>
+                            </Avatar>
+                            <div>
+                              <span className="font-bold text-foreground text-sm block">
+                                {item.studentName}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                <Clock className="w-3 h-3" aria-hidden="true" />
+                                {item.submittedAt
+                                  ? new Date(item.submittedAt).toLocaleDateString("vi-VN", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                    })
+                                  : "N/A"}
+                              </span>
+                            </div>
+                          </div>
+                        </Table.Cell>
+
+                        {/* Item Title */}
+                        <Table.Cell className="py-4">
+                          <div>
+                            <span className="font-bold text-foreground text-sm block">
+                              {item.itemTitle}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground truncate max-w-xs block">
+                              {item.courseTitle}
+                            </span>
+                          </div>
+                        </Table.Cell>
+
+                        {/* Badges / Warnings (Prioritized & Mutually Exclusive) */}
+                        <Table.Cell className="py-4">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {item.isAppeal ? (
+                              <Badge
+                                variant="outlined"
+                                className="text-[11px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30 gap-1 px-2.5 py-0.5"
+                              >
+                                <AlertTriangle
+                                  className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400"
+                                  aria-hidden="true"
+                                />
+                                Khiếu nại điểm
+                              </Badge>
+                            ) : item.isOutlier ? (
+                              <Badge
+                                variant="warning"
+                                className="text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 gap-1 px-2.5 py-0.5"
+                              >
+                                <AlertTriangle
+                                  className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"
+                                  aria-hidden="true"
+                                />
+                                Lệch điểm chuẩn
+                              </Badge>
+                            ) : item.lockedByUserId ? (
+                              <Badge
+                                variant="outlined"
+                                className="text-[11px] font-medium bg-muted text-muted-foreground gap-1 px-2.5 py-0.5"
+                              >
+                                <Lock
+                                  className="w-3.5 h-3.5 text-muted-foreground"
+                                  aria-hidden="true"
+                                />
+                                {item.lockedByName
+                                  ? `Đang giữ: ${item.lockedByName}`
+                                  : "Đang được chấm"}
+                              </Badge>
+                            ) : isItemOverdue ? (
+                              <Badge
+                                variant="error"
+                                className="text-[11px] font-bold bg-destructive/10 text-destructive border-destructive/20 gap-1 px-2.5 py-0.5"
+                              >
+                                <Clock
+                                  className="w-3.5 h-3.5 text-destructive"
+                                  aria-hidden="true"
+                                />
+                                Quá hạn 48h
+                              </Badge>
+                            ) : item.status === GradingQueueStatus.GRADED ? (
+                              <Badge
+                                variant="success"
+                                className="text-[11px] font-semibold bg-success/15 text-success border-success/30 gap-1 px-2.5 py-0.5"
+                              >
+                                <CheckCircle2
+                                  className="w-3.5 h-3.5 text-success"
+                                  aria-hidden="true"
+                                />
+                                Đã chấm
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outlined"
+                                className="text-[11px] font-medium text-muted-foreground px-2.5 py-0.5"
+                              >
+                                Chờ chấm
+                              </Badge>
+                            )}
+                          </div>
+                        </Table.Cell>
+
+                        {/* Current Score / Provenance */}
+                        <Table.Cell className="py-4">
+                          {renderProvenanceBadge(
+                            item.gradeSource,
+                            item.staffScore || item.peerScore,
+                            item.status,
+                          )}
+                        </Table.Cell>
+
+                        {/* Context-Aware Color-Coded Action Button */}
+                        <Table.Cell className="py-4 text-right">
+                          <Button
+                            type="button"
+                            onClick={() => handleOpenEvaluation(item)}
+                            disabled={claimTaskMutation.isPending}
+                            className={cn(
+                              "text-xs gap-1.5 px-3.5 py-1.5 transition-all",
+                              action.className,
+                            )}
+                          >
+                            <span>{action.label}</span>
+                            <ActionIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                          </Button>
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })}
+                </Table.Body>
+              </Table>
+            </div>
           )}
         </div>
       </main>
