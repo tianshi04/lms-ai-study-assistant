@@ -25,6 +25,7 @@ export class AdminApplicationsPage {
 
   async verifyPageLoaded() {
     await expect(this.heading).toBeVisible({ timeout: 10000 });
+    await expect(this.page.locator('text=Đang tải danh sách đơn thẩm định').first()).toBeHidden({ timeout: 15000 });
   }
 
   async filterByStatus(status: 'all' | 'pending' | 'approved' | 'rejected') {
@@ -32,12 +33,17 @@ export class AdminApplicationsPage {
     await expect(tab).toBeVisible({ timeout: 10000 });
     await expect(tab).toBeEnabled({ timeout: 5000 });
 
+    await this.page.waitForTimeout(300);
     for (let i = 0; i < 3; i++) {
       await tab.click();
-      await this.page.waitForTimeout(400);
-      if ((await tab.getAttribute('aria-pressed')) === 'true') break;
+      try {
+        await expect(tab).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
+        break;
+      } catch {
+        await this.page.waitForTimeout(500);
+      }
     }
 
-    await expect(tab).toHaveAttribute('aria-pressed', 'true', { timeout: 5000 });
+    await expect(tab).toHaveAttribute('aria-pressed', 'true', { timeout: 10000 });
   }
 }
