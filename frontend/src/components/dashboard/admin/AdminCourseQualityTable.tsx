@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import {
@@ -52,6 +53,36 @@ function CourseStatusBadge({ status }: { status: string }) {
   return <StatusBadge tone={tone}>{label}</StatusBadge>;
 }
 
+function CompletionProgressCell({
+  title,
+  completedCount,
+  enrolledCount,
+}: Pick<AdminCourseQualityMetric, "title" | "completedCount" | "enrolledCount">) {
+  const [isAnimated, setIsAnimated] = useState(false);
+  const percent = toPercent(completedCount, enrolledCount);
+
+  useEffect(() => {
+    const frameId = requestAnimationFrame(() => {
+      setIsAnimated(true);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  return (
+    <div className="space-y-1">
+      <Progress
+        value={isAnimated ? percent : 0}
+        label={`Tỷ lệ hoàn thành ${title}`}
+        className="[&_*]:duration-[1200ms] [&_*]:ease-out"
+      />
+      <p className="text-xs font-mono text-muted-foreground">
+        {formatPercent(completedCount, enrolledCount)} ({formatNumber(completedCount)}/
+        {formatNumber(enrolledCount)})
+      </p>
+    </div>
+  );
+}
+
 const columns: ColumnDef<AdminCourseQualityMetric>[] = [
   {
     id: "course",
@@ -76,21 +107,13 @@ const columns: ColumnDef<AdminCourseQualityMetric>[] = [
   {
     id: "completion",
     header: "Hoàn thành",
-    cell: ({ row }) => {
-      const { title, completedCount, enrolledCount } = row.original;
-      return (
-        <div className="space-y-1">
-          <Progress
-            value={toPercent(completedCount, enrolledCount)}
-            label={`Tỷ lệ hoàn thành ${title}`}
-          />
-          <p className="text-xs font-mono text-muted-foreground">
-            {formatPercent(completedCount, enrolledCount)} ({formatNumber(completedCount)}/
-            {formatNumber(enrolledCount)})
-          </p>
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <CompletionProgressCell
+        title={row.original.title}
+        completedCount={row.original.completedCount}
+        enrolledCount={row.original.enrolledCount}
+      />
+    ),
   },
   {
     id: "rating",

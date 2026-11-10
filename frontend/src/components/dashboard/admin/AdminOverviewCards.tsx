@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Award,
   BookOpen,
@@ -69,7 +70,18 @@ function KpiCard({ icon: Icon, iconClassName, label, value, details }: KpiCardPr
 }
 
 function RatingDistribution({ overview }: { overview?: AdminOverviewMetrics }) {
+  const [isAnimated, setIsAnimated] = useState(false);
   const total = overview?.totalReviews ?? 0;
+  const shouldAnimate = Boolean(overview) && isAnimated;
+
+  useEffect(() => {
+    if (!overview) return;
+    const frameId = requestAnimationFrame(() => {
+      setIsAnimated(true);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [overview]);
+
   return (
     <Surface variant="low" shape="2xl" className="p-5 space-y-3">
       <div className="flex items-baseline justify-between gap-3">
@@ -91,7 +103,12 @@ function RatingDistribution({ overview }: { overview?: AdminOverviewMetrics }) {
           return (
             <li key={stars} className="flex items-center gap-3 text-xs h-5">
               <span className="w-10 shrink-0 font-semibold text-foreground">{stars} sao</span>
-              <Progress value={percent} thickness="thick" label={`${stars} sao`} />
+              <Progress
+                value={shouldAnimate ? percent : 0}
+                thickness="thick"
+                label={`${stars} sao`}
+                className="[&_*]:duration-[1200ms] [&_*]:ease-out"
+              />
               <span className="w-20 shrink-0 text-right font-mono text-muted-foreground">
                 {overview ? (
                   <span className="animate-in fade-in duration-300">
