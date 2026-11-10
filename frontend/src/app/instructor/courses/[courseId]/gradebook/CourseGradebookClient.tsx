@@ -96,7 +96,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
         id: "finalGrade",
         header: () => (
           <div className="flex items-center gap-1.5 font-bold text-foreground whitespace-nowrap">
-            <Award className="w-4 h-4 text-amber-500" aria-hidden="true" />
+            <Award className="w-4 h-4 text-warning" aria-hidden="true" />
             <span>Điểm tổng kết</span>
           </div>
         ),
@@ -139,7 +139,15 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
               {itemCol.itemTitle}
             </div>
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <span className="font-medium bg-muted px-1.5 py-0.5 rounded">{itemCol.itemType}</span>
+              <span className="font-medium bg-muted px-1.5 py-0.5 rounded">
+                {itemCol.itemType === "QUIZ"
+                  ? "Trắc nghiệm"
+                  : itemCol.itemType === "ASSIGNMENT"
+                    ? "Bài tập"
+                    : itemCol.itemType === "PEER_ASSIGNMENT"
+                      ? "Chấm chéo"
+                      : itemCol.itemType}
+              </span>
               <span>• {(itemCol.weight * 100).toFixed(0)}%</span>
             </div>
           </div>
@@ -272,7 +280,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
             </Breadcrumb.Item>
             <Breadcrumb.Separator />
             <Breadcrumb.Item>
-              <Breadcrumb.Page>Sổ điểm (Course Gradebook)</Breadcrumb.Page>
+              <Breadcrumb.Page>Sổ điểm khóa học</Breadcrumb.Page>
             </Breadcrumb.Item>
           </Breadcrumb.List>
         </Breadcrumb>
@@ -407,32 +415,34 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
           </div>
         ) : (
           <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <Table>
-              <Table.Header>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <Table.Row key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <Table.Head key={header.id} className="py-3 px-4">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </Table.Head>
-                    ))}
-                  </Table.Row>
-                ))}
-              </Table.Header>
-              <Table.Body>
-                {table.getRowModel().rows.map((row) => (
-                  <Table.Row key={row.id} className="hover:bg-muted/40 transition-colors">
-                    {row.getVisibleCells().map((cell) => (
-                      <Table.Cell key={cell.id} className="py-3 px-4">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </Table.Cell>
-                    ))}
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <Table.Header>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <Table.Row key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <Table.Head key={header.id} className="py-3 px-4">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </Table.Head>
+                      ))}
+                    </Table.Row>
+                  ))}
+                </Table.Header>
+                <Table.Body>
+                  {table.getRowModel().rows.map((row) => (
+                    <Table.Row key={row.id} className="hover:bg-muted/40 transition-colors">
+                      {row.getVisibleCells().map((cell) => (
+                        <Table.Cell key={cell.id} className="py-3 px-4">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </Table.Cell>
+                      ))}
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            </div>
           </div>
         )}
       </main>

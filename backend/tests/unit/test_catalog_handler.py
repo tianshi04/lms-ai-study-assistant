@@ -709,3 +709,147 @@ async def test_get_instructor_activity_timeline_unauthorized():
         assert exc_info.value.code == Code.PERMISSION_DENIED
     finally:
         set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_success():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    usecase_mock.send_student_reminder.return_value = 2
+    handler = CatalogHandler(usecase_mock)
+    instructor = CurrentUser(
+        id="inst-1",
+        email="instructor@test.com",
+        role="INSTRUCTOR",
+    )
+    set_current_user(instructor)
+    try:
+        req = pb.SendStudentReminderRequest(
+            course_id="course-ml",
+            student_ids=["student-1", "student-2"],
+            title="Nhắc nhở học tập",
+            content="Hãy hoàn thành bài tập tuần này",
+        )
+        ctx = MagicMock()
+        res = await handler.send_student_reminder(req, ctx)
+        assert res.success is True
+        assert res.sent_count == 2
+        usecase_mock.send_student_reminder.assert_called_once_with(
+            course_id="course-ml",
+            student_ids=["student-1", "student-2"],
+            title="Nhắc nhở học tập",
+            content="Hãy hoàn thành bài tập tuần này",
+            current_user=instructor,
+        )
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_permission_denied_for_learner():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    handler = CatalogHandler(usecase_mock)
+    learner = CurrentUser(id="learner-1", email="learner@test.com", role="LEARNER")
+    set_current_user(learner)
+    try:
+        req = pb.SendStudentReminderRequest(
+            course_id="course-ml",
+            student_ids=["student-1"],
+            title="Nhắc nhở",
+            content="Nội dung",
+        )
+        ctx = MagicMock()
+        with pytest.raises(ConnectError) as exc:
+            await handler.send_student_reminder(req, ctx)
+        assert exc.value.code == Code.PERMISSION_DENIED
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_usecase_permission_error():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    usecase_mock.send_student_reminder.side_effect = PermissionError(
+        "Bạn không có quyền quản lý khóa học"
+    )
+    handler = CatalogHandler(usecase_mock)
+    instructor = CurrentUser(
+        id="inst-2",
+        email="other@test.com",
+        role="INSTRUCTOR",
+    )
+    set_current_user(instructor)
+    try:
+        req = pb.SendStudentReminderRequest(
+            course_id="course-other",
+            student_ids=["student-1"],
+            title="Nhắc nhở",
+            content="Nội dung",
+        )
+        ctx = MagicMock()
+        with pytest.raises(ConnectError) as exc:
+            await handler.send_student_reminder(req, ctx)
+        assert exc.value.code == Code.PERMISSION_DENIED
+        assert "Bạn không có quyền quản lý khóa học" in str(exc.value)
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_get_instructor_analytics_with_students_and_pacing():
+    from src.modules.catalog.domain import EnrolledStudent, InstructorAnalytics
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    analytics_obj = InstructorAnalytics(
+        id="analytics-1",
+        course_id="course-microeconomics-foundations",
+        total_enrolled_students=2,
+        average_completion_rate=77.8,
+        average_rating=4.9,
+        review_count=10,
+        students=[
+            EnrolledStudent(
+                user_id="user_learner_08",
+                user_name="tung.bui",
+                user_email="tung.bui@coursera.ai",
+                progress_percent=55.6,
+                enrolled_at="2026-08-08T00:00:00Z",
+            ),
+            EnrolledStudent(
+                user_id="user_learner_01",
+                user_name="an.nguyen",
+                user_email="an.nguyen@coursera.ai",
+                progress_percent=100.0,
+                enrolled_at="2026-10-25T00:00:00Z",
+            ),
+        ],
+    )
+    usecase_mock.get_instructor_analytics.return_value = analytics_obj
+    handler = CatalogHandler(usecase_mock)
+    instructor = CurrentUser(
+        id="inst-1",
+        email="instructor@test.com",
+        role="INSTRUCTOR",
+    )
+    set_current_user(instructor)
+    try:
+        req = pb.GetInstructorAnalyticsRequest(
+            course_id="course-microeconomics-foundations"
+        )
+        ctx = MagicMock()
+        res = await handler.get_instructor_analytics(req, ctx)
+        assert res.analytics is not None
+        assert res.analytics.course_id == "course-microeconomics-foundations"
+        assert res.analytics.total_enrolled_students == 2
+        assert len(res.analytics.students) == 2
+        assert res.analytics.students[0].user_id == "user_learner_08"
+        assert res.analytics.students[0].progress_percent == 55.6
+        assert res.analytics.students[0].enrolled_at == "2026-08-08T00:00:00Z"
+    finally:
+        set_current_user(None)

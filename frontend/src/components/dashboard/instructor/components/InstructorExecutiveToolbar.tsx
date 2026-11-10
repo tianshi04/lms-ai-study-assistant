@@ -59,7 +59,8 @@ export function InstructorExecutiveToolbar({
               <span>Đang phụ trách {courses.length} khóa học</span>
               <span>•</span>
               <span className="inline-flex items-center gap-1 text-success font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> SLA phản hồi: 3.4h (Tốt)
+                <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Thời gian phản hồi TB:
+                3.4h (Tốt)
               </span>
             </p>
           </div>

@@ -356,7 +356,7 @@ export function InstructorHeatmap({
       </div>
 
       {/* Grid Ma Trận Heatmap */}
-      <div className="overflow-x-auto pt-1">
+      <div className="overflow-x-auto overflow-y-hidden p-1.5 scrollbar-thin">
         <div className="min-w-[500px]">
           {/* Header Thứ */}
           <div className="grid grid-cols-8 gap-1.5 text-center text-[11px] font-bold pb-1 text-muted-foreground">
@@ -403,19 +403,21 @@ export function InstructorHeatmap({
                       disabled={cell.isFuture}
                       onMouseEnter={() => setHoveredCell(cell)}
                       onMouseLeave={() => setHoveredCell(null)}
-                      className={`h-8 rounded-lg transition-all flex items-center justify-center text-[10px] relative ${getCellColor(
+                      className={`h-8 rounded-lg transition-colors flex items-center justify-center text-[10px] relative ${getCellColor(
                         cell.count,
                         cell.isPeak,
                         cell.isFuture,
-                      )} ${isHovered ? "ring-2 ring-primary scale-105 z-10" : ""} ${
-                        cell.isFuture ? "cursor-default" : "cursor-pointer"
-                      }`}
+                      )} ${
+                        isHovered
+                          ? "ring-2 ring-primary ring-offset-1 ring-offset-surface z-10 font-bold shadow-xs brightness-105"
+                          : ""
+                      } ${cell.isFuture ? "cursor-default" : "cursor-pointer"}`}
                       aria-label={`${d}, ${slot}: ${cell.isFuture ? "Chưa diễn ra" : isAverageMode ? `Trung bình ${cell.count} lượt/buổi` : `${cell.count} lượt`}`}
                     >
                       <span>{cell.isFuture ? "—" : cell.count}</span>
                       {cell.isPeak && (
                         <Flame
-                          className="w-2.5 h-2.5 absolute top-0.5 right-0.5 text-amber-300 fill-amber-300"
+                          className="w-2.5 h-2.5 absolute top-0.5 right-0.5 text-amber-300 fill-amber-300 pointer-events-none"
                           aria-hidden="true"
                         />
                       )}
@@ -429,10 +431,10 @@ export function InstructorHeatmap({
       </div>
 
       {/* Hover Info & Chú giải */}
-      <div className="pt-2 border-t border-outline-variant/40 flex items-center justify-between gap-2 text-xs">
-        <div className="flex items-center gap-2">
+      <div className="pt-2 border-t border-outline-variant/40 flex items-center justify-between gap-2 text-xs min-h-[32px]">
+        <div className="flex items-center gap-2 min-w-0">
           {hoveredCell ? (
-            <span className="font-mono text-primary font-bold">
+            <span className="font-mono text-primary font-bold truncate">
               {hoveredCell.day} • {hoveredCell.timeSlot}:{" "}
               {hoveredCell.isFuture ? (
                 <span className="text-muted-foreground font-normal">Chưa diễn ra</span>
@@ -446,7 +448,7 @@ export function InstructorHeatmap({
               )}
             </span>
           ) : (
-            <span className="text-muted-foreground flex items-center gap-1.5">
+            <span className="text-muted-foreground flex items-center gap-1.5 truncate">
               <Info className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
               {isAverageMode
                 ? "Rê chuột vào từng ô để xem số lượng sinh viên tương tác trung bình mỗi buổi"

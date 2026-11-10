@@ -13,7 +13,7 @@ export function useForumThreadsQuery(
       const res = await client.listThreads({ courseId });
       return res.threads;
     },
-    enabled: !!courseId,
+    enabled: options?.enabled !== undefined ? options.enabled : true,
     ...options,
   });
 }

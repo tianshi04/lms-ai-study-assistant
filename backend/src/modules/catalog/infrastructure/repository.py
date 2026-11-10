@@ -2,7 +2,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import case, delete, func, select, update
+from sqlalchemy import and_, case, delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -1881,46 +1881,78 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 total_active_in_period=0,
             )
 
-        learning_progress_model = __import__(
-            "src.modules.learning.infrastructure.models",
-            fromlist=[
-                "LearningProgressModel",
-                "PersonalNoteModel",
-                "LearningItemProgressModel",
-            ],
-        ).LearningProgressModel
-        personal_note_model = __import__(
-            "src.modules.learning.infrastructure.models",
-            fromlist=["PersonalNoteModel"],
-        ).PersonalNoteModel
-        learning_item_progress_model = __import__(
-            "src.modules.learning.infrastructure.models",
-            fromlist=["LearningItemProgressModel"],
-        ).LearningItemProgressModel
-
-        lp_stmt = select(learning_progress_model).where(
-            learning_progress_model.course_id.in_(course_ids)
+        from src.modules.learning.infrastructure.models import (
+            LearningItemProgressModel,
+            LearningProgressModel,
+            PersonalNoteModel,
         )
+
+        courses_stmt = select(CourseModel).where(CourseModel.id.in_(course_ids))
+        courses_res = await self.session.execute(courses_stmt)
+        c_models = courses_res.scalars().all()
+        staff_ids: set[str] = set()
+        for cm in c_models:
+            if cm.owner_id:
+                staff_ids.add(cm.owner_id)
+            if cm.collaborators:
+                for collab in cm.collaborators:
+                    if collab.user_id:
+                        staff_ids.add(collab.user_id)
+
+        range_start_iso = range_start.isoformat()
+        range_end_iso = range_end.isoformat()
+
+        lp_stmt = select(LearningProgressModel).where(
+            LearningProgressModel.course_id.in_(course_ids),
+            or_(
+                and_(
+                    LearningProgressModel.last_accessed_at >= range_start_iso,
+                    LearningProgressModel.last_accessed_at <= range_end_iso,
+                ),
+                and_(
+                    LearningProgressModel.completed_at >= range_start_iso,
+                    LearningProgressModel.completed_at <= range_end_iso,
+                ),
+                and_(
+                    LearningProgressModel.enrolled_at >= range_start_iso,
+                    LearningProgressModel.enrolled_at <= range_end_iso,
+                ),
+            ),
+        )
+        if staff_ids:
+            lp_stmt = lp_stmt.where(LearningProgressModel.user_id.notin_(staff_ids))
         if learner_filter == "in_progress":
             lp_stmt = lp_stmt.where(
-                learning_progress_model.overall_progress_percent < 100.0
+                LearningProgressModel.overall_progress_percent < 100.0
             )
         elif learner_filter == "completed":
             lp_stmt = lp_stmt.where(
-                learning_progress_model.overall_progress_percent >= 100.0
+                LearningProgressModel.overall_progress_percent >= 100.0
             )
 
         lp_res = await self.session.execute(lp_stmt)
         progresses = lp_res.scalars().all()
 
-        note_stmt = select(personal_note_model).where(
-            personal_note_model.course_id.in_(course_ids)
+        note_stmt = select(PersonalNoteModel).where(
+            PersonalNoteModel.course_id.in_(course_ids),
+            or_(
+                and_(
+                    PersonalNoteModel.created_at >= range_start_iso,
+                    PersonalNoteModel.created_at <= range_end_iso,
+                ),
+                and_(
+                    PersonalNoteModel.updated_at >= range_start_iso,
+                    PersonalNoteModel.updated_at <= range_end_iso,
+                ),
+            ),
         )
         note_res = await self.session.execute(note_stmt)
         notes = note_res.scalars().all()
 
-        item_stmt = select(learning_item_progress_model).where(
-            learning_item_progress_model.course_id.in_(course_ids)
+        item_stmt = select(LearningItemProgressModel).where(
+            LearningItemProgressModel.course_id.in_(course_ids),
+            LearningItemProgressModel.last_studied_at >= range_start_iso,
+            LearningItemProgressModel.last_studied_at <= range_end_iso,
         )
         item_res = await self.session.execute(item_stmt)
         item_progresses = item_res.scalars().all()
@@ -2038,6 +2070,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         real_id = await self.get_course_id_by_slug_or_id(course_id)
         avg_rating, total_reviews = await self.get_course_rating_stats(real_id)
 
+        course_stmt = select(CourseModel).where(CourseModel.id == real_id)
+        course_res = await self.session.execute(course_stmt)
+        course_model = course_res.scalar_one_or_none()
+
+        staff_ids: set[str] = set()
+        if course_model:
+            if course_model.owner_id:
+                staff_ids.add(course_model.owner_id)
+            if course_model.collaborators:
+                for collab in course_model.collaborators:
+                    if collab.user_id:
+                        staff_ids.add(collab.user_id)
+
         identity_repo_factory = __import__(
             "src.modules.identity.infrastructure.repository",
             fromlist=["IdentityRepository"],
@@ -2052,6 +2097,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         stmt = select(learning_progress_model).where(
             learning_progress_model.course_id == real_id
         )
+        if staff_ids:
+            stmt = stmt.where(learning_progress_model.user_id.notin_(staff_ids))
         res = await self.session.execute(stmt)
         progresses = res.scalars().all()
 
@@ -2063,11 +2110,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             sum_progress += p.overall_progress_percent
             user_entity = await identity_repo.get_by_id(p.user_id)
             u_name = (
-                user_entity.email.split("@")[0]
-                if user_entity and user_entity.email
-                else f"Học viên #{p.user_id[:6]}"
+                user_entity.full_name
+                if user_entity and user_entity.full_name
+                else (
+                    user_entity.email.split("@")[0]
+                    if user_entity and user_entity.email
+                    else f"Học viên #{p.user_id[:6]}"
+                )
             )
             u_email = user_entity.email if user_entity else ""
+            enrolled_at_str = p.enrolled_at or "2026-10-25T00:00:00Z"
 
             students.append(
                 EnrolledStudent(
@@ -2075,7 +2127,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     user_name=u_name,
                     user_email=u_email,
                     progress_percent=round(p.overall_progress_percent, 1),
-                    enrolled_at="2026-07-25T00:00:00Z",
+                    enrolled_at=enrolled_at_str,
                 )
             )
 

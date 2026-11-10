@@ -367,6 +367,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self,
         course_id: str = "",
         item_id: str = "",
+        instructor_id: str = "",
     ) -> list[dict[str, Any]]:
         results = []
         for s in self.peer_submissions:
@@ -1581,3 +1582,305 @@ async def test_dynamic_rubric_criteria_from_item():
     )
     assert criteria[1].criteria_id == "user_research"
     assert criteria[1].max_score == 15.0
+async def test_self_grading_fraud_prevented(monkeypatch: pytest.MonkeyPatch) -> None:
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+
+    from src.modules.assessment.application.peer_review_usecase import PeerReviewUseCase
+
+    repo = InMemoryAssessmentRepository()
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    usecase = PeerReviewUseCase()
+    usecase._get_repo = AsyncMock(return_value=repo)
+
+    sub = PeerAssignmentSubmission(
+        id="sub-fraud-1",
+        user_id="student-fraudster",
+        item_id="item-test",
+        submission_url="https://example.com/fraud",
+        text_content="My own work",
+        created_at="2026-11-10T00:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    valid_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=10.0,
+        )
+    ]
+
+    # Attempting to self-grade must raise PermissionError
+    with pytest.raises(PermissionError, match="không được phép tự chấm điểm"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-fraud-1",
+            reviewer_user_id="student-fraudster",
+            graded_criteria=valid_rubric,
+        )
+
+
+@pytest.mark.asyncio
+async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+
+    from src.modules.assessment.application.peer_review_usecase import PeerReviewUseCase
+
+    repo = InMemoryAssessmentRepository()
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    usecase = PeerReviewUseCase()
+    usecase._get_repo = AsyncMock(return_value=repo)
+
+    sub = PeerAssignmentSubmission(
+        id="sub-valid-1",
+        user_id="student-legit",
+        item_id="item-test",
+        submission_url="https://example.com/legit",
+        text_content="Legit work",
+        created_at="2026-11-10T00:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    # 1. Negative score rejected
+    neg_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=-5.0,
+        )
+    ]
+    with pytest.raises(ValueError, match="không hợp lệ"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=neg_rubric,
+        )
+
+    # 2. Over-maximum score rejected
+    over_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=999.0,
+        )
+    ]
+    with pytest.raises(ValueError, match="không hợp lệ"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=over_rubric,
+        )
+
+    # 3. NaN score rejected
+    nan_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=float("nan"),
+        )
+    ]
+    with pytest.raises(ValueError, match="hữu hạn hợp lệ"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=nan_rubric,
+        )
+
+    # 4. Infinity score rejected
+    inf_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=float("inf"),
+        )
+    ]
+    with pytest.raises(ValueError, match="hữu hạn hợp lệ"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=inf_rubric,
+        )
+
+    # 5. Non-positive max_score rejected
+    zero_max_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=0.0,
+            score_given=0.0,
+        )
+    ]
+    with pytest.raises(ValueError, match="phải lớn hơn 0"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=zero_max_rubric,
+        )
+
+    # 6. Duplicate review by same reviewer rejected
+    valid_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=8.0,
+        )
+    ]
+    # First review succeeds
+    ok, _ = await usecase.submit_peer_review_grade(
+        review_id="rev-sub-valid-1",
+        reviewer_user_id="reviewer-peer",
+        graded_criteria=valid_rubric,
+    )
+    assert ok is True
+
+    # Second review by same reviewer must raise PermissionError
+    with pytest.raises(PermissionError, match="đã thực hiện đánh giá"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=valid_rubric,
+        )
+
+
+@pytest.mark.asyncio
+async def test_uuid7_peer_review_id_not_truncated(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure UUID7-length submission IDs are not truncated by s.id[:6]."""
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+
+    from src.modules.assessment.application.peer_review_usecase import PeerReviewUseCase
+
+    repo = InMemoryAssessmentRepository()
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    usecase = PeerReviewUseCase()
+    usecase._get_repo = AsyncMock(return_value=repo)
+
+    uuid7_sub_id = "peer-01934567-89ab-7cde-9012-3456789abcde"
+    sub = PeerAssignmentSubmission(
+        id=uuid7_sub_id,
+        user_id="student-author",
+        item_id="item-test",
+        submission_url="https://example.com/project",
+        text_content="My long UUID7 project",
+        created_at="2026-11-10T00:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    reviews_to_grade = await usecase.get_peer_reviews_to_grade(
+        user_id="reviewer-other", item_id="item-test"
+    )
+    assert len(reviews_to_grade) == 1
+    assert reviews_to_grade[0]["review_id"] == f"rev-{uuid7_sub_id}"
+
+    # Grade submission using the full review_id
+    rubric = [
+        RubricCriteria(criteria_id="c1", title="Code", max_score=10.0, score_given=9.0)
+    ]
+    ok, _ = await usecase.submit_peer_review_grade(
+        review_id=f"rev-{uuid7_sub_id}",
+        reviewer_user_id="reviewer-other",
+        graded_criteria=rubric,
+    )
+    assert ok is True
+
+
+@pytest.mark.asyncio
+async def test_staff_self_grading_prevented(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ensure staff members cannot self-grade, claim, or regrade their own submissions."""
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+
+    from src.modules.assessment.application.peer_review_usecase import PeerReviewUseCase
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    usecase = PeerReviewUseCase()
+    usecase._get_repo = AsyncMock(return_value=repo)
+
+    sub = PeerAssignmentSubmission(
+        id="sub-ta-author-1",
+        user_id="ta_author_id",
+        item_id="item-ta-test",
+        submission_url="https://example.com/ta-work",
+        text_content="TA enrolled as student",
+        created_at="2026-11-10T00:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    ta_user = CurrentUser(id="ta_author_id", role="TA", full_name="Trợ giảng A")
+
+    # 1. claim_grading_task prevented
+    with pytest.raises(PermissionError, match="không được phép tự khóa bài"):
+        await usecase.claim_grading_task(
+            submission_id="sub-ta-author-1",
+            staff_user_id="ta_author_id",
+            current_user=ta_user,
+        )
+
+    # 2. submit_staff_grading prevented
+    rubric = [
+        RubricCriteria(criteria_id="c1", title="Code", max_score=10.0, score_given=10.0)
+    ]
+    with pytest.raises(PermissionError, match="không được phép tự chấm điểm"):
+        await usecase.submit_staff_grading(
+            submission_id="sub-ta-author-1",
+            staff_user_id="ta_author_id",
+            graded_criteria=rubric,
+            total_score=100.0,
+            current_user=ta_user,
+        )
+
+    # 3. regrade_peer_submission_by_staff prevented
+    with pytest.raises(PermissionError, match="không được phép tự chấm điểm"):
+        await usecase.regrade_peer_submission_by_staff(
+            submission_id="sub-ta-author-1",
+            staff_user_id="ta_author_id",
+            ta_score=100.0,
+            current_user=ta_user,
+        )

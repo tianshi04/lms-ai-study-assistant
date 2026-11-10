@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   CheckCircle2,
@@ -23,7 +24,11 @@ import { Table } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { cn } from "@/lib/utils";
-import { useGradingQueueQuery, useClaimGradingTaskMutation } from "@/lib/query_hooks";
+import {
+  useGradingQueueQuery,
+  useClaimGradingTaskMutation,
+  useCourseDetailQuery,
+} from "@/lib/query_hooks";
 import {
   GradingProvenance,
   GradingQueueStatus,
@@ -38,18 +43,44 @@ interface GradingCockpitClientProps {
 export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   const { toast } = useToast();
   const { userId: currentUserId } = useAuth();
+  const searchParams = useSearchParams();
+  const urlSubmissionId = searchParams.get("submissionId");
+
+  const isInvalidCourse = !courseId || courseId === "undefined" || courseId === "null";
+
+  const { data: courseDetail } = useCourseDetailQuery(courseId, {
+    enabled: !isInvalidCourse,
+  });
 
   const [activeTab, setActiveTab] = useState<GradingQueueStatus>(GradingQueueStatus.ALL);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
+  const [currentTimeMs, setCurrentTimeMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentTimeMs(Date.now());
+  }, []);
+
+  // Auto-open evaluation modal if submissionId was passed in URL query param
+  useEffect(() => {
+    if (urlSubmissionId && !selectedSubmissionId) {
+      setSelectedSubmissionId(urlSubmissionId);
+      setIsEvaluationModalOpen(true);
+    }
+  }, [urlSubmissionId, selectedSubmissionId]);
 
   // Fetch grading queue using TanStack Query
-  const { data, isLoading, isError, refetch } = useGradingQueueQuery({
-    courseId,
-    status: activeTab,
-    searchQuery,
-  });
+  const { data, isLoading, isError, error, refetch } = useGradingQueueQuery(
+    {
+      courseId: isInvalidCourse ? "" : courseId,
+      status: activeTab,
+      searchQuery,
+    },
+    {
+      enabled: !isInvalidCourse,
+    },
+  );
 
   const queueItems = data?.items || [];
   const claimTaskMutation = useClaimGradingTaskMutation();
@@ -60,8 +91,8 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
     if (item.isAppeal) return false;
     if (item.isOutlier) return false;
     if (item.lockedByUserId) return false;
-    if (!item.submittedAt) return false;
-    const isPast48h = Date.now() - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
+    if (!item.submittedAt || !currentTimeMs) return false;
+    const isPast48h = currentTimeMs - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
     return isPast48h && !item.staffScore && item.peerReviewsCount < 3;
   };
 
@@ -72,7 +103,7 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
       return {
         label: "Giải quyết khiếu nại",
         className:
-          "bg-purple-600 hover:bg-purple-700 text-white shadow-sm font-bold border border-purple-600",
+          "bg-tertiary hover:bg-tertiary/90 text-on-tertiary shadow-sm font-bold border border-tertiary",
         icon: AlertTriangle,
       };
     }
@@ -80,7 +111,7 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
       return {
         label: "Xử lý lệch điểm",
         className:
-          "bg-amber-600 hover:bg-amber-700 text-white shadow-sm font-bold border border-amber-600",
+          "bg-warning hover:bg-warning-hover text-warning-foreground shadow-sm font-bold border border-warning",
         icon: AlertTriangle,
       };
     }
@@ -125,8 +156,8 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   };
 
   const getRowBorderClass = (item: GradingQueueItem, isOverdue: boolean) => {
-    if (item.isAppeal) return "border-l-4 border-l-purple-600 bg-purple-500/[0.04]";
-    if (item.isOutlier) return "border-l-4 border-l-amber-500 bg-amber-500/[0.03]";
+    if (item.isAppeal) return "border-l-4 border-l-tertiary bg-tertiary/[0.04]";
+    if (item.isOutlier) return "border-l-4 border-l-warning bg-warning/[0.03]";
     if (isOverdue) return "border-l-4 border-l-destructive bg-destructive/[0.03]";
     if (item.lockedByUserId) return "border-l-4 border-l-muted-foreground/30";
     if (item.status === GradingQueueStatus.GRADED) return "border-l-4 border-l-success/30";
@@ -215,6 +246,24 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
     }
   };
 
+  if (isInvalidCourse) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <AlertTriangle className="w-12 h-12 text-warning mx-auto" aria-hidden="true" />
+        <h2 className="text-xl font-bold">Chưa chọn khóa học để chấm bài</h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Không tìm thấy thông tin khóa học hợp lệ trong đường dẫn. Vui lòng quay lại danh sách khóa
+          học của bạn để tiếp tục.
+        </p>
+        <Link href="/instructor/courses">
+          <Button variant="filled" className="text-xs font-bold">
+            Quay về danh sách khóa học
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors pb-16">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -227,7 +276,9 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               </Breadcrumb.Item>
               <Breadcrumb.Separator />
               <Breadcrumb.Item>
-                <Breadcrumb.Link href={`/instructor/courses/${courseId}`}>Khóa học</Breadcrumb.Link>
+                <Breadcrumb.Link href={`/instructor/courses/${courseId}`}>
+                  {courseDetail?.course?.title || "Khóa học"}
+                </Breadcrumb.Link>
               </Breadcrumb.Item>
               <Breadcrumb.Separator />
               <Breadcrumb.Item>
@@ -249,7 +300,7 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
           <div className="space-y-2 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-                Cockpit Chấm bài & Phúc khảo
+                Bàn điều khiển Chấm bài & Phúc khảo
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
                 Công bố điểm tức thì
@@ -282,13 +333,11 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               <span className="text-xl font-black text-destructive block">{overdueCount}</span>
               <span className="text-[11px] font-bold text-destructive">Quá hạn</span>
             </div>
-            <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-center">
-              <span className="text-xl font-black text-purple-600 dark:text-purple-400 block">
+            <div className="p-3 rounded-2xl bg-tertiary/10 border border-tertiary/20 text-center">
+              <span className="text-xl font-black text-tertiary block">
                 {data?.appealedCount ?? 0}
               </span>
-              <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400">
-                Khiếu nại
-              </span>
+              <span className="text-[11px] font-bold text-tertiary">Khiếu nại</span>
             </div>
             <div className="p-3 rounded-2xl bg-success/10 border border-success/20 text-center">
               <span className="text-xl font-black text-success block">
@@ -406,19 +455,36 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
             <div className="p-16 text-center space-y-3">
               <AlertTriangle className="w-10 h-10 text-destructive mx-auto" aria-hidden="true" />
               <h3 className="text-base font-bold text-foreground">
-                Không thể tải dữ liệu hàng chờ
+                {error?.message?.includes("quyền") ||
+                error?.message?.includes("permission") ||
+                error?.message?.includes("PERMISSION_DENIED")
+                  ? "Không có quyền truy cập khóa học này"
+                  : "Không thể tải dữ liệu hàng chờ"}
               </h3>
               <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                Đã xảy ra lỗi khi kết nối với máy chủ chấm bài. Vui lòng kiểm tra lại đường truyền.
+                {error?.message?.includes("quyền") ||
+                error?.message?.includes("permission") ||
+                error?.message?.includes("PERMISSION_DENIED")
+                  ? "Bạn không phải là giảng viên hoặc trợ giảng phụ trách khóa học này. Vui lòng quay lại danh sách khóa học của bạn."
+                  : error?.message ||
+                    "Đã xảy ra lỗi khi kết nối với máy chủ chấm bài. Vui lòng kiểm tra lại đường truyền."}
               </p>
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={() => refetch()}
-                className="text-xs font-bold"
-              >
-                Thử lại
-              </Button>
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <Link
+                  href="/instructor/dashboard"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs transition-colors"
+                >
+                  Quay về Tổng quan
+                </Link>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => refetch()}
+                  className="text-xs font-bold"
+                >
+                  Thử lại
+                </Button>
+              </div>
             </div>
           ) : queueItems.length === 0 ? (
             <div className="p-16 text-center space-y-3">
@@ -513,10 +579,10 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                             {item.isAppeal ? (
                               <Badge
                                 variant="outlined"
-                                className="text-[11px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30 gap-1 px-2.5 py-0.5"
+                                className="text-[11px] font-bold bg-tertiary/15 text-tertiary border-tertiary/30 gap-1 px-2.5 py-0.5"
                               >
                                 <AlertTriangle
-                                  className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400"
+                                  className="w-3.5 h-3.5 text-tertiary"
                                   aria-hidden="true"
                                 />
                                 Khiếu nại điểm
@@ -524,10 +590,10 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                             ) : item.isOutlier ? (
                               <Badge
                                 variant="warning"
-                                className="text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 gap-1 px-2.5 py-0.5"
+                                className="text-[11px] font-bold bg-warning/15 text-warning border-warning/30 gap-1 px-2.5 py-0.5"
                               >
                                 <AlertTriangle
-                                  className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"
+                                  className="w-3.5 h-3.5 text-warning"
                                   aria-hidden="true"
                                 />
                                 Lệch điểm chuẩn

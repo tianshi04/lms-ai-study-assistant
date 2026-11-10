@@ -179,10 +179,20 @@ flowchart TD
 * **Quyền sở hữu Khóa học (Course Ownership & Co-Instructors):** Mỗi khóa học gắn với một Chủ sở hữu chính (`owner_id`) và danh sách Giảng viên đồng phụ trách (`co_instructor_ids`). Giảng viên chỉ có quyền chỉnh sửa/xóa khóa học do mình sở hữu hoặc phụ trách.
 * **Thông báo Khóa học (`CreateCourseAnnouncement`, `ListCourseAnnouncements`):** Giảng viên/Admin gửi thông báo truyền thông, lịch livestream hoặc nhắc nhở nộp bài tới toàn bộ học viên đăng ký khóa học.
 * **Điều phối & Kiểm duyệt Diễn đàn (Forum Moderation, Editing & Pinning):** 
-  * Trợ giảng/Giảng viên/Quản trị viên có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
+  * Trợ giảng/Giảng viên phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`) hoặc Admin có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
   * Tác giả bài viết (`author_user_id == current_user.id`) có quyền cập nhật (`UpdateThread`, `UpdateReply`) hoặc xóa bài đăng của mình. Khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động đánh dấu `is_edited = True` và ghi nhận timestamp `edited_at` để người xem dễ dàng phân biệt bài viết đã qua chỉnh sửa.
-  * Ban kiểm duyệt (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền xóa bài viết/bình luận vi phạm quy chuẩn cộng đồng của bất kỳ người dùng nào.
-* **Hỗ trợ Giải đáp:** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) để giải thích kiến thức nâng cao cho học viên.
+  * Ban kiểm duyệt phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`, `ADMIN`) có quyền xóa bài viết/bình luận vi phạm quy chuẩn cộng đồng của bất kỳ người dùng nào trong phạm vi khóa học mình phụ trách.
+* **Cách ly Luồng Thảo luận Lớp học & Phạm vi Truy cập (Class-Scoped Discussion Feed & Access Boundary):**
+  * *Cách ly Nguồn cấp Thảo luận:* API `ListThreads` tự động giới hạn phạm vi truy vấn theo danh sách các khóa học mà người dùng thực sự tham gia (`accessible_course_ids = enrolled_course_ids | teaching_course_ids`). Người dùng không thể xem thảo luận của các lớp học mình không tham gia. Super Admin giữ quyền truy cập toàn diện.
+  * *Bộ lọc Khóa học Scoped:* Dropdown lựa chọn khóa học trên Diễn đàn chỉ hiển thị các khóa học mà người dùng đã đăng ký hoặc đang giảng dạy.
+* **Ràng buộc Vai trò theo Ngữ cảnh & Ghi danh (Contextual Role Resolution & Enrollment Guard):**
+  * *Ngữ cảnh vai trò khóa học:* Nếu một tài khoản là Giảng viên tham gia vào khóa học của người khác, họ tham gia với tư cách **Học viên (`Learner`)**; phản hồi của họ không tự động gắn cờ `is_staff_answer` và không thể ghim bài.
+  * *Ràng buộc Ghi danh:* Người dùng (ngoại trừ Đội ngũ giảng dạy phụ trách và Admin) bắt buộc phải ghi danh vào khóa học mới được phép tạo chủ đề (`CreateThread`) hoặc gửi câu trả lời (`PostReply`).
+* **Hỗ trợ Giải đáp & Bàn làm việc Q&A Giảng viên (`/instructor/courses/[courseId]/discussions`):** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) và toàn bộ khóa học để giải thích kiến thức nâng cao cho học viên:
+  * **Kiểm soát quyền sở hữu khóa học (Ownership Guard):** Chỉ Giảng viên phụ trách hoặc Trợ giảng được phân công của đúng khóa học đó mới được truy cập Bàn làm việc Q&A; các giảng viên khác sẽ bị chặn và điều hướng sang Diễn đàn học tập chung.
+  * **Bộ lọc phân loại ưu tiên (Triage Filters):** Lọc theo các chủ đề *Cần giải đáp gấp (chưa có phản hồi từ Giảng viên)*, *Đã giải đáp*, và *Lời giải đã ghim*.
+  * **Hộp phản hồi nhanh (Quick Staff Reply):** Cho phép Giảng viên nhập câu trả lời chính thức trực tiếp trên danh sách câu hỏi hoặc thông qua Modal chi tiết.
+  * **Điều hướng tập trung:** Tích hợp trực tiếp từ Chip điều hướng Khóa học (`CourseHeaderBanner`), thẻ *Việc cần xử lý* trên Bảng điều khiển Giảng viên (`InstructorDashboard`), và thanh điều hướng chính (`Navbar`).
 
 ### 2.5. Bảng Phân tích & Quản lý Lớp học (Instructor Analytics & Student Roster)
 * **Báo cáo Thống kê Lớp học thời gian thực (`GetInstructorAnalytics`):** Giảng viên theo dõi tổng số học viên ghi danh (`total_enrolled_students`), tỷ lệ hoàn thành khóa học trung bình (`average_completion_rate`), điểm đánh giá sao trung bình (`average_rating`), và tổng số đánh giá.
@@ -193,6 +203,7 @@ flowchart TD
   * Chuỗi thời gian (Spline Timeline): Trả về các mốc hoạt động gồm số lượng học viên truy cập/học (`active_learners`), số bài học/quiz hoàn thành (`completed_items`), và số học viên đang học dở (`in_progress`).
   * Bản đồ nhiệt mật độ giờ học (Heatmap 7 Ngày x 4 Khung Giờ): Phân bổ lưu lượng học viên theo 7 ngày trong tuần (`T2` - `CN`) và 4 khung giờ (`Sáng (06h-12h)`, `Chiều (12h-18h)`, `Tối (18h-22h)`, `Đêm (22h-02h)`), tự động tính toán và đánh dấu khung giờ cao điểm nhất (`is_peak = True`).
 * **Danh sách Học viên (Student Roster):** Xem chi tiết thông tin và phần trăm tiến độ hoàn thành bài học của từng học viên ghi danh trong lớp.
+* **Gửi Thông báo Đôn đốc Học viên (`SendStudentReminder`):** Giảng viên gửi thông báo nhắc nhở riêng tư (cá nhân hoặc theo nhóm học viên chậm tiến độ `student_ids`) mà không phát tán công khai toàn khóa, kích hoạt sự kiện miền `StudentReminderSentDomainEvent` và gửi thông báo danh mục `ACADEMIC` đến hòm thư học viên mục tiêu.
 * **Phân tích Tỷ lệ Bỏ học (Student Drop-off Funnel):** Thống kê số lượng học viên dừng học tại từng bài học video/bài đọc để giúp Giảng viên nhận biết đoạn nội dung khó tiếp thu.
 
 ### 2.6. Sổ Điểm Khóa Học & Kiểm Soát Phân Cấp Điểm Số (Course Gradebook & Score Governance)

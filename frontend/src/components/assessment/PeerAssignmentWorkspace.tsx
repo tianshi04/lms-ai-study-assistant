@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Slider } from "@/components/ui/Slider";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
+import { getSafeExternalUrl } from "@/lib/utils";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -446,17 +447,21 @@ export function PeerAssignmentWorkspace({
                       <span className="w-2 h-2 rounded-full bg-primary" />
                       Bài nộp của Bạn học #{pIdx + 1} ({peer.reviewId})
                     </h4>
-                    {peer.submissionUrl && (
+                    {getSafeExternalUrl(peer.submissionUrl) ? (
                       <a
-                        href={peer.submissionUrl}
+                        href={getSafeExternalUrl(peer.submissionUrl)!}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                       >
                         <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
                         <span>Mở liên kết bài làm</span>
                       </a>
-                    )}
+                    ) : peer.submissionUrl ? (
+                      <span className="text-xs font-mono text-destructive">
+                        Liên kết không an toàn
+                      </span>
+                    ) : null}
                   </div>
 
                   {peer.textContent && (

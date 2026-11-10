@@ -272,8 +272,12 @@ class PeerAssignmentSubmission(Entity):
         staff_feedback: str | None = None,
         rubric_scores_json: dict[str, Any] | None = None,
     ) -> None:
-        if score < 0.0 or score > 100.0:
-            raise ValueError("Điểm số phải nằm trong khoảng từ 0 đến 100.")
+        import math
+
+        if not math.isfinite(score) or score < 0.0 or score > 100.0:
+            raise ValueError(
+                "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
+            )
         self.final_score = round(score, 2)
         self.graded_by_staff = is_staff
         if graded_by_user_id is not None:

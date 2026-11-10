@@ -68,6 +68,10 @@ class ILearningRepository(ABC):
         pass
 
     @abstractmethod
+    async def check_enrollment(self, user_id: str, course_id: str) -> bool:
+        """Check if user has an existing enrollment record in the course without modifying data."""
+
+    @abstractmethod
     async def record_learning_time(
         self,
         user_id: str,
