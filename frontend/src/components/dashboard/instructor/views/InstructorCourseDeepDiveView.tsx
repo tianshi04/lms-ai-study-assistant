@@ -66,7 +66,6 @@ export function InstructorCourseDeepDiveView({
 }: InstructorCourseDeepDiveViewProps) {
   // Tab biểu đồ ở chế độ môn học: "bar" | "funnel" | "certs"
   const [chartTab, setChartTab] = useState<"bar" | "funnel" | "certs">("bar");
-  const [funnelViewType, setFunnelViewType] = useState<"pipeline" | "bars">("pipeline");
   const [chartDateRange, setChartDateRange] = useState("7d");
   const [chartLearnerFilter, setChartLearnerFilter] = useState<"all" | "in_progress" | "completed">(
     "all",
@@ -396,8 +395,6 @@ export function InstructorCourseDeepDiveView({
             <InstructorWeeklyFunnelTab
               calculatedWeeks={calculatedWeeks}
               bottleneckWeek={bottleneckWeek}
-              funnelViewType={funnelViewType}
-              onChangeFunnelViewType={setFunnelViewType}
               selectedWeekFilter={selectedWeekFilter}
               onSelectWeekFilter={setSelectedWeekFilter}
               totalStudents={rawStudents.length}

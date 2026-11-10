@@ -29,6 +29,8 @@ export interface InstructorOverviewViewProps {
   pendingQaByCourseId: Map<string, number>;
   overviewActionTasks: OverviewActionTask[];
   totalPendingTasksCount?: number;
+  totalPendingGradingCount?: number;
+  totalPendingQaCount?: number;
   totalOverdueTasksCount?: number;
   overdueGradingByCourseId?: Map<string, number>;
   overviewReviews: OverviewReview[];
@@ -60,6 +62,8 @@ export function InstructorOverviewView({
   pendingQaByCourseId,
   overviewActionTasks,
   totalPendingTasksCount,
+  totalPendingGradingCount,
+  totalPendingQaCount,
   totalOverdueTasksCount = 0,
   overdueGradingByCourseId,
   overviewReviews,
@@ -461,9 +465,16 @@ export function InstructorOverviewView({
         <InstructorActionTasksCard
           tasks={overviewActionTasks}
           totalPendingCount={totalPendingTasksCount}
+          totalGradingCount={totalPendingGradingCount}
+          totalQaCount={totalPendingQaCount}
           totalOverdueCount={totalOverdueTasksCount}
+          behindCount={pacingCohortSummary.behindCount}
+          onFilterBehind={onOpenPacingModal}
           primaryActionUrl={
-            courses[0]?.id ? `/instructor/courses/${courses[0].id}/grading` : "/instructor/courses"
+            overviewActionTasks.find((t) => t.type === "grading")?.actionUrl ||
+            (activeCourse?.id || courses[0]?.id
+              ? `/instructor/courses/${activeCourse?.id || courses[0]?.id}/grading`
+              : "/instructor/courses")
           }
         />
 
