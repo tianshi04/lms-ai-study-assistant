@@ -359,32 +359,28 @@ async def test_list_grading_queue_and_submission_detail(test_setup):
 
 @pytest.mark.asyncio
 async def test_get_course_gradebook_and_action_tasks(test_setup):
-    """Test get_course_gradebook and get_instructor_action_tasks via AssessmentHandler and CatalogHandler."""
-    handler = test_setup["handler"]
+    """Test get_course_gradebook and get_instructor_action_tasks via AssessmentUseCase and CatalogHandler."""
+    usecase = test_setup["use_case"]
     owner = CurrentUser(
         id="instructor_owner", role="INSTRUCTOR", full_name="Giảng viên"
     )
 
-    with patch(
-        "src.modules.assessment.presentation.assessment_handler.require_current_user",
-        return_value=owner,
-    ):
-        # 1. AssessmentHandler.get_course_gradebook
-        gradebook_resp = await handler.get_course_gradebook(
-            catalog_pb.GetCourseGradebookRequest(course_id="course_test_1"),
-            None,
-        )
-        assert gradebook_resp["course_id"] == "course_test_1"
-        assert len(gradebook_resp["rows"]) == 1
-        assert gradebook_resp["rows"][0]["user_id"] == "student_1"
+    # 1. AssessmentUseCase.get_course_gradebook
+    gradebook_resp = await usecase.get_course_gradebook(
+        course_id="course_test_1",
+        current_user=owner,
+    )
+    assert gradebook_resp["course_id"] == "course_test_1"
+    assert len(gradebook_resp["rows"]) == 1
+    assert gradebook_resp["rows"][0]["user_id"] == "student_1"
 
-        # 2. AssessmentHandler.get_instructor_action_tasks
-        tasks_resp = await handler.get_instructor_action_tasks(
-            catalog_pb.GetInstructorActionTasksRequest(course_id="course_test_1"),
-            None,
-        )
-        assert "tasks" in tasks_resp
-        assert "total_pending" in tasks_resp
+    # 2. AssessmentUseCase.get_instructor_action_tasks
+    tasks_resp = await usecase.get_instructor_action_tasks(
+        course_id="course_test_1",
+        current_user=owner,
+    )
+    assert "tasks" in tasks_resp
+    assert "total_pending" in tasks_resp
 
     # 3. Test via CatalogHandler
     mock_catalog_uc = AsyncMock()

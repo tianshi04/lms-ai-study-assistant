@@ -2,7 +2,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import case, delete, func, select, update
+from sqlalchemy import case, delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -1881,22 +1881,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 total_active_in_period=0,
             )
 
-        learning_progress_model = __import__(
-            "src.modules.learning.infrastructure.models",
-            fromlist=[
-                "LearningProgressModel",
-                "PersonalNoteModel",
-                "LearningItemProgressModel",
-            ],
-        ).LearningProgressModel
-        personal_note_model = __import__(
-            "src.modules.learning.infrastructure.models",
-            fromlist=["PersonalNoteModel"],
-        ).PersonalNoteModel
-        learning_item_progress_model = __import__(
-            "src.modules.learning.infrastructure.models",
-            fromlist=["LearningItemProgressModel"],
-        ).LearningItemProgressModel
+        from src.modules.learning.infrastructure.models import (
+            LearningItemProgressModel,
+            LearningProgressModel,
+            PersonalNoteModel,
+        )
 
         courses_stmt = select(CourseModel).where(CourseModel.id.in_(course_ids))
         courses_res = await self.session.execute(courses_stmt)
@@ -1910,31 +1899,43 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     if collab.user_id:
                         staff_ids.add(collab.user_id)
 
-        lp_stmt = select(learning_progress_model).where(
-            learning_progress_model.course_id.in_(course_ids)
+        range_start_iso = range_start.isoformat()
+
+        lp_stmt = select(LearningProgressModel).where(
+            LearningProgressModel.course_id.in_(course_ids),
+            or_(
+                LearningProgressModel.last_accessed_at >= range_start_iso,
+                LearningProgressModel.completed_at >= range_start_iso,
+                LearningProgressModel.enrolled_at >= range_start_iso,
+            ),
         )
         if staff_ids:
-            lp_stmt = lp_stmt.where(learning_progress_model.user_id.notin_(staff_ids))
+            lp_stmt = lp_stmt.where(LearningProgressModel.user_id.notin_(staff_ids))
         if learner_filter == "in_progress":
             lp_stmt = lp_stmt.where(
-                learning_progress_model.overall_progress_percent < 100.0
+                LearningProgressModel.overall_progress_percent < 100.0
             )
         elif learner_filter == "completed":
             lp_stmt = lp_stmt.where(
-                learning_progress_model.overall_progress_percent >= 100.0
+                LearningProgressModel.overall_progress_percent >= 100.0
             )
 
         lp_res = await self.session.execute(lp_stmt)
         progresses = lp_res.scalars().all()
 
-        note_stmt = select(personal_note_model).where(
-            personal_note_model.course_id.in_(course_ids)
+        note_stmt = select(PersonalNoteModel).where(
+            PersonalNoteModel.course_id.in_(course_ids),
+            or_(
+                PersonalNoteModel.created_at >= range_start_iso,
+                PersonalNoteModel.updated_at >= range_start_iso,
+            ),
         )
         note_res = await self.session.execute(note_stmt)
         notes = note_res.scalars().all()
 
-        item_stmt = select(learning_item_progress_model).where(
-            learning_item_progress_model.course_id.in_(course_ids)
+        item_stmt = select(LearningItemProgressModel).where(
+            LearningItemProgressModel.course_id.in_(course_ids),
+            LearningItemProgressModel.last_studied_at >= range_start_iso,
         )
         item_res = await self.session.execute(item_stmt)
         item_progresses = item_res.scalars().all()

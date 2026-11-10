@@ -361,10 +361,11 @@ class ForumUseCase:
             if not thread:
                 raise ValueError("Chủ đề không tồn tại.")
 
-            if user:
-                await self._verify_staff_course_moderation(
-                    session, thread.course_id, user
+            if not user:
+                raise PermissionError(
+                    "Yêu cầu thông tin người dùng xác thực để ghim câu trả lời."
                 )
+            await self._verify_staff_course_moderation(session, thread.course_id, user)
             return await repo.pin_staff_answer(reply_id, ta_user_id)
 
     async def pin_thread(
@@ -376,10 +377,11 @@ class ForumUseCase:
             if not thread:
                 raise ValueError("Chủ đề không tồn tại.")
 
-            if user:
-                await self._verify_staff_course_moderation(
-                    session, thread.course_id, user
+            if not user:
+                raise PermissionError(
+                    "Yêu cầu thông tin người dùng xác thực để ghim chủ đề."
                 )
+            await self._verify_staff_course_moderation(session, thread.course_id, user)
             updated = await repo.pin_thread(thread_id, is_pinned)
             if not updated:
                 raise ValueError("Không thể cập nhật trạng thái ghim bài viết này.")
@@ -397,7 +399,10 @@ class ForumUseCase:
             existing = await repo.get_thread_by_id(thread_id)
             if not existing:
                 return None
-            if existing.author_user_id and existing.author_user_id != current_user_id:
+            if (
+                not existing.author_user_id
+                or existing.author_user_id != current_user_id
+            ):
                 logger.warning(
                     "User %s attempted to update thread %s owned by %s",
                     current_user_id,

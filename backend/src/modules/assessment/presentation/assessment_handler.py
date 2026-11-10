@@ -1,5 +1,3 @@
-from typing import Any
-
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -170,11 +168,16 @@ class AssessmentHandler(AssessmentService):
             )
             for c in request.graded_criteria
         ]
-        success, msg = await self.use_case.submit_peer_review_grade(
-            review_id=request.review_id,
-            reviewer_user_id=current_user.id,
-            graded_criteria=domain_rubrics,
-        )
+        try:
+            success, msg = await self.use_case.submit_peer_review_grade(
+                review_id=request.review_id,
+                reviewer_user_id=current_user.id,
+                graded_criteria=domain_rubrics,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.SubmitPeerReviewGradeResponse(success=success, message=msg)
 
     async def submit_grade_appeal(
@@ -190,7 +193,9 @@ class AssessmentHandler(AssessmentService):
                 appeal_reason=request.appeal_reason,
             )
         except PermissionError as e:
-            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.SubmitGradeAppealResponse(success=success, appeal_status=status)
 
     async def report_peer_review(
@@ -1037,66 +1042,6 @@ class AssessmentHandler(AssessmentService):
                 message=msg,
                 final_score=float(final_score),
                 graded_at=graded_at,
-            )
-        except PermissionError as e:
-            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
-        except ValueError as e:
-            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
-
-    async def get_course_gradebook(
-        self,
-        request: Any,
-        ctx: Any = None,
-    ) -> Any:
-        current_user = require_current_user()
-        try:
-            course = await self.use_case.get_course_for_item_or_submission(
-                course_id=request.course_id
-            )
-            user_ctx = CurrentUserContext(
-                id=current_user.id, role=current_user.role, email=current_user.email
-            )
-            enforce_course_ownership(
-                course=course,
-                user=user_ctx,
-                required_permission=CoursePermission.GRADE_ASSESSMENTS,
-                action_name="truy cập Sổ điểm (Course Gradebook)",
-            )
-            return await self.use_case.get_course_gradebook(
-                course_id=request.course_id,
-                search_query=getattr(request, "search_query", ""),
-                status_filter=getattr(request, "status_filter", ""),
-                page_size=getattr(request, "page_size", 50) or 50,
-                page_token=getattr(request, "page_token", ""),
-                current_user=current_user,
-            )
-        except PermissionError as e:
-            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
-        except ValueError as e:
-            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
-
-    async def get_instructor_action_tasks(
-        self,
-        request: Any,
-        ctx: Any = None,
-    ) -> Any:
-        current_user = require_current_user()
-        try:
-            course = await self.use_case.get_course_for_item_or_submission(
-                course_id=request.course_id
-            )
-            user_ctx = CurrentUserContext(
-                id=current_user.id, role=current_user.role, email=current_user.email
-            )
-            enforce_course_ownership(
-                course=course,
-                user=user_ctx,
-                required_permission=CoursePermission.GRADE_ASSESSMENTS,
-                action_name="xem danh sách việc cần xử lý",
-            )
-            return await self.use_case.get_instructor_action_tasks(
-                course_id=request.course_id,
-                current_user=current_user,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e

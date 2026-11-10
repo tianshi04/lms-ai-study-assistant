@@ -1,7 +1,8 @@
+from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func, or_, select, text, update
+from sqlalchemy import and_, func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -1126,7 +1127,41 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         rows = res.all()
 
         results: list[dict[str, Any]] = []
+        if not rows:
+            return results
+
         now = datetime.now(UTC)
+        sub_ids = [row[0].id for row in rows]
+        locked_user_ids = {
+            row[0].locked_by_user_id for row in rows if row[0].locked_by_user_id
+        }
+
+        # Batch 1: Query user names for locked submissions
+        user_names: dict[str, str] = {}
+        if locked_user_ids:
+            user_stmt = select(UserModel.id, UserModel.full_name).where(
+                UserModel.id.in_(locked_user_ids)
+            )
+            u_res = await self.session.execute(user_stmt)
+            user_names = {uid: name for uid, name in u_res.all() if name}
+
+        # Batch 2: Query appeals for submissions
+        appeal_stmt = select(GradeAppealModel).where(
+            GradeAppealModel.submission_id.in_(sub_ids)
+        )
+        app_res = await self.session.execute(appeal_stmt)
+        appeals_map: dict[str, GradeAppealModel] = {
+            app.submission_id: app for app in app_res.scalars().all()
+        }
+
+        # Batch 3: Query peer reviews for submissions
+        rev_stmt = select(PeerReviewModel).where(
+            PeerReviewModel.submission_id.in_(sub_ids)
+        )
+        rev_res = await self.session.execute(rev_stmt)
+        reviews_map: dict[str, list[PeerReviewModel]] = defaultdict(list)
+        for rev in rev_res.scalars().all():
+            reviews_map[rev.submission_id].append(rev)
 
         for row in rows:
             sub = row[0]
@@ -1147,31 +1182,20 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                     if now < exp_dt:
                         is_currently_locked = True
                         lock_expires_at = exp_dt.isoformat()
-                        user_stmt = select(UserModel.full_name).where(
-                            UserModel.id == sub.locked_by_user_id
-                        )
-                        u_res = await self.session.execute(user_stmt)
                         locked_by_name = (
-                            u_res.scalar_one_or_none() or sub.locked_by_user_id
+                            user_names.get(sub.locked_by_user_id)
+                            or sub.locked_by_user_id
                         )
                 except (ValueError, TypeError):
                     pass
 
             # Check appeals
-            appeal_stmt = select(GradeAppealModel).where(
-                GradeAppealModel.submission_id == sub.id
-            )
-            app_res = await self.session.execute(appeal_stmt)
-            appeal = app_res.scalar_one_or_none()
+            appeal = appeals_map.get(sub.id)
             is_appeal = bool(appeal and appeal.status != "RESOLVED")
             appeal_reason = appeal.appeal_reason if appeal else ""
 
             # Check reviews
-            rev_stmt = select(PeerReviewModel).where(
-                PeerReviewModel.submission_id == sub.id
-            )
-            rev_res = await self.session.execute(rev_stmt)
-            reviews = rev_res.scalars().all()
+            reviews = reviews_map.get(sub.id, [])
             reviews_count = len(reviews)
             is_outlier = any(r.is_outlier for r in reviews)
             peer_score = (
@@ -1302,21 +1326,48 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             .join(UserModel, UserModel.id == LearningProgressModel.user_id)
             .where(LearningProgressModel.course_id == course_id)
         )
+        count_query = (
+            select(func.count(LearningProgressModel.id))
+            .select_from(LearningProgressModel)
+            .join(UserModel, UserModel.id == LearningProgressModel.user_id)
+            .where(LearningProgressModel.course_id == course_id)
+        )
 
         if search_query and search_query.strip():
             term = f"%{search_query.strip()}%"
-            progress_query = progress_query.where(
-                or_(
-                    UserModel.full_name.ilike(term),
-                    UserModel.email.ilike(term),
-                )
+            filter_search = or_(
+                UserModel.full_name.ilike(term),
+                UserModel.email.ilike(term),
             )
+            progress_query = progress_query.where(filter_search)
+            count_query = count_query.where(filter_search)
 
-        total_count_res = await self.session.execute(
-            select(func.count(LearningProgressModel.id)).where(
-                LearningProgressModel.course_id == course_id
-            )
-        )
+        if status_filter and status_filter.upper() != "ALL":
+            sf = status_filter.upper()
+            if sf == "COMPLETED":
+                filter_status = or_(
+                    LearningProgressModel.overall_progress_percent >= 100.0,
+                    LearningProgressModel.completed_at.isnot(None),
+                )
+            elif sf == "IN_PROGRESS":
+                filter_status = and_(
+                    LearningProgressModel.overall_progress_percent > 0.0,
+                    LearningProgressModel.overall_progress_percent < 100.0,
+                    LearningProgressModel.completed_at.is_(None),
+                )
+            elif sf == "ACTIVE":
+                filter_status = and_(
+                    LearningProgressModel.overall_progress_percent == 0.0,
+                    LearningProgressModel.completed_at.is_(None),
+                )
+            else:
+                filter_status = None
+
+            if filter_status is not None:
+                progress_query = progress_query.where(filter_status)
+                count_query = count_query.where(filter_status)
+
+        total_count_res = await self.session.execute(count_query)
         total_students = total_count_res.scalar() or 0
 
         offset = int(page_token) if (page_token and page_token.isdigit()) else 0
@@ -1428,19 +1479,16 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 )
 
             final_grade = round(total_weighted_grade, 2)
-            is_completed = lp.overall_progress_percent >= 100.0 or final_grade >= 80.0
+            is_completed = (
+                lp.overall_progress_percent >= 100.0
+                or lp.completed_at is not None
+                or final_grade >= 80.0
+            )
             enrollment_status = (
                 "COMPLETED"
                 if is_completed
                 else ("IN_PROGRESS" if lp.overall_progress_percent > 0 else "ACTIVE")
             )
-
-            if (
-                status_filter
-                and status_filter.upper() != "ALL"
-                and enrollment_status.upper() != status_filter.upper()
-            ):
-                continue
 
             rows.append(
                 {

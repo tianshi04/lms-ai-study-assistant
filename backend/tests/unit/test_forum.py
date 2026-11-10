@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -551,3 +553,64 @@ async def test_pin_thread_permissions(monkeypatch):
     # Instructor can unpin thread
     unpinned = await use_case.pin_thread("t1", is_pinned=False, user=andrew)
     assert unpinned.is_staff_pinned is False
+
+
+@pytest.mark.asyncio
+async def test_forum_pin_and_update_security_guards(monkeypatch):
+    """Test that pin operations require authentication and empty author cannot be hijacked."""
+    mock_forum = MockForumRepository()
+    mock_forum.threads["t1"] = ForumThreadEntity(
+        id="t1",
+        course_id="course_ai",
+        item_id="item_1",
+        title="Edge Case Thread",
+        content="Content",
+        author_name="Anonymous",
+        author_role="Learner",
+        author_user_id="",  # Empty author edge case
+        created_at=datetime.now(UTC).isoformat(),
+    )
+    mock_forum.replies["r1"] = ForumReplyEntity(
+        id="r1",
+        thread_id="t1",
+        author_name="User 1",
+        author_role="Learner",
+        content="Reply",
+        author_user_id="user_1",
+        created_at=datetime.now(UTC).isoformat(),
+    )
+
+    use_case = ForumUseCase(
+        repo_factory=lambda _: mock_forum,
+        catalog_repo_factory=lambda _: MockCatalogRepository(),
+        learning_repo_factory=lambda _: MockLearningRepository(),
+    )
+
+    @asynccontextmanager
+    async def mock_scope():
+        yield MagicMock()
+
+    monkeypatch.setattr(
+        "src.modules.forum.application.forum_usecase.async_session_scope",
+        mock_scope,
+    )
+
+    # 1. pin_thread without user -> PermissionError
+    with pytest.raises(PermissionError) as exc_pin:
+        await use_case.pin_thread("t1", is_pinned=True, user=None)
+    assert "Yêu cầu thông tin người dùng" in str(exc_pin.value)
+
+    # 2. pin_staff_answer without user -> PermissionError
+    with pytest.raises(PermissionError) as exc_ans:
+        await use_case.pin_staff_answer("r1", ta_user_id="ta_1", user=None)
+    assert "Yêu cầu thông tin người dùng" in str(exc_ans.value)
+
+    # 3. update_thread on empty/mismatched author -> PermissionError
+    with pytest.raises(PermissionError) as exc_up:
+        await use_case.update_thread(
+            thread_id="t1",
+            title="Hacked Title",
+            content="Hacked Content",
+            current_user_id="random_attacker",
+        )
+    assert "Chỉ tác giả mới có quyền chỉnh sửa" in str(exc_up.value)
