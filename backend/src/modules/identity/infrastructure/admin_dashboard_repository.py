@@ -109,12 +109,10 @@ class AdminDashboardRepository(IAdminDashboardRepository):
     async def _get_overview(self) -> AdminOverviewMetrics:
         metrics = AdminOverviewMetrics()
         await self._fill_platform_metrics(metrics)
-        await self._fill_course_metrics(metrics)
-        await self._fill_learning_metrics(metrics)
         return metrics
 
     async def _fill_platform_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        """Fetch all non-course platform KPIs in a single SQL round-trip."""
+        """Fetch all platform overview KPIs in a single SQL round-trip."""
         now_prefix = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
         user_sq = (
             select(
@@ -135,6 +133,38 @@ class AdminDashboardRepository(IAdminDashboardRepository):
             .select_from(UserModel)
             .subquery()
         )
+        course_sq = _scope_courses(
+            select(
+                func.count()
+                .filter(CourseModel.status == CourseStatus.PUBLISHED)
+                .label("published_courses"),
+                func.count()
+                .filter(CourseModel.status == CourseStatus.PENDING_REVIEW)
+                .label("pending_review_courses"),
+                func.count()
+                .filter(CourseModel.status == CourseStatus.DRAFT)
+                .label("draft_courses"),
+                func.count()
+                .filter(CourseModel.status == CourseStatus.REJECTED)
+                .label("rejected_courses"),
+                func.count().label("total_courses"),
+            ).select_from(CourseModel)
+        ).subquery()
+        # Join courses so enrollments of courses that no longer exist are ignored,
+        # keeping this total equal to the sum of the per-course table.
+        learning_sq = _scope_courses(
+            select(
+                func.count(LearningProgressModel.id).label("total_enrollments"),
+                func.count(LearningProgressModel.id)
+                .filter(
+                    LearningProgressModel.overall_progress_percent
+                    >= _COMPLETION_PERCENT
+                )
+                .label("completed_enrollments"),
+            )
+            .select_from(LearningProgressModel)
+            .join(CourseModel, CourseModel.id == LearningProgressModel.course_id)
+        ).subquery()
         review_sq = (
             select(
                 func.count(CourseReviewModel.id).label("total_reviews"),
@@ -239,6 +269,13 @@ class AdminDashboardRepository(IAdminDashboardRepository):
                     user_sq.c.admin_count,
                     user_sq.c.total_users,
                     user_sq.c.verified_user_count,
+                    course_sq.c.published_courses,
+                    course_sq.c.pending_review_courses,
+                    course_sq.c.draft_courses,
+                    course_sq.c.rejected_courses,
+                    course_sq.c.total_courses,
+                    learning_sq.c.total_enrollments,
+                    learning_sq.c.completed_enrollments,
                     review_sq.c.total_reviews,
                     review_sq.c.average_rating,
                     review_sq.c.stars_1,
@@ -259,6 +296,8 @@ class AdminDashboardRepository(IAdminDashboardRepository):
                     category_sq.c.category_count,
                 )
                 .select_from(user_sq)
+                .join(course_sq, true())
+                .join(learning_sq, true())
                 .join(review_sq, true())
                 .join(purchase_sq, true())
                 .join(order_sq, true())
@@ -276,6 +315,13 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         metrics.admin_count = int(row.admin_count or 0)
         metrics.total_users = int(row.total_users or 0)
         metrics.verified_user_count = int(row.verified_user_count or 0)
+        metrics.published_courses = int(row.published_courses or 0)
+        metrics.pending_review_courses = int(row.pending_review_courses or 0)
+        metrics.draft_courses = int(row.draft_courses or 0)
+        metrics.rejected_courses = int(row.rejected_courses or 0)
+        metrics.total_courses = int(row.total_courses or 0)
+        metrics.total_enrollments = int(row.total_enrollments or 0)
+        metrics.completed_enrollments = int(row.completed_enrollments or 0)
         metrics.total_reviews = int(row.total_reviews or 0)
         metrics.average_rating = round(float(row.average_rating or 0.0), 2)
         metrics.rating_distribution = [
@@ -299,44 +345,6 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         )
         metrics.partner_count = int(row.partner_count or 0)
         metrics.category_count = int(row.category_count or 0)
-
-    async def _fill_course_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        status_rows = await self._session.execute(
-            _scope_courses(
-                select(CourseModel.status, func.count()).group_by(CourseModel.status)
-            )
-        )
-        status_counts = dict(status_rows.all())
-        metrics.published_courses = status_counts.get(CourseStatus.PUBLISHED, 0)
-        metrics.pending_review_courses = status_counts.get(
-            CourseStatus.PENDING_REVIEW, 0
-        )
-        metrics.draft_courses = status_counts.get(CourseStatus.DRAFT, 0)
-        metrics.rejected_courses = status_counts.get(CourseStatus.REJECTED, 0)
-        metrics.total_courses = sum(status_counts.values())
-
-    async def _fill_learning_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        # Join courses so enrollments of courses that no longer exist are ignored,
-        # keeping this total equal to the sum of the per-course table.
-        enrollment_row = (
-            await self._session.execute(
-                _scope_courses(
-                    select(
-                        func.count(LearningProgressModel.id),
-                        func.count(LearningProgressModel.id).filter(
-                            LearningProgressModel.overall_progress_percent
-                            >= _COMPLETION_PERCENT
-                        ),
-                    )
-                    .select_from(LearningProgressModel)
-                    .join(
-                        CourseModel, CourseModel.id == LearningProgressModel.course_id
-                    )
-                )
-            )
-        ).one()
-        metrics.total_enrollments = int(enrollment_row[0] or 0)
-        metrics.completed_enrollments = int(enrollment_row[1] or 0)
 
     # ------------------------------------------------------------------
     # Per-course metrics (paginated)

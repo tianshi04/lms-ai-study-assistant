@@ -128,7 +128,7 @@ export function AdminCertificatesPanel() {
       />
 
       <PagedQueryStatus
-        isLoading={isLoading}
+        isLoading={false}
         loadingLabel="Đang tải danh sách chứng chỉ…"
         isError={isError}
         errorLabel="Không thể tải danh sách chứng chỉ"
@@ -148,12 +148,16 @@ export function AdminCertificatesPanel() {
         />
       )}
 
-      {certificates.length > 0 && (
+      {(isLoading || certificates.length > 0) && (
         <div
           className={isPlaceholderData ? "opacity-60 transition-opacity" : "transition-opacity"}
-          aria-busy={isPlaceholderData}
+          aria-busy={isLoading || isPlaceholderData}
         >
-          <AdminDataTable table={table} columnClassNames={COLUMN_CLASS_NAMES} />
+          <AdminDataTable
+            table={table}
+            columnClassNames={COLUMN_CLASS_NAMES}
+            isLoading={isLoading}
+          />
         </div>
       )}
 

@@ -180,7 +180,7 @@ export function AdminCourseQualityTable() {
       />
 
       <PagedQueryStatus
-        isLoading={isLoading}
+        isLoading={false}
         loadingLabel="Đang tải danh sách khóa học…"
         isError={isError}
         errorLabel="Không thể tải danh sách khóa học"
@@ -200,12 +200,16 @@ export function AdminCourseQualityTable() {
         />
       )}
 
-      {courses.length > 0 && (
+      {(isLoading || courses.length > 0) && (
         <div
           className={isPlaceholderData ? "opacity-60 transition-opacity" : "transition-opacity"}
-          aria-busy={isPlaceholderData}
+          aria-busy={isLoading || isPlaceholderData}
         >
-          <AdminDataTable table={table} columnClassNames={COLUMN_CLASS_NAMES} />
+          <AdminDataTable
+            table={table}
+            columnClassNames={COLUMN_CLASS_NAMES}
+            isLoading={isLoading}
+          />
         </div>
       )}
 

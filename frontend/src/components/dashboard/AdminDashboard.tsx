@@ -10,7 +10,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Progress } from "@/components/ui/Progress";
 import { Surface } from "@/components/ui/Surface";
 import { useAdminDashboardStatsQuery } from "@/lib/queries/useIdentityQueries";
 import { AdminCourseQualityTable } from "./admin/AdminCourseQualityTable";
@@ -128,15 +127,6 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
           />
         </div>
 
-        {isLoading && (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <Progress.Circular size="md" className="mr-3" />
-            <span aria-live="polite" className="text-sm font-medium">
-              Đang tải số liệu tổng quan…
-            </span>
-          </div>
-        )}
-
         {isError && (
           <Surface
             variant="low"
@@ -155,19 +145,18 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
           </Surface>
         )}
 
-        {stats && overview && <AdminOverviewCards overview={overview} />}
+        <AdminOverviewCards overview={overview} />
 
         <AdminCourseQualityTable />
 
-        {stats && overview && (
-          <AdminQualityAlerts
-            assessmentAlerts={stats.assessmentAlerts}
-            assessmentTotal={stats.assessmentAlertTotal}
-            lowReviews={stats.lowReviews}
-            lowReviewTotal={stats.lowReviewTotal}
-            certificateTotal={overview.certificatesIssued}
-          />
-        )}
+        <AdminQualityAlerts
+          assessmentAlerts={stats?.assessmentAlerts ?? []}
+          assessmentTotal={stats?.assessmentAlertTotal}
+          lowReviews={stats?.lowReviews ?? []}
+          lowReviewTotal={stats?.lowReviewTotal}
+          certificateTotal={overview?.certificatesIssued}
+          isLoading={isLoading}
+        />
 
         {/* Embedded Core Admin Enterprise Seat Management View */}
         <AdminEnterpriseDashboard />

@@ -144,11 +144,30 @@ function LowReviewsTable({ reviews }: { reviews: AdminLowReviewAlert[] }) {
 interface AdminQualityAlertsProps {
   assessmentAlerts: AdminAssessmentAlert[];
   /** True number of open assessment alerts, which can exceed `assessmentAlerts.length`. */
-  assessmentTotal: number;
+  assessmentTotal?: number;
   lowReviews: AdminLowReviewAlert[];
   /** True number of low-rating reviews, which can exceed `lowReviews.length`. */
-  lowReviewTotal: number;
-  certificateTotal: number;
+  lowReviewTotal?: number;
+  certificateTotal?: number;
+  isLoading?: boolean;
+}
+
+const ALERT_SKELETON_ROWS = ["alert-sk-1", "alert-sk-2", "alert-sk-3"];
+
+function AlertSkeletonRows({ columns }: { columns: number }) {
+  return (
+    <>
+      {ALERT_SKELETON_ROWS.map((rowKey) => (
+        <Table.Row key={rowKey} aria-busy="true">
+          {Array.from({ length: columns }, (_, idx) => (
+            <Table.Cell key={`${rowKey}-${idx}`}>
+              <div className="h-4 w-full max-w-36 rounded bg-muted animate-pulse" />
+            </Table.Cell>
+          ))}
+        </Table.Row>
+      ))}
+    </>
+  );
 }
 
 export function AdminQualityAlerts({
@@ -157,6 +176,7 @@ export function AdminQualityAlerts({
   lowReviews,
   lowReviewTotal,
   certificateTotal,
+  isLoading = false,
 }: AdminQualityAlertsProps) {
   const [activeTab, setActiveTab] = useState<AlertTab>("assessment");
 
@@ -174,30 +194,69 @@ export function AdminQualityAlerts({
       >
         <Tabs.List className="overflow-x-auto pb-1">
           <Tabs.Tab value="assessment">
-            {`Chấm điểm & khiếu nại (${formatNumber(assessmentTotal)})`}
+            {assessmentTotal !== undefined
+              ? `Chấm điểm & khiếu nại (${formatNumber(assessmentTotal)})`
+              : "Chấm điểm & khiếu nại"}
           </Tabs.Tab>
-          <Tabs.Tab value="reviews">{`Đánh giá thấp (${formatNumber(lowReviewTotal)})`}</Tabs.Tab>
+          <Tabs.Tab value="reviews">
+            {lowReviewTotal !== undefined
+              ? `Đánh giá thấp (${formatNumber(lowReviewTotal)})`
+              : "Đánh giá thấp"}
+          </Tabs.Tab>
           <Tabs.Tab value="certificates">
-            {`Chứng chỉ (${formatNumber(certificateTotal)})`}
+            {certificateTotal !== undefined
+              ? `Chứng chỉ (${formatNumber(certificateTotal)})`
+              : "Chứng chỉ"}
           </Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="assessment">
-          {assessmentAlerts.length === 0 ? (
+          {isLoading ? (
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Loại</Table.Head>
+                  <Table.Head>Người gửi / người chấm</Table.Head>
+                  <Table.Head>Chi tiết</Table.Head>
+                  <Table.Head>Bài nộp</Table.Head>
+                  <Table.Head>Thời gian</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                <AlertSkeletonRows columns={5} />
+              </Table.Body>
+            </Table>
+          ) : assessmentAlerts.length === 0 ? (
             <EmptyState message="Không có báo cáo chấm điểm hay khiếu nại nào đang chờ xử lý." />
           ) : (
             <>
               <AssessmentAlertsTable alerts={assessmentAlerts} />
-              <TruncationNote shown={assessmentAlerts.length} total={assessmentTotal} />
+              <TruncationNote shown={assessmentAlerts.length} total={assessmentTotal ?? 0} />
             </>
           )}
         </Tabs.Panel>
         <Tabs.Panel value="reviews">
-          {lowReviews.length === 0 ? (
+          {isLoading ? (
+            <Table>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Khóa học</Table.Head>
+                  <Table.Head>Học viên</Table.Head>
+                  <Table.Head>Điểm</Table.Head>
+                  <Table.Head>Nhận xét</Table.Head>
+                  <Table.Head>Thời gian</Table.Head>
+                  <Table.Head className="text-right">Thao tác</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                <AlertSkeletonRows columns={6} />
+              </Table.Body>
+            </Table>
+          ) : lowReviews.length === 0 ? (
             <EmptyState message="Chưa có đánh giá 1–2 sao nào." />
           ) : (
             <>
               <LowReviewsTable reviews={lowReviews} />
-              <TruncationNote shown={lowReviews.length} total={lowReviewTotal} />
+              <TruncationNote shown={lowReviews.length} total={lowReviewTotal ?? 0} />
             </>
           )}
         </Tabs.Panel>
