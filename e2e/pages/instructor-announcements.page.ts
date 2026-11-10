@@ -9,8 +9,8 @@ export class InstructorAnnouncementsPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.titleInput = page.locator('input[placeholder*="Cập nhật"], form input[type="text"]').first();
-    this.contentTextarea = page.locator('form textarea').first();
+    this.titleInput = page.locator('#announcementTitle, input[placeholder*="Cập nhật"]').first();
+    this.contentTextarea = page.locator('#announcementContent, textarea[placeholder*="chi tiết"]').first();
     this.submitButton = page.getByRole('button', { name: /Đăng Thông báo Ngay/i });
     this.announcementCards = page.locator('div.rounded-3xl.p-6');
   }
@@ -26,19 +26,35 @@ export class InstructorAnnouncementsPage {
 
   async postAnnouncement(title: string, content: string) {
     await this.page.waitForLoadState('domcontentloaded');
-    await expect(this.titleInput).toBeVisible({ timeout: 10000 });
-    await expect(this.titleInput).toBeEnabled({ timeout: 5000 });
 
-    await this.titleInput.click();
-    await this.titleInput.fill(title);
-    await expect(this.titleInput).toHaveValue(title, { timeout: 5000 });
+    // Wait until initial announcement query finishes loading to prevent re-render from wiping input values
+    await expect(this.page.locator('text=Đang tải danh sách thông báo')).toBeHidden({ timeout: 15000 });
 
-    await this.contentTextarea.click();
-    await this.contentTextarea.fill(content);
-    await expect(this.contentTextarea).toHaveValue(content, { timeout: 5000 });
+    await expect(this.titleInput).toBeVisible({ timeout: 20000 });
+    await expect(this.titleInput).toBeEnabled({ timeout: 10000 });
+    await this.page.waitForTimeout(300);
 
-    await expect(this.submitButton).toBeEnabled({ timeout: 5000 });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.titleInput.click();
+      await this.titleInput.fill(title);
+      await this.page.waitForTimeout(200);
+      if ((await this.titleInput.inputValue()) === title) break;
+    }
+    await expect(this.titleInput).toHaveValue(title, { timeout: 10000 });
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.contentTextarea.click();
+      await this.contentTextarea.fill(content);
+      await this.page.waitForTimeout(200);
+      if ((await this.contentTextarea.inputValue()) === content) break;
+    }
+    await expect(this.contentTextarea).toHaveValue(content, { timeout: 10000 });
+
+    await expect(this.submitButton).toBeEnabled({ timeout: 10000 });
+    await this.page.waitForTimeout(300);
     await this.submitButton.click();
-    await expect(this.page.locator('text=Đã đăng thông báo khóa học thành công!').or(this.page.getByText(title)).first()).toBeVisible({ timeout: 20000 });
+
+    const successLocator = this.page.locator('text=Đã đăng thông báo khóa học thành công!').or(this.page.getByText(title)).first();
+    await expect(successLocator).toBeVisible({ timeout: 15000 });
   }
 }
