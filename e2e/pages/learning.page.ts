@@ -94,9 +94,11 @@ export class LearningPage {
     await this.switchTab('notes');
     await expect(this.highlightInput).toBeVisible({ timeout: 10000 });
     await this.highlightInput.fill(highlight);
+    await expect(this.highlightInput).toHaveValue(highlight, { timeout: 3000 });
     await this.commentInput.fill(comment);
+    await expect(this.commentInput).toHaveValue(comment, { timeout: 3000 });
     await expect(this.saveNoteButton).toBeEnabled({ timeout: 5000 });
-    await this.page.waitForTimeout(200);
     await this.saveNoteButton.click();
+    await expect(this.page.locator(`text=${highlight}`)).toBeVisible({ timeout: 15000 });
   }
 }
