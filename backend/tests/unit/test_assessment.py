@@ -1582,6 +1582,9 @@ async def test_dynamic_rubric_criteria_from_item():
     )
     assert criteria[1].criteria_id == "user_research"
     assert criteria[1].max_score == 15.0
+
+
+@pytest.mark.asyncio
 async def test_self_grading_fraud_prevented(monkeypatch: pytest.MonkeyPatch) -> None:
     from contextlib import asynccontextmanager
     from unittest.mock import AsyncMock
