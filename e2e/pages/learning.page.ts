@@ -73,6 +73,8 @@ export class LearningPage {
     await expect(this.highlightInput).toBeVisible({ timeout: 10000 });
     await this.highlightInput.fill(highlight);
     await this.commentInput.fill(comment);
+    await expect(this.saveNoteButton).toBeEnabled({ timeout: 5000 });
+    await this.page.waitForTimeout(200);
     await this.saveNoteButton.click();
   }
 }
