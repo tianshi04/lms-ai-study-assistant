@@ -1898,9 +1898,23 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             fromlist=["LearningItemProgressModel"],
         ).LearningItemProgressModel
 
+        courses_stmt = select(CourseModel).where(CourseModel.id.in_(course_ids))
+        courses_res = await self.session.execute(courses_stmt)
+        c_models = courses_res.scalars().all()
+        staff_ids: set[str] = set()
+        for cm in c_models:
+            if cm.owner_id:
+                staff_ids.add(cm.owner_id)
+            if cm.collaborators:
+                for collab in cm.collaborators:
+                    if collab.user_id:
+                        staff_ids.add(collab.user_id)
+
         lp_stmt = select(learning_progress_model).where(
             learning_progress_model.course_id.in_(course_ids)
         )
+        if staff_ids:
+            lp_stmt = lp_stmt.where(learning_progress_model.user_id.notin_(staff_ids))
         if learner_filter == "in_progress":
             lp_stmt = lp_stmt.where(
                 learning_progress_model.overall_progress_percent < 100.0
@@ -2038,6 +2052,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         real_id = await self.get_course_id_by_slug_or_id(course_id)
         avg_rating, total_reviews = await self.get_course_rating_stats(real_id)
 
+        course_stmt = select(CourseModel).where(CourseModel.id == real_id)
+        course_res = await self.session.execute(course_stmt)
+        course_model = course_res.scalar_one_or_none()
+
+        staff_ids: set[str] = set()
+        if course_model:
+            if course_model.owner_id:
+                staff_ids.add(course_model.owner_id)
+            if course_model.collaborators:
+                for collab in course_model.collaborators:
+                    if collab.user_id:
+                        staff_ids.add(collab.user_id)
+
         identity_repo_factory = __import__(
             "src.modules.identity.infrastructure.repository",
             fromlist=["IdentityRepository"],
@@ -2052,6 +2079,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         stmt = select(learning_progress_model).where(
             learning_progress_model.course_id == real_id
         )
+        if staff_ids:
+            stmt = stmt.where(learning_progress_model.user_id.notin_(staff_ids))
         res = await self.session.execute(stmt)
         progresses = res.scalars().all()
 
