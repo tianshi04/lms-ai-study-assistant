@@ -204,12 +204,17 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.ReportPeerReviewRequest, pb.ReportPeerReviewResponse],
     ) -> pb.ReportPeerReviewResponse:
         current_user = require_current_user()
-        success, msg = await self.use_case.report_peer_review(
-            user_id=current_user.id,
-            review_id=request.review_id,
-            report_reason=request.report_reason,
-        )
-        return pb.ReportPeerReviewResponse(success=success, message=msg)
+        try:
+            success, msg = await self.use_case.report_peer_review(
+                user_id=current_user.id,
+                review_id=request.review_id,
+                report_reason=request.report_reason,
+            )
+            return pb.ReportPeerReviewResponse(success=success, message=msg)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
 
     async def regrade_peer_submission_by_staff(
         self,
@@ -220,19 +225,30 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.RegradePeerSubmissionByStaffResponse:
         current_user = require_current_user()
-        if not current_user.is_staff:
-            raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Trợ giảng (TA) hoặc Giảng viên mới có quyền chấm điểm trực tiếp bài nộp của học viên.",
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                submission_id=request.submission_id
             )
-
-        success, msg = await self.use_case.regrade_peer_submission_by_staff(
-            submission_id=request.submission_id,
-            staff_user_id=current_user.id,
-            ta_score=request.ta_score,
-            current_user=current_user,
-        )
-        return pb.RegradePeerSubmissionByStaffResponse(success=success, message=msg)
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="chấm đè điểm bài nộp",
+            )
+            success, msg = await self.use_case.regrade_peer_submission_by_staff(
+                submission_id=request.submission_id,
+                staff_user_id=current_user.id,
+                ta_score=request.ta_score,
+                current_user=current_user,
+            )
+            return pb.RegradePeerSubmissionByStaffResponse(success=success, message=msg)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
 
     def _verify_instructor_permission(self) -> CurrentUser:
         user = require_current_user()

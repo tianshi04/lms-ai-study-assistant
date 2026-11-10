@@ -2,7 +2,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import case, delete, func, or_, select, update
+from sqlalchemy import and_, case, delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -1900,13 +1900,23 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                         staff_ids.add(collab.user_id)
 
         range_start_iso = range_start.isoformat()
+        range_end_iso = range_end.isoformat()
 
         lp_stmt = select(LearningProgressModel).where(
             LearningProgressModel.course_id.in_(course_ids),
             or_(
-                LearningProgressModel.last_accessed_at >= range_start_iso,
-                LearningProgressModel.completed_at >= range_start_iso,
-                LearningProgressModel.enrolled_at >= range_start_iso,
+                and_(
+                    LearningProgressModel.last_accessed_at >= range_start_iso,
+                    LearningProgressModel.last_accessed_at <= range_end_iso,
+                ),
+                and_(
+                    LearningProgressModel.completed_at >= range_start_iso,
+                    LearningProgressModel.completed_at <= range_end_iso,
+                ),
+                and_(
+                    LearningProgressModel.enrolled_at >= range_start_iso,
+                    LearningProgressModel.enrolled_at <= range_end_iso,
+                ),
             ),
         )
         if staff_ids:
@@ -1926,8 +1936,14 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         note_stmt = select(PersonalNoteModel).where(
             PersonalNoteModel.course_id.in_(course_ids),
             or_(
-                PersonalNoteModel.created_at >= range_start_iso,
-                PersonalNoteModel.updated_at >= range_start_iso,
+                and_(
+                    PersonalNoteModel.created_at >= range_start_iso,
+                    PersonalNoteModel.created_at <= range_end_iso,
+                ),
+                and_(
+                    PersonalNoteModel.updated_at >= range_start_iso,
+                    PersonalNoteModel.updated_at <= range_end_iso,
+                ),
             ),
         )
         note_res = await self.session.execute(note_stmt)
@@ -1936,6 +1952,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         item_stmt = select(LearningItemProgressModel).where(
             LearningItemProgressModel.course_id.in_(course_ids),
             LearningItemProgressModel.last_studied_at >= range_start_iso,
+            LearningItemProgressModel.last_studied_at <= range_end_iso,
         )
         item_res = await self.session.execute(item_stmt)
         item_progresses = item_res.scalars().all()

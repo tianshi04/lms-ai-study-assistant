@@ -614,3 +614,12 @@ async def test_forum_pin_and_update_security_guards(monkeypatch):
             current_user_id="random_attacker",
         )
     assert "Chỉ tác giả mới có quyền chỉnh sửa" in str(exc_up.value)
+
+    # 4. update_reply on mismatched/empty author -> PermissionError
+    with pytest.raises(PermissionError) as exc_up_rep:
+        await use_case.update_reply(
+            reply_id="r1",
+            content="Hacked reply content",
+            current_user_id="random_attacker",
+        )
+    assert "Chỉ tác giả mới có quyền chỉnh sửa" in str(exc_up_rep.value)

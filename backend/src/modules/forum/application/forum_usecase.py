@@ -460,7 +460,10 @@ class ForumUseCase:
             existing = await repo.get_reply_by_id(reply_id)
             if not existing:
                 return None
-            if existing.author_user_id and existing.author_user_id != current_user_id:
+            if (
+                not existing.author_user_id
+                or existing.author_user_id != current_user_id
+            ):
                 raise PermissionError(
                     "Chỉ tác giả mới có quyền chỉnh sửa bình luận này."
                 )

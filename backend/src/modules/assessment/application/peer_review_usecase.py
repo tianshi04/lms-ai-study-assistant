@@ -93,7 +93,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         ]
 
         for s in selected:
-            review_id = f"rev-{s.id[:6]}"
+            review_id = f"rev-{s.id}"
             result.append(
                 {
                     "review_id": review_id,
@@ -112,14 +112,33 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         graded_criteria: list[RubricCriteria],
         item_id: str | None = None,
     ) -> tuple[bool, str]:
+        import math
+
+        if not graded_criteria:
+            raise ValueError("Danh sách tiêu chí Rubric không được để trống.")
+
         for c in graded_criteria:
-            if c.score_given < 0 or (c.max_score > 0 and c.score_given > c.max_score):
+            if not math.isfinite(c.score_given) or not math.isfinite(c.max_score):
+                raise ValueError(
+                    f"Điểm số và điểm tối đa của tiêu chí '{c.title}' phải là số thực hữu hạn hợp lệ."
+                )
+            if c.max_score <= 0.0:
+                raise ValueError(
+                    f"Điểm tối đa của tiêu chí '{c.title}' phải lớn hơn 0."
+                )
+            if c.score_given < 0.0 or c.score_given > c.max_score:
                 raise ValueError(
                     f"Điểm tiêu chí '{c.title}' ({c.score_given}) không hợp lệ (yêu cầu từ 0 đến {c.max_score})."
                 )
 
         total_given = sum(c.score_given for c in graded_criteria)
-        max_possible = sum(c.max_score for c in graded_criteria) or 1.0
+        max_possible = sum(c.max_score for c in graded_criteria)
+        if (
+            not math.isfinite(total_given)
+            or not math.isfinite(max_possible)
+            or max_possible <= 0.0
+        ):
+            raise ValueError("Tổng điểm Rubric không hợp lệ.")
         score_percent = round((total_given / max_possible) * 100.0, 2)
 
         submission_id = (
@@ -140,6 +159,10 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             resolved_item_id = item_id or sub.item_id
 
             existing_reviews = await repo.get_peer_reviews_for_submission(submission_id)
+            if any(r.reviewer_user_id == reviewer_user_id for r in existing_reviews):
+                raise PermissionError(
+                    "Bạn đã thực hiện đánh giá cho bài nộp này trước đó rồi."
+                )
             is_outlier = False
             if existing_reviews:
                 prev_scores = [r.total_score for r in existing_reviews]
@@ -283,14 +306,22 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         enforces Highest Score Wins policy, and dispatches domain event.
         """
         self._verify_staff(current_user)
-        if total_score < 0.0 or total_score > 100.0:
-            raise ValueError("Điểm số phải nằm trong khoảng từ 0 đến 100.")
+        import math
+
+        if not math.isfinite(total_score) or total_score < 0.0 or total_score > 100.0:
+            raise ValueError(
+                "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
+            )
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             sub = await repo.get_peer_submission(submission_id)
             if not sub:
                 raise ValueError(f"Không tìm thấy bài nộp {submission_id}")
+            if sub.user_id == staff_user_id:
+                raise PermissionError(
+                    "Bạn không được phép tự chấm điểm bài làm của chính mình."
+                )
 
             now = datetime.now(UTC)
             if not sub.can_claim_lock(staff_user_id, now):
@@ -365,6 +396,17 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         self._verify_staff(current_user)
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                return (
+                    False,
+                    f"Không tìm thấy bài nộp {submission_id}",
+                    {},
+                )
+            if sub.user_id == staff_user_id:
+                raise PermissionError(
+                    "Bạn không được phép tự khóa bài làm của chính mình để chấm điểm."
+                )
             success = await repo.claim_submission_lock(submission_id, staff_user_id)
             if not success:
                 return (
@@ -442,15 +484,27 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         ta_score: float,
         current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
-        self._verify_staff(current_user)
         """TA / Staff Regrade Override (BR_PEER_002, BR_PEER_003).
+
         Overriding final_score 100% with TA score and resolving Grade Appeal if present.
         """
+        self._verify_staff(current_user)
+        import math
+
+        if not math.isfinite(ta_score) or ta_score < 0.0 or ta_score > 100.0:
+            raise ValueError(
+                "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
+            )
+
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             sub = await repo.get_peer_submission(submission_id)
             if not sub:
-                return False, "Không tìm thấy bài nộp dự án"
+                raise ValueError(f"Không tìm thấy bài nộp {submission_id}")
+            if sub.user_id == staff_user_id:
+                raise PermissionError(
+                    "Bạn không được phép tự chấm điểm bài làm của chính mình."
+                )
 
             # BR_PEER_008: Highest Score Wins
             effective_score = (
