@@ -8,7 +8,7 @@ export class LearningPage {
   readonly sidebarItems: Locator;
   readonly lockNotice: Locator;
 
-  // Tabs
+  // Rail Tabs
   readonly transcriptTab: Locator;
   readonly forumTab: Locator;
   readonly notesTab: Locator;
@@ -60,19 +60,45 @@ export class LearningPage {
     }
   }
 
-
   async switchTab(tab: 'transcript' | 'forum' | 'notes' | 'deadlines') {
-    if (tab === 'transcript') await this.transcriptTab.click();
-    if (tab === 'forum') await this.forumTab.click();
-    if (tab === 'notes') await this.notesTab.click();
-    if (tab === 'deadlines') await this.deadlinesTab.click();
+    const target =
+      tab === 'transcript' ? this.transcriptTab :
+      tab === 'forum' ? this.forumTab :
+      tab === 'notes' ? this.notesTab : this.deadlinesTab;
+
+    await expect(target).toBeVisible({ timeout: 10000 });
+    await this.page.waitForTimeout(300);
+
+    const titleMap: Record<string, RegExp> = {
+      transcript: /Phụ đề Tương tác/i,
+      forum: /Thảo luận Bài học/i,
+      notes: /Ghi chú Cá nhân/i,
+      deadlines: /Thời hạn & Tiến độ/i,
+    };
+
+    const header = this.page.locator('span').filter({ hasText: titleMap[tab] }).first();
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await target.click();
+      try {
+        await expect(header).toBeVisible({ timeout: 2000 });
+        break;
+      } catch {
+        await this.page.waitForTimeout(400);
+      }
+    }
+    await expect(header).toBeVisible({ timeout: 5000 });
   }
 
   async createPersonalNote(highlight: string, comment: string) {
     await this.switchTab('notes');
     await expect(this.highlightInput).toBeVisible({ timeout: 10000 });
     await this.highlightInput.fill(highlight);
+    await expect(this.highlightInput).toHaveValue(highlight, { timeout: 3000 });
     await this.commentInput.fill(comment);
+    await expect(this.commentInput).toHaveValue(comment, { timeout: 3000 });
+    await expect(this.saveNoteButton).toBeEnabled({ timeout: 5000 });
     await this.saveNoteButton.click();
+    await expect(this.page.locator(`text=${highlight}`)).toBeVisible({ timeout: 15000 });
   }
 }
