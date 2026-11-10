@@ -24,7 +24,11 @@ interface KpiCardProps {
 
 function KpiCard({ icon: Icon, iconClassName, label, value, details }: KpiCardProps) {
   return (
-    <Surface variant="low" shape="2xl" className="p-5 space-y-3">
+    <Surface
+      variant="low"
+      shape="2xl"
+      className="p-5 space-y-3 h-full flex flex-col justify-between"
+    >
       <div className="flex items-center gap-4">
         <div
           className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${iconClassName}`}
@@ -35,25 +39,31 @@ function KpiCard({ icon: Icon, iconClassName, label, value, details }: KpiCardPr
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
-          {value !== undefined ? (
-            <p className="text-2xl font-black text-foreground font-mono truncate">{value}</p>
-          ) : (
-            <div className="mt-1 h-7 w-24 rounded-lg bg-muted animate-pulse" />
-          )}
+          <div className="h-8 flex items-center">
+            {value !== undefined ? (
+              <p className="text-2xl font-black text-foreground font-mono truncate animate-in fade-in duration-300 ease-out">
+                {value}
+              </p>
+            ) : (
+              <div className="h-6 w-24 rounded-lg bg-muted/70 animate-pulse" />
+            )}
+          </div>
         </div>
       </div>
-      {details ? (
-        <ul className="space-y-1 text-xs text-muted-foreground">
-          {details.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      ) : (
-        <div className="space-y-1.5 pt-0.5">
-          <div className="h-3.5 w-48 rounded bg-muted animate-pulse" />
-          <div className="h-3.5 w-36 rounded bg-muted animate-pulse" />
-        </div>
-      )}
+      <div className="min-h-9 flex flex-col justify-center">
+        {details ? (
+          <ul className="space-y-1 text-xs text-muted-foreground animate-in fade-in duration-300 ease-out">
+            {details.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        ) : (
+          <div className="space-y-1.5">
+            <div className="h-3.5 w-48 rounded bg-muted/60 animate-pulse" />
+            <div className="h-3.5 w-36 rounded bg-muted/60 animate-pulse" />
+          </div>
+        )}
+      </div>
     </Surface>
   );
 }
@@ -64,8 +74,14 @@ function RatingDistribution({ overview }: { overview?: AdminOverviewMetrics }) {
     <Surface variant="low" shape="2xl" className="p-5 space-y-3">
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="text-sm font-extrabold text-foreground">Phân bổ điểm đánh giá (CSAT)</h3>
-        <span className="text-xs text-muted-foreground">
-          {overview ? `${formatNumber(total)} lượt đánh giá` : "Đang tải…"}
+        <span className="text-xs text-muted-foreground font-mono">
+          {overview ? (
+            <span className="animate-in fade-in duration-300">
+              {formatNumber(total)} lượt đánh giá
+            </span>
+          ) : (
+            <span className="inline-block h-3.5 w-24 rounded bg-muted/60 animate-pulse align-middle" />
+          )}
         </span>
       </div>
       <ul className="space-y-2">
@@ -73,11 +89,17 @@ function RatingDistribution({ overview }: { overview?: AdminOverviewMetrics }) {
           const count = overview?.ratingDistribution[stars - 1] ?? 0;
           const percent = toPercent(count, total);
           return (
-            <li key={stars} className="flex items-center gap-3 text-xs">
+            <li key={stars} className="flex items-center gap-3 text-xs h-5">
               <span className="w-10 shrink-0 font-semibold text-foreground">{stars} sao</span>
               <Progress value={percent} thickness="thick" label={`${stars} sao`} />
               <span className="w-20 shrink-0 text-right font-mono text-muted-foreground">
-                {overview ? `${formatNumber(count)} (${percent.toFixed(0)}%)` : "—"}
+                {overview ? (
+                  <span className="animate-in fade-in duration-300">
+                    {formatNumber(count)} ({percent.toFixed(0)}%)
+                  </span>
+                ) : (
+                  <span className="inline-block h-3.5 w-14 rounded bg-muted/60 animate-pulse align-middle" />
+                )}
               </span>
             </li>
           );

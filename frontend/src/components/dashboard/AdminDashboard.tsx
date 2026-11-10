@@ -51,20 +51,27 @@ function QuickAction({
         <Icon aria-hidden="true" className="w-5 h-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">
+        <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors truncate">
           {title}
         </h3>
-        <p className="text-[10px] text-muted-foreground">{description}</p>
+        <p className="text-[10px] leading-3.5 text-muted-foreground line-clamp-2 min-h-7">
+          {description}
+        </p>
       </div>
-      {count !== undefined && (
+      {count !== undefined ? (
         <span
-          className={`px-2 py-0.5 rounded-full text-[11px] font-black font-mono shrink-0 ${
+          className={`min-w-7 h-5 px-2 rounded-full text-[11px] font-black font-mono shrink-0 inline-flex items-center justify-center transition-all duration-300 ease-out animate-in fade-in ${
             hasPending ? "bg-warning text-warning-foreground" : "bg-muted text-muted-foreground"
           }`}
           aria-label={isPendingQueue ? `${count} mục đang chờ xử lý` : `${count} mục`}
         >
           {formatNumber(count)}
         </span>
+      ) : (
+        <span
+          aria-hidden="true"
+          className="min-w-7 h-5 rounded-full bg-muted/60 animate-pulse shrink-0"
+        />
       )}
     </Link>
   );

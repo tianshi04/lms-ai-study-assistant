@@ -194,22 +194,16 @@ export function AdminQualityAlerts({
       >
         <Tabs.List className="overflow-x-auto pb-1">
           <Tabs.Tab value="assessment">
-            {assessmentTotal !== undefined
-              ? `Chấm điểm & khiếu nại (${formatNumber(assessmentTotal)})`
-              : "Chấm điểm & khiếu nại"}
+            {`Chấm điểm & khiếu nại (${assessmentTotal !== undefined ? formatNumber(assessmentTotal) : "—"})`}
           </Tabs.Tab>
           <Tabs.Tab value="reviews">
-            {lowReviewTotal !== undefined
-              ? `Đánh giá thấp (${formatNumber(lowReviewTotal)})`
-              : "Đánh giá thấp"}
+            {`Đánh giá thấp (${lowReviewTotal !== undefined ? formatNumber(lowReviewTotal) : "—"})`}
           </Tabs.Tab>
           <Tabs.Tab value="certificates">
-            {certificateTotal !== undefined
-              ? `Chứng chỉ (${formatNumber(certificateTotal)})`
-              : "Chứng chỉ"}
+            {`Chứng chỉ (${certificateTotal !== undefined ? formatNumber(certificateTotal) : "—"})`}
           </Tabs.Tab>
         </Tabs.List>
-        <Tabs.Panel value="assessment">
+        <Tabs.Panel value="assessment" className="min-h-44">
           {isLoading ? (
             <Table>
               <Table.Header>
@@ -226,15 +220,17 @@ export function AdminQualityAlerts({
               </Table.Body>
             </Table>
           ) : assessmentAlerts.length === 0 ? (
-            <EmptyState message="Không có báo cáo chấm điểm hay khiếu nại nào đang chờ xử lý." />
+            <div className="min-h-44 flex items-center justify-center animate-in fade-in duration-300 ease-out">
+              <EmptyState message="Không có báo cáo chấm điểm hay khiếu nại nào đang chờ xử lý." />
+            </div>
           ) : (
-            <>
+            <div className="animate-in fade-in duration-300 ease-out">
               <AssessmentAlertsTable alerts={assessmentAlerts} />
               <TruncationNote shown={assessmentAlerts.length} total={assessmentTotal ?? 0} />
-            </>
+            </div>
           )}
         </Tabs.Panel>
-        <Tabs.Panel value="reviews">
+        <Tabs.Panel value="reviews" className="min-h-44">
           {isLoading ? (
             <Table>
               <Table.Header>
@@ -252,12 +248,14 @@ export function AdminQualityAlerts({
               </Table.Body>
             </Table>
           ) : lowReviews.length === 0 ? (
-            <EmptyState message="Chưa có đánh giá 1–2 sao nào." />
+            <div className="min-h-44 flex items-center justify-center animate-in fade-in duration-300 ease-out">
+              <EmptyState message="Chưa có đánh giá 1–2 sao nào." />
+            </div>
           ) : (
-            <>
+            <div className="animate-in fade-in duration-300 ease-out">
               <LowReviewsTable reviews={lowReviews} />
               <TruncationNote shown={lowReviews.length} total={lowReviewTotal ?? 0} />
-            </>
+            </div>
           )}
         </Tabs.Panel>
         <Tabs.Panel value="certificates">

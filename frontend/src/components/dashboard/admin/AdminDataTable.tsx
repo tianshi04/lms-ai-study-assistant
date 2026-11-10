@@ -17,14 +17,14 @@ interface AdminDataTableProps<TData> {
   skeletonRowCount?: number;
 }
 
-const SKELETON_ROW_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5"];
+const SKELETON_ROW_KEYS = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5", "sk-6", "sk-7", "sk-8"];
 
 /** Renders a TanStack Table instance with the design-system `Table` primitive. */
 export function AdminDataTable<TData>({
   table,
   columnClassNames = {},
   isLoading = false,
-  skeletonRowCount = 5,
+  skeletonRowCount = 8,
 }: AdminDataTableProps<TData>) {
   // The TanStack `table` instance keeps the same identity while its rows change, so a
   // compiler-memoized child would never re-render with new data.
@@ -53,15 +53,22 @@ export function AdminDataTable<TData>({
         {isLoading && rows.length === 0
           ? skeletonRows.map((rowKey) => (
               <Table.Row key={rowKey} aria-busy="true">
-                {visibleColumns.map((column) => (
+                {visibleColumns.map((column, colIdx) => (
                   <Table.Cell key={column.id} className={columnClassNames[column.id]?.cell}>
-                    <div className="h-4 w-full max-w-36 rounded bg-muted animate-pulse" />
+                    {colIdx === 0 ? (
+                      <div className="space-y-1.5 py-0.5">
+                        <div className="h-4 w-44 rounded bg-muted/70 animate-pulse" />
+                        <div className="h-3 w-28 rounded bg-muted/50 animate-pulse" />
+                      </div>
+                    ) : (
+                      <div className="h-4 w-full max-w-24 rounded bg-muted/60 animate-pulse inline-block" />
+                    )}
                   </Table.Cell>
                 ))}
               </Table.Row>
             ))
           : rows.map((row) => (
-              <Table.Row key={row.id}>
+              <Table.Row key={row.id} className="animate-in fade-in duration-300 ease-out">
                 {row.getVisibleCells().map((cell) => (
                   <Table.Cell key={cell.id} className={columnClassNames[cell.column.id]?.cell}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
