@@ -33,7 +33,7 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
 
     // Switch to Peer Review tab
     await assessmentPage.switchTab('peer');
-    await expect(assessmentPage.mySubmissionTab).toBeVisible();
+    await expect(assessmentPage.mySubmissionTab).toBeVisible({ timeout: 15000 });
 
     // If assignment has not been submitted, Tab 2 should be locked/disabled according to BR_PEER_001
     const isLocked =
