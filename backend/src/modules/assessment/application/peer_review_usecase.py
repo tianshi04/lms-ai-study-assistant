@@ -313,6 +313,20 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
             )
 
+        for c in graded_criteria:
+            if not math.isfinite(c.score_given) or not math.isfinite(c.max_score):
+                raise ValueError(
+                    f"Điểm tiêu chí '{c.title}' không được chứa NaN hoặc Infinity."
+                )
+            if c.max_score <= 0:
+                raise ValueError(
+                    f"Điểm tối đa của tiêu chí '{c.title}' phải lớn hơn 0."
+                )
+            if c.score_given < 0 or c.score_given > c.max_score:
+                raise ValueError(
+                    f"Điểm tiêu chí '{c.title}' ({c.score_given}) không hợp lệ (0 - {c.max_score})."
+                )
+
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             sub = await repo.get_peer_submission(submission_id)

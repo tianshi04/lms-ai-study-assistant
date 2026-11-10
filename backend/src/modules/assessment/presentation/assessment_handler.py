@@ -267,6 +267,22 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.CreateQuestionBankResponse:
         user = self._verify_instructor_permission()
+        if request.course_id:
+            try:
+                course = await self.use_case.get_course_for_item_or_submission(
+                    course_id=request.course_id
+                )
+                user_ctx = CurrentUserContext(
+                    id=user.id, role=user.role, email=user.email
+                )
+                enforce_course_ownership(
+                    course=course,
+                    user=user_ctx,
+                    required_permission=CoursePermission.MANAGE_CURRICULUM,
+                    action_name="tạo ngân hàng câu hỏi",
+                )
+            except PermissionError as e:
+                raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         bank = await self.use_case.create_question_bank(
             course_id=request.course_id,
             title=request.title,
@@ -381,6 +397,22 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.ConfigureQuizMatrixResponse:
         user = self._verify_instructor_permission()
+        if request.item_id:
+            try:
+                course = await self.use_case.get_course_for_item_or_submission(
+                    item_id=request.item_id
+                )
+                user_ctx = CurrentUserContext(
+                    id=user.id, role=user.role, email=user.email
+                )
+                enforce_course_ownership(
+                    course=course,
+                    user=user_ctx,
+                    required_permission=CoursePermission.MANAGE_CURRICULUM,
+                    action_name="cấu hình ma trận đề thi",
+                )
+            except PermissionError as e:
+                raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         matrix = await self.use_case.configure_quiz_matrix(
             item_id=request.item_id,
             bank_id=request.bank_id,
