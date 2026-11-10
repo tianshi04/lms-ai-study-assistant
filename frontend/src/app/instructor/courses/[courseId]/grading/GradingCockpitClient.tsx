@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   CheckCircle2,
@@ -23,7 +24,11 @@ import { Table } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { cn } from "@/lib/utils";
-import { useGradingQueueQuery, useClaimGradingTaskMutation } from "@/lib/query_hooks";
+import {
+  useGradingQueueQuery,
+  useClaimGradingTaskMutation,
+  useCourseDetailQuery,
+} from "@/lib/query_hooks";
 import {
   GradingProvenance,
   GradingQueueStatus,
@@ -38,18 +43,39 @@ interface GradingCockpitClientProps {
 export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   const { toast } = useToast();
   const { userId: currentUserId } = useAuth();
+  const searchParams = useSearchParams();
+  const urlSubmissionId = searchParams.get("submissionId");
+
+  const isInvalidCourse = !courseId || courseId === "undefined" || courseId === "null";
+
+  const { data: courseDetail } = useCourseDetailQuery(courseId, {
+    enabled: !isInvalidCourse,
+  });
 
   const [activeTab, setActiveTab] = useState<GradingQueueStatus>(GradingQueueStatus.ALL);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
 
+  // Auto-open evaluation modal if submissionId was passed in URL query param
+  useEffect(() => {
+    if (urlSubmissionId && !selectedSubmissionId) {
+      setSelectedSubmissionId(urlSubmissionId);
+      setIsEvaluationModalOpen(true);
+    }
+  }, [urlSubmissionId, selectedSubmissionId]);
+
   // Fetch grading queue using TanStack Query
-  const { data, isLoading, isError, error, refetch } = useGradingQueueQuery({
-    courseId,
-    status: activeTab,
-    searchQuery,
-  });
+  const { data, isLoading, isError, error, refetch } = useGradingQueueQuery(
+    {
+      courseId: isInvalidCourse ? "" : courseId,
+      status: activeTab,
+      searchQuery,
+    },
+    {
+      enabled: !isInvalidCourse,
+    },
+  );
 
   const queueItems = data?.items || [];
   const claimTaskMutation = useClaimGradingTaskMutation();
@@ -215,6 +241,24 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
     }
   };
 
+  if (isInvalidCourse) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <AlertTriangle className="w-12 h-12 text-warning mx-auto" aria-hidden="true" />
+        <h2 className="text-xl font-bold">Chưa chọn khóa học để chấm bài</h2>
+        <p className="text-sm text-muted-foreground max-w-md">
+          Không tìm thấy thông tin khóa học hợp lệ trong đường dẫn. Vui lòng quay lại danh sách khóa
+          học của bạn để tiếp tục.
+        </p>
+        <Link href="/instructor/courses">
+          <Button variant="filled" className="text-xs font-bold">
+            Quay về danh sách khóa học
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors pb-16">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -227,7 +271,9 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               </Breadcrumb.Item>
               <Breadcrumb.Separator />
               <Breadcrumb.Item>
-                <Breadcrumb.Link href={`/instructor/courses/${courseId}`}>Khóa học</Breadcrumb.Link>
+                <Breadcrumb.Link href={`/instructor/courses/${courseId}`}>
+                  {courseDetail?.course?.title || "Khóa học"}
+                </Breadcrumb.Link>
               </Breadcrumb.Item>
               <Breadcrumb.Separator />
               <Breadcrumb.Item>
@@ -417,7 +463,8 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                 error?.message?.includes("permission") ||
                 error?.message?.includes("PERMISSION_DENIED")
                   ? "Bạn không phải là giảng viên hoặc trợ giảng phụ trách khóa học này. Vui lòng quay lại danh sách khóa học của bạn."
-                  : "Đã xảy ra lỗi khi kết nối với máy chủ chấm bài. Vui lòng kiểm tra lại đường truyền."}
+                  : error?.message ||
+                    "Đã xảy ra lỗi khi kết nối với máy chủ chấm bài. Vui lòng kiểm tra lại đường truyền."}
               </p>
               <div className="flex items-center justify-center gap-2 pt-1">
                 <Link

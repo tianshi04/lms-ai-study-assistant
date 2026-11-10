@@ -243,6 +243,7 @@ export function useInstructorOverviewData({
         score = 100 + hoursElapsed;
       }
 
+      const targetCourseId = item.courseId || courses[0]?.id || "";
       allScoredTasks.push({
         id: `task-grading-${item.submissionId}`,
         type: "grading",
@@ -251,7 +252,9 @@ export function useInstructorOverviewData({
         courseTitle: item.courseTitle || "Khóa học",
         timeAgo: urgencyLabel,
         actionText: "Chấm ngay",
-        actionUrl: `/instructor/courses/${item.courseId}/grading?submissionId=${item.submissionId}`,
+        actionUrl: targetCourseId
+          ? `/instructor/courses/${targetCourseId}/grading?submissionId=${item.submissionId}`
+          : "/instructor/courses",
         urgencyLevel,
         urgencyLabel,
         isAppeal: item.isAppeal,
@@ -305,6 +308,7 @@ export function useInstructorOverviewData({
         score = 100 + hoursElapsed;
       }
 
+      const targetCourseId = thread.courseId || courses[0]?.id || "";
       allScoredTasks.push({
         id: `task-qa-${thread.id}`,
         type: "video_qa",
@@ -314,7 +318,9 @@ export function useInstructorOverviewData({
         courseTitle: course?.title || "Khóa học",
         timeAgo: urgencyLabel,
         actionText: "Trả lời",
-        actionUrl: `/instructor/courses/${thread.courseId}/discussions?threadId=${thread.id}`,
+        actionUrl: targetCourseId
+          ? `/instructor/courses/${targetCourseId}/discussions?threadId=${thread.id}`
+          : "/forum",
         urgencyLevel,
         urgencyLabel,
         isOverdue,
@@ -322,15 +328,37 @@ export function useInstructorOverviewData({
       });
     });
 
-    // Sắp xếp ưu tiên việc Khẩn cấp (Critical) -> Cảnh báo (Warning) -> Bình thường
-    allScoredTasks.sort((a, b) => b.score - a.score);
+    // Phân loại riêng theo mảng để đảm bảo cân bằng Fair Queueing (không để bài chấm nuốt trọn thảo luận)
+    const scoredGrading = allScoredTasks
+      .filter((t) => t.type === "grading")
+      .sort((a, b) => b.score - a.score);
+    const scoredQA = allScoredTasks
+      .filter((t) => t.type === "video_qa")
+      .sort((a, b) => b.score - a.score);
+
+    // Fair Queueing: lấy top 3 bài chấm + top 2 hỏi đáp khẩn cấp nhất cho chế độ Tất cả
+    const mixedTopTasks: ScoredTask[] = [];
+    const topG = scoredGrading.slice(0, 3);
+    const topQ = scoredQA.slice(0, 2);
+    mixedTopTasks.push(...topG, ...topQ);
+
+    const remainingG = scoredGrading.slice(3);
+    const remainingQ = scoredQA.slice(2);
+    const remainingAll = [...remainingG, ...remainingQ].sort((a, b) => b.score - a.score);
+
+    if (mixedTopTasks.length < 5) {
+      mixedTopTasks.push(...remainingAll.slice(0, 5 - mixedTopTasks.length));
+    }
+    mixedTopTasks.sort((a, b) => b.score - a.score);
+
+    // Gộp tất cả các việc vào pool để khi chuyển tab Chấm bài hoặc Hỏi đáp vẫn có đầy đủ danh sách
+    const fullTasksPool = [
+      ...mixedTopTasks,
+      ...remainingAll.filter((t) => !mixedTopTasks.some((m) => m.id === t.id)),
+    ];
+    const tasks: OverviewActionTask[] = fullTasksPool.map(({ score: _score, ...rest }) => rest);
 
     const totalOverdue = allScoredTasks.filter((t) => t.urgencyLevel === "critical").length;
-
-    // Lấy top 5 việc ưu tiên cao nhất theo chuẩn SLA
-    const tasks: OverviewActionTask[] = allScoredTasks
-      .slice(0, 5)
-      .map(({ score: _score, ...rest }) => rest);
 
     return {
       overviewActionTasks: tasks,
@@ -506,6 +534,8 @@ export function useInstructorOverviewData({
     growthPercent,
     overviewActionTasks,
     totalPendingTasksCount,
+    totalPendingGradingCount,
+    totalPendingQaCount,
     totalOverdueTasksCount,
     overdueGradingByCourseId,
     pendingGradingByCourseId,

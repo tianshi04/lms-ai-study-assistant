@@ -185,6 +185,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               pendingQaByCourseId={overviewData.pendingQaByCourseId}
               overviewActionTasks={overviewData.overviewActionTasks}
               totalPendingTasksCount={overviewData.totalPendingTasksCount}
+              totalPendingGradingCount={overviewData.totalPendingGradingCount}
+              totalPendingQaCount={overviewData.totalPendingQaCount}
               totalOverdueTasksCount={overviewData.totalOverdueTasksCount}
               overviewReviews={overviewData.overviewReviews}
               avgRatingAllCourses={overviewData.avgRatingAllCourses}
