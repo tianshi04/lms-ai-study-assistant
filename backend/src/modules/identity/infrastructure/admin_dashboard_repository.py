@@ -7,7 +7,7 @@ cases stay free of raw SQL.
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, true
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -84,12 +84,18 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         self._session = session
 
     async def get_dashboard_stats(self) -> AdminDashboardStats:
+        overview = await self._get_overview()
+        low_reviews, low_review_total = await self._get_low_reviews_with_total()
+        (
+            assessment_alerts,
+            assessment_alert_total,
+        ) = await self._get_assessment_alerts_with_total()
         return AdminDashboardStats(
-            overview=await self._get_overview(),
-            low_reviews=await self._get_low_reviews(),
-            low_review_total=await self._count_low_reviews(),
-            assessment_alerts=await self._get_assessment_alerts(),
-            assessment_alert_total=await self._count_assessment_alerts(),
+            overview=overview,
+            low_reviews=low_reviews,
+            low_review_total=low_review_total,
+            assessment_alerts=assessment_alerts,
+            assessment_alert_total=assessment_alert_total,
         )
 
     async def _count(self, stmt: Any) -> int:
@@ -102,30 +108,197 @@ class AdminDashboardRepository(IAdminDashboardRepository):
 
     async def _get_overview(self) -> AdminOverviewMetrics:
         metrics = AdminOverviewMetrics()
-        await self._fill_user_metrics(metrics)
+        await self._fill_platform_metrics(metrics)
         await self._fill_course_metrics(metrics)
         await self._fill_learning_metrics(metrics)
-        await self._fill_satisfaction_metrics(metrics)
-        await self._fill_revenue_metrics(metrics)
-        await self._fill_certificate_metrics(metrics)
-        await self._fill_work_queue_metrics(metrics)
-        await self._fill_catalog_metrics(metrics)
         return metrics
 
-    async def _fill_user_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        role_rows = await self._session.execute(
-            select(UserModel.role, func.count()).group_by(UserModel.role)
-        )
-        role_counts = dict(role_rows.all())
-        metrics.learner_count = role_counts.get(UserRole.LEARNER, 0)
-        metrics.instructor_count = role_counts.get(UserRole.INSTRUCTOR, 0)
-        metrics.admin_count = role_counts.get(UserRole.ADMIN, 0)
-        metrics.total_users = sum(role_counts.values())
-        metrics.verified_user_count = await self._count(
-            select(func.count())
+    async def _fill_platform_metrics(self, metrics: AdminOverviewMetrics) -> None:
+        """Fetch all non-course platform KPIs in a single SQL round-trip."""
+        now_prefix = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
+        user_sq = (
+            select(
+                func.count()
+                .filter(UserModel.role == UserRole.LEARNER)
+                .label("learner_count"),
+                func.count()
+                .filter(UserModel.role == UserRole.INSTRUCTOR)
+                .label("instructor_count"),
+                func.count()
+                .filter(UserModel.role == UserRole.ADMIN)
+                .label("admin_count"),
+                func.count().label("total_users"),
+                func.count()
+                .filter(UserModel.is_identity_verified.is_(True))
+                .label("verified_user_count"),
+            )
             .select_from(UserModel)
-            .where(UserModel.is_identity_verified.is_(True))
+            .subquery()
         )
+        review_sq = (
+            select(
+                func.count(CourseReviewModel.id).label("total_reviews"),
+                func.coalesce(func.avg(CourseReviewModel.rating_stars), 0.0).label(
+                    "average_rating"
+                ),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 1)
+                .label("stars_1"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 2)
+                .label("stars_2"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 3)
+                .label("stars_3"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 4)
+                .label("stars_4"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 5)
+                .label("stars_5"),
+            )
+            .select_from(CourseReviewModel)
+            .subquery()
+        )
+        purchase_sq = (
+            select(
+                func.coalesce(func.sum(CoursePurchaseModel.amount), 0.0).label(
+                    "purchase_revenue"
+                ),
+                func.count(CoursePurchaseModel.id).label("course_purchase_count"),
+            )
+            .where(CoursePurchaseModel.status == _COMPLETED)
+            .subquery()
+        )
+        order_sq = (
+            select(
+                func.coalesce(func.sum(PaymentOrderModel.amount), 0.0).label(
+                    "subscription_revenue"
+                )
+            )
+            .where(
+                PaymentOrderModel.status == _COMPLETED,
+                PaymentOrderModel.target_type == _SUBSCRIPTION_TARGET,
+            )
+            .subquery()
+        )
+        sub_sq = (
+            select(func.count().label("active_subscriptions"))
+            .select_from(UserSubscriptionModel)
+            .where(
+                UserSubscriptionModel.status == _ACTIVE,
+                func.substr(UserSubscriptionModel.expires_at, 1, _ISO_SECONDS_LENGTH)
+                >= now_prefix,
+            )
+            .subquery()
+        )
+        cert_sq = (
+            select(
+                func.count().label("certificates_issued"),
+                func.count()
+                .filter(CertificateModel.is_revoked.is_(True))
+                .label("certificates_revoked"),
+            )
+            .select_from(CertificateModel)
+            .subquery()
+        )
+        aid_sq = (
+            select(
+                func.count()
+                .filter(FinancialAidModel.status.in_(_APPROVED_AID_STATUSES))
+                .label("approved_financial_aids"),
+                func.count()
+                .filter(FinancialAidModel.status == _PENDING)
+                .label("pending_financial_aids"),
+            )
+            .select_from(FinancialAidModel)
+            .subquery()
+        )
+        app_sq = (
+            select(func.count().label("pending_instructor_applications"))
+            .select_from(InstructorApplicationModel)
+            .where(InstructorApplicationModel.status == _PENDING_REVIEW)
+            .subquery()
+        )
+        partner_sq = (
+            select(func.count().label("partner_count"))
+            .select_from(PartnerModel)
+            .subquery()
+        )
+        category_sq = (
+            select(func.count().label("category_count"))
+            .select_from(CategoryModel)
+            .subquery()
+        )
+
+        row = (
+            await self._session.execute(
+                select(
+                    user_sq.c.learner_count,
+                    user_sq.c.instructor_count,
+                    user_sq.c.admin_count,
+                    user_sq.c.total_users,
+                    user_sq.c.verified_user_count,
+                    review_sq.c.total_reviews,
+                    review_sq.c.average_rating,
+                    review_sq.c.stars_1,
+                    review_sq.c.stars_2,
+                    review_sq.c.stars_3,
+                    review_sq.c.stars_4,
+                    review_sq.c.stars_5,
+                    purchase_sq.c.purchase_revenue,
+                    purchase_sq.c.course_purchase_count,
+                    order_sq.c.subscription_revenue,
+                    sub_sq.c.active_subscriptions,
+                    cert_sq.c.certificates_issued,
+                    cert_sq.c.certificates_revoked,
+                    aid_sq.c.approved_financial_aids,
+                    aid_sq.c.pending_financial_aids,
+                    app_sq.c.pending_instructor_applications,
+                    partner_sq.c.partner_count,
+                    category_sq.c.category_count,
+                )
+                .select_from(user_sq)
+                .join(review_sq, true())
+                .join(purchase_sq, true())
+                .join(order_sq, true())
+                .join(sub_sq, true())
+                .join(cert_sq, true())
+                .join(aid_sq, true())
+                .join(app_sq, true())
+                .join(partner_sq, true())
+                .join(category_sq, true())
+            )
+        ).one()
+
+        metrics.learner_count = int(row.learner_count or 0)
+        metrics.instructor_count = int(row.instructor_count or 0)
+        metrics.admin_count = int(row.admin_count or 0)
+        metrics.total_users = int(row.total_users or 0)
+        metrics.verified_user_count = int(row.verified_user_count or 0)
+        metrics.total_reviews = int(row.total_reviews or 0)
+        metrics.average_rating = round(float(row.average_rating or 0.0), 2)
+        metrics.rating_distribution = [
+            int(row.stars_1 or 0),
+            int(row.stars_2 or 0),
+            int(row.stars_3 or 0),
+            int(row.stars_4 or 0),
+            int(row.stars_5 or 0),
+        ]
+        metrics.total_revenue = float(row.purchase_revenue or 0.0) + float(
+            row.subscription_revenue or 0.0
+        )
+        metrics.course_purchase_count = int(row.course_purchase_count or 0)
+        metrics.active_subscriptions = int(row.active_subscriptions or 0)
+        metrics.certificates_issued = int(row.certificates_issued or 0)
+        metrics.certificates_revoked = int(row.certificates_revoked or 0)
+        metrics.approved_financial_aids = int(row.approved_financial_aids or 0)
+        metrics.pending_financial_aids = int(row.pending_financial_aids or 0)
+        metrics.pending_instructor_applications = int(
+            row.pending_instructor_applications or 0
+        )
+        metrics.partner_count = int(row.partner_count or 0)
+        metrics.category_count = int(row.category_count or 0)
 
     async def _fill_course_metrics(self, metrics: AdminOverviewMetrics) -> None:
         status_rows = await self._session.execute(
@@ -164,95 +337,6 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         ).one()
         metrics.total_enrollments = int(enrollment_row[0] or 0)
         metrics.completed_enrollments = int(enrollment_row[1] or 0)
-
-    async def _fill_satisfaction_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        review_row = (
-            await self._session.execute(
-                select(
-                    func.count(CourseReviewModel.id),
-                    func.avg(CourseReviewModel.rating_stars),
-                )
-            )
-        ).one()
-        metrics.total_reviews = int(review_row[0] or 0)
-        metrics.average_rating = round(float(review_row[1] or 0.0), 2)
-        distribution_rows = await self._session.execute(
-            select(CourseReviewModel.rating_stars, func.count()).group_by(
-                CourseReviewModel.rating_stars
-            )
-        )
-        for stars, count in distribution_rows.all():
-            if 1 <= stars <= len(metrics.rating_distribution):
-                metrics.rating_distribution[stars - 1] = int(count)
-
-    async def _fill_revenue_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        # Course purchases + subscription orders (course orders are already
-        # represented by their fulfilled course purchase).
-        purchase_row = (
-            await self._session.execute(
-                select(
-                    func.coalesce(func.sum(CoursePurchaseModel.amount), 0.0),
-                    func.count(CoursePurchaseModel.id),
-                ).where(CoursePurchaseModel.status == _COMPLETED)
-            )
-        ).one()
-        subscription_revenue = (
-            await self._session.execute(
-                select(func.coalesce(func.sum(PaymentOrderModel.amount), 0.0)).where(
-                    PaymentOrderModel.status == _COMPLETED,
-                    PaymentOrderModel.target_type == _SUBSCRIPTION_TARGET,
-                )
-            )
-        ).scalar_one()
-        metrics.total_revenue = float(purchase_row[0] or 0.0) + float(
-            subscription_revenue or 0.0
-        )
-        metrics.course_purchase_count = int(purchase_row[1] or 0)
-        now_prefix = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
-        metrics.active_subscriptions = await self._count(
-            select(func.count())
-            .select_from(UserSubscriptionModel)
-            .where(
-                UserSubscriptionModel.status == _ACTIVE,
-                func.substr(UserSubscriptionModel.expires_at, 1, _ISO_SECONDS_LENGTH)
-                >= now_prefix,
-            )
-        )
-
-    async def _fill_certificate_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        metrics.certificates_issued = await self._count(
-            select(func.count()).select_from(CertificateModel)
-        )
-        metrics.certificates_revoked = await self._count(
-            select(func.count())
-            .select_from(CertificateModel)
-            .where(CertificateModel.is_revoked.is_(True))
-        )
-        metrics.approved_financial_aids = await self._count(
-            select(func.count())
-            .select_from(FinancialAidModel)
-            .where(FinancialAidModel.status.in_(_APPROVED_AID_STATUSES))
-        )
-
-    async def _fill_work_queue_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        metrics.pending_instructor_applications = await self._count(
-            select(func.count())
-            .select_from(InstructorApplicationModel)
-            .where(InstructorApplicationModel.status == _PENDING_REVIEW)
-        )
-        metrics.pending_financial_aids = await self._count(
-            select(func.count())
-            .select_from(FinancialAidModel)
-            .where(FinancialAidModel.status == _PENDING)
-        )
-
-    async def _fill_catalog_metrics(self, metrics: AdminOverviewMetrics) -> None:
-        metrics.partner_count = await self._count(
-            select(func.count()).select_from(PartnerModel)
-        )
-        metrics.category_count = await self._count(
-            select(func.count()).select_from(CategoryModel)
-        )
 
     # ------------------------------------------------------------------
     # Per-course metrics (paginated)
@@ -319,6 +403,7 @@ class AdminDashboardRepository(IAdminDashboardRepository):
                 enrolled_expr,
                 func.coalesce(enrollment_sq.c.completed, 0),
                 revenue_expr,
+                func.count().over(),
             )
             .outerjoin(enrollment_sq, CourseModel.id == enrollment_sq.c.course_id)
             .outerjoin(revenue_sq, CourseModel.id == revenue_sq.c.course_id)
@@ -334,11 +419,16 @@ class AdminDashboardRepository(IAdminDashboardRepository):
             .offset((page - 1) * page_size)
         )
         rows = (await self._session.execute(stmt)).all()
-        total_count = await self._count(
-            _scope_courses(
-                select(func.count()).select_from(CourseModel).where(*filters)
+        if rows:
+            total_count = int(rows[0][9] or 0)
+        elif page == 1:
+            total_count = 0
+        else:
+            total_count = await self._count(
+                _scope_courses(
+                    select(func.count()).select_from(CourseModel).where(*filters)
+                )
             )
-        )
         return AdminCourseMetricsPage(
             courses=[
                 AdminCourseQualityMetric(
@@ -362,6 +452,7 @@ class AdminDashboardRepository(IAdminDashboardRepository):
                     enrolled,
                     completed,
                     revenue,
+                    _total,
                 ) in rows
             ],
             total_count=total_count,
@@ -401,9 +492,11 @@ class AdminDashboardRepository(IAdminDashboardRepository):
             PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
         )
 
-    async def _get_low_reviews(self) -> list[AdminLowReviewAlert]:
+    async def _get_low_reviews_with_total(
+        self,
+    ) -> tuple[list[AdminLowReviewAlert], int]:
         stmt = _scope_courses(
-            select(CourseReviewModel, CourseModel.title)
+            select(CourseReviewModel, CourseModel.title, func.count().over())
             .join(CourseModel, CourseModel.id == CourseReviewModel.course_id)
             .outerjoin(
                 LowReviewAcknowledgementModel,
@@ -414,31 +507,21 @@ class AdminDashboardRepository(IAdminDashboardRepository):
             .limit(ADMIN_DASHBOARD_ALERT_LIMIT)
         )
         rows = (await self._session.execute(stmt)).all()
-        return [
-            AdminLowReviewAlert(
-                review_id=review.id,
-                course_id=review.course_id,
-                course_title=course_title,
-                user_name=review.user_name,
-                rating_stars=review.rating_stars,
-                comment_text=review.comment_text,
-                created_at=review.created_at,
-            )
-            for review, course_title in rows
-        ]
-
-    async def _count_low_reviews(self) -> int:
-        return await self._count(
-            _scope_courses(
-                select(func.count())
-                .select_from(CourseReviewModel)
-                .join(CourseModel, CourseModel.id == CourseReviewModel.course_id)
-                .outerjoin(
-                    LowReviewAcknowledgementModel,
-                    LowReviewAcknowledgementModel.review_id == CourseReviewModel.id,
+        total = int(rows[0][2] or 0) if rows else 0
+        return (
+            [
+                AdminLowReviewAlert(
+                    review_id=review.id,
+                    course_id=review.course_id,
+                    course_title=course_title,
+                    user_name=review.user_name,
+                    rating_stars=review.rating_stars,
+                    comment_text=review.comment_text,
+                    created_at=review.created_at,
                 )
-                .where(*self._open_low_review_filters())
-            )
+                for review, course_title, _total in rows
+            ],
+            total,
         )
 
     async def acknowledge_low_review(self, review_id: str, admin_id: str) -> bool:
@@ -471,29 +554,35 @@ class AdminDashboardRepository(IAdminDashboardRepository):
         )
         return True
 
-    async def _get_assessment_alerts(self) -> list[AdminAssessmentAlert]:
+    async def _get_assessment_alerts_with_total(
+        self,
+    ) -> tuple[list[AdminAssessmentAlert], int]:
         appeal_stmt = (
-            select(GradeAppealModel)
+            select(GradeAppealModel, UserModel.full_name, func.count().over())
+            .outerjoin(UserModel, UserModel.id == GradeAppealModel.user_id)
             .where(self._pending_appeal_filter())
             .order_by(GradeAppealModel.created_at.desc())
             .limit(ADMIN_DASHBOARD_ALERT_LIMIT)
         )
-        appeals = (await self._session.execute(appeal_stmt)).scalars().all()
+        appeal_rows = (await self._session.execute(appeal_stmt)).all()
+        appeal_total = int(appeal_rows[0][2] or 0) if appeal_rows else 0
 
         outlier_stmt = (
-            select(PeerReviewModel)
+            select(PeerReviewModel, UserModel.full_name, func.count().over())
             .join(
                 PeerAssignmentSubmissionModel,
                 PeerAssignmentSubmissionModel.id == PeerReviewModel.submission_id,
             )
+            .outerjoin(UserModel, UserModel.id == PeerReviewModel.reviewer_user_id)
             .where(*self._unsettled_outlier_filters())
             .order_by(PeerReviewModel.created_at.desc())
             .limit(ADMIN_DASHBOARD_ALERT_LIMIT)
         )
-        outliers = (await self._session.execute(outlier_stmt)).scalars().all()
+        outlier_rows = (await self._session.execute(outlier_stmt)).all()
+        outlier_total = int(outlier_rows[0][2] or 0) if outlier_rows else 0
 
         alerts: list[AdminAssessmentAlert] = []
-        for appeal in appeals:
+        for appeal, user_name, _total in appeal_rows:
             is_report = appeal.appeal_reason.startswith(_REPORTED_REVIEW_PREFIX)
             alerts.append(
                 AdminAssessmentAlert(
@@ -505,6 +594,7 @@ class AdminDashboardRepository(IAdminDashboardRepository):
                     ),
                     submission_id=appeal.submission_id,
                     user_id=appeal.user_id,
+                    user_name=user_name or "",
                     reason=appeal.appeal_reason,
                     created_at=appeal.created_at,
                 )
@@ -515,44 +605,14 @@ class AdminDashboardRepository(IAdminDashboardRepository):
                 kind=AdminAssessmentAlertKind.OUTLIER_PEER_REVIEW,
                 submission_id=review.submission_id,
                 user_id=review.reviewer_user_id,
+                user_name=user_name or "",
                 total_score=float(review.total_score),
                 created_at=review.created_at,
             )
-            for review in outliers
+            for review, user_name, _total in outlier_rows
         )
         alerts.sort(key=lambda a: a.created_at, reverse=True)
-        alerts = alerts[:ADMIN_DASHBOARD_ALERT_LIMIT]
-
-        await self._resolve_user_names(alerts)
-        return alerts
-
-    async def _count_assessment_alerts(self) -> int:
-        appeal_total = await self._count(
-            select(func.count())
-            .select_from(GradeAppealModel)
-            .where(self._pending_appeal_filter())
-        )
-        outlier_total = await self._count(
-            select(func.count())
-            .select_from(PeerReviewModel)
-            .join(
-                PeerAssignmentSubmissionModel,
-                PeerAssignmentSubmissionModel.id == PeerReviewModel.submission_id,
-            )
-            .where(*self._unsettled_outlier_filters())
-        )
-        return appeal_total + outlier_total
-
-    async def _resolve_user_names(self, alerts: list[AdminAssessmentAlert]) -> None:
-        user_ids = {alert.user_id for alert in alerts if alert.user_id}
-        if not user_ids:
-            return
-        rows = await self._session.execute(
-            select(UserModel.id, UserModel.full_name).where(UserModel.id.in_(user_ids))
-        )
-        names = dict(rows.all())
-        for alert in alerts:
-            alert.user_name = names.get(alert.user_id, "")
+        return alerts[:ADMIN_DASHBOARD_ALERT_LIMIT], appeal_total + outlier_total
 
     # ------------------------------------------------------------------
     # Certificates (paginated)
@@ -588,16 +648,21 @@ class AdminDashboardRepository(IAdminDashboardRepository):
             filters.append(CertificateModel.is_revoked.is_(is_revoked))
 
         stmt = (
-            select(CertificateModel)
+            select(CertificateModel, func.count().over())
             .where(*filters)
             .order_by(CertificateModel.is_revoked, CertificateModel.certificate_id)
             .limit(page_size)
             .offset((page - 1) * page_size)
         )
-        certificates = (await self._session.execute(stmt)).scalars().all()
-        total_count = await self._count(
-            select(func.count()).select_from(CertificateModel).where(*filters)
-        )
+        rows = (await self._session.execute(stmt)).all()
+        if rows:
+            total_count = int(rows[0][1] or 0)
+        elif page == 1:
+            total_count = 0
+        else:
+            total_count = await self._count(
+                select(func.count()).select_from(CertificateModel).where(*filters)
+            )
         return AdminCertificatesPage(
             certificates=[
                 AdminCertificateSummary(
@@ -609,7 +674,7 @@ class AdminDashboardRepository(IAdminDashboardRepository):
                     is_revoked=cert.is_revoked,
                     revoked_reason=cert.revoked_reason,
                 )
-                for cert in certificates
+                for cert, _total in rows
             ],
             total_count=total_count,
             page=page,

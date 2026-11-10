@@ -155,18 +155,18 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
           </Surface>
         )}
 
+        {stats && overview && <AdminOverviewCards overview={overview} />}
+
+        <AdminCourseQualityTable />
+
         {stats && overview && (
-          <>
-            <AdminOverviewCards overview={overview} />
-            <AdminCourseQualityTable />
-            <AdminQualityAlerts
-              assessmentAlerts={stats.assessmentAlerts}
-              assessmentTotal={stats.assessmentAlertTotal}
-              lowReviews={stats.lowReviews}
-              lowReviewTotal={stats.lowReviewTotal}
-              certificateTotal={overview.certificatesIssued}
-            />
-          </>
+          <AdminQualityAlerts
+            assessmentAlerts={stats.assessmentAlerts}
+            assessmentTotal={stats.assessmentAlertTotal}
+            lowReviews={stats.lowReviews}
+            lowReviewTotal={stats.lowReviewTotal}
+            certificateTotal={overview.certificatesIssued}
+          />
         )}
 
         {/* Embedded Core Admin Enterprise Seat Management View */}
