@@ -1,4 +1,4 @@
-"""add staff grading lock renewal draft and gradebook
+"""add staff grading lock renewal and gradebook
 
 Revision ID: 15b6d8df8786
 Revises: 00c565ecc4ba
@@ -69,10 +69,6 @@ def upgrade() -> None:
     )
     op.add_column(
         "peer_assignment_submissions",
-        sa.Column("is_draft", sa.Boolean(), server_default="false", nullable=False),
-    )
-    op.add_column(
-        "peer_assignment_submissions",
         sa.Column("published_at", sa.String(length=64), nullable=True),
     )
     op.add_column(
@@ -109,7 +105,6 @@ def downgrade() -> None:
     )
     op.drop_column("peer_assignment_submissions", "status")
     op.drop_column("peer_assignment_submissions", "published_at")
-    op.drop_column("peer_assignment_submissions", "is_draft")
     op.drop_column("peer_assignment_submissions", "rubric_scores_json")
     op.drop_column("peer_assignment_submissions", "locked_at")
     op.drop_column("peer_assignment_submissions", "locked_by_user_id")
