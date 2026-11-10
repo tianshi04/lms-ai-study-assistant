@@ -233,10 +233,10 @@ export function InstructorBulkReminderModal({
                   type="button"
                   onClick={handleResetSmartTemplate}
                   className="text-[10px] text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                  title="Khôi phục lại nội dung mẫu thông minh ban đầu"
+                  title="Khôi phục lại nội dung mẫu ban đầu"
                 >
                   <RotateCcw className="w-3 h-3" aria-hidden="true" />
-                  <span>Khôi phục mẫu AI</span>
+                  <span>Khôi phục mẫu</span>
                 </button>
               </div>
               <Textarea

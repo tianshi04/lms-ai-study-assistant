@@ -58,27 +58,34 @@ export function InstructorStudentDetailModal({
   const { success, error } = useToast();
   const [activeTab, setActiveTab] = useState<"reminder" | "announcement">("reminder");
 
-  // Soạn sẵn mẫu thông báo nhắc nhở đôn đốc cá nhân
-  const defaultSubject = `[Nhắc nhở học tập] Tiến độ môn ${courseTitle}`;
-  const defaultBody = student
-    ? `Chào ${student.userName},\n\nThầy/Cô gửi thông báo này để nhắc nhở em về tiến độ học tập môn "${courseTitle}". Hiện tại em đang dừng ở ${
-        student.currentWeekTitle || `Tuần ${student.currentWeekNumber || 1}`
-      }.\n\nEm hãy sắp xếp thời gian xem hết các video bài giảng và hoàn thành bài kiểm tra trắc nghiệm trước cuối tuần để bám sát lộ trình nhé!\n\nNếu gặp khó khăn trong quá trình học, em có thể đặt câu hỏi trên Diễn đàn môn học.`
-    : "";
+  const isDone = Boolean(student?.isCompleted || (student?.progressPercent ?? 0) >= 100);
+  const isAhead = Boolean(student?.pace === "AHEAD");
 
-  const [reminderSubject, setReminderSubject] = useState(defaultSubject);
-  const [reminderBody, setReminderBody] = useState(defaultBody);
+  const [reminderSubject, setReminderSubject] = useState("");
+  const [reminderBody, setReminderBody] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   // Đồng bộ lại khi đổi student
   React.useEffect(() => {
     if (student) {
-      setReminderSubject(`[Nhắc nhở học tập] Tiến độ môn ${courseTitle}`);
-      setReminderBody(
-        `Chào ${student.userName},\n\nThầy/Cô gửi thông báo này để nhắc nhở em về tiến độ học tập môn "${courseTitle}". Hiện tại em đang dừng ở ${
-          student.currentWeekTitle || `Tuần ${student.currentWeekNumber || 1}`
-        }.\n\nEm hãy sắp xếp thời gian xem hết các video bài giảng và hoàn thành bài kiểm tra trắc nghiệm trước cuối tuần để bám sát lộ trình nhé!\n\nNếu gặp khó khăn trong quá trình học, em có thể đặt câu hỏi trên Diễn đàn môn học.`,
-      );
+      if (student.isCompleted || (student.progressPercent ?? 0) >= 100) {
+        setReminderSubject(`[Chúc mừng hoàn thành] Tốt nghiệp xuất sắc môn ${courseTitle}`);
+        setReminderBody(
+          `Chào ${student.userName},\n\nThầy/Cô gửi lời chúc mừng em đã hoàn thành 100% môn học "${courseTitle}" và xuất sắc tốt nghiệp khóa học!\n\nEm hãy kiểm tra mục Chứng chỉ trong Hồ sơ học tập để xem và tải về Chứng chỉ hoàn thành nhé. Chúc em tiếp tục gặt hái nhiều thành công trên con đường học tập!`,
+        );
+      } else if (student.pace === "AHEAD") {
+        setReminderSubject(`[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${courseTitle}`);
+        setReminderBody(
+          `Chào ${student.userName},\n\nThầy/Cô rất vui mừng nhận thấy em đang học vượt tiến độ đề xuất môn "${courseTitle}" (${student.progressPercent}% đề cương).\n\nChúc em tiếp tục phát huy tinh thần tự học tuyệt vời này để sớm hoàn thành xuất sắc khóa học nhé!`,
+        );
+      } else {
+        setReminderSubject(`[Nhắc nhở học tập] Tiến độ môn ${courseTitle}`);
+        setReminderBody(
+          `Chào ${student.userName},\n\nThầy/Cô gửi thông báo này để nhắc nhở em về tiến độ học tập môn "${courseTitle}". Hiện tại em đang dừng ở ${
+            student.currentWeekTitle || `Tuần ${student.currentWeekNumber || 1}`
+          }.\n\nEm hãy sắp xếp thời gian xem hết các video bài giảng và hoàn thành bài kiểm tra trắc nghiệm trước cuối tuần để bám sát lộ trình nhé!\n\nNếu gặp khó khăn trong quá trình học, em có thể đặt câu hỏi trên Diễn đàn môn học.`,
+        );
+      }
     }
   }, [student, courseTitle]);
 
@@ -86,7 +93,7 @@ export function InstructorStudentDetailModal({
 
   const handleSend = async () => {
     if (!reminderBody.trim()) {
-      error("Vui lòng nhập nội dung thông báo nhắc nhở.");
+      error("Vui lòng nhập nội dung thông điệp.");
       return;
     }
 
@@ -102,10 +109,15 @@ export function InstructorStudentDetailModal({
         });
       }
       onSendReminder(student.userId, reminderBody);
-      success(`Đã gửi thông báo nhắc nhở học tập tới ${student.userName}!`);
+      const successMsg = isDone
+        ? `Đã gửi lời chúc mừng tốt nghiệp tới ${student.userName}!`
+        : isAhead
+          ? `Đã gửi lời khen ngợi & khích lệ học tập tới ${student.userName}!`
+          : `Đã gửi thông báo nhắc nhở học tập tới ${student.userName}!`;
+      success(successMsg);
       onOpenChange(false);
     } catch (err: unknown) {
-      error(err instanceof Error ? err.message : "Không thể gửi thông báo nhắc nhở.");
+      error(err instanceof Error ? err.message : "Không thể gửi thông điệp.");
     } finally {
       setIsSending(false);
     }
@@ -288,7 +300,11 @@ export function InstructorStudentDetailModal({
                       htmlFor="reminder-body-textarea"
                       className="text-xs font-bold text-foreground"
                     >
-                      Nội dung thông báo nhắc nhở:
+                      {isDone
+                        ? "Nội dung thư chúc mừng tốt nghiệp:"
+                        : isAhead
+                          ? "Nội dung thư khích lệ học tập:"
+                          : "Nội dung thông báo nhắc nhở:"}
                     </label>
                     <span className="text-[10px] text-muted-foreground">
                       Học viên sẽ nhận chuông thông báo & email
@@ -300,7 +316,13 @@ export function InstructorStudentDetailModal({
                     value={reminderBody}
                     onChange={(e) => setReminderBody(e.target.value)}
                     className="w-full text-xs leading-relaxed font-sans"
-                    placeholder="Nhập nội dung nhắc nhở..."
+                    placeholder={
+                      isDone
+                        ? "Nhập nội dung chúc mừng..."
+                        : isAhead
+                          ? "Nhập nội dung khích lệ..."
+                          : "Nhập nội dung nhắc nhở..."
+                    }
                   />
                 </div>
 
@@ -378,7 +400,15 @@ export function InstructorStudentDetailModal({
               className="text-xs font-bold flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>{isSending ? "Đang gửi..." : "Gửi Thông Báo Nhắc Nhở"}</span>
+              <span>
+                {isSending
+                  ? "Đang gửi..."
+                  : isDone
+                    ? "Gửi Lời Chúc Mừng"
+                    : isAhead
+                      ? "Gửi Lời Khích Lệ"
+                      : "Gửi Thông Báo Nhắc Nhở"}
+              </span>
             </Button>
           )}
         </Dialog.Footer>

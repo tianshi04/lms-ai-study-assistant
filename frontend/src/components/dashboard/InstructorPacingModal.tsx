@@ -13,6 +13,8 @@ import {
   BookOpen,
   Mail,
   X,
+  GraduationCap,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { getRpcClient } from "@/lib/connect_client";
@@ -134,24 +136,37 @@ export function InstructorPacingModal({
     }
   };
 
-  // Nhắc nhở 1 học viên
+  // Tương tác sư phạm: Khích lệ (Vượt tiến độ) hoặc Nhắc nhở (Chậm/Đúng tiến độ)
   const handleNudgeStudent = async (student: StudentPacingRecord) => {
     setNudgedStudentIds((prev) => new Set(prev).add(student.id));
     try {
       if (student.courseId) {
         const client = getRpcClient(CatalogService);
+        const isAhead = student.pace === "AHEAD";
+        const title = isAhead
+          ? `[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${student.courseTitle}`
+          : `[Nhắc nhở học tập] Tiến độ môn ${student.courseTitle}`;
+        const content = isAhead
+          ? `Chào ${student.name}, Thầy/Cô rất ấn tượng khi em đang học vượt tiến độ đề xuất ở môn ${student.courseTitle} (${student.progressPercent}% đề cương). Chúc em tiếp tục duy trì phong độ để sớm hoàn thành xuất sắc khóa học nhé!`
+          : `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`;
+
         await client.sendStudentReminder({
           courseId: student.courseId,
           studentIds: [student.id],
-          title: `[Nhắc nhở học tập] Tiến độ môn ${student.courseTitle}`,
-          content: `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`,
+          title,
+          content,
         });
       }
-      toast.success(`Đã gửi thông báo & email khích lệ học tập tới học viên ${student.name}!`, {
-        description: `Lộ trình hiện tại: ${student.currentLesson}`,
-      });
+      toast.success(
+        student.pace === "AHEAD"
+          ? `Đã gửi lời khen ngợi & khích lệ tới học viên ${student.name}!`
+          : `Đã gửi thông báo & email nhắc nhở học tập tới học viên ${student.name}!`,
+        {
+          description: `Lộ trình hiện tại: ${student.currentLesson}`,
+        },
+      );
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Không thể gửi nhắc nhở học viên.");
+      toast.error(err instanceof Error ? err.message : "Không thể gửi thông điệp tới học viên.");
     }
   };
 
@@ -433,50 +448,82 @@ export function InstructorPacingModal({
 
                         {/* Cột 4: Hoạt động gần nhất */}
                         <Table.Cell>
-                          <span
-                            className={`text-[11px] font-mono block ${
-                              st.daysInactive >= 7
-                                ? "text-destructive font-bold"
-                                : st.daysInactive >= 3
-                                  ? "text-warning font-semibold"
-                                  : "text-muted-foreground"
-                            }`}
-                          >
-                            {st.lastActive}
-                          </span>
-                          {st.daysInactive >= 7 && (
-                            <span className="text-[9px] text-destructive block font-bold">
-                              Không học &gt; {st.daysInactive} ngày
-                            </span>
+                          {st.progressPercent >= 100 ? (
+                            <div className="space-y-0.5">
+                              <span className="text-[11px] font-mono text-success font-semibold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-success shrink-0" />
+                                Đã tốt nghiệp
+                              </span>
+                              <span className="text-[10px] text-muted-foreground block">
+                                Hoàn tất chương trình
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="space-y-0.5">
+                              <span
+                                className={`text-[11px] font-mono block ${
+                                  st.pace === "BEHIND" && st.daysInactive >= 7
+                                    ? "text-destructive font-bold"
+                                    : st.daysInactive >= 3
+                                      ? "text-warning font-semibold"
+                                      : "text-muted-foreground"
+                                }`}
+                              >
+                                {st.lastActive}
+                              </span>
+                              {st.pace === "BEHIND" && st.daysInactive >= 7 ? (
+                                <span className="text-[9px] text-destructive block font-bold">
+                                  Không học &gt; {st.daysInactive} ngày
+                                </span>
+                              ) : st.pace === "AHEAD" && st.daysInactive >= 7 ? (
+                                <span className="text-[9px] text-muted-foreground block font-medium">
+                                  Tạm nghỉ {st.daysInactive} ngày
+                                </span>
+                              ) : null}
+                            </div>
                           )}
                         </Table.Cell>
 
                         {/* Cột 5: Nút thao tác sư phạm */}
                         <Table.Cell className="text-right">
-                          <button
-                            type="button"
-                            disabled={isNudged}
-                            onClick={() => handleNudgeStudent(st)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
-                              isNudged
-                                ? "bg-success/15 text-success border border-success/30 cursor-default"
-                                : st.pace === "BEHIND"
-                                  ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 shadow-xs"
-                                  : "bg-surface-container-high hover:bg-primary hover:text-on-primary text-foreground border border-outline-variant"
-                            }`}
-                          >
-                            {isNudged ? (
-                              <>
-                                <CheckCircle2 className="w-3 h-3 text-success" />
-                                <span>Đã nhắc</span>
-                              </>
-                            ) : (
-                              <>
-                                <Mail className="w-3 h-3" />
-                                <span>Nhắc nhở</span>
-                              </>
-                            )}
-                          </button>
+                          {st.progressPercent >= 100 ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-success/15 text-success border border-success/30">
+                              <GraduationCap className="w-3.5 h-3.5 text-success" />
+                              <span>Đã tốt nghiệp</span>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={isNudged}
+                              onClick={() => handleNudgeStudent(st)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
+                                isNudged
+                                  ? "bg-success/15 text-success border border-success/30 cursor-default"
+                                  : st.pace === "BEHIND"
+                                    ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 shadow-xs"
+                                    : st.pace === "AHEAD"
+                                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 shadow-xs"
+                                      : "bg-surface-container-high hover:bg-primary hover:text-on-primary text-foreground border border-outline-variant"
+                              }`}
+                            >
+                              {isNudged ? (
+                                <>
+                                  <CheckCircle2 className="w-3 h-3 text-success" />
+                                  <span>{st.pace === "AHEAD" ? "Đã khích lệ" : "Đã nhắc"}</span>
+                                </>
+                              ) : st.pace === "AHEAD" ? (
+                                <>
+                                  <Sparkles className="w-3 h-3 text-amber-500" />
+                                  <span>Khích lệ</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Mail className="w-3 h-3" />
+                                  <span>Nhắc nhở</span>
+                                </>
+                              )}
+                            </button>
+                          )}
                         </Table.Cell>
                       </Table.Row>
                     );
