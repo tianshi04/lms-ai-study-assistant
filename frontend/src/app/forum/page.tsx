@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -12,9 +12,14 @@ import {
   AlertTriangle,
   BookOpen,
   Pin,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  MessageCircle,
 } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
+import { cn } from "@/lib/utils";
 import {
   ForumService,
   ForumThreadSchema,
@@ -59,6 +64,79 @@ function ForumPageContent() {
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Status Filter State (Interactive Discussion KPI Strip)
+  type ForumStatusFilter = "ALL" | "UNANSWERED" | "ANSWERED";
+  const [statusFilter, setStatusFilter] = useState<ForumStatusFilter>("ALL");
+
+  const forumKpis = useMemo(() => {
+    const total = threads.length;
+    let unanswered = 0;
+    let answered = 0;
+    let totalReplies = 0;
+
+    for (const thread of threads) {
+      totalReplies += thread.replies.length;
+      const r = (thread.authorRole || "").toUpperCase();
+      const isStaffThread =
+        r.includes("INSTRUCTOR") ||
+        r.includes("GIẢNG VIÊN") ||
+        r === "2" ||
+        r.includes("TA") ||
+        r === "3" ||
+        r.includes("ADMIN");
+      const titleLower = thread.title.trim().toLowerCase();
+      const isAnnouncement =
+        titleLower.startsWith("[thông báo]") ||
+        titleLower.startsWith("[thong bao]") ||
+        titleLower.startsWith("[announcement]");
+      const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
+
+      if (hasStaffAnswer) {
+        answered++;
+      } else if (!isStaffThread && !isAnnouncement && !thread.isStaffPinned) {
+        unanswered++;
+      }
+    }
+
+    const totalQuestions = unanswered + answered;
+    const resolvedRate = totalQuestions > 0 ? Math.round((answered / totalQuestions) * 100) : 100;
+
+    return {
+      total,
+      unanswered,
+      answered,
+      totalReplies,
+      resolvedRate,
+    };
+  }, [threads]);
+
+  const filteredThreads = useMemo(() => {
+    if (statusFilter === "ALL") return threads;
+    if (statusFilter === "UNANSWERED") {
+      return threads.filter((thread) => {
+        const r = (thread.authorRole || "").toUpperCase();
+        const isStaffThread =
+          r.includes("INSTRUCTOR") ||
+          r.includes("GIẢNG VIÊN") ||
+          r === "2" ||
+          r.includes("TA") ||
+          r === "3" ||
+          r.includes("ADMIN");
+        const titleLower = thread.title.trim().toLowerCase();
+        const isAnnouncement =
+          titleLower.startsWith("[thông báo]") ||
+          titleLower.startsWith("[thong bao]") ||
+          titleLower.startsWith("[announcement]");
+        const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
+        return !isStaffThread && !isAnnouncement && !thread.isStaffPinned && !hasStaffAnswer;
+      });
+    }
+    if (statusFilter === "ANSWERED") {
+      return threads.filter((thread) => thread.replies.some((reply) => reply.isStaffAnswer));
+    }
+    return threads;
+  }, [threads, statusFilter]);
 
   const { userId: authUserId, isStaff: isStaffOrAdmin, isSuperAdmin, isAuthenticated } = useAuth();
   const currentUserId = authUserId || "";
@@ -540,6 +618,104 @@ function ForumPageContent() {
           </div>
         </div>
 
+        {/* Discussion KPI Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+          {/* Card 1: Tổng chủ đề */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("ALL")}
+            className={cn(
+              "p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group",
+              statusFilter === "ALL"
+                ? "bg-primary/5 border-primary ring-2 ring-primary/20 shadow-xs"
+                : "bg-card border-border hover:border-primary/40 hover:bg-muted/40",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Tổng chủ đề
+              </span>
+              <MessageSquare className="w-4 h-4 text-primary" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-foreground">{forumKpis.total}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">Tất cả cuộc hội thoại</div>
+          </button>
+
+          {/* Card 2: Cần giải đáp */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("UNANSWERED")}
+            className={cn(
+              "p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group",
+              statusFilter === "UNANSWERED"
+                ? "bg-destructive/10 border-destructive ring-2 ring-destructive/20 shadow-xs"
+                : "bg-card border-border hover:border-destructive/40 hover:bg-destructive/5",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-destructive uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                Cần giải đáp
+              </span>
+              <AlertCircle className="w-4 h-4 text-destructive" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-destructive">{forumKpis.unanswered}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">Chưa có phản hồi từ GV</div>
+          </button>
+
+          {/* Card 3: Đã giải đáp */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("ANSWERED")}
+            className={cn(
+              "p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group",
+              statusFilter === "ANSWERED"
+                ? "bg-success/10 border-success ring-2 ring-success/20 shadow-xs"
+                : "bg-card border-border hover:border-success/40 hover:bg-success/5",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-success uppercase tracking-wider">
+                Đã giải đáp
+              </span>
+              <CheckCircle2 className="w-4 h-4 text-success" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-success">{forumKpis.answered}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">
+              Đã có lời giải chính thức
+            </div>
+          </button>
+
+          {/* Card 4: Lượt trao đổi */}
+          <div className="p-4 rounded-2xl border bg-card border-border">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Lượt trao đổi
+              </span>
+              <MessageCircle className="w-4 h-4 text-primary" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-foreground">{forumKpis.totalReplies}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">Phản hồi & bình luận</div>
+          </div>
+
+          {/* Card 5: Tỷ lệ giải đáp */}
+          <div className="p-4 rounded-2xl border bg-card border-border">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Tỷ lệ giải đáp
+              </span>
+              <Sparkles className="w-4 h-4 text-amber-500" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-foreground">{forumKpis.resolvedRate}%</div>
+            <div className="mt-2 w-full bg-muted rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-primary h-full transition-all duration-500"
+                style={{ width: `${forumKpis.resolvedRate}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Filter Bar */}
         <Surface
           variant="container"
@@ -576,10 +752,27 @@ function ForumPageContent() {
             </Select>
           </div>
 
-          <div className="text-xs text-muted-foreground">
-            {"Tổng cộng "}
-            <span className="font-bold text-foreground">{threads.length}</span>
-            {" chủ đề thảo luận"}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {statusFilter !== "ALL" && (
+              <Badge
+                variant="outlined"
+                className="cursor-pointer gap-1.5 hover:bg-muted text-xs font-medium border-primary/30 text-primary"
+                onClick={() => setStatusFilter("ALL")}
+              >
+                <span>
+                  Đang lọc:{" "}
+                  <strong>{statusFilter === "UNANSWERED" ? "Cần giải đáp" : "Đã giải đáp"}</strong>
+                </span>
+                <span className="text-muted-foreground hover:text-foreground">✕</span>
+              </Badge>
+            )}
+            <span>
+              {"Hiển thị "}
+              <span className="font-bold text-foreground">{filteredThreads.length}</span>
+              {" / "}
+              {threads.length}
+              {" chủ đề"}
+            </span>
           </div>
         </Surface>
 
@@ -627,9 +820,31 @@ function ForumPageContent() {
               {"Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"}
             </p>
           </div>
+        ) : filteredThreads.length === 0 ? (
+          <div className="text-center py-16 bg-card rounded-2xl border border-border p-8 space-y-3">
+            <CheckCircle2 aria-hidden="true" className="w-12 h-12 text-success mx-auto" />
+            <h3 className="text-base font-bold text-foreground">
+              {statusFilter === "UNANSWERED"
+                ? "Tuyệt vời! Không có chủ đề nào đang chờ giải đáp"
+                : "Không có chủ đề nào phù hợp với bộ lọc này"}
+            </h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              {statusFilter === "UNANSWERED"
+                ? "Tất cả các câu hỏi của học viên đều đã được Giảng viên và Ban quản trị phản hồi đầy đủ."
+                : "Bạn có thể chuyển lại bộ lọc sang Tất cả chủ đề để xem toàn bộ trao đổi."}
+            </p>
+            <Button
+              variant="outlined"
+              size="sm"
+              onClick={() => setStatusFilter("ALL")}
+              className="text-xs font-bold"
+            >
+              Xem tất cả chủ đề
+            </Button>
+          </div>
         ) : (
           <div className="space-y-6">
-            {threads.map((thread) => {
+            {filteredThreads.map((thread) => {
               const isExpanded = expandedThreads[thread.id] ?? true;
               const isThreadAuthor = Boolean(
                 currentUserId && thread.authorUserId === currentUserId,
