@@ -98,7 +98,7 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
       return {
         label: "Giải quyết khiếu nại",
         className:
-          "bg-purple-600 hover:bg-purple-700 text-white shadow-sm font-bold border border-purple-600",
+          "bg-tertiary hover:bg-tertiary-hover text-on-tertiary shadow-sm font-bold border border-tertiary",
         icon: AlertTriangle,
       };
     }
@@ -106,7 +106,7 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
       return {
         label: "Xử lý lệch điểm",
         className:
-          "bg-amber-600 hover:bg-amber-700 text-white shadow-sm font-bold border border-amber-600",
+          "bg-warning hover:bg-warning-hover text-warning-foreground shadow-sm font-bold border border-warning",
         icon: AlertTriangle,
       };
     }
@@ -151,8 +151,8 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   };
 
   const getRowBorderClass = (item: GradingQueueItem, isOverdue: boolean) => {
-    if (item.isAppeal) return "border-l-4 border-l-purple-600 bg-purple-500/[0.04]";
-    if (item.isOutlier) return "border-l-4 border-l-amber-500 bg-amber-500/[0.03]";
+    if (item.isAppeal) return "border-l-4 border-l-tertiary bg-tertiary/[0.04]";
+    if (item.isOutlier) return "border-l-4 border-l-warning bg-warning/[0.03]";
     if (isOverdue) return "border-l-4 border-l-destructive bg-destructive/[0.03]";
     if (item.lockedByUserId) return "border-l-4 border-l-muted-foreground/30";
     if (item.status === GradingQueueStatus.GRADED) return "border-l-4 border-l-success/30";
@@ -295,7 +295,7 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
           <div className="space-y-2 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-                Cockpit Chấm bài & Phúc khảo
+                Bàn điều khiển Chấm bài & Phúc khảo
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
                 Công bố điểm tức thì
@@ -328,13 +328,11 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               <span className="text-xl font-black text-destructive block">{overdueCount}</span>
               <span className="text-[11px] font-bold text-destructive">Quá hạn</span>
             </div>
-            <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-center">
-              <span className="text-xl font-black text-purple-600 dark:text-purple-400 block">
+            <div className="p-3 rounded-2xl bg-tertiary/10 border border-tertiary/20 text-center">
+              <span className="text-xl font-black text-tertiary block">
                 {data?.appealedCount ?? 0}
               </span>
-              <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400">
-                Khiếu nại
-              </span>
+              <span className="text-[11px] font-bold text-tertiary">Khiếu nại</span>
             </div>
             <div className="p-3 rounded-2xl bg-success/10 border border-success/20 text-center">
               <span className="text-xl font-black text-success block">
@@ -576,10 +574,10 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                             {item.isAppeal ? (
                               <Badge
                                 variant="outlined"
-                                className="text-[11px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30 gap-1 px-2.5 py-0.5"
+                                className="text-[11px] font-bold bg-tertiary/15 text-tertiary border-tertiary/30 gap-1 px-2.5 py-0.5"
                               >
                                 <AlertTriangle
-                                  className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400"
+                                  className="w-3.5 h-3.5 text-tertiary"
                                   aria-hidden="true"
                                 />
                                 Khiếu nại điểm
@@ -587,10 +585,10 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                             ) : item.isOutlier ? (
                               <Badge
                                 variant="warning"
-                                className="text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 gap-1 px-2.5 py-0.5"
+                                className="text-[11px] font-bold bg-warning/15 text-warning border-warning/30 gap-1 px-2.5 py-0.5"
                               >
                                 <AlertTriangle
-                                  className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"
+                                  className="w-3.5 h-3.5 text-warning"
                                   aria-hidden="true"
                                 />
                                 Lệch điểm chuẩn

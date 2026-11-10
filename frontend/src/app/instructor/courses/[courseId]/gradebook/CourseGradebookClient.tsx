@@ -272,7 +272,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
             </Breadcrumb.Item>
             <Breadcrumb.Separator />
             <Breadcrumb.Item>
-              <Breadcrumb.Page>Sổ điểm (Course Gradebook)</Breadcrumb.Page>
+              <Breadcrumb.Page>Sổ điểm khóa học</Breadcrumb.Page>
             </Breadcrumb.Item>
           </Breadcrumb.List>
         </Breadcrumb>
@@ -407,32 +407,34 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
           </div>
         ) : (
           <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <Table>
-              <Table.Header>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <Table.Row key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <Table.Head key={header.id} className="py-3 px-4">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </Table.Head>
-                    ))}
-                  </Table.Row>
-                ))}
-              </Table.Header>
-              <Table.Body>
-                {table.getRowModel().rows.map((row) => (
-                  <Table.Row key={row.id} className="hover:bg-muted/40 transition-colors">
-                    {row.getVisibleCells().map((cell) => (
-                      <Table.Cell key={cell.id} className="py-3 px-4">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </Table.Cell>
-                    ))}
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <Table.Header>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <Table.Row key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <Table.Head key={header.id} className="py-3 px-4">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </Table.Head>
+                      ))}
+                    </Table.Row>
+                  ))}
+                </Table.Header>
+                <Table.Body>
+                  {table.getRowModel().rows.map((row) => (
+                    <Table.Row key={row.id} className="hover:bg-muted/40 transition-colors">
+                      {row.getVisibleCells().map((cell) => (
+                        <Table.Cell key={cell.id} className="py-3 px-4">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </Table.Cell>
+                      ))}
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            </div>
           </div>
         )}
       </main>

@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Input } from "@/components/ui/Input";
 import { Slider } from "@/components/ui/Slider";
 import { useToast } from "@/components/ui/Toast";
+import { getSafeExternalUrl } from "@/lib/utils";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useGradingSubmissionDetailQuery,
@@ -295,7 +296,7 @@ export function EvaluationModal({
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
                   isLockedByOther
-                    ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30"
+                    ? "bg-warning/10 text-warning border-warning/30"
                     : remainingSeconds !== null && remainingSeconds <= 300
                       ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse"
                       : remainingSeconds !== null && remainingSeconds <= 600
@@ -304,10 +305,7 @@ export function EvaluationModal({
                 }`}
               >
                 {isLockedByOther ? (
-                  <Lock
-                    className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"
-                    aria-hidden="true"
-                  />
+                  <Lock className="w-4 h-4 shrink-0 text-warning" aria-hidden="true" />
                 ) : (
                   <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
                 )}
@@ -405,12 +403,9 @@ export function EvaluationModal({
                     {isLockedByOther ? (
                       <Badge
                         variant="warning"
-                        className="font-bold text-xs bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30 gap-1"
+                        className="font-bold text-xs bg-warning/10 text-warning border-warning/30 gap-1"
                       >
-                        <Lock
-                          className="w-3 h-3 text-amber-600 dark:text-amber-400"
-                          aria-hidden="true"
-                        />
+                        <Lock className="w-3 h-3 text-warning" aria-hidden="true" />
                         Đang giữ: {detail.submission?.lockedByName || "Đồng nghiệp"}
                       </Badge>
                     ) : (
@@ -427,7 +422,7 @@ export function EvaluationModal({
                         {detail.submission?.isAppeal && (
                           <Badge
                             variant="outlined"
-                            className="font-bold text-xs bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30"
+                            className="font-bold text-xs bg-tertiary/15 text-tertiary border-tertiary/30"
                           >
                             Khiếu nại điểm
                           </Badge>
@@ -447,12 +442,9 @@ export function EvaluationModal({
 
                 {/* Read-Only Callout (when locked by another staff member) */}
                 {isLockedByOther && (
-                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 space-y-1">
+                  <div className="p-4 rounded-2xl bg-warning/10 border border-warning/30 text-warning space-y-1">
                     <div className="flex items-center gap-2 font-bold text-sm">
-                      <Lock
-                        className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"
-                        aria-hidden="true"
-                      />
+                      <Lock className="w-4 h-4 shrink-0 text-warning" aria-hidden="true" />
                       <span>
                         Bài nộp đang được {detail.submission?.lockedByName || "đồng nghiệp"} tiếp
                         nhận chấm
@@ -484,15 +476,15 @@ export function EvaluationModal({
 
                 {/* Appeal Reason Callout (if appealed) */}
                 {detail.submission?.isAppeal && detail.submission?.appealReason && (
-                  <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-900 dark:text-purple-200 space-y-1">
+                  <div className="p-4 rounded-2xl bg-tertiary/10 border border-tertiary/30 text-tertiary space-y-1">
                     <div className="flex items-center gap-2 font-bold text-sm">
                       <AlertTriangle
-                        className="w-4 h-4 shrink-0 text-purple-600 dark:text-purple-400"
+                        className="w-4 h-4 shrink-0 text-tertiary"
                         aria-hidden="true"
                       />
                       <span>Lý do sinh viên khiếu nại phúc khảo:</span>
                     </div>
-                    <p className="text-xs text-purple-800/90 dark:text-purple-300/90 leading-relaxed pl-6">
+                    <p className="text-xs text-muted-foreground leading-relaxed pl-6">
                       {detail.submission.appealReason}
                     </p>
                   </div>
@@ -529,24 +521,35 @@ export function EvaluationModal({
                         <p className="text-xs text-muted-foreground">
                           Tệp đính kèm / Liên kết bài làm:
                         </p>
-                        <a
-                          href={detail.submissionUrl}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="text-sm font-bold text-primary hover:underline truncate block"
-                        >
-                          {detail.submissionUrl}
-                        </a>
+                        {getSafeExternalUrl(detail.submissionUrl) ? (
+                          <a
+                            href={getSafeExternalUrl(detail.submissionUrl)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-bold text-primary hover:underline truncate block"
+                          >
+                            {detail.submissionUrl}
+                          </a>
+                        ) : (
+                          <span className="text-xs font-mono text-destructive">
+                            Liên kết không an toàn hoặc không hợp lệ ({detail.submissionUrl})
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      className="shrink-0 text-xs font-bold"
-                      onClick={() => window.open(detail.submissionUrl, "_blank")}
-                    >
-                      Mở liên kết
-                    </Button>
+                    {getSafeExternalUrl(detail.submissionUrl) && (
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        className="shrink-0 text-xs font-bold"
+                        onClick={() => {
+                          const safe = getSafeExternalUrl(detail.submissionUrl);
+                          if (safe) window.open(safe, "_blank", "noopener,noreferrer");
+                        }}
+                      >
+                        Mở liên kết
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -605,12 +608,9 @@ export function EvaluationModal({
                       {isLockedByOther ? (
                         <Badge
                           variant="warning"
-                          className="text-xs font-semibold bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30 gap-1"
+                          className="text-xs font-semibold bg-warning/10 text-warning border-warning/30 gap-1"
                         >
-                          <Lock
-                            className="w-3 h-3 text-amber-600 dark:text-amber-400"
-                            aria-hidden="true"
-                          />
+                          <Lock className="w-3 h-3 text-warning" aria-hidden="true" />
                           Chế độ Chỉ đọc
                         </Badge>
                       ) : (

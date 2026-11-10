@@ -502,7 +502,7 @@ export function InstructorPacingModal({
                                   : st.pace === "BEHIND"
                                     ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 shadow-xs"
                                     : st.pace === "AHEAD"
-                                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 shadow-xs"
+                                      ? "bg-warning/10 text-warning hover:bg-warning/20 border border-warning/30 shadow-xs"
                                       : "bg-surface-container-high hover:bg-primary hover:text-on-primary text-foreground border border-outline-variant"
                               }`}
                             >
@@ -513,7 +513,7 @@ export function InstructorPacingModal({
                                 </>
                               ) : st.pace === "AHEAD" ? (
                                 <>
-                                  <Sparkles className="w-3 h-3 text-amber-500" />
+                                  <Sparkles className="w-3 h-3 text-warning" />
                                   <span>Khích lệ</span>
                                 </>
                               ) : (

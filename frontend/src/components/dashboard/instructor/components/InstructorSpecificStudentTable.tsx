@@ -172,7 +172,7 @@ export function InstructorSpecificStudentTable({
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-success uppercase tracking-wider flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
+              <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-success/20 text-success font-bold">
               {coursePacingCounts.ahead} SV
@@ -201,7 +201,7 @@ export function InstructorSpecificStudentTable({
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Đúng tiến độ
+              <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-bold">
               {coursePacingCounts.onTrack} SV
@@ -230,7 +230,7 @@ export function InstructorSpecificStudentTable({
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
+              <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-destructive/20 text-destructive font-bold">
               {coursePacingCounts.behind} SV
@@ -314,7 +314,7 @@ export function InstructorSpecificStudentTable({
                 className="px-2 py-0.5 rounded-lg bg-primary text-primary-foreground text-[11px] font-bold inline-flex items-center gap-1 shadow-xs hover:bg-primary/90 transition-all cursor-pointer"
                 title="Tạo thông báo hướng dẫn toàn lớp cho tuần này"
               >
-                <BookOpen className="w-3 h-3" />
+                <BookOpen className="w-3 h-3" aria-hidden="true" />
                 <span>Đăng thông báo Tuần {selectedWeekFilter}</span>
               </Link>
             )}
@@ -331,7 +331,7 @@ export function InstructorSpecificStudentTable({
       )}
 
       {/* Bảng Danh Sách Học Viên */}
-      <div className="rounded-2xl border border-outline-variant/60 overflow-hidden bg-surface max-h-96 overflow-y-auto">
+      <div className="rounded-2xl border border-outline-variant/60 overflow-x-auto bg-surface max-h-96 overflow-y-auto">
         <Table className="table-fixed min-w-[700px] w-full">
           <Table.Header className="sticky top-0 z-10 bg-surface shadow-xs">
             <Table.Row className="text-[11px] text-muted-foreground border-b border-outline-variant/60">
@@ -442,15 +442,15 @@ export function InstructorSpecificStudentTable({
                     <Table.Cell className="w-[18%] min-w-[130px]">
                       {st.pace === "AHEAD" ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
-                          <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
+                          <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
                         </span>
                       ) : st.pace === "ON_TRACK" ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
-                          <Clock className="w-3 h-3" /> Đúng tiến độ
+                          <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
-                          <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
+                          <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
                         </span>
                       )}
                       <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
@@ -509,12 +509,12 @@ export function InstructorSpecificStudentTable({
                           >
                             {isNudged ? (
                               <>
-                                <CheckCircle2 className="w-3 h-3 text-success" />
+                                <CheckCircle2 className="w-3 h-3 text-success" aria-hidden="true" />
                                 <span>Đã gửi</span>
                               </>
                             ) : (
                               <>
-                                <Mail className="w-3 h-3" />
+                                <Mail className="w-3 h-3" aria-hidden="true" />
                                 <span>Nhắc nhở</span>
                               </>
                             )}

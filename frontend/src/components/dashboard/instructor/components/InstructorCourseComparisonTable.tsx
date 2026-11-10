@@ -255,7 +255,7 @@ export function InstructorCourseComparisonTable({
                             href={`/instructor/courses/${course.id}/grading`}
                             onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
-                            title="Có bài tập quá hạn 48h SLA cần chấm ngay"
+                            title="Có bài tập quá hạn 48h quy định cần chấm ngay"
                           >
                             <AlertTriangle
                               className="w-3 h-3 text-destructive"
