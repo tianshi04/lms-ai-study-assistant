@@ -74,12 +74,19 @@ export function EvaluationModal({
 
   // Countdown timer state
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [currentTimeMs, setCurrentTimeMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentTimeMs(Date.now());
+  }, []);
 
   const isLockActive = useMemo(() => {
     if (!detail?.submission?.lockExpiresAt) return false;
+    if (remainingSeconds !== null) return remainingSeconds > 0;
+    if (!currentTimeMs) return false;
     const expiresAt = new Date(detail.submission.lockExpiresAt).getTime();
-    return expiresAt > Date.now();
-  }, [detail?.submission?.lockExpiresAt, remainingSeconds]);
+    return expiresAt > currentTimeMs;
+  }, [detail?.submission?.lockExpiresAt, remainingSeconds, currentTimeMs]);
 
   const isLockedByOther = Boolean(
     detail?.submission?.lockedByUserId &&
@@ -88,13 +95,14 @@ export function EvaluationModal({
   );
 
   const isOverdue = Boolean(
+    currentTimeMs &&
     !isLockedByOther &&
     !detail?.submission?.lockedByUserId &&
     !detail?.submission?.isAppeal &&
     !detail?.submission?.isOutlier &&
     detail?.submission?.status !== GradingQueueStatus.GRADED &&
     detail?.submission?.submittedAt &&
-    Date.now() - new Date(detail.submission.submittedAt).getTime() > 48 * 3600 * 1000 &&
+    currentTimeMs - new Date(detail.submission.submittedAt).getTime() > 48 * 3600 * 1000 &&
     !detail?.submission?.staffScore &&
     (detail?.peerReviews?.length ?? 0) < 3,
   );

@@ -337,7 +337,7 @@ export function InstructorCourseDiscussionsClient({
               Không có quyền quản lý khóa học này
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Bàn làm việc Q&amp;A chỉ dành riêng cho Giảng viên phụ trách hoặc Trợ giảng được phân
+              Bàn làm việc Hỏi đáp chỉ dành riêng cho Giảng viên phụ trách hoặc Trợ giảng được phân
               công của khóa học{" "}
               <span className="font-semibold text-foreground">{course.title}</span>.
             </p>
@@ -393,10 +393,10 @@ export function InstructorCourseDiscussionsClient({
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="primary" className="text-[11px] font-bold">
-                  {course?.partnerName || "Coursera AI"}
+                  {course?.partnerName || "Coursera"}
                 </Badge>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
-                  Bàn làm việc Q&A Giảng viên
+                  Bàn làm việc Hỏi đáp Giảng viên
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
@@ -582,7 +582,7 @@ export function InstructorCourseDiscussionsClient({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-success" aria-hidden="true" />
               <span>Đã giải đáp ({kpis.answered})</span>
             </button>
 
@@ -595,7 +595,7 @@ export function InstructorCourseDiscussionsClient({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Megaphone className="w-3.5 h-3.5 text-primary" />
+              <Megaphone className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
               <span>Thông báo GV ({kpis.announcements})</span>
             </button>
 
@@ -608,14 +608,17 @@ export function InstructorCourseDiscussionsClient({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Pin className="w-3.5 h-3.5 text-primary" />
+              <Pin className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
               <span>Đã ghim ({kpis.pinned})</span>
             </button>
           </div>
 
           {/* Search Box */}
           <div className="relative w-full md:w-72 shrink-0">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search
+              className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -630,7 +633,7 @@ export function InstructorCourseDiscussionsClient({
           {filteredThreads.length === 0 ? (
             <div className="p-12 text-center rounded-3xl bg-surface border border-outline-variant/60 space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center mx-auto">
-                <MessageSquare className="w-6 h-6" />
+                <MessageSquare className="w-6 h-6" aria-hidden="true" />
               </div>
               <h3 className="text-sm font-bold text-foreground">
                 Không tìm thấy câu hỏi thảo luận nào
@@ -670,7 +673,7 @@ export function InstructorCourseDiscussionsClient({
                           {thread.authorName || "Học viên"}
                         </span>
                         <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-mono">
-                          <Clock className="w-2.5 h-2.5" />
+                          <Clock className="w-2.5 h-2.5" aria-hidden="true" />
                           {thread.createdAt || "Gần đây"}
                         </span>
                       </div>
@@ -686,23 +689,24 @@ export function InstructorCourseDiscussionsClient({
                       >
                         <Pin
                           className={`w-2.5 h-2.5 ${thread.isStaffPinned ? "fill-current" : ""}`}
+                          aria-hidden="true"
                         />
                         <span>{thread.isStaffPinned ? "Đã ghim" : "Ghim"}</span>
                       </Button>
 
                       {isAnnouncement ? (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/20 flex items-center gap-1">
-                          <Megaphone className="w-3 h-3 text-primary" />
+                          <Megaphone className="w-3 h-3 text-primary" aria-hidden="true" />
                           <span>Thông báo Giảng viên</span>
                         </span>
                       ) : !isAnswered ? (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-warning/15 text-warning border border-warning/20 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 text-warning" />
+                          <AlertTriangle className="w-3 h-3 text-warning" aria-hidden="true" />
                           <span>Chưa có câu trả lời GV</span>
                         </span>
                       ) : (
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/20 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-success" />
+                          <CheckCircle2 className="w-3 h-3 text-success" aria-hidden="true" />
                           <span>Đã giải đáp ({staffReplies.length} phản hồi)</span>
                         </span>
                       )}
@@ -726,7 +730,7 @@ export function InstructorCourseDiscussionsClient({
                     <div className="p-3.5 rounded-2xl bg-primary/5 border border-primary/20 space-y-2">
                       <div className="flex items-center justify-between text-xs font-bold text-primary">
                         <span className="flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5" />
+                          <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Phản hồi chính thức từ Giảng viên / TA:</span>
                         </span>
                         <span className="text-[10px] font-mono text-muted-foreground">
@@ -744,7 +748,7 @@ export function InstructorCourseDiscussionsClient({
                     {/* Quick Staff Reply Bar */}
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                        <MessageSquare className="w-3.5 h-3.5" />
+                        <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
                       </div>
                       <Input
                         value={quickReplies[thread.id] || ""}
@@ -771,7 +775,7 @@ export function InstructorCourseDiscussionsClient({
                         onClick={() => handleSendQuickReply(thread.id)}
                         className="text-xs font-bold gap-1 px-3 py-1.5 shrink-0"
                       >
-                        <Send className="w-3 h-3" />
+                        <Send className="w-3 h-3" aria-hidden="true" />
                         <span>{sending ? "Đang gửi..." : "Trả lời"}</span>
                       </Button>
                     </div>

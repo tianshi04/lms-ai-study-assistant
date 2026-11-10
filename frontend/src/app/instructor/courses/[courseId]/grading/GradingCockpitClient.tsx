@@ -56,6 +56,11 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
+  const [currentTimeMs, setCurrentTimeMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentTimeMs(Date.now());
+  }, []);
 
   // Auto-open evaluation modal if submissionId was passed in URL query param
   useEffect(() => {
@@ -86,8 +91,8 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
     if (item.isAppeal) return false;
     if (item.isOutlier) return false;
     if (item.lockedByUserId) return false;
-    if (!item.submittedAt) return false;
-    const isPast48h = Date.now() - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
+    if (!item.submittedAt || !currentTimeMs) return false;
+    const isPast48h = currentTimeMs - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
     return isPast48h && !item.staffScore && item.peerReviewsCount < 3;
   };
 
@@ -98,7 +103,7 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
       return {
         label: "Giải quyết khiếu nại",
         className:
-          "bg-tertiary hover:bg-tertiary-hover text-on-tertiary shadow-sm font-bold border border-tertiary",
+          "bg-tertiary hover:bg-tertiary/90 text-on-tertiary shadow-sm font-bold border border-tertiary",
         icon: AlertTriangle,
       };
     }

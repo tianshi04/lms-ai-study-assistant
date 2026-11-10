@@ -369,9 +369,11 @@ export function InstructorOverviewView({
                     aria-label="Lọc chứng chỉ theo khóa học"
                   >
                     <option value="all">Tất cả khóa học ({allCompletedStudentsList.length})</option>
-                    <option value="Vi mô">Kinh tế học Vi mô Căn bản</option>
-                    <option value="Hành vi">Kinh tế học Hành vi &amp; Định giá</option>
-                    <option value="Kinh tế lượng">Kinh tế lượng Ứng dụng</option>
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.title}>
+                        {c.title}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

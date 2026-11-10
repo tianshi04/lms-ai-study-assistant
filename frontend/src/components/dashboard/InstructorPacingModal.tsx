@@ -229,7 +229,7 @@ export function InstructorPacingModal({
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-success uppercase tracking-wider flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
+                  <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-success/20 text-success font-bold">
                   {counts.all > 0 ? Math.round((counts.ahead / counts.all) * 100) : 0}%
@@ -253,7 +253,7 @@ export function InstructorPacingModal({
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> Đúng tiến độ
+                  <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-bold">
                   {counts.all > 0 ? Math.round((counts.onTrack / counts.all) * 100) : 0}%
@@ -277,7 +277,7 @@ export function InstructorPacingModal({
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
+                  <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-destructive/20 text-destructive font-bold">
                   {counts.all > 0 ? Math.round((counts.behind / counts.all) * 100) : 0}%
@@ -311,9 +311,10 @@ export function InstructorPacingModal({
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
+                    aria-label="Xóa từ khóa tìm kiếm"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -354,9 +355,9 @@ export function InstructorPacingModal({
           {/* Bảng Danh Sách Học Viên Chi Tiết với Thanh cuộn tải động 25 SV */}
           <div
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto rounded-2xl border border-outline-variant/60 bg-surface min-h-[300px]"
+            className="flex-1 overflow-y-auto overflow-x-auto rounded-2xl border border-outline-variant/60 bg-surface min-h-[300px]"
           >
-            <Table>
+            <Table className="min-w-[650px] w-full">
               <Table.Header className="sticky top-0 z-10 bg-surface shadow-xs">
                 <Table.Row className="text-[11px] text-muted-foreground border-b border-outline-variant/60">
                   <Table.Head>Học viên & Môn học</Table.Head>
@@ -430,15 +431,15 @@ export function InstructorPacingModal({
                         <Table.Cell>
                           {st.pace === "AHEAD" ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
-                              <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
+                              <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
                             </span>
                           ) : st.pace === "ON_TRACK" ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
-                              <Clock className="w-3 h-3" /> Đúng tiến độ
+                              <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
-                              <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
+                              <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
                             </span>
                           )}
                           <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug max-w-[190px]">
@@ -451,7 +452,10 @@ export function InstructorPacingModal({
                           {st.progressPercent >= 100 ? (
                             <div className="space-y-0.5">
                               <span className="text-[11px] font-mono text-success font-semibold flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3 text-success shrink-0" />
+                                <CheckCircle2
+                                  className="w-3 h-3 text-success shrink-0"
+                                  aria-hidden="true"
+                                />
                                 Đã tốt nghiệp
                               </span>
                               <span className="text-[10px] text-muted-foreground block">
@@ -488,7 +492,10 @@ export function InstructorPacingModal({
                         <Table.Cell className="text-right">
                           {st.progressPercent >= 100 ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-success/15 text-success border border-success/30">
-                              <GraduationCap className="w-3.5 h-3.5 text-success" />
+                              <GraduationCap
+                                className="w-3.5 h-3.5 text-success"
+                                aria-hidden="true"
+                              />
                               <span>Đã tốt nghiệp</span>
                             </span>
                           ) : (
@@ -508,17 +515,20 @@ export function InstructorPacingModal({
                             >
                               {isNudged ? (
                                 <>
-                                  <CheckCircle2 className="w-3 h-3 text-success" />
+                                  <CheckCircle2
+                                    className="w-3 h-3 text-success"
+                                    aria-hidden="true"
+                                  />
                                   <span>{st.pace === "AHEAD" ? "Đã khích lệ" : "Đã nhắc"}</span>
                                 </>
                               ) : st.pace === "AHEAD" ? (
                                 <>
-                                  <Sparkles className="w-3 h-3 text-warning" />
+                                  <Sparkles className="w-3 h-3 text-warning" aria-hidden="true" />
                                   <span>Khích lệ</span>
                                 </>
                               ) : (
                                 <>
-                                  <Mail className="w-3 h-3" />
+                                  <Mail className="w-3 h-3" aria-hidden="true" />
                                   <span>Nhắc nhở</span>
                                 </>
                               )}

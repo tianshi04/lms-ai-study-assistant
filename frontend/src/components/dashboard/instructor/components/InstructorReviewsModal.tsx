@@ -125,16 +125,14 @@ export function InstructorReviewsModal({
 
           <div className="flex items-center gap-2 text-xs flex-wrap w-full sm:w-auto justify-start sm:justify-end">
             <span className="px-2.5 py-1 rounded-xl bg-surface border border-border text-foreground font-semibold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />5 sao:{" "}
-              {stats.count5}
+              <span className="w-2 h-2 rounded-full bg-success inline-block" />5 sao: {stats.count5}
             </span>
             <span className="px-2.5 py-1 rounded-xl bg-surface border border-border text-foreground font-semibold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />4 sao:{" "}
-              {stats.count4}
+              <span className="w-2 h-2 rounded-full bg-warning inline-block" />4 sao: {stats.count4}
             </span>
             {stats.count3Below > 0 && (
               <span className="px-2.5 py-1 rounded-xl bg-surface border border-border text-foreground font-semibold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />≤ 3 sao:{" "}
+                <span className="w-2 h-2 rounded-full bg-destructive inline-block" />≤ 3 sao:{" "}
                 {stats.count3Below}
               </span>
             )}
@@ -144,7 +142,10 @@ export function InstructorReviewsModal({
         {/* Thanh tìm kiếm và bộ lọc */}
         <div className="space-y-2.5 pb-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search
+              className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              aria-hidden="true"
+            />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -158,7 +159,7 @@ export function InstructorReviewsModal({
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded cursor-pointer"
                 aria-label="Xóa tìm kiếm"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             )}
           </div>

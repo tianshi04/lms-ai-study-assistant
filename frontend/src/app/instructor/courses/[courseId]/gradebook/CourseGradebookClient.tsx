@@ -96,7 +96,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
         id: "finalGrade",
         header: () => (
           <div className="flex items-center gap-1.5 font-bold text-foreground whitespace-nowrap">
-            <Award className="w-4 h-4 text-amber-500" aria-hidden="true" />
+            <Award className="w-4 h-4 text-warning" aria-hidden="true" />
             <span>Điểm tổng kết</span>
           </div>
         ),
@@ -139,7 +139,15 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
               {itemCol.itemTitle}
             </div>
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <span className="font-medium bg-muted px-1.5 py-0.5 rounded">{itemCol.itemType}</span>
+              <span className="font-medium bg-muted px-1.5 py-0.5 rounded">
+                {itemCol.itemType === "QUIZ"
+                  ? "Trắc nghiệm"
+                  : itemCol.itemType === "ASSIGNMENT"
+                    ? "Bài tập"
+                    : itemCol.itemType === "PEER_ASSIGNMENT"
+                      ? "Chấm chéo"
+                      : itemCol.itemType}
+              </span>
               <span>• {(itemCol.weight * 100).toFixed(0)}%</span>
             </div>
           </div>

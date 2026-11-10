@@ -153,171 +153,180 @@ export function InstructorCourseComparisonTable({
         </div>
       </div>
 
-      {/* Bảng so sánh khóa học co giãn tối ưu 100% chiều ngang, không tràn cuộn */}
-      <Table>
-        <Table.Header className="bg-muted/40">
-          <Table.Row className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
-            <Table.Head className="py-2.5 px-3">Khóa học & Đối tác</Table.Head>
-            <Table.Head className="py-2.5 px-1.5 text-center whitespace-nowrap w-[80px]">
-              Trạng thái
-            </Table.Head>
-            <Table.Head className="py-2.5 px-1.5 text-right whitespace-nowrap w-[55px]">
-              Học viên
-            </Table.Head>
-            <Table.Head className="py-2.5 px-1.5 whitespace-nowrap w-[80px]">Tiến độ TB</Table.Head>
-            <Table.Head className="py-2.5 px-1.5 whitespace-nowrap w-[110px]">Nhiệm vụ</Table.Head>
-            <Table.Head className="py-2.5 px-2 text-right whitespace-nowrap w-[90px]">
-              Đánh giá
-            </Table.Head>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {filtered.length === 0 ? (
-            <Table.Row>
-              <Table.Cell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
-                Không tìm thấy khóa học nào khớp với từ khóa tìm kiếm.
-              </Table.Cell>
+      {/* Bảng so sánh khóa học bọc overflow-x-auto chống tràn co giãn */}
+      <div className="overflow-x-auto">
+        <Table className="min-w-[550px] w-full">
+          <Table.Header className="bg-muted/40">
+            <Table.Row className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
+              <Table.Head className="py-2.5 px-3">Khóa học & Đối tác</Table.Head>
+              <Table.Head className="py-2.5 px-1.5 text-center whitespace-nowrap w-[80px]">
+                Trạng thái
+              </Table.Head>
+              <Table.Head className="py-2.5 px-1.5 text-right whitespace-nowrap w-[55px]">
+                Học viên
+              </Table.Head>
+              <Table.Head className="py-2.5 px-1.5 whitespace-nowrap w-[80px]">
+                Tiến độ TB
+              </Table.Head>
+              <Table.Head className="py-2.5 px-1.5 whitespace-nowrap w-[110px]">
+                Nhiệm vụ
+              </Table.Head>
+              <Table.Head className="py-2.5 px-2 text-right whitespace-nowrap w-[90px]">
+                Đánh giá
+              </Table.Head>
             </Table.Row>
-          ) : (
-            filtered.map((item) => {
-              const {
-                course,
-                totalStudents,
-                compRate,
-                rating,
-                pendingGrading,
-                overdueGrading,
-                pendingQa,
-              } = item;
+          </Table.Header>
+          <Table.Body>
+            {filtered.length === 0 ? (
+              <Table.Row>
+                <Table.Cell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
+                  Không tìm thấy khóa học nào khớp với từ khóa tìm kiếm.
+                </Table.Cell>
+              </Table.Row>
+            ) : (
+              filtered.map((item) => {
+                const {
+                  course,
+                  totalStudents,
+                  compRate,
+                  rating,
+                  pendingGrading,
+                  overdueGrading,
+                  pendingQa,
+                } = item;
 
-              return (
-                <Table.Row
-                  key={course.id}
-                  onClick={() => onSelectCourse(course.id)}
-                  className="text-xs hover:bg-muted/30 cursor-pointer transition-colors group border-b border-border/50"
-                >
-                  {/* 1. Tên môn học & Đối tác */}
-                  <Table.Cell className="py-2.5 px-3 min-w-[140px]">
-                    <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-1 sm:line-clamp-2">
-                      {course.title}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <span className="font-mono font-bold text-primary text-[10px]">
-                        {course.slug || course.id.slice(0, 8)}
+                return (
+                  <Table.Row
+                    key={course.id}
+                    onClick={() => onSelectCourse(course.id)}
+                    className="text-xs hover:bg-muted/30 cursor-pointer transition-colors group border-b border-border/50"
+                  >
+                    {/* 1. Tên môn học & Đối tác */}
+                    <Table.Cell className="py-2.5 px-3 min-w-[140px]">
+                      <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-primary transition-colors leading-snug line-clamp-1 sm:line-clamp-2">
+                        {course.title}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className="font-mono font-bold text-primary text-[10px]">
+                          {course.slug || course.id.slice(0, 8)}
+                        </span>
+                        {course.partnerName && (
+                          <>
+                            <span>•</span>
+                            <span className="text-muted-foreground font-medium text-[10px] truncate max-w-[140px]">
+                              {course.partnerName}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </Table.Cell>
+
+                    {/* 2. Trạng thái thực tế */}
+                    <Table.Cell className="text-center py-2.5 px-1.5 whitespace-nowrap">
+                      {renderCourseStatusBadge(course.status)}
+                    </Table.Cell>
+
+                    {/* 3. Số học viên thật */}
+                    <Table.Cell className="text-right py-2.5 px-1.5 whitespace-nowrap">
+                      <span className="font-mono font-bold text-xs sm:text-sm text-foreground">
+                        {totalStudents}{" "}
+                        <span className="text-[10px] font-sans font-medium text-muted-foreground">
+                          SV
+                        </span>
                       </span>
-                      {course.partnerName && (
-                        <>
-                          <span>•</span>
-                          <span className="text-muted-foreground font-medium text-[10px] truncate max-w-[140px]">
-                            {course.partnerName}
-                          </span>
-                        </>
+                    </Table.Cell>
+
+                    {/* 4. Tiến độ TB kết hợp thanh mini trực quan */}
+                    <Table.Cell className="py-2.5 px-1.5 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-mono font-bold text-foreground w-6 shrink-0">
+                          {compRate}%
+                        </span>
+                        <div className="w-8 sm:w-10 h-1.5 rounded-full bg-muted overflow-hidden shrink-0">
+                          <div
+                            className="h-full bg-success rounded-full transition-all duration-300"
+                            style={{ width: `${compRate}%` }}
+                          />
+                        </div>
+                      </div>
+                    </Table.Cell>
+
+                    {/* 5. Nhiệm vụ cần xử lý có số liệu thật */}
+                    <Table.Cell className="py-2.5 px-1.5 whitespace-nowrap">
+                      {overdueGrading > 0 || pendingGrading > 0 || pendingQa > 0 ? (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {overdueGrading > 0 && (
+                            <Link
+                              href={`/instructor/courses/${course.id}/grading`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
+                              title="Có bài tập quá hạn 48h quy định cần chấm ngay"
+                            >
+                              <AlertTriangle
+                                className="w-3 h-3 text-destructive"
+                                aria-hidden="true"
+                              />
+                              <span>{overdueGrading} quá hạn</span>
+                            </Link>
+                          )}
+                          {pendingGrading > 0 && overdueGrading === 0 && (
+                            <Link
+                              href={`/instructor/courses/${course.id}/grading`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 hover:bg-warning/20 border border-warning/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
+                              title="Mở Bàn làm việc chấm bài"
+                            >
+                              <ClipboardCheck className="w-3 h-3 text-warning" aria-hidden="true" />
+                              <span>{pendingGrading} bài chờ chấm</span>
+                            </Link>
+                          )}
+                          {pendingQa > 0 && (
+                            <Link
+                              href={`/instructor/courses/${course.id}/discussions`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
+                              title="Mở diễn đàn thảo luận & Q&A"
+                            >
+                              <MessageSquare className="w-3 h-3 text-primary" aria-hidden="true" />
+                              <span>{pendingQa} hỏi đáp</span>
+                            </Link>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground whitespace-nowrap">
+                          <CheckCircle2 className="w-3 h-3 text-success" aria-hidden="true" />
+                          <span>Hoàn thành</span>
+                        </span>
                       )}
-                    </div>
-                  </Table.Cell>
+                    </Table.Cell>
 
-                  {/* 2. Trạng thái thực tế */}
-                  <Table.Cell className="text-center py-2.5 px-1.5 whitespace-nowrap">
-                    {renderCourseStatusBadge(course.status)}
-                  </Table.Cell>
-
-                  {/* 3. Số học viên thật */}
-                  <Table.Cell className="text-right py-2.5 px-1.5 whitespace-nowrap">
-                    <span className="font-mono font-bold text-xs sm:text-sm text-foreground">
-                      {totalStudents}{" "}
-                      <span className="text-[10px] font-sans font-medium text-muted-foreground">
-                        SV
-                      </span>
-                    </span>
-                  </Table.Cell>
-
-                  {/* 4. Tiến độ TB kết hợp thanh mini trực quan */}
-                  <Table.Cell className="py-2.5 px-1.5 whitespace-nowrap">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-mono font-bold text-foreground w-6 shrink-0">
-                        {compRate}%
-                      </span>
-                      <div className="w-8 sm:w-10 h-1.5 rounded-full bg-muted overflow-hidden shrink-0">
-                        <div
-                          className="h-full bg-success rounded-full transition-all duration-300"
-                          style={{ width: `${compRate}%` }}
-                        />
+                    {/* 6. Đánh giá & Xem chi tiết */}
+                    <Table.Cell className="text-right py-2.5 px-2.5 whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                        <span className="font-mono font-bold text-warning text-xs flex items-center gap-0.5">
+                          <span>{rating.toFixed(1)}</span>
+                          <span className="text-amber-400">★</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onSelectCourse(course.id)}
+                          className="inline-flex items-center gap-0.5 text-xs font-bold text-primary hover:text-primary-hover hover:underline transition-colors cursor-pointer group/btn"
+                        >
+                          <span>Chi tiết</span>
+                          <ArrowRight
+                            className="w-3 h-3 transition-transform group-hover/btn:translate-x-0.5"
+                            aria-hidden="true"
+                          />
+                        </button>
                       </div>
-                    </div>
-                  </Table.Cell>
-
-                  {/* 5. Nhiệm vụ cần xử lý có số liệu thật */}
-                  <Table.Cell className="py-2.5 px-1.5 whitespace-nowrap">
-                    {overdueGrading > 0 || pendingGrading > 0 || pendingQa > 0 ? (
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {overdueGrading > 0 && (
-                          <Link
-                            href={`/instructor/courses/${course.id}/grading`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
-                            title="Có bài tập quá hạn 48h quy định cần chấm ngay"
-                          >
-                            <AlertTriangle
-                              className="w-3 h-3 text-destructive"
-                              aria-hidden="true"
-                            />
-                            <span>{overdueGrading} quá hạn</span>
-                          </Link>
-                        )}
-                        {pendingGrading > 0 && overdueGrading === 0 && (
-                          <Link
-                            href={`/instructor/courses/${course.id}/grading`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 hover:bg-warning/20 border border-warning/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
-                            title="Mở Bàn làm việc chấm bài"
-                          >
-                            <ClipboardCheck className="w-3 h-3 text-warning" aria-hidden="true" />
-                            <span>{pendingGrading} bài chờ chấm</span>
-                          </Link>
-                        )}
-                        {pendingQa > 0 && (
-                          <Link
-                            href={`/instructor/courses/${course.id}/discussions`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
-                            title="Mở diễn đàn thảo luận & Q&A"
-                          >
-                            <MessageSquare className="w-3 h-3 text-primary" aria-hidden="true" />
-                            <span>{pendingQa} hỏi đáp</span>
-                          </Link>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground whitespace-nowrap">
-                        <CheckCircle2 className="w-3 h-3 text-success" aria-hidden="true" />
-                        <span>Hoàn thành</span>
-                      </span>
-                    )}
-                  </Table.Cell>
-
-                  {/* 6. Đánh giá & Xem chi tiết */}
-                  <Table.Cell className="text-right py-2.5 px-2.5 whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                      <span className="font-mono font-bold text-warning text-xs flex items-center gap-0.5">
-                        <span>{rating.toFixed(1)}</span>
-                        <span className="text-amber-400">★</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => onSelectCourse(course.id)}
-                        className="inline-flex items-center gap-0.5 text-xs font-bold text-primary hover:text-primary-hover hover:underline transition-colors cursor-pointer group/btn"
-                      >
-                        <span>Chi tiết</span>
-                        <ArrowRight className="w-3 h-3 transition-transform group-hover/btn:translate-x-0.5" />
-                      </button>
-                    </div>
-                  </Table.Cell>
-                </Table.Row>
-              );
-            })
-          )}
-        </Table.Body>
-      </Table>
+                    </Table.Cell>
+                  </Table.Row>
+                );
+              })
+            )}
+          </Table.Body>
+        </Table>
+      </div>
     </div>
   );
 }
