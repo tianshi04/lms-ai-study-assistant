@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Slider } from "@/components/ui/Slider";
 import { mapConnectError } from "@/lib/connect_error_mapper";
+import { getSafeExternalUrl } from "@/lib/utils";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -399,15 +400,21 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                     <span className="w-2 h-2 rounded-full bg-primary" />
                     Bài nộp của Bạn học #{pIdx + 1} ({peer.reviewId})
                   </h4>
-                  <a
-                    href={peer.submissionUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-                  >
-                    <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
-                    <span>Xem Repository</span>
-                  </a>
+                  {getSafeExternalUrl(peer.submissionUrl) ? (
+                    <a
+                      href={getSafeExternalUrl(peer.submissionUrl)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                    >
+                      <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
+                      <span>Xem Repository</span>
+                    </a>
+                  ) : (
+                    <span className="text-xs font-mono text-destructive">
+                      Liên kết không an toàn
+                    </span>
+                  )}
                 </div>
 
                 <p className="text-xs text-muted-foreground bg-surface-container-lowest p-3 rounded-xl border border-border font-mono leading-relaxed">

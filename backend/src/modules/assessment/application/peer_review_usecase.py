@@ -112,6 +112,12 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         graded_criteria: list[RubricCriteria],
         item_id: str | None = None,
     ) -> tuple[bool, str]:
+        for c in graded_criteria:
+            if c.score_given < 0 or (c.max_score > 0 and c.score_given > c.max_score):
+                raise ValueError(
+                    f"Điểm tiêu chí '{c.title}' ({c.score_given}) không hợp lệ (yêu cầu từ 0 đến {c.max_score})."
+                )
+
         total_given = sum(c.score_given for c in graded_criteria)
         max_possible = sum(c.max_score for c in graded_criteria) or 1.0
         score_percent = round((total_given / max_possible) * 100.0, 2)
@@ -123,12 +129,15 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
 
-            resolved_item_id = item_id
-            if not resolved_item_id:
-                sub = await repo.get_peer_submission(submission_id)
-                if not sub:
-                    raise ValueError(f"Bài nộp {submission_id} không tồn tại.")
-                resolved_item_id = sub.item_id
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                raise ValueError(f"Bài nộp {submission_id} không tồn tại.")
+            if sub.user_id == reviewer_user_id:
+                raise PermissionError(
+                    "Bạn không được phép tự chấm điểm bài làm của chính mình."
+                )
+
+            resolved_item_id = item_id or sub.item_id
 
             existing_reviews = await repo.get_peer_reviews_for_submission(submission_id)
             is_outlier = False
@@ -160,8 +169,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             )
 
             # Update final_score on PeerAssignmentSubmission if not graded by staff
-            sub = await repo.get_peer_submission(submission_id)
-            if sub and not sub.graded_by_staff:
+            if not sub.graded_by_staff:
                 all_revs = await repo.get_peer_reviews_for_submission(submission_id)
                 if len(all_revs) >= REQUIRED_PEER_REVIEWS_COUNT:
                     avg_score = round(
