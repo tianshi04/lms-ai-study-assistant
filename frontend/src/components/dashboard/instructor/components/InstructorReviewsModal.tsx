@@ -184,7 +184,8 @@ export function InstructorReviewsModal({
               onClick={() => setRatingFilter(5)}
               className="h-6.5 text-[11px] px-2.5 rounded-lg shrink-0 gap-1"
             >
-              <Star className="w-3 h-3 fill-warning text-warning" />5 sao ({stats.count5})
+              <Star className="w-3 h-3 fill-warning text-warning" aria-hidden="true" />5 sao (
+              {stats.count5})
             </Button>
             <Button
               variant={ratingFilter === 4 ? "filled" : "outlined"}
@@ -192,7 +193,8 @@ export function InstructorReviewsModal({
               onClick={() => setRatingFilter(4)}
               className="h-6.5 text-[11px] px-2.5 rounded-lg shrink-0 gap-1"
             >
-              <Star className="w-3 h-3 fill-warning text-warning" />4 sao ({stats.count4})
+              <Star className="w-3 h-3 fill-warning text-warning" aria-hidden="true" />4 sao (
+              {stats.count4})
             </Button>
             {stats.count3Below > 0 && (
               <Button
@@ -240,7 +242,10 @@ export function InstructorReviewsModal({
         <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-1 min-h-[240px]">
           {filteredReviews.length === 0 ? (
             <div className="py-12 text-center space-y-2 border border-dashed border-border rounded-2xl bg-muted/10">
-              <MessageSquareQuote className="w-8 h-8 text-muted-foreground mx-auto opacity-50" />
+              <MessageSquareQuote
+                className="w-8 h-8 text-muted-foreground mx-auto opacity-50"
+                aria-hidden="true"
+              />
               <p className="text-xs font-semibold text-foreground">Không tìm thấy đánh giá nào</p>
               <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
                 Không có phản hồi nào phù hợp với bộ lọc hiện tại. Vui lòng thử chọn lại tiêu chí

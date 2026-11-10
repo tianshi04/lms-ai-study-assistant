@@ -393,7 +393,7 @@ export function InstructorCourseDiscussionsClient({
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="primary" className="text-[11px] font-bold">
-                  {course?.partnerName || "Coursera"}
+                  {course?.partnerName || "LMS AI"}
                 </Badge>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
                   Bàn làm việc Hỏi đáp Giảng viên

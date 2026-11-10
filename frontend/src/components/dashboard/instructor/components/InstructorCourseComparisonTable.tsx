@@ -285,7 +285,7 @@ export function InstructorCourseComparisonTable({
                               href={`/instructor/courses/${course.id}/discussions`}
                               onClick={(e) => e.stopPropagation()}
                               className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
-                              title="Mở diễn đàn thảo luận & Q&A"
+                              title="Mở diễn đàn thảo luận & hỏi đáp"
                             >
                               <MessageSquare className="w-3 h-3 text-primary" aria-hidden="true" />
                               <span>{pendingQa} hỏi đáp</span>
