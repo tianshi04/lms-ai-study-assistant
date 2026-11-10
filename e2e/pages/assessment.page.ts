@@ -58,16 +58,10 @@ export class AssessmentPage {
 
   async switchTab(tab: 'quiz' | 'lab' | 'peer') {
     await this.page.waitForLoadState('domcontentloaded');
-    if (tab === 'quiz') {
-      await this.quizTab.click();
-    }
-    if (tab === 'lab') {
-      await this.labTab.click();
-    }
-    if (tab === 'peer') {
-      await this.peerTab.click();
-    }
-    await this.page.waitForTimeout(300);
+    const target = tab === 'quiz' ? this.quizTab : tab === 'lab' ? this.labTab : this.peerTab;
+    await expect(target).toBeVisible({ timeout: 10000 });
+    await target.click();
+    await this.page.waitForTimeout(500);
   }
 
   async agreeHonorCode() {

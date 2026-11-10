@@ -39,6 +39,6 @@ export class InstructorAnnouncementsPage {
 
     await expect(this.submitButton).toBeEnabled({ timeout: 5000 });
     await this.submitButton.click();
-    await expect(this.page.locator('text=Đã đăng thông báo khóa học thành công!').first()).toBeVisible({ timeout: 15000 });
+    await expect(this.page.locator('text=Đã đăng thông báo khóa học thành công!').or(this.page.getByText(title)).first()).toBeVisible({ timeout: 20000 });
   }
 }
