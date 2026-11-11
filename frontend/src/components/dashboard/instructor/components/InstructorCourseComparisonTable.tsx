@@ -201,6 +201,8 @@ export function InstructorCourseComparisonTable({
                         <Link
                           href={`/instructor/courses/${course.id}/grading`}
                           title="Trung tâm Chấm bài"
+                          aria-label={`Trung tâm Chấm bài môn ${course.title}`}
+                          onClick={(e) => e.stopPropagation()}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                         >
                           <ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />
@@ -208,13 +210,18 @@ export function InstructorCourseComparisonTable({
                         <Link
                           href={`/instructor/courses/${course.id}/gradebook`}
                           title="Sổ điểm Khóa học"
+                          aria-label={`Sổ điểm Khóa học môn ${course.title}`}
+                          onClick={(e) => e.stopPropagation()}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                         >
                           <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
                         </Link>
                         <button
                           type="button"
-                          onClick={() => onSelectCourse(course.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectCourse(course.id);
+                          }}
                           className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline pl-1 cursor-pointer"
                         >
                           <span>Chi tiết</span>

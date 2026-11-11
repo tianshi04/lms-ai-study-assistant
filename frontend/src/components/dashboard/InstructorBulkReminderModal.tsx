@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
-import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { useSendStudentReminderMutation } from "@/lib/query_hooks";
 import { Zap, AlertTriangle, Users, RotateCcw, Sparkles } from "lucide-react";
 
 export interface BulkReminderStudent {
@@ -60,6 +59,7 @@ export function InstructorBulkReminderModal({
   onSuccess,
 }: InstructorBulkReminderModalProps) {
   const toast = useToast();
+  const sendReminderMutation = useSendStudentReminderMutation();
   const smartTemplates = getSmartTemplates(courseTitle, bottleneckWeek);
   const [subject, setSubject] = useState(smartTemplates.subject);
   const [content, setContent] = useState(smartTemplates.body);
@@ -87,8 +87,6 @@ export function InstructorBulkReminderModal({
 
     setIsSending(true);
     try {
-      const client = getRpcClient(CatalogService);
-
       // Nhóm theo courseId khi gửi hàng loạt từ view "Tất cả khóa học" hoặc danh sách nhiều môn
       const groups = new Map<string, { title: string; studentIds: string[] }>();
       for (const s of students) {
@@ -117,7 +115,7 @@ export function InstructorBulkReminderModal({
       const sentStudentIds: string[] = [];
 
       for (const [targetCourseId, group] of groups.entries()) {
-        const res = await client.sendStudentReminder({
+        const res = await sendReminderMutation.mutateAsync({
           courseId: targetCourseId,
           studentIds: group.studentIds,
           title: subject.trim(),

@@ -22,6 +22,7 @@ import {
   type ToggleCourseReviewHelpfulResponse,
   type GetCourseGradebookResponse,
   type GetInstructorActionTasksResponse,
+  type SendStudentReminderResponse,
 } from "@/gen/catalog/v1/catalog_pb";
 
 export interface CourseFilters {
@@ -712,6 +713,42 @@ export function useInstructorActionTasksQuery(
       return await client.getInstructorActionTasks({ courseId });
     },
     enabled: !!courseId,
+    ...options,
+  });
+}
+
+export interface SendStudentReminderInput {
+  courseId: string;
+  studentIds: string[];
+  title: string;
+  content: string;
+}
+
+/**
+ * Hook gửi thông báo đôn đốc/nhắc nhở học viên qua SendStudentReminder RPC
+ */
+export function useSendStudentReminderMutation(
+  options?: Partial<
+    UseMutationOptions<SendStudentReminderResponse, Error, SendStudentReminderInput>
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<SendStudentReminderResponse, Error, SendStudentReminderInput>({
+    mutationFn: async (input) => {
+      const client = getRpcClient(CatalogService);
+      return await client.sendStudentReminder(input);
+    },
+    onSuccess: (res, variables, context) => {
+      if (variables.courseId) {
+        queryClient.invalidateQueries({
+          queryKey: ["instructorAnalytics", variables.courseId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["instructorActionTasks", variables.courseId],
+        });
+      }
+      options?.onSuccess?.(res, variables, context as unknown as never, queryClient as never);
+    },
     ...options,
   });
 }

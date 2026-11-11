@@ -35,6 +35,7 @@ import { InstructorSplineChart } from "./InstructorSplineChart";
 import { InstructorHeatmap } from "./InstructorHeatmap";
 import { InstructorAIAssistantCard } from "./InstructorAIAssistantCard";
 import type { StudentDetailRecord } from "./InstructorStudentDetailModal";
+import type { StudentPacingRecord } from "./InstructorPacingModal";
 
 import { generateTimeLabels } from "./instructor/utils/time_labels";
 import { InstructorExecutiveToolbar } from "./instructor/components/InstructorExecutiveToolbar";
@@ -317,6 +318,44 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     });
     return certs;
   }, [courses, analyticsByCourseId]);
+
+  // Danh sách học viên thực tế dùng cho Pacing Modal (100% dữ liệu thật, không dùng mock ID)
+  const allPacingStudents = useMemo<StudentPacingRecord[]>(() => {
+    const list: StudentPacingRecord[] = [];
+    courses.forEach((c) => {
+      const an = c.id === activeCourse?.id ? analytics : analyticsByCourseId.get(c.id);
+      if (an?.students) {
+        an.students.forEach((s) => {
+          let pace: "AHEAD" | "ON_TRACK" | "BEHIND" = "ON_TRACK";
+          let paceDesc = "Đúng lộ trình đề xuất";
+          if (s.progressPercent >= 80) {
+            pace = "AHEAD";
+            paceDesc = "Vượt tiến độ chuẩn";
+          } else if (s.progressPercent < 40) {
+            pace = "BEHIND";
+            paceDesc = "Chậm tiến độ học tập";
+          }
+          list.push({
+            id: s.userId,
+            name: s.userName || s.userEmail || "Học viên",
+            email: s.userEmail || "",
+            courseId: c.id,
+            courseTitle: c.title,
+            progressPercent: Math.round(s.progressPercent || 0),
+            currentLesson: "Bài học theo lộ trình",
+            currentWeekNumber: 1,
+            lastActive: s.enrolledAt
+              ? new Date(s.enrolledAt).toLocaleDateString("vi-VN")
+              : "Hôm nay",
+            daysInactive: 0,
+            pace,
+            paceDescription: paceDesc,
+          });
+        });
+      }
+    });
+    return list;
+  }, [courses, analyticsByCourseId, activeCourse?.id, analytics]);
 
   const filteredCertificates = useMemo(() => {
     if (certCourseFilter === "all") return allCompletedStudentsList;
@@ -2276,6 +2315,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           onOpenChange={setIsPacingModalOpen}
           initialCategory={pacingModalCategory}
           coursesList={courses.map((c) => ({ id: c.id, title: c.title }))}
+          students={allPacingStudents}
         />
       )}
 

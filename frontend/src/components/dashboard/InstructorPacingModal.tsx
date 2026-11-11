@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Table } from "@/components/ui/Table";
+import { Input } from "@/components/ui/Input";
 import {
   Search,
   Zap,
@@ -15,8 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { useSendStudentReminderMutation } from "@/lib/query_hooks";
 import { InstructorBulkReminderModal } from "./InstructorBulkReminderModal";
 
 export type PacingCategory = "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND";
@@ -38,305 +38,13 @@ export interface StudentPacingRecord {
   bottleneckStuck?: boolean;
 }
 
-// 25 mẫu học viên chân thực trên cả 3 khóa học của PGS. TS. Trần Minh Tuấn
-const MOCK_PACING_STUDENTS: StudentPacingRecord[] = [
-  // --- VƯỢT TIẾN ĐỘ (AHEAD) ---
-  {
-    id: "st-01",
-    name: "Hoàng Văn Nam",
-    email: "nam.hoang@student.neu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 100,
-    currentLesson: "Đã hoàn thành toàn bộ khóa học",
-    currentWeekNumber: 2,
-    lastActive: "Hôm qua lúc 14:30",
-    daysInactive: 1,
-    pace: "AHEAD",
-    paceDescription: "Hoàn thành trước hạn 6 ngày, chuẩn bị cấp chứng chỉ",
-  },
-  {
-    id: "st-02",
-    name: "Lê Thu Thảo",
-    email: "thao.le@fpt.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 100,
-    currentLesson: "Đã hoàn thành toàn bộ khóa học",
-    currentWeekNumber: 2,
-    lastActive: "2 ngày trước",
-    daysInactive: 2,
-    pace: "AHEAD",
-    paceDescription: "Nộp bài kiểm định giả thuyết F đạt 100% điểm",
-  },
-  {
-    id: "st-03",
-    name: "Nguyễn Quốc Anh",
-    email: "quocanh.ng@hcmut.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 88,
-    currentLesson: "Bài 4: Tối ưu hóa Doanh thu Đa kênh",
-    currentWeekNumber: 2,
-    lastActive: "3 giờ trước",
-    daysInactive: 0,
-    pace: "AHEAD",
-    paceDescription: "Học vượt 2 bài trước lịch trình đề xuất",
-  },
-  {
-    id: "st-04",
-    name: "Trần Bảo Ngọc",
-    email: "ngoc.tran@neu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 92,
-    currentLesson: "Bài 5: Thặng dư Xã hội & Cân bằng Thị trường",
-    currentWeekNumber: 2,
-    lastActive: "Hôm nay lúc 09:15",
-    daysInactive: 0,
-    pace: "AHEAD",
-    paceDescription: "Tốc độ học gấp 1.8 lần tốc độ trung bình lớp",
-  },
-  {
-    id: "st-05",
-    name: "Vũ Minh Quân",
-    email: "quan.vm@rmit.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 85,
-    currentLesson: "Bài 3: Hiệu ứng Chim mồi & Mỏ neo",
-    currentWeekNumber: 2,
-    lastActive: "Hôm qua lúc 21:00",
-    daysInactive: 1,
-    pace: "AHEAD",
-    paceDescription: "Điểm quiz trung bình đạt 9.5/10",
-  },
-  {
-    id: "st-06",
-    name: "Phạm Hải Đăng",
-    email: "dang.ph@hust.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 82,
-    currentLesson: "Bài 3: Khắc phục Hiện tượng Phương sai Sai số Thay đổi",
-    currentWeekNumber: 2,
-    lastActive: "4 giờ trước",
-    daysInactive: 0,
-    pace: "AHEAD",
-    paceDescription: "Chủ động làm trước bài tập thực hành Stata/R",
-  },
-
-  // --- ĐÚNG TIẾN ĐỘ (ON_TRACK) ---
-  {
-    id: "st-07",
-    name: "Nguyễn Văn An",
-    email: "an.nguyen@ftu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 65,
-    currentLesson: "Bài 3: Hệ số Co giãn Cung - Cầu theo Giá",
-    currentWeekNumber: 1,
-    lastActive: "Hôm nay lúc 11:20",
-    daysInactive: 0,
-    pace: "ON_TRACK",
-    paceDescription: "Học đều đặn 45 phút/ngày, bám sát lịch học tuần 1",
-  },
-  {
-    id: "st-08",
-    name: "Trần Thị Mai",
-    email: "mai.tran@ueh.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 55,
-    currentLesson: "Bài 2: Tâm lý Học Cài cắm Giá (Psychological Pricing)",
-    currentWeekNumber: 1,
-    lastActive: "Hôm qua lúc 18:40",
-    daysInactive: 1,
-    pace: "ON_TRACK",
-    paceDescription: "Vừa hoàn thành bài tập trắc nghiệm chương 1",
-  },
-  {
-    id: "st-09",
-    name: "Lê Quốc Huy",
-    email: "huy.le@tdtu.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 50,
-    currentLesson: "Bài 2: Hồi quy Đa biến & Đa cộng tuyến",
-    currentWeekNumber: 1,
-    lastActive: "2 ngày trước",
-    daysInactive: 2,
-    pace: "ON_TRACK",
-    paceDescription: "Tham gia thảo luận diễn đàn tích cực",
-  },
-  {
-    id: "st-10",
-    name: "Đỗ Bích Thủy",
-    email: "thuy.do@neu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 58,
-    currentLesson: "Bài 2: Cung Cầu & Tác động Thuế quan",
-    currentWeekNumber: 1,
-    lastActive: "Hôm qua lúc 20:10",
-    daysInactive: 1,
-    pace: "ON_TRACK",
-    paceDescription: "Nộp bài đúng hạn, tiến độ hoàn thành ổn định",
-  },
-  {
-    id: "st-11",
-    name: "Bùi Tuấn Kiệt",
-    email: "kiet.bt@vnu.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 48,
-    currentLesson: "Bài 2: Chiến lược Định giá Phiến diện",
-    currentWeekNumber: 1,
-    lastActive: "Hôm nay lúc 08:30",
-    daysInactive: 0,
-    pace: "ON_TRACK",
-    paceDescription: "Xem video bài giảng đạt 95% thời lượng",
-  },
-  {
-    id: "st-12",
-    name: "Phan Ánh Nguyệt",
-    email: "nguyet.pa@buv.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 60,
-    currentLesson: "Bài 2: Mô hình Hồi quy Tuyến tính Đơn",
-    currentWeekNumber: 1,
-    lastActive: "3 ngày trước",
-    daysInactive: 3,
-    pace: "ON_TRACK",
-    paceDescription: "Đã làm xong bài thực hành số liệu doanh nghiệp",
-  },
-  {
-    id: "st-13",
-    name: "Hà Minh Trí",
-    email: "tri.hm@uel.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 70,
-    currentLesson: "Bài 4: Thị trường Cạnh tranh Hoàn hảo",
-    currentWeekNumber: 2,
-    lastActive: "Hôm nay lúc 10:00",
-    daysInactive: 0,
-    pace: "ON_TRACK",
-    paceDescription: "Bắt đầu học nội dung Tuần 2 theo đúng tiến độ kế hoạch",
-  },
-  {
-    id: "st-14",
-    name: "Ngô Thanh Hằng",
-    email: "hang.ngo@dav.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 52,
-    currentLesson: "Bài 2: Ma trận Định giá Giá trị Khách hàng",
-    currentWeekNumber: 1,
-    lastActive: "Hôm qua lúc 15:20",
-    daysInactive: 1,
-    pace: "ON_TRACK",
-    paceDescription: "Nhịp học ổn định, chưa có bài tập nộp trễ",
-  },
-
-  // --- CHẬM TIẾN ĐỘ / CẦN CAN THIỆP (BEHIND) ---
-  {
-    id: "st-15",
-    name: "Đặng Khánh Linh",
-    email: "linh.dk@student.neu.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 12,
-    currentLesson: "Bài 1: Giới thiệu Tâm lý Học Hành vi",
-    currentWeekNumber: 1,
-    lastActive: "8 ngày trước",
-    daysInactive: 8,
-    pace: "BEHIND",
-    paceDescription: "Dừng học tại Tuần 1, không đăng nhập 8 ngày liên tiếp",
-    bottleneckStuck: true,
-  },
-  {
-    id: "st-16",
-    name: "Võ Thành Long",
-    email: "long.vt@hust.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 18,
-    currentLesson: "Bài 1: Ôn tập Xác suất Thống kê cho Kinh tế lượng",
-    currentWeekNumber: 1,
-    lastActive: "11 ngày trước",
-    daysInactive: 11,
-    pace: "BEHIND",
-    paceDescription: "Chưa nộp bài tập Tuần 1, có nguy cơ bỏ dở khóa học",
-    bottleneckStuck: true,
-  },
-  {
-    id: "st-17",
-    name: "Phạm Thu Hà",
-    email: "ha.pham@ftu.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 20,
-    currentLesson: "Bài 1: Giới thiệu Cơ chế Thị trường",
-    currentWeekNumber: 1,
-    lastActive: "6 ngày trước",
-    daysInactive: 6,
-    pace: "BEHIND",
-    paceDescription: "Tiến độ đạt 20%, đang xin hỗ trợ tài chính",
-  },
-  {
-    id: "st-18",
-    name: "Dương Minh Đức",
-    email: "duc.dm@hcmussh.edu.vn",
-    courseId: "course-behavioral-pricing-strategy",
-    courseTitle: "Kinh tế học Hành vi & Định giá",
-    progressPercent: 15,
-    currentLesson: "Bài 1: Định giá Theo Chi phí vs Theo Giá trị",
-    currentWeekNumber: 1,
-    lastActive: "9 ngày trước",
-    daysInactive: 9,
-    pace: "BEHIND",
-    paceDescription: "Bị kẹt tại điểm nghẽn Tuần 1, chưa xem xong video 2",
-    bottleneckStuck: true,
-  },
-  {
-    id: "st-19",
-    name: "Lâm Gia Hân",
-    email: "han.lg@vanlanguni.edu.vn",
-    courseId: "course-applied-econometrics",
-    courseTitle: "Kinh tế lượng Ứng dụng",
-    progressPercent: 22,
-    currentLesson: "Bài 1: Cài đặt và Làm quen Giao diện Stata/R",
-    currentWeekNumber: 1,
-    lastActive: "7 ngày trước",
-    daysInactive: 7,
-    pace: "BEHIND",
-    paceDescription: "Gặp khó khăn kỹ thuật khi cài đặt phần mềm phân tích",
-    bottleneckStuck: true,
-  },
-  {
-    id: "st-20",
-    name: "Trịnh Hoàng Yến",
-    email: "yen.th@hub.edu.vn",
-    courseId: "course-microeconomics-foundations",
-    courseTitle: "Kinh tế học Vi mô Căn bản",
-    progressPercent: 25,
-    currentLesson: "Bài 1: Đường Giới hạn Khả năng Sản xuất (PPF)",
-    currentWeekNumber: 1,
-    lastActive: "5 ngày trước",
-    daysInactive: 5,
-    pace: "BEHIND",
-    paceDescription: "Tỷ lệ làm quiz lần đầu chỉ đạt 4/10 điểm, cần ôn tập",
-  },
-];
-
-interface InstructorPacingModalProps {
+export interface InstructorPacingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialCategory?: PacingCategory;
   initialCourseId?: string;
   coursesList?: { id: string; title: string }[];
+  students?: StudentPacingRecord[];
 }
 
 export function InstructorPacingModal({
@@ -344,22 +52,11 @@ export function InstructorPacingModal({
   onOpenChange,
   initialCategory = "ALL",
   initialCourseId = "ALL",
-  coursesList = [
-    {
-      id: "course-microeconomics-foundations",
-      title: "Kinh tế học Vi mô Căn bản: Nguyên lý Thị trường & Quyết định Giá cả",
-    },
-    {
-      id: "course-behavioral-pricing-strategy",
-      title: "Kinh tế học Hành vi & Chiến lược Định giá Doanh nghiệp",
-    },
-    {
-      id: "course-applied-econometrics",
-      title: "Kinh tế lượng Ứng dụng & Phân tích Dữ liệu Kinh doanh",
-    },
-  ],
+  coursesList = [],
+  students = [],
 }: InstructorPacingModalProps) {
   const toast = useToast();
+  const sendReminderMutation = useSendStudentReminderMutation();
   const [selectedPace, setSelectedPace] = useState<PacingCategory>(initialCategory);
   const [selectedCourse, setSelectedCourse] = useState<string>(initialCourseId);
   const [searchQuery, setSearchQuery] = useState("");
@@ -383,16 +80,16 @@ export function InstructorPacingModal({
   // Bộ đếm phân loại trên toàn hệ thống
   const counts = useMemo(() => {
     return {
-      all: MOCK_PACING_STUDENTS.length,
-      ahead: MOCK_PACING_STUDENTS.filter((s) => s.pace === "AHEAD").length,
-      onTrack: MOCK_PACING_STUDENTS.filter((s) => s.pace === "ON_TRACK").length,
-      behind: MOCK_PACING_STUDENTS.filter((s) => s.pace === "BEHIND").length,
+      all: students.length,
+      ahead: students.filter((s) => s.pace === "AHEAD").length,
+      onTrack: students.filter((s) => s.pace === "ON_TRACK").length,
+      behind: students.filter((s) => s.pace === "BEHIND").length,
     };
-  }, []);
+  }, [students]);
 
   // Lọc danh sách học viên
   const filteredStudents = useMemo(() => {
-    return MOCK_PACING_STUDENTS.filter((st) => {
+    return students.filter((st) => {
       // 1. Lọc theo pace
       if (selectedPace === "AHEAD" && st.pace !== "AHEAD") return false;
       if (selectedPace === "ON_TRACK" && st.pace !== "ON_TRACK") return false;
@@ -412,7 +109,7 @@ export function InstructorPacingModal({
 
       return true;
     });
-  }, [selectedPace, selectedCourse, searchQuery]);
+  }, [students, selectedPace, selectedCourse, searchQuery]);
 
   // Nhắc nhở 1 học viên
   const handleNudgeStudent = async (student: StudentPacingRecord) => {
@@ -422,7 +119,6 @@ export function InstructorPacingModal({
     }
     const targetCourseId = student.courseId;
     try {
-      const client = getRpcClient(CatalogService);
       const isAhead = student.pace === "AHEAD";
       const courseName = student.courseTitle || "Khóa học";
       const title = isAhead
@@ -432,7 +128,7 @@ export function InstructorPacingModal({
         ? `Chào ${student.name}, Thầy/Cô rất ấn tượng khi em đang học vượt tiến độ đề xuất ở môn ${courseName} (${student.progressPercent}% đề cương). Chúc em tiếp tục duy trì phong độ để sớm hoàn thành xuất sắc khóa học nhé!`
         : `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`;
 
-      const res = await client.sendStudentReminder({
+      const res = await sendReminderMutation.mutateAsync({
         courseId: targetCourseId,
         studentIds: [student.id],
         title,
@@ -581,27 +277,29 @@ export function InstructorPacingModal({
           {/* Thanh công cụ Tìm kiếm & Lọc môn học & Nút Nhắc nhở hàng loạt */}
           <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-1">
-              <div className="relative flex-1 max-w-sm">
-                <Search
-                  className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden="true"
-                />
-                <input
+              <div className="flex-1 max-w-sm">
+                <Input
                   type="text"
                   placeholder="Tìm tên học viên, email, bài học..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-surface border border-outline-variant text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:border-primary outline-hidden"
+                  startAdornment={
+                    <Search className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                  }
+                  endAdornment={
+                    searchQuery ? (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery("")}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer"
+                        aria-label="Xóa từ khóa tìm kiếm"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    ) : null
+                  }
+                  className="h-8.5 text-xs rounded-xl bg-surface border-outline-variant"
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
               </div>
 
               <div className="relative min-w-[180px] max-w-[240px]">

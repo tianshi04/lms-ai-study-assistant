@@ -130,7 +130,7 @@ export function InstructorActionTasksCard({
                   </span>
                 )}
                 {appealsCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-tertiary/15 text-tertiary border border-tertiary/30">
                     {appealsCount} khiếu nại
                   </span>
                 )}
