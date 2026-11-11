@@ -856,7 +856,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             current_slug=safe_slug,
             foundational_ids=foundational_course_ids,
         )
-
         clean_org_id = (
             organization_id.strip()
             if organization_id and organization_id.strip()
