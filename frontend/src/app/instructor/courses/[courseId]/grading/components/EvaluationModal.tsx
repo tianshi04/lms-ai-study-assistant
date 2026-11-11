@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Input } from "@/components/ui/Input";
 import { Slider } from "@/components/ui/Slider";
 import { useToast } from "@/components/ui/Toast";
+import { getSafeExternalUrl } from "@/lib/utils";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useGradingSubmissionDetailQuery,
@@ -73,12 +74,19 @@ export function EvaluationModal({
 
   // Countdown timer state
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [currentTimeMs, setCurrentTimeMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentTimeMs(Date.now());
+  }, []);
 
   const isLockActive = useMemo(() => {
     if (!detail?.submission?.lockExpiresAt) return false;
+    if (remainingSeconds !== null) return remainingSeconds > 0;
+    if (!currentTimeMs) return false;
     const expiresAt = new Date(detail.submission.lockExpiresAt).getTime();
-    return expiresAt > Date.now();
-  }, [detail?.submission?.lockExpiresAt, remainingSeconds]);
+    return expiresAt > currentTimeMs;
+  }, [detail?.submission?.lockExpiresAt, remainingSeconds, currentTimeMs]);
 
   const isLockedByOther = Boolean(
     detail?.submission?.lockedByUserId &&
@@ -87,13 +95,14 @@ export function EvaluationModal({
   );
 
   const isOverdue = Boolean(
+    currentTimeMs &&
     !isLockedByOther &&
     !detail?.submission?.lockedByUserId &&
     !detail?.submission?.isAppeal &&
     !detail?.submission?.isOutlier &&
     detail?.submission?.status !== GradingQueueStatus.GRADED &&
     detail?.submission?.submittedAt &&
-    Date.now() - new Date(detail.submission.submittedAt).getTime() > 48 * 3600 * 1000 &&
+    currentTimeMs - new Date(detail.submission.submittedAt).getTime() > 48 * 3600 * 1000 &&
     !detail?.submission?.staffScore &&
     (detail?.peerReviews?.length ?? 0) < 3,
   );
@@ -217,6 +226,18 @@ export function EvaluationModal({
     }
   };
 
+  // Automatically release soft-lock when closing modal without submitting
+  const handleCloseAndRelease = async () => {
+    if (!isLockedByOther && detail?.submission?.lockedByUserId) {
+      try {
+        await releaseLockMutation.mutateAsync({ submissionId });
+      } catch {
+        // Silently close without blocking UI
+      }
+    }
+    onClose();
+  };
+
   // Handle submit grading (Immediate Publishing model)
   const handleSubmitGrading = async () => {
     if (!detail) return;
@@ -231,11 +252,16 @@ export function EvaluationModal({
       }),
     );
 
+    const normalizedTotalScore =
+      maxPossibleScore > 0
+        ? Number(((currentTotalScore / maxPossibleScore) * 100.0).toFixed(2))
+        : 0;
+
     try {
       await submitGradingMutation.mutateAsync({
         submissionId,
         gradedCriteria: payloadCriteria,
-        totalScore: currentTotalScore,
+        totalScore: normalizedTotalScore,
         feedback: feedback.trim(),
         resolveAppeal: detail.submission?.isAppeal ? resolveAppeal : false,
         appealResolutionNotes: appealNotes.trim(),
@@ -262,7 +288,7 @@ export function EvaluationModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAndRelease()}>
       <Dialog.Content
         size="full"
         className="max-w-6xl w-[95vw] h-[92vh] max-h-[92vh] p-0 flex flex-col rounded-3xl overflow-hidden bg-background border border-border shadow-2xl"
@@ -295,7 +321,7 @@ export function EvaluationModal({
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
                   isLockedByOther
-                    ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30"
+                    ? "bg-warning/10 text-warning border-warning/30"
                     : remainingSeconds !== null && remainingSeconds <= 300
                       ? "bg-destructive/10 text-destructive border-destructive/20 animate-pulse"
                       : remainingSeconds !== null && remainingSeconds <= 600
@@ -304,10 +330,7 @@ export function EvaluationModal({
                 }`}
               >
                 {isLockedByOther ? (
-                  <Lock
-                    className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"
-                    aria-hidden="true"
-                  />
+                  <Lock className="w-4 h-4 shrink-0 text-warning" aria-hidden="true" />
                 ) : (
                   <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
                 )}
@@ -405,12 +428,9 @@ export function EvaluationModal({
                     {isLockedByOther ? (
                       <Badge
                         variant="warning"
-                        className="font-bold text-xs bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30 gap-1"
+                        className="font-bold text-xs bg-warning/10 text-warning border-warning/30 gap-1"
                       >
-                        <Lock
-                          className="w-3 h-3 text-amber-600 dark:text-amber-400"
-                          aria-hidden="true"
-                        />
+                        <Lock className="w-3 h-3 text-warning" aria-hidden="true" />
                         Đang giữ: {detail.submission?.lockedByName || "Đồng nghiệp"}
                       </Badge>
                     ) : (
@@ -427,7 +447,7 @@ export function EvaluationModal({
                         {detail.submission?.isAppeal && (
                           <Badge
                             variant="outlined"
-                            className="font-bold text-xs bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30"
+                            className="font-bold text-xs bg-tertiary/15 text-tertiary border-tertiary/30"
                           >
                             Khiếu nại điểm
                           </Badge>
@@ -447,12 +467,9 @@ export function EvaluationModal({
 
                 {/* Read-Only Callout (when locked by another staff member) */}
                 {isLockedByOther && (
-                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 space-y-1">
+                  <div className="p-4 rounded-2xl bg-warning/10 border border-warning/30 text-warning space-y-1">
                     <div className="flex items-center gap-2 font-bold text-sm">
-                      <Lock
-                        className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"
-                        aria-hidden="true"
-                      />
+                      <Lock className="w-4 h-4 shrink-0 text-warning" aria-hidden="true" />
                       <span>
                         Bài nộp đang được {detail.submission?.lockedByName || "đồng nghiệp"} tiếp
                         nhận chấm
@@ -484,15 +501,15 @@ export function EvaluationModal({
 
                 {/* Appeal Reason Callout (if appealed) */}
                 {detail.submission?.isAppeal && detail.submission?.appealReason && (
-                  <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-900 dark:text-purple-200 space-y-1">
+                  <div className="p-4 rounded-2xl bg-tertiary/10 border border-tertiary/30 text-tertiary space-y-1">
                     <div className="flex items-center gap-2 font-bold text-sm">
                       <AlertTriangle
-                        className="w-4 h-4 shrink-0 text-purple-600 dark:text-purple-400"
+                        className="w-4 h-4 shrink-0 text-tertiary"
                         aria-hidden="true"
                       />
                       <span>Lý do sinh viên khiếu nại phúc khảo:</span>
                     </div>
-                    <p className="text-xs text-purple-800/90 dark:text-purple-300/90 leading-relaxed pl-6">
+                    <p className="text-xs text-muted-foreground leading-relaxed pl-6">
                       {detail.submission.appealReason}
                     </p>
                   </div>
@@ -529,24 +546,35 @@ export function EvaluationModal({
                         <p className="text-xs text-muted-foreground">
                           Tệp đính kèm / Liên kết bài làm:
                         </p>
-                        <a
-                          href={detail.submissionUrl}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="text-sm font-bold text-primary hover:underline truncate block"
-                        >
-                          {detail.submissionUrl}
-                        </a>
+                        {getSafeExternalUrl(detail.submissionUrl) ? (
+                          <a
+                            href={getSafeExternalUrl(detail.submissionUrl)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-bold text-primary hover:underline truncate block"
+                          >
+                            {detail.submissionUrl}
+                          </a>
+                        ) : (
+                          <span className="text-xs font-mono text-destructive">
+                            Liên kết không an toàn hoặc không hợp lệ ({detail.submissionUrl})
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      className="shrink-0 text-xs font-bold"
-                      onClick={() => window.open(detail.submissionUrl, "_blank")}
-                    >
-                      Mở liên kết
-                    </Button>
+                    {getSafeExternalUrl(detail.submissionUrl) && (
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        className="shrink-0 text-xs font-bold"
+                        onClick={() => {
+                          const safe = getSafeExternalUrl(detail.submissionUrl);
+                          if (safe) window.open(safe, "_blank", "noopener,noreferrer");
+                        }}
+                      >
+                        Mở liên kết
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -605,12 +633,9 @@ export function EvaluationModal({
                       {isLockedByOther ? (
                         <Badge
                           variant="warning"
-                          className="text-xs font-semibold bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30 gap-1"
+                          className="text-xs font-semibold bg-warning/10 text-warning border-warning/30 gap-1"
                         >
-                          <Lock
-                            className="w-3 h-3 text-amber-600 dark:text-amber-400"
-                            aria-hidden="true"
-                          />
+                          <Lock className="w-3 h-3 text-warning" aria-hidden="true" />
                           Chế độ Chỉ đọc
                         </Badge>
                       ) : (
@@ -652,6 +677,11 @@ export function EvaluationModal({
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 <h4 className="text-sm font-bold text-foreground">{c.title}</h4>
+                                {c.description && (
+                                  <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                                    {c.description}
+                                  </p>
+                                )}
                                 <span className="text-[11px] text-muted-foreground">
                                   Tối đa: {c.maxScore} điểm
                                 </span>
@@ -801,7 +831,7 @@ export function EvaluationModal({
                     <Button
                       type="button"
                       variant="text"
-                      onClick={onClose}
+                      onClick={handleCloseAndRelease}
                       disabled={submitGradingMutation.isPending}
                       className="w-full sm:w-auto text-xs font-bold"
                     >

@@ -242,7 +242,19 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_course_id_by_bank_id(self, bank_id: str) -> str | None:
+        pass
+
+    @abstractmethod
+    async def get_course_id_by_question_id(self, question_id: str) -> str | None:
+        pass
+
+    @abstractmethod
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
+        pass
+
+    @abstractmethod
+    async def get_item_rubric_criteria_json(self, item_id: str) -> str | None:
         pass
 
     @abstractmethod
@@ -250,6 +262,7 @@ class AssessmentRepositoryInterface(ABC):
         self,
         course_id: str = "",
         item_id: str = "",
+        instructor_id: str = "",
     ) -> list[dict[str, Any]]:
         """Lists grading queue items for peer assignments across course or specific item."""
 

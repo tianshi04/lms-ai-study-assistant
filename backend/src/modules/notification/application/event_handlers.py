@@ -2,6 +2,7 @@ import logging
 
 from src.modules.assessment.domain import (
     LabSubmittedDomainEvent,
+    PeerAssignmentGradedDomainEvent,
     PeerReviewSubmittedDomainEvent,
     QuizSubmittedDomainEvent,
 )
@@ -55,6 +56,27 @@ async def handle_lab_submitted(event: LabSubmittedDomainEvent) -> None:
         category=NotificationCategory.ACADEMIC,
         title=f"Kết quả bài thực hành Lab: {status_str}",
         content=f"Bạn đã vượt qua {event.test_cases_passed}/{event.total_test_cases} test cases.",
+        action_url=action_url,
+    )
+
+
+async def handle_peer_assignment_graded(
+    event: PeerAssignmentGradedDomainEvent,
+) -> None:
+    if not event.user_id:
+        return
+    status_str = "ĐẠT" if event.passed else "CHƯA ĐẠT"
+    action_url = (
+        f"/learn/{event.course_id}?itemId={event.item_id}"
+        if event.course_id and event.item_id
+        else ""
+    )
+    notif_uc = NotificationUseCase()
+    await notif_uc.send_notification(
+        recipient_id=event.user_id,
+        category=NotificationCategory.ACADEMIC,
+        title=f"Bài tập đã được chấm điểm: {event.final_score:.1f}/100 ({status_str})",
+        content=f"Giảng viên/Trợ giảng đã hoàn tất chấm điểm bài nộp của bạn với kết quả {event.final_score:.1f}/100.",
         action_url=action_url,
     )
 
@@ -230,6 +252,7 @@ def register_notification_event_handlers() -> None:
     EventBus.subscribe(QuizSubmittedDomainEvent, handle_quiz_submitted)
     EventBus.subscribe(LabSubmittedDomainEvent, handle_lab_submitted)
     EventBus.subscribe(PeerReviewSubmittedDomainEvent, handle_peer_review_submitted)
+    EventBus.subscribe(PeerAssignmentGradedDomainEvent, handle_peer_assignment_graded)
     EventBus.subscribe(
         CourseAnnouncementCreatedDomainEvent, handle_course_announcement_created
     )
