@@ -976,9 +976,12 @@ class CatalogHandler(CatalogService):
         ],
     ) -> pb.SendStudentReminderResponse:
         user = self._verify_instructor_permission()
+        course_id = request.course_id.strip() if request.course_id else ""
+        if not course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
         try:
             sent_count = await self.use_case.send_student_reminder(
-                course_id=request.course_id,
+                course_id=course_id,
                 student_ids=list(request.student_ids),
                 title=request.title,
                 content=request.content,
