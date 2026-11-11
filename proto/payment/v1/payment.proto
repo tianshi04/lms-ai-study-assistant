@@ -180,4 +180,15 @@ service PaymentService {
   rpc CancelVNPayOrder(CancelVNPayOrderRequest) returns (CancelVNPayOrderResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetAdminPaymentStats(GetAdminPaymentStatsRequest) returns (GetAdminPaymentStatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}
+
+message GetAdminPaymentStatsRequest {}
+
+message GetAdminPaymentStatsResponse {
+  double total_revenue = 1;
+  int32 course_purchase_count = 2;
+  int32 active_subscriptions = 3;
 }

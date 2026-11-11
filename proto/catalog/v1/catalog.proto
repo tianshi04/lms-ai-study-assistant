@@ -742,6 +742,15 @@ service CatalogService {
   rpc ListMyBookmarkedCourses(ListMyBookmarkedCoursesRequest) returns (ListMyBookmarkedCoursesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetAdminCatalogStats(GetAdminCatalogStatsRequest) returns (GetAdminCatalogStatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListAdminCourseMetrics(ListAdminCourseMetricsRequest) returns (ListAdminCourseMetricsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc AcknowledgeLowReview(AcknowledgeLowReviewRequest) returns (AcknowledgeLowReviewResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message ParseScormPackageRequest {
@@ -902,4 +911,67 @@ message ListMyBookmarkedCoursesRequest {}
 
 message ListMyBookmarkedCoursesResponse {
   repeated CourseBookmark bookmarks = 1;
+}
+
+message AdminLowReviewAlert {
+  string review_id = 1;
+  string course_id = 2;
+  string course_title = 3;
+  string user_name = 4;
+  int32 rating_stars = 5;
+  string comment_text = 6;
+  string created_at = 7;
+}
+
+message GetAdminCatalogStatsRequest {}
+
+message GetAdminCatalogStatsResponse {
+  int32 total_courses = 1;
+  int32 published_courses = 2;
+  int32 pending_review_courses = 3;
+  int32 draft_courses = 4;
+  int32 rejected_courses = 5;
+  int32 category_count = 6;
+  int32 total_reviews = 7;
+  double average_rating = 8;
+  // Review counts for 1..5 stars; index 0 is 1 star, index 4 is 5 stars.
+  repeated int32 rating_distribution = 9;
+  // Most recent unacknowledged low-rating reviews, capped by the server.
+  repeated AdminLowReviewAlert low_reviews = 10;
+  int32 low_review_total = 11;
+}
+
+message AdminCourseQualityMetric {
+  string course_id = 1;
+  string title = 2;
+  string partner_name = 3;
+  CourseStatus status = 4;
+  int32 enrolled_count = 5;
+  int32 completed_count = 6;
+  double average_rating = 7;
+  int32 review_count = 8;
+  double revenue = 9;
+}
+
+message ListAdminCourseMetricsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string search_query = 3;
+  CourseStatus status = 4;
+}
+
+message ListAdminCourseMetricsResponse {
+  repeated AdminCourseQualityMetric courses = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message AcknowledgeLowReviewRequest {
+  string review_id = 1;
+}
+
+message AcknowledgeLowReviewResponse {
+  bool success = 1;
+  string message = 2;
 }

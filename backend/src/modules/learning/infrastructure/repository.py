@@ -1,6 +1,6 @@
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import select, update
+from sqlalchemy import case, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -8,8 +8,10 @@ from uuid6 import uuid7
 
 from src.modules.catalog.infrastructure.models import WeekModuleModel
 from src.modules.learning.domain import (
+    COURSE_COMPLETION_PERCENT,
     DEFAULT_COHORT_EXTENSION_DAYS,
     MIN_DAILY_STUDY_SECONDS_FOR_STREAK,
+    AdminLearningStats,
     DailyStudyRecord,
     DeadlineStatus,
     EnrolledCourseSummary,
@@ -578,3 +580,59 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             )
 
         return streak, today_seconds, recent_days
+
+    async def get_admin_enrollment_stats(
+        self, valid_course_ids: list[str]
+    ) -> AdminLearningStats:
+        if not valid_course_ids:
+            return AdminLearningStats(total_enrollments=0, completed_enrollments=0)
+        stmt = select(
+            func.count(LearningProgressModel.id).label("total_enrollments"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            LearningProgressModel.overall_progress_percent
+                            >= COURSE_COMPLETION_PERCENT,
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("completed_enrollments"),
+        ).where(LearningProgressModel.course_id.in_(valid_course_ids))
+        row = (await self.session.execute(stmt)).one()
+        return AdminLearningStats(
+            total_enrollments=int(row.total_enrollments),
+            completed_enrollments=int(row.completed_enrollments),
+        )
+
+    async def get_course_enrollment_counts(
+        self, course_ids: list[str]
+    ) -> dict[str, tuple[int, int]]:
+        if not course_ids:
+            return {}
+        stmt = (
+            select(
+                LearningProgressModel.course_id,
+                func.count(LearningProgressModel.id).label("enrolled"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (
+                                LearningProgressModel.overall_progress_percent
+                                >= COURSE_COMPLETION_PERCENT,
+                                1,
+                            ),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ).label("completed"),
+            )
+            .where(LearningProgressModel.course_id.in_(course_ids))
+            .group_by(LearningProgressModel.course_id)
+        )
+        rows = (await self.session.execute(stmt)).all()
+        return {str(r.course_id): (int(r.enrolled), int(r.completed)) for r in rows}

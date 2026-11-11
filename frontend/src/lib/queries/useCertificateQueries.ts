@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -7,7 +8,64 @@ import {
 } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
+import {
+  CertificateService,
+  type AdminCertificateStatusFilter,
+  type GetAdminCertificateStatsResponse,
+  type ListAdminCertificatesResponse,
+  type VerifiedCertificate,
+} from "@/gen/certificate/v1/certificate_pb";
+
+/**
+ * Super Admin certificate and financial-aid KPIs owned by the Certificate bounded context.
+ */
+export function useAdminCertificateStatsQuery(
+  options?: Partial<UseQueryOptions<GetAdminCertificateStatsResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminCertificateStatsResponse, Error>({
+    queryKey: ["adminCertificateStats"],
+    queryFn: async () => {
+      const client = getRpcClient(CertificateService);
+      return client.getAdminCertificateStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
+
+export interface AdminCertificatesParams {
+  /** 1-based page number. */
+  page: number;
+  pageSize: number;
+  searchQuery: string;
+  status: AdminCertificateStatusFilter;
+}
+
+/**
+ * Paginated certificates for the Super Admin dashboard (valid first, then revoked),
+ * with optional search (id / learner / course) and valid-or-revoked filter.
+ * The previous page stays on screen while the next one loads.
+ */
+export function useAdminCertificatesQuery({
+  page,
+  pageSize,
+  searchQuery,
+  status,
+}: AdminCertificatesParams) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<ListAdminCertificatesResponse, Error>({
+    queryKey: ["adminCertificates", page, pageSize, searchQuery, status],
+    queryFn: async () => {
+      const client = getRpcClient(CertificateService);
+      return client.listAdminCertificates({ page, pageSize, searchQuery, status });
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    enabled: isAuthenticated && isSuperAdmin,
+  });
+}
 
 export function useCertificateVerificationQuery(
   certificateId: string,
@@ -72,7 +130,7 @@ export function useRevokeCertificateMutation(
     },
     ...options,
     onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ["adminDashboardStats"] });
+      queryClient.invalidateQueries({ queryKey: ["adminCertificateStats"] });
       queryClient.invalidateQueries({ queryKey: ["adminCertificates"] });
       queryClient.invalidateQueries({ queryKey: ["certificate", variables.certificateId] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);

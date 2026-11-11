@@ -205,3 +205,15 @@ class Invitation:
     expires_at: str = ""
     created_at: str = ""
     responded_at: str = ""
+
+
+@dataclass
+class AdminIdentityStats:
+    """Platform-wide user & instructor application counters owned by Identity."""
+
+    total_users: int = 0
+    learner_count: int = 0
+    instructor_count: int = 0
+    admin_count: int = 0
+    verified_user_count: int = 0
+    pending_instructor_applications: int = 0

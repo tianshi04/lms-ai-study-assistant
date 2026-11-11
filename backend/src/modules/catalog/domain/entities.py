@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from src.shared.domain import ADMIN_PAGE_SIZE_DEFAULT
 from src.shared.domain.base import Entity, ValueObject
 
 
@@ -381,3 +382,60 @@ class UserSearchHistory(Entity):
     filters_json: str
     result_count: int
     created_at: str
+
+
+@dataclass(frozen=True)
+class AdminLowReviewAlert(ValueObject):
+    review_id: str
+    course_id: str
+    course_title: str
+    user_name: str
+    rating_stars: int
+    comment_text: str = ""
+    created_at: str = ""
+
+
+@dataclass(frozen=True)
+class AdminCatalogStats(ValueObject):
+    total_courses: int = 0
+    published_courses: int = 0
+    pending_review_courses: int = 0
+    draft_courses: int = 0
+    rejected_courses: int = 0
+    category_count: int = 0
+    total_reviews: int = 0
+    average_rating: float = 0.0
+    rating_distribution: tuple[int, ...] = (0, 0, 0, 0, 0)
+    low_reviews: tuple[AdminLowReviewAlert, ...] = ()
+    low_review_total: int = 0
+
+
+@dataclass(frozen=True)
+class AdminCourseSummaryRow(ValueObject):
+    course_id: str
+    title: str
+    partner_name: str
+    status: CourseStatus
+    average_rating: float = 0.0
+    review_count: int = 0
+
+
+@dataclass(frozen=True)
+class AdminCourseQualityMetric(ValueObject):
+    course_id: str
+    title: str
+    partner_name: str
+    status: CourseStatus
+    enrolled_count: int = 0
+    completed_count: int = 0
+    average_rating: float = 0.0
+    review_count: int = 0
+    revenue: float = 0.0
+
+
+@dataclass(frozen=True)
+class AdminCourseMetricsPage(ValueObject):
+    courses: tuple[AdminCourseQualityMetric, ...] = ()
+    total_count: int = 0
+    page: int = 1
+    page_size: int = ADMIN_PAGE_SIZE_DEFAULT

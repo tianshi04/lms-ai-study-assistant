@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 
+from src.modules.assessment.domain.constants import ADMIN_ASSESSMENT_ALERT_LIMIT
 from src.modules.assessment.domain.entities import (
+    AdminAssessmentAlert,
     GradeAppeal,
     HonorCodeAgreement,
     LabSubmission,
@@ -216,3 +218,9 @@ class AssessmentRepositoryInterface(ABC):
     @abstractmethod
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         pass
+
+    @abstractmethod
+    async def list_admin_assessment_alerts(
+        self, limit: int = ADMIN_ASSESSMENT_ALERT_LIMIT
+    ) -> tuple[list[AdminAssessmentAlert], int]:
+        """Return ``(recent_alerts_without_user_names, total_unresolved_count)``."""

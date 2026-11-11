@@ -9,6 +9,8 @@ from uuid6 import uuid7
 from src.modules.certificate.domain import (
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
     MIN_FINANCIAL_AID_ESSAY_WORDS,
+    AdminCertificatesPage,
+    AdminCertificateStats,
     CertificateIssuedDomainEvent,
     FinancialAidApplication,
     FinancialAidReviewedDomainEvent,
@@ -19,6 +21,12 @@ from src.modules.certificate.domain import (
 )
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.shared.auth import CurrentUser
+from src.shared.domain import (
+    ADMIN_PAGE_SIZE_DEFAULT,
+    ADMIN_REQUIRED_MESSAGE,
+    normalize_admin_paging,
+    normalize_admin_search,
+)
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
 
@@ -466,3 +474,33 @@ class CertificateUseCase:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.get_certificates_by_user(user_id)
+
+    async def get_admin_certificate_stats(
+        self, current_user: CurrentUser
+    ) -> AdminCertificateStats:
+        if not current_user.is_admin:
+            raise PermissionError(ADMIN_REQUIRED_MESSAGE)
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            return await repo.get_admin_certificate_stats()
+
+    async def list_admin_certificates(
+        self,
+        current_user: CurrentUser,
+        page: int = 1,
+        page_size: int = ADMIN_PAGE_SIZE_DEFAULT,
+        search_query: str = "",
+        is_revoked: bool | None = None,
+    ) -> AdminCertificatesPage:
+        if not current_user.is_admin:
+            raise PermissionError(ADMIN_REQUIRED_MESSAGE)
+        effective_page, effective_page_size = normalize_admin_paging(page, page_size)
+        normalized_search = normalize_admin_search(search_query)
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            return await repo.list_admin_certificates(
+                effective_page,
+                effective_page_size,
+                normalized_search,
+                is_revoked,
+            )

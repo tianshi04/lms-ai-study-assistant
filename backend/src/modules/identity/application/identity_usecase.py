@@ -3,9 +3,8 @@ from typing import Any
 
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.identity.domain import (
-    AdminCertificatesPage,
-    AdminCourseMetricsPage,
-    AdminDashboardStats,
+    AdminIdentityStats,
+    IIdentityRepository,
     InstructorApplication,
     User,
 )
@@ -14,7 +13,6 @@ from src.shared.auth import (
     CurrentUser,
 )
 
-from .admin_dashboard_usecase import AdminDashboardUseCase
 from .auth_usecase import AuthUseCase, hash_password, validate_password, verify_password
 from .enterprise_usecase import EnterpriseLicenseUseCase
 from .invitation_usecase import InvitationUseCase
@@ -24,7 +22,6 @@ from .submit_application_usecase import SubmitInstructorApplicationUseCase
 from .user_profile_usecase import UserProfileUseCase
 
 __all__ = [
-    "AdminDashboardUseCase",
     "AuthUseCase",
     "EnterpriseLicenseUseCase",
     "IdentityUseCase",
@@ -46,15 +43,15 @@ class IdentityUseCase:
         self,
         learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
         catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
+        repo_factory: Callable[[Any], IIdentityRepository] | None = None,
     ) -> None:
         self.auth = AuthUseCase()
-        self.user_profile = UserProfileUseCase()
+        self.user_profile = UserProfileUseCase(repo_factory=repo_factory)
         self.organization = OrganizationUseCase()
         self.enterprise = EnterpriseLicenseUseCase(
             learning_repo_factory=learning_repo_factory
         )
         self.invitation = InvitationUseCase(catalog_repo_factory=catalog_repo_factory)
-        self.admin_dashboard = AdminDashboardUseCase()
         self.learning_repo_factory = self.enterprise.learning_repo_factory
         self.catalog_repo_factory = self.invitation.catalog_repo_factory
 
@@ -196,43 +193,10 @@ class IdentityUseCase:
             current_user=current_user,
         )
 
-    # -------------------------------------------------------------------------
-    # Admin Dashboard (AdminDashboardUseCase)
-    # -------------------------------------------------------------------------
-
-    async def get_admin_dashboard_stats(
+    async def get_admin_identity_stats(
         self, current_user: CurrentUser
-    ) -> AdminDashboardStats:
-        return await self.admin_dashboard.get_dashboard_stats(current_user)
-
-    async def list_admin_course_metrics(
-        self,
-        current_user: CurrentUser,
-        page: int = 1,
-        page_size: int = 0,
-        search_query: str = "",
-        status: str | None = None,
-    ) -> AdminCourseMetricsPage:
-        return await self.admin_dashboard.list_course_metrics(
-            current_user, page, page_size, search_query, status
-        )
-
-    async def list_admin_certificates(
-        self,
-        current_user: CurrentUser,
-        page: int = 1,
-        page_size: int = 0,
-        search_query: str = "",
-        is_revoked: bool | None = None,
-    ) -> AdminCertificatesPage:
-        return await self.admin_dashboard.list_certificates(
-            current_user, page, page_size, search_query, is_revoked
-        )
-
-    async def acknowledge_low_review(
-        self, current_user: CurrentUser, review_id: str
-    ) -> None:
-        await self.admin_dashboard.acknowledge_low_review(current_user, review_id)
+    ) -> AdminIdentityStats:
+        return await self.user_profile.get_admin_identity_stats(current_user)
 
     # -------------------------------------------------------------------------
     # Organization Management (OrganizationUseCase)

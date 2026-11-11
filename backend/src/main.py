@@ -26,14 +26,17 @@ from src.gen.payment.v1.payment_connect import PaymentServiceASGIApplication
 from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
 from src.modules.catalog.application import CatalogUseCase
+from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.catalog.presentation.catalog_handler import CatalogHandler
 from src.modules.certificate.application import CertificateUseCase
 from src.modules.certificate.presentation.certificate_handler import CertificateHandler
 from src.modules.forum.application import ForumUseCase
 from src.modules.forum.presentation.forum_handler import ForumHandler
 from src.modules.identity.application import IdentityUseCase
+from src.modules.identity.infrastructure.repository import IdentityRepository
 from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application import LearningUseCase
+from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.modules.learning.presentation.learning_handler import LearningHandler
 from src.modules.notification.application import (
     NotificationUseCase,
@@ -44,6 +47,7 @@ from src.modules.notification.presentation.notification_handler import (
 from src.modules.partner.application import PartnerUseCase
 from src.modules.partner.presentation.partner_handler import PartnerHandler
 from src.modules.payment.application import PaymentUseCase
+from src.modules.payment.infrastructure.repository import PaymentRepository
 from src.modules.payment.presentation.payment_handler import PaymentHandler
 from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
@@ -118,17 +122,26 @@ otel_interceptor = OpenTelemetryInterceptor()
 interceptors = [error_interceptor, auth_interceptor, otel_interceptor]
 
 
-catalog_usecase = CatalogUseCase()
+catalog_usecase = CatalogUseCase(
+    learning_repo_factory=SQLAlchemyLearningRepository,
+    identity_repo_factory=IdentityRepository,
+    payment_repo_factory=PaymentRepository,
+)
 catalog_handler = CatalogHandler(use_case=catalog_usecase)
 catalog_app = CatalogServiceASGIApplication(catalog_handler, interceptors=interceptors)
 
-learning_usecase = LearningUseCase()
+learning_usecase = LearningUseCase(
+    catalog_repo_factory=SQLAlchemyCatalogRepository,
+)
 learning_handler = LearningHandler(use_case=learning_usecase)
 learning_app = LearningServiceASGIApplication(
     learning_handler, interceptors=interceptors
 )
 
-identity_usecase = IdentityUseCase()
+identity_usecase = IdentityUseCase(
+    learning_repo_factory=SQLAlchemyLearningRepository,
+    catalog_repo_factory=SQLAlchemyCatalogRepository,
+)
 identity_handler = IdentityHandler(use_case=identity_usecase)
 identity_app = IdentityServiceASGIApplication(
     identity_handler, interceptors=interceptors
@@ -140,7 +153,9 @@ certificate_app = CertificateServiceASGIApplication(
     certificate_handler, interceptors=interceptors
 )
 
-assessment_usecase = AssessmentUseCase()
+assessment_usecase = AssessmentUseCase(
+    identity_repo_factory=IdentityRepository,
+)
 assessment_handler = AssessmentHandler(use_case=assessment_usecase)
 assessment_app = AssessmentServiceASGIApplication(
     assessment_handler, interceptors=interceptors

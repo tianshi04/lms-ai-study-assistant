@@ -333,181 +333,15 @@ message CompleteResetPasswordResponse {
   User user = 3;
 }
 
-message GetAdminDashboardStatsRequest {}
+message GetAdminIdentityStatsRequest {}
 
-message AdminOverviewMetrics {
-  // Users
+message GetAdminIdentityStatsResponse {
   int32 total_users = 1;
   int32 learner_count = 2;
   int32 instructor_count = 3;
   int32 admin_count = 4;
   int32 verified_user_count = 5;
-
-  // Courses
-  int32 total_courses = 6;
-  int32 published_courses = 7;
-  int32 pending_review_courses = 8;
-  int32 draft_courses = 9;
-  int32 rejected_courses = 10;
-
-  // Learning
-  int32 total_enrollments = 11;
-  int32 completed_enrollments = 12;
-
-  // Satisfaction (CSAT)
-  int32 total_reviews = 13;
-  double average_rating = 14;
-  // Review counts for 1..5 stars; index 0 is 1 star, index 4 is 5 stars.
-  repeated int32 rating_distribution = 15;
-
-  // Revenue (VND): completed course purchases + completed subscription orders.
-  double total_revenue = 16;
-  int32 course_purchase_count = 17;
-  int32 active_subscriptions = 18;
-
-  // Certificates and financial aid
-  int32 certificates_issued = 19;
-  int32 certificates_revoked = 20;
-  int32 approved_financial_aids = 21;
-
-  // Admin work queues
-  int32 pending_instructor_applications = 22;
-  int32 pending_financial_aids = 23;
-
-  // Catalog and partners
-  int32 partner_count = 24;
-  int32 category_count = 25;
-}
-
-message AdminCourseQualityMetric {
-  string course_id = 1;
-  string title = 2;
-  string partner_name = 3;
-  // Course lifecycle status name: DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED.
-  string status = 4;
-  int32 enrolled_count = 5;
-  int32 completed_count = 6;
-  double average_rating = 7;
-  int32 review_count = 8;
-  double revenue = 9;
-}
-
-message AdminLowReviewAlert {
-  string review_id = 1;
-  string course_title = 2;
-  string user_name = 3;
-  int32 rating_stars = 4;
-  string comment_text = 5;
-  string created_at = 6;
-  string course_id = 7;
-}
-
-enum AdminAssessmentAlertKind {
-  ADMIN_ASSESSMENT_ALERT_KIND_UNSPECIFIED = 0;
-  ADMIN_ASSESSMENT_ALERT_KIND_GRADE_APPEAL = 1;
-  ADMIN_ASSESSMENT_ALERT_KIND_REPORTED_PEER_REVIEW = 2;
-  ADMIN_ASSESSMENT_ALERT_KIND_OUTLIER_PEER_REVIEW = 3;
-}
-
-message AdminAssessmentAlert {
-  string alert_id = 1;
-  AdminAssessmentAlertKind kind = 2;
-  string submission_id = 3;
-  string user_id = 4;
-  string user_name = 5;
-  // Appeal or report reason. Empty for outlier peer reviews.
-  string reason = 6;
-  // Peer review score percent. Only set for outlier peer reviews.
-  double total_score = 7;
-  string created_at = 8;
-}
-
-message AdminCertificateSummary {
-  string certificate_id = 1;
-  string learner_name = 2;
-  string course_title = 3;
-  string partner_name = 4;
-  string issue_date = 5;
-  bool is_revoked = 6;
-  string revoked_reason = 7;
-}
-
-message GetAdminDashboardStatsResponse {
-  AdminOverviewMetrics overview = 1;
-  // Most recent low-rating reviews, capped by the server.
-  repeated AdminLowReviewAlert low_reviews = 2;
-  // Most recent assessment alerts, capped by the server.
-  repeated AdminAssessmentAlert assessment_alerts = 3;
-  // Total number of low-rating reviews, including those not returned above.
-  int32 low_review_total = 4;
-  // Total number of open assessment alerts, including those not returned above.
-  int32 assessment_alert_total = 5;
-}
-
-enum AdminCourseStatusFilter {
-  ADMIN_COURSE_STATUS_FILTER_UNSPECIFIED = 0;
-  ADMIN_COURSE_STATUS_FILTER_DRAFT = 1;
-  ADMIN_COURSE_STATUS_FILTER_PENDING_REVIEW = 2;
-  ADMIN_COURSE_STATUS_FILTER_PUBLISHED = 3;
-  ADMIN_COURSE_STATUS_FILTER_REJECTED = 4;
-}
-
-enum AdminCertificateStatusFilter {
-  ADMIN_CERTIFICATE_STATUS_FILTER_UNSPECIFIED = 0;
-  ADMIN_CERTIFICATE_STATUS_FILTER_VALID = 1;
-  ADMIN_CERTIFICATE_STATUS_FILTER_REVOKED = 2;
-}
-
-message ListAdminCourseMetricsRequest {
-  // 1-based page number. Values below 1 are treated as the first page.
-  int32 page = 1;
-  // Rows per page. Defaults to 10 when unset and is capped at 50.
-  int32 page_size = 2;
-  // Case-insensitive match on course title or partner name. Empty means no search.
-  string search_query = 3;
-  // Restricts the list to one lifecycle status. UNSPECIFIED means all statuses.
-  AdminCourseStatusFilter status = 4;
-}
-
-message ListAdminCourseMetricsResponse {
-  // Sorted by revenue (highest first), then enrollments, then title.
-  repeated AdminCourseQualityMetric courses = 1;
-  // Total number of courses across all pages.
-  int32 total_count = 2;
-  // Effective page number and page size applied by the server.
-  int32 page = 3;
-  int32 page_size = 4;
-}
-
-message ListAdminCertificatesRequest {
-  // 1-based page number. Values below 1 are treated as the first page.
-  int32 page = 1;
-  // Rows per page. Defaults to 10 when unset and is capped at 50.
-  int32 page_size = 2;
-  // Case-insensitive match on certificate id, learner name or course title.
-  // Empty means no search.
-  string search_query = 3;
-  // Restricts the list to valid or revoked certificates. UNSPECIFIED means both.
-  AdminCertificateStatusFilter status = 4;
-}
-
-message ListAdminCertificatesResponse {
-  // Valid certificates first, then revoked ones, each group ordered by certificate id.
-  repeated AdminCertificateSummary certificates = 1;
-  // Total number of certificates across all pages.
-  int32 total_count = 2;
-  // Effective page number and page size applied by the server.
-  int32 page = 3;
-  int32 page_size = 4;
-}
-
-message AcknowledgeLowReviewRequest {
-  string review_id = 1;
-}
-
-message AcknowledgeLowReviewResponse {
-  bool success = 1;
-  string message = 2;
+  int32 pending_instructor_applications = 6;
 }
 
 service IdentityService {
@@ -568,16 +402,7 @@ service IdentityService {
   rpc ReviewInstructorApplication(ReviewInstructorApplicationRequest) returns (ReviewInstructorApplicationResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
-  rpc GetAdminDashboardStats(GetAdminDashboardStatsRequest) returns (GetAdminDashboardStatsResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
-  }
-  rpc ListAdminCourseMetrics(ListAdminCourseMetricsRequest) returns (ListAdminCourseMetricsResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
-  }
-  rpc ListAdminCertificates(ListAdminCertificatesRequest) returns (ListAdminCertificatesResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
-  }
-  rpc AcknowledgeLowReview(AcknowledgeLowReviewRequest) returns (AcknowledgeLowReviewResponse) {
+  rpc GetAdminIdentityStats(GetAdminIdentityStatsRequest) returns (GetAdminIdentityStatsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc AddOrganizationMember(AddOrganizationMemberRequest) returns (AddOrganizationMemberResponse) {

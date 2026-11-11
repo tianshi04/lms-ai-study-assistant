@@ -141,6 +141,14 @@ class DailyStudyRecord(ValueObject):
     is_streak_qualified: bool
 
 
+@dataclass(frozen=True)
+class AdminLearningStats(ValueObject):
+    """Scoped platform-wide enrollment & completion counters for the Admin Dashboard."""
+
+    total_enrollments: int = 0
+    completed_enrollments: int = 0
+
+
 class UserLearningStreak(Entity):
     def __init__(
         self,

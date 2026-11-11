@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from typing import Any
 
 from src.modules.assessment.domain.constants import (
@@ -413,3 +414,31 @@ def calculate_topic_mastery(
             )
         )
     return result
+
+
+class AdminAssessmentAlertKind(StrEnum):
+    GRADE_APPEAL = "GRADE_APPEAL"
+    REPORTED_PEER_REVIEW = "REPORTED_PEER_REVIEW"
+    OUTLIER_PEER_REVIEW = "OUTLIER_PEER_REVIEW"
+
+
+@dataclass(frozen=True)
+class AdminAssessmentAlert(ValueObject):
+    """Unresolved grade appeal, reported peer review, or ungraded outlier review."""
+
+    alert_id: str
+    kind: AdminAssessmentAlertKind
+    submission_id: str
+    user_id: str
+    user_name: str = ""
+    reason: str = ""
+    total_score: float = 0.0
+    created_at: str = ""
+
+
+@dataclass(frozen=True)
+class AdminAssessmentAlertsPage(ValueObject):
+    """Recent unresolved assessment quality alerts plus true un-truncated total."""
+
+    alerts: tuple[AdminAssessmentAlert, ...] = ()
+    total_count: int = 0

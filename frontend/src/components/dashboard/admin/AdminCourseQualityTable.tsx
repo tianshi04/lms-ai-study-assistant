@@ -3,41 +3,39 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
-import {
-  AdminCourseStatusFilter,
-  type AdminCourseQualityMetric,
-} from "@/gen/identity/v1/identity_pb";
+import { CourseStatus, type AdminCourseQualityMetric } from "@/gen/catalog/v1/catalog_pb";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
-import { useAdminCourseMetricsQuery } from "@/lib/queries/useIdentityQueries";
+import { useAdminCourseMetricsQuery } from "@/lib/queries/useCatalogQueries";
 import { AdminDataTable } from "./AdminDataTable";
 import { AdminPagination } from "./AdminPagination";
 import { AdminSection, EmptyState } from "./AdminSection";
 import { AdminTableFilters, type FilterOption } from "./AdminTableFilters";
 import { formatNumber, formatPercent, formatVnd, toPercent } from "./formatters";
 import { PagedQueryStatus } from "./PagedQueryStatus";
-import { StatusBadge, type StatusBadgeTone } from "./StatusBadge";
 import { useAdminTableState } from "./useAdminTableState";
 
 const PAGE_SIZE = 10;
 const NO_COURSES: AdminCourseQualityMetric[] = [];
 
-const COURSE_STATUS: Record<string, { label: string; tone: StatusBadgeTone }> = {
-  PUBLISHED: { label: "Đã xuất bản", tone: "success" },
-  PENDING_REVIEW: { label: "Chờ duyệt", tone: "warning" },
-  DRAFT: { label: "Bản nháp", tone: "muted" },
-  REJECTED: { label: "Bị từ chối", tone: "destructive" },
+type CourseStatusBadgeVariant = "success" | "warning" | "muted" | "destructive";
+
+const COURSE_STATUS: Partial<
+  Record<CourseStatus, { label: string; variant: CourseStatusBadgeVariant }>
+> = {
+  [CourseStatus.PUBLISHED]: { label: "Đã xuất bản", variant: "success" },
+  [CourseStatus.PENDING_REVIEW]: { label: "Chờ duyệt", variant: "warning" },
+  [CourseStatus.DRAFT]: { label: "Bản nháp", variant: "muted" },
+  [CourseStatus.REJECTED]: { label: "Bị từ chối", variant: "destructive" },
 };
 
 const STATUS_OPTIONS: FilterOption[] = [
-  { value: String(AdminCourseStatusFilter.UNSPECIFIED), label: "Tất cả trạng thái" },
-  { value: String(AdminCourseStatusFilter.PUBLISHED), label: COURSE_STATUS.PUBLISHED.label },
-  {
-    value: String(AdminCourseStatusFilter.PENDING_REVIEW),
-    label: COURSE_STATUS.PENDING_REVIEW.label,
-  },
-  { value: String(AdminCourseStatusFilter.DRAFT), label: COURSE_STATUS.DRAFT.label },
-  { value: String(AdminCourseStatusFilter.REJECTED), label: COURSE_STATUS.REJECTED.label },
+  { value: String(CourseStatus.UNSPECIFIED), label: "Tất cả trạng thái" },
+  { value: String(CourseStatus.PUBLISHED), label: "Đã xuất bản" },
+  { value: String(CourseStatus.PENDING_REVIEW), label: "Chờ duyệt" },
+  { value: String(CourseStatus.DRAFT), label: "Bản nháp" },
+  { value: String(CourseStatus.REJECTED), label: "Bị từ chối" },
 ];
 
 const COLUMN_CLASS_NAMES = {
@@ -48,9 +46,16 @@ const COLUMN_CLASS_NAMES = {
   actions: { head: "text-right", cell: "text-right" },
 };
 
-function CourseStatusBadge({ status }: { status: string }) {
-  const { label, tone } = COURSE_STATUS[status] ?? { label: status, tone: "muted" };
-  return <StatusBadge tone={tone}>{label}</StatusBadge>;
+function CourseStatusBadge({ status }: { status: CourseStatus }) {
+  const { label, variant } = COURSE_STATUS[status] ?? {
+    label: "Không xác định",
+    variant: "muted" as const,
+  };
+  return (
+    <Badge size="pill" variant={variant}>
+      {label}
+    </Badge>
+  );
 }
 
 function CompletionProgressCell({
@@ -147,7 +152,7 @@ const columns: ColumnDef<AdminCourseQualityMetric>[] = [
         >
           Xem
         </Button>
-        {row.original.status === "PENDING_REVIEW" && (
+        {row.original.status === CourseStatus.PENDING_REVIEW && (
           <Button size="sm" variant="tonal" render={<Link href="/admin/courses/review" />}>
             Kiểm duyệt
           </Button>
@@ -203,8 +208,6 @@ export function AdminCourseQualityTable() {
       />
 
       <PagedQueryStatus
-        isLoading={false}
-        loadingLabel="Đang tải danh sách khóa học…"
         isError={isError}
         errorLabel="Không thể tải danh sách khóa học"
         errorMessage={error?.message}

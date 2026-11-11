@@ -1,5 +1,7 @@
 """ConnectRPC Presentation Handler for PaymentService."""
 
+from connectrpc.code import Code
+from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
 from src.gen.payment.v1 import payment_pb as pb
@@ -345,4 +347,22 @@ class PaymentHandler(PaymentService):
         return pb.CancelVNPayOrderResponse(
             success=success,
             message=msg,
+        )
+
+    async def get_admin_payment_stats(
+        self,
+        request: pb.GetAdminPaymentStatsRequest,
+        ctx: RequestContext[
+            pb.GetAdminPaymentStatsRequest, pb.GetAdminPaymentStatsResponse
+        ],
+    ) -> pb.GetAdminPaymentStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self._use_case.get_admin_payment_stats(current_user)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminPaymentStatsResponse(
+            total_revenue=stats.total_revenue,
+            course_purchase_count=stats.course_purchase_count,
+            active_subscriptions=stats.active_subscriptions,
         )

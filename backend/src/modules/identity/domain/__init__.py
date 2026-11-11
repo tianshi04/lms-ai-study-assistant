@@ -1,20 +1,4 @@
-from .admin_dashboard import (
-    AdminAssessmentAlert,
-    AdminAssessmentAlertKind,
-    AdminCertificatesPage,
-    AdminCertificateSummary,
-    AdminCourseMetricsPage,
-    AdminCourseQualityMetric,
-    AdminDashboardStats,
-    AdminLowReviewAlert,
-    AdminOverviewMetrics,
-)
 from .constants import (
-    ADMIN_DASHBOARD_ALERT_LIMIT,
-    ADMIN_DASHBOARD_LOW_RATING_MAX_STARS,
-    ADMIN_DASHBOARD_PAGE_SIZE_DEFAULT,
-    ADMIN_DASHBOARD_PAGE_SIZE_MAX,
-    ADMIN_DASHBOARD_SEARCH_MAX_LENGTH,
     DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
     DEFAULT_INVITATION_EXPIRATION_DAYS,
     DEFAULT_PBKDF2_ITERATIONS,
@@ -30,6 +14,7 @@ from .constants import (
     PASSWORD_MIN_LENGTH,
 )
 from .entities import (
+    AdminIdentityStats,
     ApplicationStatus,
     EnterpriseLicense,
     InstructorApplication,
@@ -54,7 +39,6 @@ from .events import (
     UserRegisteredDomainEvent,
 )
 from .repositories import (
-    IAdminDashboardRepository,
     IEnterpriseLicenseRepository,
     IIdentityRepository,
     IInstructorApplicationRepository,
@@ -63,11 +47,6 @@ from .repositories import (
 )
 
 __all__ = [
-    "ADMIN_DASHBOARD_ALERT_LIMIT",
-    "ADMIN_DASHBOARD_LOW_RATING_MAX_STARS",
-    "ADMIN_DASHBOARD_PAGE_SIZE_DEFAULT",
-    "ADMIN_DASHBOARD_PAGE_SIZE_MAX",
-    "ADMIN_DASHBOARD_SEARCH_MAX_LENGTH",
     "DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS",
     "DEFAULT_INVITATION_EXPIRATION_DAYS",
     "DEFAULT_PBKDF2_ITERATIONS",
@@ -81,19 +60,10 @@ __all__ = [
     "LOGIN_LOCKOUT_SECONDS",
     "LOGIN_MAX_ATTEMPTS",
     "PASSWORD_MIN_LENGTH",
-    "AdminAssessmentAlert",
-    "AdminAssessmentAlertKind",
-    "AdminCertificateSummary",
-    "AdminCertificatesPage",
-    "AdminCourseMetricsPage",
-    "AdminCourseQualityMetric",
-    "AdminDashboardStats",
-    "AdminLowReviewAlert",
-    "AdminOverviewMetrics",
+    "AdminIdentityStats",
     "ApplicationStatus",
     "EnterpriseLicense",
     "EnterpriseSeatAssignedDomainEvent",
-    "IAdminDashboardRepository",
     "IEnterpriseLicenseRepository",
     "IIdentityRepository",
     "IInstructorApplicationRepository",

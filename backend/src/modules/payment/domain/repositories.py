@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 
 from src.modules.payment.domain.entities import (
+    AdminPaymentStats,
     CoursePurchase,
     PaymentOrder,
     PaymentOrderStatus,
@@ -94,3 +95,13 @@ class IPaymentRepository(ABC):
     @abstractmethod
     async def get_course_titles(self, course_ids: list[str]) -> dict[str, str]:
         """Maps course IDs to their titles for display."""
+
+    @abstractmethod
+    async def get_admin_payment_stats(self) -> AdminPaymentStats:
+        """Aggregate completed revenue, course purchase count, and active subscriptions."""
+
+    @abstractmethod
+    async def get_completed_revenue_by_course(
+        self, course_ids: list[str] | None = None
+    ) -> dict[str, float]:
+        """Return ``{course_id: completed_purchase_revenue}`` grouped by course."""

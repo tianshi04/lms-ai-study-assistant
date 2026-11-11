@@ -10,6 +10,7 @@ from src.modules.learning.domain import (
     DEFAULT_TIMEZONE,
     MAX_HEARTBEAT_DELTA_SECONDS,
     MIN_HEARTBEAT_DELTA_SECONDS,
+    AdminLearningStats,
     DailyStudyRecord,
     EnrolledCourseSummary,
     ILearningRepository,
@@ -17,6 +18,8 @@ from src.modules.learning.domain import (
     PersonalNote,
 )
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
+from src.shared.auth import CurrentUser
+from src.shared.domain import ADMIN_REQUIRED_MESSAGE
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.rate_limiter import check_learning_heartbeat_rate_limit
 
@@ -287,3 +290,14 @@ class LearningUseCase:
             last_active,
             recent_days,
         )
+
+    async def get_admin_learning_stats(
+        self, current_user: CurrentUser
+    ) -> AdminLearningStats:
+        if not current_user.is_admin:
+            raise PermissionError(ADMIN_REQUIRED_MESSAGE)
+        async with async_session_scope() as session:
+            catalog_repo = self.catalog_repo_factory(session)
+            valid_course_ids = await catalog_repo.list_scoped_course_ids()
+            repo = self.repo_factory(session)
+            return await repo.get_admin_enrollment_stats(valid_course_ids)

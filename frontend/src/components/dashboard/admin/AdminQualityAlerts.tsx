@@ -5,17 +5,17 @@ import Link from "next/link";
 import {
   AdminAssessmentAlertKind,
   type AdminAssessmentAlert,
-  type AdminLowReviewAlert,
-} from "@/gen/identity/v1/identity_pb";
+} from "@/gen/assessment/v1/assessment_pb";
+import type { AdminLowReviewAlert } from "@/gen/catalog/v1/catalog_pb";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Table } from "@/components/ui/Table";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
-import { useAcknowledgeLowReviewMutation } from "@/lib/queries/useIdentityQueries";
+import { useAcknowledgeLowReviewMutation } from "@/lib/queries/useCatalogQueries";
 import { AdminCertificatesPanel } from "./AdminCertificatesPanel";
 import { AdminSection, EmptyState } from "./AdminSection";
 import { formatDateTime, formatNumber } from "./formatters";
-import { StatusBadge } from "./StatusBadge";
 
 type AlertTab = "assessment" | "reviews" | "certificates";
 
@@ -54,7 +54,9 @@ function AssessmentAlertsTable({ alerts }: { alerts: AdminAssessmentAlert[] }) {
         {alerts.map((alert) => (
           <Table.Row key={alert.alertId}>
             <Table.Cell>
-              <StatusBadge tone="warning">{ALERT_KIND_LABELS[alert.kind]}</StatusBadge>
+              <Badge size="pill" variant="warning">
+                {ALERT_KIND_LABELS[alert.kind]}
+              </Badge>
             </Table.Cell>
             <Table.Cell>
               <p className="font-semibold">{alert.userName || "Không rõ"}</p>
@@ -149,7 +151,8 @@ interface AdminQualityAlertsProps {
   /** True number of low-rating reviews, which can exceed `lowReviews.length`. */
   lowReviewTotal?: number;
   certificateTotal?: number;
-  isLoading?: boolean;
+  isAssessmentLoading?: boolean;
+  isReviewsLoading?: boolean;
 }
 
 const ALERT_SKELETON_ROWS = ["alert-sk-1", "alert-sk-2", "alert-sk-3"];
@@ -176,7 +179,8 @@ export function AdminQualityAlerts({
   lowReviews,
   lowReviewTotal,
   certificateTotal,
-  isLoading = false,
+  isAssessmentLoading = false,
+  isReviewsLoading = false,
 }: AdminQualityAlertsProps) {
   const [activeTab, setActiveTab] = useState<AlertTab>("assessment");
 
@@ -204,7 +208,7 @@ export function AdminQualityAlerts({
           </Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="assessment" className="min-h-44">
-          {isLoading ? (
+          {isAssessmentLoading ? (
             <Table>
               <Table.Header>
                 <Table.Row>
@@ -231,7 +235,7 @@ export function AdminQualityAlerts({
           )}
         </Tabs.Panel>
         <Tabs.Panel value="reviews" className="min-h-44">
-          {isLoading ? (
+          {isReviewsLoading ? (
             <Table>
               <Table.Header>
                 <Table.Row>

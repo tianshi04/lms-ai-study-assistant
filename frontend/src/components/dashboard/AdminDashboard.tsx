@@ -9,9 +9,16 @@ import {
   List,
   type LucideIcon,
 } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
-import { useAdminDashboardStatsQuery } from "@/lib/queries/useIdentityQueries";
+import { useAdminAssessmentAlertsQuery } from "@/lib/queries/useAssessmentQueries";
+import { useAdminCatalogStatsQuery } from "@/lib/queries/useCatalogQueries";
+import { useAdminCertificateStatsQuery } from "@/lib/queries/useCertificateQueries";
+import { useAdminIdentityStatsQuery } from "@/lib/queries/useIdentityQueries";
+import { useAdminLearningStatsQuery } from "@/lib/queries/useLearningQueries";
+import { usePartnersQuery } from "@/lib/queries/usePartnerQueries";
+import { useAdminPaymentStatsQuery } from "@/lib/queries/usePaymentQueries";
 import { AdminCourseQualityTable } from "./admin/AdminCourseQualityTable";
 import { AdminOverviewCards } from "./admin/AdminOverviewCards";
 import { AdminQualityAlerts } from "./admin/AdminQualityAlerts";
@@ -78,8 +85,33 @@ function QuickAction({
 }
 
 export function AdminDashboard({ userName: _userName }: { userName: string }) {
-  const { data: stats, isLoading, isError, error, refetch } = useAdminDashboardStatsQuery();
-  const overview = stats?.overview;
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  const identityQuery = useAdminIdentityStatsQuery();
+  const catalogQuery = useAdminCatalogStatsQuery();
+  const learningQuery = useAdminLearningStatsQuery();
+  const paymentQuery = useAdminPaymentStatsQuery();
+  const certificateQuery = useAdminCertificateStatsQuery();
+  const assessmentQuery = useAdminAssessmentAlertsQuery();
+  const partnersQuery = usePartnersQuery({
+    enabled: isAuthenticated && isSuperAdmin,
+    staleTime: 60 * 1000,
+  });
+
+  const summaryQueries = [
+    identityQuery,
+    catalogQuery,
+    learningQuery,
+    paymentQuery,
+    certificateQuery,
+    assessmentQuery,
+    partnersQuery,
+  ];
+  const failedQuery = summaryQueries.find((q) => q.isError);
+  const refetchFailed = () => {
+    for (const q of summaryQueries) {
+      if (q.isError) void q.refetch();
+    }
+  };
 
   return (
     <div className="w-full flex-1 bg-background min-h-screen">
@@ -95,7 +127,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             iconClassName="bg-success/10 text-success"
             title="Duyệt Đơn Giảng Viên"
             description="Xét duyệt đơn đăng ký tác giả/giảng viên"
-            count={overview?.pendingInstructorApplications}
+            count={identityQuery.data?.pendingInstructorApplications}
             isPendingQueue
           />
           <QuickAction
@@ -104,7 +136,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             iconClassName="bg-warning/10 text-warning"
             title="Duyệt Khóa Học"
             description="Kiểm duyệt chất lượng trước khi xuất bản"
-            count={overview?.pendingReviewCourses}
+            count={catalogQuery.data?.pendingReviewCourses}
             isPendingQueue
           />
           <QuickAction
@@ -113,7 +145,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             iconClassName="bg-primary/10 text-primary"
             title="Duyệt Hỗ Trợ Tài Chính"
             description="Xét duyệt đơn xin học bổng của học viên"
-            count={overview?.pendingFinancialAids}
+            count={certificateQuery.data?.pendingFinancialAids}
             isPendingQueue
           />
           <QuickAction
@@ -122,7 +154,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             iconClassName="bg-accent text-accent-foreground"
             title="Quản Lý Danh Mục"
             description="Cấu hình cây chủ đề và môn học"
-            count={overview?.categoryCount}
+            count={catalogQuery.data?.categoryCount}
           />
           <QuickAction
             href="/admin/partners"
@@ -130,11 +162,11 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             iconClassName="bg-info/10 text-info"
             title="Quản Trị Đối Tác"
             description="Trường đại học và doanh nghiệp"
-            count={overview?.partnerCount}
+            count={partnersQuery.data?.length}
           />
         </div>
 
-        {isError && (
+        {failedQuery && (
           <Surface
             variant="low"
             shape="2xl"
@@ -144,25 +176,32 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
               <h2 className="text-sm font-extrabold text-destructive">
                 Không thể tải số liệu dashboard
               </h2>
-              <p className="text-xs text-muted-foreground">{error.message}</p>
+              <p className="text-xs text-muted-foreground">{failedQuery.error?.message}</p>
             </div>
-            <Button variant="outlined" size="sm" onClick={() => refetch()}>
+            <Button variant="outlined" size="sm" onClick={refetchFailed}>
               Thử lại
             </Button>
           </Surface>
         )}
 
-        <AdminOverviewCards overview={overview} />
+        <AdminOverviewCards
+          identityStats={identityQuery.data}
+          catalogStats={catalogQuery.data}
+          learningStats={learningQuery.data}
+          paymentStats={paymentQuery.data}
+          certificateStats={certificateQuery.data}
+        />
 
         <AdminCourseQualityTable />
 
         <AdminQualityAlerts
-          assessmentAlerts={stats?.assessmentAlerts ?? []}
-          assessmentTotal={stats?.assessmentAlertTotal}
-          lowReviews={stats?.lowReviews ?? []}
-          lowReviewTotal={stats?.lowReviewTotal}
-          certificateTotal={overview?.certificatesIssued}
-          isLoading={isLoading}
+          assessmentAlerts={assessmentQuery.data?.alerts ?? []}
+          assessmentTotal={assessmentQuery.data?.totalCount}
+          lowReviews={catalogQuery.data?.lowReviews ?? []}
+          lowReviewTotal={catalogQuery.data?.lowReviewTotal}
+          certificateTotal={certificateQuery.data?.certificatesIssued}
+          isAssessmentLoading={assessmentQuery.isLoading}
+          isReviewsLoading={catalogQuery.isLoading}
         />
 
         {/* Embedded Core Admin Enterprise Seat Management View */}

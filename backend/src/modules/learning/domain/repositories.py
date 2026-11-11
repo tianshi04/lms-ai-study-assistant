@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import date
 
 from src.modules.learning.domain.entities import (
+    AdminLearningStats,
     DailyStudyRecord,
     EnrolledCourseSummary,
     LearningProgress,
@@ -94,3 +95,15 @@ class ILearningRepository(ABC):
         Returns:
             (UserLearningStreak, today_total_seconds, recent_7_days)
         """
+
+    @abstractmethod
+    async def get_admin_enrollment_stats(
+        self, valid_course_ids: list[str]
+    ) -> AdminLearningStats:
+        """Count enrollments and completions restricted to organization-scoped courses."""
+
+    @abstractmethod
+    async def get_course_enrollment_counts(
+        self, course_ids: list[str]
+    ) -> dict[str, tuple[int, int]]:
+        """Return ``{course_id: (enrolled_count, completed_count)}`` for ``course_ids``."""

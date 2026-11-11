@@ -314,6 +314,9 @@ service AssessmentService {
   rpc GetQuizAttemptDetail(GetQuizAttemptDetailRequest) returns (GetQuizAttemptDetailResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc ListAdminAssessmentAlerts(ListAdminAssessmentAlertsRequest) returns (ListAdminAssessmentAlertsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message StartGradedQuizSessionRequest {
@@ -420,4 +423,29 @@ message GetQuizAttemptDetailResponse {
   repeated QuizAttemptAnswerDetail answers = 7;
   repeated TopicMastery topic_mastery = 8;
   bool is_answer_masked = 9;
+}
+
+enum AdminAssessmentAlertKind {
+  ADMIN_ASSESSMENT_ALERT_KIND_UNSPECIFIED = 0;
+  ADMIN_ASSESSMENT_ALERT_KIND_GRADE_APPEAL = 1;
+  ADMIN_ASSESSMENT_ALERT_KIND_REPORTED_PEER_REVIEW = 2;
+  ADMIN_ASSESSMENT_ALERT_KIND_OUTLIER_PEER_REVIEW = 3;
+}
+
+message AdminAssessmentAlert {
+  string alert_id = 1;
+  AdminAssessmentAlertKind kind = 2;
+  string submission_id = 3;
+  string user_id = 4;
+  string user_name = 5;
+  string reason = 6;
+  double total_score = 7;
+  string created_at = 8;
+}
+
+message ListAdminAssessmentAlertsRequest {}
+
+message ListAdminAssessmentAlertsResponse {
+  repeated AdminAssessmentAlert alerts = 1;
+  int32 total_count = 2;
 }

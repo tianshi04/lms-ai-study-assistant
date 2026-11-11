@@ -8,6 +8,7 @@ from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    AdminAssessmentAlertKind,
     RubricCriteria,
 )
 from src.shared.auth import CurrentUser, require_current_user
@@ -648,4 +649,40 @@ class AssessmentHandler(AssessmentService):
             answers=pb_answers,
             topic_mastery=pb_mastery,
             is_answer_masked=res["is_answer_masked"],
+        )
+
+    async def list_admin_assessment_alerts(
+        self,
+        request: pb.ListAdminAssessmentAlertsRequest,
+        ctx: RequestContext[
+            pb.ListAdminAssessmentAlertsRequest,
+            pb.ListAdminAssessmentAlertsResponse,
+        ],
+    ) -> pb.ListAdminAssessmentAlertsResponse:
+        current_user = require_current_user()
+        try:
+            page = await self.use_case.list_admin_assessment_alerts(current_user)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+
+        kind_map = {
+            AdminAssessmentAlertKind.GRADE_APPEAL: pb.AdminAssessmentAlertKind.GRADE_APPEAL,
+            AdminAssessmentAlertKind.REPORTED_PEER_REVIEW: pb.AdminAssessmentAlertKind.REPORTED_PEER_REVIEW,
+            AdminAssessmentAlertKind.OUTLIER_PEER_REVIEW: pb.AdminAssessmentAlertKind.OUTLIER_PEER_REVIEW,
+        }
+        return pb.ListAdminAssessmentAlertsResponse(
+            alerts=[
+                pb.AdminAssessmentAlert(
+                    alert_id=a.alert_id,
+                    kind=kind_map.get(a.kind, pb.AdminAssessmentAlertKind.UNSPECIFIED),
+                    submission_id=a.submission_id,
+                    user_id=a.user_id,
+                    user_name=a.user_name,
+                    reason=a.reason,
+                    total_score=a.total_score,
+                    created_at=a.created_at,
+                )
+                for a in page.alerts
+            ],
+            total_count=page.total_count,
         )

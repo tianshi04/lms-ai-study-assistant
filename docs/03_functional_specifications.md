@@ -28,11 +28,19 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Cài đặt tham số LLM:** Cấu hình `Temperature` (mặc định `0.2` để đảm bảo độ chính xác học thuật), `Max Output Tokens`, `Top-P`, `Top-K`.
 * **Cấu hình Vector DB & Cloud Storage:** Địa chỉ kết nối Vector Database (Index Name, API Key) và Cloud Storage cho video/phụ đề.
 
-### 1.4. Quản lý chất lượng & Báo cáo vi phạm (Quality Control & Abuse Management)
+### 1.4. Quản lý chất lượng, Thống kê toàn sàn & Báo cáo vi phạm (Admin Dashboard, Quality Control & Abuse Management)
+* **Kiến trúc Phân rã Theo Bounded Context (DDD-Segregated Admin RPCs):** Toàn bộ số liệu tổng quan và bảng quản trị trên `/admin/dashboard` được phân quyền `SUPER_ADMIN` và truy vấn song song theo đúng ranh giới miền nghiệp vụ (không gom về một God Service):
+  * `IdentityService.GetAdminIdentityStats` (`proto/identity/v1/identity.proto`): Tổng số người dùng phân loại theo vai trò, số tài khoản đã xác minh KYC và số đơn đăng ký giảng viên chờ duyệt.
+  * `CatalogService.GetAdminCatalogStats`, `ListAdminCourseMetrics`, `AcknowledgeLowReview` (`proto/catalog/v1/catalog.proto`): Thống kê khóa học theo trạng thái, số danh mục, điểm hài lòng trung bình & phân bổ CSAT (1–5 sao), bảng chất lượng & hiệu quả từng khóa học (phân trang, tìm kiếm, lọc `CourseStatus`, xếp theo doanh thu giảm dần), và hàng đợi đánh giá thấp (1–2 sao) kèm thao tác đánh dấu đã xem xét (tự động xuất hiện lại nếu học viên chỉnh sửa đánh giá).
+  * `LearningService.GetAdminLearningStats` (`proto/learning/v1/learning.proto`): Tổng lượt ghi danh và tỷ lệ hoàn thành khóa học toàn sàn.
+  * `PaymentService.GetAdminPaymentStats` (`proto/payment/v1/payment.proto`): Tổng doanh thu đã thanh toán (tránh đếm trùng đơn VNPay khóa học lẻ với bản ghi `course_purchases`), số lượt mua khóa lẻ và số gói Coursera Plus đang hiệu lực.
+  * `CertificateService.GetAdminCertificateStats`, `ListAdminCertificates` (`proto/certificate/v1/certificate.proto`): Số chứng chỉ đã cấp/đã thu hồi, số đơn hỗ trợ tài chính đã duyệt/chờ duyệt, và bảng tra cứu chứng chỉ phân trang hỗ trợ thu hồi trực tiếp (`RevokeCertificate`).
+  * `AssessmentService.ListAdminAssessmentAlerts` (`proto/assessment/v1/assessment.proto`): Hàng đợi cảnh báo khiếu nại điểm (`GRADE_APPEAL`), báo cáo lượt chấm chéo (`REPORTED_PEER_REVIEW`) và chấm điểm lệch bất thường (`OUTLIER_PEER_REVIEW`).
+  * `PartnerService.ListPartners` (`proto/partner/v1/partner.proto`): Số lượng tổ chức đối tác trên thanh điều hướng nhanh.
 * **Giám sát chỉ số CSAT:** Tổng hợp điểm số hài lòng trung bình (1-5 sao) và tỷ lệ hoàn thành (Completion Rate) của từng khóa học.
 * **Quản lý Báo cáo vi phạm (Abuse Queue):**
-  * Tiếng nhận các báo cáo từ học viên về nội dung bài giảng bị lỗi/phản cảm hoặc gian lận điểm số.
-  * *Hành động:* Gửi email nhắc nhở Giảng viên, ẩn tạm thời bài học (chuyển về trạng thái Nháp) hoặc thu hồi chứng chỉ vi phạm.
+  * Tiếp nhận các báo cáo từ học viên về nội dung bài giảng bị lỗi/phản cảm hoặc gian lận điểm số.
+  * *Hành động:* Đánh dấu đã xem xét đánh giá thấp (`AcknowledgeLowReview`), gửi nhắc nhở Giảng viên, ẩn tạm thời bài học (chuyển về trạng thái Nháp) hoặc thu hồi chứng chỉ vi phạm (`RevokeCertificate`).
 
 ### 1.5. Quản lý B2B Đối tác Phát hành & Cấp phát Mã Enterprise License (Partner Organization Management)
 * **Khởi tạo & Cấu hình B2B Partner:** Super Admin khởi tạo hồ sơ Đối tác (`CreatePartner`), cấu hình Tên miền được ủy quyền (`allowed_domains`), Logo, Banner và thông tin chữ ký mặc định.

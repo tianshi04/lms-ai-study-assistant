@@ -1,11 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { Progress } from "@/components/ui/Progress";
 
 interface PagedQueryStatusProps {
-  isLoading: boolean;
-  loadingLabel: string;
   isError: boolean;
   /** Message shown before the error detail, e.g. "Không thể tải danh sách khóa học". */
   errorLabel: string;
@@ -16,10 +13,8 @@ interface PagedQueryStatusProps {
   onGoToFirstPage: () => void;
 }
 
-/** Loading, error and "page no longer exists" states shared by the paged admin tables. */
+/** Error and "page no longer exists" states shared by the paged admin tables. */
 export function PagedQueryStatus({
-  isLoading,
-  loadingLabel,
   isError,
   errorLabel,
   errorMessage,
@@ -27,17 +22,6 @@ export function PagedQueryStatus({
   isPastLastPage,
   onGoToFirstPage,
 }: PagedQueryStatusProps) {
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-10 text-muted-foreground">
-        <Progress.Circular size="md" className="mr-3" />
-        <span aria-live="polite" className="text-sm font-medium">
-          {loadingLabel}
-        </span>
-      </div>
-    );
-  }
-
   if (isError) {
     return (
       <div className="py-8 flex flex-col items-center gap-3 text-center">

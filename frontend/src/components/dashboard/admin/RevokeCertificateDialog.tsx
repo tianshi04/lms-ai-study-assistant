@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ShieldAlert } from "lucide-react";
-import type { AdminCertificateSummary } from "@/gen/identity/v1/identity_pb";
+import type { AdminCertificateSummary } from "@/gen/certificate/v1/certificate_pb";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Textarea } from "@/components/ui/Textarea";

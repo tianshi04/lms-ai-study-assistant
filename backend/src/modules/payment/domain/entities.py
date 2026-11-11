@@ -186,3 +186,12 @@ class PaymentTransaction:
     vnp_pay_date: str
     raw_payload: str
     created_at: str
+
+
+@dataclass(frozen=True)
+class AdminPaymentStats:
+    """Platform-wide revenue, course purchases, and active subscription counters."""
+
+    total_revenue: float = 0.0
+    course_purchase_count: int = 0
+    active_subscriptions: int = 0

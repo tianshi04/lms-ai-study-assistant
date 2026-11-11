@@ -3,11 +3,13 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.payment.domain import (
+    ISO_TIMESTAMP_SECONDS_LEN,
+    AdminPaymentStats,
     CoursePurchase,
     IPaymentRepository,
     PaymentOrder,
@@ -454,3 +456,72 @@ class PaymentRepository(IPaymentRepository):
         res = await self.session.execute(stmt)
         rows = res.all()
         return {r[0]: r[1] for r in rows}
+
+    async def get_admin_payment_stats(self) -> AdminPaymentStats:
+        now_prefix = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S")
+
+        purchase_sq = (
+            select(
+                func.count(CoursePurchaseModel.id).label("course_purchase_count"),
+                func.coalesce(func.sum(CoursePurchaseModel.amount), 0.0).label(
+                    "purchase_revenue"
+                ),
+            )
+            .where(CoursePurchaseModel.status == PurchaseStatus.COMPLETED.value)
+            .subquery()
+        )
+
+        subscription_revenue_sq = (
+            select(func.coalesce(func.sum(PaymentOrderModel.amount), 0.0))
+            .where(
+                PaymentOrderModel.status == PaymentOrderStatus.COMPLETED.value,
+                PaymentOrderModel.target_type
+                == PaymentTargetType.SYSTEM_SUBSCRIPTION.value,
+            )
+            .scalar_subquery()
+        )
+
+        active_sub_sq = (
+            select(func.count(UserSubscriptionModel.id))
+            .where(
+                UserSubscriptionModel.status == SubscriptionStatus.ACTIVE.value,
+                func.substr(
+                    UserSubscriptionModel.expires_at, 1, ISO_TIMESTAMP_SECONDS_LEN
+                )
+                >= now_prefix,
+            )
+            .scalar_subquery()
+        )
+
+        stmt = select(
+            purchase_sq.c.course_purchase_count,
+            purchase_sq.c.purchase_revenue,
+            subscription_revenue_sq.label("subscription_revenue"),
+            active_sub_sq.label("active_subscriptions"),
+        )
+        row = (await self.session.execute(stmt)).one()
+        return AdminPaymentStats(
+            total_revenue=float(row.purchase_revenue) + float(row.subscription_revenue),
+            course_purchase_count=int(row.course_purchase_count),
+            active_subscriptions=int(row.active_subscriptions),
+        )
+
+    async def get_completed_revenue_by_course(
+        self, course_ids: list[str] | None = None
+    ) -> dict[str, float]:
+        if course_ids is not None and not course_ids:
+            return {}
+        stmt = (
+            select(
+                CoursePurchaseModel.course_id,
+                func.coalesce(func.sum(CoursePurchaseModel.amount), 0.0).label(
+                    "revenue"
+                ),
+            )
+            .where(CoursePurchaseModel.status == PurchaseStatus.COMPLETED.value)
+            .group_by(CoursePurchaseModel.course_id)
+        )
+        if course_ids is not None:
+            stmt = stmt.where(CoursePurchaseModel.course_id.in_(course_ids))
+        rows = (await self.session.execute(stmt)).all()
+        return {str(r.course_id): float(r.revenue) for r in rows}

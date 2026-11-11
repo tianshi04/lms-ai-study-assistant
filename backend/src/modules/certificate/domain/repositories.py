@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 
 from src.modules.certificate.domain.entities import (
+    AdminCertificatesPage,
+    AdminCertificateStats,
     FinancialAidApplication,
     VerifiedCertificate,
 )
@@ -96,3 +98,17 @@ class ICertificateRepository(ABC):
     @abstractmethod
     async def is_financial_aid_enabled(self, course_id_or_slug: str) -> bool:
         pass
+
+    @abstractmethod
+    async def get_admin_certificate_stats(self) -> AdminCertificateStats:
+        """Aggregate issued/revoked certificates and financial-aid application counts."""
+
+    @abstractmethod
+    async def list_admin_certificates(
+        self,
+        page: int,
+        page_size: int,
+        search_query: str = "",
+        is_revoked: bool | None = None,
+    ) -> AdminCertificatesPage:
+        """Return a 1-based page of certificates ordered valid-first then by ID."""

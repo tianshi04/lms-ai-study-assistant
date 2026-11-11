@@ -2,13 +2,20 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import case, delete, func, select, update
+from sqlalchemy import Numeric, case, delete, func, or_, select, true, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid6 import uuid7
 
 from src.modules.catalog.domain import (
+    ADMIN_LOW_RATING_MAX_STARS,
+    ADMIN_LOW_REVIEW_ALERT_LIMIT,
+    RATING_ROUND_DECIMALS,
+    AdminCatalogStats,
+    AdminCourseSummaryRow,
+    AdminLowReviewAlert,
     Category,
     Course,
     CourseAnnouncement,
@@ -47,12 +54,14 @@ from src.modules.catalog.infrastructure.models import (
     InVideoQuizModel,
     LearningItemModel,
     LessonModel,
+    LowReviewAcknowledgementModel,
     SpecializationModel,
     UserSearchHistoryModel,
     WeekModuleModel,
 )
 from src.modules.identity.infrastructure.models import UserModel
 from src.shared.auth import get_current_user
+from src.shared.domain import escape_like_pattern
 from src.shared.infrastructure.scopes import apply_organization_scope
 
 logger = logging.getLogger(__name__)
@@ -2132,4 +2141,227 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
         self.session.add(new_record)
         await self.session.commit()
+        return True
+
+    async def list_scoped_course_ids(self) -> list[str]:
+        stmt = apply_organization_scope(
+            select(CourseModel.id), CourseModel, get_current_user()
+        )
+        return list((await self.session.execute(stmt)).scalars().all())
+
+    async def get_admin_catalog_stats(self) -> AdminCatalogStats:
+        current_user = get_current_user()
+        scoped_courses_sq = apply_organization_scope(
+            select(CourseModel.id, CourseModel.status), CourseModel, current_user
+        ).subquery()
+
+        course_sq = (
+            select(
+                func.count().label("total_courses"),
+                func.count()
+                .filter(scoped_courses_sq.c.status == CourseStatus.PUBLISHED)
+                .label("published_courses"),
+                func.count()
+                .filter(scoped_courses_sq.c.status == CourseStatus.PENDING_REVIEW)
+                .label("pending_review_courses"),
+                func.count()
+                .filter(scoped_courses_sq.c.status == CourseStatus.DRAFT)
+                .label("draft_courses"),
+                func.count()
+                .filter(scoped_courses_sq.c.status == CourseStatus.REJECTED)
+                .label("rejected_courses"),
+            )
+            .select_from(scoped_courses_sq)
+            .subquery()
+        )
+
+        category_sq = select(func.count(CategoryModel.id)).scalar_subquery()
+
+        review_sq = (
+            select(
+                func.count(CourseReviewModel.id).label("total_reviews"),
+                func.coalesce(
+                    func.round(
+                        func.cast(func.avg(CourseReviewModel.rating_stars), Numeric),
+                        RATING_ROUND_DECIMALS,
+                    ),
+                    0.0,
+                ).label("average_rating"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 1)
+                .label("stars_1"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 2)
+                .label("stars_2"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 3)
+                .label("stars_3"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 4)
+                .label("stars_4"),
+                func.count()
+                .filter(CourseReviewModel.rating_stars == 5)
+                .label("stars_5"),
+            )
+            .select_from(CourseReviewModel)
+            .join(
+                scoped_courses_sq,
+                scoped_courses_sq.c.id == CourseReviewModel.course_id,
+            )
+            .subquery()
+        )
+
+        agg_stmt = (
+            select(
+                course_sq.c.total_courses,
+                course_sq.c.published_courses,
+                course_sq.c.pending_review_courses,
+                course_sq.c.draft_courses,
+                course_sq.c.rejected_courses,
+                category_sq.label("category_count"),
+                review_sq.c.total_reviews,
+                review_sq.c.average_rating,
+                review_sq.c.stars_1,
+                review_sq.c.stars_2,
+                review_sq.c.stars_3,
+                review_sq.c.stars_4,
+                review_sq.c.stars_5,
+            )
+            .select_from(course_sq)
+            .join(review_sq, true())
+        )
+        row = (await self.session.execute(agg_stmt)).one()
+
+        low_stmt = (
+            apply_organization_scope(
+                select(
+                    CourseReviewModel,
+                    CourseModel.title.label("course_title"),
+                    func.count().over().label("total_count"),
+                ).join(CourseModel, CourseModel.id == CourseReviewModel.course_id),
+                CourseModel,
+                current_user,
+            )
+            .outerjoin(
+                LowReviewAcknowledgementModel,
+                LowReviewAcknowledgementModel.review_id == CourseReviewModel.id,
+            )
+            .where(
+                CourseReviewModel.rating_stars <= ADMIN_LOW_RATING_MAX_STARS,
+                or_(
+                    LowReviewAcknowledgementModel.review_id.is_(None),
+                    CourseReviewModel.created_at
+                    > LowReviewAcknowledgementModel.acknowledged_at,
+                ),
+            )
+            .order_by(CourseReviewModel.created_at.desc())
+            .limit(ADMIN_LOW_REVIEW_ALERT_LIMIT)
+        )
+        low_rows = (await self.session.execute(low_stmt)).all()
+        low_review_total = int(low_rows[0].total_count) if low_rows else 0
+        low_reviews = tuple(
+            AdminLowReviewAlert(
+                review_id=rev.id,
+                course_id=rev.course_id,
+                course_title=course_title or "",
+                user_name=rev.user_name or "",
+                rating_stars=int(rev.rating_stars),
+                comment_text=rev.comment_text or "",
+                created_at=rev.created_at or "",
+            )
+            for rev, course_title, _ in low_rows
+        )
+
+        return AdminCatalogStats(
+            total_courses=int(row.total_courses),
+            published_courses=int(row.published_courses),
+            pending_review_courses=int(row.pending_review_courses),
+            draft_courses=int(row.draft_courses),
+            rejected_courses=int(row.rejected_courses),
+            category_count=int(row.category_count),
+            total_reviews=int(row.total_reviews),
+            average_rating=float(row.average_rating),
+            rating_distribution=(
+                int(row.stars_1),
+                int(row.stars_2),
+                int(row.stars_3),
+                int(row.stars_4),
+                int(row.stars_5),
+            ),
+            low_reviews=low_reviews,
+            low_review_total=low_review_total,
+        )
+
+    async def list_admin_course_summaries(
+        self,
+        search_query: str = "",
+        status: CourseStatus | None = None,
+    ) -> list[AdminCourseSummaryRow]:
+        stmt = apply_organization_scope(
+            select(
+                CourseModel.id,
+                CourseModel.title,
+                CourseModel.partner_name,
+                CourseModel.status,
+                CourseModel.average_rating,
+                CourseModel.review_count,
+            ),
+            CourseModel,
+            get_current_user(),
+        )
+        if search_query:
+            pattern = escape_like_pattern(search_query)
+            stmt = stmt.where(
+                or_(
+                    CourseModel.title.ilike(pattern, escape="\\"),
+                    CourseModel.partner_name.ilike(pattern, escape="\\"),
+                )
+            )
+        if status is not None:
+            stmt = stmt.where(CourseModel.status == status)
+
+        rows = (await self.session.execute(stmt)).all()
+        return [
+            AdminCourseSummaryRow(
+                course_id=str(r.id),
+                title=r.title or "",
+                partner_name=r.partner_name or "",
+                status=r.status
+                if isinstance(r.status, CourseStatus)
+                else CourseStatus(str(r.status)),
+                average_rating=float(r.average_rating or 0.0),
+                review_count=int(r.review_count or 0),
+            )
+            for r in rows
+        ]
+
+    async def acknowledge_low_review(self, review_id: str, admin_id: str) -> bool:
+        exists_stmt = apply_organization_scope(
+            select(CourseReviewModel.id)
+            .join(CourseModel, CourseModel.id == CourseReviewModel.course_id)
+            .where(CourseReviewModel.id == review_id),
+            CourseModel,
+            get_current_user(),
+        )
+        if (await self.session.execute(exists_stmt)).scalar_one_or_none() is None:
+            return False
+
+        now_iso = datetime.now(UTC).isoformat()
+        upsert_stmt = (
+            pg_insert(LowReviewAcknowledgementModel)
+            .values(
+                review_id=review_id,
+                acknowledged_by=admin_id,
+                acknowledged_at=now_iso,
+            )
+            .on_conflict_do_update(
+                index_elements=[LowReviewAcknowledgementModel.review_id],
+                set_={
+                    "acknowledged_by": admin_id,
+                    "acknowledged_at": now_iso,
+                },
+            )
+        )
+        await self.session.execute(upsert_stmt)
+        await self.session.flush()
         return True

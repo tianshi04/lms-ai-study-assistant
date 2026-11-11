@@ -176,4 +176,14 @@ service LearningService {
   rpc GetLearningStreak(GetLearningStreakRequest) returns (GetLearningStreakResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetAdminLearningStats(GetAdminLearningStatsRequest) returns (GetAdminLearningStatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}
+
+message GetAdminLearningStatsRequest {}
+
+message GetAdminLearningStatsResponse {
+  int32 total_enrollments = 1;
+  int32 completed_enrollments = 2;
 }

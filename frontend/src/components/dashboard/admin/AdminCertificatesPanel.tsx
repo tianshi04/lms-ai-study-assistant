@@ -5,16 +5,16 @@ import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-
 import {
   AdminCertificateStatusFilter,
   type AdminCertificateSummary,
-} from "@/gen/identity/v1/identity_pb";
+} from "@/gen/certificate/v1/certificate_pb";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useAdminCertificatesQuery } from "@/lib/queries/useIdentityQueries";
+import { useAdminCertificatesQuery } from "@/lib/queries/useCertificateQueries";
 import { AdminDataTable } from "./AdminDataTable";
 import { AdminPagination } from "./AdminPagination";
 import { EmptyState } from "./AdminSection";
 import { AdminTableFilters, type FilterOption } from "./AdminTableFilters";
 import { PagedQueryStatus } from "./PagedQueryStatus";
 import { RevokeCertificateDialog } from "./RevokeCertificateDialog";
-import { StatusBadge } from "./StatusBadge";
 import { useAdminTableState } from "./useAdminTableState";
 
 const PAGE_SIZE = 10;
@@ -55,13 +55,17 @@ function createColumns(
       cell: ({ row }) =>
         row.original.isRevoked ? (
           <div className="space-y-1">
-            <StatusBadge tone="destructive">Đã thu hồi</StatusBadge>
+            <Badge size="pill" variant="destructive">
+              Đã thu hồi
+            </Badge>
             {row.original.revokedReason && (
               <p className="text-xs text-muted-foreground">{row.original.revokedReason}</p>
             )}
           </div>
         ) : (
-          <StatusBadge tone="success">Hợp lệ</StatusBadge>
+          <Badge size="pill" variant="success">
+            Hợp lệ
+          </Badge>
         ),
     },
     {
@@ -128,8 +132,6 @@ export function AdminCertificatesPanel() {
       />
 
       <PagedQueryStatus
-        isLoading={false}
-        loadingLabel="Đang tải danh sách chứng chỉ…"
         isError={isError}
         errorLabel="Không thể tải danh sách chứng chỉ"
         errorMessage={error?.message}

@@ -7,9 +7,11 @@ import {
   type UseMutationOptions,
 } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   CatalogService,
   type Course,
+  type CourseStatus,
   type Category,
   type CourseReview,
   type CourseCollaboratorDetail,
@@ -17,7 +19,82 @@ import {
   type Specialization,
   type CourseBookmark,
   type ToggleCourseReviewHelpfulResponse,
+  type GetAdminCatalogStatsResponse,
+  type ListAdminCourseMetricsResponse,
 } from "@/gen/catalog/v1/catalog_pb";
+
+/**
+ * Super Admin KPI aggregates and low-rating review queue owned by the Catalog bounded context.
+ */
+export function useAdminCatalogStatsQuery(
+  options?: Partial<UseQueryOptions<GetAdminCatalogStatsResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminCatalogStatsResponse, Error>({
+    queryKey: ["adminCatalogStats"],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return client.getAdminCatalogStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
+
+export interface AdminCourseMetricsParams {
+  /** 1-based page number. */
+  page: number;
+  pageSize: number;
+  searchQuery: string;
+  status: CourseStatus;
+}
+
+/**
+ * Paginated per-course metrics for the Super Admin dashboard, highest revenue first,
+ * with optional search (title / partner) and status filter.
+ * The previous page stays on screen while the next one loads.
+ */
+export function useAdminCourseMetricsQuery({
+  page,
+  pageSize,
+  searchQuery,
+  status,
+}: AdminCourseMetricsParams) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<ListAdminCourseMetricsResponse, Error>({
+    queryKey: ["adminCourseMetrics", page, pageSize, searchQuery, status],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return client.listAdminCourseMetrics({ page, pageSize, searchQuery, status });
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    enabled: isAuthenticated && isSuperAdmin,
+  });
+}
+
+/**
+ * Marks a low-rating review as looked at so it leaves the dashboard alert list.
+ * The review returns to the list if its author edits it afterwards.
+ */
+export function useAcknowledgeLowReviewMutation(
+  options?: Partial<UseMutationOptions<{ success: boolean; message: string }, Error, string>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<{ success: boolean; message: string }, Error, string>({
+    mutationFn: async (reviewId) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.acknowledgeLowReview({ reviewId });
+      return { success: res.success, message: res.message };
+    },
+    ...options,
+    onSuccess: (data, variables, context, mutationContext) => {
+      queryClient.invalidateQueries({ queryKey: ["adminCatalogStats"] });
+      options?.onSuccess?.(data, variables, context, mutationContext);
+    },
+  });
+}
 
 export interface CourseFilters {
   searchQuery?: string;
@@ -128,6 +205,7 @@ export function useCreateCategoryMutation(
     ...options,
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["adminCatalogStats"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
@@ -146,6 +224,7 @@ export function useDeleteCategoryMutation(
     ...options,
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["adminCatalogStats"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });

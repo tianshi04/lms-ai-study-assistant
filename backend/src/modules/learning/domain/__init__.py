@@ -1,4 +1,5 @@
 from .constants import (
+    COURSE_COMPLETION_PERCENT,
     DEADLINE_RESET_COOLDOWN_DAYS,
     DEFAULT_COHORT_EXTENSION_DAYS,
     DEFAULT_HEARTBEAT_INTERVAL_SECONDS,
@@ -10,6 +11,7 @@ from .constants import (
     STREAK_WINDOW_SECONDS,
 )
 from .entities import (
+    AdminLearningStats,
     DailyStudyRecord,
     DeadlineStatus,
     EnrolledCourseSummary,
@@ -22,6 +24,7 @@ from .entities import (
 from .repositories import ILearningRepository
 
 __all__ = [
+    "COURSE_COMPLETION_PERCENT",
     "DEADLINE_RESET_COOLDOWN_DAYS",
     "DEFAULT_COHORT_EXTENSION_DAYS",
     "DEFAULT_HEARTBEAT_INTERVAL_SECONDS",
@@ -31,6 +34,7 @@ __all__ = [
     "MIN_DAILY_STUDY_SECONDS_FOR_STREAK",
     "MIN_HEARTBEAT_DELTA_SECONDS",
     "STREAK_WINDOW_SECONDS",
+    "AdminLearningStats",
     "DailyStudyRecord",
     "DeadlineStatus",
     "EnrolledCourseSummary",

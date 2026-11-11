@@ -1,3 +1,4 @@
+from .admin_catalog_usecase import AdminCatalogUseCase
 from .catalog_usecase import CatalogUseCase
 from .collaborator_usecase import CourseCollaboratorUseCase
 from .course_review_usecase import CourseReviewUseCase
@@ -6,6 +7,7 @@ from .curriculum_usecase import CurriculumUseCase
 from .scorm_usecase import ScormUseCase
 
 __all__ = [
+    "AdminCatalogUseCase",
     "CatalogUseCase",
     "CourseCollaboratorUseCase",
     "CourseReviewUseCase",

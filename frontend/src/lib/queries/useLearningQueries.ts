@@ -14,7 +14,27 @@ import {
   type EnrolledCourseSummary,
   type GetLearningStreakResponse,
   type RecordLearningTimeResponse,
+  type GetAdminLearningStatsResponse,
 } from "@/gen/learning/v1/learning_pb";
+
+/**
+ * Super Admin enrollment and completion KPIs owned by the Learning bounded context.
+ */
+export function useAdminLearningStatsQuery(
+  options?: Partial<UseQueryOptions<GetAdminLearningStatsResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminLearningStatsResponse, Error>({
+    queryKey: ["adminLearningStats"],
+    queryFn: async () => {
+      const client = getRpcClient(LearningService);
+      return client.getAdminLearningStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
 
 export function useMyEnrolledCoursesQuery(
   options?: Partial<UseQueryOptions<EnrolledCourseSummary[], Error>>,
