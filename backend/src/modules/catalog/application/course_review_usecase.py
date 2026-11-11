@@ -3,6 +3,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
+from src.modules.catalog.application.helpers import verify_catalog_course_ownership
 from src.modules.catalog.domain import (
     ERR_MSG_SELF_UPVOTE,
     MAX_RATING_STARS,
@@ -11,7 +12,6 @@ from src.modules.catalog.domain import (
     MIN_RATING_STARS,
     VERIFIED_COMPLETER_PROGRESS_PERCENT,
     CourseAnnouncementCreatedDomainEvent,
-    CourseStatus,
     ICatalogRepository,
     StudentReminderSentDomainEvent,
 )
@@ -22,7 +22,6 @@ from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
 from src.shared.permissions import (
     CoursePermission,
-    enforce_course_ownership,
 )
 
 
@@ -61,30 +60,16 @@ class CourseReviewUseCase:
         allow_read_only_pending: bool = False,
         required_permission: CoursePermission | None = None,
         disallow_published_mutation: bool = False,
-    ) -> None:
-        clean_course_id = course_id.strip() if course_id else ""
-        if not clean_course_id:
-            raise ValueError("Mã khóa học không được để trống")
-        if not user:
-            raise PermissionError(f"Bạn không có quyền {action_name}.")
-        course = await repo.get_course_detail(clean_course_id)
-        if not course:
-            raise ValueError("Khóa học không tồn tại")
-        enforce_course_ownership(
-            course,
-            user,
-            required_permission=required_permission,
+    ):
+        return await verify_catalog_course_ownership(
+            repo=repo,
+            course_id=course_id,
+            user=user,
             action_name=action_name,
             allow_read_only_pending=allow_read_only_pending,
+            required_permission=required_permission,
+            disallow_published_mutation=disallow_published_mutation,
         )
-        if (
-            disallow_published_mutation
-            and course.status == CourseStatus.PUBLISHED
-            and not getattr(user, "is_admin", False)
-        ):
-            raise PermissionError(
-                f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
-            )
 
     async def submit_course_review(
         self,
@@ -261,12 +246,27 @@ class CourseReviewUseCase:
         title: str,
         content: str,
         current_user: CurrentUser | None = None,
-    ) -> int:
+    ) -> tuple[int, list[str]]:
         clean_course_id = course_id.strip() if course_id else ""
         if not clean_course_id:
             raise ValueError("Mã khóa học không được để trống")
-        if not student_ids:
-            return 0
+        clean_title = title.strip() if title else ""
+        if not clean_title:
+            raise ValueError("Tiêu đề thông báo không được để trống")
+        clean_content = content.strip() if content else ""
+        if not clean_content:
+            raise ValueError("Nội dung thông báo không được để trống")
+
+        unique_student_ids = list(
+            dict.fromkeys(sid.strip() for sid in student_ids if sid and sid.strip())
+        )
+        if not unique_student_ids:
+            return 0, []
+        if len(unique_student_ids) > 100:
+            raise ValueError(
+                "Số lượng học viên nhận thông báo vượt quá giới hạn cho phép (tối đa 100 học viên mỗi lần gửi)."
+            )
+
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             await self._verify_ownership(
@@ -275,9 +275,11 @@ class CourseReviewUseCase:
             real_id = await repo.get_course_id_by_slug_or_id(clean_course_id)
             target_ids = list({clean_course_id, real_id})
             enrolled_ids = set(await repo.get_enrolled_user_ids(target_ids))
-            valid_student_ids = [sid for sid in student_ids if sid in enrolled_ids]
+            valid_student_ids = [
+                sid for sid in unique_student_ids if sid in enrolled_ids
+            ]
             if not valid_student_ids:
-                return 0
+                return 0, []
             author_name = (
                 current_user.email.split("@")[0]
                 if current_user and current_user.email
@@ -289,8 +291,8 @@ class CourseReviewUseCase:
                     instructor_id=current_user.id if current_user else "",
                     instructor_name=author_name,
                     student_ids=valid_student_ids,
-                    title=title,
-                    content=content,
+                    title=clean_title,
+                    content=clean_content,
                 )
             )
-            return len(valid_student_ids)
+            return len(valid_student_ids), valid_student_ids

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo, useEffect, useState } from "react";
+import React, { useRef, useMemo, useEffect, useState, useCallback } from "react";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +52,7 @@ function formatIso(year: number, month: number, day: number): string {
 
 /**
  * Form tùy chọn khoảng ngày chuẩn định dạng Việt Nam: Ngày -> Tháng -> Năm (DD/MM/YYYY).
- * Tự động kiểm tra và giới hạn số ngày hợp lệ theo từng tháng (vd: Tháng 11 tối đa 30 ngày).
+ * Hỗ trợ gõ bàn phím tự nhiên (clamp trên onBlur) và đảm bảo startDate <= endDate.
  */
 export function InstructorDateRangeForm({
   startDate,
@@ -73,7 +73,35 @@ export function InstructorDateRangeForm({
   const startParsed = useMemo(() => parseIso(startDate, fallbackPast), [startDate, fallbackPast]);
   const endParsed = useMemo(() => parseIso(endDate, fallbackNow), [endDate, fallbackNow]);
 
-  // Tự động chuẩn hóa nếu dữ liệu ban đầu chứa ngày không tồn tại (vd: 31.11 -> 30.11)
+  const [startInput, setStartInput] = useState({
+    day: String(startParsed.day),
+    month: String(startParsed.month),
+    year: String(startParsed.year),
+  });
+
+  const [endInput, setEndInput] = useState({
+    day: String(endParsed.day),
+    month: String(endParsed.month),
+    year: String(endParsed.year),
+  });
+
+  useEffect(() => {
+    setStartInput({
+      day: String(startParsed.day),
+      month: String(startParsed.month),
+      year: String(startParsed.year),
+    });
+  }, [startParsed]);
+
+  useEffect(() => {
+    setEndInput({
+      day: String(endParsed.day),
+      month: String(endParsed.month),
+      year: String(endParsed.year),
+    });
+  }, [endParsed]);
+
+  // Chuẩn hóa ban đầu nếu prop không hợp lệ
   useEffect(() => {
     const validStartIso = formatIso(startParsed.year, startParsed.month, startParsed.day);
     const validEndIso = formatIso(endParsed.year, endParsed.month, endParsed.day);
@@ -82,26 +110,43 @@ export function InstructorDateRangeForm({
     }
   }, [startParsed, endParsed, startDate, endDate, onChange]);
 
-  const maxStartDays = getDaysInMonth(startParsed.year, startParsed.month);
-  const maxEndDays = getDaysInMonth(endParsed.year, endParsed.month);
-
-  const handleUpdateStart = (day: number, month: number, year: number) => {
-    const y = Math.max(2020, Math.min(2035, year || 2026));
-    const m = Math.max(1, Math.min(12, month || 1));
+  const commitStart = useCallback(() => {
+    const y = Math.max(2020, Math.min(2035, Number(startInput.year) || startParsed.year || 2026));
+    const m = Math.max(1, Math.min(12, Number(startInput.month) || startParsed.month || 1));
     const maxD = getDaysInMonth(y, m);
-    const d = Math.max(1, Math.min(maxD, day || 1));
+    const d = Math.max(1, Math.min(maxD, Number(startInput.day) || startParsed.day || 1));
     const newStart = formatIso(y, m, d);
-    onChange(newStart, endDate);
-  };
 
-  const handleUpdateEnd = (day: number, month: number, year: number) => {
-    const y = Math.max(2020, Math.min(2035, year || 2026));
-    const m = Math.max(1, Math.min(12, month || 1));
+    setStartInput({ day: String(d), month: String(m), year: String(y) });
+
+    let validEnd = endDate;
+    if (newStart > validEnd) {
+      validEnd = newStart;
+    }
+    onChange(newStart, validEnd);
+  }, [startInput, startParsed, endDate, onChange]);
+
+  const commitEnd = useCallback(() => {
+    const y = Math.max(2020, Math.min(2035, Number(endInput.year) || endParsed.year || 2026));
+    const m = Math.max(1, Math.min(12, Number(endInput.month) || endParsed.month || 1));
     const maxD = getDaysInMonth(y, m);
-    const d = Math.max(1, Math.min(maxD, day || 1));
+    const d = Math.max(1, Math.min(maxD, Number(endInput.day) || endParsed.day || 1));
     const newEnd = formatIso(y, m, d);
-    onChange(startDate, newEnd);
-  };
+
+    setEndInput({ day: String(d), month: String(m), year: String(y) });
+
+    let validStart = startDate;
+    if (validStart > newEnd) {
+      validStart = newEnd;
+    }
+    onChange(validStart, newEnd);
+  }, [endInput, endParsed, startDate, onChange]);
+
+  const maxStartDays = getDaysInMonth(
+    Number(startInput.year) || 2026,
+    Number(startInput.month) || 1,
+  );
+  const maxEndDays = getDaysInMonth(Number(endInput.year) || 2026, Number(endInput.month) || 1);
 
   return (
     <div
@@ -117,10 +162,10 @@ export function InstructorDateRangeForm({
           type="number"
           min={1}
           max={maxStartDays}
-          value={startParsed.day}
-          onChange={(e) =>
-            handleUpdateStart(Number(e.target.value), startParsed.month, startParsed.year)
-          }
+          value={startInput.day}
+          onChange={(e) => setStartInput((prev) => ({ ...prev, day: e.target.value }))}
+          onBlur={commitStart}
+          onKeyDown={(e) => e.key === "Enter" && commitStart()}
           className="w-7 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
           aria-label="Ngày bắt đầu"
           title={`Ngày (1 - ${maxStartDays})`}
@@ -130,10 +175,10 @@ export function InstructorDateRangeForm({
           type="number"
           min={1}
           max={12}
-          value={startParsed.month}
-          onChange={(e) =>
-            handleUpdateStart(startParsed.day, Number(e.target.value), startParsed.year)
-          }
+          value={startInput.month}
+          onChange={(e) => setStartInput((prev) => ({ ...prev, month: e.target.value }))}
+          onBlur={commitStart}
+          onKeyDown={(e) => e.key === "Enter" && commitStart()}
           className="w-7 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
           aria-label="Tháng bắt đầu"
           title="Tháng (1 - 12)"
@@ -143,10 +188,10 @@ export function InstructorDateRangeForm({
           type="number"
           min={2020}
           max={2035}
-          value={startParsed.year}
-          onChange={(e) =>
-            handleUpdateStart(startParsed.day, startParsed.month, Number(e.target.value))
-          }
+          value={startInput.year}
+          onChange={(e) => setStartInput((prev) => ({ ...prev, year: e.target.value }))}
+          onBlur={commitStart}
+          onKeyDown={(e) => e.key === "Enter" && commitStart()}
           className="w-12 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
           aria-label="Năm bắt đầu"
           title="Năm"
@@ -167,7 +212,9 @@ export function InstructorDateRangeForm({
             value={startDate}
             onChange={(e) => {
               if (e.target.value) {
-                onChange(e.target.value, endDate);
+                const picked = e.target.value;
+                const validEnd = picked > endDate ? picked : endDate;
+                onChange(picked, validEnd);
               }
             }}
           />
@@ -185,8 +232,10 @@ export function InstructorDateRangeForm({
           type="number"
           min={1}
           max={maxEndDays}
-          value={endParsed.day}
-          onChange={(e) => handleUpdateEnd(Number(e.target.value), endParsed.month, endParsed.year)}
+          value={endInput.day}
+          onChange={(e) => setEndInput((prev) => ({ ...prev, day: e.target.value }))}
+          onBlur={commitEnd}
+          onKeyDown={(e) => e.key === "Enter" && commitEnd()}
           className="w-7 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
           aria-label="Ngày kết thúc"
           title={`Ngày (1 - ${maxEndDays})`}
@@ -196,8 +245,10 @@ export function InstructorDateRangeForm({
           type="number"
           min={1}
           max={12}
-          value={endParsed.month}
-          onChange={(e) => handleUpdateEnd(endParsed.day, Number(e.target.value), endParsed.year)}
+          value={endInput.month}
+          onChange={(e) => setEndInput((prev) => ({ ...prev, month: e.target.value }))}
+          onBlur={commitEnd}
+          onKeyDown={(e) => e.key === "Enter" && commitEnd()}
           className="w-7 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
           aria-label="Tháng kết thúc"
           title="Tháng (1 - 12)"
@@ -207,8 +258,10 @@ export function InstructorDateRangeForm({
           type="number"
           min={2020}
           max={2035}
-          value={endParsed.year}
-          onChange={(e) => handleUpdateEnd(endParsed.day, endParsed.month, Number(e.target.value))}
+          value={endInput.year}
+          onChange={(e) => setEndInput((prev) => ({ ...prev, year: e.target.value }))}
+          onBlur={commitEnd}
+          onKeyDown={(e) => e.key === "Enter" && commitEnd()}
           className="w-12 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
           aria-label="Năm kết thúc"
           title="Năm"
@@ -229,7 +282,9 @@ export function InstructorDateRangeForm({
             value={endDate}
             onChange={(e) => {
               if (e.target.value) {
-                onChange(startDate, e.target.value);
+                const picked = e.target.value;
+                const validStart = picked < startDate ? picked : startDate;
+                onChange(validStart, picked);
               }
             }}
           />

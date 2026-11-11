@@ -198,27 +198,55 @@ export function InstructorAIAssistantCard({
 
   const handleAction = async () => {
     if (current.actionType === "nudge") {
-      setNudged(true);
-      if (courseId && behindStudents.length > 0) {
-        try {
-          const client = getRpcClient(CatalogService);
-          const studentIds = behindStudents.map((s) => s.userId);
-          await client.sendStudentReminder({
-            courseId,
-            studentIds,
-            title: `[Đôn đốc học tập] Tiếp tục bài học môn ${courseTitle}`,
-            content: `Chào các em, Trợ lý AI Teaching Copilot nhắc nhở các bạn học viên đang chậm tiến độ hãy dành thời gian hoàn thành các bài học tuần này để đạt chứng chỉ đúng hạn nhé!`,
-          });
-        } catch {
-          // Fallback
-        }
+      if (!courseId) {
+        toast({
+          title: "Không thể gửi đôn đốc",
+          description: "Vui lòng chọn một khóa học cụ thể để thực hiện đôn đốc học viên.",
+          type: "error",
+        });
+        return;
       }
-      toast({
-        title: "Đã gửi đôn đốc",
-        description: `Đã gửi thông báo đôn đốc học tập tới ${behindStudents.length || 3} sinh viên qua hệ thống!`,
-        type: "success",
-      });
-      setTimeout(() => setNudged(false), 3500);
+      if (behindStudents.length === 0) {
+        toast({
+          title: "Không có học viên chậm tiến độ",
+          description: "Hiện tại không có học viên nào chậm tiến độ trong khóa học này.",
+          type: "info",
+        });
+        return;
+      }
+      try {
+        const client = getRpcClient(CatalogService);
+        const studentIds = behindStudents.map((s) => s.userId);
+        const res = await client.sendStudentReminder({
+          courseId,
+          studentIds,
+          title: `[Đôn đốc học tập] Tiếp tục bài học môn ${courseTitle}`,
+          content: `Chào các em, Trợ lý AI Teaching Copilot nhắc nhở các bạn học viên đang chậm tiến độ hãy dành thời gian hoàn thành các bài học tuần này để đạt chứng chỉ đúng hạn nhé!`,
+        });
+        if (res.sentCount > 0) {
+          setNudged(true);
+          toast({
+            title: "Đã gửi đôn đốc",
+            description: `Đã gửi thông báo đôn đốc học tập tới ${res.sentCount} sinh viên qua hệ thống!`,
+            type: "success",
+          });
+          setTimeout(() => setNudged(false), 3500);
+        } else {
+          toast({
+            title: "Không thể gửi đôn đốc",
+            description:
+              "Không có học viên hợp lệ nào nhận được thông báo (có thể do học viên không còn ghi danh).",
+            type: "error",
+          });
+        }
+      } catch (err: unknown) {
+        toast({
+          title: "Gửi đôn đốc thất bại",
+          description:
+            err instanceof Error ? err.message : "Đã xảy ra lỗi khi gửi đôn đốc học tập.",
+          type: "error",
+        });
+      }
     } else if (current.actionType === "broadcast") {
       setIsBroadcastOpen(true);
       setBroadcastTitle(`[Hỗ trợ kiến thức] ${current.title}`);

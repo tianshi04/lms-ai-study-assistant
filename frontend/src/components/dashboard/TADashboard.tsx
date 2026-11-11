@@ -58,7 +58,7 @@ export function TADashboard({ userName }: { userName: string }) {
         {/* Operational KPI Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link
-            href="/instructor/courses/course-microeconomics-foundations/grading"
+            href="/ta/grading"
             className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-warning/60 transition-all cursor-pointer group"
           >
             <div className="w-14 h-14 rounded-2xl bg-warning/10 flex items-center justify-center text-warning shrink-0 group-hover:scale-105 transition-transform">
@@ -130,7 +130,7 @@ export function TADashboard({ userName }: { userName: string }) {
           </Link>
 
           <Link
-            href="/instructor/courses/course-microeconomics-foundations/grading"
+            href="/ta/grading"
             className="p-6 rounded-3xl bg-card border border-border hover:border-warning/50 shadow-sm transition-colors group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
