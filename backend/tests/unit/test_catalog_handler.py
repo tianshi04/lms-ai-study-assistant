@@ -770,6 +770,34 @@ async def test_send_student_reminder_permission_denied_for_learner():
 
 
 @pytest.mark.asyncio
+async def test_send_student_reminder_empty_course_id():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    handler = CatalogHandler(usecase_mock)
+    instructor = CurrentUser(
+        id="inst-1",
+        email="instructor@test.com",
+        role="INSTRUCTOR",
+    )
+    set_current_user(instructor)
+    try:
+        req = pb.SendStudentReminderRequest(
+            course_id="   ",
+            student_ids=["student-1"],
+            title="Nhắc nhở",
+            content="Nội dung",
+        )
+        ctx = MagicMock()
+        with pytest.raises(ConnectError) as exc:
+            await handler.send_student_reminder(req, ctx)
+        assert exc.value.code == Code.INVALID_ARGUMENT
+        assert "Mã khóa học không được để trống" in str(exc.value)
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
 async def test_send_student_reminder_usecase_permission_error():
     from src.shared.auth import CurrentUser, set_current_user
 

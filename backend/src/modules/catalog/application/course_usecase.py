@@ -51,22 +51,23 @@ class CourseUseCase:
     ) -> None:
         if user and course_id:
             course = await repo.get_course_detail(course_id)
-            if course:
-                enforce_course_ownership(
-                    course,
-                    user,
-                    required_permission=required_permission,
-                    action_name=action_name,
-                    allow_read_only_pending=allow_read_only_pending,
+            if not course:
+                raise ValueError("Khóa học không tồn tại")
+            enforce_course_ownership(
+                course,
+                user,
+                required_permission=required_permission,
+                action_name=action_name,
+                allow_read_only_pending=allow_read_only_pending,
+            )
+            if (
+                disallow_published_mutation
+                and course.status == CourseStatus.PUBLISHED
+                and not getattr(user, "is_admin", False)
+            ):
+                raise PermissionError(
+                    f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
                 )
-                if (
-                    disallow_published_mutation
-                    and course.status == CourseStatus.PUBLISHED
-                    and not getattr(user, "is_admin", False)
-                ):
-                    raise PermissionError(
-                        f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
-                    )
 
     async def submit_course_for_launch(
         self, course_id: str, current_user: CurrentUser | None = None

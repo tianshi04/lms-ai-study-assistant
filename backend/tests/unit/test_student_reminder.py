@@ -28,6 +28,8 @@ async def test_send_student_reminder_success(mock_repo):
         status=CourseStatus.PUBLISHED,
     )
     mock_repo.get_course_detail.return_value = course
+    mock_repo.get_course_id_by_slug_or_id.return_value = "course-123"
+    mock_repo.get_enrolled_user_ids.return_value = ["student-1", "student-2"]
 
     uc = CourseReviewUseCase(repo_factory=lambda _: mock_repo)
     instructor = CurrentUser(
@@ -64,6 +66,162 @@ async def test_send_student_reminder_success(mock_repo):
         assert published_event.student_ids == ["student-1", "student-2"]
         assert published_event.title == "Đôn đốc hoàn thành bài tập"
         assert published_event.instructor_name == "instructor"
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_empty_course_id(mock_repo):
+    uc = CourseReviewUseCase(repo_factory=lambda _: mock_repo)
+    instructor = CurrentUser(
+        id="inst-1",
+        email="instructor@test.com",
+        role="INSTRUCTOR",
+    )
+
+    with pytest.raises(ValueError, match="Mã khóa học không được để trống"):
+        await uc.send_student_reminder(
+            course_id="   ",
+            student_ids=["student-1"],
+            title="Nhắc nhở",
+            content="Nội dung",
+            current_user=instructor,
+        )
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_unauthenticated(mock_repo):
+    uc = CourseReviewUseCase(repo_factory=lambda _: mock_repo)
+
+    with patch(
+        "src.modules.catalog.application.course_review_usecase.async_session_scope"
+    ) as mock_scope:
+        mock_ctx = AsyncMock()
+        mock_scope.return_value.__aenter__.return_value = mock_ctx
+
+        with pytest.raises(
+            PermissionError, match="Bạn không có quyền gửi thông báo nhắc nhở học viên"
+        ):
+            await uc.send_student_reminder(
+                course_id="course-123",
+                student_ids=["student-1"],
+                title="Nhắc nhở",
+                content="Nội dung",
+                current_user=None,
+            )
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_empty_student_ids(mock_repo):
+    uc = CourseReviewUseCase(repo_factory=lambda _: mock_repo)
+    instructor = CurrentUser(
+        id="inst-1",
+        email="instructor@test.com",
+        role="INSTRUCTOR",
+    )
+
+    count = await uc.send_student_reminder(
+        course_id="course-123",
+        student_ids=[],
+        title="Nhắc nhở",
+        content="Nội dung",
+        current_user=instructor,
+    )
+    assert count == 0
+    mock_repo.get_course_detail.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_filters_non_enrolled_students(mock_repo):
+    course = Course(
+        id="course-123",
+        title="Kinh tế học Vi mô Căn bản",
+        slug="kinh-te-hoc-vi-mo",
+        owner_id="inst-1",
+        co_instructor_ids=[],
+        status=CourseStatus.PUBLISHED,
+    )
+    mock_repo.get_course_detail.return_value = course
+    mock_repo.get_course_id_by_slug_or_id.return_value = "course-123"
+    # Only student-1 is actually enrolled in this course
+    mock_repo.get_enrolled_user_ids.return_value = ["student-1"]
+
+    uc = CourseReviewUseCase(repo_factory=lambda _: mock_repo)
+    instructor = CurrentUser(
+        id="inst-1",
+        email="instructor@coursera.ai",
+        role="INSTRUCTOR",
+    )
+
+    with (
+        patch(
+            "src.modules.catalog.application.course_review_usecase.async_session_scope"
+        ) as mock_scope,
+        patch(
+            "src.modules.catalog.application.course_review_usecase.EventBus"
+        ) as mock_bus,
+    ):
+        mock_ctx = AsyncMock()
+        mock_scope.return_value.__aenter__.return_value = mock_ctx
+        mock_bus.publish = AsyncMock()
+
+        # Attacker tries to include student-stranger from another course
+        count = await uc.send_student_reminder(
+            course_id="course-123",
+            student_ids=["student-1", "student-stranger"],
+            title="Đôn đốc",
+            content="Nội dung",
+            current_user=instructor,
+        )
+
+        assert count == 1
+        mock_bus.publish.assert_called_once()
+        published_event = mock_bus.publish.call_args[0][0]
+        assert published_event.student_ids == ["student-1"]
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_all_non_enrolled(mock_repo):
+    course = Course(
+        id="course-123",
+        title="Kinh tế học Vi mô Căn bản",
+        slug="kinh-te-hoc-vi-mo",
+        owner_id="inst-1",
+        co_instructor_ids=[],
+        status=CourseStatus.PUBLISHED,
+    )
+    mock_repo.get_course_detail.return_value = course
+    mock_repo.get_course_id_by_slug_or_id.return_value = "course-123"
+    # No enrolled students match
+    mock_repo.get_enrolled_user_ids.return_value = ["other-student"]
+
+    uc = CourseReviewUseCase(repo_factory=lambda _: mock_repo)
+    instructor = CurrentUser(
+        id="inst-1",
+        email="instructor@coursera.ai",
+        role="INSTRUCTOR",
+    )
+
+    with (
+        patch(
+            "src.modules.catalog.application.course_review_usecase.async_session_scope"
+        ) as mock_scope,
+        patch(
+            "src.modules.catalog.application.course_review_usecase.EventBus"
+        ) as mock_bus,
+    ):
+        mock_ctx = AsyncMock()
+        mock_scope.return_value.__aenter__.return_value = mock_ctx
+        mock_bus.publish = AsyncMock()
+
+        count = await uc.send_student_reminder(
+            course_id="course-123",
+            student_ids=["student-stranger"],
+            title="Đôn đốc",
+            content="Nội dung",
+            current_user=instructor,
+        )
+
+        assert count == 0
+        mock_bus.publish.assert_not_called()
 
 
 @pytest.mark.asyncio
