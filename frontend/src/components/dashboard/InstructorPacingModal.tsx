@@ -782,17 +782,11 @@ export function InstructorPacingModal({
           key={`pacing-bulk-${isBulkReminderModalOpen}`}
           open={isBulkReminderModalOpen}
           onOpenChange={setIsBulkReminderModalOpen}
-          courseId={
-            selectedCourse !== "ALL"
-              ? selectedCourse
-              : filteredStudents.find((s) => s.pace === "BEHIND")?.courseId ||
-                coursesList[0]?.id ||
-                ""
-          }
+          courseId={selectedCourse}
           courseTitle={
-            coursesList.find((c) => c.id === selectedCourse)?.title ||
-            filteredStudents.find((s) => s.pace === "BEHIND")?.courseTitle ||
-            "Khóa học"
+            selectedCourse !== "ALL"
+              ? coursesList.find((c) => c.id === selectedCourse)?.title || "Khóa học"
+              : "Tất cả khóa học"
           }
           students={filteredStudents
             .filter((s) => s.pace === "BEHIND")
@@ -802,6 +796,8 @@ export function InstructorPacingModal({
               userEmail: s.email,
               progressPercent: s.progressPercent,
               paceDesc: s.paceDescription,
+              courseId: s.courseId,
+              courseTitle: s.courseTitle,
             }))}
           bottleneckWeek={
             filteredStudents.some((s) => s.bottleneckStuck)

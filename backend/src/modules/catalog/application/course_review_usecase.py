@@ -62,25 +62,29 @@ class CourseReviewUseCase:
         required_permission: CoursePermission | None = None,
         disallow_published_mutation: bool = False,
     ) -> None:
-        if user and course_id:
-            course = await repo.get_course_detail(course_id)
-            if not course:
-                raise ValueError("Khóa học không tồn tại")
-            enforce_course_ownership(
-                course,
-                user,
-                required_permission=required_permission,
-                action_name=action_name,
-                allow_read_only_pending=allow_read_only_pending,
+        clean_course_id = course_id.strip() if course_id else ""
+        if not clean_course_id:
+            raise ValueError("Mã khóa học không được để trống")
+        if not user:
+            raise PermissionError(f"Bạn không có quyền {action_name}.")
+        course = await repo.get_course_detail(clean_course_id)
+        if not course:
+            raise ValueError("Khóa học không tồn tại")
+        enforce_course_ownership(
+            course,
+            user,
+            required_permission=required_permission,
+            action_name=action_name,
+            allow_read_only_pending=allow_read_only_pending,
+        )
+        if (
+            disallow_published_mutation
+            and course.status == CourseStatus.PUBLISHED
+            and not getattr(user, "is_admin", False)
+        ):
+            raise PermissionError(
+                f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
             )
-            if (
-                disallow_published_mutation
-                and course.status == CourseStatus.PUBLISHED
-                and not getattr(user, "is_admin", False)
-            ):
-                raise PermissionError(
-                    f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
-                )
 
     async def submit_course_review(
         self,
@@ -258,13 +262,22 @@ class CourseReviewUseCase:
         content: str,
         current_user: CurrentUser | None = None,
     ) -> int:
+        clean_course_id = course_id.strip() if course_id else ""
+        if not clean_course_id:
+            raise ValueError("Mã khóa học không được để trống")
         if not student_ids:
             return 0
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             await self._verify_ownership(
-                repo, course_id, current_user, "gửi thông báo nhắc nhở học viên"
+                repo, clean_course_id, current_user, "gửi thông báo nhắc nhở học viên"
             )
+            real_id = await repo.get_course_id_by_slug_or_id(clean_course_id)
+            target_ids = list({clean_course_id, real_id})
+            enrolled_ids = set(await repo.get_enrolled_user_ids(target_ids))
+            valid_student_ids = [sid for sid in student_ids if sid in enrolled_ids]
+            if not valid_student_ids:
+                return 0
             author_name = (
                 current_user.email.split("@")[0]
                 if current_user and current_user.email
@@ -272,12 +285,12 @@ class CourseReviewUseCase:
             )
             await EventBus.publish(
                 StudentReminderSentDomainEvent(
-                    course_id=course_id,
+                    course_id=clean_course_id,
                     instructor_id=current_user.id if current_user else "",
                     instructor_name=author_name,
-                    student_ids=list(student_ids),
+                    student_ids=valid_student_ids,
                     title=title,
                     content=content,
                 )
             )
-            return len(student_ids)
+            return len(valid_student_ids)

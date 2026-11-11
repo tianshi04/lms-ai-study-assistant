@@ -199,11 +199,13 @@ export function InstructorAIAssistantCard({
   const handleAction = async () => {
     if (current.actionType === "nudge") {
       setNudged(true);
-      if (courseId) {
+      if (courseId && behindStudents.length > 0) {
         try {
           const client = getRpcClient(CatalogService);
-          await client.createCourseAnnouncement({
+          const studentIds = behindStudents.map((s) => s.userId);
+          await client.sendStudentReminder({
             courseId,
+            studentIds,
             title: `[Đôn đốc học tập] Tiếp tục bài học môn ${courseTitle}`,
             content: `Chào các em, Trợ lý AI Teaching Copilot nhắc nhở các bạn học viên đang chậm tiến độ hãy dành thời gian hoàn thành các bài học tuần này để đạt chứng chỉ đúng hạn nhé!`,
           });

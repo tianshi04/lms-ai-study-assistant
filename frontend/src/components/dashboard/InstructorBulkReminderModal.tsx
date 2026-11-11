@@ -16,13 +16,15 @@ export interface BulkReminderStudent {
   userEmail?: string;
   progressPercent?: number;
   paceDesc?: string;
+  courseId?: string;
+  courseTitle?: string;
 }
 
 export interface InstructorBulkReminderModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  courseId: string;
-  courseTitle: string;
+  courseId?: string;
+  courseTitle?: string;
   students: BulkReminderStudent[];
   bottleneckWeek?: {
     weekNumber: number;
@@ -51,8 +53,8 @@ function getSmartTemplates(
 export function InstructorBulkReminderModal({
   open,
   onOpenChange,
-  courseId,
-  courseTitle,
+  courseId = "",
+  courseTitle = "Khóa học",
   students,
   bottleneckWeek,
   onSuccess,
@@ -86,24 +88,69 @@ export function InstructorBulkReminderModal({
     setIsSending(true);
     try {
       const client = getRpcClient(CatalogService);
-      const studentIds = students.map((s) => s.userId);
 
-      await client.sendStudentReminder({
-        courseId,
-        studentIds,
-        title: subject.trim(),
-        content: content.trim(),
-      });
-
-      toast.success(`Đã gửi thông báo nhắc nhở tới ${students.length} học viên chậm tiến độ!`, {
-        description: `Môn: ${courseTitle}`,
-      });
-
-      if (onSuccess) {
-        onSuccess(studentIds);
+      // Nhóm theo courseId khi gửi hàng loạt từ view "Tất cả khóa học" hoặc danh sách nhiều môn
+      const groups = new Map<string, { title: string; studentIds: string[] }>();
+      for (const s of students) {
+        const cId = s.courseId || (courseId !== "ALL" ? courseId : "");
+        if (!cId) continue;
+        const cTitle = s.courseTitle || courseTitle || "Khóa học";
+        if (!groups.has(cId)) {
+          groups.set(cId, { title: cTitle, studentIds: [] });
+        }
+        groups.get(cId)!.studentIds.push(s.userId);
       }
 
-      onOpenChange(false);
+      if (groups.size === 0 && courseId && courseId !== "ALL") {
+        groups.set(courseId, {
+          title: courseTitle || "Khóa học",
+          studentIds: students.map((s) => s.userId),
+        });
+      }
+
+      if (groups.size === 0) {
+        toast.error("Không xác định được mã khóa học tương ứng của học viên.");
+        return;
+      }
+
+      let totalSent = 0;
+      const sentStudentIds: string[] = [];
+
+      for (const [targetCourseId, group] of groups.entries()) {
+        const res = await client.sendStudentReminder({
+          courseId: targetCourseId,
+          studentIds: group.studentIds,
+          title: subject.trim(),
+          content: content.trim(),
+        });
+        if (res.sentCount > 0) {
+          totalSent += res.sentCount;
+          sentStudentIds.push(...group.studentIds.slice(0, res.sentCount));
+        }
+      }
+
+      if (totalSent > 0) {
+        toast.success(`Đã gửi thông báo nhắc nhở tới ${totalSent} học viên chậm tiến độ!`, {
+          description:
+            groups.size > 1 ? `Đã gửi trên ${groups.size} khóa học` : `Môn: ${courseTitle}`,
+        });
+
+        if (onSuccess) {
+          onSuccess(sentStudentIds);
+        }
+
+        onOpenChange(false);
+      } else {
+        toast.error(
+          "Không có học viên hợp lệ nào nhận được thông báo (có thể do học viên không còn ghi danh).",
+          {
+            description:
+              groups.size > 1
+                ? "Vui lòng kiểm tra lại trạng thái học viên."
+                : `Môn: ${courseTitle}`,
+          },
+        );
+      }
     } catch (err: unknown) {
       toast.error(
         err instanceof Error ? err.message : "Không thể gửi thông báo nhắc nhở học viên.",
@@ -185,9 +232,10 @@ export function InstructorBulkReminderModal({
                     <span className="font-semibold text-foreground truncate block">
                       {st.userName}
                     </span>
-                    {st.userEmail && (
+                    {(st.userEmail || st.courseTitle) && (
                       <span className="text-[10px] text-muted-foreground block truncate">
                         {st.userEmail}
+                        {st.courseTitle && ` • ${st.courseTitle}`}
                       </span>
                     )}
                   </div>

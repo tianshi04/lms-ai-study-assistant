@@ -148,7 +148,18 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         subject=model.subject or "",
         level=model.level or "",
         owner_id=getattr(model, "owner_id", ""),
-        co_instructor_ids=[c.user_id for c in getattr(model, "collaborators", [])],
+        co_instructor_ids=[
+            c.user_id
+            for c in getattr(model, "collaborators", [])
+            if getattr(c, "role", "").upper()
+            not in ("TA", "TEACHING_ASSISTANT", "COLLABORATOR")
+        ],
+        ta_ids=[
+            c.user_id
+            for c in getattr(model, "collaborators", [])
+            if getattr(c, "role", "").upper()
+            in ("TA", "TEACHING_ASSISTANT", "COLLABORATOR")
+        ],
         status=getattr(model, "status", CourseStatus.DRAFT) or CourseStatus.DRAFT,
         rejection_reason=getattr(model, "rejection_reason", "") or "",
         organization_id=getattr(model, "organization_id", "partner_community")
@@ -2038,6 +2049,22 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         real_id = await self.get_course_id_by_slug_or_id(course_id)
         avg_rating, total_reviews = await self.get_course_rating_stats(real_id)
 
+        # Exclude teaching personnel (owner_id, co_instructor_ids, ta_ids)
+        staff_ids: set[str] = set()
+        course_stmt = select(CourseModel.owner_id).where(CourseModel.id == real_id)
+        course_res = await self.session.execute(course_stmt)
+        owner_id = course_res.scalar_one_or_none()
+        if owner_id:
+            staff_ids.add(owner_id)
+
+        collab_stmt = select(CourseCollaboratorModel.user_id).where(
+            CourseCollaboratorModel.course_id == real_id
+        )
+        collab_res = await self.session.execute(collab_stmt)
+        for uid in collab_res.scalars().all():
+            if uid:
+                staff_ids.add(uid)
+
         identity_repo_factory = __import__(
             "src.modules.identity.infrastructure.repository",
             fromlist=["IdentityRepository"],
@@ -2056,10 +2083,12 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         progresses = res.scalars().all()
 
         students: list[EnrolledStudent] = []
-        total_students = len(progresses)
         sum_progress = 0.0
 
         for p in progresses:
+            if p.user_id in staff_ids:
+                continue
+
             sum_progress += p.overall_progress_percent
             user_entity = await identity_repo.get_by_id(p.user_id)
             u_name = (
@@ -2072,7 +2101,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 )
             )
             u_email = user_entity.email if user_entity else ""
-            enrolled_at_str = p.enrolled_at or "2026-10-25T00:00:00Z"
+            enrolled_at_str = p.enrolled_at or ""
 
             students.append(
                 EnrolledStudent(
@@ -2084,6 +2113,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 )
             )
 
+        total_students = len(students)
         avg_completion = (
             round(sum_progress / total_students, 1) if total_students > 0 else 0.0
         )

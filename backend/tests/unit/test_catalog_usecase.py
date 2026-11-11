@@ -961,3 +961,22 @@ async def test_update_course_exceeds_max_foundational_courses(catalog_usecase):
             foundational_course_ids=[f"fc-{i}" for i in range(11)],
             current_user=user,
         )
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
+async def test_verify_ownership_course_not_found_raises_value_error(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+    mock_repo.get_course_detail.return_value = None
+
+    instructor = CurrentUser(
+        id="inst-1", email="instructor@test.com", role="INSTRUCTOR"
+    )
+    with pytest.raises(ValueError, match="Khóa học không tồn tại"):
+        await catalog_usecase.submit_course_for_launch(
+            "non-existent-course", current_user=instructor
+        )
