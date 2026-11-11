@@ -103,6 +103,18 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
     async def submit_peer_assignment(
         self, user_id: str, item_id: str, submission_url: str, text_content: str
     ) -> tuple[str, str]:
+        cleaned_url = (submission_url or "").strip()
+        if cleaned_url:
+            lower_url = cleaned_url.lower()
+            if lower_url.startswith(("javascript:", "data:", "vbscript:")):
+                raise ValueError(
+                    "Liên kết nộp bài không an toàn hoặc chứa giao thức bị cấm (javascript:/data:)."
+                )
+            if not lower_url.startswith(("http://", "https://", "/")):
+                raise ValueError(
+                    "Liên kết nộp bài phải bắt đầu bằng http:// hoặc https://."
+                )
+
         now_iso = datetime.now(UTC).isoformat()
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -113,10 +125,13 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         f"Bạn đã đạt giới hạn tối đa {MAX_PEER_SUBMISSION_ATTEMPTS} lần nộp bài."
                     )
                 existing.attempt_number += 1
-                existing.submission_url = submission_url
+                existing.submission_url = cleaned_url
                 existing.text_content = text_content
                 existing.created_at = now_iso
                 existing.status = "SUBMITTED"
+                existing.locked_by_user_id = None
+                existing.locked_at = None
+                existing.lock_expires_at = None
                 await repo.save_peer_submission(existing)
                 sub_id = existing.id
             else:
@@ -125,7 +140,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     id=sub_id,
                     user_id=user_id,
                     item_id=item_id,
-                    submission_url=submission_url,
+                    submission_url=cleaned_url,
                     text_content=text_content,
                     created_at=now_iso,
                     attempt_number=1,
@@ -491,6 +506,13 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             if not sub.can_claim_lock(staff_user_id, now):
                 raise PermissionError("Bài nộp đang được nhân sự khác khóa để chấm.")
 
+            # BR_GRADE_002: Hierarchy Check (AUTO <= PEER < TA < INSTRUCTOR)
+            # Teaching Assistant cannot override grade locked by an Instructor
+            if sub.grade_source == "INSTRUCTOR" and provenance == "TA":
+                raise PermissionError(
+                    "Trợ giảng không thể chấm đè lên điểm đã do Giảng viên chốt."
+                )
+
             # BR_PEER_008: Highest Score Wins
             effective_score = (
                 max(total_score, sub.final_score)
@@ -603,6 +625,13 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         self._verify_staff(current_user)
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                return False, f"Không tìm thấy bài nộp {submission_id}", {}
+            if sub.user_id == staff_user_id:
+                raise PermissionError(
+                    "Bạn không được phép tự khóa bài làm của chính mình để chấm điểm."
+                )
             success = await repo.renew_submission_lock(
                 submission_id, staff_user_id, timeout_minutes=extend_minutes
             )
@@ -669,6 +698,19 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 raise PermissionError(
                     "Bạn không được phép tự chấm điểm bài làm của chính mình."
                 )
+
+            # BR_GRADE_002: Hierarchy Check (AUTO <= PEER < TA < INSTRUCTOR)
+            if sub.grade_source == "INSTRUCTOR":
+                is_instructor = current_user and getattr(current_user, "role", "") in (
+                    "INSTRUCTOR",
+                    "USER_ROLE_INSTRUCTOR",
+                    "ADMIN",
+                    "USER_ROLE_ADMIN",
+                )
+                if not is_instructor:
+                    raise PermissionError(
+                        "Trợ giảng không thể chấm đè lên điểm đã do Giảng viên chốt."
+                    )
 
             # BR_PEER_008: Highest Score Wins
             effective_score = (

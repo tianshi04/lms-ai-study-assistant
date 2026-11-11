@@ -62,13 +62,22 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
     setCurrentTimeMs(Date.now());
   }, []);
 
+  const claimTaskMutation = useClaimGradingTaskMutation();
+
   // Auto-open evaluation modal if submissionId was passed in URL query param
   useEffect(() => {
     if (urlSubmissionId && !selectedSubmissionId) {
-      setSelectedSubmissionId(urlSubmissionId);
-      setIsEvaluationModalOpen(true);
+      claimTaskMutation
+        .mutateAsync({ submissionId: urlSubmissionId })
+        .catch(() => {
+          // If already claimed or failed, still open modal in inspected mode
+        })
+        .finally(() => {
+          setSelectedSubmissionId(urlSubmissionId);
+          setIsEvaluationModalOpen(true);
+        });
     }
-  }, [urlSubmissionId, selectedSubmissionId]);
+  }, [urlSubmissionId, selectedSubmissionId, claimTaskMutation]);
 
   // Fetch grading queue using TanStack Query
   const { data, isLoading, isError, error, refetch } = useGradingQueueQuery(
@@ -83,7 +92,6 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   );
 
   const queueItems = data?.items || [];
-  const claimTaskMutation = useClaimGradingTaskMutation();
 
   const isSubmissionOverdue = (item: GradingQueueItem) => {
     // Only items that are NOT graded, NOT appealed, NOT outlier, NOT claimed, and past 48h

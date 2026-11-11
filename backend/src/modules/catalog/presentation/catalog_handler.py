@@ -1449,7 +1449,7 @@ class CatalogHandler(CatalogService):
 
             assessment_usecase = AssessmentUseCase()
             res = await assessment_usecase.get_course_gradebook(
-                course_id=request.course_id,
+                course_id=course.id,
                 search_query=request.search_query,
                 status_filter=request.status_filter,
                 page_size=request.page_size or 50,

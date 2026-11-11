@@ -151,8 +151,7 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         co_instructor_ids=[
             c.user_id
             for c in getattr(model, "collaborators", [])
-            if getattr(c, "role", "").upper()
-            not in ("TA", "TEACHING_ASSISTANT", "COLLABORATOR")
+            if getattr(c, "role", "").upper() in ("CO_INSTRUCTOR", "INSTRUCTOR")
         ],
         ta_ids=[
             c.user_id

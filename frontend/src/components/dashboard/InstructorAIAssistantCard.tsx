@@ -250,17 +250,15 @@ export function InstructorAIAssistantCard({
       }
     }
 
-    setTimeout(() => {
-      setBroadcastSent(false);
-      setIsBroadcastOpen(false);
-      setBroadcastTitle("");
-      setBroadcastBody("");
-      toast({
-        title: "Đăng bài thành công",
-        description: "Đã đăng thông báo hỗ trợ học tập tới toàn thể sinh viên!",
-        type: "success",
-      });
-    }, 1200);
+    setBroadcastSent(false);
+    setIsBroadcastOpen(false);
+    setBroadcastTitle("");
+    setBroadcastBody("");
+    toast({
+      title: "Đăng bài thành công",
+      description: "Đã đăng thông báo hỗ trợ học tập tới toàn thể sinh viên!",
+      type: "success",
+    });
   };
 
   return (

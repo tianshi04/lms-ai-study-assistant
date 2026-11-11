@@ -360,6 +360,11 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
     def _to_peer_submission_entity(
         model: PeerAssignmentSubmissionModel,
     ) -> PeerAssignmentSubmission:
+        exp_at = (
+            model.lock_expires_at.isoformat()
+            if model.lock_expires_at is not None
+            else None
+        )
         return PeerAssignmentSubmission(
             id=model.id,
             user_id=model.user_id,
@@ -376,6 +381,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             grade_source=model.grade_source,
             locked_by_user_id=model.locked_by_user_id,
             locked_at=model.locked_at,
+            lock_expires_at=exp_at,
             rubric_scores_json=model.rubric_scores_json,
             published_at=model.published_at,
             status=model.status,
@@ -391,6 +397,13 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             res = await self.session.execute(stmt)
             model = res.scalar_one_or_none()
 
+        exp_dt = None
+        if submission.lock_expires_at:
+            try:
+                exp_dt = datetime.fromisoformat(submission.lock_expires_at)
+            except (ValueError, TypeError):
+                exp_dt = None
+
         if model:
             model.submission_url = submission.submission_url
             model.text_content = submission.text_content
@@ -403,6 +416,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             model.grade_source = submission.grade_source
             model.locked_by_user_id = submission.locked_by_user_id
             model.locked_at = submission.locked_at
+            model.lock_expires_at = exp_dt
             model.rubric_scores_json = submission.rubric_scores_json
             model.published_at = submission.published_at
             model.status = submission.status
@@ -423,6 +437,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 grade_source=submission.grade_source,
                 locked_by_user_id=submission.locked_by_user_id,
                 locked_at=submission.locked_at,
+                lock_expires_at=exp_dt,
                 rubric_scores_json=submission.rubric_scores_json,
                 published_at=submission.published_at,
                 status=submission.status,
@@ -470,20 +485,27 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
     ) -> bool:
         now = datetime.now(UTC)
-        expired_threshold = (now - timedelta(minutes=timeout_minutes)).isoformat()
+        lock_expires = now + timedelta(minutes=timeout_minutes)
         stmt = (
             update(PeerAssignmentSubmissionModel)
             .where(
                 PeerAssignmentSubmissionModel.id == submission_id,
+                PeerAssignmentSubmissionModel.user_id != user_id,
                 or_(
                     PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
                     PeerAssignmentSubmissionModel.locked_by_user_id == user_id,
-                    PeerAssignmentSubmissionModel.locked_at < expired_threshold,
+                    PeerAssignmentSubmissionModel.lock_expires_at < now,
+                    and_(
+                        PeerAssignmentSubmissionModel.lock_expires_at.is_(None),
+                        PeerAssignmentSubmissionModel.locked_at
+                        < (now - timedelta(minutes=timeout_minutes)).isoformat(),
+                    ),
                 ),
             )
             .values(
                 locked_by_user_id=user_id,
                 locked_at=now.isoformat(),
+                lock_expires_at=lock_expires,
             )
         )
         res = await self.session.execute(stmt)
@@ -497,16 +519,20 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
     ) -> bool:
         now = datetime.now(UTC)
-        expired_threshold = (now - timedelta(minutes=timeout_minutes)).isoformat()
+        new_expires = now + timedelta(minutes=timeout_minutes)
         stmt = (
             update(PeerAssignmentSubmissionModel)
             .where(
                 PeerAssignmentSubmissionModel.id == submission_id,
                 PeerAssignmentSubmissionModel.locked_by_user_id == user_id,
-                PeerAssignmentSubmissionModel.locked_at >= expired_threshold,
+                or_(
+                    PeerAssignmentSubmissionModel.lock_expires_at.is_(None),
+                    PeerAssignmentSubmissionModel.lock_expires_at >= now,
+                ),
             )
             .values(
                 locked_at=now.isoformat(),
+                lock_expires_at=new_expires,
             )
         )
         res = await self.session.execute(stmt)
@@ -532,6 +558,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             .values(
                 locked_by_user_id=None,
                 locked_at=None,
+                lock_expires_at=None,
             )
         )
         res = await self.session.execute(stmt)
@@ -1200,10 +1227,21 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             locked_by_name = ""
             lock_expires_at = ""
             is_currently_locked = False
-            if sub.locked_by_user_id and sub.locked_at:
-                try:
-                    lock_dt = datetime.fromisoformat(sub.locked_at)
-                    exp_dt = lock_dt + timedelta(minutes=GRADING_LOCK_TIMEOUT_MINUTES)
+            if sub.locked_by_user_id:
+                exp_dt = sub.lock_expires_at
+                if not exp_dt and sub.locked_at:
+                    try:
+                        lock_dt = datetime.fromisoformat(sub.locked_at)
+                        if lock_dt.tzinfo is None:
+                            lock_dt = lock_dt.replace(tzinfo=UTC)
+                        exp_dt = lock_dt + timedelta(
+                            minutes=GRADING_LOCK_TIMEOUT_MINUTES
+                        )
+                    except (ValueError, TypeError):
+                        exp_dt = None
+                if exp_dt:
+                    if exp_dt.tzinfo is None:
+                        exp_dt = exp_dt.replace(tzinfo=UTC)
                     if now < exp_dt:
                         is_currently_locked = True
                         lock_expires_at = exp_dt.isoformat()
@@ -1211,8 +1249,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                             user_names.get(sub.locked_by_user_id)
                             or sub.locked_by_user_id
                         )
-                except (ValueError, TypeError):
-                    pass
 
             # Check appeals
             appeal = appeals_map.get(sub.id)
@@ -1506,7 +1542,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             final_grade = round(total_weighted_grade, 2)
             is_completed = (
                 lp.overall_progress_percent >= 100.0 or lp.completed_at is not None
-            )
+            ) and (final_grade >= 80.0)
             enrollment_status = (
                 "COMPLETED"
                 if is_completed

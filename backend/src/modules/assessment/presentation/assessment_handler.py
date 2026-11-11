@@ -1190,16 +1190,44 @@ class AssessmentHandler(AssessmentService):
                 )
                 for c in request.graded_criteria
             ]
-            provenance_str = "INSTRUCTOR" if current_user.role == "INSTRUCTOR" else "TA"
+            is_ta = current_user.id in (getattr(course, "ta_ids", []) or [])
+            provenance_str = (
+                "TA"
+                if is_ta
+                else (
+                    "INSTRUCTOR"
+                    if current_user.role
+                    in (
+                        "INSTRUCTOR",
+                        "USER_ROLE_INSTRUCTOR",
+                        "ADMIN",
+                        "USER_ROLE_ADMIN",
+                    )
+                    else "TA"
+                )
+            )
 
-            max_possible = sum(c.max_score for c in criteria_list)
-            total_given = sum(c.score_given for c in criteria_list)
-            if request.total_score > 0:
-                total_score = request.total_score
-            elif max_possible > 0:
-                total_score = round((total_given / max_possible) * 100.0, 2)
+            if criteria_list:
+                max_possible = sum(c.max_score for c in criteria_list)
+                total_given = sum(c.score_given for c in criteria_list)
+                expected_score = (
+                    round((total_given / max_possible) * 100.0, 2)
+                    if max_possible > 0
+                    else 0.0
+                )
+                if (
+                    request.total_score > 0
+                    and abs(request.total_score - expected_score) > 0.05
+                ):
+                    raise ConnectError(
+                        Code.INVALID_ARGUMENT,
+                        f"Tổng điểm ({request.total_score}) không nhất quán với tổng điểm tiêu chí rubric ({expected_score}%).",
+                    )
+                total_score = (
+                    request.total_score if request.total_score > 0 else expected_score
+                )
             else:
-                total_score = total_given
+                total_score = request.total_score
             (
                 success,
                 msg,

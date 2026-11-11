@@ -295,7 +295,7 @@ function InstructorSplineChartComponent({
           const isFuture = pt.data.isFuture;
 
           return (
-            <g key={`${pt.data.day}-${pt.data.date}-${i}`}>
+            <g key={`${pt.data.day}-${pt.data.date}-${i}`} suppressHydrationWarning>
               {/* Chấm tròn phát sáng khi Hover hoặc Selected - Đường truy cập */}
               {!isFuture && (isHovered || isSelected) && (
                 <>
@@ -376,6 +376,7 @@ function InstructorSplineChartComponent({
                     strokeWidth="1"
                   />
                   <text
+                    suppressHydrationWarning
                     x={pt.x}
                     y={padding.top + innerHeight + 16}
                     textAnchor="middle"
@@ -391,6 +392,7 @@ function InstructorSplineChartComponent({
                   </text>
                   {pt.data.date && (
                     <text
+                      suppressHydrationWarning
                       x={pt.x}
                       y={padding.top + innerHeight + 28}
                       textAnchor="middle"

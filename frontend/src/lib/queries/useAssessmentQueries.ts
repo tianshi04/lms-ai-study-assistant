@@ -346,6 +346,7 @@ export function useRenewGradingTaskLockMutation(
     >
   >,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<
     RenewGradingTaskLockResponse,
     Error,
@@ -354,6 +355,12 @@ export function useRenewGradingTaskLockMutation(
     mutationFn: async ({ submissionId, extendMinutes = 15 }) => {
       const client = getRpcClient(AssessmentService);
       return await client.renewGradingTaskLock({ submissionId, extendMinutes });
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["gradingQueue"] });
+      queryClient.invalidateQueries({
+        queryKey: ["gradingSubmissionDetail", vars.submissionId],
+      });
     },
     ...options,
   });

@@ -296,19 +296,7 @@ class PeerAssignmentSubmission(Entity):
     def is_lock_active(
         self, now: datetime, timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES
     ) -> bool:
-        if not self.locked_by_user_id:
-            return False
-        if self.lock_expires_at:
-            try:
-                exp_dt = datetime.fromisoformat(self.lock_expires_at)
-                if exp_dt.tzinfo is None and now.tzinfo is not None:
-                    exp_dt = exp_dt.replace(tzinfo=UTC)
-                elif exp_dt.tzinfo is not None and now.tzinfo is None:
-                    exp_dt = exp_dt.replace(tzinfo=None)
-                return now < exp_dt
-            except (ValueError, TypeError):
-                pass
-        if not self.locked_at:
+        if not self.locked_by_user_id or not self.locked_at:
             return False
         try:
             lock_dt = datetime.fromisoformat(self.locked_at)
@@ -316,9 +304,24 @@ class PeerAssignmentSubmission(Entity):
                 lock_dt = lock_dt.replace(tzinfo=UTC)
             elif lock_dt.tzinfo is not None and now.tzinfo is None:
                 lock_dt = lock_dt.replace(tzinfo=None)
-            return now < lock_dt + timedelta(minutes=timeout_minutes)
+            if now >= lock_dt + timedelta(minutes=timeout_minutes):
+                return False
         except (ValueError, TypeError):
             return False
+
+        if self.lock_expires_at:
+            try:
+                exp_dt = datetime.fromisoformat(self.lock_expires_at)
+                if exp_dt.tzinfo is None and now.tzinfo is not None:
+                    exp_dt = exp_dt.replace(tzinfo=UTC)
+                elif exp_dt.tzinfo is not None and now.tzinfo is None:
+                    exp_dt = exp_dt.replace(tzinfo=None)
+                if now >= exp_dt:
+                    return False
+            except (ValueError, TypeError):
+                pass
+
+        return True
 
     def can_claim_lock(
         self,
