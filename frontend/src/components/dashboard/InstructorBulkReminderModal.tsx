@@ -125,7 +125,10 @@ export function InstructorBulkReminderModal({
         });
         if (res.sentCount > 0) {
           totalSent += res.sentCount;
-          sentStudentIds.push(...group.studentIds.slice(0, res.sentCount));
+          const returnedIds = res.sentStudentIds?.length
+            ? res.sentStudentIds
+            : group.studentIds.slice(0, res.sentCount);
+          sentStudentIds.push(...returnedIds);
         }
       }
 

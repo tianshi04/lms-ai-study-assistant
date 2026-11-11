@@ -716,7 +716,7 @@ async def test_send_student_reminder_success():
     from src.shared.auth import CurrentUser, set_current_user
 
     usecase_mock = AsyncMock()
-    usecase_mock.send_student_reminder.return_value = 2
+    usecase_mock.send_student_reminder.return_value = (2, ["student-1", "student-2"])
     handler = CatalogHandler(usecase_mock)
     instructor = CurrentUser(
         id="inst-1",
@@ -735,6 +735,7 @@ async def test_send_student_reminder_success():
         res = await handler.send_student_reminder(req, ctx)
         assert res.success is True
         assert res.sent_count == 2
+        assert list(res.sent_student_ids) == ["student-1", "student-2"]
         usecase_mock.send_student_reminder.assert_called_once_with(
             course_id="course-ml",
             student_ids=["student-1", "student-2"],
@@ -751,6 +752,9 @@ async def test_send_student_reminder_permission_denied_for_learner():
     from src.shared.auth import CurrentUser, set_current_user
 
     usecase_mock = AsyncMock()
+    usecase_mock.send_student_reminder.side_effect = PermissionError(
+        "Bạn không có quyền gửi thông báo nhắc nhở học viên"
+    )
     handler = CatalogHandler(usecase_mock)
     learner = CurrentUser(id="learner-1", email="learner@test.com", role="LEARNER")
     set_current_user(learner)
@@ -765,6 +769,43 @@ async def test_send_student_reminder_permission_denied_for_learner():
         with pytest.raises(ConnectError) as exc:
             await handler.send_student_reminder(req, ctx)
         assert exc.value.code == Code.PERMISSION_DENIED
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_empty_title_or_content():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    handler = CatalogHandler(usecase_mock)
+    instructor = CurrentUser(
+        id="inst-1", email="instructor@test.com", role="INSTRUCTOR"
+    )
+    set_current_user(instructor)
+    try:
+        req1 = pb.SendStudentReminderRequest(
+            course_id="course-ml",
+            student_ids=["student-1"],
+            title="   ",
+            content="Nội dung",
+        )
+        ctx = MagicMock()
+        with pytest.raises(ConnectError) as exc1:
+            await handler.send_student_reminder(req1, ctx)
+        assert exc1.value.code == Code.INVALID_ARGUMENT
+        assert "Tiêu đề" in str(exc1.value)
+
+        req2 = pb.SendStudentReminderRequest(
+            course_id="course-ml",
+            student_ids=["student-1"],
+            title="Tiêu đề",
+            content="   ",
+        )
+        with pytest.raises(ConnectError) as exc2:
+            await handler.send_student_reminder(req2, ctx)
+        assert exc2.value.code == Code.INVALID_ARGUMENT
+        assert "Nội dung" in str(exc2.value)
     finally:
         set_current_user(None)
 

@@ -60,16 +60,16 @@ export function InstructorActionTasksCard({
   }, [queueItems, currentTimeMs]);
 
   const appealsCount = useMemo(() => {
-    return queueItems.filter((i) => i.isAppeal).length;
+    return queueItems.filter((i) => i.isAppeal && i.status !== GradingQueueStatus.GRADED).length;
   }, [queueItems]);
 
   const outliersCount = useMemo(() => {
-    return queueItems.filter((i) => i.isOutlier).length;
+    return queueItems.filter((i) => i.isOutlier && i.status !== GradingQueueStatus.GRADED).length;
   }, [queueItems]);
 
   // Chế độ 1: Xem môn học cụ thể (Deep-dive specific course mode)
   if (courseId) {
-    const totalUrgentCount = pendingGradingCount + appealsCount + behindCount;
+    const totalUrgentCount = pendingGradingCount + behindCount;
 
     return (
       <div className="p-4.5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-3">

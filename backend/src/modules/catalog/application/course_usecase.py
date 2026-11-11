@@ -2,6 +2,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
+from src.modules.catalog.application.helpers import verify_catalog_course_ownership
 from src.modules.catalog.domain import (
     Category,
     Course,
@@ -21,7 +22,6 @@ from src.shared.infrastructure.database import async_session_scope
 from src.shared.permissions import (
     CoursePermission,
     OrgPermission,
-    enforce_course_ownership,
     enforce_organization_permission,
 )
 
@@ -48,26 +48,16 @@ class CourseUseCase:
         allow_read_only_pending: bool = False,
         required_permission: CoursePermission | None = None,
         disallow_published_mutation: bool = False,
-    ) -> None:
-        if user and course_id:
-            course = await repo.get_course_detail(course_id)
-            if not course:
-                raise ValueError("Khóa học không tồn tại")
-            enforce_course_ownership(
-                course,
-                user,
-                required_permission=required_permission,
-                action_name=action_name,
-                allow_read_only_pending=allow_read_only_pending,
-            )
-            if (
-                disallow_published_mutation
-                and course.status == CourseStatus.PUBLISHED
-                and not getattr(user, "is_admin", False)
-            ):
-                raise PermissionError(
-                    f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
-                )
+    ):
+        return await verify_catalog_course_ownership(
+            repo=repo,
+            course_id=course_id,
+            user=user,
+            action_name=action_name,
+            allow_read_only_pending=allow_read_only_pending,
+            required_permission=required_permission,
+            disallow_published_mutation=disallow_published_mutation,
+        )
 
     async def submit_course_for_launch(
         self, course_id: str, current_user: CurrentUser | None = None

@@ -497,6 +497,7 @@ message SendStudentReminderRequest {
 message SendStudentReminderResponse {
   int32 sent_count = 1;
   bool success = 2;
+  repeated string sent_student_ids = 3;
 }
 
 message EnrolledStudent {
