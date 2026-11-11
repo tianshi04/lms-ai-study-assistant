@@ -49,7 +49,8 @@ export function NotificationBell() {
           {unreadCount > 0 && (
             <Badge
               variant="error"
-              className="absolute top-0 right-0 font-black shadow-md animate-in zoom-in-50 duration-m3-short-4 ease-m3-decelerate"
+              size="counter"
+              className="absolute -top-1 -right-1 font-black shadow-md animate-in zoom-in-50 duration-m3-short-4 ease-m3-decelerate"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
@@ -62,7 +63,9 @@ export function NotificationBell() {
             <div className="flex items-center gap-2">
               <h3 className="text-base font-extrabold text-on-surface">Thông báo</h3>
               {unreadCount > 0 && (
-                <Badge variant="primary">{unreadCount > 99 ? "99+" : unreadCount}</Badge>
+                <Badge variant="primary" size="counter">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Badge>
               )}
             </div>
 

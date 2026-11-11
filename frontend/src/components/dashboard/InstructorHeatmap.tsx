@@ -24,197 +24,6 @@ interface HeatmapCell {
 const DAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const TIME_SLOTS = ["Sáng (06h-12h)", "Chiều (12h-18h)", "Tối (18h-22h)", "Đêm (22h-02h)"];
 
-// 1. Dữ liệu 7 ngày gần nhất (Rolling 7 ngày - Đầy đủ dữ liệu thực tế)
-const DATA_7D: HeatmapCell[] = [
-  { day: "T2", timeSlot: "Sáng (06h-12h)", count: 8 },
-  { day: "T2", timeSlot: "Chiều (12h-18h)", count: 14 },
-  { day: "T2", timeSlot: "Tối (18h-22h)", count: 28 },
-  { day: "T2", timeSlot: "Đêm (22h-02h)", count: 11 },
-
-  { day: "T3", timeSlot: "Sáng (06h-12h)", count: 6 },
-  { day: "T3", timeSlot: "Chiều (12h-18h)", count: 12 },
-  { day: "T3", timeSlot: "Tối (18h-22h)", count: 24 },
-  { day: "T3", timeSlot: "Đêm (22h-02h)", count: 9 },
-
-  { day: "T4", timeSlot: "Sáng (06h-12h)", count: 9 },
-  { day: "T4", timeSlot: "Chiều (12h-18h)", count: 16 },
-  { day: "T4", timeSlot: "Tối (18h-22h)", count: 31 },
-  { day: "T4", timeSlot: "Đêm (22h-02h)", count: 14 },
-
-  { day: "T5", timeSlot: "Sáng (06h-12h)", count: 7 },
-  { day: "T5", timeSlot: "Chiều (12h-18h)", count: 15 },
-  { day: "T5", timeSlot: "Tối (18h-22h)", count: 29 },
-  { day: "T5", timeSlot: "Đêm (22h-02h)", count: 12 },
-
-  { day: "T6", timeSlot: "Sáng (06h-12h)", count: 11 },
-  { day: "T6", timeSlot: "Chiều (12h-18h)", count: 20 },
-  { day: "T6", timeSlot: "Tối (18h-22h)", count: 36 },
-  { day: "T6", timeSlot: "Đêm (22h-02h)", count: 18 },
-
-  { day: "T7", timeSlot: "Sáng (06h-12h)", count: 16 },
-  { day: "T7", timeSlot: "Chiều (12h-18h)", count: 26 },
-  { day: "T7", timeSlot: "Tối (18h-22h)", count: 48, isPeak: true },
-  { day: "T7", timeSlot: "Đêm (22h-02h)", count: 22 },
-
-  { day: "CN", timeSlot: "Sáng (06h-12h)", count: 19 },
-  { day: "CN", timeSlot: "Chiều (12h-18h)", count: 28 },
-  { day: "CN", timeSlot: "Tối (18h-22h)", count: 45, isPeak: true },
-  { day: "CN", timeSlot: "Đêm (22h-02h)", count: 16 },
-];
-
-// 2. Dữ liệu Tuần này (Thứ 2 & Thứ 3 hôm nay có số liệu; Thứ 4..CN tương lai chưa diễn ra)
-const DATA_THIS_WEEK: HeatmapCell[] = [
-  { day: "T2", timeSlot: "Sáng (06h-12h)", count: 8 },
-  { day: "T2", timeSlot: "Chiều (12h-18h)", count: 14 },
-  { day: "T2", timeSlot: "Tối (18h-22h)", count: 28, isPeak: true },
-  { day: "T2", timeSlot: "Đêm (22h-02h)", count: 11 },
-
-  { day: "T3", timeSlot: "Sáng (06h-12h)", count: 6 },
-  { day: "T3", timeSlot: "Chiều (12h-18h)", count: 12 },
-  { day: "T3", timeSlot: "Tối (18h-22h)", count: 16 },
-  { day: "T3", timeSlot: "Đêm (22h-02h)", count: 0 },
-
-  { day: "T4", timeSlot: "Sáng (06h-12h)", count: 0, isFuture: true },
-  { day: "T4", timeSlot: "Chiều (12h-18h)", count: 0, isFuture: true },
-  { day: "T4", timeSlot: "Tối (18h-22h)", count: 0, isFuture: true },
-  { day: "T4", timeSlot: "Đêm (22h-02h)", count: 0, isFuture: true },
-
-  { day: "T5", timeSlot: "Sáng (06h-12h)", count: 0, isFuture: true },
-  { day: "T5", timeSlot: "Chiều (12h-18h)", count: 0, isFuture: true },
-  { day: "T5", timeSlot: "Tối (18h-22h)", count: 0, isFuture: true },
-  { day: "T5", timeSlot: "Đêm (22h-02h)", count: 0, isFuture: true },
-
-  { day: "T6", timeSlot: "Sáng (06h-12h)", count: 0, isFuture: true },
-  { day: "T6", timeSlot: "Chiều (12h-18h)", count: 0, isFuture: true },
-  { day: "T6", timeSlot: "Tối (18h-22h)", count: 0, isFuture: true },
-  { day: "T6", timeSlot: "Đêm (22h-02h)", count: 0, isFuture: true },
-
-  { day: "T7", timeSlot: "Sáng (06h-12h)", count: 0, isFuture: true },
-  { day: "T7", timeSlot: "Chiều (12h-18h)", count: 0, isFuture: true },
-  { day: "T7", timeSlot: "Tối (18h-22h)", count: 0, isFuture: true },
-  { day: "T7", timeSlot: "Đêm (22h-02h)", count: 0, isFuture: true },
-
-  { day: "CN", timeSlot: "Sáng (06h-12h)", count: 0, isFuture: true },
-  { day: "CN", timeSlot: "Chiều (12h-18h)", count: 0, isFuture: true },
-  { day: "CN", timeSlot: "Tối (18h-22h)", count: 0, isFuture: true },
-  { day: "CN", timeSlot: "Đêm (22h-02h)", count: 0, isFuture: true },
-];
-
-// 3. Dữ liệu Tuần trước (Trọn vẹn tuần vừa rồi)
-const DATA_LAST_WEEK: HeatmapCell[] = [
-  { day: "T2", timeSlot: "Sáng (06h-12h)", count: 10 },
-  { day: "T2", timeSlot: "Chiều (12h-18h)", count: 18 },
-  { day: "T2", timeSlot: "Tối (18h-22h)", count: 32 },
-  { day: "T2", timeSlot: "Đêm (22h-02h)", count: 14 },
-
-  { day: "T3", timeSlot: "Sáng (06h-12h)", count: 8 },
-  { day: "T3", timeSlot: "Chiều (12h-18h)", count: 15 },
-  { day: "T3", timeSlot: "Tối (18h-22h)", count: 26 },
-  { day: "T3", timeSlot: "Đêm (22h-02h)", count: 10 },
-
-  { day: "T4", timeSlot: "Sáng (06h-12h)", count: 12 },
-  { day: "T4", timeSlot: "Chiều (12h-18h)", count: 22 },
-  { day: "T4", timeSlot: "Tối (18h-22h)", count: 38 },
-  { day: "T4", timeSlot: "Đêm (22h-02h)", count: 16 },
-
-  { day: "T5", timeSlot: "Sáng (06h-12h)", count: 9 },
-  { day: "T5", timeSlot: "Chiều (12h-18h)", count: 19 },
-  { day: "T5", timeSlot: "Tối (18h-22h)", count: 34 },
-  { day: "T5", timeSlot: "Đêm (22h-02h)", count: 13 },
-
-  { day: "T6", timeSlot: "Sáng (06h-12h)", count: 14 },
-  { day: "T6", timeSlot: "Chiều (12h-18h)", count: 24 },
-  { day: "T6", timeSlot: "Tối (18h-22h)", count: 42 },
-  { day: "T6", timeSlot: "Đêm (22h-02h)", count: 20 },
-
-  { day: "T7", timeSlot: "Sáng (06h-12h)", count: 20 },
-  { day: "T7", timeSlot: "Chiều (12h-18h)", count: 30 },
-  { day: "T7", timeSlot: "Tối (18h-22h)", count: 54, isPeak: true },
-  { day: "T7", timeSlot: "Đêm (22h-02h)", count: 26 },
-
-  { day: "CN", timeSlot: "Sáng (06h-12h)", count: 22 },
-  { day: "CN", timeSlot: "Chiều (12h-18h)", count: 32 },
-  { day: "CN", timeSlot: "Tối (18h-22h)", count: 50, isPeak: true },
-  { day: "CN", timeSlot: "Đêm (22h-02h)", count: 19 },
-];
-
-// 4. Dữ liệu Tháng này (Mật độ trung bình hàng tuần - Weekly Habit Pattern)
-// Thay vì cộng dồn cơ học làm số nhảy vọt phi thực tế, hiển thị số lượt học trung bình / buổi
-const DATA_THIS_MONTH_AVG: HeatmapCell[] = [
-  { day: "T2", timeSlot: "Sáng (06h-12h)", count: 10 },
-  { day: "T2", timeSlot: "Chiều (12h-18h)", count: 17 },
-  { day: "T2", timeSlot: "Tối (18h-22h)", count: 31 },
-  { day: "T2", timeSlot: "Đêm (22h-02h)", count: 13 },
-
-  { day: "T3", timeSlot: "Sáng (06h-12h)", count: 8 },
-  { day: "T3", timeSlot: "Chiều (12h-18h)", count: 15 },
-  { day: "T3", timeSlot: "Tối (18h-22h)", count: 28 },
-  { day: "T3", timeSlot: "Đêm (22h-02h)", count: 11 },
-
-  { day: "T4", timeSlot: "Sáng (06h-12h)", count: 11 },
-  { day: "T4", timeSlot: "Chiều (12h-18h)", count: 20 },
-  { day: "T4", timeSlot: "Tối (18h-22h)", count: 34 },
-  { day: "T4", timeSlot: "Đêm (22h-02h)", count: 15 },
-
-  { day: "T5", timeSlot: "Sáng (06h-12h)", count: 9 },
-  { day: "T5", timeSlot: "Chiều (12h-18h)", count: 18 },
-  { day: "T5", timeSlot: "Tối (18h-22h)", count: 32 },
-  { day: "T5", timeSlot: "Đêm (22h-02h)", count: 14 },
-
-  { day: "T6", timeSlot: "Sáng (06h-12h)", count: 13 },
-  { day: "T6", timeSlot: "Chiều (12h-18h)", count: 23 },
-  { day: "T6", timeSlot: "Tối (18h-22h)", count: 40 },
-  { day: "T6", timeSlot: "Đêm (22h-02h)", count: 20 },
-
-  { day: "T7", timeSlot: "Sáng (06h-12h)", count: 19 },
-  { day: "T7", timeSlot: "Chiều (12h-18h)", count: 30 },
-  { day: "T7", timeSlot: "Tối (18h-22h)", count: 53, isPeak: true },
-  { day: "T7", timeSlot: "Đêm (22h-02h)", count: 25 },
-
-  { day: "CN", timeSlot: "Sáng (06h-12h)", count: 21 },
-  { day: "CN", timeSlot: "Chiều (12h-18h)", count: 32 },
-  { day: "CN", timeSlot: "Tối (18h-22h)", count: 50, isPeak: true },
-  { day: "CN", timeSlot: "Đêm (22h-02h)", count: 19 },
-];
-
-// 5. Dữ liệu Tháng trước (Mật độ trung bình hàng tuần)
-const DATA_LAST_MONTH_AVG: HeatmapCell[] = [
-  { day: "T2", timeSlot: "Sáng (06h-12h)", count: 9 },
-  { day: "T2", timeSlot: "Chiều (12h-18h)", count: 16 },
-  { day: "T2", timeSlot: "Tối (18h-22h)", count: 29 },
-  { day: "T2", timeSlot: "Đêm (22h-02h)", count: 12 },
-
-  { day: "T3", timeSlot: "Sáng (06h-12h)", count: 7 },
-  { day: "T3", timeSlot: "Chiều (12h-18h)", count: 14 },
-  { day: "T3", timeSlot: "Tối (18h-22h)", count: 26 },
-  { day: "T3", timeSlot: "Đêm (22h-02h)", count: 10 },
-
-  { day: "T4", timeSlot: "Sáng (06h-12h)", count: 10 },
-  { day: "T4", timeSlot: "Chiều (12h-18h)", count: 19 },
-  { day: "T4", timeSlot: "Tối (18h-22h)", count: 32 },
-  { day: "T4", timeSlot: "Đêm (22h-02h)", count: 14 },
-
-  { day: "T5", timeSlot: "Sáng (06h-12h)", count: 8 },
-  { day: "T5", timeSlot: "Chiều (12h-18h)", count: 17 },
-  { day: "T5", timeSlot: "Tối (18h-22h)", count: 30 },
-  { day: "T5", timeSlot: "Đêm (22h-02h)", count: 13 },
-
-  { day: "T6", timeSlot: "Sáng (06h-12h)", count: 12 },
-  { day: "T6", timeSlot: "Chiều (12h-18h)", count: 21 },
-  { day: "T6", timeSlot: "Tối (18h-22h)", count: 38 },
-  { day: "T6", timeSlot: "Đêm (22h-02h)", count: 18 },
-
-  { day: "T7", timeSlot: "Sáng (06h-12h)", count: 17 },
-  { day: "T7", timeSlot: "Chiều (12h-18h)", count: 28 },
-  { day: "T7", timeSlot: "Tối (18h-22h)", count: 49, isPeak: true },
-  { day: "T7", timeSlot: "Đêm (22h-02h)", count: 23 },
-
-  { day: "CN", timeSlot: "Sáng (06h-12h)", count: 19 },
-  { day: "CN", timeSlot: "Chiều (12h-18h)", count: 30 },
-  { day: "CN", timeSlot: "Tối (18h-22h)", count: 47, isPeak: true },
-  { day: "CN", timeSlot: "Đêm (22h-02h)", count: 18 },
-];
-
 export function InstructorHeatmap({
   dateRange = "7d",
   learnerFilter: _learnerFilter = "all",
@@ -239,32 +48,27 @@ export function InstructorHeatmap({
         isFuture: false,
       }));
     }
-    switch (dateRange) {
-      case "this_week":
-      case "today":
-        return DATA_THIS_WEEK;
-      case "last_week":
-        return DATA_LAST_WEEK;
-      case "this_month":
-        return DATA_THIS_MONTH_AVG;
-      case "last_month":
-        return DATA_LAST_MONTH_AVG;
-      case "7d":
-      default:
-        return DATA_7D;
-    }
-  }, [dateRange, heatmapData]);
+    // Generate pristine zero-filled grid when no data is provided
+    const emptyGrid: HeatmapCell[] = [];
+    DAYS.forEach((day) => {
+      TIME_SLOTS.forEach((timeSlot) => {
+        emptyGrid.push({
+          day,
+          timeSlot,
+          count: 0,
+          isPeak: false,
+          isFuture: false,
+        });
+      });
+    });
+    return emptyGrid;
+  }, [heatmapData]);
 
   // Tổng số lượt học trong kỳ
   const totalInteractions = useMemo(() => {
     if (totalActiveInPeriod !== undefined) return totalActiveInPeriod;
-    if (heatmapData && heatmapData.length > 0) {
-      return currentData.reduce((acc, c) => acc + c.count, 0);
-    }
-    if (dateRange === "this_month") return 2150;
-    if (dateRange === "last_month") return 1980;
     return currentData.reduce((acc, c) => acc + c.count, 0);
-  }, [currentData, dateRange, heatmapData, totalActiveInPeriod]);
+  }, [currentData, totalActiveInPeriod]);
 
   // Nhãn thời gian hiển thị
   const timeRangeLabel = useMemo(() => {
