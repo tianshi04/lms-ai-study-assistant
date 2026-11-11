@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Table } from "@/components/ui/Table";
+import { Input } from "@/components/ui/Input";
 import {
   Search,
   Zap,
@@ -17,8 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
-import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { useSendStudentReminderMutation } from "@/lib/query_hooks";
 import { InstructorBulkReminderModal } from "./InstructorBulkReminderModal";
 
 export type PacingCategory = "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND";
@@ -58,6 +58,7 @@ export function InstructorPacingModal({
   students = [],
 }: InstructorPacingModalProps) {
   const toast = useToast();
+  const sendReminderMutation = useSendStudentReminderMutation();
   const [selectedPace, setSelectedPace] = useState<PacingCategory>(initialCategory);
   const [selectedCourse, setSelectedCourse] = useState<string>(initialCourseId);
   const [searchQuery, setSearchQuery] = useState("");
@@ -144,7 +145,6 @@ export function InstructorPacingModal({
     }
     const targetCourseId = student.courseId;
     try {
-      const client = getRpcClient(CatalogService);
       const isAhead = student.pace === "AHEAD";
       const courseName = student.courseTitle || "Khóa học";
       const title = isAhead
@@ -154,7 +154,7 @@ export function InstructorPacingModal({
         ? `Chào ${student.name}, Thầy/Cô rất ấn tượng khi em đang học vượt tiến độ đề xuất ở môn ${courseName} (${student.progressPercent}% đề cương). Chúc em tiếp tục duy trì phong độ để sớm hoàn thành xuất sắc khóa học nhé!`
         : `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`;
 
-      const res = await client.sendStudentReminder({
+      const res = await sendReminderMutation.mutateAsync({
         courseId: targetCourseId,
         studentIds: [student.id],
         title,
@@ -306,28 +306,29 @@ export function InstructorPacingModal({
           {/* Thanh công cụ Tìm kiếm & Lọc môn học & Nút Nhắc nhở hàng loạt */}
           <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-1">
-              <div className="relative flex-1 max-w-sm">
-                <Search
-                  className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden="true"
-                />
-                <input
+              <div className="flex-1 max-w-sm">
+                <Input
                   type="text"
                   placeholder="Tìm tên học viên, email, bài học..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-surface border border-outline-variant text-xs font-medium text-foreground focus:ring-1 focus:ring-primary focus:border-primary outline-hidden"
+                  startAdornment={
+                    <Search className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                  }
+                  endAdornment={
+                    searchQuery ? (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery("")}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer"
+                        aria-label="Xóa từ khóa tìm kiếm"
+                      >
+                        <X className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    ) : null
+                  }
+                  className="h-8.5 text-xs rounded-xl bg-surface border-outline-variant"
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    aria-label="Xóa từ khóa tìm kiếm"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
-                )}
               </div>
 
               <div className="relative min-w-[180px] max-w-[240px]">

@@ -261,6 +261,7 @@ export function InstructorCourseComparisonTable({
                               onClick={(e) => e.stopPropagation()}
                               className="inline-flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
                               title="Có bài tập quá hạn 48h quy định cần chấm ngay"
+                              aria-label={`Có ${overdueGrading} bài tập quá hạn cần chấm môn ${course.title}`}
                             >
                               <AlertTriangle
                                 className="w-3 h-3 text-destructive"
@@ -275,6 +276,7 @@ export function InstructorCourseComparisonTable({
                               onClick={(e) => e.stopPropagation()}
                               className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 hover:bg-warning/20 border border-warning/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
                               title="Mở Bàn làm việc chấm bài"
+                              aria-label={`Có ${pendingGrading} bài chờ chấm môn ${course.title}`}
                             >
                               <ClipboardCheck className="w-3 h-3 text-warning" aria-hidden="true" />
                               <span>{pendingGrading} bài chờ chấm</span>
@@ -286,6 +288,7 @@ export function InstructorCourseComparisonTable({
                               onClick={(e) => e.stopPropagation()}
                               className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-1.5 py-0.5 rounded-md whitespace-nowrap transition-colors"
                               title="Mở diễn đàn thảo luận & hỏi đáp"
+                              aria-label={`Có ${pendingQa} câu hỏi thảo luận môn ${course.title}`}
                             >
                               <MessageSquare className="w-3 h-3 text-primary" aria-hidden="true" />
                               <span>{pendingQa} hỏi đáp</span>
@@ -309,7 +312,11 @@ export function InstructorCourseComparisonTable({
                         </span>
                         <button
                           type="button"
-                          onClick={() => onSelectCourse(course.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectCourse(course.id);
+                          }}
+                          aria-label={`Xem chi tiết môn ${course.title}`}
                           className="inline-flex items-center gap-0.5 text-xs font-bold text-primary hover:text-primary-hover hover:underline transition-colors cursor-pointer group/btn"
                         >
                           <span>Chi tiết</span>

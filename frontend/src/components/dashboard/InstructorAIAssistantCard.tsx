@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { useSendStudentReminderMutation } from "@/lib/query_hooks";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
@@ -94,6 +95,7 @@ export function InstructorAIAssistantCard({
   bottleneckWeek,
 }: InstructorAIAssistantCardProps) {
   const { toast } = useToast();
+  const sendReminderMutation = useSendStudentReminderMutation();
   const [activeIdx, setActiveIdx] = useState(0);
   const [nudged, setNudged] = useState(false);
   const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
@@ -215,9 +217,8 @@ export function InstructorAIAssistantCard({
         return;
       }
       try {
-        const client = getRpcClient(CatalogService);
         const studentIds = behindStudents.map((s) => s.userId);
-        const res = await client.sendStudentReminder({
+        const res = await sendReminderMutation.mutateAsync({
           courseId,
           studentIds,
           title: `[Đôn đốc học tập] Tiếp tục bài học môn ${courseTitle}`,
