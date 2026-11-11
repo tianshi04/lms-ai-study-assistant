@@ -138,33 +138,44 @@ export function InstructorPacingModal({
 
   // Tương tác sư phạm: Khích lệ (Vượt tiến độ) hoặc Nhắc nhở (Chậm/Đúng tiến độ)
   const handleNudgeStudent = async (student: StudentPacingRecord) => {
-    setNudgedStudentIds((prev) => new Set(prev).add(student.id));
+    if (!student.courseId) {
+      toast.error("Không xác định được mã khóa học của học viên.");
+      return;
+    }
+    const targetCourseId = student.courseId;
     try {
-      if (student.courseId) {
-        const client = getRpcClient(CatalogService);
-        const isAhead = student.pace === "AHEAD";
-        const title = isAhead
-          ? `[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${student.courseTitle}`
-          : `[Nhắc nhở học tập] Tiến độ môn ${student.courseTitle}`;
-        const content = isAhead
-          ? `Chào ${student.name}, Thầy/Cô rất ấn tượng khi em đang học vượt tiến độ đề xuất ở môn ${student.courseTitle} (${student.progressPercent}% đề cương). Chúc em tiếp tục duy trì phong độ để sớm hoàn thành xuất sắc khóa học nhé!`
-          : `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`;
+      const client = getRpcClient(CatalogService);
+      const isAhead = student.pace === "AHEAD";
+      const courseName = student.courseTitle || "Khóa học";
+      const title = isAhead
+        ? `[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${courseName}`
+        : `[Nhắc nhở học tập] Tiến độ môn ${courseName}`;
+      const content = isAhead
+        ? `Chào ${student.name}, Thầy/Cô rất ấn tượng khi em đang học vượt tiến độ đề xuất ở môn ${courseName} (${student.progressPercent}% đề cương). Chúc em tiếp tục duy trì phong độ để sớm hoàn thành xuất sắc khóa học nhé!`
+        : `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`;
 
-        await client.sendStudentReminder({
-          courseId: student.courseId,
-          studentIds: [student.id],
-          title,
-          content,
-        });
+      const res = await client.sendStudentReminder({
+        courseId: targetCourseId,
+        studentIds: [student.id],
+        title,
+        content,
+      });
+
+      if (res.sentCount > 0) {
+        setNudgedStudentIds((prev) => new Set(prev).add(student.id));
+        toast.success(
+          isAhead
+            ? `Đã gửi lời khen ngợi & khích lệ tới học viên ${student.name}!`
+            : `Đã gửi thông báo & email nhắc nhở học tập tới học viên ${student.name}!`,
+          {
+            description: `Lộ trình hiện tại: ${student.currentLesson}`,
+          },
+        );
+      } else {
+        toast.error(
+          `Không thể gửi nhắc nhở tới ${student.name} (học viên không còn ghi danh trong khóa học).`,
+        );
       }
-      toast.success(
-        student.pace === "AHEAD"
-          ? `Đã gửi lời khen ngợi & khích lệ tới học viên ${student.name}!`
-          : `Đã gửi thông báo & email nhắc nhở học tập tới học viên ${student.name}!`,
-        {
-          description: `Lộ trình hiện tại: ${student.currentLesson}`,
-        },
-      );
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Không thể gửi thông điệp tới học viên.");
     }

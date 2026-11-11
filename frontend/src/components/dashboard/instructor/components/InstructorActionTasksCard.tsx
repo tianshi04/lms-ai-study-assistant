@@ -71,11 +71,11 @@ export function InstructorActionTasksCard({
   }, [queueItems, currentTimeMs]);
 
   const courseAppealsCount = useMemo(() => {
-    return queueItems.filter((i) => i.isAppeal).length;
+    return queueItems.filter((i) => i.isAppeal && i.status !== GradingQueueStatus.GRADED).length;
   }, [queueItems]);
 
   const courseOutliersCount = useMemo(() => {
-    return queueItems.filter((i) => i.isOutlier).length;
+    return queueItems.filter((i) => i.isOutlier && i.status !== GradingQueueStatus.GRADED).length;
   }, [queueItems]);
 
   // 2. Dữ liệu khi xem ở Chế độ Tổng quan toàn bộ các môn học
@@ -112,8 +112,7 @@ export function InstructorActionTasksCard({
   const effectiveQaCount = isOverview ? overviewQaCount : 0;
   const effectiveBehindCount = behindCount;
 
-  const totalUrgentCount =
-    effectiveGradingCount + effectiveAppealsCount + effectiveBehindCount + effectiveQaCount;
+  const totalUrgentCount = effectiveGradingCount + effectiveBehindCount + effectiveQaCount;
 
   const isLoading = !isOverview && loadingGrading;
 

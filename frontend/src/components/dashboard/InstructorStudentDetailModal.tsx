@@ -92,21 +92,33 @@ export function InstructorStudentDetailModal({
   if (!student) return null;
 
   const handleSend = async () => {
+    if (!reminderSubject.trim()) {
+      error("Vui lòng nhập tiêu đề thông điệp.");
+      return;
+    }
     if (!reminderBody.trim()) {
       error("Vui lòng nhập nội dung thông điệp.");
+      return;
+    }
+    if (!courseId) {
+      error("Không xác định được mã khóa học.");
       return;
     }
 
     setIsSending(true);
     try {
-      if (courseId) {
-        const client = getRpcClient(CatalogService);
-        await client.sendStudentReminder({
-          courseId,
-          studentIds: [student.userId],
-          title: reminderSubject,
-          content: reminderBody,
-        });
+      const client = getRpcClient(CatalogService);
+      const res = await client.sendStudentReminder({
+        courseId,
+        studentIds: [student.userId],
+        title: reminderSubject.trim(),
+        content: reminderBody.trim(),
+      });
+      if (res.sentCount === 0) {
+        error(
+          "Không thể gửi thông điệp tới học viên (học viên không còn ghi danh trong khóa học).",
+        );
+        return;
       }
       onSendReminder(student.userId, reminderBody);
       const successMsg = isDone

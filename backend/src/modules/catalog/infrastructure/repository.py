@@ -15,6 +15,7 @@ from src.modules.catalog.domain import (
     CourseAnnouncement,
     CourseBookmark,
     CourseReview,
+    CourseRole,
     CourseStatus,
     EnrolledStudent,
     HeatmapCell,
@@ -151,13 +152,20 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         co_instructor_ids=[
             c.user_id
             for c in getattr(model, "collaborators", [])
-            if getattr(c, "role", "").upper() in ("CO_INSTRUCTOR", "INSTRUCTOR")
+            if getattr(c, "role", "").upper()
+            in (CourseRole.CO_INSTRUCTOR.value, "CO_INSTRUCTOR", "INSTRUCTOR")
         ],
         ta_ids=[
             c.user_id
             for c in getattr(model, "collaborators", [])
             if getattr(c, "role", "").upper()
-            in ("TA", "TEACHING_ASSISTANT", "COLLABORATOR")
+            in (
+                CourseRole.COURSE_TA.value,
+                "COURSE_TA",
+                "TA",
+                "TEACHING_ASSISTANT",
+                "COLLABORATOR",
+            )
         ],
         status=getattr(model, "status", CourseStatus.DRAFT) or CourseStatus.DRAFT,
         rejection_reason=getattr(model, "rejection_reason", "") or "",
