@@ -547,10 +547,10 @@ function CoursePlayerContent() {
   useEffect(() => {
     if (!isInitialLoadCompletedRef.current || !activeItemId || isPreviewMode) return;
     const client = getRpcClient(LearningService);
-    client.getProgress({ courseId, currentItemId: activeItemId }).catch(() => {
+    client.getProgress({ courseId: resolvedCourseId, currentItemId: activeItemId }).catch(() => {
       // Ignore background tracking failure
     });
-  }, [courseId, activeItemId, isPreviewMode]);
+  }, [resolvedCourseId, activeItemId, isPreviewMode]);
 
   // Mark Item as Complete is now moved above useEffect hooks.
 

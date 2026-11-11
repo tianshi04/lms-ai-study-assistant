@@ -33,4 +33,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
+    """Downgrade schema (irreversible data-repair backfill: no-op)."""

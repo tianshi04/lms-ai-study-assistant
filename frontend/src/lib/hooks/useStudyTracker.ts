@@ -15,12 +15,15 @@ interface UseStudyTrackerOptions {
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const IDLE_TIMEOUT_MS = 120_000;
 
-export function flushStudyTimeKeepalive(payload: {
-  courseId: string;
-  itemId: string;
-  deltaSeconds: number;
-  clientTimezone: string;
-}) {
+export function flushStudyTimeKeepalive(
+  payload: {
+    courseId: string;
+    itemId: string;
+    deltaSeconds: number;
+    clientTimezone: string;
+  },
+  onBlocked?: () => void,
+) {
   if (payload.deltaSeconds <= 0) return;
 
   fetch("/rpc/learning.v1.LearningService/RecordLearningTime", {
@@ -37,9 +40,15 @@ export function flushStudyTimeKeepalive(payload: {
       deltaSeconds: payload.deltaSeconds,
       clientTimezone: payload.clientTimezone,
     }),
-  }).catch(() => {
-    // Ignore background flush error on unload
-  });
+  })
+    .then((res) => {
+      if (res.status === 401 || res.status === 403) {
+        onBlocked?.();
+      }
+    })
+    .catch(() => {
+      // Ignore background flush error on unload
+    });
 }
 
 export function useStudyTracker({
@@ -60,6 +69,9 @@ export function useStudyTracker({
 
   useEffect(() => {
     isBlockedRef.current = false;
+  }, [courseId, isPreviewMode, isEnrolled]);
+
+  useEffect(() => {
     activeDeltaRef.current = 0;
   }, [courseId, itemId, isPreviewMode, isEnrolled]);
 
@@ -97,12 +109,18 @@ export function useStudyTracker({
     if (delta <= 0) return;
 
     activeDeltaRef.current = 0;
-    flushStudyTimeKeepalive({
-      courseId,
-      itemId,
-      deltaSeconds: delta,
-      clientTimezone: getClientTimezone(),
-    });
+    flushStudyTimeKeepalive(
+      {
+        courseId,
+        itemId,
+        deltaSeconds: delta,
+        clientTimezone: getClientTimezone(),
+      },
+      () => {
+        isBlockedRef.current = true;
+        activeDeltaRef.current = 0;
+      },
+    );
   }, [canTrack, courseId, itemId, getClientTimezone]);
 
   useEffect(() => {

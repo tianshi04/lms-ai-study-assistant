@@ -114,6 +114,59 @@ async def test_get_progress_backfills_empty_enrolled_at(repository, mock_session
 
 
 @pytest.mark.asyncio
+async def test_get_progress_backfills_from_last_reset_at_and_preserves_on_item_switch(
+    repository, mock_session
+):
+    mock_model = LearningProgressModel(
+        id="u_legacy2:c1",
+        user_id="u_legacy2",
+        course_id="c1",
+        overall_progress_percent=10.0,
+        completed_item_ids=[],
+        enrolled_at="",
+        last_accessed_at=None,
+        last_reset_at="2026-10-10T00:00:00+00:00",
+        weekly_deadlines=[],
+    )
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_model
+    mock_session.execute.return_value = mock_result
+
+    progress = await repository.get_progress("u_legacy2", "c1", current_item_id="i2")
+
+    assert progress.enrolled_at == "2026-10-10T00:00:00+00:00"
+    assert progress.last_accessed_item_id == "i2"
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_progress_backfills_with_now_when_no_prior_timestamps(
+    repository, mock_session
+):
+    mock_model = LearningProgressModel(
+        id="u_legacy3:c1",
+        user_id="u_legacy3",
+        course_id="c1",
+        overall_progress_percent=0.0,
+        completed_item_ids=[],
+        enrolled_at="",
+        last_accessed_at="",
+        last_reset_at="",
+        weekly_deadlines=[],
+    )
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_model
+    mock_session.execute.return_value = mock_result
+
+    progress = await repository.get_progress("u_legacy3", "c1")
+
+    assert progress.enrolled_at != ""
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_get_progress_not_existing_with_current_item(repository, mock_session):
     mock_model = LearningProgressModel(
         id="u2:c2",
