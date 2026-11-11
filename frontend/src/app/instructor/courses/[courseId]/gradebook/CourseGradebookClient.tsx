@@ -154,7 +154,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
         ),
         cell: ({ row }) => {
           const cellData = row.original.cells.find((c) => c.itemId === itemCol.itemId);
-          if (!cellData || cellData.score === 0) {
+          if (!cellData || (!cellData.gradedAt && !cellData.submissionId && !cellData.provenance)) {
             return <span className="text-muted-foreground/60 text-xs italic">Chưa có bài</span>;
           }
 
@@ -251,16 +251,17 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
     ]);
 
     const csvContent =
-      "data:text/csv;charset=utf-8,\uFEFF" +
-      [headerRow.join(","), ...bodyRows.map((r) => r.join(","))].join("\n");
+      "\uFEFF" + [headerRow.join(","), ...bodyRows.map((r) => r.join(","))].join("\n");
 
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `so_diem_khoa_hoc_${courseId}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -380,10 +381,15 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
             <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || "ALL")}>
-              <Select.Item value="ALL">Tất cả trạng thái</Select.Item>
-              <Select.Item value="COMPLETED">Đã tốt nghiệp</Select.Item>
-              <Select.Item value="IN_PROGRESS">Đang học</Select.Item>
-              <Select.Item value="ACTIVE">Mới kích hoạt</Select.Item>
+              <Select.Trigger className="w-full sm:w-48 text-xs py-2">
+                <Select.Value placeholder="Tất cả trạng thái" />
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="ALL">Tất cả trạng thái</Select.Item>
+                <Select.Item value="COMPLETED">Đã tốt nghiệp</Select.Item>
+                <Select.Item value="IN_PROGRESS">Đang học</Select.Item>
+                <Select.Item value="ACTIVE">Mới kích hoạt</Select.Item>
+              </Select.Content>
             </Select>
           </div>
         </div>

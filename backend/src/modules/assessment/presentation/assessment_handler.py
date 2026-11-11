@@ -267,25 +267,34 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.CreateQuestionBankResponse:
         user = self._verify_instructor_permission()
-        if request.course_id:
-            try:
-                course = await self.use_case.get_course_for_item_or_submission(
-                    course_id=request.course_id
-                )
-                user_ctx = CurrentUserContext(
-                    id=user.id, role=user.role, email=user.email
-                )
-                enforce_course_ownership(
-                    course=course,
-                    user=user_ctx,
-                    required_permission=CoursePermission.MANAGE_CURRICULUM,
-                    action_name="tạo ngân hàng câu hỏi",
-                )
-            except PermissionError as e:
-                raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        course_id = request.course_id.strip() if request.course_id else ""
+        if not course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
+        title = request.title.strip() if request.title else ""
+        if not title:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Tiêu đề ngân hàng câu hỏi không được để trống"
+            )
+
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                course_id=course_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="tạo ngân hàng câu hỏi",
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
         bank = await self.use_case.create_question_bank(
-            course_id=request.course_id,
-            title=request.title,
+            course_id=course_id,
+            title=title,
             category=request.category,
             description=request.description,
             current_user=user,
@@ -306,8 +315,28 @@ class AssessmentHandler(AssessmentService):
         request: pb.ListQuestionBanksRequest,
         ctx: RequestContext[pb.ListQuestionBanksRequest, pb.ListQuestionBanksResponse],
     ) -> pb.ListQuestionBanksResponse:
-        require_current_user()
-        banks = await self.use_case.list_question_banks(course_id=request.course_id)
+        user = self._verify_instructor_permission()
+        course_id = request.course_id.strip() if request.course_id else ""
+        if not course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
+
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                course_id=course_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="xem ngân hàng câu hỏi",
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        banks = await self.use_case.list_question_banks(course_id=course_id)
         pb_banks = []
         for b in banks:
             pb_questions = []
@@ -353,12 +382,34 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.AddQuestionToBankRequest, pb.AddQuestionToBankResponse],
     ) -> pb.AddQuestionToBankResponse:
         user = self._verify_instructor_permission()
+        bank_id = request.bank_id.strip() if request.bank_id else ""
+        if not bank_id:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Mã ngân hàng câu hỏi không được để trống"
+            )
+
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                bank_id=bank_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="thêm câu hỏi vào ngân hàng",
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
         options_data = [
             {"option_text": opt.option_text, "is_correct": opt.is_correct}
             for opt in request.options
         ]
         q = await self.use_case.add_question_to_bank(
-            bank_id=request.bank_id,
+            bank_id=bank_id,
             text=request.text,
             question_type=request.question_type,
             difficulty=request.difficulty,
@@ -397,25 +448,36 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.ConfigureQuizMatrixResponse:
         user = self._verify_instructor_permission()
-        if request.item_id:
-            try:
-                course = await self.use_case.get_course_for_item_or_submission(
-                    item_id=request.item_id
-                )
-                user_ctx = CurrentUserContext(
-                    id=user.id, role=user.role, email=user.email
-                )
-                enforce_course_ownership(
-                    course=course,
-                    user=user_ctx,
-                    required_permission=CoursePermission.MANAGE_CURRICULUM,
-                    action_name="cấu hình ma trận đề thi",
-                )
-            except PermissionError as e:
-                raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        item_id = request.item_id.strip() if request.item_id else ""
+        if not item_id:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Mã mục học tập không được để trống"
+            )
+        bank_id = request.bank_id.strip() if request.bank_id else ""
+        if not bank_id:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Mã ngân hàng câu hỏi không được để trống"
+            )
+
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                item_id=item_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="cấu hình ma trận đề thi",
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
         matrix = await self.use_case.configure_quiz_matrix(
-            item_id=request.item_id,
-            bank_id=request.bank_id,
+            item_id=item_id,
+            bank_id=bank_id,
             time_limit_minutes=request.time_limit_minutes,
             passing_threshold_percent=request.passing_threshold_percent,
             easy_count=request.easy_count,
@@ -446,11 +508,33 @@ class AssessmentHandler(AssessmentService):
         request: pb.GetQuizMatrixRequest,
         ctx: RequestContext[pb.GetQuizMatrixRequest, pb.GetQuizMatrixResponse],
     ) -> pb.GetQuizMatrixResponse:
-        require_current_user()
-        matrix = await self.use_case.get_quiz_matrix(item_id=request.item_id)
+        user = self._verify_instructor_permission()
+        item_id = request.item_id.strip() if request.item_id else ""
+        if not item_id:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Mã mục học tập không được để trống"
+            )
+
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                item_id=item_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="xem ma trận đề thi",
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        matrix = await self.use_case.get_quiz_matrix(item_id=item_id)
         if not matrix:
             raise ConnectError(
-                Code.NOT_FOUND, f"Quiz Matrix for item {request.item_id} not found"
+                Code.NOT_FOUND, f"Quiz Matrix for item {item_id} not found"
             )
         return pb.GetQuizMatrixResponse(
             matrix=pb.QuizMatrix(
@@ -473,12 +557,32 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.UpdateQuestionRequest, pb.UpdateQuestionResponse],
     ) -> pb.UpdateQuestionResponse:
         user = self._verify_instructor_permission()
+        question_id = request.question_id.strip() if request.question_id else ""
+        if not question_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã câu hỏi không được để trống")
+
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                question_id=question_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="cập nhật câu hỏi",
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
         options_data = [
             {"option_text": opt.option_text, "is_correct": opt.is_correct}
             for opt in request.options
         ]
         q = await self.use_case.update_question(
-            question_id=request.question_id,
+            question_id=question_id,
             text=request.text,
             question_type=request.question_type,
             difficulty=request.difficulty,
@@ -515,8 +619,28 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.DeleteQuestionRequest, pb.DeleteQuestionResponse],
     ) -> pb.DeleteQuestionResponse:
         user = self._verify_instructor_permission()
+        question_id = request.question_id.strip() if request.question_id else ""
+        if not question_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã câu hỏi không được để trống")
+
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                question_id=question_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="xóa câu hỏi",
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
         success = await self.use_case.delete_question(
-            question_id=request.question_id, current_user=user
+            question_id=question_id, current_user=user
         )
         msg = (
             "Deleted successfully"
@@ -1059,16 +1183,46 @@ class AssessmentHandler(AssessmentService):
                     title=c.title,
                     max_score=c.max_score,
                     score_given=c.score_given,
+                    description=getattr(c, "description", ""),
                 )
                 for c in request.graded_criteria
             ]
-            provenance_str = "INSTRUCTOR" if current_user.role == "INSTRUCTOR" else "TA"
-
-            total_score = (
-                request.total_score
-                if request.total_score > 0
-                else sum(c.score_given for c in criteria_list)
+            is_ta = current_user.id in (getattr(course, "ta_ids", []) or [])
+            provenance_str = (
+                "TA"
+                if is_ta
+                else (
+                    "INSTRUCTOR"
+                    if current_user.role
+                    in (
+                        "INSTRUCTOR",
+                        "USER_ROLE_INSTRUCTOR",
+                        "ADMIN",
+                        "USER_ROLE_ADMIN",
+                    )
+                    else "TA"
+                )
             )
+
+            if criteria_list:
+                max_possible = sum(c.max_score for c in criteria_list)
+                total_given = sum(c.score_given for c in criteria_list)
+                expected_score = (
+                    round((total_given / max_possible) * 100.0, 2)
+                    if max_possible > 0
+                    else 0.0
+                )
+                if request.total_score > 0:
+                    is_raw_sum = abs(request.total_score - total_given) <= 0.05
+                    is_normalized = abs(request.total_score - expected_score) <= 0.05
+                    if not (is_raw_sum or is_normalized):
+                        raise ConnectError(
+                            Code.INVALID_ARGUMENT,
+                            f"Tổng điểm ({request.total_score}) không nhất quán với tổng điểm tiêu chí rubric ({expected_score}%).",
+                        )
+                total_score = expected_score
+            else:
+                total_score = request.total_score
             (
                 success,
                 msg,

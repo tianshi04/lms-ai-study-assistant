@@ -226,6 +226,18 @@ export function EvaluationModal({
     }
   };
 
+  // Automatically release soft-lock when closing modal without submitting
+  const handleCloseAndRelease = async () => {
+    if (!isLockedByOther && detail?.submission?.lockedByUserId) {
+      try {
+        await releaseLockMutation.mutateAsync({ submissionId });
+      } catch {
+        // Silently close without blocking UI
+      }
+    }
+    onClose();
+  };
+
   // Handle submit grading (Immediate Publishing model)
   const handleSubmitGrading = async () => {
     if (!detail) return;
@@ -240,11 +252,16 @@ export function EvaluationModal({
       }),
     );
 
+    const normalizedTotalScore =
+      maxPossibleScore > 0
+        ? Number(((currentTotalScore / maxPossibleScore) * 100.0).toFixed(2))
+        : 0;
+
     try {
       await submitGradingMutation.mutateAsync({
         submissionId,
         gradedCriteria: payloadCriteria,
-        totalScore: currentTotalScore,
+        totalScore: normalizedTotalScore,
         feedback: feedback.trim(),
         resolveAppeal: detail.submission?.isAppeal ? resolveAppeal : false,
         appealResolutionNotes: appealNotes.trim(),
@@ -271,7 +288,7 @@ export function EvaluationModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseAndRelease()}>
       <Dialog.Content
         size="full"
         className="max-w-6xl w-[95vw] h-[92vh] max-h-[92vh] p-0 flex flex-col rounded-3xl overflow-hidden bg-background border border-border shadow-2xl"
@@ -809,7 +826,7 @@ export function EvaluationModal({
                     <Button
                       type="button"
                       variant="text"
-                      onClick={onClose}
+                      onClick={handleCloseAndRelease}
                       disabled={submitGradingMutation.isPending}
                       className="w-full sm:w-auto text-xs font-bold"
                     >

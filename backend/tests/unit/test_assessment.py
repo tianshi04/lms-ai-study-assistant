@@ -35,6 +35,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.grade_appeals: dict[str, GradeAppeal] = {}
         self.matrices: dict[str, Any] = {}
         self.item_types: dict[str, str] = {}
+        self.rubric_criteria_json_map: dict[str, str] = {}
 
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         self.honor_codes[agreement.id] = agreement
@@ -316,8 +317,21 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def get_course_id_by_item_id(self, item_id: str) -> str | None:
         return "course_test_1"
 
+    async def get_course_id_by_bank_id(self, bank_id: str) -> str | None:
+        return getattr(self, "bank_course_map", {}).get(bank_id, "course_test_1")
+
+    async def get_course_id_by_question_id(self, question_id: str) -> str | None:
+        return getattr(self, "question_course_map", {}).get(
+            question_id, "course_test_1"
+        )
+
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         return None
+
+    async def get_item_rubric_criteria_json(self, item_id: str) -> str | None:
+        if hasattr(self, "rubric_criteria_json_map"):
+            return self.rubric_criteria_json_map.get(item_id)
+        return getattr(self, "item_rubrics", {}).get(item_id, None)
 
     async def claim_submission_lock(
         self, submission_id: str, user_id: str, timeout_minutes: int = 30
@@ -1529,6 +1543,55 @@ async def test_course_gradebook_matrix_usecase():
     assert len(gb["rows"]) == 2
     assert gb["rows"][0]["cells"][0]["score"] in (90.0, 70.0)
     assert gb["rows"][0]["cells"][0]["provenance"] in ("TA", "PEER_REVIEW")
+
+
+@pytest.mark.asyncio
+async def test_dynamic_rubric_criteria_from_item():
+    import json
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+
+    custom_rubrics = [
+        {
+            "criteria_id": "ux_design",
+            "title": "Thiết kế Giao diện UI/UX",
+            "max_score": 25.0,
+            "description": "Giao diện tuân thủ Design System và có trải nghiệm mượt mà.",
+        },
+        {
+            "criteria_id": "user_research",
+            "title": "Nghiên cứu Người dùng",
+            "max_score": 15.0,
+            "description": "Khảo sát và chân dung người dùng có cơ sở số liệu.",
+        },
+    ]
+    repo.rubric_criteria_json_map = {"item-custom-peer": json.dumps(custom_rubrics)}
+
+    # Submit a peer assignment by another user
+    _sub_id, _ = await usecase.submit_peer_assignment(
+        "author-peer-1",
+        "item-custom-peer",
+        "https://figma.com/file/123",
+        "Figma UI/UX prototype",
+    )
+
+    # Get peer reviews to grade for student-reviewer
+    reviews_to_grade = await usecase.get_peer_reviews_to_grade(
+        user_id="student-reviewer", item_id="item-custom-peer"
+    )
+    assert len(reviews_to_grade) == 1
+    criteria = reviews_to_grade[0]["rubric_criteria"]
+    assert len(criteria) == 2
+    assert criteria[0].criteria_id == "ux_design"
+    assert criteria[0].title == "Thiết kế Giao diện UI/UX"
+    assert criteria[0].max_score == 25.0
+    assert (
+        criteria[0].description
+        == "Giao diện tuân thủ Design System và có trải nghiệm mượt mà."
+    )
+    assert criteria[1].criteria_id == "user_research"
+    assert criteria[1].max_score == 15.0
 
 
 @pytest.mark.asyncio
