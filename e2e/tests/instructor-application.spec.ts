@@ -6,6 +6,7 @@ test.describe('Full System Blackbox - Individual Instructor Application (POM)', 
     await page.goto('/learner/dashboard');
     const navLink = page.getByRole('link', { name: /Trở thành Giảng viên/i }).first();
     await expect(navLink).toBeVisible({ timeout: 15000 });
+    await navLink.scrollIntoViewIfNeeded();
     await navLink.click();
     await expect(page).toHaveURL(/\/become-an-instructor/, { timeout: 15000 });
   });

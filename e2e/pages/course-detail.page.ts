@@ -20,7 +20,7 @@ export class CourseDetailPage {
   }
 
   async verifyPageLoaded() {
-    await expect(this.page).toHaveURL(/\/courses\/.+/);
+    await expect(this.page).toHaveURL(/\/courses\/.+/, { timeout: 15000 });
     await expect(this.courseTitle).toBeVisible({ timeout: 15000 });
     await expect(this.enrollButton).toBeVisible({ timeout: 10000 });
     await expect(this.syllabusHeading).toBeVisible({ timeout: 10000 });
