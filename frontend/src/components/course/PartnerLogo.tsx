@@ -21,7 +21,7 @@ export function PartnerLogo({ logoUrl, partnerName }: PartnerLogoProps) {
         width={140}
         height={24}
         onError={() => setImgError(true)}
-        className="h-6 max-w-[140px] w-auto object-contain dark:brightness-200 dark:contrast-200 transition-opacity"
+        className="h-6 max-w-[140px] min-w-0 w-auto object-contain dark:brightness-200 dark:contrast-200 transition-opacity"
         unoptimized
       />
     );
@@ -30,7 +30,7 @@ export function PartnerLogo({ logoUrl, partnerName }: PartnerLogoProps) {
   return (
     <Chip
       variant="assist"
-      className="h-7 text-xs font-bold bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container pointer-events-none cursor-default shadow-xs"
+      className="h-7 min-w-0 max-w-full shrink text-xs font-bold bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container pointer-events-none cursor-default shadow-xs"
       leadingIcon={<Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />}
     >
       {partnerName || "Coursera Partner"}
