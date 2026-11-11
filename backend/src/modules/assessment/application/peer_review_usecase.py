@@ -28,6 +28,74 @@ from .base_usecase import BaseAssessmentUseCase
 logger = logging.getLogger(__name__)
 
 
+def _parse_rubrics(raw_rubrics: Any) -> list[RubricCriteria]:
+    """Parses raw rubric criteria from DB JSON (string, dict, or list) into list[RubricCriteria]."""
+    if not raw_rubrics:
+        return []
+
+    data = raw_rubrics
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return []
+
+    if isinstance(data, dict):
+        if "items" in data and isinstance(data["items"], list):
+            data = data["items"]
+        else:
+            items_list = []
+            for k, v in data.items():
+                if isinstance(v, dict):
+                    crit_id = str(v.get("criteria_id") or k)
+                    title = str(v.get("title") or v.get("criterion") or k)
+                    max_score = float(v.get("max_score", v.get("max_points", 10.0)))
+                    description = str(v.get("description") or "")
+                    items_list.append(
+                        RubricCriteria(
+                            criteria_id=crit_id,
+                            title=title,
+                            max_score=max_score,
+                            description=description,
+                        )
+                    )
+                elif isinstance(v, (int, float)):
+                    items_list.append(
+                        RubricCriteria(
+                            criteria_id=str(k), title=str(k), max_score=float(v)
+                        )
+                    )
+            return items_list
+
+    if isinstance(data, list):
+        result = []
+        for idx, item in enumerate(data):
+            if isinstance(item, dict):
+                crit_id = str(
+                    item.get("criteria_id") or item.get("id") or f"c{idx + 1}"
+                )
+                title = str(
+                    item.get("title") or item.get("criterion") or f"Tiêu chí {idx + 1}"
+                )
+                max_score = float(
+                    item.get("max_score") or item.get("max_points") or 10.0
+                )
+                description = str(item.get("description") or "")
+                result.append(
+                    RubricCriteria(
+                        criteria_id=crit_id,
+                        title=title,
+                        max_score=max_score,
+                        description=description,
+                    )
+                )
+            elif isinstance(item, RubricCriteria):
+                result.append(item)
+        return result
+
+    return []
+
+
 class PeerReviewUseCase(BaseAssessmentUseCase):
     """Application Use Case for Peer Review assignment submissions, grading, staff regrade, and reports."""
 
@@ -71,42 +139,10 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             f"Assignment submitted successfully. Please complete {REQUIRED_PEER_REVIEWS_COUNT} peer reviews to view your score.",
         )
 
-    def _parse_rubric_criteria(
-        self, rubric_json_str: str | None
-    ) -> list[RubricCriteria]:
-        if rubric_json_str:
-            try:
-                raw_items = json.loads(rubric_json_str)
-                if isinstance(raw_items, list) and len(raw_items) > 0:
-                    parsed = []
-                    for idx, r in enumerate(raw_items):
-                        crit_id = str(
-                            r.get("criteria_id") or r.get("id") or f"c{idx + 1}"
-                        )
-                        title = str(
-                            r.get("title")
-                            or r.get("criterion")
-                            or f"Tiêu chí {idx + 1}"
-                        )
-                        max_score = float(
-                            r.get("max_score") or r.get("max_points") or 10.0
-                        )
-                        description = str(r.get("description") or "")
-                        parsed.append(
-                            RubricCriteria(
-                                criteria_id=crit_id,
-                                title=title,
-                                max_score=max_score,
-                                description=description,
-                            )
-                        )
-                    if parsed:
-                        return parsed
-            except (json.JSONDecodeError, TypeError, ValueError, KeyError) as exc:
-                logger.warning(
-                    "Failed to parse rubric criteria JSON: %s, falling back to default",
-                    exc,
-                )
+    def _parse_rubric_criteria(self, raw_rubrics: Any) -> list[RubricCriteria]:
+        parsed = _parse_rubrics(raw_rubrics)
+        if parsed:
+            return parsed
 
         return [
             RubricCriteria(
@@ -168,30 +204,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         if not graded_criteria:
             raise ValueError("Danh sách tiêu chí Rubric không được để trống.")
 
-        for c in graded_criteria:
-            if not math.isfinite(c.score_given) or not math.isfinite(c.max_score):
-                raise ValueError(
-                    f"Điểm số và điểm tối đa của tiêu chí '{c.title}' phải là số thực hữu hạn hợp lệ."
-                )
-            if c.max_score <= 0.0:
-                raise ValueError(
-                    f"Điểm tối đa của tiêu chí '{c.title}' phải lớn hơn 0."
-                )
-            if c.score_given < 0.0 or c.score_given > c.max_score:
-                raise ValueError(
-                    f"Điểm tiêu chí '{c.title}' ({c.score_given}) không hợp lệ (yêu cầu từ 0 đến {c.max_score})."
-                )
-
-        total_given = sum(c.score_given for c in graded_criteria)
-        max_possible = sum(c.max_score for c in graded_criteria)
-        if (
-            not math.isfinite(total_given)
-            or not math.isfinite(max_possible)
-            or max_possible <= 0.0
-        ):
-            raise ValueError("Tổng điểm Rubric không hợp lệ.")
-        score_percent = round((total_given / max_possible) * 100.0, 2)
-
         submission_id = (
             review_id.replace("rev-", "") if review_id.startswith("rev-") else review_id
         )
@@ -207,7 +219,82 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     "Bạn không được phép tự chấm điểm bài làm của chính mình."
                 )
 
+            # BR_FORUM / BR_PEER: Check enrollment of reviewer in the course
+            course_id = await repo.get_course_id_by_item_id(sub.item_id)
+            if course_id:
+                learning_repo = self.learning_repo_factory(session)
+                is_enrolled = await learning_repo.check_enrollment(
+                    reviewer_user_id, course_id
+                )
+                if not is_enrolled:
+                    raise PermissionError(
+                        "Bạn cần đăng ký khóa học để thực hiện chấm chéo."
+                    )
+
             resolved_item_id = item_id or sub.item_id
+            raw_rubrics = await repo.get_item_rubric_criteria_json(resolved_item_id)
+            db_rubrics = self._parse_rubric_criteria(raw_rubrics)
+            db_rubric_map = {r.criteria_id: r for r in db_rubrics} if db_rubrics else {}
+
+            final_criteria: list[RubricCriteria] = []
+            for c in graded_criteria:
+                if not math.isfinite(c.score_given) or not math.isfinite(c.max_score):
+                    raise ValueError(
+                        f"Điểm số và điểm tối đa của tiêu chí '{c.title}' phải là số thực hữu hạn hợp lệ."
+                    )
+                if c.max_score <= 0.0:
+                    raise ValueError(
+                        f"Điểm tối đa của tiêu chí '{c.title}' phải lớn hơn 0."
+                    )
+                db_crit = db_rubric_map.get(c.criteria_id)
+                if db_crit:
+                    authoritative_max_score = db_crit.max_score
+                    authoritative_title = db_crit.title
+                    authoritative_desc = getattr(db_crit, "description", "")
+                elif raw_rubrics is None:
+                    authoritative_max_score = c.max_score
+                    authoritative_title = c.title
+                    authoritative_desc = getattr(c, "description", "")
+                else:
+                    raise ValueError(
+                        f"Tiêu chí Rubric '{c.criteria_id}' không tồn tại trong cấu hình bài tập."
+                    )
+
+                if not math.isfinite(c.score_given) or not math.isfinite(
+                    authoritative_max_score
+                ):
+                    raise ValueError(
+                        f"Điểm số và điểm tối đa của tiêu chí '{authoritative_title}' phải là số thực hữu hạn hợp lệ."
+                    )
+                if authoritative_max_score <= 0.0:
+                    raise ValueError(
+                        f"Điểm tối đa của tiêu chí '{authoritative_title}' phải lớn hơn 0."
+                    )
+                if c.score_given < 0.0 or c.score_given > authoritative_max_score:
+                    raise ValueError(
+                        f"Điểm tiêu chí '{authoritative_title}' ({c.score_given}) không hợp lệ (yêu cầu từ 0 đến {authoritative_max_score})."
+                    )
+
+                final_criteria.append(
+                    RubricCriteria(
+                        criteria_id=c.criteria_id,
+                        title=authoritative_title,
+                        max_score=authoritative_max_score,
+                        score_given=c.score_given,
+                        feedback=c.feedback,
+                        description=authoritative_desc,
+                    )
+                )
+
+            total_given = sum(c.score_given for c in final_criteria)
+            max_possible = sum(c.max_score for c in final_criteria)
+            if (
+                not math.isfinite(total_given)
+                or not math.isfinite(max_possible)
+                or max_possible <= 0.0
+            ):
+                raise ValueError("Tổng điểm Rubric không hợp lệ.")
+            score_percent = round((total_given / max_possible) * 100.0, 2)
 
             existing_reviews = await repo.get_peer_reviews_for_submission(submission_id)
             if any(r.reviewer_user_id == reviewer_user_id for r in existing_reviews):
@@ -228,7 +315,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 submission_id=submission_id,
                 reviewer_user_id=reviewer_user_id,
                 item_id=resolved_item_id,
-                rubric_criteria=graded_criteria,
+                rubric_criteria=final_criteria,
                 total_score=score_percent,
                 is_outlier=is_outlier,
                 created_at=now_iso,
@@ -359,11 +446,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         self._verify_staff(current_user)
         import math
 
-        if not math.isfinite(total_score) or total_score < 0.0 or total_score > 100.0:
-            raise ValueError(
-                "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
-            )
-
         for c in graded_criteria:
             if not math.isfinite(c.score_given) or not math.isfinite(c.max_score):
                 raise ValueError(
@@ -377,6 +459,23 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 raise ValueError(
                     f"Điểm tiêu chí '{c.title}' ({c.score_given}) không hợp lệ (0 - {c.max_score})."
                 )
+
+        if graded_criteria:
+            max_possible = sum(c.max_score for c in graded_criteria)
+            total_given = sum(c.score_given for c in graded_criteria)
+            if max_possible > 0:
+                expected_score = round((total_given / max_possible) * 100.0, 2)
+                if total_score <= 0.0:
+                    total_score = expected_score
+                elif abs(total_score - expected_score) > 1.0:
+                    raise ValueError(
+                        f"Điểm tổng ({total_score}) không nhất quán với tổng điểm tiêu chí Rubric ({expected_score}%)."
+                    )
+
+        if not math.isfinite(total_score) or total_score < 0.0 or total_score > 100.0:
+            raise ValueError(
+                "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
+            )
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -653,6 +752,9 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         self, user_id: str, review_id: str, report_reason: str
     ) -> tuple[bool, str]:
         """Reports a malicious or spam peer review (BR_PEER_005)."""
+        if not report_reason or not report_reason.strip():
+            raise ValueError("Lý do báo cáo không được để trống.")
+
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             submission_id = (
@@ -660,13 +762,21 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 if review_id.startswith("rev-")
                 else review_id
             )
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                raise ValueError(f"Không tìm thấy bài nộp {submission_id}")
+            if sub.user_id != user_id:
+                raise PermissionError(
+                    "Chỉ chủ sở hữu bài nộp mới có quyền gửi báo cáo đánh giá bài làm của mình."
+                )
+
             appeal_id = f"report-{uuid7().hex}"
             now_iso = datetime.now(UTC).isoformat()
             appeal = GradeAppeal(
                 id=appeal_id,
                 user_id=user_id,
                 submission_id=submission_id,
-                appeal_reason=f"[REPORT_REVIEW:{review_id}] {report_reason}",
+                appeal_reason=f"[REPORT_REVIEW:{review_id}] {report_reason.strip()}",
                 status="PENDING_STAFF_REVIEW",
                 created_at=now_iso,
             )
@@ -809,28 +919,39 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 for r in reviews
             ]
 
+            raw_rubrics = await repo.get_item_rubric_criteria_json(sub.item_id)
+            rubric_criteria = self._parse_rubric_criteria(raw_rubrics)
+            rubric_map = {r.criteria_id: r for r in rubric_criteria}
+
             staff_grading = None
             if sub.graded_by_staff or sub.rubric_scores_json:
+                graded_criteria = []
+                for k, v in (sub.rubric_scores_json or {}).items():
+                    db_crit = rubric_map.get(k)
+                    title = db_crit.title if db_crit else k
+                    max_score = db_crit.max_score if db_crit else 10.0
+                    description = getattr(db_crit, "description", "") if db_crit else ""
+                    graded_criteria.append(
+                        RubricCriteria(
+                            criteria_id=k,
+                            title=title,
+                            max_score=max_score,
+                            score_given=float(v),
+                            description=description,
+                        )
+                    )
                 staff_grading = {
                     "staff_id": sub.graded_by_user_id or "",
                     "staff_name": "Trợ giảng"
                     if sub.grader_role == "TA"
                     else "Giảng viên",
                     "score": float(sub.final_score or 0.0),
-                    "graded_criteria": [
-                        RubricCriteria(
-                            criteria_id=k, title=k, max_score=10.0, score_given=float(v)
-                        )
-                        for k, v in (sub.rubric_scores_json or {}).items()
-                    ],
+                    "graded_criteria": graded_criteria,
                     "feedback": sub.staff_feedback or "",
                     "graded_at": sub.published_at or sub.created_at,
                     "provenance": sub.grade_source or "TA",
                     "appeal_resolution_notes": "",
                 }
-
-            rubric_json_str = await repo.get_item_rubric_criteria_json(sub.item_id)
-            rubric_criteria = self._parse_rubric_criteria(rubric_json_str)
 
             return {
                 "submission": matching_item,
@@ -878,7 +999,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         "course_title": i["course_title"],
                         "time_ago": "Cần xử lý",
                         "action_text": "Xem khiếu nại",
-                        "action_url": f"/instructor/courses/{course_id}/grading-cockpit?submission={i['submission_id']}",
+                        "action_url": f"/instructor/courses/{course_id}/grading?submissionId={i['submission_id']}",
                         "course_id": course_id,
                         "priority": "HIGH",
                         "created_at": i["submitted_at"],
@@ -895,7 +1016,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         "course_title": i["course_title"],
                         "time_ago": "Quá 48h",
                         "action_text": "Chấm ngay",
-                        "action_url": f"/instructor/courses/{course_id}/grading-cockpit?submission={i['submission_id']}",
+                        "action_url": f"/instructor/courses/{course_id}/grading?submissionId={i['submission_id']}",
                         "course_id": course_id,
                         "priority": "HIGH",
                         "created_at": i["submitted_at"],

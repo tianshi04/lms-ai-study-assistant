@@ -1,9 +1,11 @@
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
     ARRAY,
     JSON,
     Boolean,
+    DateTime,
     Float,
     ForeignKey,
     Index,
@@ -156,6 +158,9 @@ class PeerAssignmentSubmissionModel(Base):
         String(64), nullable=True, index=True
     )
     locked_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    lock_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     rubric_scores_json: Mapped[dict[str, Any]] = mapped_column(
         JSON().with_variant(JSONB, "postgresql"),
         nullable=False,

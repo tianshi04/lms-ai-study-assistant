@@ -290,16 +290,10 @@ class ForumRepository(IForumRepository):
         if not reply_orm:
             return False
 
-        reply_orm.is_staff_answer = not reply_orm.is_staff_answer
-
-        if reply_orm.is_staff_answer:
-            thread_stmt = select(ForumThreadORM).where(
-                ForumThreadORM.id == reply_orm.thread_id
-            )
-            t_res = await self.session.execute(thread_stmt)
-            thread_orm = t_res.scalar_one_or_none()
-            if thread_orm:
-                thread_orm.is_staff_pinned = True
+        if reply_orm.author_role in ("Instructor", "Admin", "TA"):
+            reply_orm.is_staff_answer = True
+        else:
+            reply_orm.is_staff_answer = not reply_orm.is_staff_answer
 
         await self.session.commit()
         return True

@@ -176,6 +176,7 @@ def _to_pb_course(course: Course) -> pb.Course:
         co_instructor_ids=getattr(course, "co_instructor_ids", []) or [],
         price=float(getattr(course, "price", 0.0) or 0.0),
         foundational_course_ids=getattr(course, "foundational_course_ids", []) or [],
+        ta_ids=getattr(course, "ta_ids", []) or [],
     )
 
 

@@ -317,11 +317,21 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def get_course_id_by_item_id(self, item_id: str) -> str | None:
         return "course_test_1"
 
+    async def get_course_id_by_bank_id(self, bank_id: str) -> str | None:
+        return getattr(self, "bank_course_map", {}).get(bank_id, "course_test_1")
+
+    async def get_course_id_by_question_id(self, question_id: str) -> str | None:
+        return getattr(self, "question_course_map", {}).get(
+            question_id, "course_test_1"
+        )
+
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         return None
 
     async def get_item_rubric_criteria_json(self, item_id: str) -> str | None:
-        return getattr(self, "rubric_criteria_json_map", {}).get(item_id, None)
+        if hasattr(self, "rubric_criteria_json_map"):
+            return self.rubric_criteria_json_map.get(item_id)
+        return getattr(self, "item_rubrics", {}).get(item_id, None)
 
     async def claim_submission_lock(
         self, submission_id: str, user_id: str, timeout_minutes: int = 30

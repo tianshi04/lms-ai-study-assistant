@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   MessageSquare,
   CheckCircle2,
@@ -48,7 +49,15 @@ export function InstructorCourseDiscussionsClient({
   const [triageFilter, setTriageFilter] = useState<DiscussionTriageFilter>("unanswered");
 
   // Thread detail modal state
+  const searchParams = useSearchParams();
+  const threadIdFromUrl = searchParams?.get("threadId") || "";
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (threadIdFromUrl) {
+      setSelectedThreadId(threadIdFromUrl);
+    }
+  }, [threadIdFromUrl]);
 
   // Quick reply input per thread (inline response)
   const [quickReplies, setQuickReplies] = useState<Record<string, string>>({});
@@ -60,14 +69,20 @@ export function InstructorCourseDiscussionsClient({
       const catalogClient = getRpcClient(CatalogService);
       const forumClient = getRpcClient(ForumService);
 
-      const [courseRes, threadsRes] = await Promise.all([
-        catalogClient.getCourseDetail({ idOrSlug: courseId }).catch(() => null),
-        forumClient.listThreads({ courseId }).catch(() => ({ threads: [] })),
-      ]);
+      const courseRes = await catalogClient
+        .getCourseDetail({ idOrSlug: courseId })
+        .catch(() => null);
 
-      if (courseRes?.course) {
-        setCourse(courseRes.course);
+      const resolvedCourse = courseRes?.course || null;
+      if (resolvedCourse) {
+        setCourse(resolvedCourse);
       }
+
+      const targetCourseId = resolvedCourse?.id || courseId;
+      const threadsRes = await forumClient
+        .listThreads({ courseId: targetCourseId })
+        .catch(() => ({ threads: [] }));
+
       setThreads(threadsRes.threads || []);
     } catch (err: unknown) {
       console.error("Failed to load course discussions:", err);
@@ -124,6 +139,7 @@ export function InstructorCourseDiscussionsClient({
         if (course.ownerId && thread.authorUserId === course.ownerId) return true;
         if (course.coInstructorIds && course.coInstructorIds.includes(thread.authorUserId))
           return true;
+        if (course.taIds && course.taIds.includes(thread.authorUserId)) return true;
       }
 
       return false;
@@ -139,7 +155,8 @@ export function InstructorCourseDiscussionsClient({
     const isCoInstructor = Boolean(
       userId && course.coInstructorIds && course.coInstructorIds.includes(userId),
     );
-    return isOwner || isCoInstructor;
+    const isTa = Boolean(userId && course.taIds && course.taIds.includes(userId));
+    return isOwner || isCoInstructor || isTa;
   }, [course, userId, userRole]);
 
   // KPI counts: Tách bạch rõ câu hỏi học viên vs thông báo giảng viên

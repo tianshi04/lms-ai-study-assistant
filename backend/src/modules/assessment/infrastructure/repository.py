@@ -1060,6 +1060,22 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
 
+    async def get_course_id_by_bank_id(self, bank_id: str) -> str | None:
+        stmt = select(QuestionBankModel.course_id).where(
+            QuestionBankModel.id == bank_id
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def get_course_id_by_question_id(self, question_id: str) -> str | None:
+        stmt = (
+            select(QuestionBankModel.course_id)
+            .join(QuestionModel, QuestionModel.bank_id == QuestionBankModel.id)
+            .where(QuestionModel.id == question_id)
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         from src.modules.catalog.infrastructure.models import LearningItemModel
 

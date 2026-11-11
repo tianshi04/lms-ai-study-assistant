@@ -240,11 +240,16 @@ export function EvaluationModal({
       }),
     );
 
+    const normalizedTotalScore =
+      maxPossibleScore > 0
+        ? Number(((currentTotalScore / maxPossibleScore) * 100.0).toFixed(2))
+        : 0;
+
     try {
       await submitGradingMutation.mutateAsync({
         submissionId,
         gradedCriteria: payloadCriteria,
-        totalScore: currentTotalScore,
+        totalScore: normalizedTotalScore,
         feedback: feedback.trim(),
         resolveAppeal: detail.submission?.isAppeal ? resolveAppeal : false,
         appealResolutionNotes: appealNotes.trim(),
