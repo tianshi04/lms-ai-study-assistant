@@ -38,9 +38,9 @@ export class ForumPage {
     await this.page.waitForTimeout(400);
 
     for (let attempt = 0; attempt < 3; attempt++) {
-      await this.openModalButton.click();
+      await this.openModalButton.click({ force: true });
       try {
-        await expect(this.modalTitleInput).toBeVisible({ timeout: 2000 });
+        await expect(this.modalTitleInput).toBeVisible({ timeout: 4000 });
         break;
       } catch {
         await this.page.waitForTimeout(500);

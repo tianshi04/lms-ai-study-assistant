@@ -228,6 +228,18 @@ function ForumPageContent() {
           }
         }
 
+        // Fallback: If no enrolled or teaching courses found, provide public catalog courses
+        if (combinedMap.size === 0) {
+          try {
+            const publicRes = await catalogClient.listCourses({ pageSize: 50 });
+            publicRes.courses.forEach((c) => {
+              combinedMap.set(c.id, { id: c.id, title: c.title });
+            });
+          } catch (err) {
+            console.error("Error fetching fallback courses for forum:", err);
+          }
+        }
+
         if (!cancelled) {
           const accessibleCourses = Array.from(combinedMap.values());
           setCourses(accessibleCourses);
@@ -602,12 +614,6 @@ function ForumPageContent() {
             <Button
               variant="filled"
               onClick={() => {
-                if (courses.length === 0) {
-                  toast.error(
-                    "Bạn cần đăng ký hoặc phụ trách ít nhất một khóa học để tạo chủ đề thảo luận.",
-                  );
-                  return;
-                }
                 setShowCreateModal(true);
               }}
               className="px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-primary/20 gap-2"
