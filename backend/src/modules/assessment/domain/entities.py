@@ -239,6 +239,7 @@ class PeerAssignmentSubmission(Entity):
         grade_source: str = "PEER_REVIEW",
         locked_by_user_id: str | None = None,
         locked_at: str | None = None,
+        lock_expires_at: str | None = None,
         rubric_scores_json: dict[str, Any] | None = None,
         published_at: str | None = None,
         status: str = "SUBMITTED",
@@ -258,6 +259,7 @@ class PeerAssignmentSubmission(Entity):
         self.grade_source = grade_source
         self.locked_by_user_id = locked_by_user_id
         self.locked_at = locked_at
+        self.lock_expires_at = lock_expires_at
         self.rubric_scores_json = rubric_scores_json or {}
         self.published_at = published_at
         self.status = status
@@ -294,7 +296,19 @@ class PeerAssignmentSubmission(Entity):
     def is_lock_active(
         self, now: datetime, timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES
     ) -> bool:
-        if not self.locked_by_user_id or not self.locked_at:
+        if not self.locked_by_user_id:
+            return False
+        if self.lock_expires_at:
+            try:
+                exp_dt = datetime.fromisoformat(self.lock_expires_at)
+                if exp_dt.tzinfo is None and now.tzinfo is not None:
+                    exp_dt = exp_dt.replace(tzinfo=UTC)
+                elif exp_dt.tzinfo is not None and now.tzinfo is None:
+                    exp_dt = exp_dt.replace(tzinfo=None)
+                return now < exp_dt
+            except (ValueError, TypeError):
+                pass
+        if not self.locked_at:
             return False
         try:
             lock_dt = datetime.fromisoformat(self.locked_at)
@@ -316,22 +330,35 @@ class PeerAssignmentSubmission(Entity):
             return True
         return self.locked_by_user_id == user_id
 
-    def claim_lock(self, user_id: str, now: datetime) -> None:
-        if not self.can_claim_lock(user_id, now):
+    def claim_lock(
+        self,
+        user_id: str,
+        now: datetime,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> None:
+        if not self.can_claim_lock(user_id, now, timeout_minutes):
             raise PermissionError("Bài nộp đang được nhân sự khác chấm.")
         self.locked_by_user_id = user_id
         self.locked_at = now.isoformat()
+        self.lock_expires_at = (now + timedelta(minutes=timeout_minutes)).isoformat()
 
-    def renew_lock(self, user_id: str, now: datetime) -> None:
+    def renew_lock(
+        self,
+        user_id: str,
+        now: datetime,
+        extend_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> None:
         if self.locked_by_user_id != user_id:
             raise PermissionError("Bạn không sở hữu khóa chấm bài này.")
         self.locked_at = now.isoformat()
+        self.lock_expires_at = (now + timedelta(minutes=extend_minutes)).isoformat()
 
     def release_lock(self, user_id: str) -> None:
         if self.locked_by_user_id and self.locked_by_user_id != user_id:
             raise PermissionError("Bạn không thể nhả khóa của người khác.")
         self.locked_by_user_id = None
         self.locked_at = None
+        self.lock_expires_at = None
 
 
 class PeerReview(Entity):
