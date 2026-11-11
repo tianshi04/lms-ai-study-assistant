@@ -1215,17 +1215,15 @@ class AssessmentHandler(AssessmentService):
                     if max_possible > 0
                     else 0.0
                 )
-                if (
-                    request.total_score > 0
-                    and abs(request.total_score - expected_score) > 0.05
-                ):
-                    raise ConnectError(
-                        Code.INVALID_ARGUMENT,
-                        f"Tổng điểm ({request.total_score}) không nhất quán với tổng điểm tiêu chí rubric ({expected_score}%).",
-                    )
-                total_score = (
-                    request.total_score if request.total_score > 0 else expected_score
-                )
+                if request.total_score > 0:
+                    is_raw_sum = abs(request.total_score - total_given) <= 0.05
+                    is_normalized = abs(request.total_score - expected_score) <= 0.05
+                    if not (is_raw_sum or is_normalized):
+                        raise ConnectError(
+                            Code.INVALID_ARGUMENT,
+                            f"Tổng điểm ({request.total_score}) không nhất quán với tổng điểm tiêu chí rubric ({expected_score}%).",
+                        )
+                total_score = expected_score
             else:
                 total_score = request.total_score
             (

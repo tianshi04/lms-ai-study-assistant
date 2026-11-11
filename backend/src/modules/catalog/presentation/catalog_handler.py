@@ -1490,7 +1490,7 @@ class CatalogHandler(CatalogService):
                 for r in res.get("rows", [])
             ]
             return pb.GetCourseGradebookResponse(
-                course_id=res.get("course_id", request.course_id),
+                course_id=res.get("course_id", course.id),
                 course_title=res.get("course_title", course.title),
                 columns=columns,
                 rows=rows,
@@ -1527,7 +1527,7 @@ class CatalogHandler(CatalogService):
 
             assessment_usecase = AssessmentUseCase()
             res = await assessment_usecase.get_instructor_action_tasks(
-                course_id=request.course_id,
+                course_id=course.id,
                 current_user=current_user,
             )
             tasks = [
