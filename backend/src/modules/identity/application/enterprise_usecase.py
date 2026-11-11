@@ -247,7 +247,7 @@ class EnterpriseLicenseUseCase:
 
             if within_grace_period and course_id:
                 learning_repo = self.learning_repo_factory(session)
-                progress = await learning_repo.get_progress(user_id, course_id)
+                progress = await learning_repo.find_progress(user_id, course_id)
                 if (
                     progress
                     and progress.overall_progress_percent

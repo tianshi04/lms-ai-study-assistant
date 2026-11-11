@@ -296,7 +296,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_LEARNING_001 (Tính toán Tiến độ, Khử trùng lặp & Ràng buộc Bảng Completed Items):**
   * Mỗi khi hoàn thành 1 bài học (Video, Reading, Quiz), hệ thống tự động lưu vết bản ghi trạng thái hoàn thành vào cơ sở dữ liệu (`user_item_completions`) với khóa chính duy nhất `(user_id, item_id)` (`uq_user_item_completion`) và timestamp `completed_at`, đồng thời thêm `item_id` vào danh sách `completed_item_ids` (sử dụng tập hợp `set` để khử trùng lặp).
   * *Theo dõi Thời gian & Vị trí Bài học gần nhất (Granular Resuming & Timestamps):*
-    * `enrolled_at`: Mốc thời gian ghi danh khóa học lần đầu.
+    * `enrolled_at`: Mốc thời gian ghi danh khóa học lần đầu (được khởi tạo khi học viên bắt đầu phiên học qua `GetProgress` trên `/learn/[courseId]`; các truy vấn kiểm tra chéo từ Review, Certificate, Enterprise Seat hay Enrollment Guard sử dụng hàm đọc thuần túy `find_progress` theo chuẩn CQS để không tự động ghi danh nhầm).
     * `completed_at`: Mốc thời gian hoàn thành 100% khóa học (chuyển sang trạng thái `COMPLETED`).
     * `last_accessed_at` & `last_accessed_item_id`: Tự động cập nhật mỗi khi học viên truy cập hoặc đổi bài học trong khóa học qua RPC `GetProgress(course_id, current_item_id)`.
     * Khi học viên bấm "Tiếp tục học" trên giao diện `/my-learning` hoặc mở `/learn/[courseId]`, hệ thống tự động đưa học viên tới bài học tương ứng với `last_accessed_item_id`.
@@ -315,7 +315,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Bảo mật & Kẹp chặn Dữ liệu (Anti-Cheating & Velocity Limit):*
     * `delta_seconds` bị kẹp trong khoảng $[1, 120]$ giây (`MAX_HEARTBEAT_DELTA_SECONDS = 120`).
     * Áp dụng Rate Limiting tối đa 1 heartbeat mỗi 5 giây cho mỗi `user_id` qua Redis token với cơ chế Fail-open an toàn.
-    * Bắt buộc kiểm tra Enrollment Guard: Học viên bắt buộc phải đã ghi danh khóa học (`enrolled_at != ""`) và `item_id` phải thực sự thuộc cấu trúc khóa học.
+    * Bắt buộc kiểm tra Enrollment Guard (read-only qua `find_progress`): Học viên bắt buộc phải đã có bản ghi tiến độ ghi danh khóa học (`enrolled_at != ""`) và `item_id` phải thực sự thuộc cấu trúc khóa học; phía Frontend chỉ kích hoạt `useStudyTracker` khi `progress.enrolledAt` hợp lệ và tự dừng heartbeat nếu nhận `PERMISSION_DENIED` / `UNAUTHENTICATED`.
   * *Phân giải Múi giờ Tuyệt đối (Server-Authoritative Timezone):*
     * Server sử dụng đồng hồ UTC tuyệt đối, chuyển đổi sang ngày địa phương bằng `zoneinfo.ZoneInfo(client_timezone)` (mặc định fallback `"Asia/Ho_Chi_Minh"` / UTC+7) để xác định `study_date` (YYYY-MM-DD), triệt tiêu nguy cơ mất chuỗi streak sau nửa đêm và chống gian lận ngày từ client.
   * *Quy tắc Tính Chuỗi Ngày Học Liên tục (Streak Engine):*

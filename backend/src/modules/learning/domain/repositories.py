@@ -14,6 +14,12 @@ class ILearningRepository(ABC):
     """Abstract Repository Interface for Learning Domain (DIP)."""
 
     @abstractmethod
+    async def find_progress(
+        self, user_id: str, course_id: str
+    ) -> LearningProgress | None:
+        """Read-only lookup of user learning progress without auto-enrolling."""
+
+    @abstractmethod
     async def get_progress(
         self, user_id: str, course_id: str, current_item_id: str | None = None
     ) -> LearningProgress:

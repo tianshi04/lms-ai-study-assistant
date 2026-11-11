@@ -618,7 +618,7 @@ async def test_revoke_enterprise_seat_progress_guard(
     )
 
     mock_learning_repo = AsyncMock()
-    mock_learning_repo.get_progress = AsyncMock(return_value=progress)
+    mock_learning_repo.find_progress = AsyncMock(return_value=progress)
 
     usecase = IdentityUseCase(learning_repo_factory=lambda s: mock_learning_repo)
     ok, msg = await usecase.revoke_enterprise_seat("u1", course_id="c1")
