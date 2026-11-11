@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
-import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { useSendStudentReminderMutation } from "@/lib/query_hooks";
 import {
   Bell,
   CheckCircle2,
@@ -56,6 +55,7 @@ export function InstructorStudentDetailModal({
   onSendReminder,
 }: InstructorStudentDetailModalProps) {
   const { success, error } = useToast();
+  const sendReminderMutation = useSendStudentReminderMutation();
   const [activeTab, setActiveTab] = useState<"reminder" | "announcement">("reminder");
 
   const isDone = Boolean(student?.isCompleted || (student?.progressPercent ?? 0) >= 100);
@@ -107,8 +107,7 @@ export function InstructorStudentDetailModal({
 
     setIsSending(true);
     try {
-      const client = getRpcClient(CatalogService);
-      const res = await client.sendStudentReminder({
+      const res = await sendReminderMutation.mutateAsync({
         courseId,
         studentIds: [student.userId],
         title: reminderSubject.trim(),

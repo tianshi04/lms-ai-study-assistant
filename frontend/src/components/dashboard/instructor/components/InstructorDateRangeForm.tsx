@@ -20,26 +20,26 @@ export function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-function parseIso(isoStr: string, fallback: Date): { day: number; month: number; year: number } {
-  if (!isoStr) {
-    return {
-      day: fallback.getDate(),
-      month: fallback.getMonth() + 1,
-      year: fallback.getFullYear(),
-    };
-  }
-  const parts = isoStr.split("-").map(Number);
-  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
-    const y = parts[0];
-    const m = Math.max(1, Math.min(12, parts[1]));
-    const maxD = getDaysInMonth(y, m);
-    const d = Math.max(1, Math.min(maxD, parts[2]));
-    return { day: d, month: m, year: y };
+function parseIso(
+  isoStr: string,
+  defaultDay = 1,
+  defaultMonth = 1,
+  defaultYear = 2026,
+): { day: number; month: number; year: number } {
+  if (isoStr) {
+    const parts = isoStr.split("-").map(Number);
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+      const y = parts[0];
+      const m = Math.max(1, Math.min(12, parts[1]));
+      const maxD = getDaysInMonth(y, m);
+      const d = Math.max(1, Math.min(maxD, parts[2]));
+      return { day: d, month: m, year: y };
+    }
   }
   return {
-    day: fallback.getDate(),
-    month: fallback.getMonth() + 1,
-    year: fallback.getFullYear(),
+    day: defaultDay,
+    month: defaultMonth,
+    year: defaultYear,
   };
 }
 
@@ -63,15 +63,8 @@ export function InstructorDateRangeForm({
   const startPickerRef = useRef<HTMLInputElement>(null);
   const endPickerRef = useRef<HTMLInputElement>(null);
 
-  const [fallbackNow] = useState(() => new Date());
-  const [fallbackPast] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 14);
-    return d;
-  });
-
-  const startParsed = useMemo(() => parseIso(startDate, fallbackPast), [startDate, fallbackPast]);
-  const endParsed = useMemo(() => parseIso(endDate, fallbackNow), [endDate, fallbackNow]);
+  const startParsed = useMemo(() => parseIso(startDate, 1, 1, 2026), [startDate]);
+  const endParsed = useMemo(() => parseIso(endDate, 15, 1, 2026), [endDate]);
 
   const [startInput, setStartInput] = useState({
     day: String(startParsed.day),
