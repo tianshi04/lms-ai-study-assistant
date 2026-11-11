@@ -22,6 +22,7 @@ interface InstructorActionTasksCardProps {
   totalQaCount?: number;
   totalOverdueCount?: number;
   primaryActionUrl?: string;
+  primaryActionTitle?: string;
   courseId?: string;
   courseTitle?: string;
   behindCount?: number;
@@ -35,6 +36,7 @@ export function InstructorActionTasksCard({
   totalQaCount,
   totalOverdueCount = 0,
   primaryActionUrl,
+  primaryActionTitle,
   courseId,
   courseTitle = "Khóa học",
   behindCount = 0,
@@ -205,7 +207,12 @@ export function InstructorActionTasksCard({
                   : primaryActionUrl || "/instructor/courses"
               }
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs transition-colors"
-              title="Mở Bàn làm việc chấm bài"
+              title={
+                primaryActionTitle ||
+                (courseId
+                  ? `Mở Bàn làm việc chấm bài môn ${courseTitle}`
+                  : "Mở Bàn làm việc chấm bài")
+              }
             >
               <span>Chấm bài ngay</span>
               <ArrowRight className="w-3 h-3" aria-hidden="true" />

@@ -216,19 +216,20 @@ export function EvaluationModal({
         description: "Bài nộp đã được trả về hàng chờ để trợ giảng khác chấm.",
         type: "default",
       });
-      onClose();
     } catch {
       toast({
         title: "Lỗi nhả bài",
         description: "Không thể nhả bài nộp vào lúc này.",
         type: "error",
       });
+    } finally {
+      onClose();
     }
   };
 
   // Automatically release soft-lock when closing modal without submitting
   const handleCloseAndRelease = async () => {
-    if (!isLockedByOther && detail?.submission?.lockedByUserId) {
+    if (!isLockedByOther) {
       try {
         await releaseLockMutation.mutateAsync({ submissionId });
       } catch {

@@ -108,6 +108,32 @@ export function InstructorOverviewView({
     );
   }, [allCompletedStudentsList, certCourseFilter]);
 
+  // Xác định khóa học ưu tiên điều phối chấm bài (khiếu nại -> quá hạn SLA -> chờ chấm -> active course)
+  const primaryGradingCourse = useMemo(() => {
+    // 1. Khóa học có bài tập khiếu nại (appeal)
+    const appealTask = overviewActionTasks.find((t) => t.type === "grading" && t.isAppeal);
+    if (appealTask) {
+      const matched = courses.find((c) => c.title === appealTask.courseTitle);
+      if (matched) return matched;
+    }
+    // 2. Khóa học có bài quá hạn 48h SLA
+    const courseWithOverdue = courses.find((c) => (overdueGradingByCourseId?.get(c.id) || 0) > 0);
+    if (courseWithOverdue) return courseWithOverdue;
+
+    // 3. Khóa học có bài đang chờ chấm
+    const courseWithPending = courses.find((c) => (pendingGradingByCourseId?.get(c.id) || 0) > 0);
+    if (courseWithPending) return courseWithPending;
+
+    // 4. Môn đang active hoặc môn đầu tiên
+    return activeCourse || courses[0] || null;
+  }, [
+    overviewActionTasks,
+    courses,
+    overdueGradingByCourseId,
+    pendingGradingByCourseId,
+    activeCourse,
+  ]);
+
   // Dữ liệu tương tác biểu đồ cho TOÀN BỘ CÁC MÔN HỌC theo khoảng thời gian và bộ lọc đối tượng
   const allCoursesWeekDaysData = useMemo(() => {
     const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
@@ -473,10 +499,14 @@ export function InstructorOverviewView({
           behindCount={pacingCohortSummary.behindCount}
           onFilterBehind={onOpenPacingModal}
           primaryActionUrl={
-            overviewActionTasks.find((t) => t.type === "grading")?.actionUrl ||
-            (activeCourse?.id || courses[0]?.id
-              ? `/instructor/courses/${activeCourse?.id || courses[0]?.id}/grading`
-              : "/instructor/courses")
+            primaryGradingCourse
+              ? `/instructor/courses/${primaryGradingCourse.id}/grading`
+              : "/instructor/courses"
+          }
+          primaryActionTitle={
+            primaryGradingCourse
+              ? `Mở Bàn chấm bài môn: ${primaryGradingCourse.title}`
+              : "Mở Bàn làm việc chấm bài"
           }
         />
 
