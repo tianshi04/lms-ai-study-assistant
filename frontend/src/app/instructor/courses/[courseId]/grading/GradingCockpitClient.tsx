@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Search,
   CheckCircle2,
@@ -43,8 +43,11 @@ interface GradingCockpitClientProps {
 export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   const { toast } = useToast();
   const { userId: currentUserId } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlSubmissionId = searchParams.get("submissionId");
+  const autoClaimedSubmissionRef = useRef<string | null>(null);
 
   const isInvalidCourse = !courseId || courseId === "undefined" || courseId === "null";
 
@@ -64,9 +67,10 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
 
   const claimTaskMutation = useClaimGradingTaskMutation();
 
-  // Auto-open evaluation modal if submissionId was passed in URL query param
+  // Auto-open evaluation modal if submissionId was passed in URL query param (chỉ chạy 1 lần cho mỗi URL submissionId)
   useEffect(() => {
-    if (urlSubmissionId && !selectedSubmissionId) {
+    if (urlSubmissionId && autoClaimedSubmissionRef.current !== urlSubmissionId) {
+      autoClaimedSubmissionRef.current = urlSubmissionId;
       claimTaskMutation
         .mutateAsync({ submissionId: urlSubmissionId })
         .catch(() => {
@@ -77,7 +81,18 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
           setIsEvaluationModalOpen(true);
         });
     }
-  }, [urlSubmissionId, selectedSubmissionId, claimTaskMutation]);
+  }, [urlSubmissionId, claimTaskMutation]);
+
+  const handleCloseModal = useCallback(() => {
+    setIsEvaluationModalOpen(false);
+    setSelectedSubmissionId(null);
+    if (urlSubmissionId) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("submissionId");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }
+  }, [urlSubmissionId, searchParams, pathname, router]);
 
   // Fetch grading queue using TanStack Query
   const { data, isLoading, isError, error, refetch } = useGradingQueueQuery(
@@ -691,12 +706,10 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
         <EvaluationModal
           isOpen={isEvaluationModalOpen}
           submissionId={selectedSubmissionId}
-          onClose={() => {
-            setIsEvaluationModalOpen(false);
-            setSelectedSubmissionId(null);
-          }}
+          onClose={handleCloseModal}
           onGradedSuccessfully={() => {
             refetch();
+            handleCloseModal();
           }}
         />
       )}
