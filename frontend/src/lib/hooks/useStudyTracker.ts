@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
+import { Code, ConnectError } from "@connectrpc/connect";
 import { useRecordLearningTimeMutation } from "@/lib/queries/useLearningQueries";
 
 interface UseStudyTrackerOptions {
@@ -8,6 +9,7 @@ interface UseStudyTrackerOptions {
   itemId: string | null;
   isVideoPlaying?: boolean;
   isPreviewMode?: boolean;
+  isEnrolled: boolean;
 }
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
@@ -45,20 +47,37 @@ export function useStudyTracker({
   itemId,
   isVideoPlaying = false,
   isPreviewMode = false,
+  isEnrolled,
 }: UseStudyTrackerOptions) {
   const activeDeltaRef = useRef<number>(0);
   const lastInteractionRef = useRef<number>(0);
   const isVideoPlayingRef = useRef(isVideoPlaying);
+  const isBlockedRef = useRef(false);
 
   useEffect(() => {
     lastInteractionRef.current = Date.now();
   }, []);
 
   useEffect(() => {
+    isBlockedRef.current = false;
+    activeDeltaRef.current = 0;
+  }, [courseId, itemId, isPreviewMode, isEnrolled]);
+
+  useEffect(() => {
     isVideoPlayingRef.current = isVideoPlaying;
   }, [isVideoPlaying]);
 
-  const recordMutation = useRecordLearningTimeMutation();
+  const recordMutation = useRecordLearningTimeMutation({
+    onError: (err) => {
+      if (
+        err instanceof ConnectError &&
+        (err.code === Code.PermissionDenied || err.code === Code.Unauthenticated)
+      ) {
+        isBlockedRef.current = true;
+        activeDeltaRef.current = 0;
+      }
+    },
+  });
   const mutateRef = useRef(recordMutation.mutate);
   useEffect(() => {
     mutateRef.current = recordMutation.mutate;
@@ -70,8 +89,10 @@ export function useStudyTracker({
       : "Asia/Ho_Chi_Minh";
   }, []);
 
+  const canTrack = !isPreviewMode && isEnrolled && Boolean(courseId) && Boolean(itemId);
+
   const flush = useCallback(() => {
-    if (isPreviewMode || !courseId || !itemId) return;
+    if (!canTrack || !itemId || isBlockedRef.current) return;
     const delta = activeDeltaRef.current;
     if (delta <= 0) return;
 
@@ -82,7 +103,7 @@ export function useStudyTracker({
       deltaSeconds: delta,
       clientTimezone: getClientTimezone(),
     });
-  }, [courseId, itemId, isPreviewMode, getClientTimezone]);
+  }, [canTrack, courseId, itemId, getClientTimezone]);
 
   useEffect(() => {
     const onUserInteraction = () => {
@@ -123,9 +144,10 @@ export function useStudyTracker({
   }, [flush]);
 
   useEffect(() => {
-    if (isPreviewMode || !courseId || !itemId) return;
+    if (!canTrack) return;
 
     const interval = setInterval(() => {
+      if (isBlockedRef.current) return;
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
         return;
       }
@@ -139,12 +161,13 @@ export function useStudyTracker({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [courseId, itemId, isPreviewMode]);
+  }, [canTrack]);
 
   useEffect(() => {
-    if (isPreviewMode || !courseId || !itemId) return;
+    if (!canTrack || !itemId) return;
 
     const heartbeat = setInterval(() => {
+      if (isBlockedRef.current) return;
       const delta = activeDeltaRef.current;
       if (delta >= 15) {
         activeDeltaRef.current = 0;
@@ -157,7 +180,7 @@ export function useStudyTracker({
     }, HEARTBEAT_INTERVAL_MS);
 
     return () => clearInterval(heartbeat);
-  }, [courseId, itemId, isPreviewMode]);
+  }, [canTrack, courseId, itemId]);
 
   useEffect(() => {
     return () => {

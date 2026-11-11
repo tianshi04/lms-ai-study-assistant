@@ -69,12 +69,15 @@ function CoursePlayerContent() {
   const prevActiveItemIdRef = useRef<string | null>(null);
   const isInitialLoadCompletedRef = useRef(false);
 
+  const resolvedCourseId = course?.id || courseId;
+
   // Study time tracking with heartbeat and keepalive flush
   useStudyTracker({
-    courseId,
+    courseId: resolvedCourseId,
     itemId: activeItem?.id || null,
     isVideoPlaying,
     isPreviewMode,
+    isEnrolled: Boolean(progress?.enrolledAt),
   });
 
   // Default sidebars closed on mobile (< 1024px) to prevent layout shift, and open on desktop (>= 1024px).
@@ -119,8 +122,6 @@ function CoursePlayerContent() {
       [weekId]: !prev[weekId],
     }));
   };
-
-  const resolvedCourseId = course?.id || courseId;
 
   const { data: paymentAccess, isLoading: loadingPaymentAccess } = usePaymentAccessQuery(
     resolvedCourseId,

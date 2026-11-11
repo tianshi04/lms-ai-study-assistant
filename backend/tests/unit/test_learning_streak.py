@@ -107,7 +107,7 @@ async def test_record_learning_time_validation(
     mock_catalog_repo.get_course_detail.return_value = sample_course
 
     # Enrolled user progress
-    mock_repo.get_progress.return_value = LearningProgress(
+    mock_repo.find_progress.return_value = LearningProgress(
         user_id="u1",
         course_id="course-1",
         enrolled_at="2026-11-03T10:00:00Z",
@@ -139,8 +139,18 @@ async def test_record_learning_time_validation(
             user_id="u1", course_id="course-1", item_id="invalid-item", delta_seconds=30
         )
 
-    # 4. Non-enrolled user -> PermissionError
-    mock_repo.get_progress.return_value = LearningProgress(
+    # 4a. Non-enrolled user (no record) -> PermissionError
+    mock_repo.find_progress.return_value = None
+    with pytest.raises(PermissionError, match="chưa ghi danh"):
+        await use_case.record_learning_time(
+            user_id="u_never_enrolled",
+            course_id="course-1",
+            item_id="item-1",
+            delta_seconds=30,
+        )
+
+    # 4b. Non-enrolled user (empty enrolled_at) -> PermissionError
+    mock_repo.find_progress.return_value = LearningProgress(
         user_id="u_unregistered",
         course_id="course-1",
         enrolled_at="",  # Not enrolled
@@ -154,7 +164,7 @@ async def test_record_learning_time_validation(
         )
 
     # 5. Valid enrolled user and clamped delta
-    mock_repo.get_progress.return_value = LearningProgress(
+    mock_repo.find_progress.return_value = LearningProgress(
         user_id="u1",
         course_id="course-1",
         enrolled_at="2026-11-03T10:00:00Z",

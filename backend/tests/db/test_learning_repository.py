@@ -24,6 +24,45 @@ def repository(mock_session):
 
 
 @pytest.mark.asyncio
+async def test_find_progress_found(repository, mock_session):
+    mock_model = LearningProgressModel(
+        id="u1:c1",
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=50.0,
+        completed_item_ids=["i1"],
+        enrolled_at="2026-11-01T00:00:00Z",
+        weekly_deadlines=[],
+    )
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_model
+    mock_session.execute.return_value = mock_result
+
+    progress = await repository.find_progress("u1", "c1")
+
+    assert progress is not None
+    assert progress.user_id == "u1"
+    assert progress.course_id == "c1"
+    assert progress.enrolled_at == "2026-11-01T00:00:00Z"
+    mock_session.execute.assert_awaited_once()
+    mock_session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_find_progress_not_found(repository, mock_session):
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_result
+
+    progress = await repository.find_progress("u_missing", "c1")
+
+    assert progress is None
+    mock_session.execute.assert_awaited_once()
+    mock_session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_get_progress_existing(repository, mock_session):
     mock_model = LearningProgressModel(
         id="u1:c1",
@@ -31,6 +70,7 @@ async def test_get_progress_existing(repository, mock_session):
         course_id="c1",
         overall_progress_percent=50.0,
         completed_item_ids=["i1"],
+        enrolled_at="2026-11-01T00:00:00Z",
         weekly_deadlines=[],
     )
 
@@ -45,7 +85,32 @@ async def test_get_progress_existing(repository, mock_session):
     assert progress.course_id == "c1"
     assert progress.overall_progress_percent == 50.0
     assert progress.completed_item_ids == ["i1"]
+    assert progress.enrolled_at == "2026-11-01T00:00:00Z"
     mock_session.execute.assert_awaited_once()
+    mock_session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_get_progress_backfills_empty_enrolled_at(repository, mock_session):
+    mock_model = LearningProgressModel(
+        id="u_legacy:c1",
+        user_id="u_legacy",
+        course_id="c1",
+        overall_progress_percent=25.0,
+        completed_item_ids=["i1"],
+        enrolled_at="",
+        last_accessed_at="2026-10-15T08:00:00+00:00",
+        weekly_deadlines=[],
+    )
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_model
+    mock_session.execute.return_value = mock_result
+
+    progress = await repository.get_progress("u_legacy", "c1")
+
+    assert progress.enrolled_at == "2026-10-15T08:00:00+00:00"
+    mock_session.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio

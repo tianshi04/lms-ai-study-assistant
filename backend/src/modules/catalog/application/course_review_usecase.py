@@ -139,7 +139,7 @@ class CourseReviewUseCase:
 
             # BR_REVIEW_001: Check if user completed at least 50% of the course via Learning domain
             learning_repo = self.learning_repo_factory(session)
-            progress = await learning_repo.get_progress(user_id, real_course_id)
+            progress = await learning_repo.find_progress(user_id, real_course_id)
 
             if (
                 not progress
