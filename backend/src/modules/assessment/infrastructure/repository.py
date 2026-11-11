@@ -1314,6 +1314,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         page_token: str = "",
     ) -> dict[str, Any]:
         from src.modules.catalog.infrastructure.models import (
+            CourseCollaboratorModel,
             CourseModel,
             LearningItemModel,
             LessonModel,
@@ -1381,7 +1382,20 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             for item in graded_items
         ]
 
-        # 3. Query enrolled students
+        # 3. Resolve course teaching staff to exclude instructors, co-instructors, and TAs
+        staff_ids: set[str] = set()
+        if course and course.owner_id:
+            staff_ids.add(course.owner_id)
+
+        collab_stmt = select(CourseCollaboratorModel.user_id).where(
+            CourseCollaboratorModel.course_id == course_id
+        )
+        collab_res = await self.session.execute(collab_stmt)
+        for uid in collab_res.scalars().all():
+            if uid:
+                staff_ids.add(uid)
+
+        # 4. Query enrolled students (excluding teaching staff)
         progress_query = (
             select(LearningProgressModel, UserModel)
             .join(UserModel, UserModel.id == LearningProgressModel.user_id)
@@ -1393,6 +1407,14 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             .join(UserModel, UserModel.id == LearningProgressModel.user_id)
             .where(LearningProgressModel.course_id == course_id)
         )
+
+        if staff_ids:
+            progress_query = progress_query.where(
+                LearningProgressModel.user_id.notin_(staff_ids)
+            )
+            count_query = count_query.where(
+                LearningProgressModel.user_id.notin_(staff_ids)
+            )
 
         if search_query and search_query.strip():
             term = f"%{search_query.strip()}%"
@@ -1498,29 +1520,37 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
                 score = 0.0
                 is_passed = False
-                provenance = "AUTO"
+                provenance = ""
                 graded_at = ""
                 submission_id = ""
 
                 if key in peer_submissions_map:
                     p_sub = peer_submissions_map[key]
                     submission_id = p_sub.id
-                    score = float(p_sub.final_score or 0.0)
-                    is_passed = score >= 80.0
-                    graded_at = p_sub.published_at or p_sub.created_at or ""
-                    source = p_sub.grade_source or "PEER_REVIEW"
-                    if "INSTRUCTOR" in source.upper():
-                        provenance = "INSTRUCTOR"
-                    elif "TA" in source.upper():
-                        provenance = "TA"
+                    if p_sub.final_score is not None:
+                        score = float(p_sub.final_score)
+                        is_passed = score >= 80.0
+                        graded_at = p_sub.published_at or p_sub.created_at or ""
+                        source = p_sub.grade_source or "PEER_REVIEW"
+                        if "INSTRUCTOR" in source.upper():
+                            provenance = "INSTRUCTOR"
+                        elif "TA" in source.upper():
+                            provenance = "TA"
+                        else:
+                            provenance = "PEER"
                     else:
-                        provenance = "PEER"
+                        score = 0.0
+                        is_passed = False
+                        graded_at = ""
+                        provenance = "PENDING"
                 elif key in quiz_scores:
+                    submission_id = f"quiz_{key[0]}_{key[1]}"
                     score = quiz_scores[key]
                     is_passed = score >= 80.0
                     provenance = "AUTO"
                     graded_at = quiz_timestamps.get(key, "")
                 elif key in lab_scores:
+                    submission_id = f"lab_{key[0]}_{key[1]}"
                     score = lab_scores[key]
                     is_passed = score >= 80.0
                     provenance = "AUTO"

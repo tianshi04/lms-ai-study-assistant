@@ -155,7 +155,23 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
         cell: ({ row }) => {
           const cellData = row.original.cells.find((c) => c.itemId === itemCol.itemId);
           if (!cellData || (!cellData.gradedAt && !cellData.submissionId && !cellData.provenance)) {
-            return <span className="text-muted-foreground/60 text-xs italic">Chưa có bài</span>;
+            return <span className="text-muted-foreground/60 text-xs italic">Chưa làm</span>;
+          }
+
+          // Đã nộp nhưng đang chờ chấm
+          if (
+            cellData.submissionId &&
+            (!cellData.gradedAt || cellData.provenance.toUpperCase() === "PENDING")
+          ) {
+            return (
+              <div className="min-w-[120px] space-y-1">
+                <Badge variant="warning" className="gap-1 text-[10px] px-1.5 py-0.5">
+                  <Clock className="w-3 h-3" aria-hidden="true" />
+                  Đang chấm
+                </Badge>
+                <span className="block text-[10px] text-muted-foreground">Chờ đánh giá</span>
+              </div>
+            );
           }
 
           const prov = cellData.provenance.toUpperCase();
@@ -246,7 +262,13 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
       student.finalWeightedGrade.toFixed(2),
       ...columnsData.map((c) => {
         const cell = student.cells.find((cellItem) => cellItem.itemId === c.itemId);
-        return cell ? cell.score.toFixed(1) : "0";
+        if (!cell || (!cell.submissionId && !cell.gradedAt && !cell.provenance)) {
+          return '"Chưa làm"';
+        }
+        if (cell.submissionId && (!cell.gradedAt || cell.provenance.toUpperCase() === "PENDING")) {
+          return '"Đang chấm"';
+        }
+        return cell.score.toFixed(1);
       }),
     ]);
 
