@@ -1411,7 +1411,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 )
 
             final_grade = round(total_weighted_grade, 2)
-            is_completed = lp.overall_progress_percent >= 100.0 or final_grade >= 80.0
+            is_completed = lp.overall_progress_percent >= 100.0 and final_grade >= 80.0
             enrollment_status = (
                 "COMPLETED"
                 if is_completed

@@ -246,13 +246,30 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.CreateQuestionBankResponse:
         user = self._verify_instructor_permission()
-        bank = await self.use_case.create_question_bank(
-            course_id=request.course_id,
-            title=request.title,
-            category=request.category,
-            description=request.description,
-            current_user=user,
-        )
+        if not request.course_id or not request.course_id.strip():
+            raise ConnectError(Code.INVALID_ARGUMENT, "course_id là bắt buộc.")
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                course_id=request.course_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="tạo ngân hàng câu hỏi",
+            )
+            bank = await self.use_case.create_question_bank(
+                course_id=course.id,
+                title=request.title,
+                category=request.category,
+                description=request.description,
+                current_user=user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.CreateQuestionBankResponse(
             bank=pb.QuestionBank(
                 id=bank.id,
@@ -269,8 +286,26 @@ class AssessmentHandler(AssessmentService):
         request: pb.ListQuestionBanksRequest,
         ctx: RequestContext[pb.ListQuestionBanksRequest, pb.ListQuestionBanksResponse],
     ) -> pb.ListQuestionBanksResponse:
-        require_current_user()
-        banks = await self.use_case.list_question_banks(course_id=request.course_id)
+        user = self._verify_instructor_permission()
+        if not request.course_id or not request.course_id.strip():
+            raise ConnectError(Code.INVALID_ARGUMENT, "course_id là bắt buộc.")
+        try:
+            course = await self.use_case.get_course_for_item_or_submission(
+                course_id=request.course_id
+            )
+            user_ctx = CurrentUserContext(id=user.id, role=user.role, email=user.email)
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.MANAGE_CURRICULUM,
+                action_name="xem ngân hàng câu hỏi",
+                allow_read_only_pending=True,
+            )
+            banks = await self.use_case.list_question_banks(course_id=course.id)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         pb_banks = []
         for b in banks:
             pb_questions = []
@@ -682,23 +717,24 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.ListGradingQueueRequest, pb.ListGradingQueueResponse],
     ) -> pb.ListGradingQueueResponse:
         current_user = require_current_user()
+        if not request.course_id or not request.course_id.strip():
+            raise ConnectError(Code.INVALID_ARGUMENT, "course_id là bắt buộc.")
         try:
-            if request.course_id:
-                course = await self.use_case.get_course_for_item_or_submission(
-                    course_id=request.course_id
-                )
-                user_ctx = CurrentUserContext(
-                    id=current_user.id, role=current_user.role, email=current_user.email
-                )
-                enforce_course_ownership(
-                    course=course,
-                    user=user_ctx,
-                    required_permission=CoursePermission.GRADE_ASSESSMENTS,
-                    action_name="xem danh sách bài chấm",
-                )
+            course = await self.use_case.get_course_for_item_or_submission(
+                course_id=request.course_id
+            )
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="xem danh sách bài chấm",
+            )
 
             res = await self.use_case.list_grading_queue(
-                course_id=request.course_id,
+                course_id=course.id,
                 item_id=request.item_id,
                 status_filter=str(request.status),
                 search_query=request.search_query,
@@ -1011,11 +1047,16 @@ class AssessmentHandler(AssessmentService):
             ]
             provenance_str = "INSTRUCTOR" if current_user.role == "INSTRUCTOR" else "TA"
 
-            total_score = (
-                request.total_score
-                if request.total_score > 0
-                else sum(c.score_given for c in criteria_list)
-            )
+            if request.total_score > 0:
+                total_score = request.total_score
+            else:
+                max_possible = sum(c.max_score for c in criteria_list)
+                total_given = sum(c.score_given for c in criteria_list)
+                total_score = (
+                    round((total_given / max_possible) * 100.0, 2)
+                    if max_possible > 0
+                    else 0.0
+                )
             (
                 success,
                 msg,
@@ -1049,9 +1090,12 @@ class AssessmentHandler(AssessmentService):
         ctx: Any = None,
     ) -> Any:
         current_user = require_current_user()
+        course_id = getattr(request, "course_id", "") or ""
+        if not course_id or not str(course_id).strip():
+            raise ConnectError(Code.INVALID_ARGUMENT, "course_id là bắt buộc.")
         try:
             course = await self.use_case.get_course_for_item_or_submission(
-                course_id=request.course_id
+                course_id=course_id
             )
             user_ctx = CurrentUserContext(
                 id=current_user.id, role=current_user.role, email=current_user.email
@@ -1063,7 +1107,7 @@ class AssessmentHandler(AssessmentService):
                 action_name="truy cập Sổ điểm (Course Gradebook)",
             )
             return await self.use_case.get_course_gradebook(
-                course_id=request.course_id,
+                course_id=course.id,
                 search_query=getattr(request, "search_query", ""),
                 status_filter=getattr(request, "status_filter", ""),
                 page_size=getattr(request, "page_size", 50) or 50,
@@ -1081,9 +1125,12 @@ class AssessmentHandler(AssessmentService):
         ctx: Any = None,
     ) -> Any:
         current_user = require_current_user()
+        course_id = getattr(request, "course_id", "") or ""
+        if not course_id or not str(course_id).strip():
+            raise ConnectError(Code.INVALID_ARGUMENT, "course_id là bắt buộc.")
         try:
             course = await self.use_case.get_course_for_item_or_submission(
-                course_id=request.course_id
+                course_id=course_id
             )
             user_ctx = CurrentUserContext(
                 id=current_user.id, role=current_user.role, email=current_user.email
@@ -1095,7 +1142,7 @@ class AssessmentHandler(AssessmentService):
                 action_name="xem danh sách việc cần xử lý",
             )
             return await self.use_case.get_instructor_action_tasks(
-                course_id=request.course_id,
+                course_id=course.id,
                 current_user=current_user,
             )
         except PermissionError as e:

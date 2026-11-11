@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   CheckCircle2,
@@ -41,8 +42,20 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
 
   const [activeTab, setActiveTab] = useState<GradingQueueStatus>(GradingQueueStatus.ALL);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
-  const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const submissionIdParam = searchParams.get("submissionId") || searchParams.get("submission");
+
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(
+    submissionIdParam,
+  );
+  const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(Boolean(submissionIdParam));
+
+  useEffect(() => {
+    if (submissionIdParam) {
+      setSelectedSubmissionId(submissionIdParam);
+      setIsEvaluationModalOpen(true);
+    }
+  }, [submissionIdParam]);
 
   // Fetch grading queue using TanStack Query
   const { data, isLoading, isError, refetch } = useGradingQueueQuery({

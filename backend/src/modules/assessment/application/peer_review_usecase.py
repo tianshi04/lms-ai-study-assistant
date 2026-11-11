@@ -288,12 +288,8 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             if not sub.can_claim_lock(staff_user_id, now):
                 raise PermissionError("Bài nộp đang được nhân sự khác khóa để chấm.")
 
-            # BR_PEER_008: Highest Score Wins
-            effective_score = (
-                max(total_score, sub.final_score)
-                if sub.final_score is not None
-                else total_score
-            )
+            # Staff adjudication directly overrides the final score (cheating, plagiarism, appeal)
+            effective_score = float(total_score)
             rubric_json = {c.criteria_id: c.score_given for c in graded_criteria}
             grader_role = current_user.role if current_user else "TA"
 
@@ -444,12 +440,8 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             if not sub:
                 return False, "Không tìm thấy bài nộp dự án"
 
-            # BR_PEER_008: Highest Score Wins
-            effective_score = (
-                max(ta_score, sub.final_score)
-                if sub.final_score is not None
-                else ta_score
-            )
+            # Staff adjudication directly overrides the final score
+            effective_score = float(ta_score)
             sub.assign_grade(
                 effective_score,
                 is_staff=True,
@@ -754,7 +746,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         "course_title": i["course_title"],
                         "time_ago": "Cần xử lý",
                         "action_text": "Xem khiếu nại",
-                        "action_url": f"/instructor/courses/{course_id}/grading-cockpit?submission={i['submission_id']}",
+                        "action_url": f"/instructor/courses/{course_id}/grading?submissionId={i['submission_id']}",
                         "course_id": course_id,
                         "priority": "HIGH",
                         "created_at": i["submitted_at"],
@@ -771,7 +763,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         "course_title": i["course_title"],
                         "time_ago": "Quá 48h",
                         "action_text": "Chấm ngay",
-                        "action_url": f"/instructor/courses/{course_id}/grading-cockpit?submission={i['submission_id']}",
+                        "action_url": f"/instructor/courses/{course_id}/grading?submissionId={i['submission_id']}",
                         "course_id": course_id,
                         "priority": "HIGH",
                         "created_at": i["submitted_at"],

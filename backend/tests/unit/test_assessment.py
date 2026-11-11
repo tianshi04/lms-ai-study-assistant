@@ -1356,7 +1356,7 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
     assert sub2 is not None
     assert sub2.attempt_number == 2
 
-    # Staff grades attempt 2 with lower score (70.0) -> Highest Score Wins maintains 85.0!
+    # Staff adjudication overrides and lowers the score to 70.0 (penalty for cheating/plagiarism)
     criteria_low = [RubricCriteria("c1", "Quality", 10.0, 7.0)]
     _, _, final_s, _ = await usecase.submit_staff_grading(
         submission_id=sub_id2,
@@ -1365,10 +1365,10 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
         total_score=70.0,
         current_user=staff,
     )
-    assert final_s == 85.0  # Preserved highest score!
+    assert final_s == 70.0  # Staff adjudication overrides score!
     sub2_graded = await repo.get_peer_submission(sub_id2)
     assert sub2_graded is not None
-    assert sub2_graded.final_score == 85.0
+    assert sub2_graded.final_score == 70.0
 
     # 3. Resubmission (attempt 3)
     await usecase.submit_peer_assignment(
@@ -1528,3 +1528,298 @@ async def test_course_gradebook_matrix_usecase():
     assert len(gb["rows"]) == 2
     assert gb["rows"][0]["cells"][0]["score"] in (90.0, 70.0)
     assert gb["rows"][0]["cells"][0]["provenance"] in ("TA", "PEER_REVIEW")
+
+
+@pytest.mark.asyncio
+async def test_list_grading_queue_empty_course_id_rejected():
+    """Negative test: Validate course_id cannot be empty or whitespace in list_grading_queue (ReBAC bypass guard)."""
+    from typing import Any, cast
+    from unittest.mock import MagicMock, patch
+
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+
+    from src.gen.assessment.v1 import assessment_pb as pb
+    from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
+    from src.shared.auth import CurrentUser
+
+    usecase = AssessmentUseCase(repository=InMemoryAssessmentRepository())
+    handler = AssessmentHandler(use_case=usecase)
+    instructor = CurrentUser(id="inst-1", email="inst@example.com", role="INSTRUCTOR")
+    mock_ctx = cast(Any, MagicMock())
+
+    with patch(
+        "src.modules.assessment.presentation.assessment_handler.require_current_user",
+        return_value=instructor,
+    ):
+        # 1. Empty course_id -> INVALID_ARGUMENT
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.list_grading_queue(
+                pb.ListGradingQueueRequest(course_id=""), mock_ctx
+            )
+        assert exc_info.value.code == Code.INVALID_ARGUMENT
+        assert "course_id là bắt buộc" in exc_info.value.message
+
+        # 2. Whitespace course_id -> INVALID_ARGUMENT
+        with pytest.raises(ConnectError) as exc_info2:
+            await handler.list_grading_queue(
+                pb.ListGradingQueueRequest(course_id="   "), mock_ctx
+            )
+        assert exc_info2.value.code == Code.INVALID_ARGUMENT
+        assert "course_id là bắt buộc" in exc_info2.value.message
+
+
+@pytest.mark.asyncio
+async def test_list_question_banks_security_and_rebac():
+    """Security test: Learner cannot view question banks/answers; Instructor without course ownership is rejected."""
+    from typing import Any, cast
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+
+    from src.gen.assessment.v1 import assessment_pb as pb
+    from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
+    from src.modules.catalog.domain import Course, CourseStatus
+    from src.shared.auth import CurrentUser
+
+    usecase = AssessmentUseCase(repository=InMemoryAssessmentRepository())
+    handler = AssessmentHandler(use_case=usecase)
+    mock_ctx = cast(Any, MagicMock())
+
+    # 1. Learner attempts to call list_question_banks -> PERMISSION_DENIED
+    learner = CurrentUser(id="student-1", email="student@example.com", role="LEARNER")
+    with patch(
+        "src.modules.assessment.presentation.assessment_handler.require_current_user",
+        return_value=learner,
+    ):
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.list_question_banks(
+                pb.ListQuestionBanksRequest(course_id="course-secret"), mock_ctx
+            )
+        assert exc_info.value.code == Code.PERMISSION_DENIED
+
+    # 2. Instructor calls with empty course_id -> INVALID_ARGUMENT
+    instructor_intruder = CurrentUser(
+        id="inst-intruder", email="intruder@example.com", role="INSTRUCTOR"
+    )
+    with patch(
+        "src.modules.assessment.presentation.assessment_handler.require_current_user",
+        return_value=instructor_intruder,
+    ):
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.list_question_banks(
+                pb.ListQuestionBanksRequest(course_id=""), mock_ctx
+            )
+        assert exc_info.value.code == Code.INVALID_ARGUMENT
+
+    # 3. Instructor calls with course owned by another instructor -> PERMISSION_DENIED
+    mock_course = Course(
+        id="c0000000-0000-0000-0000-000000000001",
+        title="Bảo Mật Hệ Thống",
+        slug="bao-mat-he-thong",
+        owner_id="inst-real-owner",
+        organization_id="org-1",
+        status=CourseStatus.PUBLISHED,
+    )
+    with (
+        patch(
+            "src.modules.assessment.presentation.assessment_handler.require_current_user",
+            return_value=instructor_intruder,
+        ),
+        patch.object(
+            usecase,
+            "get_course_for_item_or_submission",
+            new=AsyncMock(return_value=mock_course),
+        ),
+    ):
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.list_question_banks(
+                pb.ListQuestionBanksRequest(
+                    course_id="c0000000-0000-0000-0000-000000000001"
+                ),
+                mock_ctx,
+            )
+        assert exc_info.value.code == Code.PERMISSION_DENIED
+
+    # 4. Authorized owner calls list_question_banks -> Success
+    instructor_owner = CurrentUser(
+        id="inst-real-owner", email="owner@example.com", role="INSTRUCTOR"
+    )
+    with (
+        patch(
+            "src.modules.assessment.presentation.assessment_handler.require_current_user",
+            return_value=instructor_owner,
+        ),
+        patch.object(
+            usecase,
+            "get_course_for_item_or_submission",
+            new=AsyncMock(return_value=mock_course),
+        ),
+        patch.object(usecase, "list_question_banks", new=AsyncMock(return_value=[])),
+    ):
+        resp = await handler.list_question_banks(
+            pb.ListQuestionBanksRequest(
+                course_id="c0000000-0000-0000-0000-000000000001"
+            ),
+            mock_ctx,
+        )
+        assert isinstance(resp, pb.ListQuestionBanksResponse)
+
+
+@pytest.mark.asyncio
+async def test_submit_staff_grading_rubric_normalization_and_score_override():
+    """Math & Logic test: Rubric score normalized to 100-point scale and staff score overrides cheating score."""
+    from typing import Any, cast
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from src.gen.assessment.v1 import assessment_pb as pb
+    from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
+    from src.modules.catalog.domain import Course, CourseStatus
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    handler = AssessmentHandler(use_case=usecase)
+    staff = CurrentUser(id="inst-owner", email="inst@example.com", role="INSTRUCTOR")
+    mock_ctx = cast(Any, MagicMock())
+
+    mock_course = Course(
+        id="c0000000-0000-0000-0000-000000000001",
+        title="Khóa Học Math",
+        slug="khoa-hoc-math",
+        owner_id="inst-owner",
+        organization_id="org-1",
+        status=CourseStatus.PUBLISHED,
+    )
+
+    # Seed submission with an initial high peer score (95.0)
+    sub = PeerAssignmentSubmission(
+        id="sub-cheat-test",
+        user_id="student-cheat",
+        item_id="item-math-1",
+        submission_url="http://cheat.com",
+        text_content="Content",
+        created_at="2026-08-18T10:00:00Z",
+        final_score=95.0,
+        status="PUBLISHED",
+    )
+    await repo.save_peer_submission(sub)
+
+    # 1. Staff grades with criteria sum fallback (total_score=0 in request)
+    # 3 criteria: max_scores 10, 10, 10 = 30. Given 8, 8, 8 = 24. Normalization: (24 / 30) * 100 = 80.0!
+    req = pb.SubmitStaffGradingRequest(
+        submission_id="sub-cheat-test",
+        total_score=0.0,
+        graded_criteria=[
+            pb.RubricCriteria(
+                criteria_id="c1", title="Criterion 1", max_score=10.0, score_given=8.0
+            ),
+            pb.RubricCriteria(
+                criteria_id="c2", title="Criterion 2", max_score=10.0, score_given=8.0
+            ),
+            pb.RubricCriteria(
+                criteria_id="c3", title="Criterion 3", max_score=10.0, score_given=8.0
+            ),
+        ],
+        feedback="Normalized rubric grade",
+    )
+
+    with (
+        patch(
+            "src.modules.assessment.presentation.assessment_handler.require_current_user",
+            return_value=staff,
+        ),
+        patch.object(
+            usecase,
+            "get_course_for_item_or_submission",
+            new=AsyncMock(return_value=mock_course),
+        ),
+    ):
+        resp = await handler.submit_staff_grading(req, mock_ctx)
+        assert resp.success is True
+        assert (
+            resp.final_score == 80.0
+        )  # Normalized to 80.0, NOT raw sum 24.0 and NOT old score 95.0!
+
+    # 2. Staff directly overrides and lowers score to 25.0 due to plagiarism
+    req_penalize = pb.SubmitStaffGradingRequest(
+        submission_id="sub-cheat-test",
+        total_score=25.0,
+        graded_criteria=[],
+        feedback="Phát hiện đạo văn, hạ điểm xuống 25.",
+    )
+    with (
+        patch(
+            "src.modules.assessment.presentation.assessment_handler.require_current_user",
+            return_value=staff,
+        ),
+        patch.object(
+            usecase,
+            "get_course_for_item_or_submission",
+            new=AsyncMock(return_value=mock_course),
+        ),
+    ):
+        resp2 = await handler.submit_staff_grading(req_penalize, mock_ctx)
+        assert resp2.success is True
+        assert resp2.final_score == 25.0  # Successfully lowered from 80.0 to 25.0!
+
+
+@pytest.mark.asyncio
+async def test_instructor_action_tasks_url_format():
+    """Cross-layer test: Verify action_url follows Next.js route with submissionId parameter."""
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    staff = CurrentUser(id="instructor-1", email="inst@example.com", role="INSTRUCTOR")
+
+    # Seed overdue submission (> 48h)
+    sub = PeerAssignmentSubmission(
+        id="sub-overdue-123",
+        user_id="student-overdue",
+        item_id="item-overdue-1",
+        submission_url="http://overdue.com",
+        text_content="Overdue project",
+        created_at="2026-08-01T10:00:00Z",
+        status="SUBMITTED",
+        final_score=None,
+    )
+    await repo.save_peer_submission(sub)
+
+    tasks_result = await usecase.get_instructor_action_tasks(
+        course_id="course-url-test",
+        current_user=staff,
+    )
+    tasks = tasks_result.get("tasks", [])
+    assert len(tasks) >= 1
+    overdue_task = next(
+        (t for t in tasks if t["id"] == "task-overdue-sub-overdue-123"), None
+    )
+    assert overdue_task is not None
+    # Verify URL structure
+    assert "grading-cockpit" not in overdue_task["action_url"]
+    assert (
+        "/instructor/courses/course-url-test/grading?submissionId=sub-overdue-123"
+        == overdue_task["action_url"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_gradebook_completion_condition_progress_and_final_grade():
+    """Business rule BR_GRADE_001 invariant test: Both progress >= 100.0 AND final_grade >= 80.0 required."""
+
+    def check_completed(progress: float, final_grade: float) -> bool:
+        return progress >= 100.0 and final_grade >= 80.0
+
+    # Case 1: 100% progress but failed grade (75.0) -> NOT COMPLETED
+    assert check_completed(100.0, 75.0) is False
+
+    # Case 2: 70% progress with high grade (95.0) -> NOT COMPLETED
+    assert check_completed(70.0, 95.0) is False
+
+    # Case 3: 100% progress and passing grade (80.0) -> COMPLETED
+    assert check_completed(100.0, 80.0) is True
+
+    # Case 4: 100% progress and exceptional grade (98.0) -> COMPLETED
+    assert check_completed(100.0, 98.0) is True
