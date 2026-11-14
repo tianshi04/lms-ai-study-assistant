@@ -83,17 +83,14 @@ function computeYAxisMax(points: ChartPoint[]): number {
   return Math.max(3, Math.ceil(niceFactor * magnitude));
 }
 
-function findPeakDate(points: ChartPoint[], valueGetter: (p: ChartPoint) => number): string {
+function findPeakSummary(points: ChartPoint[], formatValue: (value: number) => string): string {
   let best: ChartPoint | null = null;
-  let bestValue = 0;
   for (const point of points) {
-    const val = valueGetter(point);
-    if (val > bestValue) {
-      bestValue = val;
+    if (point.primaryValue > 0 && (!best || point.primaryValue > best.primaryValue)) {
       best = point;
     }
   }
-  return best ? `${formatIsoDay(best.date, true)} (${formatCompactCount(bestValue)})` : "Chưa có";
+  return best ? `${formatIsoDay(best.date, true)} (${formatValue(best.primaryValue)})` : "Chưa có";
 }
 
 function useTrendSeries(metric: AdminTrendMetric, days: DayRange): NormalizedTrendSeries {
@@ -133,7 +130,7 @@ function useTrendSeries(metric: AdminTrendMetric, days: DayRange): NormalizedTre
           { label: `Hoàn thành (${days}N)`, value: formatNumber(totalCompletions) },
           {
             label: "Cao điểm ghi danh",
-            value: findPeakDate(points, (p) => p.primaryValue),
+            value: findPeakSummary(points, formatCompactCount),
           },
         ],
         isLoading: learningQuery.isLoading,
@@ -176,7 +173,7 @@ function useTrendSeries(metric: AdminTrendMetric, days: DayRange): NormalizedTre
           { label: "Điểm TB trong kỳ", value: avgWindowRating },
           {
             label: "Cao điểm đánh giá",
-            value: findPeakDate(points, (p) => p.primaryValue),
+            value: findPeakSummary(points, formatCompactCount),
           },
         ],
         isLoading: csatQuery.isLoading,
@@ -192,11 +189,10 @@ function useTrendSeries(metric: AdminTrendMetric, days: DayRange): NormalizedTre
       const raw = revenueQuery.data?.points ?? [];
       let totalRevenue = 0;
       let totalPurchases = 0;
-      let peakPoint: ChartPoint | null = null;
       const points: ChartPoint[] = raw.map((p) => {
         totalRevenue += p.revenue;
         totalPurchases += p.purchaseCount;
-        const point: ChartPoint = {
+        return {
           date: p.date,
           primaryValue: p.revenue,
           tooltipLines: [
@@ -204,15 +200,7 @@ function useTrendSeries(metric: AdminTrendMetric, days: DayRange): NormalizedTre
             `Mua khóa học lẻ: ${formatNumber(p.purchaseCount)} lượt`,
           ],
         };
-        if (!peakPoint || point.primaryValue > peakPoint.primaryValue) {
-          peakPoint = point;
-        }
-        return point;
       });
-      const peakLabel =
-        peakPoint && (peakPoint as ChartPoint).primaryValue > 0
-          ? `${formatIsoDay((peakPoint as ChartPoint).date, true)} (${formatCompactVnd((peakPoint as ChartPoint).primaryValue)})`
-          : "Chưa có";
       return {
         title: "Xu hướng Doanh thu",
         subtitle: `Doanh thu mua khóa học & Coursera Plus hoàn tất trong ${days} ngày gần nhất (UTC)`,
@@ -222,7 +210,7 @@ function useTrendSeries(metric: AdminTrendMetric, days: DayRange): NormalizedTre
         summaryStats: [
           { label: `Doanh thu (${days}N)`, value: formatVnd(totalRevenue) },
           { label: "Mua khóa học lẻ", value: `${formatNumber(totalPurchases)} lượt` },
-          { label: "Ngày cao nhất", value: peakLabel },
+          { label: "Ngày cao nhất", value: findPeakSummary(points, formatCompactVnd) },
         ],
         isLoading: revenueQuery.isLoading,
         isError: revenueQuery.isError,
@@ -255,7 +243,7 @@ function useTrendSeries(metric: AdminTrendMetric, days: DayRange): NormalizedTre
         { label: "Trung bình / ngày", value: avgPerDay },
         {
           label: "Ngày cấp nhiều nhất",
-          value: findPeakDate(points, (p) => p.primaryValue),
+          value: findPeakSummary(points, formatCompactCount),
         },
       ],
       isLoading: certQuery.isLoading,

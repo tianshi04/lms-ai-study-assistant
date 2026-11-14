@@ -1,7 +1,7 @@
 """add low review acknowledgements table
 
 Revision ID: d4b7a91c3e52
-Revises: 00c565ecc4ba
+Revises: 8b3d6d35e697
 Create Date: 2026-11-09 19:59:00.000000
 
 """
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "d4b7a91c3e52"
-down_revision: str | Sequence[str] | None = "00c565ecc4ba"
+down_revision: str | Sequence[str] | None = "8b3d6d35e697"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
