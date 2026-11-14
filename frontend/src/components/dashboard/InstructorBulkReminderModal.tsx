@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 import { useSendStudentReminderMutation } from "@/lib/query_hooks";
-import { Zap, AlertTriangle, Users, RotateCcw, Sparkles } from "lucide-react";
+import { Zap, AlertTriangle, Users, RotateCcw, Sparkles, Clock, Loader2 } from "lucide-react";
 
 export interface BulkReminderStudent {
   userId: string;
@@ -34,6 +34,30 @@ export interface InstructorBulkReminderModalProps {
   onSuccess?: (studentIds: string[]) => void;
 }
 
+function getStudentPaceConfig(pace?: "AHEAD" | "ON_TRACK" | "BEHIND") {
+  switch (pace) {
+    case "AHEAD":
+      return {
+        label: "Vượt tiến độ",
+        textColor: "text-success",
+        badgeClass: "bg-success/10 text-success border-success/20",
+      };
+    case "ON_TRACK":
+      return {
+        label: "Đúng tiến độ",
+        textColor: "text-primary",
+        badgeClass: "bg-primary/10 text-primary border-primary/20",
+      };
+    case "BEHIND":
+    default:
+      return {
+        label: "Chậm tiến độ",
+        textColor: "text-destructive",
+        badgeClass: "bg-destructive/10 text-destructive border-destructive/20",
+      };
+  }
+}
+
 function getSmartTemplates(
   courseTitle: string,
   bottleneckWeek?: { weekNumber: number; title: string; dropRate?: number } | null,
@@ -48,6 +72,13 @@ function getSmartTemplates(
       return {
         subject: `[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${effectiveCourseTitle}`,
         body: `Chào em ${singleStudent.userName},\n\nThầy/Cô rất vui mừng nhận thấy em đang học vượt tiến độ đề xuất môn "${effectiveCourseTitle}" (${Math.round(singleStudent.progressPercent ?? 0)}% đề cương).\n\nChúc em tiếp tục phát huy tinh thần tự học tuyệt vời này để sớm hoàn thành xuất sắc khóa học nhé!`,
+      };
+    }
+
+    if (singleStudent.pace === "ON_TRACK") {
+      return {
+        subject: `[Đôn đốc học tập] Duy trì nhịp độ học tập tốt môn ${effectiveCourseTitle}`,
+        body: `Chào em ${singleStudent.userName},\n\nThầy/Cô nhận thấy em đang bám sát rất tốt lộ trình học tập môn "${effectiveCourseTitle}" (${Math.round(singleStudent.progressPercent ?? 0)}% đề cương).\n\nHãy tiếp tục duy trì nhịp độ học tập ổn định này để hoàn thành khóa học đúng hạn nhé!\n\nChúc em học tập hiệu quả!`,
       };
     }
 
@@ -91,6 +122,7 @@ export function InstructorBulkReminderModal({
   const isSingle = students.length === 1;
   const singleStudent = isSingle ? students[0] : null;
   const isAhead = singleStudent?.pace === "AHEAD";
+  const isOnTrack = singleStudent?.pace === "ON_TRACK";
   const effectiveCourseTitle =
     singleStudent?.courseTitle || (courseTitle !== "Tất cả khóa học" ? courseTitle : "Khóa học");
 
@@ -177,7 +209,9 @@ export function InstructorBulkReminderModal({
           isSingle
             ? isAhead
               ? `Đã gửi lời khích lệ học tập tới học viên ${singleStudent?.userName}!`
-              : `Đã gửi thông báo nhắc nhở tới học viên ${singleStudent?.userName}!`
+              : isOnTrack
+                ? `Đã gửi đôn đốc tiến độ tới học viên ${singleStudent?.userName}!`
+                : `Đã gửi thông báo nhắc nhở tới học viên ${singleStudent?.userName}!`
             : `Đã gửi thông báo nhắc nhở tới ${totalSent} học viên!`,
           {
             description:
@@ -219,11 +253,17 @@ export function InstructorBulkReminderModal({
           <div className="flex items-center gap-3">
             <div
               className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                isAhead ? "bg-warning/15 text-warning" : "bg-destructive/10 text-destructive"
+                isAhead
+                  ? "bg-warning/15 text-warning"
+                  : isOnTrack
+                    ? "bg-primary/10 text-primary"
+                    : "bg-destructive/10 text-destructive"
               }`}
             >
               {isAhead ? (
                 <Sparkles className="w-5 h-5 fill-warning/20 text-warning" aria-hidden="true" />
+              ) : isOnTrack ? (
+                <Clock className="w-5 h-5 text-primary" aria-hidden="true" />
               ) : (
                 <Zap className="w-5 h-5 fill-destructive" aria-hidden="true" />
               )}
@@ -233,7 +273,9 @@ export function InstructorBulkReminderModal({
                 {isSingle
                   ? isAhead
                     ? "Gửi Khích Lệ Học Tập Tới Học Viên"
-                    : "Gửi Nhắc Nhở Học Tập Tới Học Viên"
+                    : isOnTrack
+                      ? "Gửi Đôn Đốc Tiến Độ Tới Học Viên"
+                      : "Gửi Nhắc Nhở Học Tập Tới Học Viên"
                   : "Gửi Nhắc Nhở Học Tập Tới Học Viên Chậm Tiến Độ"}
               </Dialog.Title>
             </div>
@@ -241,8 +283,8 @@ export function InstructorBulkReminderModal({
         </Dialog.Header>
 
         <div className="space-y-3.5 text-xs">
-          {/* Card cảnh báo điểm nghẽn nếu có */}
-          {bottleneckWeek ? (
+          {/* Card cảnh báo điểm nghẽn nếu có và nhóm học viên thực sự cần can thiệp */}
+          {bottleneckWeek && (!isSingle || singleStudent?.pace === "BEHIND") ? (
             <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-start gap-2.5 text-xs text-destructive">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
               <div className="space-y-0.5">
@@ -288,34 +330,39 @@ export function InstructorBulkReminderModal({
             </div>
 
             <div className="max-h-28 overflow-y-auto rounded-xl border border-outline-variant/60 bg-surface p-2 divide-y divide-outline-variant/30 scrollbar-thin">
-              {students.map((st) => (
-                <div
-                  key={st.userId}
-                  className="py-1.5 first:pt-0 last:pb-0 flex items-center justify-between text-xs gap-2"
-                >
-                  <div className="min-w-0 pr-2">
-                    <span className="font-semibold text-foreground truncate block">
-                      {st.userName}
-                    </span>
-                    {(st.userEmail || st.courseTitle) && (
-                      <span className="text-[10px] text-muted-foreground block truncate">
-                        {st.userEmail}
-                        {st.courseTitle && ` • ${st.courseTitle}`}
+              {students.map((st) => {
+                const paceConfig = getStudentPaceConfig(st.pace);
+                return (
+                  <div
+                    key={st.userId}
+                    className="py-1.5 first:pt-0 last:pb-0 flex items-center justify-between text-xs gap-2"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <span className="font-semibold text-foreground truncate block">
+                        {st.userName}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {st.progressPercent !== undefined && (
-                      <span className="font-mono text-[11px] font-bold text-destructive">
-                        {st.progressPercent.toFixed(1)}%
+                      {(st.userEmail || st.courseTitle) && (
+                        <span className="text-[10px] text-muted-foreground block truncate">
+                          {st.userEmail}
+                          {st.courseTitle && ` • ${st.courseTitle}`}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {st.progressPercent !== undefined && (
+                        <span className={`font-mono text-[11px] font-bold ${paceConfig.textColor}`}>
+                          {st.progressPercent.toFixed(1)}%
+                        </span>
+                      )}
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${paceConfig.badgeClass}`}
+                      >
+                        {paceConfig.label}
                       </span>
-                    )}
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-destructive/10 text-destructive border border-destructive/20">
-                      Chậm tiến độ
-                    </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -380,13 +427,17 @@ export function InstructorBulkReminderModal({
             disabled={isSending || students.length === 0 || !subject.trim() || !content.trim()}
             onClick={handleConfirmSend}
             className={`text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer ${
-              isAhead
+              isAhead || isOnTrack
                 ? "bg-primary hover:bg-primary-hover text-primary-foreground"
                 : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             }`}
           >
-            {isAhead ? (
+            {isSending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+            ) : isAhead ? (
               <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+            ) : isOnTrack ? (
+              <Clock className="w-3.5 h-3.5" aria-hidden="true" />
             ) : (
               <Zap className="w-3.5 h-3.5" aria-hidden="true" />
             )}
