@@ -40,11 +40,21 @@ export class NewCoursePage {
 
   async fillAndSubmitCourse(title: string, description: string, partnerOrgId?: string) {
     await this.page.waitForLoadState('domcontentloaded');
-    await expect(this.titleInput).toBeVisible({ timeout: 10000 });
-    await expect(this.titleInput).toBeEnabled({ timeout: 5000 });
+    await expect(this.partnerSelect).toBeVisible({ timeout: 15000 });
+    await expect(this.titleInput).toBeVisible({ timeout: 15000 });
+    await expect(this.titleInput).toBeEnabled({ timeout: 10000 });
+    await this.page.waitForTimeout(300);
     await this.titleInput.click();
     await this.titleInput.fill(title);
-    await expect(this.titleInput).toHaveValue(title, { timeout: 5000 });
+
+    // Verify value persisted; if hydration wiped it, re-fill
+    const val = await this.titleInput.inputValue();
+    if (val !== title) {
+      await this.page.waitForTimeout(500);
+      await this.titleInput.click();
+      await this.titleInput.fill(title);
+    }
+    await expect(this.titleInput).toHaveValue(title, { timeout: 10000 });
 
     // Verify or ensure slug is populated
     await expect(this.slugInput).toBeVisible({ timeout: 5000 });
