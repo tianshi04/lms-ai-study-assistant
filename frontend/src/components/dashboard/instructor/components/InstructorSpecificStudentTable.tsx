@@ -140,9 +140,6 @@ export function InstructorSpecificStudentTable({
               {filteredStudents.length}/{rawStudentsWithPacing.length} SV
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Theo dõi tiến độ từng học viên, can thiệp hỗ trợ kịp thời cho các sinh viên học chậm
-          </p>
         </div>
 
         {coursePacingCounts.behind > 0 && (
