@@ -201,6 +201,7 @@ flowchart TD
   * Chuỗi thời gian (Spline Timeline): Trả về các mốc hoạt động gồm số lượng học viên truy cập/học (`active_learners`), số bài học/quiz hoàn thành (`completed_items`), và số học viên đang học dở (`in_progress`).
   * Bản đồ nhiệt mật độ giờ học (Heatmap 7 Ngày x 4 Khung Giờ): Phân bổ lưu lượng học viên theo 7 ngày trong tuần (`T2` - `CN`) và 4 khung giờ (`Sáng (06h-12h)`, `Chiều (12h-18h)`, `Tối (18h-22h)`, `Đêm (22h-02h)`), tự động tính toán và đánh dấu khung giờ cao điểm nhất (`is_peak = True`).
 * **Danh sách Học viên (Student Roster):** Xem chi tiết thông tin và phần trăm tiến độ hoàn thành bài học của từng học viên ghi danh trong lớp.
+* **Gửi Thông báo Đôn đốc Học viên (`SendStudentReminder`):** Giảng viên gửi thông báo nhắc nhở riêng tư (cá nhân hoặc theo nhóm học viên chậm tiến độ `student_ids`) mà không phát tán công khai toàn khóa, kích hoạt sự kiện miền `StudentReminderSentDomainEvent` và gửi thông báo danh mục `ACADEMIC` đến hòm thư học viên mục tiêu.
 * **Phân tích Tỷ lệ Bỏ học (Student Drop-off Funnel):** Thống kê số lượng học viên dừng học tại từng bài học video/bài đọc để giúp Giảng viên nhận biết đoạn nội dung khó tiếp thu.
 
 ### 2.6. Kiểm Soát Phân Cấp Điểm Số & Nguồn Gốc Đánh Giá (Score Governance & Grading Provenance)
