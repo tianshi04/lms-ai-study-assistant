@@ -280,7 +280,7 @@ export function useInstructorOverviewData({
         titleLower.startsWith("[thong bao]") ||
         titleLower.startsWith("[announcement]");
       const hasStaffReply = th.replies?.some((reply) => reply.isStaffAnswer);
-      return !th.isStaffPinned && !isStaff && !isAnnouncement && !hasStaffReply;
+      return !isStaff && !isAnnouncement && !hasStaffReply;
     });
 
     pendingQA.forEach((thread) => {
@@ -517,7 +517,7 @@ export function useInstructorOverviewData({
         titleLower.startsWith("[thong bao]") ||
         titleLower.startsWith("[announcement]");
       const hasStaffReply = th.replies?.some((reply) => reply.isStaffAnswer);
-      return !th.isStaffPinned && !isStaff && !isAnnouncement && !hasStaffReply;
+      return !isStaff && !isAnnouncement && !hasStaffReply;
     }).length;
   }, [allThreads, courses]);
 

@@ -1,22 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Check, Lock, AlertTriangle, Info, Send, ExternalLink, Scale, Users } from "lucide-react";
+import {
+  Check,
+  Lock,
+  AlertTriangle,
+  Info,
+  Send,
+  ExternalLink,
+  Scale,
+  Users,
+  BookOpen,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Slider } from "@/components/ui/Slider";
 import { mapConnectError } from "@/lib/connect_error_mapper";
+import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import { getSafeExternalUrl } from "@/lib/utils";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
   title?: string;
   userId?: string;
+  instructionsMarkdown?: string;
+  rubricCriteriaJson?: string;
 }
 
 interface PeerItem {
@@ -29,10 +43,17 @@ interface PeerItem {
     maxScore: number;
     scoreGiven: number;
     feedback: string;
+    description?: string;
   }[];
 }
 
-export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmentWorkspaceProps) {
+export function PeerAssignmentWorkspace({
+  itemId,
+  title,
+  userId,
+  instructionsMarkdown,
+  rubricCriteriaJson: _rubricCriteriaJson,
+}: PeerAssignmentWorkspaceProps) {
   const { userId: authUserId } = useAuth();
   const effectiveUserId = userId || authUserId || "user-demo-1";
 
@@ -60,75 +81,78 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
     }
     return "";
   });
-  const [submissionUrl, setSubmissionUrl] = useState(
-    "https://github.com/learner/supervised-ml-capstone",
-  );
-  const [textContent, setTextContent] = useState(
-    "Dự án Capstone Mô hình Học có giám sát. Xây dựng mô hình Random Forest & Hồi quy tuyến tính đạt độ chính xác 94.2% trên tập kiểm thử.",
-  );
+  const [submissionUrl, setSubmissionUrl] = useState("");
+  const [textContent, setTextContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Peer items to grade
   const [peerItems, setPeerItems] = useState<PeerItem[]>([
     {
       reviewId: "rev-sub-001",
-      submissionUrl: "https://github.com/peer-alex/ml-capstone-project",
+      submissionUrl: "https://figma.com/file/sample-project",
       textContent:
-        "Implemented XGBoost model for housing price prediction with Feature Engineering and K-Fold cross validation.",
+        "Dự án phân tích và thiết kế trải nghiệm người dùng với nguyên mẫu Prototype tương tác hoàn chỉnh.",
       rubricCriteria: [
         {
           criteriaId: "c1",
-          title: "Code Structure & Best Practices",
+          title: "Chất lượng nội dung & Lập luận",
           maxScore: 10,
           scoreGiven: 9,
-          feedback: "Great modular structure!",
+          feedback: "Phân tích có chiều sâu và giải pháp rất thuyết phục.",
+          description: "Mức độ hoàn thiện, tính logic và chiều sâu phân tích.",
         },
         {
           criteriaId: "c2",
-          title: "Model Evaluation Metrics",
+          title: "Bố cục & Kỹ năng trình bày",
           maxScore: 10,
           scoreGiven: 10,
-          feedback: "Thorough MSE & R2 reporting.",
+          feedback: "Bố cục đẹp, phân cấp thị giác rõ ràng.",
+          description: "Tổ chức đề mục khoa học, diễn đạt mạch lạc.",
         },
         {
           criteriaId: "c3",
-          title: "Documentation & Readme",
+          title: "Tài liệu & Minh chứng thực tế",
           maxScore: 10,
           scoreGiven: 8,
-          feedback: "Clear installation steps.",
-        },
-      ],
-    },
-    {
-      reviewId: "rev-sub-002",
-      submissionUrl: "https://github.com/peer-sam/regression-model",
-      textContent:
-        "Supervised Learning project comparing Linear Regression and Polynomial Regression models.",
-      rubricCriteria: [
-        {
-          criteriaId: "c1",
-          title: "Code Structure & Best Practices",
-          maxScore: 10,
-          scoreGiven: 8,
-          feedback: "Good effort.",
-        },
-        {
-          criteriaId: "c2",
-          title: "Model Evaluation Metrics",
-          maxScore: 10,
-          scoreGiven: 7,
-          feedback: "Missing cross validation.",
-        },
-        {
-          criteriaId: "c3",
-          title: "Documentation & Readme",
-          maxScore: 10,
-          scoreGiven: 8,
-          feedback: "Decent readme.",
+          feedback: "Đầy đủ dẫn chứng.",
+          description: "Dẫn chứng số liệu cụ thể, có nguồn tham khảo tin cậy.",
         },
       ],
     },
   ]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchReviews = async () => {
+      try {
+        const client = getRpcClient(AssessmentService);
+        const res = await client.getPeerReviewsToGrade({ itemId });
+        if (isMounted && res.itemsToGrade && res.itemsToGrade.length > 0) {
+          setPeerItems(
+            res.itemsToGrade.map((item) => ({
+              reviewId: item.reviewId,
+              submissionUrl: item.submissionUrl,
+              textContent: item.textContent,
+              rubricCriteria: item.rubricCriteria.map((c) => ({
+                criteriaId: c.criteriaId,
+                title: c.title,
+                maxScore: c.maxScore || 10,
+                scoreGiven: c.scoreGiven || Math.round((c.maxScore || 10) * 0.8),
+                feedback: c.feedback || "",
+                description: c.description || "",
+              })),
+            })),
+          );
+        }
+      } catch {
+        // Fallback gracefully to default items
+      }
+    };
+    fetchReviews();
+    return () => {
+      isMounted = false;
+    };
+  }, [itemId]);
 
   const [appealReason, setAppealReason] = useState("");
   const [appealStatus, setAppealStatus] = useState("");
@@ -314,34 +338,47 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           aria-labelledby="peer-tab-submit"
           className="space-y-5"
         >
+          {instructionsMarkdown && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-2xs space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary border-b border-border pb-2">
+                <BookOpen className="w-4 h-4" aria-hidden="true" />
+                <span>Đề bài & Hướng dẫn làm bài</span>
+              </div>
+              <div className="text-xs leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                {renderMarkdown(instructionsMarkdown)}
+              </div>
+            </div>
+          )}
+
           <div className="p-4 rounded-xl bg-info/10 border border-info/20 text-xs text-info space-y-1.5">
             <h4 className="font-bold flex items-center gap-1.5 text-foreground">
               <Info aria-hidden="true" className="w-4 h-4 text-info shrink-0" />
               <span>Yêu cầu Nộp bài:</span>
             </h4>
             <p className="text-muted-foreground leading-relaxed">
-              Nộp đường dẫn kho lưu trữ mã nguồn (Repository URL) và bản tóm tắt nội dung bài làm.
-              Bạn phải nộp bài cá nhân trước khi mở khóa chức năng chấm điểm bạn học.
+              Cung cấp đường dẫn liên kết bài làm / sản phẩm (Figma, Canva, Google Drive, Slide,
+              Github, Website...) và bài luận hoặc bản tóm tắt giải pháp. Bạn phải nộp bài cá nhân
+              trước khi mở khóa chức năng chấm điểm bạn học.
             </p>
           </div>
 
           <div className="space-y-4">
             <Input
-              label="Đường dẫn Repository / Bài làm (URL)"
+              label="Đường dẫn Bài làm / Sản phẩm dự án (URL)"
               type="url"
               inputMode="url"
               value={submissionUrl}
               onChange={(e) => setSubmissionUrl(e.target.value)}
               className="font-mono text-xs"
-              placeholder="https://github.com/username/project"
+              placeholder="https://figma.com/file/... hoặc Google Drive, Canva, Github, website..."
             />
 
             <Textarea
-              label="Bản tóm tắt Dự án & Phương pháp thực hiện"
+              label="Nội dung bài viết / Luận văn / Bản tóm tắt giải pháp"
               value={textContent}
               onChange={(e) => setTextContent(e.target.value)}
-              rows={4}
-              placeholder="Mô tả tóm tắt giải pháp, kiến trúc và kết quả đạt được…"
+              rows={6}
+              placeholder="Nhập nội dung bài luận chi tiết hoặc tóm tắt giải pháp, kiến trúc và kết quả đạt được…"
             />
 
             {submitStatus && (
@@ -390,76 +427,114 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           </div>
 
           <div className="space-y-4">
-            {peerItems.map((peer, pIdx) => (
-              <div
-                key={peer.reviewId}
-                className="p-5 rounded-2xl border border-border/80 bg-surface-container-low/30 space-y-4"
-              >
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary" />
-                    Bài nộp của Bạn học #{pIdx + 1} ({peer.reviewId})
-                  </h4>
-                  {getSafeExternalUrl(peer.submissionUrl) ? (
-                    <a
-                      href={getSafeExternalUrl(peer.submissionUrl)!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-                    >
-                      <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
-                      <span>Xem Repository</span>
-                    </a>
-                  ) : (
-                    <span className="text-xs font-mono text-destructive">
-                      Liên kết không an toàn
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-xs text-muted-foreground bg-surface-container-lowest p-3 rounded-xl border border-border font-mono leading-relaxed">
-                  {peer.textContent}
+            {peerItems.length === 0 ? (
+              <div className="p-8 rounded-2xl border border-dashed border-border bg-card text-center space-y-3">
+                <Users className="w-8 h-8 text-muted-foreground mx-auto" />
+                <h4 className="font-bold text-sm text-foreground">Chưa có bài nộp nào cần chấm</h4>
+                <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                  Hệ thống chưa tìm thấy bài nộp nào khác trong hàng chờ chấm chéo. Khi các bạn học
+                  khác nộp bài, hệ thống sẽ tự động phân bổ bài vào đây cho bạn.
                 </p>
-
-                {/* Rubric Criteria Controls */}
-                <div className="space-y-3 pt-1">
-                  <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Chấm điểm theo Tiêu chí Rubric:
-                  </h5>
-                  {peer.rubricCriteria.map((crit, cIdx) => (
-                    <div
-                      key={crit.criteriaId}
-                      className="p-3.5 rounded-xl bg-surface-container-lowest border border-border space-y-2"
-                    >
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-foreground">{crit.title}</span>
-                        <span className="font-mono font-bold text-primary">
-                          {crit.scoreGiven} / {crit.maxScore} điểm
-                        </span>
-                      </div>
-
-                      <Slider
-                        min={0}
-                        max={crit.maxScore}
-                        step={1}
-                        value={[crit.scoreGiven]}
-                        onValueChange={(val) => {
-                          const num = Array.isArray(val) ? val[0] : val;
-                          handleScoreChange(pIdx, cIdx, num);
-                        }}
-                        aria-label={`Điểm cho tiêu chí ${crit.title}`}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <Button type="button" onClick={() => handleSubmitPeerGrade(pIdx)} size="sm">
-                    Nộp điểm cho Bài làm #{pIdx + 1}
-                  </Button>
-                </div>
               </div>
-            ))}
+            ) : (
+              peerItems.map((peer, pIdx) => (
+                <div
+                  key={peer.reviewId}
+                  className="p-5 rounded-2xl border border-border/80 bg-surface-container-low/30 space-y-4"
+                >
+                  <div className="flex items-center justify-between border-b border-border pb-3">
+                    <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-primary" />
+                      Bài nộp của Bạn học #{pIdx + 1} ({peer.reviewId})
+                    </h4>
+                    {getSafeExternalUrl(peer.submissionUrl) ? (
+                      <a
+                        href={getSafeExternalUrl(peer.submissionUrl)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                      >
+                        <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
+                        <span>Mở liên kết bài làm</span>
+                      </a>
+                    ) : peer.submissionUrl ? (
+                      <span className="text-xs font-mono text-destructive">
+                        Liên kết không an toàn
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {peer.textContent && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <FileText className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>Nội dung bài luận / Tóm tắt dự án:</span>
+                      </div>
+                      <p className="text-xs text-foreground bg-surface-container-lowest p-3.5 rounded-xl border border-border whitespace-pre-wrap leading-relaxed">
+                        {peer.textContent}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Rubric Criteria Controls */}
+                  <div className="space-y-3 pt-1">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Chấm điểm theo Tiêu chí Rubric:
+                    </h5>
+                    {peer.rubricCriteria.map((crit, cIdx) => (
+                      <div
+                        key={crit.criteriaId}
+                        className="p-3.5 rounded-xl bg-surface-container-lowest border border-border space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-foreground">{crit.title}</span>
+                          <span className="font-mono font-bold text-primary">
+                            {crit.scoreGiven} / {crit.maxScore} điểm
+                          </span>
+                        </div>
+
+                        {crit.description && (
+                          <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+                            {crit.description}
+                          </p>
+                        )}
+
+                        <Slider
+                          min={0}
+                          max={crit.maxScore}
+                          step={1}
+                          value={[crit.scoreGiven]}
+                          onValueChange={(val) => {
+                            const num = Array.isArray(val) ? val[0] : val;
+                            handleScoreChange(pIdx, cIdx, num);
+                          }}
+                          aria-label={`Điểm cho tiêu chí ${crit.title}`}
+                        />
+
+                        <Input
+                          placeholder="Nhận xét / Lời góp ý cho tiêu chí này (tùy chọn)..."
+                          value={crit.feedback || ""}
+                          onChange={(e) => {
+                            const updated = [...peerItems];
+                            updated[pIdx].rubricCriteria[cIdx].feedback = e.target.value;
+                            setPeerItems(updated);
+                          }}
+                          className="text-xs"
+                          aria-label={`Nhận xét tiêu chí ${crit.title}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button type="button" onClick={() => handleSubmitPeerGrade(pIdx)} size="sm">
+                      <Send aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
+                      Xác nhận nộp điểm đánh giá
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

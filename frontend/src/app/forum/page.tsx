@@ -228,18 +228,6 @@ function ForumPageContent() {
           }
         }
 
-        // Fallback: If no enrolled or teaching courses found, provide public catalog courses
-        if (combinedMap.size === 0) {
-          try {
-            const publicRes = await catalogClient.listCourses({ pageSize: 50 });
-            publicRes.courses.forEach((c) => {
-              combinedMap.set(c.id, { id: c.id, title: c.title });
-            });
-          } catch (err) {
-            console.error("Error fetching fallback courses for forum:", err);
-          }
-        }
-
         if (!cancelled) {
           const accessibleCourses = Array.from(combinedMap.values());
           setCourses(accessibleCourses);
