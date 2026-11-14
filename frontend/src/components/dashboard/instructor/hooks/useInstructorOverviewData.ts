@@ -358,11 +358,15 @@ export function useInstructorOverviewData({
     ];
     const tasks: OverviewActionTask[] = fullTasksPool.map(({ score: _score, ...rest }) => rest);
 
-    const totalOverdue = allScoredTasks.filter((t) => t.urgencyLevel === "critical").length;
+    const totalOverdueGrading = pendingGrading.filter((item) => {
+      const submittedMs = item.submittedAt ? new Date(item.submittedAt).getTime() : 0;
+      const hoursElapsed = submittedMs > 0 ? Math.floor((nowMs - submittedMs) / (3600 * 1000)) : 0;
+      return hoursElapsed >= 48;
+    }).length;
 
     return {
       overviewActionTasks: tasks,
-      totalOverdueTasksCount: totalOverdue,
+      totalOverdueTasksCount: totalOverdueGrading,
       overdueGradingByCourseId: overdueByCourse,
     };
   }, [allGradingData, allThreads, courses, currentTimeMs]);
