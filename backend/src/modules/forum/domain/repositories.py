@@ -7,9 +7,13 @@ from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntit
 class IForumRepository(ABC):
     @abstractmethod
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = ""
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        course_ids: Sequence[str] | None = None,
     ) -> Sequence[ForumThreadEntity]:
-        """List forum threads matching course_id and optional item_id."""
+        """List forum threads matching course_id, optional item_id, or scoped by course_ids."""
 
     @abstractmethod
     async def get_thread_by_id(self, thread_id: str) -> ForumThreadEntity | None:
@@ -32,6 +36,12 @@ class IForumRepository(ABC):
     @abstractmethod
     async def pin_staff_answer(self, reply_id: str, _ta_user_id: str = "") -> bool:
         """Pin a reply as staff answer."""
+
+    @abstractmethod
+    async def pin_thread(
+        self, thread_id: str, is_pinned: bool
+    ) -> ForumThreadEntity | None:
+        """Pin or unpin a thread."""
 
     @abstractmethod
     async def get_reply_by_id(self, reply_id: str) -> ForumReplyEntity | None:
