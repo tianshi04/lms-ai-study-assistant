@@ -9,7 +9,6 @@ import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
 import { InstructorCourseComparisonTab } from "../components/InstructorCourseComparisonTab";
 import { InstructorCertificatesTab } from "../components/InstructorCertificatesTab";
 import { InstructorPacingCohortsCard } from "../components/InstructorPacingCohortsCard";
-import { InstructorCourseComparisonTable } from "../components/InstructorCourseComparisonTable";
 import { InstructorActionTasksCard } from "../components/InstructorActionTasksCard";
 import { InstructorRecentReviewsCard } from "../components/InstructorRecentReviewsCard";
 import { generateTimeLabels } from "../utils/time_labels";
@@ -57,15 +56,15 @@ export function InstructorOverviewView({
   courses,
   activeCourse,
   onSelectCourse,
-  analyticsByCourseId,
-  pendingGradingByCourseId,
-  pendingQaByCourseId,
+  analyticsByCourseId: _analyticsByCourseId,
+  pendingGradingByCourseId: _pendingGradingByCourseId,
+  pendingQaByCourseId: _pendingQaByCourseId,
   overviewActionTasks,
   totalPendingTasksCount,
   totalPendingGradingCount,
   totalPendingQaCount,
   totalOverdueTasksCount = 0,
-  overdueGradingByCourseId,
+  overdueGradingByCourseId: _overdueGradingByCourseId,
   overviewReviews,
   avgRatingAllCourses,
   totalStudentsAllCourses,
@@ -448,16 +447,6 @@ export function InstructorOverviewView({
           behindCount={pacingCohortSummary.behindCount}
           behindPercent={pacingCohortSummary.behindPercent}
           onOpenModal={onOpenPacingModal}
-        />
-
-        {/* Card 3: Bảng So Sánh Các Khóa Học Giảng Dạy */}
-        <InstructorCourseComparisonTable
-          courses={courses}
-          analyticsByCourseId={analyticsByCourseId}
-          pendingGradingByCourseId={pendingGradingByCourseId}
-          pendingQaByCourseId={pendingQaByCourseId}
-          overdueGradingByCourseId={overdueGradingByCourseId}
-          onSelectCourse={onSelectCourse}
         />
       </div>
 
