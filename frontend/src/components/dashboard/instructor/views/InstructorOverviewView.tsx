@@ -1,15 +1,13 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { BarChart3, Clock, TrendingDown, Award, Filter } from "lucide-react";
+import { BarChart3, TrendingDown, Award, Filter } from "lucide-react";
 import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
-import { InstructorHeatmap } from "../../InstructorHeatmap";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
 import { InstructorCourseComparisonTab } from "../components/InstructorCourseComparisonTab";
 import { InstructorCertificatesTab } from "../components/InstructorCertificatesTab";
 import { InstructorPacingCohortsCard } from "../components/InstructorPacingCohortsCard";
-import { InstructorActionTasksCard } from "../components/InstructorActionTasksCard";
 import { InstructorRecentReviewsCard } from "../components/InstructorRecentReviewsCard";
 import { generateTimeLabels } from "../utils/time_labels";
 import type {
@@ -59,11 +57,11 @@ export function InstructorOverviewView({
   analyticsByCourseId: _analyticsByCourseId,
   pendingGradingByCourseId: _pendingGradingByCourseId,
   pendingQaByCourseId: _pendingQaByCourseId,
-  overviewActionTasks,
-  totalPendingTasksCount,
-  totalPendingGradingCount,
-  totalPendingQaCount,
-  totalOverdueTasksCount = 0,
+  overviewActionTasks: _overviewActionTasks,
+  totalPendingTasksCount: _totalPendingTasksCount,
+  totalPendingGradingCount: _totalPendingGradingCount,
+  totalPendingQaCount: _totalPendingQaCount,
+  totalOverdueTasksCount: _totalOverdueTasksCount = 0,
   overdueGradingByCourseId: _overdueGradingByCourseId,
   overviewReviews,
   avgRatingAllCourses,
@@ -76,10 +74,8 @@ export function InstructorOverviewView({
   currentMonthNumber,
   lastMonthNumber,
 }: InstructorOverviewViewProps) {
-  // Tab biểu đồ ở chế độ tất cả môn: "trend" | "heatmap" | "compare" | "certs"
-  const [allChartTab, setAllChartTab] = useState<"trend" | "heatmap" | "compare" | "certs">(
-    "trend",
-  );
+  // Tab biểu đồ ở chế độ tất cả môn: "trend" | "compare" | "certs"
+  const [allChartTab, setAllChartTab] = useState<"trend" | "compare" | "certs">("trend");
   const [chartDateRange, setChartDateRange] = useState("7d");
   const [chartLearnerFilter, setChartLearnerFilter] = useState<"all" | "in_progress" | "completed">(
     "all",
@@ -263,19 +259,6 @@ export function InstructorOverviewView({
 
               <button
                 type="button"
-                onClick={() => setAllChartTab("heatmap")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  allChartTab === "heatmap"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                <span>Bản đồ nhiệt giờ học</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setAllChartTab("compare")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                   allChartTab === "compare"
@@ -302,7 +285,7 @@ export function InstructorOverviewView({
             </div>
 
             {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
-            {allChartTab === "trend" || allChartTab === "heatmap" ? (
+            {allChartTab === "trend" ? (
               <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
                   <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
@@ -406,17 +389,7 @@ export function InstructorOverviewView({
             </div>
           )}
 
-          {/* Tab 2: Bản đồ nhiệt giờ học */}
-          {allChartTab === "heatmap" && (
-            <InstructorHeatmap
-              dateRange={chartDateRange}
-              learnerFilter={chartLearnerFilter}
-              currentMonthNumber={currentMonthNumber}
-              lastMonthNumber={lastMonthNumber}
-            />
-          )}
-
-          {/* Tab 3: So sánh tỷ lệ hoàn thành & hiệu suất giữa các môn */}
+          {/* Tab 2: So sánh tỷ lệ hoàn thành & hiệu suất giữa các môn */}
           {allChartTab === "compare" && (
             <InstructorCourseComparisonTab
               courses={enrichedCoursesForComparison}
@@ -427,7 +400,7 @@ export function InstructorOverviewView({
             />
           )}
 
-          {/* Tab 4: Danh sách toàn bộ chứng chỉ đã cấp */}
+          {/* Tab 3: Danh sách toàn bộ chứng chỉ đã cấp */}
           {allChartTab === "certs" && (
             <InstructorCertificatesTab
               mode="all"
@@ -452,22 +425,7 @@ export function InstructorOverviewView({
 
       {/* CỘT PHẢI (4/12 - 33%): ACTION CENTER & ĐIỀU HÀNH GIẢNG DẠY */}
       <div className="lg:col-span-4 space-y-4">
-        {/* Box 1: Việc Cần Xử Lý */}
-        <InstructorActionTasksCard
-          tasks={overviewActionTasks}
-          totalPendingCount={totalPendingTasksCount}
-          totalGradingCount={totalPendingGradingCount}
-          totalQaCount={totalPendingQaCount}
-          totalOverdueCount={totalOverdueTasksCount}
-          behindCount={pacingCohortSummary.behindCount}
-          onFilterBehind={onOpenPacingModal}
-          primaryActionUrl={
-            overviewActionTasks.find((t) => t.type === "grading")?.actionUrl ||
-            "/instructor/courses"
-          }
-        />
-
-        {/* Box 2: Phản Hồi Sinh Viên */}
+        {/* Phản Hồi Sinh Viên */}
         <InstructorRecentReviewsCard
           reviews={overviewReviews}
           avgRating={avgRatingAllCourses || "5.0"}
