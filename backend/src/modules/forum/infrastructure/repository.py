@@ -43,7 +43,11 @@ class ForumRepository(IForumRepository):
     def _to_thread_entity(
         self, orm: ForumThreadORM, voted_post_ids: set[str] | None = None
     ) -> ForumThreadEntity:
-        replies = [self._to_reply_entity(r, voted_post_ids) for r in orm.replies]
+        sorted_replies = sorted(
+            orm.replies,
+            key=lambda r: (not r.is_staff_answer, r.created_at),
+        )
+        replies = [self._to_reply_entity(r, voted_post_ids) for r in sorted_replies]
         is_voted = (orm.id in voted_post_ids) if voted_post_ids else False
         return ForumThreadEntity(
             id=orm.id,
@@ -64,7 +68,11 @@ class ForumRepository(IForumRepository):
         )
 
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = ""
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        course_ids: Sequence[str] | None = None,
     ) -> Sequence[ForumThreadEntity]:
         voted_post_ids: set[str] = set()
         if current_user_id:
@@ -75,8 +83,12 @@ class ForumRepository(IForumRepository):
             voted_post_ids = set(v_res.scalars().all())
 
         query = select(ForumThreadORM).options(selectinload(ForumThreadORM.replies))
-        if course_id:
+        if course_id and course_id.upper() != "ALL":
             query = query.where(ForumThreadORM.course_id == course_id)
+        elif course_ids is not None:
+            if not course_ids:
+                return []
+            query = query.where(ForumThreadORM.course_id.in_(list(course_ids)))
         if item_id:
             query = query.where(ForumThreadORM.item_id == item_id)
 
@@ -282,16 +294,29 @@ class ForumRepository(IForumRepository):
         if not reply_orm:
             return False
 
-        reply_orm.is_staff_answer = True
+        reply_orm.is_staff_answer = not reply_orm.is_staff_answer
 
-        # Mark thread as staff pinned
-        thread_stmt = select(ForumThreadORM).where(
-            ForumThreadORM.id == reply_orm.thread_id
-        )
-        t_res = await self.session.execute(thread_stmt)
-        thread_orm = t_res.scalar_one_or_none()
-        if thread_orm:
-            thread_orm.is_staff_pinned = True
+        if reply_orm.is_staff_answer:
+            thread_stmt = select(ForumThreadORM).where(
+                ForumThreadORM.id == reply_orm.thread_id
+            )
+            t_res = await self.session.execute(thread_stmt)
+            thread_orm = t_res.scalar_one_or_none()
+            if thread_orm:
+                thread_orm.is_staff_pinned = True
 
         await self.session.commit()
         return True
+
+    async def pin_thread(
+        self, thread_id: str, is_pinned: bool
+    ) -> ForumThreadEntity | None:
+        stmt = select(ForumThreadORM).where(ForumThreadORM.id == thread_id)
+        res = await self.session.execute(stmt)
+        thread_orm = res.scalar_one_or_none()
+        if not thread_orm:
+            return None
+
+        thread_orm.is_staff_pinned = is_pinned
+        await self.session.commit()
+        return await self.get_thread_by_id(thread_id)

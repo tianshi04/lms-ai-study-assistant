@@ -2,55 +2,29 @@
 
 import React from "react";
 import { Star, ChevronRight } from "lucide-react";
-import type { EnrichedCourseComparisonItem } from "../types";
+import type { ComparisonCourseCardItem } from "../types";
 
 export interface InstructorCourseComparisonTabProps {
-  courses: EnrichedCourseComparisonItem[];
+  courses: ComparisonCourseCardItem[];
   activeCourseId?: string;
-  compareSortBy: "rate" | "students" | "rating";
-  onChangeCompareSortBy: (sort: "rate" | "students" | "rating") => void;
   onSelectCourse: (courseId: string) => void;
 }
 
 export function InstructorCourseComparisonTab({
   courses,
-  activeCourseId,
-  compareSortBy,
-  onChangeCompareSortBy,
+  activeCourseId: _activeCourseId,
   onSelectCourse,
 }: InstructorCourseComparisonTabProps) {
   return (
     <div className="space-y-4">
-      {/* Header điều khiển: Sắp xếp */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-outline-variant/50">
-        <div>
-          <p className="text-xs font-bold text-foreground">Đối Sánh Hiệu Suất Từng Khóa Học</p>
-          <p className="text-[11px] text-muted-foreground">
-            Dữ liệu thực tế từ hệ thống theo dõi học tập của từng lớp (Click môn để xem chi tiết):
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Bộ sắp xếp */}
-          <select
-            value={compareSortBy}
-            onChange={(e) =>
-              onChangeCompareSortBy(e.target.value as "rate" | "students" | "rating")
-            }
-            className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-            aria-label="Sắp xếp danh sách khóa học"
-          >
-            <option value="rate">Hoàn thành cao nhất</option>
-            <option value="students">Đông học viên nhất</option>
-            <option value="rating">Đánh giá cao nhất</option>
-          </select>
-        </div>
+      {/* Header: Tiêu đề đối sánh */}
+      <div>
+        <p className="text-xs font-bold text-foreground">Đối Sánh Hiệu Suất Từng Khóa Học</p>
       </div>
 
       {/* LƯỚI THẺ VÒNG TRÒN TỶ LỆ (RADIAL RING CARDS) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {courses.map((course) => {
-          const isCurrentActive = course.id === activeCourseId;
           const radius = 32;
           const circumference = 2 * Math.PI * radius;
           const strokeDashoffset = circumference - (course.compRate / 100) * circumference;
@@ -60,11 +34,7 @@ export function InstructorCourseComparisonTab({
               type="button"
               key={course.id}
               onClick={() => onSelectCourse(course.id)}
-              className={`w-full text-left group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                isCurrentActive
-                  ? "bg-primary/5 border-primary ring-1 ring-primary/30"
-                  : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-sm"
-              }`}
+              className="w-full text-left group p-4 rounded-2xl border border-outline-variant/60 bg-surface hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">

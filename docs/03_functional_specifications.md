@@ -28,19 +28,11 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Cài đặt tham số LLM:** Cấu hình `Temperature` (mặc định `0.2` để đảm bảo độ chính xác học thuật), `Max Output Tokens`, `Top-P`, `Top-K`.
 * **Cấu hình Vector DB & Cloud Storage:** Địa chỉ kết nối Vector Database (Index Name, API Key) và Cloud Storage cho video/phụ đề.
 
-### 1.4. Quản lý chất lượng, Thống kê toàn sàn & Báo cáo vi phạm (Admin Dashboard, Quality Control & Abuse Management)
-* **Kiến trúc Phân rã Theo Bounded Context (DDD-Segregated Admin RPCs):** Toàn bộ số liệu tổng quan và bảng quản trị trên `/admin/dashboard` được phân quyền `SUPER_ADMIN` và truy vấn song song theo đúng ranh giới miền nghiệp vụ (không gom về một God Service):
-  * `IdentityService.GetAdminIdentityStats` (`proto/identity/v1/identity.proto`): Tổng số người dùng phân loại theo vai trò, số tài khoản đã xác minh KYC và số đơn đăng ký giảng viên chờ duyệt.
-  * `CatalogService.GetAdminCatalogStats`, `ListAdminCourseMetrics`, `AcknowledgeLowReview` (`proto/catalog/v1/catalog.proto`): Thống kê khóa học theo trạng thái, số danh mục, điểm hài lòng trung bình & phân bổ CSAT (1–5 sao), bảng chất lượng & hiệu quả từng khóa học (phân trang, tìm kiếm, lọc `CourseStatus`, xếp theo doanh thu giảm dần), và hàng đợi đánh giá thấp (1–2 sao) kèm thao tác đánh dấu đã xem xét (tự động xuất hiện lại nếu học viên chỉnh sửa đánh giá).
-  * `LearningService.GetAdminLearningStats` (`proto/learning/v1/learning.proto`): Tổng lượt ghi danh và tỷ lệ hoàn thành khóa học toàn sàn.
-  * `PaymentService.GetAdminPaymentStats` (`proto/payment/v1/payment.proto`): Tổng doanh thu đã thanh toán (tránh đếm trùng đơn VNPay khóa học lẻ với bản ghi `course_purchases`), số lượt mua khóa lẻ và số gói Coursera Plus đang hiệu lực.
-  * `CertificateService.GetAdminCertificateStats`, `ListAdminCertificates` (`proto/certificate/v1/certificate.proto`): Số chứng chỉ đã cấp/đã thu hồi, số đơn hỗ trợ tài chính đã duyệt/chờ duyệt, và bảng tra cứu chứng chỉ phân trang hỗ trợ thu hồi trực tiếp (`RevokeCertificate`).
-  * `AssessmentService.ListAdminAssessmentAlerts` (`proto/assessment/v1/assessment.proto`): Hàng đợi cảnh báo khiếu nại điểm (`GRADE_APPEAL`), báo cáo lượt chấm chéo (`REPORTED_PEER_REVIEW`) và chấm điểm lệch bất thường (`OUTLIER_PEER_REVIEW`).
-  * `PartnerService.ListPartners` (`proto/partner/v1/partner.proto`): Số lượng tổ chức đối tác trên thanh điều hướng nhanh.
+### 1.4. Quản lý chất lượng & Báo cáo vi phạm (Quality Control & Abuse Management)
 * **Giám sát chỉ số CSAT:** Tổng hợp điểm số hài lòng trung bình (1-5 sao) và tỷ lệ hoàn thành (Completion Rate) của từng khóa học.
 * **Quản lý Báo cáo vi phạm (Abuse Queue):**
-  * Tiếp nhận các báo cáo từ học viên về nội dung bài giảng bị lỗi/phản cảm hoặc gian lận điểm số.
-  * *Hành động:* Đánh dấu đã xem xét đánh giá thấp (`AcknowledgeLowReview`), gửi nhắc nhở Giảng viên, ẩn tạm thời bài học (chuyển về trạng thái Nháp) hoặc thu hồi chứng chỉ vi phạm (`RevokeCertificate`).
+  * Tiếng nhận các báo cáo từ học viên về nội dung bài giảng bị lỗi/phản cảm hoặc gian lận điểm số.
+  * *Hành động:* Gửi email nhắc nhở Giảng viên, ẩn tạm thời bài học (chuyển về trạng thái Nháp) hoặc thu hồi chứng chỉ vi phạm.
 
 ### 1.5. Quản lý B2B Đối tác Phát hành & Cấp phát Mã Enterprise License (Partner Organization Management)
 * **Khởi tạo & Cấu hình B2B Partner:** Super Admin khởi tạo hồ sơ Đối tác (`CreatePartner`), cấu hình Tên miền được ủy quyền (`allowed_domains`), Logo, Banner và thông tin chữ ký mặc định.
@@ -187,10 +179,20 @@ flowchart TD
 * **Quyền sở hữu Khóa học (Course Ownership & Co-Instructors):** Mỗi khóa học gắn với một Chủ sở hữu chính (`owner_id`) và danh sách Giảng viên đồng phụ trách (`co_instructor_ids`). Giảng viên chỉ có quyền chỉnh sửa/xóa khóa học do mình sở hữu hoặc phụ trách.
 * **Thông báo Khóa học (`CreateCourseAnnouncement`, `ListCourseAnnouncements`):** Giảng viên/Admin gửi thông báo truyền thông, lịch livestream hoặc nhắc nhở nộp bài tới toàn bộ học viên đăng ký khóa học.
 * **Điều phối & Kiểm duyệt Diễn đàn (Forum Moderation, Editing & Pinning):** 
-  * Trợ giảng/Giảng viên/Quản trị viên có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
+  * Trợ giảng/Giảng viên phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`) hoặc Admin có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
   * Tác giả bài viết (`author_user_id == current_user.id`) có quyền cập nhật (`UpdateThread`, `UpdateReply`) hoặc xóa bài đăng của mình. Khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động đánh dấu `is_edited = True` và ghi nhận timestamp `edited_at` để người xem dễ dàng phân biệt bài viết đã qua chỉnh sửa.
-  * Ban kiểm duyệt (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền xóa bài viết/bình luận vi phạm quy chuẩn cộng đồng của bất kỳ người dùng nào.
-* **Hỗ trợ Giải đáp:** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) để giải thích kiến thức nâng cao cho học viên.
+  * Ban kiểm duyệt phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`, `ADMIN`) có quyền xóa bài viết/bình luận vi phạm quy chuẩn cộng đồng của bất kỳ người dùng nào trong phạm vi khóa học mình phụ trách.
+* **Cách ly Luồng Thảo luận Lớp học & Phạm vi Truy cập (Class-Scoped Discussion Feed & Access Boundary):**
+  * *Cách ly Nguồn cấp Thảo luận:* API `ListThreads` tự động giới hạn phạm vi truy vấn theo danh sách các khóa học mà người dùng thực sự tham gia (`accessible_course_ids = enrolled_course_ids | teaching_course_ids`). Người dùng không thể xem thảo luận của các lớp học mình không tham gia. Super Admin giữ quyền truy cập toàn diện.
+  * *Bộ lọc Khóa học Scoped:* Dropdown lựa chọn khóa học trên Diễn đàn chỉ hiển thị các khóa học mà người dùng đã đăng ký hoặc đang giảng dạy.
+* **Ràng buộc Vai trò theo Ngữ cảnh & Ghi danh (Contextual Role Resolution & Enrollment Guard):**
+  * *Ngữ cảnh vai trò khóa học:* Nếu một tài khoản là Giảng viên tham gia vào khóa học của người khác, họ tham gia với tư cách **Học viên (`Learner`)**; phản hồi của họ không tự động gắn cờ `is_staff_answer` và không thể ghim bài.
+  * *Ràng buộc Ghi danh:* Người dùng (ngoại trừ Đội ngũ giảng dạy phụ trách và Admin) bắt buộc phải ghi danh vào khóa học mới được phép tạo chủ đề (`CreateThread`) hoặc gửi câu trả lời (`PostReply`).
+* **Hỗ trợ Giải đáp & Bàn làm việc Q&A Giảng viên (`/instructor/courses/[courseId]/discussions`):** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) và toàn bộ khóa học để giải thích kiến thức nâng cao cho học viên:
+  * **Kiểm soát quyền sở hữu khóa học (Ownership Guard):** Chỉ Giảng viên phụ trách hoặc Trợ giảng được phân công của đúng khóa học đó mới được truy cập Bàn làm việc Q&A; các giảng viên khác sẽ bị chặn và điều hướng sang Diễn đàn học tập chung.
+  * **Bộ lọc phân loại ưu tiên (Triage Filters):** Lọc theo các chủ đề *Cần giải đáp gấp (chưa có phản hồi từ Giảng viên)*, *Đã giải đáp*, và *Lời giải đã ghim*.
+  * **Hộp phản hồi nhanh (Quick Staff Reply):** Cho phép Giảng viên nhập câu trả lời chính thức trực tiếp trên danh sách câu hỏi hoặc thông qua Modal chi tiết.
+  * **Điều hướng tập trung:** Tích hợp trực tiếp từ Chip điều hướng Khóa học (`CourseHeaderBanner`), thẻ *Việc cần xử lý* trên Bảng điều khiển Giảng viên (`InstructorDashboard`), và thanh điều hướng chính (`Navbar`).
 
 ### 2.5. Bảng Phân tích & Quản lý Lớp học (Instructor Analytics & Student Roster)
 * **Báo cáo Thống kê Lớp học thời gian thực (`GetInstructorAnalytics`):** Giảng viên theo dõi tổng số học viên ghi danh (`total_enrolled_students`), tỷ lệ hoàn thành khóa học trung bình (`average_completion_rate`), điểm đánh giá sao trung bình (`average_rating`), và tổng số đánh giá.
@@ -204,10 +206,15 @@ flowchart TD
 * **Gửi Thông báo Đôn đốc Học viên (`SendStudentReminder`):** Giảng viên gửi thông báo nhắc nhở riêng tư (cá nhân hoặc theo nhóm học viên chậm tiến độ `student_ids`) mà không phát tán công khai toàn khóa, kích hoạt sự kiện miền `StudentReminderSentDomainEvent` và gửi thông báo danh mục `ACADEMIC` đến hòm thư học viên mục tiêu.
 * **Phân tích Tỷ lệ Bỏ học (Student Drop-off Funnel):** Thống kê số lượng học viên dừng học tại từng bài học video/bài đọc để giúp Giảng viên nhận biết đoạn nội dung khó tiếp thu.
 
-### 2.6. Kiểm Soát Phân Cấp Điểm Số & Nguồn Gốc Đánh Giá (Score Governance & Grading Provenance)
-* **Khái niệm & Phạm vi Nghiệp vụ:** Đảm bảo tính minh bạch, chính xác và phân cấp thẩm quyền sư phạm đối với mọi con điểm của học viên trong khóa học.
+### 2.6. Sổ Điểm Khóa Học & Kiểm Soát Phân Cấp Điểm Số (Course Gradebook & Score Governance)
+* **Khái niệm & Phạm vi Nghiệp vụ:** Cung cấp cho Giảng viên (`INSTRUCTOR`) và Trợ giảng (`TA`) góc nhìn toàn diện về kết quả học tập của toàn bộ học viên ghi danh vào khóa học thông qua ma trận sổ điểm tập trung (`Course Gradebook Matrix`).
+* **Cấu trúc Ma trận Điểm số (Gradebook Matrix Structure):**
+  * **Trục hàng (Học viên):** Danh sách toàn bộ học viên đã ghi danh vào khóa học (`enrolled_students`), hiển thị Họ tên, Email, Ảnh đại diện, và Trạng thái hoàn thành môn (`IN_PROGRESS`, `COMPLETED`, `AT_RISK`). Hỗ trợ tìm kiếm theo tên/email và lọc theo trạng thái điểm.
+  * **Trục cột (Bài tập & Cột điểm):** Tập hợp tất cả các bài tập tính điểm trong khóa học (`Graded Items`): Graded Quizzes, Auto-Graded Labs, Peer Review Assignments. Mỗi cột hiển thị tên bài, loại bài tập và trọng số điểm tương ứng ($w_i$).
+  * **Cột Điểm Tổng kết (Weighted Final Grade):** Tự động tính toán điểm trung bình có trọng số theo thời gian thực dựa trên các cột điểm thành phần đã công bố:
+    $$\text{Final Grade} = \sum_{i=1}^{N} \left( w_i \times \text{Score}_i \right) \quad \text{với} \quad \sum_{i=1}^{N} w_i = 100\%$$
 * **Hệ thống Nhãn Nguồn gốc Điểm số (Grading Provenance Labeling):**
-  * Mọi con điểm trong hệ thống và trên bài làm của học viên đều bắt buộc gắn nhãn nguồn gốc xuất xứ (`Provenance Badge`) để đảm bảo tính minh bạch và truy vết sư phạm (`BR_GRADE_002`):
+  * Mọi con điểm trong sổ điểm và trên bài làm của học viên đều bắt buộc gắn nhãn nguồn gốc xuất xứ (`Provenance Badge`) để đảm bảo tính minh bạch và truy vết sư phạm (`BR_GRADE_002`):
     1. **`AUTO` (Tự động):** Điểm do hệ thống chấm tự động (Graded Quiz thuật toán, Auto-Grader chạy unit test trong Sandbox cách ly).
     2. **`PEER` (Bạn học):** Điểm trung bình cộng đồng thuận được tính từ các lượt chấm chéo rubric của học viên cùng khóa (`BR_PEER_002`).
     3. **`TA` (Trợ giảng):** Điểm do Trợ giảng chấm trực tiếp hoặc chấm giải cứu (xử lý đơn khiếu nại Grade Appeal, xử lý bài Outlier chênh lệch điểm quá 30%, hoặc xử lý thiếu bài chấm chéo sau 48h Cold Start).
@@ -238,7 +245,7 @@ flowchart TD
   * Việc cấp khóa được thực hiện nguyên tử ở tầng cơ sở dữ liệu (`locked_by_user_id = current_user.id`, `lock_expires_at = now() + 30 mins`).
   * Trong danh sách hàng chờ, bài nộp lập tức chuyển sang trạng thái `BEING_GRADED`, hiển thị avatar cùng tên của nhân sự đang chấm và đồng hồ đếm ngược thời gian lease còn lại. Các trợ giảng khác bị vô hiệu hóa nút bấm tiếp nhận bài nộp này.
 * **Gia Hạn Khóa (Lock Renewal) & Tự Động Nhả Khóa (Auto Unlock on Expiry):**
-  * **Gia hạn khóa (Heartbeat Lease Renewal - Reset from Current Time):** Khi người chấm đang tích cực tương tác trên giao diện (thao tác cuộn xem bài, nhập nhận xét, chấm điểm rubric), Frontend tự động phát tín hiệu heartbeat định kỳ mỗi 5 phút hoặc cung cấp nút bấm *"Gia hạn (+15p)"* để đảm bảo không bị gián đoạn giữa chừng đối với các bài luận dài. Khi gia hạn, thời hạn khóa được tái thiết lập từ thời điểm hiện tại (`new_expires = now + timeout_minutes`), tuyệt đối không cộng dồn lũy kế để ngăn chặn hành vi găm giữ bài nộp vô thời hạn.
+  * **Gia hạn tự động (Heartbeat Lease Renewal):** Khi người chấm đang tích cực tương tác trên giao diện (thao tác cuộn xem bài, nhập nhận xét, chấm điểm rubric), Frontend tự động phát tín hiệu heartbeat định kỳ mỗi 5 phút hoặc cung cấp nút bấm *"Gia hạn thêm 15 phút"* để đảm bảo không bị gián đoạn giữa chừng đối với các bài luận dài.
   * **Tự động nhả khóa khi hết hạn (Auto Unlock on Expiry):** Nếu người chấm bất ngờ tắt trình duyệt, mất kết nối internet hoặc bỏ dở bài nộp quá 30 phút mà không hoàn tất việc chấm bài, Task Lease sẽ tự động hết hạn (`lock_expires_at <= now()`). Hệ thống tự động giải phóng khóa, trả bài nộp về trạng thái sẵn sàng trong hàng chờ để các trợ giảng khác có thể nhận chấm tiếp.
   * **Nhả khóa chủ động (Voluntary Release):** Khi người chấm bấm nút *"Hủy & Nhả bài"* hoặc điều hướng quay lại hàng chờ, hệ thống lập tức xóa khóa mềm (`locked_by_user_id = NULL`, `lock_expires_at = NULL`) để người khác tiếp quản ngay lập tức mà không cần đợi hết 30 phút.
 

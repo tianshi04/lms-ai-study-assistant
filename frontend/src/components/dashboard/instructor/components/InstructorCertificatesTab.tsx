@@ -15,7 +15,7 @@ export type InstructorCertificatesTabProps =
   | {
       mode: "all";
       certificates: OverviewCertificate[];
-      totalCount: number;
+      totalCount?: number;
     }
   | {
       mode: "specific";
@@ -24,19 +24,9 @@ export type InstructorCertificatesTabProps =
 
 export function InstructorCertificatesTab(props: InstructorCertificatesTabProps) {
   if (props.mode === "all") {
-    const { certificates, totalCount } = props;
+    const { certificates } = props;
     return (
       <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span>
-            Các chứng chỉ số đã cấp cho sinh viên hoàn thành toàn diện khóa học (
-            {certificates.length}/{totalCount} chứng chỉ):
-          </span>
-          <span className="text-[11px] text-muted-foreground font-mono">
-            Cuộn để xem toàn bộ danh sách
-          </span>
-        </div>
-
         <div className="rounded-2xl border border-outline-variant/60 overflow-hidden bg-surface max-h-[290px] overflow-y-auto">
           <Table>
             <Table.Header className="sticky top-0 z-10 bg-surface shadow-xs">
@@ -59,7 +49,7 @@ export function InstructorCertificatesTab(props: InstructorCertificatesTabProps)
                 </Table.Row>
               ) : (
                 certificates.map((st, idx) => (
-                  <Table.Row key={st.certId || `cert-${idx}`} className="text-xs hover:bg-muted/30">
+                  <Table.Row key={`${st.certId}-${idx}`} className="text-xs hover:bg-muted/30">
                     <Table.Cell className="font-mono text-[11px] text-primary font-semibold">
                       {st.certId}
                     </Table.Cell>
@@ -69,9 +59,7 @@ export function InstructorCertificatesTab(props: InstructorCertificatesTabProps)
                         {st.userEmail}
                       </div>
                     </Table.Cell>
-                    <Table.Cell className="truncate max-w-[200px] text-muted-foreground">
-                      {st.courseTitle}
-                    </Table.Cell>
+                    <Table.Cell className="text-muted-foreground">{st.courseTitle}</Table.Cell>
                     <Table.Cell className="text-right font-mono text-muted-foreground">
                       {st.issueDate}
                     </Table.Cell>
@@ -89,10 +77,6 @@ export function InstructorCertificatesTab(props: InstructorCertificatesTabProps)
   const { completedStudents } = props;
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Danh sách sinh viên đã hoàn thành 100% nội dung và được cấp chứng chỉ số:
-      </p>
-
       <div className="rounded-2xl border border-outline-variant/60 overflow-hidden bg-surface max-h-[290px] overflow-y-auto">
         <Table>
           <Table.Header className="sticky top-0 z-10 bg-surface shadow-xs">
@@ -111,10 +95,14 @@ export function InstructorCertificatesTab(props: InstructorCertificatesTabProps)
                 </Table.Cell>
               </Table.Row>
             ) : (
-              completedStudents.map((st) => (
-                <Table.Row key={st.userId} className="text-xs">
+              completedStudents.map((st, idx) => (
+                <Table.Row key={`${st.userId}-${idx}`} className="text-xs">
                   <Table.Cell className="font-mono text-[11px] text-primary font-semibold">
-                    CERT-{st.userId.slice(0, 8).toUpperCase()}
+                    CERT-
+                    {st.userId
+                      .replace(/^user_/, "")
+                      .slice(0, 10)
+                      .toUpperCase()}
                   </Table.Cell>
                   <Table.Cell>
                     <div className="font-bold text-foreground">{st.userName}</div>

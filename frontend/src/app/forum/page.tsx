@@ -1,10 +1,25 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { MessageSquare, Plus, ChevronUp, ChevronDown, Reply, AlertTriangle } from "lucide-react";
+import {
+  MessageSquare,
+  Plus,
+  ChevronUp,
+  ChevronDown,
+  Reply,
+  AlertTriangle,
+  BookOpen,
+  Pin,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  MessageCircle,
+} from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
+import { cn } from "@/lib/utils";
 import {
   ForumService,
   ForumThreadSchema,
@@ -12,7 +27,8 @@ import {
   type ForumThread,
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
-import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { LearningService } from "@/gen/learning/v1/learning_pb";
 import { Dialog } from "@/components/ui/Dialog";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -24,6 +40,11 @@ import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { Select } from "@/components/ui/Select";
+
+interface ForumCourseItem {
+  id: string;
+  title: string;
+}
 
 function formatRoleName(role: string): string {
   if (!role) return "Học viên";
@@ -37,14 +58,97 @@ function formatRoleName(role: string): string {
 function ForumPageContent() {
   const locale = "vi";
   const toast = useToast();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
+  const [courses, setCourses] = useState<ForumCourseItem[]>([]);
+  const [teachingCourseIds, setTeachingCourseIds] = useState<Set<string>>(new Set());
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("ALL");
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { userId: authUserId, isStaff: isStaffOrAdmin } = useAuth();
+  // Status Filter State (Interactive Discussion KPI Strip)
+  type ForumStatusFilter = "ALL" | "UNANSWERED" | "ANSWERED";
+  const [statusFilter, setStatusFilter] = useState<ForumStatusFilter>("ALL");
+
+  const forumKpis = useMemo(() => {
+    const total = threads.length;
+    let unanswered = 0;
+    let answered = 0;
+    let totalReplies = 0;
+
+    for (const thread of threads) {
+      totalReplies += thread.replies.length;
+      const r = (thread.authorRole || "").toUpperCase();
+      const isStaffThread =
+        r.includes("INSTRUCTOR") ||
+        r.includes("GIẢNG VIÊN") ||
+        r === "2" ||
+        r.includes("TA") ||
+        r === "3" ||
+        r.includes("ADMIN");
+      const titleLower = thread.title.trim().toLowerCase();
+      const isAnnouncement =
+        titleLower.startsWith("[thông báo]") ||
+        titleLower.startsWith("[thong bao]") ||
+        titleLower.startsWith("[announcement]");
+      const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
+
+      if (hasStaffAnswer) {
+        answered++;
+      } else if (!isStaffThread && !isAnnouncement && !thread.isStaffPinned) {
+        unanswered++;
+      }
+    }
+
+    const totalQuestions = unanswered + answered;
+    const resolvedRate = totalQuestions > 0 ? Math.round((answered / totalQuestions) * 100) : 100;
+
+    return {
+      total,
+      unanswered,
+      answered,
+      totalReplies,
+      resolvedRate,
+    };
+  }, [threads]);
+
+  const filteredThreads = useMemo(() => {
+    if (statusFilter === "ALL") return threads;
+    if (statusFilter === "UNANSWERED") {
+      return threads.filter((thread) => {
+        const r = (thread.authorRole || "").toUpperCase();
+        const isStaffThread =
+          r.includes("INSTRUCTOR") ||
+          r.includes("GIẢNG VIÊN") ||
+          r === "2" ||
+          r.includes("TA") ||
+          r === "3" ||
+          r.includes("ADMIN");
+        const titleLower = thread.title.trim().toLowerCase();
+        const isAnnouncement =
+          titleLower.startsWith("[thông báo]") ||
+          titleLower.startsWith("[thong bao]") ||
+          titleLower.startsWith("[announcement]");
+        const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
+        return !isStaffThread && !isAnnouncement && !thread.isStaffPinned && !hasStaffAnswer;
+      });
+    }
+    if (statusFilter === "ANSWERED") {
+      return threads.filter((thread) => thread.replies.some((reply) => reply.isStaffAnswer));
+    }
+    return threads;
+  }, [threads, statusFilter]);
+
+  const { userId: authUserId, isStaff: isStaffOrAdmin, isSuperAdmin, isAuthenticated } = useAuth();
   const currentUserId = authUserId || "";
+
+  const isCourseModerator = useCallback(
+    (courseId: string) => {
+      if (isSuperAdmin) return true;
+      if (!courseId) return false;
+      return teachingCourseIds.has(courseId);
+    },
+    [isSuperAdmin, teachingCourseIds],
+  );
 
   // New Thread Form State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -81,22 +185,84 @@ function ForumPageContent() {
   const [isDeletingThread, setIsDeletingThread] = useState(false);
   const [isDeletingReply, setIsDeletingReply] = useState(false);
 
-  // Fetch Courses Catalog
+  // Fetch Accessible Courses (Enrolled for learners, Teaching for instructors, All for Super Admins)
   useEffect(() => {
-    async function fetchCatalog() {
+    let cancelled = false;
+
+    async function fetchAccessibleCourses() {
       try {
-        const client = getRpcClient(CatalogService);
-        const res = await client.listCourses({});
-        setCourses(res.courses);
-        if (res.courses.length > 0 && !newCourseId) {
-          setNewCourseId(res.courses[0].id);
+        const catalogClient = getRpcClient(CatalogService);
+        const teachingSet = new Set<string>();
+        const combinedMap = new Map<string, ForumCourseItem>();
+
+        if (isSuperAdmin) {
+          const res = await catalogClient.listCourses({});
+          res.courses.forEach((c) => {
+            combinedMap.set(c.id, { id: c.id, title: c.title });
+          });
+        } else {
+          // 1. Fetch Enrolled Courses
+          if (isAuthenticated || authUserId) {
+            try {
+              const learningClient = getRpcClient(LearningService);
+              const enrolledRes = await learningClient.listMyEnrolledCourses({});
+              enrolledRes.courses.forEach((c) => {
+                combinedMap.set(c.courseId, { id: c.courseId, title: c.courseTitle });
+              });
+            } catch (err) {
+              console.error("Error fetching enrolled courses for forum:", err);
+            }
+          }
+
+          // 2. Fetch Teaching Courses if Instructor or Staff
+          if (isStaffOrAdmin) {
+            try {
+              const teachingRes = await catalogClient.listInstructorCourses({ pageSize: 100 });
+              teachingRes.courses.forEach((c) => {
+                teachingSet.add(c.id);
+                combinedMap.set(c.id, { id: c.id, title: c.title });
+              });
+            } catch (err) {
+              console.error("Error fetching instructor courses for forum:", err);
+            }
+          }
+        }
+
+        // Fallback: If no enrolled or teaching courses found, provide public catalog courses
+        if (combinedMap.size === 0) {
+          try {
+            const publicRes = await catalogClient.listCourses({ pageSize: 50 });
+            publicRes.courses.forEach((c) => {
+              combinedMap.set(c.id, { id: c.id, title: c.title });
+            });
+          } catch (err) {
+            console.error("Error fetching fallback courses for forum:", err);
+          }
+        }
+
+        if (!cancelled) {
+          const accessibleCourses = Array.from(combinedMap.values());
+          setCourses(accessibleCourses);
+          setTeachingCourseIds(teachingSet);
+          if (accessibleCourses.length > 0) {
+            setNewCourseId((prev) =>
+              prev && combinedMap.has(prev) ? prev : accessibleCourses[0].id,
+            );
+          }
         }
       } catch (err) {
-        console.error("Error fetching courses catalog for forum:", err);
+        if (!cancelled) {
+          console.error("Error fetching accessible courses for forum:", err);
+        }
       }
     }
-    fetchCatalog();
-  }, [newCourseId]);
+
+    fetchAccessibleCourses();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, authUserId, isSuperAdmin, isStaffOrAdmin]);
 
   // Fetch Forum Threads
   const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
@@ -110,7 +276,7 @@ function ForumPageContent() {
       try {
         const client = getRpcClient(ForumService);
         const res = await client.listThreads({
-          courseId: selectedCourseId,
+          courseId: selectedCourseId === "ALL" ? "" : selectedCourseId,
           itemId: "",
         });
         if (!cancelled) {
@@ -149,22 +315,34 @@ function ForumPageContent() {
   const [selectedModalThreadId, setSelectedModalThreadId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (urlCourseId && !selectedCourseId) {
+    if (urlCourseId && urlCourseId !== "ALL") {
       setSelectedCourseId(urlCourseId);
     }
-  }, [urlCourseId, selectedCourseId]);
+    if (urlThreadId) {
+      setStatusFilter("ALL");
+    }
+  }, [urlCourseId, urlThreadId]);
 
   useEffect(() => {
     if (urlThreadId && !loading && threads.length > 0) {
-      setSelectedModalThreadId(urlThreadId);
       setExpandedThreads((prev) => ({ ...prev, [urlThreadId]: true }));
-      const timer = setTimeout(() => {
+      // Cuộn mượt mà trực tiếp tới bài thảo luận mục tiêu trên trang
+      const scrollToThread = () => {
         const el = document.getElementById(`thread-${urlThreadId}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
+          return true;
         }
-      }, 150);
-      return () => clearTimeout(timer);
+        return false;
+      };
+
+      if (!scrollToThread()) {
+        const timer = setTimeout(scrollToThread, 150);
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(scrollToThread, 300);
+        return () => clearTimeout(timer);
+      }
     }
   }, [urlThreadId, loading, threads]);
 
@@ -179,7 +357,9 @@ function ForumPageContent() {
     try {
       const client = getRpcClient(ForumService);
       const targetCourseId =
-        newCourseId || selectedCourseId || (courses[0]?.id ?? "course-web-dev");
+        newCourseId ||
+        (selectedCourseId !== "ALL" ? selectedCourseId : "") ||
+        (courses[0]?.id ?? "course-web-dev");
 
       await client.createThread({
         courseId: targetCourseId,
@@ -194,8 +374,8 @@ function ForumPageContent() {
       toast.success(
         locale === "vi" ? "Đã đăng chủ đề thảo luận mới!" : "New discussion thread created!",
       );
-      if (selectedCourseId && selectedCourseId !== targetCourseId) {
-        setSelectedCourseId("");
+      if (selectedCourseId !== "ALL" && selectedCourseId !== targetCourseId) {
+        setSelectedCourseId("ALL");
       } else {
         fetchThreads();
       }
@@ -391,9 +571,32 @@ function ForumPageContent() {
     try {
       const client = getRpcClient(ForumService);
       await client.pinStaffAnswer({ replyId });
+      toast.success("Đã cập nhật trạng thái ghim câu trả lời!");
       fetchThreads();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to pin staff answer:", err);
+      toast.error(err instanceof Error ? err.message : "Không thể ghim câu trả lời.");
+    }
+  };
+
+  const handleTogglePinThread = async (thread: ForumThread) => {
+    try {
+      const client = getRpcClient(ForumService);
+      await client.pinThread({
+        threadId: thread.id,
+        isPinned: !thread.isStaffPinned,
+      });
+      toast.success(
+        thread.isStaffPinned
+          ? "Đã bỏ ghim bài viết khỏi đầu diễn đàn!"
+          : "Đã ghim bài viết lên đầu diễn đàn!",
+      );
+      fetchThreads();
+    } catch (err: unknown) {
+      console.error("Failed to pin/unpin thread:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Không thể thay đổi trạng thái ghim bài viết.",
+      );
     }
   };
 
@@ -422,12 +625,112 @@ function ForumPageContent() {
           <div className="flex items-center gap-3">
             <Button
               variant="filled"
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => {
+                setShowCreateModal(true);
+              }}
               className="px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-primary/20 gap-2"
             >
               <Plus aria-hidden="true" className="w-4 h-4" />
               {"Tạo chủ đề thảo luận mới"}
             </Button>
+          </div>
+        </div>
+
+        {/* Discussion KPI Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+          {/* Card 1: Tổng chủ đề */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("ALL")}
+            className={cn(
+              "p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group",
+              statusFilter === "ALL"
+                ? "bg-primary/5 border-primary ring-2 ring-primary/20 shadow-xs"
+                : "bg-card border-border hover:border-primary/40 hover:bg-muted/40",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Tổng chủ đề
+              </span>
+              <MessageSquare className="w-4 h-4 text-primary" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-foreground">{forumKpis.total}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">Tất cả cuộc hội thoại</div>
+          </button>
+
+          {/* Card 2: Cần giải đáp */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("UNANSWERED")}
+            className={cn(
+              "p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group",
+              statusFilter === "UNANSWERED"
+                ? "bg-destructive/10 border-destructive ring-2 ring-destructive/20 shadow-xs"
+                : "bg-card border-border hover:border-destructive/40 hover:bg-destructive/5",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-destructive uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                Cần giải đáp
+              </span>
+              <AlertCircle className="w-4 h-4 text-destructive" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-destructive">{forumKpis.unanswered}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">Chưa có phản hồi từ GV</div>
+          </button>
+
+          {/* Card 3: Đã giải đáp */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("ANSWERED")}
+            className={cn(
+              "p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group",
+              statusFilter === "ANSWERED"
+                ? "bg-success/10 border-success ring-2 ring-success/20 shadow-xs"
+                : "bg-card border-border hover:border-success/40 hover:bg-success/5",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-success uppercase tracking-wider">
+                Đã giải đáp
+              </span>
+              <CheckCircle2 className="w-4 h-4 text-success" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-success">{forumKpis.answered}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">
+              Đã có lời giải chính thức
+            </div>
+          </button>
+
+          {/* Card 4: Lượt trao đổi */}
+          <div className="p-4 rounded-2xl border bg-card border-border">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Lượt trao đổi
+              </span>
+              <MessageCircle className="w-4 h-4 text-primary" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-foreground">{forumKpis.totalReplies}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">Phản hồi & bình luận</div>
+          </div>
+
+          {/* Card 5: Tỷ lệ giải đáp */}
+          <div className="p-4 rounded-2xl border bg-card border-border">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Tỷ lệ giải đáp
+              </span>
+              <Sparkles className="w-4 h-4 text-amber-500" aria-hidden="true" />
+            </div>
+            <div className="text-2xl font-black text-foreground">{forumKpis.resolvedRate}%</div>
+            <div className="mt-2 w-full bg-muted rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-primary h-full transition-all duration-500"
+                style={{ width: `${forumKpis.resolvedRate}%` }}
+              />
+            </div>
           </div>
         </div>
 
@@ -447,12 +750,12 @@ function ForumPageContent() {
                 if (val) setSelectedCourseId(val as string);
               }}
             >
-              <Select.Trigger className="w-[200px] text-xs font-semibold">
+              <Select.Trigger className="w-full sm:w-[280px] text-xs font-semibold">
                 <Select.Value placeholder="Tất cả khóa học">
                   {(() => {
-                    if (selectedCourseId === "ALL") return "Tất cả khóa học";
+                    if (!selectedCourseId || selectedCourseId === "ALL") return "Tất cả khóa học";
                     const c = courses.find((course) => course.id === selectedCourseId);
-                    return c ? c.title : selectedCourseId;
+                    return c ? c.title : "Tất cả khóa học";
                   })()}
                 </Select.Value>
               </Select.Trigger>
@@ -467,8 +770,27 @@ function ForumPageContent() {
             </Select>
           </div>
 
-          <div className="text-xs text-muted-foreground">
-            Total <span className="font-bold text-foreground">{threads.length}</span> threads
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {statusFilter !== "ALL" && (
+              <Badge
+                variant="outlined"
+                className="cursor-pointer gap-1.5 hover:bg-muted text-xs font-medium border-primary/30 text-primary"
+                onClick={() => setStatusFilter("ALL")}
+              >
+                <span>
+                  Đang lọc:{" "}
+                  <strong>{statusFilter === "UNANSWERED" ? "Cần giải đáp" : "Đã giải đáp"}</strong>
+                </span>
+                <span className="text-muted-foreground hover:text-foreground">✕</span>
+              </Badge>
+            )}
+            <span>
+              {"Hiển thị "}
+              <span className="font-bold text-foreground">{filteredThreads.length}</span>
+              {" / "}
+              {threads.length}
+              {" chủ đề"}
+            </span>
           </div>
         </Surface>
 
@@ -487,6 +809,25 @@ function ForumPageContent() {
           <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
             <p className="font-semibold">{error}</p>
           </div>
+        ) : courses.length === 0 ? (
+          <div className="text-center py-16 bg-card rounded-2xl border border-border p-8 space-y-4">
+            <BookOpen aria-hidden="true" className="w-12 h-12 text-primary mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-foreground">
+              {"Bạn chưa tham gia khóa học nào"}
+            </h3>
+            <p className="text-muted-foreground font-medium max-w-md mx-auto text-sm">
+              {
+                "Diễn đàn thảo luận được phân chia theo từng khóa học để đảm bảo tính tập trung và quyền riêng tư lớp học. Vui lòng đăng ký tham gia khóa học để bắt đầu trao đổi cùng Giảng viên."
+              }
+            </p>
+            <div>
+              <Link href="/catalog">
+                <Button variant="filled" size="md">
+                  {"Khám phá khóa học"}
+                </Button>
+              </Link>
+            </div>
+          </div>
         ) : threads.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-2xl border border-border p-8">
             <MessageSquare
@@ -497,14 +838,36 @@ function ForumPageContent() {
               {"Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"}
             </p>
           </div>
+        ) : filteredThreads.length === 0 ? (
+          <div className="text-center py-16 bg-card rounded-2xl border border-border p-8 space-y-3">
+            <CheckCircle2 aria-hidden="true" className="w-12 h-12 text-success mx-auto" />
+            <h3 className="text-base font-bold text-foreground">
+              {statusFilter === "UNANSWERED"
+                ? "Tuyệt vời! Không có chủ đề nào đang chờ giải đáp"
+                : "Không có chủ đề nào phù hợp với bộ lọc này"}
+            </h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              {statusFilter === "UNANSWERED"
+                ? "Tất cả các câu hỏi của học viên đều đã được Giảng viên và Ban quản trị phản hồi đầy đủ."
+                : "Bạn có thể chuyển lại bộ lọc sang Tất cả chủ đề để xem toàn bộ trao đổi."}
+            </p>
+            <Button
+              variant="outlined"
+              size="sm"
+              onClick={() => setStatusFilter("ALL")}
+              className="text-xs font-bold"
+            >
+              Xem tất cả chủ đề
+            </Button>
+          </div>
         ) : (
           <div className="space-y-6">
-            {threads.map((thread) => {
+            {filteredThreads.map((thread) => {
               const isExpanded = expandedThreads[thread.id] ?? true;
               const isThreadAuthor = Boolean(
                 currentUserId && thread.authorUserId === currentUserId,
               );
-              const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
+              const canDeleteThread = isThreadAuthor || isCourseModerator(thread.courseId);
               const isTargetThread = urlThreadId === thread.id;
 
               return (
@@ -513,18 +876,46 @@ function ForumPageContent() {
                   shape="2xl"
                   key={thread.id}
                   id={`thread-${thread.id}`}
-                  className={`p-6 transition-colors [content-visibility:auto] [contain-intrinsic-size:auto_240px] ${
+                  className={`p-6 transition-all duration-300 ${
                     isTargetThread
-                      ? "border-primary ring-2 ring-primary/50 bg-primary/5"
-                      : "hover:border-accent-hover"
+                      ? "border-primary ring-4 ring-primary/40 bg-primary/5 shadow-md"
+                      : "hover:border-accent-hover [content-visibility:auto] [contain-intrinsic-size:auto_240px]"
                   }`}
                 >
                   {/* Thread Header */}
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
-                        {isTargetThread && <Badge variant="primary">📌 TB</Badge>}
+                        {isTargetThread && (
+                          <Badge variant="primary" className="animate-pulse">
+                            📌 Bài thảo luận mục tiêu
+                          </Badge>
+                        )}
                         {thread.isStaffPinned && <Badge variant="warning">GHIM</Badge>}
+                        {Boolean(
+                          thread.title.trim().toLowerCase().startsWith("[thông báo]") ||
+                          thread.title.trim().toLowerCase().startsWith("[thong bao]") ||
+                          (thread.authorRole || "").toUpperCase().includes("INSTRUCTOR"),
+                        ) && (
+                          <Badge variant="primary" className="text-[11px] font-bold">
+                            📢 Thông báo GV
+                          </Badge>
+                        )}
+                        {(() => {
+                          const courseObj = courses.find((c) => c.id === thread.courseId);
+                          const courseTitle = courseObj?.title || thread.courseId;
+                          if (!courseTitle) return null;
+                          return (
+                            <Badge
+                              variant="secondary"
+                              className="text-[11px] font-semibold cursor-pointer hover:opacity-85 transition-opacity"
+                              onClick={() => setSelectedCourseId(thread.courseId)}
+                              title={`Lọc chỉ xem khóa học: ${courseTitle}`}
+                            >
+                              📚 {courseTitle}
+                            </Badge>
+                          );
+                        })()}
                         <span className="text-xs font-medium text-muted-foreground">
                           By{" "}
                           <strong className="text-foreground">
@@ -544,30 +935,48 @@ function ForumPageContent() {
                           </span>
                         )}
 
-                        {(isThreadAuthor || canDeleteThread) && (
-                          <div className="ml-auto flex items-center gap-2">
-                            {isThreadAuthor && (
-                              <Button
-                                variant="text"
-                                size="sm"
-                                onClick={() => openEditThreadModal(thread)}
-                                className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
-                              >
-                                {"Sửa"}
-                              </Button>
-                            )}
-                            {canDeleteThread && (
-                              <Button
-                                variant="text"
-                                size="sm"
-                                onClick={() => handleDeleteThread(thread.id)}
-                                className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
-                              >
-                                {"Xóa"}
-                              </Button>
-                            )}
-                          </div>
-                        )}
+                        <div className="ml-auto flex items-center gap-2">
+                          {isCourseModerator(thread.courseId) && (
+                            <Button
+                              variant="text"
+                              size="sm"
+                              onClick={() => handleTogglePinThread(thread)}
+                              className="text-xs text-muted-foreground hover:text-warning h-auto p-1 gap-1"
+                              title={
+                                thread.isStaffPinned
+                                  ? "Bỏ ghim bài viết này"
+                                  : "Ghim bài viết lên đầu diễn đàn"
+                              }
+                            >
+                              <Pin
+                                className={`w-3.5 h-3.5 ${
+                                  thread.isStaffPinned ? "fill-warning text-warning" : ""
+                                }`}
+                              />
+                              <span>{thread.isStaffPinned ? "Bỏ ghim" : "Ghim"}</span>
+                            </Button>
+                          )}
+                          {isThreadAuthor && (
+                            <Button
+                              variant="text"
+                              size="sm"
+                              onClick={() => openEditThreadModal(thread)}
+                              className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
+                            >
+                              {"Sửa"}
+                            </Button>
+                          )}
+                          {canDeleteThread && (
+                            <Button
+                              variant="text"
+                              size="sm"
+                              onClick={() => handleDeleteThread(thread.id)}
+                              className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
+                            >
+                              {"Xóa"}
+                            </Button>
+                          )}
+                        </div>
                       </div>
 
                       <Button
@@ -614,8 +1023,8 @@ function ForumPageContent() {
                     >
                       <span>
                         {isExpanded
-                          ? "Hide replies"
-                          : `Show (${thread.replies.length}) ${"phản hồi"}`}
+                          ? "Ẩn phản hồi"
+                          : `Xem tất cả (${thread.replies.length}) phản hồi`}
                       </span>
                       <ChevronDown
                         aria-hidden="true"
@@ -627,123 +1036,131 @@ function ForumPageContent() {
                   {/* Replies List */}
                   {isExpanded && (
                     <div className="mt-4 space-y-4 border-l-2 border-border pl-4 md:pl-6 pt-2">
-                      {thread.replies.map((reply) => {
-                        const isReplyAuthor = Boolean(
-                          currentUserId && reply.authorUserId === currentUserId,
-                        );
-                        const canDeleteReply = isReplyAuthor || isStaffOrAdmin;
-                        const isEditingThisReply = editingReplyId === reply.id;
+                      {[...thread.replies]
+                        .sort((a, b) => {
+                          if (Boolean(a.isStaffAnswer) !== Boolean(b.isStaffAnswer)) {
+                            return a.isStaffAnswer ? -1 : 1;
+                          }
+                          return 0;
+                        })
+                        .map((reply) => {
+                          const isReplyAuthor = Boolean(
+                            currentUserId && reply.authorUserId === currentUserId,
+                          );
+                          const canDeleteReply =
+                            isReplyAuthor || isCourseModerator(thread.courseId);
+                          const isEditingThisReply = editingReplyId === reply.id;
 
-                        return (
-                          <div
-                            key={reply.id}
-                            className={`p-4 rounded-xl text-sm transition-colors ${
-                              reply.isStaffAnswer
-                                ? "bg-warning/10 border border-warning/20"
-                                : "bg-muted/50 border border-border"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2 mb-2">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold text-foreground">
-                                  {reply.authorName || "Thành viên LMS"}
-                                </span>
-                                {reply.isStaffAnswer && <Badge variant="warning">BQT</Badge>}
-                                <span className="text-xs text-muted-foreground">
-                                  ({formatRoleName(reply.authorRole)})
-                                </span>
-                                {reply.isEdited && (
-                                  <span className="text-xs text-warning font-medium italic">
-                                    {"(Đã chỉnh sửa)"}
+                          return (
+                            <div
+                              key={reply.id}
+                              className={`p-4 rounded-xl text-sm transition-colors ${
+                                reply.isStaffAnswer
+                                  ? "bg-warning/10 border border-warning/20"
+                                  : "bg-muted/50 border border-border"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-semibold text-foreground">
+                                    {reply.authorName || "Thành viên LMS"}
                                   </span>
-                                )}
-                              </div>
+                                  {reply.isStaffAnswer && <Badge variant="warning">BQT</Badge>}
+                                  <span className="text-xs text-muted-foreground">
+                                    ({formatRoleName(reply.authorRole)})
+                                  </span>
+                                  {reply.isEdited && (
+                                    <span className="text-xs text-warning font-medium italic">
+                                      {"(Đã chỉnh sửa)"}
+                                    </span>
+                                  )}
+                                </div>
 
-                              <div className="flex items-center gap-2">
-                                {isReplyAuthor && (
-                                  <Button
-                                    variant="text"
-                                    size="sm"
-                                    onClick={() => startEditReply(reply)}
-                                    className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
-                                  >
-                                    {"Sửa"}
-                                  </Button>
-                                )}
-                                {canDeleteReply && (
-                                  <Button
-                                    variant="text"
-                                    size="sm"
-                                    onClick={() => handleDeleteReply(reply.id)}
-                                    className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
-                                  >
-                                    {"Xóa"}
-                                  </Button>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {isReplyAuthor && (
+                                    <Button
+                                      variant="text"
+                                      size="sm"
+                                      onClick={() => startEditReply(reply)}
+                                      className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
+                                    >
+                                      {"Sửa"}
+                                    </Button>
+                                  )}
+                                  {canDeleteReply && (
+                                    <Button
+                                      variant="text"
+                                      size="sm"
+                                      onClick={() => handleDeleteReply(reply.id)}
+                                      className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
+                                    >
+                                      {"Xóa"}
+                                    </Button>
+                                  )}
 
-                                {isStaffOrAdmin && !reply.isStaffAnswer && (
-                                  <Button
-                                    variant="outlined"
-                                    size="sm"
-                                    onClick={() => handlePinStaffAnswer(reply.id)}
-                                    className="text-xs text-warning bg-warning/10 hover:bg-warning/20 border-warning/30 px-3 py-1 rounded-full h-auto"
-                                  >
-                                    Pin Answer
-                                  </Button>
-                                )}
+                                  {isCourseModerator(thread.courseId) && !reply.isStaffAnswer && (
+                                    <Button
+                                      variant="outlined"
+                                      size="sm"
+                                      onClick={() => handlePinStaffAnswer(reply.id)}
+                                      className="text-xs text-warning bg-warning/10 hover:bg-warning/20 border-warning/30 px-3 py-1 rounded-full h-auto"
+                                    >
+                                      {"Ghim câu trả lời"}
+                                    </Button>
+                                  )}
 
-                                <Button
-                                  variant={reply.isUpvotedByMe ? "filled" : "outlined"}
-                                  size="sm"
-                                  onClick={() => handleVote(reply.id, true)}
-                                  className="rounded-full text-xs gap-1 px-3 py-1 h-auto"
-                                >
-                                  <ChevronUp aria-hidden="true" className="w-3.5 h-3.5" />
-                                  <span className="font-bold">{reply.upvoteCount}</span>
-                                </Button>
-                              </div>
-                            </div>
-
-                            {isEditingThisReply ? (
-                              <div className="mt-2 space-y-2">
-                                <Textarea
-                                  value={editReplyContent}
-                                  onChange={(e) => setEditReplyContent(e.target.value)}
-                                  rows={3}
-                                  className="bg-card p-3 text-sm"
-                                />
-                                <div className="flex justify-end gap-2">
                                   <Button
-                                    variant="text"
+                                    variant={reply.isUpvotedByMe ? "filled" : "outlined"}
                                     size="sm"
-                                    onClick={() => setEditingReplyId(null)}
-                                    className="text-xs font-medium"
+                                    onClick={() => handleVote(reply.id, true)}
+                                    className="rounded-full text-xs gap-1 px-3 py-1 h-auto"
                                   >
-                                    {"Hủy"}
-                                  </Button>
-                                  <Button
-                                    variant="filled"
-                                    size="sm"
-                                    onClick={() => handleUpdateReply(reply.id)}
-                                    disabled={
-                                      submittingEditReply ||
-                                      !editReplyContent.trim() ||
-                                      submittingEditReply
-                                    }
-                                    className="text-xs font-semibold"
-                                  >
-                                    {"Lưu thay đổi"}
+                                    <ChevronUp aria-hidden="true" className="w-3.5 h-3.5" />
+                                    <span className="font-bold">{reply.upvoteCount}</span>
                                   </Button>
                                 </div>
                               </div>
-                            ) : (
-                              <p className="text-foreground leading-relaxed whitespace-pre-line">
-                                {reply.content}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
+
+                              {isEditingThisReply ? (
+                                <div className="mt-2 space-y-2">
+                                  <Textarea
+                                    value={editReplyContent}
+                                    onChange={(e) => setEditReplyContent(e.target.value)}
+                                    rows={3}
+                                    className="bg-card p-3 text-sm"
+                                  />
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      variant="text"
+                                      size="sm"
+                                      onClick={() => setEditingReplyId(null)}
+                                      className="text-xs font-medium"
+                                    >
+                                      {"Hủy"}
+                                    </Button>
+                                    <Button
+                                      variant="filled"
+                                      size="sm"
+                                      onClick={() => handleUpdateReply(reply.id)}
+                                      disabled={
+                                        submittingEditReply ||
+                                        !editReplyContent.trim() ||
+                                        submittingEditReply
+                                      }
+                                      className="text-xs font-semibold"
+                                    >
+                                      {"Lưu thay đổi"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-foreground leading-relaxed whitespace-pre-line">
+                                  {reply.content}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
 
                       {/* Reply Input Form */}
                       <div className="pt-2">
@@ -940,7 +1357,10 @@ function ForumPageContent() {
         onClose={() => setSelectedModalThreadId(null)}
         thread={threads.find((t) => t.id === selectedModalThreadId) || null}
         currentUserId={currentUserId}
-        isStaffOrAdmin={isStaffOrAdmin}
+        isStaffOrAdmin={Boolean(
+          selectedModalThreadId &&
+          isCourseModerator(threads.find((t) => t.id === selectedModalThreadId)?.courseId || ""),
+        )}
         onVote={handleVote}
         onPostReply={async (threadId, content) => {
           const client = getRpcClient(ForumService);
@@ -950,6 +1370,10 @@ function ForumPageContent() {
         onDeleteThread={handleDeleteThread}
         onDeleteReply={handleDeleteReply}
         onPinStaffAnswer={handlePinStaffAnswer}
+        onTogglePinThread={(threadId) => {
+          const t = threads.find((x) => x.id === threadId);
+          if (t) handleTogglePinThread(t);
+        }}
         isNotificationTarget={urlThreadId === selectedModalThreadId}
       />
 
