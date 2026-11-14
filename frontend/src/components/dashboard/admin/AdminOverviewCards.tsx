@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   GraduationCap,
   Star,
+  TrendingUp,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import type { GetAdminLearningStatsResponse } from "@/gen/learning/v1/learning_p
 import type { GetAdminPaymentStatsResponse } from "@/gen/payment/v1/payment_pb";
 import { Progress } from "@/components/ui/Progress";
 import { Surface } from "@/components/ui/Surface";
+import { AdminTrendPanel, type AdminTrendMetric } from "./AdminTrendPanel";
 import { formatNumber, formatPercent, formatVnd, toPercent } from "./formatters";
 
 interface KpiCardProps {
@@ -25,14 +27,32 @@ interface KpiCardProps {
   label: string;
   value?: string;
   details?: string[];
+  isSelected?: boolean;
+  onToggleTrend?: () => void;
 }
 
-function KpiCard({ icon: Icon, iconClassName, label, value, details }: KpiCardProps) {
-  return (
+function KpiCard({
+  icon: Icon,
+  iconClassName,
+  label,
+  value,
+  details,
+  isSelected = false,
+  onToggleTrend,
+}: KpiCardProps) {
+  const interactiveClasses = onToggleTrend
+    ? `w-full text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 ${
+        isSelected
+          ? "ring-2 ring-primary/70 shadow-sm bg-card"
+          : "hover:ring-1 hover:ring-primary/40 hover:-translate-y-0.5"
+      }`
+    : "";
+
+  const content = (
     <Surface
       variant="low"
       shape="2xl"
-      className="p-5 space-y-3 h-full flex flex-col justify-between"
+      className={`p-5 space-y-3 h-full flex flex-col justify-between ${interactiveClasses}`}
     >
       <div className="flex items-center gap-4">
         <div
@@ -41,9 +61,23 @@ function KpiCard({ icon: Icon, iconClassName, label, value, details }: KpiCardPr
           <Icon aria-hidden="true" className="w-6 h-6" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            {label}
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground truncate">
+              {label}
+            </p>
+            {onToggleTrend && (
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 transition-colors ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/80 text-muted-foreground"
+                }`}
+              >
+                <TrendingUp aria-hidden="true" className="w-3 h-3" />
+                {isSelected ? "Đang xem" : "Xu hướng"}
+              </span>
+            )}
+          </div>
           <div className="h-8 flex items-center">
             {value !== undefined ? (
               <p className="text-2xl font-black text-foreground font-mono truncate animate-in fade-in duration-300 ease-out">
@@ -70,6 +104,22 @@ function KpiCard({ icon: Icon, iconClassName, label, value, details }: KpiCardPr
         )}
       </div>
     </Surface>
+  );
+
+  if (!onToggleTrend) {
+    return content;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onToggleTrend}
+      aria-expanded={isSelected}
+      aria-controls={isSelected ? "admin-trend-panel" : undefined}
+      className="block h-full w-full text-left rounded-2xl focus-visible:outline-none"
+    >
+      {content}
+    </button>
   );
 }
 
@@ -145,11 +195,23 @@ export function AdminOverviewCards({
   paymentStats,
   certificateStats,
 }: AdminOverviewCardsProps) {
+  const [selectedMetric, setSelectedMetric] = useState<AdminTrendMetric | null>(null);
+
+  const toggleMetric = (metric: AdminTrendMetric) => {
+    setSelectedMetric((current) => (current === metric ? null : metric));
+  };
+
   return (
     <section aria-labelledby="admin-overview-heading" className="space-y-4">
-      <h2 id="admin-overview-heading" className="text-lg font-extrabold text-foreground">
-        Tổng quan toàn sàn
-      </h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="admin-overview-heading" className="text-lg font-extrabold text-foreground">
+          Tổng quan toàn sàn
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Chọn thẻ có nhãn <span className="font-semibold text-foreground">Xu hướng</span> để xem
+          biểu đồ theo thời gian
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <KpiCard
@@ -185,6 +247,8 @@ export function AdminOverviewCards({
           iconClassName="bg-success/10 text-success"
           label="Ghi danh & hoàn thành"
           value={learningStats ? formatNumber(learningStats.totalEnrollments) : undefined}
+          isSelected={selectedMetric === "learning"}
+          onToggleTrend={() => toggleMetric("learning")}
           details={
             learningStats
               ? [
@@ -198,6 +262,8 @@ export function AdminOverviewCards({
           icon={Star}
           iconClassName="bg-warning/10 text-warning"
           label="Mức hài lòng (CSAT)"
+          isSelected={selectedMetric === "csat"}
+          onToggleTrend={() => toggleMetric("csat")}
           value={
             catalogStats
               ? catalogStats.totalReviews > 0
@@ -215,6 +281,8 @@ export function AdminOverviewCards({
           icon={CircleDollarSign}
           iconClassName="bg-success/10 text-success"
           label="Doanh thu"
+          isSelected={selectedMetric === "revenue"}
+          onToggleTrend={() => toggleMetric("revenue")}
           value={paymentStats ? formatVnd(paymentStats.totalRevenue) : undefined}
           details={
             paymentStats
@@ -229,6 +297,8 @@ export function AdminOverviewCards({
           icon={Award}
           iconClassName="bg-accent text-accent-foreground"
           label="Chứng chỉ & học bổng"
+          isSelected={selectedMetric === "certificates"}
+          onToggleTrend={() => toggleMetric("certificates")}
           value={certificateStats ? formatNumber(certificateStats.certificatesIssued) : undefined}
           details={
             certificateStats
@@ -240,6 +310,10 @@ export function AdminOverviewCards({
           }
         />
       </div>
+
+      {selectedMetric && (
+        <AdminTrendPanel metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
+      )}
 
       <RatingDistribution catalogStats={catalogStats} />
     </section>

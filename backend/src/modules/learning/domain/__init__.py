@@ -12,6 +12,7 @@ from .constants import (
 )
 from .entities import (
     AdminLearningStats,
+    AdminLearningTrendPoint,
     DailyStudyRecord,
     DeadlineStatus,
     EnrolledCourseSummary,
@@ -35,6 +36,7 @@ __all__ = [
     "MIN_HEARTBEAT_DELTA_SECONDS",
     "STREAK_WINDOW_SECONDS",
     "AdminLearningStats",
+    "AdminLearningTrendPoint",
     "DailyStudyRecord",
     "DeadlineStatus",
     "EnrolledCourseSummary",

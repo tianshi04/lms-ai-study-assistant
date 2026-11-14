@@ -411,6 +411,15 @@ class AdminCatalogStats(ValueObject):
 
 
 @dataclass(frozen=True)
+class AdminCatalogTrendPoint(ValueObject):
+    """Review volume and mean star rating for one UTC day."""
+
+    date: str
+    review_count: int = 0
+    average_rating: float = 0.0
+
+
+@dataclass(frozen=True)
 class AdminCourseSummaryRow(ValueObject):
     course_id: str
     title: str

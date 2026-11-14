@@ -3,6 +3,7 @@ from datetime import date
 
 from src.modules.learning.domain.entities import (
     AdminLearningStats,
+    AdminLearningTrendPoint,
     DailyStudyRecord,
     EnrolledCourseSummary,
     LearningProgress,
@@ -107,6 +108,12 @@ class ILearningRepository(ABC):
         self, valid_course_ids: list[str]
     ) -> AdminLearningStats:
         """Count enrollments and completions restricted to organization-scoped courses."""
+
+    @abstractmethod
+    async def get_admin_enrollment_trend(
+        self, valid_course_ids: list[str], window: list[str]
+    ) -> list[AdminLearningTrendPoint]:
+        """Daily enrollments/completions for scoped courses, zero-filled per ``window`` date."""
 
     @abstractmethod
     async def get_course_enrollment_counts(

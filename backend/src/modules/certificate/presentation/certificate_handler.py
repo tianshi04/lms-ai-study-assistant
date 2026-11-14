@@ -247,6 +247,28 @@ class CertificateHandler(CertificateService):
             pending_financial_aids=stats.pending_financial_aids,
         )
 
+    async def get_admin_certificate_trend(
+        self,
+        request: pb.GetAdminCertificateTrendRequest,
+        ctx: RequestContext[
+            pb.GetAdminCertificateTrendRequest,
+            pb.GetAdminCertificateTrendResponse,
+        ],
+    ) -> pb.GetAdminCertificateTrendResponse:
+        current_user = require_current_user()
+        try:
+            points = await self._use_case.get_admin_certificate_trend(
+                current_user, request.days
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminCertificateTrendResponse(
+            points=[
+                pb.AdminCertificateTrendPoint(date=p.date, issued=p.issued)
+                for p in points
+            ]
+        )
+
     async def list_admin_certificates(
         self,
         request: pb.ListAdminCertificatesRequest,

@@ -20,6 +20,7 @@ import {
   type CourseBookmark,
   type ToggleCourseReviewHelpfulResponse,
   type GetAdminCatalogStatsResponse,
+  type GetAdminCatalogTrendResponse,
   type ListAdminCourseMetricsResponse,
 } from "@/gen/catalog/v1/catalog_pb";
 
@@ -35,6 +36,26 @@ export function useAdminCatalogStatsQuery(
     queryFn: async () => {
       const client = getRpcClient(CatalogService);
       return client.getAdminCatalogStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
+
+/**
+ * Daily course review volume and average rating trend for the Admin Dashboard.
+ */
+export function useAdminCatalogTrendQuery(
+  days: number,
+  options?: Partial<UseQueryOptions<GetAdminCatalogTrendResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminCatalogTrendResponse, Error>({
+    queryKey: ["adminCatalogTrend", days],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return client.getAdminCatalogTrend({ days });
     },
     staleTime: 60 * 1000,
     ...options,

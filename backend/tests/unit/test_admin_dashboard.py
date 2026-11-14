@@ -161,6 +161,7 @@ def test_admin_application_layers_do_not_import_other_module_infrastructure(
             {
                 "list_scoped_course_ids",
                 "get_admin_catalog_stats",
+                "get_admin_review_trend",
                 "list_admin_course_summaries",
                 "acknowledge_low_review",
             },
@@ -168,17 +169,29 @@ def test_admin_application_layers_do_not_import_other_module_infrastructure(
         ),
         (
             "learning",
-            {"get_admin_enrollment_stats", "get_course_enrollment_counts"},
+            {
+                "get_admin_enrollment_stats",
+                "get_admin_enrollment_trend",
+                "get_course_enrollment_counts",
+            },
             {"CourseModel", "UserModel", "CoursePurchase", "Certificate"},
         ),
         (
             "payment",
-            {"get_admin_payment_stats", "get_completed_revenue_by_course"},
+            {
+                "get_admin_payment_stats",
+                "get_admin_payment_trend",
+                "get_completed_revenue_by_course",
+            },
             {"CourseModel", "UserModel", "LearningProgress", "Certificate"},
         ),
         (
             "certificate",
-            {"get_admin_certificate_stats", "list_admin_certificates"},
+            {
+                "get_admin_certificate_stats",
+                "get_admin_certificate_trend",
+                "list_admin_certificates",
+            },
             {"CourseModel", "UserModel", "LearningProgress", "GradeAppeal"},
         ),
         (

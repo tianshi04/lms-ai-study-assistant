@@ -195,3 +195,12 @@ class AdminPaymentStats:
     total_revenue: float = 0.0
     course_purchase_count: int = 0
     active_subscriptions: int = 0
+
+
+@dataclass(frozen=True)
+class AdminPaymentTrendPoint:
+    """Completed revenue and course purchase count for one UTC day."""
+
+    date: str
+    revenue: float = 0.0
+    purchase_count: int = 0

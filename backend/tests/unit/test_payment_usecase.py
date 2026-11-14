@@ -172,6 +172,11 @@ class InMemoryPaymentRepository(IPaymentRepository):
             active_subscriptions=0,
         )
 
+    async def get_admin_payment_trend(self, window: list[str]):
+        from src.modules.payment.domain import AdminPaymentTrendPoint
+
+        return [AdminPaymentTrendPoint(date=day) for day in window]
+
     async def get_completed_revenue_by_course(
         self, course_ids: list[str] | None = None
     ) -> dict[str, float]:

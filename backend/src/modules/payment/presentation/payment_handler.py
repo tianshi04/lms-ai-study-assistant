@@ -366,3 +366,28 @@ class PaymentHandler(PaymentService):
             course_purchase_count=stats.course_purchase_count,
             active_subscriptions=stats.active_subscriptions,
         )
+
+    async def get_admin_payment_trend(
+        self,
+        request: pb.GetAdminPaymentTrendRequest,
+        ctx: RequestContext[
+            pb.GetAdminPaymentTrendRequest, pb.GetAdminPaymentTrendResponse
+        ],
+    ) -> pb.GetAdminPaymentTrendResponse:
+        current_user = require_current_user()
+        try:
+            points = await self._use_case.get_admin_payment_trend(
+                current_user, request.days
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminPaymentTrendResponse(
+            points=[
+                pb.AdminPaymentTrendPoint(
+                    date=p.date,
+                    revenue=p.revenue,
+                    purchase_count=p.purchase_count,
+                )
+                for p in points
+            ]
+        )

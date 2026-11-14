@@ -12,6 +12,7 @@ from src.modules.learning.domain import (
     DEFAULT_COHORT_EXTENSION_DAYS,
     MIN_DAILY_STUDY_SECONDS_FOR_STREAK,
     AdminLearningStats,
+    AdminLearningTrendPoint,
     DailyStudyRecord,
     DeadlineStatus,
     EnrolledCourseSummary,
@@ -29,6 +30,7 @@ from src.modules.learning.infrastructure.models import (
     UserLearningStreakModel,
     WeeklyDeadlineModel,
 )
+from src.shared.domain import TREND_DATE_PREFIX_LEN
 
 
 def _model_to_domain_progress(model: LearningProgressModel) -> LearningProgress:
@@ -625,6 +627,56 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             total_enrollments=int(row.total_enrollments),
             completed_enrollments=int(row.completed_enrollments),
         )
+
+    async def get_admin_enrollment_trend(
+        self, valid_course_ids: list[str], window: list[str]
+    ) -> list[AdminLearningTrendPoint]:
+        if not window:
+            return []
+        if not valid_course_ids:
+            return [AdminLearningTrendPoint(date=day) for day in window]
+
+        enrolled_day = func.substr(
+            LearningProgressModel.enrolled_at, 1, TREND_DATE_PREFIX_LEN
+        ).label("day")
+        enrolled_stmt = (
+            select(enrolled_day, func.count(LearningProgressModel.id).label("total"))
+            .where(
+                LearningProgressModel.course_id.in_(valid_course_ids),
+                LearningProgressModel.enrolled_at >= window[0],
+            )
+            .group_by(enrolled_day)
+        )
+
+        completed_day = func.substr(
+            LearningProgressModel.completed_at, 1, TREND_DATE_PREFIX_LEN
+        ).label("day")
+        completed_stmt = (
+            select(completed_day, func.count(LearningProgressModel.id).label("total"))
+            .where(
+                LearningProgressModel.course_id.in_(valid_course_ids),
+                LearningProgressModel.completed_at.is_not(None),
+                LearningProgressModel.completed_at >= window[0],
+            )
+            .group_by(completed_day)
+        )
+
+        enrolled = {
+            row.day: int(row.total)
+            for row in (await self.session.execute(enrolled_stmt)).all()
+        }
+        completed = {
+            row.day: int(row.total)
+            for row in (await self.session.execute(completed_stmt)).all()
+        }
+        return [
+            AdminLearningTrendPoint(
+                date=day,
+                enrollments=enrolled.get(day, 0),
+                completions=completed.get(day, 0),
+            )
+            for day in window
+        ]
 
     async def get_course_enrollment_counts(
         self, course_ids: list[str]

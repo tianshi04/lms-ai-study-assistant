@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.payment.domain import (
     ISO_TIMESTAMP_SECONDS_LEN,
     AdminPaymentStats,
+    AdminPaymentTrendPoint,
     CoursePurchase,
     IPaymentRepository,
     PaymentOrder,
@@ -28,6 +29,7 @@ from src.modules.payment.infrastructure.models import (
     PaymentTransactionModel,
     UserSubscriptionModel,
 )
+from src.shared.domain import TREND_DATE_PREFIX_LEN
 
 logger = logging.getLogger(__name__)
 
@@ -505,6 +507,71 @@ class PaymentRepository(IPaymentRepository):
             course_purchase_count=int(row.course_purchase_count),
             active_subscriptions=int(row.active_subscriptions),
         )
+
+    async def get_admin_payment_trend(
+        self, window: list[str]
+    ) -> list[AdminPaymentTrendPoint]:
+        if not window:
+            return []
+
+        purchase_day = func.substr(
+            CoursePurchaseModel.created_at, 1, TREND_DATE_PREFIX_LEN
+        ).label("day")
+        purchase_stmt = (
+            select(
+                purchase_day,
+                func.count(CoursePurchaseModel.id).label("purchase_count"),
+                func.coalesce(func.sum(CoursePurchaseModel.amount), 0.0).label(
+                    "revenue"
+                ),
+            )
+            .where(
+                CoursePurchaseModel.status == PurchaseStatus.COMPLETED.value,
+                CoursePurchaseModel.created_at >= window[0],
+            )
+            .group_by(purchase_day)
+        )
+
+        subscription_day = func.substr(
+            PaymentOrderModel.created_at, 1, TREND_DATE_PREFIX_LEN
+        ).label("day")
+        subscription_stmt = (
+            select(
+                subscription_day,
+                func.coalesce(func.sum(PaymentOrderModel.amount), 0.0).label("revenue"),
+            )
+            .where(
+                PaymentOrderModel.status == PaymentOrderStatus.COMPLETED.value,
+                PaymentOrderModel.target_type
+                == PaymentTargetType.SYSTEM_SUBSCRIPTION.value,
+                PaymentOrderModel.created_at >= window[0],
+            )
+            .group_by(subscription_day)
+        )
+
+        purchase_rows = (await self.session.execute(purchase_stmt)).all()
+        subscription_rows = (await self.session.execute(subscription_stmt)).all()
+
+        revenue_by_day: dict[str, float] = {}
+        purchases_by_day: dict[str, int] = {}
+        for row in purchase_rows:
+            revenue_by_day[row.day] = revenue_by_day.get(row.day, 0.0) + float(
+                row.revenue
+            )
+            purchases_by_day[row.day] = int(row.purchase_count)
+        for row in subscription_rows:
+            revenue_by_day[row.day] = revenue_by_day.get(row.day, 0.0) + float(
+                row.revenue
+            )
+
+        return [
+            AdminPaymentTrendPoint(
+                date=day,
+                revenue=revenue_by_day.get(day, 0.0),
+                purchase_count=purchases_by_day.get(day, 0),
+            )
+            for day in window
+        ]
 
     async def get_completed_revenue_by_course(
         self, course_ids: list[str] | None = None

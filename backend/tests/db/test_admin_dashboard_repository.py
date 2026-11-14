@@ -847,3 +847,151 @@ async def test_course_queries_respect_organization_scope():
     # Non-admin and anonymous callers only ever see the platform's internal org.
     assert [c.course_id for c in as_learner] == [internal]
     assert [c.course_id for c in anonymous] == [internal]
+
+
+@pytest.mark.asyncio
+async def test_admin_trend_queries_aggregate_by_day_and_normalize_cert_dates():
+    window = ["2099-05-01", "2099-05-02", "2099-05-03"]
+    course_id = _uid("trend-course")
+    u1, u2 = _uid("trend-u1"), _uid("trend-u2")
+
+    async with database.async_session_scope() as session:
+        session.add(_course(course_id, "Trend Course"))
+        session.add_all(
+            [
+                UserModel(
+                    id=u1,
+                    email=f"{u1}@example.com",
+                    full_name="Trend User 1",
+                    role=UserRole.LEARNER,
+                    password_hash="x",
+                ),
+                UserModel(
+                    id=u2,
+                    email=f"{u2}@example.com",
+                    full_name="Trend User 2",
+                    role=UserRole.LEARNER,
+                    password_hash="x",
+                ),
+            ]
+        )
+        await session.flush()
+
+        session.add_all(
+            [
+                LearningProgressModel(
+                    id=f"{u1}:{course_id}",
+                    user_id=u1,
+                    course_id=course_id,
+                    overall_progress_percent=100.0,
+                    enrolled_at="2099-05-01T08:00:00+00:00",
+                    completed_at="2099-05-03T12:00:00+00:00",
+                ),
+                LearningProgressModel(
+                    id=f"{u2}:{course_id}",
+                    user_id=u2,
+                    course_id=course_id,
+                    overall_progress_percent=30.0,
+                    enrolled_at="2099-05-01T14:00:00+00:00",
+                    completed_at=None,
+                ),
+                CourseReviewModel(
+                    id=_uid("trend-rev1"),
+                    user_id=u1,
+                    user_name="Trend User 1",
+                    course_id=course_id,
+                    rating_stars=5,
+                    comment_text="Great",
+                    created_at="2099-05-02T09:00:00+00:00",
+                ),
+                CourseReviewModel(
+                    id=_uid("trend-rev2"),
+                    user_id=u2,
+                    user_name="Trend User 2",
+                    course_id=course_id,
+                    rating_stars=3,
+                    comment_text="Okay",
+                    created_at="2099-05-02T18:00:00+00:00",
+                ),
+                CoursePurchaseModel(
+                    id=_uid("trend-pur"),
+                    user_id=u1,
+                    course_id=course_id,
+                    amount=500_000.0,
+                    status="COMPLETED",
+                    created_at="2099-05-01T10:00:00+00:00",
+                ),
+                CoursePurchaseModel(
+                    id=_uid("trend-pur-fail"),
+                    user_id=u2,
+                    course_id=course_id,
+                    amount=999_000.0,
+                    status="FAILED",
+                    created_at="2099-05-01T11:00:00+00:00",
+                ),
+                PaymentOrderModel(
+                    id=_uid("trend-sub"),
+                    user_id=u2,
+                    target_type="SYSTEM_SUBSCRIPTION",
+                    target_id="plus_monthly",
+                    amount=250_000.0,
+                    status="COMPLETED",
+                    vnp_txn_ref=_uid("TXN"),
+                    created_at="2099-05-01T12:00:00+00:00",
+                    updated_at="2099-05-01T12:00:00+00:00",
+                ),
+                CertificateModel(
+                    certificate_id=f"TREND-LEG-{uuid.uuid4().hex[:6]}",
+                    user_id=u1,
+                    course_id=course_id,
+                    learner_name="Trend User 1",
+                    course_title="Trend Course",
+                    partner_name="P",
+                    issue_date="02/05/2099",
+                    verification_url="/verify/leg",
+                ),
+                CertificateModel(
+                    certificate_id=f"TREND-ISO-{uuid.uuid4().hex[:6]}",
+                    user_id=u2,
+                    course_id=course_id,
+                    learner_name="Trend User 2",
+                    course_title="Trend Course",
+                    partner_name="P",
+                    issue_date="2099-05-03",
+                    verification_url="/verify/iso",
+                ),
+            ]
+        )
+        await session.flush()
+
+        learning_pts = await SQLAlchemyLearningRepository(
+            session
+        ).get_admin_enrollment_trend([course_id], window)
+        catalog_pts = await SQLAlchemyCatalogRepository(session).get_admin_review_trend(
+            window
+        )
+        payment_pts = await PaymentRepository(session).get_admin_payment_trend(window)
+        cert_pts = await CertificateRepository(session).get_admin_certificate_trend(
+            window
+        )
+
+    assert [(p.date, p.enrollments, p.completions) for p in learning_pts] == [
+        ("2099-05-01", 2, 0),
+        ("2099-05-02", 0, 0),
+        ("2099-05-03", 0, 1),
+    ]
+    assert [(p.date, p.review_count, p.average_rating) for p in catalog_pts] == [
+        ("2099-05-01", 0, 0.0),
+        ("2099-05-02", 2, 4.0),
+        ("2099-05-03", 0, 0.0),
+    ]
+    assert [(p.date, p.revenue, p.purchase_count) for p in payment_pts] == [
+        ("2099-05-01", 750_000.0, 1),
+        ("2099-05-02", 0.0, 0),
+        ("2099-05-03", 0.0, 0),
+    ]
+    assert [(p.date, p.issued) for p in cert_pts] == [
+        ("2099-05-01", 0),
+        ("2099-05-02", 1),
+        ("2099-05-03", 1),
+    ]

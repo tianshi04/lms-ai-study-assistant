@@ -14,6 +14,7 @@ from src.modules.catalog.domain import (
     ADMIN_LOW_REVIEW_ALERT_LIMIT,
     RATING_ROUND_DECIMALS,
     AdminCatalogStats,
+    AdminCatalogTrendPoint,
     AdminCourseSummaryRow,
     AdminLowReviewAlert,
     Category,
@@ -61,7 +62,7 @@ from src.modules.catalog.infrastructure.models import (
 )
 from src.modules.identity.infrastructure.models import UserModel
 from src.shared.auth import get_current_user
-from src.shared.domain import escape_like_pattern
+from src.shared.domain import TREND_DATE_PREFIX_LEN, escape_like_pattern
 from src.shared.infrastructure.scopes import apply_organization_scope
 
 logger = logging.getLogger(__name__)
@@ -2291,6 +2292,43 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             low_reviews=low_reviews,
             low_review_total=low_review_total,
         )
+
+    async def get_admin_review_trend(
+        self, window: list[str]
+    ) -> list[AdminCatalogTrendPoint]:
+        if not window:
+            return []
+
+        review_day = func.substr(
+            CourseReviewModel.created_at, 1, TREND_DATE_PREFIX_LEN
+        ).label("day")
+        stmt = (
+            apply_organization_scope(
+                select(
+                    review_day,
+                    func.count(CourseReviewModel.id).label("review_count"),
+                    func.avg(CourseReviewModel.rating_stars).label("average_rating"),
+                ).join(CourseModel, CourseModel.id == CourseReviewModel.course_id),
+                CourseModel,
+                get_current_user(),
+            )
+            .where(CourseReviewModel.created_at >= window[0])
+            .group_by(review_day)
+        )
+        by_day = {
+            row.day: (int(row.review_count), float(row.average_rating or 0.0))
+            for row in (await self.session.execute(stmt)).all()
+        }
+        return [
+            AdminCatalogTrendPoint(
+                date=day,
+                review_count=by_day.get(day, (0, 0.0))[0],
+                average_rating=round(
+                    by_day.get(day, (0, 0.0))[1], RATING_ROUND_DECIMALS
+                ),
+            )
+            for day in window
+        ]
 
     async def list_admin_course_summaries(
         self,

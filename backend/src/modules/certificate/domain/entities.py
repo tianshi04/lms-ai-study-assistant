@@ -93,6 +93,14 @@ class AdminCertificateStats:
 
 
 @dataclass(frozen=True)
+class AdminCertificateTrendPoint:
+    """Certificates issued on one UTC day."""
+
+    date: str
+    issued: int = 0
+
+
+@dataclass(frozen=True)
 class AdminCertificateSummary:
     """Row in the paginated Admin Dashboard certificate audit table."""
 

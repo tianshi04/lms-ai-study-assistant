@@ -9,6 +9,7 @@ from src.modules.certificate.domain import (
     AdminCertificatesPage,
     AdminCertificateStats,
     AdminCertificateSummary,
+    AdminCertificateTrendPoint,
     FinancialAidApplication,
     FinancialAidStatus,
     ICertificateRepository,
@@ -19,7 +20,7 @@ from src.modules.certificate.infrastructure.models import (
     FinancialAidModel,
 )
 from src.modules.identity.infrastructure.repository import IdentityRepository
-from src.shared.domain import escape_like_pattern
+from src.shared.domain import TREND_DATE_PREFIX_LEN, escape_like_pattern
 
 
 class CertificateRepository(ICertificateRepository):
@@ -503,6 +504,41 @@ class CertificateRepository(ICertificateRepository):
             approved_financial_aids=int(row.approved_financial_aids),
             pending_financial_aids=int(row.pending_financial_aids),
         )
+
+    async def get_admin_certificate_trend(
+        self, window: list[str]
+    ) -> list[AdminCertificateTrendPoint]:
+        if not window:
+            return []
+
+        # ``issue_date`` is written as ``DD/MM/YYYY`` (course certificates, seeds) or
+        # ``YYYY-MM-DD`` (specialization certificates); normalize both to ISO days.
+        legacy_format = CertificateModel.issue_date.op("~")(r"^\d{2}/\d{2}/\d{4}")
+        issued_day = case(
+            (
+                legacy_format,
+                func.concat(
+                    func.substr(CertificateModel.issue_date, 7, 4),
+                    "-",
+                    func.substr(CertificateModel.issue_date, 4, 2),
+                    "-",
+                    func.substr(CertificateModel.issue_date, 1, 2),
+                ),
+            ),
+            else_=func.substr(CertificateModel.issue_date, 1, TREND_DATE_PREFIX_LEN),
+        ).label("day")
+        stmt = select(
+            issued_day,
+            func.count(CertificateModel.certificate_id).label("issued"),
+        ).group_by(issued_day)
+        issued = {
+            row.day: int(row.issued)
+            for row in (await self._session.execute(stmt)).all()
+        }
+        return [
+            AdminCertificateTrendPoint(date=day, issued=issued.get(day, 0))
+            for day in window
+        ]
 
     async def list_admin_certificates(
         self,

@@ -3,6 +3,7 @@ from typing import Any
 
 from src.modules.catalog.domain import (
     AdminCatalogStats,
+    AdminCatalogTrendPoint,
     AdminCourseMetricsPage,
     AdminCourseQualityMetric,
     CourseStatus,
@@ -15,8 +16,10 @@ from src.shared.auth import CurrentUser
 from src.shared.domain import (
     ADMIN_PAGE_SIZE_DEFAULT,
     ADMIN_REQUIRED_MESSAGE,
+    build_trend_window,
     normalize_admin_paging,
     normalize_admin_search,
+    normalize_trend_days,
 )
 from src.shared.infrastructure.database import async_session_scope
 
@@ -48,6 +51,15 @@ class AdminCatalogUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.get_admin_catalog_stats()
+
+    async def get_admin_catalog_trend(
+        self, current_user: CurrentUser, days: int = 0
+    ) -> list[AdminCatalogTrendPoint]:
+        self._require_admin(current_user)
+        window = build_trend_window(normalize_trend_days(days))
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.get_admin_review_trend(window)
 
     async def list_admin_course_metrics(
         self,

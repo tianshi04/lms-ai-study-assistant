@@ -12,6 +12,7 @@ import {
   CertificateService,
   type AdminCertificateStatusFilter,
   type GetAdminCertificateStatsResponse,
+  type GetAdminCertificateTrendResponse,
   type ListAdminCertificatesResponse,
   type VerifiedCertificate,
 } from "@/gen/certificate/v1/certificate_pb";
@@ -28,6 +29,26 @@ export function useAdminCertificateStatsQuery(
     queryFn: async () => {
       const client = getRpcClient(CertificateService);
       return client.getAdminCertificateStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
+
+/**
+ * Daily issued certificate count trend for the Admin Dashboard.
+ */
+export function useAdminCertificateTrendQuery(
+  days: number,
+  options?: Partial<UseQueryOptions<GetAdminCertificateTrendResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminCertificateTrendResponse, Error>({
+    queryKey: ["adminCertificateTrend", days],
+    queryFn: async () => {
+      const client = getRpcClient(CertificateService);
+      return client.getAdminCertificateTrend({ days });
     },
     staleTime: 60 * 1000,
     ...options,

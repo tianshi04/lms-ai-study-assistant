@@ -4,6 +4,7 @@ from typing import Any
 from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
 from src.modules.catalog.domain.entities import (
     AdminCatalogStats,
+    AdminCatalogTrendPoint,
     AdminCourseSummaryRow,
     Category,
     Course,
@@ -424,6 +425,12 @@ class ICatalogRepository(ABC):
     @abstractmethod
     async def get_admin_catalog_stats(self) -> AdminCatalogStats:
         pass
+
+    @abstractmethod
+    async def get_admin_review_trend(
+        self, window: list[str]
+    ) -> list[AdminCatalogTrendPoint]:
+        """Daily review count and mean rating for scoped courses, zero-filled per ``window`` date."""
 
     @abstractmethod
     async def list_admin_course_summaries(

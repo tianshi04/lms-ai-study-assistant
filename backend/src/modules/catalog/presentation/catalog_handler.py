@@ -1385,6 +1385,31 @@ class CatalogHandler(CatalogService):
             low_review_total=stats.low_review_total,
         )
 
+    async def get_admin_catalog_trend(
+        self,
+        request: pb.GetAdminCatalogTrendRequest,
+        ctx: RequestContext[
+            pb.GetAdminCatalogTrendRequest, pb.GetAdminCatalogTrendResponse
+        ],
+    ) -> pb.GetAdminCatalogTrendResponse:
+        current_user = require_current_user()
+        try:
+            points = await self.use_case.get_admin_catalog_trend(
+                current_user=current_user, days=request.days
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminCatalogTrendResponse(
+            points=[
+                pb.AdminCatalogTrendPoint(
+                    date=p.date,
+                    review_count=p.review_count,
+                    average_rating=p.average_rating,
+                )
+                for p in points
+            ]
+        )
+
     async def list_admin_course_metrics(
         self,
         request: pb.ListAdminCourseMetricsRequest,

@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 from src.modules.payment.domain.entities import (
     AdminPaymentStats,
+    AdminPaymentTrendPoint,
     CoursePurchase,
     PaymentOrder,
     PaymentOrderStatus,
@@ -99,6 +100,12 @@ class IPaymentRepository(ABC):
     @abstractmethod
     async def get_admin_payment_stats(self) -> AdminPaymentStats:
         """Aggregate completed revenue, course purchase count, and active subscriptions."""
+
+    @abstractmethod
+    async def get_admin_payment_trend(
+        self, window: list[str]
+    ) -> list[AdminPaymentTrendPoint]:
+        """Daily completed revenue/purchases, one zero-filled point per ``window`` date."""
 
     @abstractmethod
     async def get_completed_revenue_by_course(

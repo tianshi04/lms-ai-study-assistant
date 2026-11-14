@@ -11,6 +11,7 @@ from src.modules.certificate.domain import (
     MIN_FINANCIAL_AID_ESSAY_WORDS,
     AdminCertificatesPage,
     AdminCertificateStats,
+    AdminCertificateTrendPoint,
     CertificateIssuedDomainEvent,
     FinancialAidApplication,
     FinancialAidReviewedDomainEvent,
@@ -24,8 +25,10 @@ from src.shared.auth import CurrentUser
 from src.shared.domain import (
     ADMIN_PAGE_SIZE_DEFAULT,
     ADMIN_REQUIRED_MESSAGE,
+    build_trend_window,
     normalize_admin_paging,
     normalize_admin_search,
+    normalize_trend_days,
 )
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
@@ -483,6 +486,16 @@ class CertificateUseCase:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.get_admin_certificate_stats()
+
+    async def get_admin_certificate_trend(
+        self, current_user: CurrentUser, days: int = 0
+    ) -> list[AdminCertificateTrendPoint]:
+        if not current_user.is_admin:
+            raise PermissionError(ADMIN_REQUIRED_MESSAGE)
+        window = build_trend_window(normalize_trend_days(days))
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            return await repo.get_admin_certificate_trend(window)
 
     async def list_admin_certificates(
         self,

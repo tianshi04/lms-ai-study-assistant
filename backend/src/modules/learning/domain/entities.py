@@ -149,6 +149,15 @@ class AdminLearningStats(ValueObject):
     completed_enrollments: int = 0
 
 
+@dataclass(frozen=True)
+class AdminLearningTrendPoint(ValueObject):
+    """New enrollments and completions recorded on one UTC day."""
+
+    date: str
+    enrollments: int = 0
+    completions: int = 0
+
+
 class UserLearningStreak(Entity):
     def __init__(
         self,

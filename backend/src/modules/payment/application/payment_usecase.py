@@ -16,6 +16,7 @@ from src.modules.payment.domain import (
     DEFAULT_YEARLY_PLAN_DAYS,
     PENDING_ORDER_REUSE_TTL_MINUTES,
     AdminPaymentStats,
+    AdminPaymentTrendPoint,
     CoursePurchase,
     IPaymentRepository,
     PaymentOrder,
@@ -31,7 +32,11 @@ from src.modules.payment.infrastructure.repository import PaymentRepository
 from src.modules.payment.infrastructure.vnpay_service import VNPayService
 from src.shared.access_policy import AccessPolicyService
 from src.shared.auth import CurrentUser
-from src.shared.domain import ADMIN_REQUIRED_MESSAGE
+from src.shared.domain import (
+    ADMIN_REQUIRED_MESSAGE,
+    build_trend_window,
+    normalize_trend_days,
+)
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -874,3 +879,13 @@ class PaymentUseCase:
         async with async_session_scope() as session:
             repo = self.repository or PaymentRepository(session)
             return await repo.get_admin_payment_stats()
+
+    async def get_admin_payment_trend(
+        self, current_user: CurrentUser, days: int = 0
+    ) -> list[AdminPaymentTrendPoint]:
+        if not current_user.is_admin:
+            raise PermissionError(ADMIN_REQUIRED_MESSAGE)
+        window = build_trend_window(normalize_trend_days(days))
+        async with async_session_scope() as session:
+            repo = self.repository or PaymentRepository(session)
+            return await repo.get_admin_payment_trend(window)

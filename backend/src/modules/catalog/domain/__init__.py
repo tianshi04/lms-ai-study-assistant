@@ -14,6 +14,7 @@ from .constants import (
 )
 from .entities import (
     AdminCatalogStats,
+    AdminCatalogTrendPoint,
     AdminCourseMetricsPage,
     AdminCourseQualityMetric,
     AdminCourseSummaryRow,
@@ -56,6 +57,7 @@ __all__ = [
     "SEARCH_HISTORY_THROTTLE_SECONDS",
     "VERIFIED_COMPLETER_PROGRESS_PERCENT",
     "AdminCatalogStats",
+    "AdminCatalogTrendPoint",
     "AdminCourseMetricsPage",
     "AdminCourseQualityMetric",
     "AdminCourseSummaryRow",

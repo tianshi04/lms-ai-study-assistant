@@ -179,6 +179,9 @@ service LearningService {
   rpc GetAdminLearningStats(GetAdminLearningStatsRequest) returns (GetAdminLearningStatsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetAdminLearningTrend(GetAdminLearningTrendRequest) returns (GetAdminLearningTrendResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message GetAdminLearningStatsRequest {}
@@ -186,4 +189,20 @@ message GetAdminLearningStatsRequest {}
 message GetAdminLearningStatsResponse {
   int32 total_enrollments = 1;
   int32 completed_enrollments = 2;
+}
+
+message GetAdminLearningTrendRequest {
+  // Number of trailing UTC days (including today) to chart; clamped server-side.
+  int32 days = 1;
+}
+
+message AdminLearningTrendPoint {
+  // UTC calendar day formatted as YYYY-MM-DD.
+  string date = 1;
+  int32 enrollments = 2;
+  int32 completions = 3;
+}
+
+message GetAdminLearningTrendResponse {
+  repeated AdminLearningTrendPoint points = 1;
 }

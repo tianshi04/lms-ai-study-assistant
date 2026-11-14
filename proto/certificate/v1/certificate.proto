@@ -148,6 +148,9 @@ service CertificateService {
   rpc GetAdminCertificateStats(GetAdminCertificateStatsRequest) returns (GetAdminCertificateStatsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetAdminCertificateTrend(GetAdminCertificateTrendRequest) returns (GetAdminCertificateTrendResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
   rpc ListAdminCertificates(ListAdminCertificatesRequest) returns (ListAdminCertificatesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
@@ -160,6 +163,21 @@ message GetAdminCertificateStatsResponse {
   int32 certificates_revoked = 2;
   int32 approved_financial_aids = 3;
   int32 pending_financial_aids = 4;
+}
+
+message GetAdminCertificateTrendRequest {
+  // Number of trailing UTC days (including today) to chart; clamped server-side.
+  int32 days = 1;
+}
+
+message AdminCertificateTrendPoint {
+  // UTC calendar day formatted as YYYY-MM-DD.
+  string date = 1;
+  int32 issued = 2;
+}
+
+message GetAdminCertificateTrendResponse {
+  repeated AdminCertificateTrendPoint points = 1;
 }
 
 enum AdminCertificateStatusFilter {

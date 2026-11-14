@@ -745,6 +745,9 @@ service CatalogService {
   rpc GetAdminCatalogStats(GetAdminCatalogStatsRequest) returns (GetAdminCatalogStatsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetAdminCatalogTrend(GetAdminCatalogTrendRequest) returns (GetAdminCatalogTrendResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
   rpc ListAdminCourseMetrics(ListAdminCourseMetricsRequest) returns (ListAdminCourseMetricsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
@@ -939,6 +942,23 @@ message GetAdminCatalogStatsResponse {
   // Most recent unacknowledged low-rating reviews, capped by the server.
   repeated AdminLowReviewAlert low_reviews = 10;
   int32 low_review_total = 11;
+}
+
+message GetAdminCatalogTrendRequest {
+  // Number of trailing UTC days (including today) to chart; clamped server-side.
+  int32 days = 1;
+}
+
+message AdminCatalogTrendPoint {
+  // UTC calendar day formatted as YYYY-MM-DD.
+  string date = 1;
+  int32 review_count = 2;
+  // Mean star rating of reviews created that day; 0 when review_count is 0.
+  double average_rating = 3;
+}
+
+message GetAdminCatalogTrendResponse {
+  repeated AdminCatalogTrendPoint points = 1;
 }
 
 message AdminCourseQualityMetric {

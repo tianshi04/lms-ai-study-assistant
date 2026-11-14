@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from src.modules.certificate.domain.entities import (
     AdminCertificatesPage,
     AdminCertificateStats,
+    AdminCertificateTrendPoint,
     FinancialAidApplication,
     VerifiedCertificate,
 )
@@ -102,6 +103,12 @@ class ICertificateRepository(ABC):
     @abstractmethod
     async def get_admin_certificate_stats(self) -> AdminCertificateStats:
         """Aggregate issued/revoked certificates and financial-aid application counts."""
+
+    @abstractmethod
+    async def get_admin_certificate_trend(
+        self, window: list[str]
+    ) -> list[AdminCertificateTrendPoint]:
+        """Daily issued certificates, one zero-filled point per ``window`` date."""
 
     @abstractmethod
     async def list_admin_certificates(

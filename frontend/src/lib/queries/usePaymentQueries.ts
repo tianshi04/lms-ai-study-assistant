@@ -14,6 +14,7 @@ import {
   type CoursePurchase,
   type UserSubscription,
   type GetAdminPaymentStatsResponse,
+  type GetAdminPaymentTrendResponse,
 } from "@/gen/payment/v1/payment_pb";
 
 /**
@@ -28,6 +29,26 @@ export function useAdminPaymentStatsQuery(
     queryFn: async () => {
       const client = getRpcClient(PaymentService);
       return client.getAdminPaymentStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
+
+/**
+ * Daily completed revenue and purchase volume trend for the Admin Dashboard.
+ */
+export function useAdminPaymentTrendQuery(
+  days: number,
+  options?: Partial<UseQueryOptions<GetAdminPaymentTrendResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminPaymentTrendResponse, Error>({
+    queryKey: ["adminPaymentTrend", days],
+    queryFn: async () => {
+      const client = getRpcClient(PaymentService);
+      return client.getAdminPaymentTrend({ days });
     },
     staleTime: 60 * 1000,
     ...options,
