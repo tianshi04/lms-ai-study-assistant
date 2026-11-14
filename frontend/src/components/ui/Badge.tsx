@@ -17,11 +17,14 @@ export const badgeVariants = cva(
         outlined: "bg-surface-container-high text-on-surface-variant border border-outline-variant",
         success: "bg-success/15 text-success border border-success/30",
         warning: "bg-warning/15 text-warning border border-warning/30",
+        destructive: "bg-destructive/15 text-destructive border border-destructive/30",
+        muted: "bg-muted text-muted-foreground border border-border",
       },
       size: {
         dot: "h-[6px] w-[6px] p-0 rounded-full", // Small Badge: 6dp x 6dp, 3dp corner radius, no text
         large:
           "h-4 min-w-4 max-w-[34px] px-1 rounded-full text-[11px] font-medium leading-none tracking-tight overflow-hidden whitespace-nowrap", // Large Badge: 16dp height, 16dp min-width, 34dp max-width, 8dp radius, 4dp padding
+        pill: "px-2.5 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap",
       },
     },
     defaultVariants: {

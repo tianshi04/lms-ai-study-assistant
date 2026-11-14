@@ -333,6 +333,17 @@ message CompleteResetPasswordResponse {
   User user = 3;
 }
 
+message GetAdminIdentityStatsRequest {}
+
+message GetAdminIdentityStatsResponse {
+  int32 total_users = 1;
+  int32 learner_count = 2;
+  int32 instructor_count = 3;
+  int32 admin_count = 4;
+  int32 verified_user_count = 5;
+  int32 pending_instructor_applications = 6;
+}
+
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -389,6 +400,9 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ReviewInstructorApplication(ReviewInstructorApplicationRequest) returns (ReviewInstructorApplicationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetAdminIdentityStats(GetAdminIdentityStatsRequest) returns (GetAdminIdentityStatsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc AddOrganizationMember(AddOrganizationMemberRequest) returns (AddOrganizationMemberResponse) {

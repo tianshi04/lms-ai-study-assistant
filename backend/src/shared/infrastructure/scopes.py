@@ -6,11 +6,11 @@ from src.modules.identity.domain import INTERNAL_SYSTEM_ORG_ID
 from src.shared.auth import CurrentUserContext
 
 
-def apply_organization_scope(
-    stmt: Select[Any],
+def apply_organization_scope[*Ts](
+    stmt: Select[*Ts],
     model_cls: Any,
     ctx: CurrentUserContext | None,
-) -> Select[Any]:
+) -> Select[*Ts]:
     """Applies SQL Scope Pushdown filtering for Organization-scoped models.
 
     Rules:

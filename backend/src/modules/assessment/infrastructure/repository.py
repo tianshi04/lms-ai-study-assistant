@@ -1,12 +1,17 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
+    ADMIN_ASSESSMENT_ALERT_LIMIT,
+    PENDING_APPEAL_STATUSES,
+    REPORTED_REVIEW_PREFIX,
+    AdminAssessmentAlert,
+    AdminAssessmentAlertKind,
     AssessmentRepositoryInterface,
     GradeAppeal,
     HonorCodeAgreement,
@@ -975,3 +980,73 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         )
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
+
+    async def list_admin_assessment_alerts(
+        self, limit: int = ADMIN_ASSESSMENT_ALERT_LIMIT
+    ) -> tuple[list[AdminAssessmentAlert], int]:
+        appeal_stmt = (
+            select(
+                GradeAppealModel,
+                func.count().over().label("total_count"),
+            )
+            .where(GradeAppealModel.status.in_(PENDING_APPEAL_STATUSES))
+            .order_by(GradeAppealModel.created_at.desc())
+            .limit(limit)
+        )
+        appeal_rows = (await self.session.execute(appeal_stmt)).all()
+        appeal_total = int(appeal_rows[0].total_count) if appeal_rows else 0
+
+        outlier_stmt = (
+            select(
+                PeerReviewModel,
+                func.count().over().label("total_count"),
+            )
+            .join(
+                PeerAssignmentSubmissionModel,
+                PeerAssignmentSubmissionModel.id == PeerReviewModel.submission_id,
+            )
+            .where(
+                PeerReviewModel.is_outlier.is_(True),
+                PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
+            )
+            .order_by(PeerReviewModel.created_at.desc())
+            .limit(limit)
+        )
+        outlier_rows = (await self.session.execute(outlier_stmt)).all()
+        outlier_total = int(outlier_rows[0].total_count) if outlier_rows else 0
+
+        alerts: list[AdminAssessmentAlert] = []
+        for appeal_model, _ in appeal_rows:
+            reason = appeal_model.appeal_reason or ""
+            kind = (
+                AdminAssessmentAlertKind.REPORTED_PEER_REVIEW
+                if reason.startswith(REPORTED_REVIEW_PREFIX)
+                else AdminAssessmentAlertKind.GRADE_APPEAL
+            )
+            alerts.append(
+                AdminAssessmentAlert(
+                    alert_id=appeal_model.id,
+                    kind=kind,
+                    submission_id=appeal_model.submission_id,
+                    user_id=appeal_model.user_id,
+                    reason=reason,
+                    total_score=0.0,
+                    created_at=appeal_model.created_at or "",
+                )
+            )
+
+        for pr_model, _ in outlier_rows:
+            alerts.append(
+                AdminAssessmentAlert(
+                    alert_id=pr_model.id,
+                    kind=AdminAssessmentAlertKind.OUTLIER_PEER_REVIEW,
+                    submission_id=pr_model.submission_id,
+                    user_id=pr_model.reviewer_user_id,
+                    reason="",
+                    total_score=float(pr_model.total_score or 0.0),
+                    created_at=pr_model.created_at or "",
+                )
+            )
+
+        alerts.sort(key=lambda a: a.created_at, reverse=True)
+        return alerts[:limit], appeal_total + outlier_total

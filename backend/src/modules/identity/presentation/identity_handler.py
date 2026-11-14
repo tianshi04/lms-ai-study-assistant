@@ -494,6 +494,30 @@ class IdentityHandler(IdentityService):
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
 
+    async def get_admin_identity_stats(
+        self,
+        request: pb.GetAdminIdentityStatsRequest,
+        ctx: RequestContext[
+            pb.GetAdminIdentityStatsRequest,
+            pb.GetAdminIdentityStatsResponse,
+        ],
+    ) -> pb.GetAdminIdentityStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self._use_case.get_admin_identity_stats(
+                current_user=current_user
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminIdentityStatsResponse(
+            total_users=stats.total_users,
+            learner_count=stats.learner_count,
+            instructor_count=stats.instructor_count,
+            admin_count=stats.admin_count,
+            verified_user_count=stats.verified_user_count,
+            pending_instructor_applications=stats.pending_instructor_applications,
+        )
+
     async def add_organization_member(
         self,
         request: pb.AddOrganizationMemberRequest,

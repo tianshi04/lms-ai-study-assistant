@@ -18,7 +18,28 @@ import {
   type OrganizationMemberDetail,
   type UserOrganizationDetail,
   type Invitation,
+  type GetAdminIdentityStatsResponse,
 } from "@/gen/identity/v1/identity_pb";
+
+/**
+ * Super Admin KPI aggregates owned by the Identity bounded context
+ * (users by role, verified KYC count, pending instructor applications).
+ */
+export function useAdminIdentityStatsQuery(
+  options?: Partial<UseQueryOptions<GetAdminIdentityStatsResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminIdentityStatsResponse, Error>({
+    queryKey: ["adminIdentityStats"],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      return client.getAdminIdentityStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
 
 /**
  * Custom TanStack Query hook for fetching current user profile.
@@ -223,6 +244,7 @@ export function useReviewInstructorApplicationMutation(
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["instructorApplications"] });
       queryClient.invalidateQueries({ queryKey: ["myInstructorApplication"] });
+      queryClient.invalidateQueries({ queryKey: ["adminIdentityStats"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });

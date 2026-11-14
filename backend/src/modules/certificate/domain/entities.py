@@ -80,3 +80,44 @@ class VerifiedCertificate:
     signer_name: str = ""
     signer_title: str = ""
     signature_image_url: str = ""
+
+
+@dataclass(frozen=True)
+class AdminCertificateStats:
+    """Platform-wide certificate & financial-aid counters for the Admin Dashboard."""
+
+    certificates_issued: int = 0
+    certificates_revoked: int = 0
+    approved_financial_aids: int = 0
+    pending_financial_aids: int = 0
+
+
+@dataclass(frozen=True)
+class AdminCertificateTrendPoint:
+    """Certificates issued on one UTC day."""
+
+    date: str
+    issued: int = 0
+
+
+@dataclass(frozen=True)
+class AdminCertificateSummary:
+    """Row in the paginated Admin Dashboard certificate audit table."""
+
+    certificate_id: str
+    learner_name: str
+    course_title: str
+    partner_name: str
+    issue_date: str
+    is_revoked: bool
+    revoked_reason: str = ""
+
+
+@dataclass(frozen=True)
+class AdminCertificatesPage:
+    """One page of issued certificates ordered valid-first then revoked."""
+
+    certificates: tuple[AdminCertificateSummary, ...] = ()
+    total_count: int = 0
+    page: int = 1
+    page_size: int = 10

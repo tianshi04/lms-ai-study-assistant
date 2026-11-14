@@ -6,13 +6,55 @@ import {
   type UseMutationOptions,
 } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   PaymentService,
   PlanType,
   PaymentTargetType,
   type CoursePurchase,
   type UserSubscription,
+  type GetAdminPaymentStatsResponse,
+  type GetAdminPaymentTrendResponse,
 } from "@/gen/payment/v1/payment_pb";
+
+/**
+ * Super Admin revenue and active subscription KPIs owned by the Payment bounded context.
+ */
+export function useAdminPaymentStatsQuery(
+  options?: Partial<UseQueryOptions<GetAdminPaymentStatsResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminPaymentStatsResponse, Error>({
+    queryKey: ["adminPaymentStats"],
+    queryFn: async () => {
+      const client = getRpcClient(PaymentService);
+      return client.getAdminPaymentStats({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
+
+/**
+ * Daily completed revenue and purchase volume trend for the Admin Dashboard.
+ */
+export function useAdminPaymentTrendQuery(
+  days: number,
+  options?: Partial<UseQueryOptions<GetAdminPaymentTrendResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<GetAdminPaymentTrendResponse, Error>({
+    queryKey: ["adminPaymentTrend", days],
+    queryFn: async () => {
+      const client = getRpcClient(PaymentService);
+      return client.getAdminPaymentTrend({ days });
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
 
 export function usePaymentAccessQuery(
   courseId: string,

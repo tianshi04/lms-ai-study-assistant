@@ -180,4 +180,35 @@ service PaymentService {
   rpc CancelVNPayOrder(CancelVNPayOrderRequest) returns (CancelVNPayOrderResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetAdminPaymentStats(GetAdminPaymentStatsRequest) returns (GetAdminPaymentStatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetAdminPaymentTrend(GetAdminPaymentTrendRequest) returns (GetAdminPaymentTrendResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}
+
+message GetAdminPaymentStatsRequest {}
+
+message GetAdminPaymentStatsResponse {
+  double total_revenue = 1;
+  int32 course_purchase_count = 2;
+  int32 active_subscriptions = 3;
+}
+
+message GetAdminPaymentTrendRequest {
+  // Number of trailing UTC days (including today) to chart; clamped server-side.
+  int32 days = 1;
+}
+
+message AdminPaymentTrendPoint {
+  // UTC calendar day formatted as YYYY-MM-DD.
+  string date = 1;
+  // Completed course purchases + completed Coursera Plus orders on that day.
+  double revenue = 2;
+  int32 purchase_count = 3;
+}
+
+message GetAdminPaymentTrendResponse {
+  repeated AdminPaymentTrendPoint points = 1;
 }

@@ -145,4 +145,67 @@ service CertificateService {
   rpc ListMyCertificates(ListMyCertificatesRequest) returns (ListMyCertificatesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetAdminCertificateStats(GetAdminCertificateStatsRequest) returns (GetAdminCertificateStatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetAdminCertificateTrend(GetAdminCertificateTrendRequest) returns (GetAdminCertificateTrendResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListAdminCertificates(ListAdminCertificatesRequest) returns (ListAdminCertificatesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}
+
+message GetAdminCertificateStatsRequest {}
+
+message GetAdminCertificateStatsResponse {
+  int32 certificates_issued = 1;
+  int32 certificates_revoked = 2;
+  int32 approved_financial_aids = 3;
+  int32 pending_financial_aids = 4;
+}
+
+message GetAdminCertificateTrendRequest {
+  // Number of trailing UTC days (including today) to chart; clamped server-side.
+  int32 days = 1;
+}
+
+message AdminCertificateTrendPoint {
+  // UTC calendar day formatted as YYYY-MM-DD.
+  string date = 1;
+  int32 issued = 2;
+}
+
+message GetAdminCertificateTrendResponse {
+  repeated AdminCertificateTrendPoint points = 1;
+}
+
+enum AdminCertificateStatusFilter {
+  ADMIN_CERTIFICATE_STATUS_FILTER_UNSPECIFIED = 0;
+  ADMIN_CERTIFICATE_STATUS_FILTER_VALID = 1;
+  ADMIN_CERTIFICATE_STATUS_FILTER_REVOKED = 2;
+}
+
+message AdminCertificateSummary {
+  string certificate_id = 1;
+  string learner_name = 2;
+  string course_title = 3;
+  string partner_name = 4;
+  string issue_date = 5;
+  bool is_revoked = 6;
+  string revoked_reason = 7;
+}
+
+message ListAdminCertificatesRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string search_query = 3;
+  AdminCertificateStatusFilter status = 4;
+}
+
+message ListAdminCertificatesResponse {
+  repeated AdminCertificateSummary certificates = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
 }

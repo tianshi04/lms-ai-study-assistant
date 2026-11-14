@@ -6,6 +6,7 @@ import {
   type UseMutationOptions,
 } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   AssessmentService,
   type QuizResult,
@@ -15,7 +16,27 @@ import {
   type QuestionOption,
   type GetQuizAttemptHistoryResponse,
   type GetQuizAttemptDetailResponse,
+  type ListAdminAssessmentAlertsResponse,
 } from "@/gen/assessment/v1/assessment_pb";
+
+/**
+ * Super Admin assessment & peer-review quality alerts owned by the Assessment bounded context.
+ */
+export function useAdminAssessmentAlertsQuery(
+  options?: Partial<UseQueryOptions<ListAdminAssessmentAlertsResponse, Error>>,
+) {
+  const { isAuthenticated, isSuperAdmin } = useAuth();
+  return useQuery<ListAdminAssessmentAlertsResponse, Error>({
+    queryKey: ["adminAssessmentAlerts"],
+    queryFn: async () => {
+      const client = getRpcClient(AssessmentService);
+      return client.listAdminAssessmentAlerts({});
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && isSuperAdmin && (options?.enabled ?? true),
+  });
+}
 
 export function useSubmitQuizMutation(
   options?: Partial<

@@ -3,11 +3,12 @@ from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import MagicMock
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid6 import uuid7
 
 from src.modules.identity.domain import (
+    AdminIdentityStats,
     ApplicationStatus,
     EnterpriseLicense,
     IEnterpriseLicenseRepository,
@@ -112,6 +113,73 @@ class IdentityRepository(IIdentityRepository):
     async def decrement_enterprise_seat(self, key: str) -> bool:
         repo = EnterpriseLicenseRepository(self._session)
         return await repo.decrement_enterprise_seat(key)
+
+    async def get_user_names_by_ids(self, user_ids: list[str]) -> dict[str, str]:
+        unique_ids = list({uid for uid in user_ids if uid})
+        if not unique_ids:
+            return {}
+        rows = (
+            await self._session.execute(
+                select(UserModel.id, UserModel.full_name).where(
+                    UserModel.id.in_(unique_ids)
+                )
+            )
+        ).all()
+        return {uid: (full_name or "") for uid, full_name in rows}
+
+    async def get_admin_identity_stats(self) -> AdminIdentityStats:
+        user_sq = (
+            select(
+                func.count().label("total_users"),
+                func.count()
+                .filter(UserModel.role == UserRole.LEARNER)
+                .label("learner_count"),
+                func.count()
+                .filter(UserModel.role == UserRole.INSTRUCTOR)
+                .label("instructor_count"),
+                func.count()
+                .filter(UserModel.role == UserRole.ADMIN)
+                .label("admin_count"),
+                func.count()
+                .filter(UserModel.is_identity_verified.is_(True))
+                .label("verified_user_count"),
+            )
+            .select_from(UserModel)
+            .subquery()
+        )
+        app_sq = (
+            select(func.count().label("pending_instructor_applications"))
+            .select_from(InstructorApplicationModel)
+            .where(
+                InstructorApplicationModel.status
+                == ApplicationStatus.PENDING_REVIEW.value
+            )
+            .subquery()
+        )
+        row = (
+            await self._session.execute(
+                select(
+                    user_sq.c.total_users,
+                    user_sq.c.learner_count,
+                    user_sq.c.instructor_count,
+                    user_sq.c.admin_count,
+                    user_sq.c.verified_user_count,
+                    app_sq.c.pending_instructor_applications,
+                )
+                .select_from(user_sq)
+                .join(app_sq, true())
+            )
+        ).one()
+        return AdminIdentityStats(
+            total_users=int(row.total_users or 0),
+            learner_count=int(row.learner_count or 0),
+            instructor_count=int(row.instructor_count or 0),
+            admin_count=int(row.admin_count or 0),
+            verified_user_count=int(row.verified_user_count or 0),
+            pending_instructor_applications=int(
+                row.pending_instructor_applications or 0
+            ),
+        )
 
     def _to_entity(self, model: UserModel) -> User:
         return User(

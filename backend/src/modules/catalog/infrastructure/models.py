@@ -324,6 +324,29 @@ class CourseReviewReactionModel(Base):
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class LowReviewAcknowledgementModel(Base):
+    """Marks a low-rating course review as looked at by a Super Admin.
+
+    The dashboard hides an acknowledged review until the reviewer edits it again
+    (an edit refreshes ``course_reviews.created_at``, which then postdates
+    ``acknowledged_at``), so settled alerts do not stay on the list forever.
+    """
+
+    __tablename__ = "low_review_acknowledgements"
+
+    review_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("course_reviews.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    acknowledged_by: Mapped[str | None] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    acknowledged_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class CourseAnnouncementModel(Base):
     __tablename__ = "course_announcements"
 

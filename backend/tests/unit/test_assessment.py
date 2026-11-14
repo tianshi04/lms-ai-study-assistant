@@ -318,6 +318,9 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         return None
 
+    async def list_admin_assessment_alerts(self, limit: int = 20):
+        return [], 0
+
 
 @pytest.mark.asyncio
 async def test_honor_code_agreement():

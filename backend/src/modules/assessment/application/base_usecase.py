@@ -9,6 +9,7 @@ from src.modules.assessment.infrastructure.repository import (
 from src.modules.assessment.infrastructure.sandbox_service import (
     PythonCodeSandboxExecutor,
 )
+from src.modules.identity.domain import IIdentityRepository
 from src.shared.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
@@ -22,12 +23,14 @@ class BaseAssessmentUseCase:
         repository: AssessmentRepositoryInterface | None = None,
         repo_factory: Callable[[Any], AssessmentRepositoryInterface] | None = None,
         sandbox_executor: PythonCodeSandboxExecutor | None = None,
+        identity_repo_factory: Callable[[Any], IIdentityRepository] | None = None,
     ) -> None:
         self.repository = repository
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyAssessmentRepository(session)
         )
         self.sandbox_executor = sandbox_executor or PythonCodeSandboxExecutor()
+        self.identity_repo_factory = identity_repo_factory
 
     def _verify_staff(self, current_user: CurrentUser | None) -> None:
         if current_user is not None and not current_user.is_staff:

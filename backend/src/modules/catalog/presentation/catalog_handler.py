@@ -12,6 +12,7 @@ from src.modules.catalog.domain import (
     Category,
     Course,
     CourseReview,
+    CourseStatus,
     InteractiveTranscript,
     InVideoQuiz,
     ItemType,
@@ -1343,3 +1344,144 @@ class CatalogHandler(CatalogService):
             for bm in bms
         ]
         return pb.ListMyBookmarkedCoursesResponse(bookmarks=pb_bms)
+
+    async def get_admin_catalog_stats(
+        self,
+        request: pb.GetAdminCatalogStatsRequest,
+        ctx: RequestContext[
+            pb.GetAdminCatalogStatsRequest, pb.GetAdminCatalogStatsResponse
+        ],
+    ) -> pb.GetAdminCatalogStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self.use_case.get_admin_catalog_stats(
+                current_user=current_user
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+
+        return pb.GetAdminCatalogStatsResponse(
+            total_courses=stats.total_courses,
+            published_courses=stats.published_courses,
+            pending_review_courses=stats.pending_review_courses,
+            draft_courses=stats.draft_courses,
+            rejected_courses=stats.rejected_courses,
+            category_count=stats.category_count,
+            total_reviews=stats.total_reviews,
+            average_rating=stats.average_rating,
+            rating_distribution=list(stats.rating_distribution),
+            low_reviews=[
+                pb.AdminLowReviewAlert(
+                    review_id=r.review_id,
+                    course_id=r.course_id,
+                    course_title=r.course_title,
+                    user_name=r.user_name,
+                    rating_stars=r.rating_stars,
+                    comment_text=r.comment_text,
+                    created_at=r.created_at,
+                )
+                for r in stats.low_reviews
+            ],
+            low_review_total=stats.low_review_total,
+        )
+
+    async def get_admin_catalog_trend(
+        self,
+        request: pb.GetAdminCatalogTrendRequest,
+        ctx: RequestContext[
+            pb.GetAdminCatalogTrendRequest, pb.GetAdminCatalogTrendResponse
+        ],
+    ) -> pb.GetAdminCatalogTrendResponse:
+        current_user = require_current_user()
+        try:
+            points = await self.use_case.get_admin_catalog_trend(
+                current_user=current_user, days=request.days
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminCatalogTrendResponse(
+            points=[
+                pb.AdminCatalogTrendPoint(
+                    date=p.date,
+                    review_count=p.review_count,
+                    average_rating=p.average_rating,
+                )
+                for p in points
+            ]
+        )
+
+    async def list_admin_course_metrics(
+        self,
+        request: pb.ListAdminCourseMetricsRequest,
+        ctx: RequestContext[
+            pb.ListAdminCourseMetricsRequest, pb.ListAdminCourseMetricsResponse
+        ],
+    ) -> pb.ListAdminCourseMetricsResponse:
+        current_user = require_current_user()
+        status_map: dict[pb.CourseStatus, CourseStatus | None] = {
+            pb.CourseStatus.UNSPECIFIED: None,
+            pb.CourseStatus.DRAFT: CourseStatus.DRAFT,
+            pb.CourseStatus.PENDING_REVIEW: CourseStatus.PENDING_REVIEW,
+            pb.CourseStatus.PUBLISHED: CourseStatus.PUBLISHED,
+            pb.CourseStatus.REJECTED: CourseStatus.REJECTED,
+        }
+        if request.status not in status_map:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT,
+                "Bộ lọc trạng thái khóa học không hợp lệ.",
+            )
+
+        try:
+            result = await self.use_case.list_admin_course_metrics(
+                current_user=current_user,
+                page=request.page,
+                page_size=request.page_size,
+                search_query=request.search_query,
+                status=status_map[request.status],
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.ListAdminCourseMetricsResponse(
+            courses=[
+                pb.AdminCourseQualityMetric(
+                    course_id=m.course_id,
+                    title=m.title,
+                    partner_name=m.partner_name,
+                    status=_to_pb_course_status(m.status),
+                    enrolled_count=m.enrolled_count,
+                    completed_count=m.completed_count,
+                    average_rating=m.average_rating,
+                    review_count=m.review_count,
+                    revenue=m.revenue,
+                )
+                for m in result.courses
+            ],
+            total_count=result.total_count,
+            page=result.page,
+            page_size=result.page_size,
+        )
+
+    async def acknowledge_low_review(
+        self,
+        request: pb.AcknowledgeLowReviewRequest,
+        ctx: RequestContext[
+            pb.AcknowledgeLowReviewRequest, pb.AcknowledgeLowReviewResponse
+        ],
+    ) -> pb.AcknowledgeLowReviewResponse:
+        current_user = require_current_user()
+        try:
+            await self.use_case.acknowledge_low_review(
+                current_user=current_user, review_id=request.review_id
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.AcknowledgeLowReviewResponse(
+            success=True,
+            message="Đã ghi nhận xác nhận đánh giá.",
+        )

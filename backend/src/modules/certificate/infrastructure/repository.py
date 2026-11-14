@@ -1,10 +1,15 @@
-from sqlalchemy import select
+from sqlalchemy import case, func, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.catalog.domain import ItemType
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.certificate.domain import (
+    APPROVED_FINANCIAL_AID_STATUSES,
     DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT,
+    AdminCertificatesPage,
+    AdminCertificateStats,
+    AdminCertificateSummary,
+    AdminCertificateTrendPoint,
     FinancialAidApplication,
     FinancialAidStatus,
     ICertificateRepository,
@@ -15,6 +20,7 @@ from src.modules.certificate.infrastructure.models import (
     FinancialAidModel,
 )
 from src.modules.identity.infrastructure.repository import IdentityRepository
+from src.shared.domain import TREND_DATE_PREFIX_LEN, escape_like_pattern
 
 
 class CertificateRepository(ICertificateRepository):
@@ -442,3 +448,157 @@ class CertificateRepository(ICertificateRepository):
         if not course:
             return True
         return course.financial_aid_enabled
+
+    async def get_admin_certificate_stats(self) -> AdminCertificateStats:
+        cert_sq = select(
+            func.count(CertificateModel.certificate_id).label("certificates_issued"),
+            func.coalesce(
+                func.sum(case((CertificateModel.is_revoked.is_(True), 1), else_=0)),
+                0,
+            ).label("certificates_revoked"),
+        ).subquery()
+
+        aid_sq = select(
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            FinancialAidModel.status.in_(
+                                APPROVED_FINANCIAL_AID_STATUSES
+                            ),
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("approved_financial_aids"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            FinancialAidModel.status == FinancialAidStatus.PENDING,
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("pending_financial_aids"),
+        ).subquery()
+
+        stmt = (
+            select(
+                cert_sq.c.certificates_issued,
+                cert_sq.c.certificates_revoked,
+                aid_sq.c.approved_financial_aids,
+                aid_sq.c.pending_financial_aids,
+            )
+            .select_from(cert_sq)
+            .join(aid_sq, true())
+        )
+        row = (await self._session.execute(stmt)).one()
+        return AdminCertificateStats(
+            certificates_issued=int(row.certificates_issued),
+            certificates_revoked=int(row.certificates_revoked),
+            approved_financial_aids=int(row.approved_financial_aids),
+            pending_financial_aids=int(row.pending_financial_aids),
+        )
+
+    async def get_admin_certificate_trend(
+        self, window: list[str]
+    ) -> list[AdminCertificateTrendPoint]:
+        if not window:
+            return []
+
+        # ``issue_date`` is written as ``DD/MM/YYYY`` (course certificates, seeds) or
+        # ``YYYY-MM-DD`` (specialization certificates); normalize both to ISO days.
+        legacy_format = CertificateModel.issue_date.op("~")(r"^\d{2}/\d{2}/\d{4}")
+        issued_day = case(
+            (
+                legacy_format,
+                func.concat(
+                    func.substr(CertificateModel.issue_date, 7, 4),
+                    "-",
+                    func.substr(CertificateModel.issue_date, 4, 2),
+                    "-",
+                    func.substr(CertificateModel.issue_date, 1, 2),
+                ),
+            ),
+            else_=func.substr(CertificateModel.issue_date, 1, TREND_DATE_PREFIX_LEN),
+        ).label("day")
+        stmt = select(
+            issued_day,
+            func.count(CertificateModel.certificate_id).label("issued"),
+        ).group_by(issued_day)
+        issued = {
+            row.day: int(row.issued)
+            for row in (await self._session.execute(stmt)).all()
+        }
+        return [
+            AdminCertificateTrendPoint(date=day, issued=issued.get(day, 0))
+            for day in window
+        ]
+
+    async def list_admin_certificates(
+        self,
+        page: int,
+        page_size: int,
+        search_query: str = "",
+        is_revoked: bool | None = None,
+    ) -> AdminCertificatesPage:
+        filters = []
+        if search_query:
+            pattern = escape_like_pattern(search_query)
+            filters.append(
+                or_(
+                    CertificateModel.certificate_id.ilike(pattern, escape="\\"),
+                    CertificateModel.learner_name.ilike(pattern, escape="\\"),
+                    CertificateModel.course_title.ilike(pattern, escape="\\"),
+                )
+            )
+        if is_revoked is not None:
+            filters.append(CertificateModel.is_revoked.is_(is_revoked))
+
+        stmt = (
+            select(
+                CertificateModel,
+                func.count().over().label("total_count"),
+            )
+            .where(*filters)
+            .order_by(
+                CertificateModel.is_revoked.asc(),
+                CertificateModel.certificate_id.asc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        rows = (await self._session.execute(stmt)).all()
+        if rows:
+            total_count = int(rows[0].total_count)
+        elif page > 1:
+            count_stmt = select(func.count(CertificateModel.certificate_id)).where(
+                *filters
+            )
+            total_count = int((await self._session.execute(count_stmt)).scalar_one())
+        else:
+            total_count = 0
+
+        certificates = tuple(
+            AdminCertificateSummary(
+                certificate_id=r[0].certificate_id,
+                learner_name=r[0].learner_name or "",
+                course_title=r[0].course_title or "",
+                partner_name=r[0].partner_name or "",
+                issue_date=r[0].issue_date or "",
+                is_revoked=bool(r[0].is_revoked),
+                revoked_reason=r[0].revoked_reason or "",
+            )
+            for r in rows
+        )
+        return AdminCertificatesPage(
+            certificates=certificates,
+            total_count=total_count,
+            page=page,
+            page_size=page_size,
+        )

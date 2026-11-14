@@ -215,6 +215,7 @@ async def test_get_learning_streak(mock_session_scope):
     mock_repo.get_learning_streak_stats.return_value = (streak, 0, recent_days)
 
     use_case = LearningUseCase(repo_factory=lambda s: mock_repo)
+    # Pin "today" so the streak is not broken by the real clock moving past `yesterday`.
     with patch(
         "src.modules.learning.application.learning_usecase._resolve_study_date",
         return_value=today,
@@ -222,7 +223,11 @@ async def test_get_learning_streak(mock_session_scope):
         result = await use_case.get_learning_streak(
             user_id="u1", client_timezone="Asia/Ho_Chi_Minh"
         )
+
     mock_resolve.assert_called_once_with("Asia/Ho_Chi_Minh")
+    mock_repo.get_learning_streak_stats.assert_awaited_once_with(
+        user_id="u1", today=today
+    )
 
     effective_streak, longest, today_sec, total_sec, last_act, days = result
     assert effective_streak == 5

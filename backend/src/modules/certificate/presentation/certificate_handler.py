@@ -226,3 +226,95 @@ class CertificateHandler(CertificateService):
         return pb.ListMyCertificatesResponse(
             certificates=[_to_pb_certificate(c) for c in certs]
         )
+
+    async def get_admin_certificate_stats(
+        self,
+        request: pb.GetAdminCertificateStatsRequest,
+        ctx: RequestContext[
+            pb.GetAdminCertificateStatsRequest,
+            pb.GetAdminCertificateStatsResponse,
+        ],
+    ) -> pb.GetAdminCertificateStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self._use_case.get_admin_certificate_stats(current_user)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminCertificateStatsResponse(
+            certificates_issued=stats.certificates_issued,
+            certificates_revoked=stats.certificates_revoked,
+            approved_financial_aids=stats.approved_financial_aids,
+            pending_financial_aids=stats.pending_financial_aids,
+        )
+
+    async def get_admin_certificate_trend(
+        self,
+        request: pb.GetAdminCertificateTrendRequest,
+        ctx: RequestContext[
+            pb.GetAdminCertificateTrendRequest,
+            pb.GetAdminCertificateTrendResponse,
+        ],
+    ) -> pb.GetAdminCertificateTrendResponse:
+        current_user = require_current_user()
+        try:
+            points = await self._use_case.get_admin_certificate_trend(
+                current_user, request.days
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminCertificateTrendResponse(
+            points=[
+                pb.AdminCertificateTrendPoint(date=p.date, issued=p.issued)
+                for p in points
+            ]
+        )
+
+    async def list_admin_certificates(
+        self,
+        request: pb.ListAdminCertificatesRequest,
+        ctx: RequestContext[
+            pb.ListAdminCertificatesRequest,
+            pb.ListAdminCertificatesResponse,
+        ],
+    ) -> pb.ListAdminCertificatesResponse:
+        current_user = require_current_user()
+        status_map: dict[pb.AdminCertificateStatusFilter, bool | None] = {
+            pb.AdminCertificateStatusFilter.UNSPECIFIED: None,
+            pb.AdminCertificateStatusFilter.VALID: False,
+            pb.AdminCertificateStatusFilter.REVOKED: True,
+        }
+        if request.status not in status_map:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT,
+                "Bộ lọc trạng thái chứng chỉ không hợp lệ.",
+            )
+        try:
+            result = await self._use_case.list_admin_certificates(
+                current_user=current_user,
+                page=request.page,
+                page_size=request.page_size,
+                search_query=request.search_query,
+                is_revoked=status_map[request.status],
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.ListAdminCertificatesResponse(
+            certificates=[
+                pb.AdminCertificateSummary(
+                    certificate_id=c.certificate_id,
+                    learner_name=c.learner_name,
+                    course_title=c.course_title,
+                    partner_name=c.partner_name,
+                    issue_date=c.issue_date,
+                    is_revoked=c.is_revoked,
+                    revoked_reason=c.revoked_reason,
+                )
+                for c in result.certificates
+            ],
+            total_count=result.total_count,
+            page=result.page,
+            page_size=result.page_size,
+        )

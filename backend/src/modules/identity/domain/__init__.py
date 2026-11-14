@@ -14,6 +14,7 @@ from .constants import (
     PASSWORD_MIN_LENGTH,
 )
 from .entities import (
+    AdminIdentityStats,
     ApplicationStatus,
     EnterpriseLicense,
     InstructorApplication,
@@ -59,6 +60,7 @@ __all__ = [
     "LOGIN_LOCKOUT_SECONDS",
     "LOGIN_MAX_ATTEMPTS",
     "PASSWORD_MIN_LENGTH",
+    "AdminIdentityStats",
     "ApplicationStatus",
     "EnterpriseLicense",
     "EnterpriseSeatAssignedDomainEvent",

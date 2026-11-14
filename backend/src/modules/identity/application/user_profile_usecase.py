@@ -1,6 +1,10 @@
 import logging
+from collections.abc import Callable
+from typing import Any
 
 from src.modules.identity.domain import (
+    AdminIdentityStats,
+    IIdentityRepository,
     InstructorApplication,
     User,
 )
@@ -8,6 +12,7 @@ from src.modules.identity.infrastructure import repository as repo_module
 from src.shared.auth import (
     CurrentUser,
 )
+from src.shared.domain import ADMIN_REQUIRED_MESSAGE
 from src.shared.infrastructure import database
 
 from .review_application_usecase import ReviewInstructorApplicationUseCase
@@ -17,6 +22,13 @@ logger = logging.getLogger(__name__)
 
 
 class UserProfileUseCase:
+    def __init__(
+        self, repo_factory: Callable[[Any], IIdentityRepository] | None = None
+    ) -> None:
+        self.repo_factory = repo_factory or (
+            lambda session: repo_module.IdentityRepository(session)
+        )
+
     def _verify_admin(self, current_user: CurrentUser | None) -> None:
         if current_user is not None and not current_user.is_admin:
             raise PermissionError(
@@ -121,3 +133,12 @@ class UserProfileUseCase:
                 approve=approve,
                 rejection_reason=rejection_reason,
             )
+
+    async def get_admin_identity_stats(
+        self, current_user: CurrentUser
+    ) -> AdminIdentityStats:
+        if not current_user.is_admin:
+            raise PermissionError(ADMIN_REQUIRED_MESSAGE)
+        async with database.async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.get_admin_identity_stats()

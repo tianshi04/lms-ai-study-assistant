@@ -3,6 +3,9 @@ from typing import Any
 
 from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
 from src.modules.catalog.domain.entities import (
+    AdminCatalogStats,
+    AdminCatalogTrendPoint,
+    AdminCourseSummaryRow,
     Category,
     Course,
     CourseAnnouncement,
@@ -413,4 +416,30 @@ class ICatalogRepository(ABC):
         filters_json: str = "",
         result_count: int = 0,
     ) -> bool:
+        pass
+
+    @abstractmethod
+    async def list_scoped_course_ids(self) -> list[str]:
+        pass
+
+    @abstractmethod
+    async def get_admin_catalog_stats(self) -> AdminCatalogStats:
+        pass
+
+    @abstractmethod
+    async def get_admin_review_trend(
+        self, window: list[str]
+    ) -> list[AdminCatalogTrendPoint]:
+        """Daily review count and mean rating for scoped courses, zero-filled per ``window`` date."""
+
+    @abstractmethod
+    async def list_admin_course_summaries(
+        self,
+        search_query: str = "",
+        status: CourseStatus | None = None,
+    ) -> list[AdminCourseSummaryRow]:
+        pass
+
+    @abstractmethod
+    async def acknowledge_low_review(self, review_id: str, admin_id: str) -> bool:
         pass

@@ -246,3 +246,45 @@ class LearningHandler(LearningService):
                 for r in recent_days
             ],
         )
+
+    async def get_admin_learning_stats(
+        self,
+        request: pb.GetAdminLearningStatsRequest,
+        ctx: RequestContext[
+            pb.GetAdminLearningStatsRequest, pb.GetAdminLearningStatsResponse
+        ],
+    ) -> pb.GetAdminLearningStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self.use_case.get_admin_learning_stats(current_user)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminLearningStatsResponse(
+            total_enrollments=stats.total_enrollments,
+            completed_enrollments=stats.completed_enrollments,
+        )
+
+    async def get_admin_learning_trend(
+        self,
+        request: pb.GetAdminLearningTrendRequest,
+        ctx: RequestContext[
+            pb.GetAdminLearningTrendRequest, pb.GetAdminLearningTrendResponse
+        ],
+    ) -> pb.GetAdminLearningTrendResponse:
+        current_user = require_current_user()
+        try:
+            points = await self.use_case.get_admin_learning_trend(
+                current_user, request.days
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        return pb.GetAdminLearningTrendResponse(
+            points=[
+                pb.AdminLearningTrendPoint(
+                    date=p.date,
+                    enrollments=p.enrollments,
+                    completions=p.completions,
+                )
+                for p in points
+            ]
+        )

@@ -163,6 +163,25 @@ class InMemoryPaymentRepository(IPaymentRepository):
     async def get_course_titles(self, course_ids: list[str]) -> dict[str, str]:
         return {cid: f"Course {cid}" for cid in course_ids}
 
+    async def get_admin_payment_stats(self):
+        from src.modules.payment.domain import AdminPaymentStats
+
+        return AdminPaymentStats(
+            total_revenue=0.0,
+            course_purchase_count=0,
+            active_subscriptions=0,
+        )
+
+    async def get_admin_payment_trend(self, window: list[str]):
+        from src.modules.payment.domain import AdminPaymentTrendPoint
+
+        return [AdminPaymentTrendPoint(date=day) for day in window]
+
+    async def get_completed_revenue_by_course(
+        self, course_ids: list[str] | None = None
+    ) -> dict[str, float]:
+        return {}
+
 
 @pytest.mark.asyncio
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")

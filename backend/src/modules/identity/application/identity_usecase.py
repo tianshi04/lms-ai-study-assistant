@@ -3,6 +3,8 @@ from typing import Any
 
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.identity.domain import (
+    AdminIdentityStats,
+    IIdentityRepository,
     InstructorApplication,
     User,
 )
@@ -41,9 +43,10 @@ class IdentityUseCase:
         self,
         learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
         catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
+        repo_factory: Callable[[Any], IIdentityRepository] | None = None,
     ) -> None:
         self.auth = AuthUseCase()
-        self.user_profile = UserProfileUseCase()
+        self.user_profile = UserProfileUseCase(repo_factory=repo_factory)
         self.organization = OrganizationUseCase()
         self.enterprise = EnterpriseLicenseUseCase(
             learning_repo_factory=learning_repo_factory
@@ -189,6 +192,11 @@ class IdentityUseCase:
             rejection_reason=rejection_reason,
             current_user=current_user,
         )
+
+    async def get_admin_identity_stats(
+        self, current_user: CurrentUser
+    ) -> AdminIdentityStats:
+        return await self.user_profile.get_admin_identity_stats(current_user)
 
     # -------------------------------------------------------------------------
     # Organization Management (OrganizationUseCase)

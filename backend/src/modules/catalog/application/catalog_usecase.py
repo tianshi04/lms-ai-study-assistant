@@ -5,9 +5,11 @@ from typing import Any
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.learning.domain import ILearningRepository
+from src.modules.payment.domain import IPaymentRepository
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
 
+from .admin_catalog_usecase import AdminCatalogUseCase
 from .collaborator_usecase import (
     CourseCollaboratorUseCase,
     _default_identity_repo_factory,
@@ -23,6 +25,7 @@ from .scorm_usecase import ScormUseCase
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "AdminCatalogUseCase",
     "CatalogUseCase",
     "CourseCollaboratorUseCase",
     "CourseReviewUseCase",
@@ -43,6 +46,7 @@ class CatalogUseCase(
     ScormUseCase,
     CourseReviewUseCase,
     CourseCollaboratorUseCase,
+    AdminCatalogUseCase,
 ):
     """Application Use Case coordinator and unified Facade for Catalog domain."""
 
@@ -51,6 +55,7 @@ class CatalogUseCase(
         repo_factory: Callable[[Any], ICatalogRepository] | None = None,
         learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
         identity_repo_factory: Callable[[Any], Any] | None = None,
+        payment_repo_factory: Callable[[Any], IPaymentRepository] | None = None,
     ) -> None:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyCatalogRepository(session)
@@ -61,6 +66,7 @@ class CatalogUseCase(
         self.identity_repo_factory = (
             identity_repo_factory or _default_identity_repo_factory
         )
+        self.payment_repo_factory = payment_repo_factory
 
         # Composition sub-usecases for modular access
         self.course_uc = CourseUseCase(repo_factory=self.repo_factory)
@@ -73,4 +79,9 @@ class CatalogUseCase(
         self.collaborator_uc = CourseCollaboratorUseCase(
             repo_factory=self.repo_factory,
             identity_repo_factory=self.identity_repo_factory,
+        )
+        self.admin_uc = AdminCatalogUseCase(
+            repo_factory=self.repo_factory,
+            learning_repo_factory=self.learning_repo_factory,
+            payment_repo_factory=self.payment_repo_factory,
         )
