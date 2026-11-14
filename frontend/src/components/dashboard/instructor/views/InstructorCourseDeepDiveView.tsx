@@ -259,7 +259,7 @@ export function InstructorCourseDeepDiveView({
                 <span>
                   Biểu đồ (
                   {chartDateRange === "today"
-                    ? "24h"
+                    ? "Hôm nay"
                     : chartDateRange === "this_week"
                       ? "Tuần này"
                       : chartDateRange === "last_week"
@@ -319,13 +319,13 @@ export function InstructorCourseDeepDiveView({
                       className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
                       aria-label="Chọn khoảng thời gian biểu đồ"
                     >
-                      <option value="today">Hôm nay (24h)</option>
-                      <option value="this_week">Tuần này (T2 - CN)</option>
-                      <option value="7d">7 ngày qua (Mặc định)</option>
+                      <option value="today">Hôm nay</option>
+                      <option value="7d">7 ngày gần nhất</option>
+                      <option value="this_week">Tuần này</option>
                       <option value="last_week">Tuần trước</option>
-                      <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
-                      <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
-                      <option value="custom">Tùy chọn khoảng ngày...</option>
+                      <option value="this_month">Tháng này</option>
+                      <option value="last_month">Tháng trước</option>
+                      <option value="custom">Chọn thời gian</option>
                     </select>
 
                     {chartDateRange === "custom" && (
