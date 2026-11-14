@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Plus, Users, CheckCircle2, ChevronDown, Sparkles } from "lucide-react";
+import { Plus, Users, ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 
@@ -62,14 +62,6 @@ export function InstructorExecutiveToolbar({
             <h1 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
               {userName || "PGS. TS. Trần Minh Tuấn"}
             </h1>
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
-              <span>Đang phụ trách {courses.length} khóa học</span>
-              <span>•</span>
-              <span className="inline-flex items-center gap-1 text-success font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Thời gian phản hồi TB:
-                3.4h (Tốt)
-              </span>
-            </p>
           </div>
         </div>
 
