@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { FileText, MessageSquare, ArrowRight, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { MessageSquare, ArrowRight, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
@@ -171,9 +172,15 @@ export function InstructorCourseComparisonTable({
                     <Table.Cell className="py-3 px-3">
                       <div className="flex items-center gap-2">
                         {pendingAssignments > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
-                            <FileText className="w-3 h-3" /> {pendingAssignments} bài chấm
-                          </span>
+                          <Link
+                            href={`/instructor/courses/${course.id}/grading`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline p-1 rounded-lg hover:bg-primary/10 transition-colors"
+                            title="Mở Bàn làm việc chấm bài"
+                          >
+                            <ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>{pendingAssignments} bài chấm</span>
+                          </Link>
                         )}
                         {pendingQuestions > 0 && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-warning">
@@ -190,10 +197,37 @@ export function InstructorCourseComparisonTable({
 
                     {/* Thao tác */}
                     <Table.Cell className="text-right whitespace-nowrap py-3 px-3">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary group-hover:underline">
-                        <span>Chi tiết</span>
-                        <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
-                      </span>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          href={`/instructor/courses/${course.id}/grading`}
+                          title="Trung tâm Chấm bài"
+                          aria-label={`Trung tâm Chấm bài môn ${course.title}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        >
+                          <ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                        </Link>
+                        <Link
+                          href={`/instructor/courses/${course.id}/gradebook`}
+                          title="Sổ điểm Khóa học"
+                          aria-label={`Sổ điểm Khóa học môn ${course.title}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        >
+                          <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectCourse(course.id);
+                          }}
+                          className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline pl-1 cursor-pointer"
+                        >
+                          <span>Chi tiết</span>
+                          <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                        </button>
+                      </div>
                     </Table.Cell>
                   </Table.Row>
                 );

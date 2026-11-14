@@ -14,7 +14,6 @@ import dynamic from "next/dynamic";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
-import { useToast } from "@/components/ui/Toast";
 import {
   AlertTriangle,
   Search,
@@ -30,7 +29,6 @@ import {
   TrendingDown,
   BarChart3,
   Award,
-  LayoutGrid,
   GitCommit,
   Zap,
 } from "lucide-react";
@@ -38,6 +36,7 @@ import { InstructorSplineChart } from "./InstructorSplineChart";
 import { InstructorHeatmap } from "./InstructorHeatmap";
 import { InstructorAIAssistantCard } from "./InstructorAIAssistantCard";
 import type { StudentDetailRecord } from "./InstructorStudentDetailModal";
+import type { StudentPacingRecord } from "./InstructorPacingModal";
 
 import { generateTimeLabels } from "./instructor/utils/time_labels";
 import { InstructorExecutiveToolbar } from "./instructor/components/InstructorExecutiveToolbar";
@@ -45,6 +44,7 @@ import { InstructorKpiRibbon } from "./instructor/components/InstructorKpiRibbon
 import { InstructorPacingCohortsCard } from "./instructor/components/InstructorPacingCohortsCard";
 import { InstructorActionTasksCard } from "./instructor/components/InstructorActionTasksCard";
 import { InstructorCourseComparisonTable } from "./instructor/components/InstructorCourseComparisonTable";
+import { InstructorDateRangeForm } from "./instructor/components/InstructorDateRangeForm";
 import { InstructorRecentReviewsCard } from "./instructor/components/InstructorRecentReviewsCard";
 
 export type { TimeDataPoint } from "./instructor/types";
@@ -67,8 +67,12 @@ const InstructorStudentDetailModal = dynamic(
   { ssr: false },
 );
 
+const InstructorBulkReminderModal = dynamic(
+  () => import("./InstructorBulkReminderModal").then((m) => m.InstructorBulkReminderModal),
+  { ssr: false },
+);
+
 export function InstructorDashboard({ userName }: { userName: string }) {
-  const toast = useToast();
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   const { data: courses = [] } = useInstructorCoursesQuery(50);
 
@@ -95,14 +99,13 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND"
   >("ALL");
   const [nudgedSpecificStudentIds, setNudgedSpecificStudentIds] = useState<Set<string>>(new Set());
+  const [isBulkReminderModalOpen, setIsBulkReminderModalOpen] = useState(false);
   // Modal xem chi tiết tiến độ sinh viên & gửi thông báo nhắc nhở
   const [selectedStudentForDetail, setSelectedStudentForDetail] =
     useState<StudentDetailRecord | null>(null);
   const [isStudentDetailModalOpen, setIsStudentDetailModalOpen] = useState(false);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
-  // Kiểu hiển thị của Sơ đồ 2 (So sánh tỷ lệ hoàn thành): "bars" (Biểu đồ thước đo) | "cards" (Thẻ chỉ số lưới)
-  const [compareViewType, setCompareViewType] = useState<"bars" | "cards">("bars");
+  // Sắp xếp của Sơ đồ So sánh tỷ lệ hoàn thành theo môn
   const [compareSortBy, setCompareSortBy] = useState<"rate" | "students" | "rating">("rate");
 
   // Kiểu hiển thị của Sơ đồ phễu chi tiết: "pipeline" (Dòng chảy tuần) | "bars" (Cột tỷ lệ)
@@ -448,16 +451,35 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
   // Làm giàu danh sách học viên của môn đang chọn với phân loại nhịp độ học tập (Pacing)
   const rawStudentsWithPacing = useMemo(() => {
+    const totalWeeks = calculatedWeeks.length || 2;
+    const courseDurationDays = Math.max(14, totalWeeks * 7);
+    const nowMs = currentTimeMs > 0 ? currentTimeMs : 0;
+
     return rawStudents.map((st) => {
       let pace: "AHEAD" | "ON_TRACK" | "BEHIND" = "ON_TRACK";
       let paceLabel = "Đúng tiến độ";
-      let paceDesc = "Học ổn định theo tuần";
+      let paceDesc = "Bám sát tuần học";
 
-      if (st.progressPercent >= 80) {
+      // Lấy thời điểm nhập học thực tế
+      const enrolledMs = st.enrolledAt ? new Date(st.enrolledAt).getTime() : nowMs;
+      const daysElapsed = Math.max(0, Math.floor((nowMs - enrolledMs) / (1000 * 60 * 60 * 24)));
+      const expectedProgressPct = Math.min(
+        100,
+        Math.round((daysElapsed / courseDurationDays) * 100),
+      );
+
+      if (st.progressPercent >= 100) {
+        pace = "AHEAD";
+        paceLabel = "Vượt tiến độ";
+        paceDesc = "Đã hoàn thành khóa";
+      } else if (st.progressPercent >= 80 || st.progressPercent >= expectedProgressPct + 20) {
         pace = "AHEAD";
         paceLabel = "Vượt tiến độ";
         paceDesc = "Học nhanh hơn hạn dự kiến";
-      } else if (st.progressPercent < 35) {
+      } else if (
+        st.progressPercent < Math.max(25, expectedProgressPct - 25) ||
+        (daysElapsed > courseDurationDays && st.progressPercent < 75)
+      ) {
         pace = "BEHIND";
         paceLabel = "Chậm tiến độ";
         paceDesc =
@@ -473,7 +495,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         paceDesc,
       };
     });
-  }, [rawStudents, bottleneckWeek]);
+  }, [rawStudents, calculatedWeeks.length, currentTimeMs, bottleneckWeek]);
 
   // Bộ đếm nhịp độ học viên trong môn đang chọn
   const coursePacingCounts = useMemo(() => {
@@ -486,21 +508,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   }, [rawStudentsWithPacing]);
 
   // Danh sách toàn bộ học viên kèm nhịp độ học tập trên tất cả khóa học
-  const allPacingStudents = useMemo(() => {
-    const list: Array<{
-      id: string;
-      name: string;
-      email: string;
-      courseId: string;
-      courseTitle: string;
-      progressPercent: number;
-      currentLesson: string;
-      currentWeekNumber: number;
-      lastActive: string;
-      daysInactive: number;
-      pace: "AHEAD" | "ON_TRACK" | "BEHIND";
-      paceDescription: string;
-    }> = [];
+  const allPacingStudents = useMemo<StudentPacingRecord[]>(() => {
+    const list: StudentPacingRecord[] = [];
 
     courses.forEach((c) => {
       const isCurrentActive = c.id === activeCourse?.id;
@@ -712,8 +721,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         if (!matchName && !matchEmail && !matchId) return false;
       }
 
-      if (selectedStudentId && st.userId !== selectedStudentId) return false;
-
       // Lọc theo nhịp độ học tập (Pacing)
       if (studentPacingFilter === "AHEAD" && st.pace !== "AHEAD") return false;
       if (studentPacingFilter === "ON_TRACK" && st.pace !== "ON_TRACK") return false;
@@ -749,7 +756,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     studentPacingFilter,
     studentStatusFilter,
     selectedWeekFilter,
-    selectedStudentId,
     activeCourse,
   ]);
 
@@ -829,16 +835,16 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             {/* CỘT TRÁI (8/12 - 67%): BIỂU ĐỒ TOÀN HỆ THỐNG & BẢNG SO SÁNH KHÓA HỌC */}
             <div className="lg:col-span-8 space-y-5">
               {/* Card 1: Khung Biểu Đồ Hoạt Động Toàn Sàn */}
-              <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/60">
+              <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
+                <div className="space-y-3 pb-3 border-b border-outline-variant/60">
                   {/* Tabs biểu đồ toàn sàn */}
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
                     <button
                       type="button"
                       onClick={() => setAllChartTab("trend")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         allChartTab === "trend"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -865,7 +871,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setAllChartTab("heatmap")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         allChartTab === "heatmap"
                           ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
@@ -878,9 +884,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setAllChartTab("compare")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         allChartTab === "compare"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -891,9 +897,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setAllChartTab("certs")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         allChartTab === "certs"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -902,81 +908,82 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     </button>
                   </div>
 
+                  {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
                   {allChartTab === "trend" || allChartTab === "heatmap" ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={chartDateRange}
-                        onChange={(e) => setChartDateRange(e.target.value)}
-                        className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                        aria-label="Chọn khoảng thời gian biểu đồ toàn sàn"
-                      >
-                        <option value="today">Hôm nay (24h)</option>
-                        <option value="this_week">Tuần này (T2 - CN)</option>
-                        <option value="7d">7 ngày gần nhất (Mặc định)</option>
-                        <option value="last_week">Tuần trước</option>
-                        <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
-                        <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
-                        {allChartTab === "trend" && (
-                          <option value="custom">Tùy chọn khoảng ngày...</option>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                        <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                        <span>Bộ lọc hiển thị:</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={chartDateRange}
+                          onChange={(e) => setChartDateRange(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                          aria-label="Chọn khoảng thời gian biểu đồ toàn sàn"
+                        >
+                          <option value="today">Hôm nay (24h)</option>
+                          <option value="this_week">Tuần này (T2 - CN)</option>
+                          <option value="7d">7 ngày gần nhất (Mặc định)</option>
+                          <option value="last_week">Tuần trước</option>
+                          <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
+                          <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
+                          {allChartTab === "trend" && (
+                            <option value="custom">Tùy chọn khoảng ngày...</option>
+                          )}
+                        </select>
+
+                        {allChartTab === "trend" && chartDateRange === "custom" && (
+                          <InstructorDateRangeForm
+                            startDate={customStartDate}
+                            endDate={customEndDate}
+                            onChange={(s, e) => {
+                              setCustomStartDate(s);
+                              setCustomEndDate(e);
+                            }}
+                          />
                         )}
-                      </select>
 
-                      {allChartTab === "trend" && chartDateRange === "custom" && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-primary/40 text-xs animate-in fade-in duration-150">
-                          <span className="text-[10px] text-muted-foreground font-semibold">
-                            Từ:
-                          </span>
-                          <input
-                            type="date"
-                            value={customStartDate}
-                            onChange={(e) => setCustomStartDate(e.target.value)}
-                            className="px-1.5 py-0.5 rounded bg-muted/50 border border-outline-variant/60 text-[11px] font-mono text-foreground outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                            aria-label="Từ ngày"
-                          />
-                          <span className="text-[10px] text-muted-foreground font-semibold">
-                            Đến:
-                          </span>
-                          <input
-                            type="date"
-                            value={customEndDate}
-                            onChange={(e) => setCustomEndDate(e.target.value)}
-                            className="px-1.5 py-0.5 rounded bg-muted/50 border border-outline-variant/60 text-[11px] font-mono text-foreground outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                            aria-label="Đến ngày"
-                          />
-                        </div>
-                      )}
-
-                      <select
-                        value={chartLearnerFilter}
-                        onChange={(e) =>
-                          setChartLearnerFilter(
-                            e.target.value as "all" | "in_progress" | "completed",
-                          )
-                        }
-                        className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                        aria-label="Phân khúc đối tượng học viên vĩ mô"
-                        title="Lọc xu hướng phân tích theo nhóm đối tượng học viên trên toàn hệ thống"
-                      >
-                        <option value="all">Nhóm: Tất cả học viên</option>
-                        <option value="in_progress">Nhóm: Đang học (&lt; 100%)</option>
-                        <option value="completed">Nhóm: Đã tốt nghiệp (100%)</option>
-                      </select>
+                        <select
+                          value={chartLearnerFilter}
+                          onChange={(e) =>
+                            setChartLearnerFilter(
+                              e.target.value as "all" | "in_progress" | "completed",
+                            )
+                          }
+                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                          aria-label="Phân khúc đối tượng học viên vĩ mô"
+                          title="Lọc xu hướng phân tích theo nhóm đối tượng học viên trên toàn hệ thống"
+                        >
+                          <option value="all">Nhóm: Tất cả học viên</option>
+                          <option value="in_progress">Nhóm: Đang học</option>
+                          <option value="completed">Nhóm: Đã tốt nghiệp</option>
+                        </select>
+                      </div>
                     </div>
                   ) : allChartTab === "certs" ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={certCourseFilter}
-                        onChange={(e) => setCertCourseFilter(e.target.value)}
-                        className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                        aria-label="Lọc chứng chỉ theo khóa học"
-                      >
-                        <option value="all">
-                          Tất cả khóa học ({allCompletedStudentsList.length})
-                        </option>
-                        <option value="Vi mô">Kinh tế học Vi mô Căn bản</option>
-                        <option value="Hành vi">Kinh tế học Hành vi &amp; Định giá</option>
-                        <option value="Kinh tế lượng">Kinh tế lượng Ứng dụng</option>
-                      </select>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                        <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                        <span>Khóa học cấp chứng chỉ:</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={certCourseFilter}
+                          onChange={(e) => setCertCourseFilter(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                          aria-label="Lọc chứng chỉ theo khóa học"
+                        >
+                          <option value="all">
+                            Tất cả khóa học ({allCompletedStudentsList.length})
+                          </option>
+                          <option value="Vi mô">Kinh tế học Vi mô Căn bản</option>
+                          <option value="Hành vi">Kinh tế học Hành vi &amp; Định giá</option>
+                          <option value="Kinh tế lượng">Kinh tế lượng Ứng dụng</option>
+                        </select>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -1041,36 +1048,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {/* Toggle 2 chế độ hiển thị Sơ đồ 2 */}
-                        <div className="p-0.5 rounded-lg bg-muted flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setCompareViewType("bars")}
-                            className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                              compareViewType === "bars"
-                                ? "bg-surface text-primary shadow-xs font-black"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                            aria-label="Xem dạng thước đo đối sánh"
-                          >
-                            <BarChart3 className="w-3 h-3" aria-hidden="true" />
-                            <span>Thước đo</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCompareViewType("cards")}
-                            className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                              compareViewType === "cards"
-                                ? "bg-surface text-primary shadow-xs font-black"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                            aria-label="Xem dạng thẻ vòng tròn"
-                          >
-                            <LayoutGrid className="w-3 h-3" aria-hidden="true" />
-                            <span>Thẻ tròn</span>
-                          </button>
-                        </div>
-
                         {/* Bộ sắp xếp */}
                         <select
                           value={compareSortBy}
@@ -1087,212 +1064,103 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                       </div>
                     </div>
 
-                    {/* CÁCH 1: BIỂU ĐỒ THƯỚC ĐO ĐỐI SÁNH (BENCHMARK SCALE MATRIX) */}
-                    {compareViewType === "bars" ? (
-                      <div className="space-y-3">
-                        {/* Thước đo tỷ lệ 0% - 100% */}
-                        <div className="relative pt-2 pb-1 px-3 text-[10px] font-mono text-muted-foreground border-b border-outline-variant/40 flex justify-between">
-                          <span className="w-8">0%</span>
-                          <span className="w-8 text-center">25%</span>
-                          <span className="w-8 text-center">50%</span>
-                          <span className="w-8 text-center">75%</span>
-                          <span className="w-8 text-right">100%</span>
-                        </div>
+                    {/* LƯỚI THẺ VÒNG TRÒN TỶ LỆ (RADIAL RING CARDS) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                      {enrichedCoursesForComparison.map((course) => {
+                        const isCurrentActive = course.id === activeCourse?.id;
+                        const radius = 32;
+                        const circumference = 2 * Math.PI * radius;
+                        const strokeDashoffset =
+                          circumference - (course.compRate / 100) * circumference;
 
-                        {/* Danh sách các thanh đối sánh */}
-                        <div className="space-y-3">
-                          {enrichedCoursesForComparison.map((course) => {
-                            const isCurrentActive = course.id === activeCourse?.id;
-                            return (
-                              <button
-                                type="button"
-                                key={course.id}
-                                onClick={() => handleSelectCourse(course.id)}
-                                className={`w-full text-left group p-3.5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                  isCurrentActive
-                                    ? "bg-primary/5 border-primary ring-1 ring-primary/30"
-                                    : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-xs"
-                                }`}
-                              >
-                                {/* Header hàng: Tên môn, Trạng thái & Rating */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground uppercase font-mono shrink-0">
-                                      {course.subject || "Khóa học"}
-                                    </span>
-                                    <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                                      {course.title}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-3 shrink-0 text-xs font-mono">
-                                    <span className="text-muted-foreground text-[11px]">
-                                      {course.weekCount} tuần • {course.totalStudents} SV
-                                    </span>
-                                    <span className="text-warning font-bold flex items-center gap-1">
-                                      <Star
-                                        className="w-3 h-3 fill-warning text-warning"
-                                        aria-hidden="true"
-                                      />
-                                      {course.rating.toFixed(1)}
-                                    </span>
-                                    <span
-                                      className={`font-black text-xs px-2 py-0.5 rounded-md ${
-                                        course.compRate >= 70
-                                          ? "bg-success/15 text-success"
-                                          : course.compRate >= 30
-                                            ? "bg-primary/15 text-primary"
-                                            : "bg-muted text-muted-foreground"
-                                      }`}
-                                    >
-                                      {course.compRate}% TB
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* Thanh tiến độ đa màu (Xanh lá: Hoàn thành, Xanh dương: Đang học) */}
-                                <div className="w-full h-3 rounded-full overflow-hidden bg-muted flex relative">
-                                  {/* Đường chuẩn mờ 50% benchmark */}
-                                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-foreground/20 z-10 pointer-events-none" />
-
-                                  {/* Phần đã tốt nghiệp */}
-                                  <div
-                                    style={{
-                                      width: `${course.totalStudents > 0 ? (course.completedCount / course.totalStudents) * 100 : 0}%`,
-                                    }}
-                                    className="h-full bg-success transition-all"
-                                    title={`Đã hoàn thành: ${course.completedCount} SV`}
+                        return (
+                          <button
+                            type="button"
+                            key={course.id}
+                            onClick={() => handleSelectCourse(course.id)}
+                            className={`w-full text-left group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                              isCurrentActive
+                                ? "bg-primary/5 border-primary ring-1 ring-primary/30"
+                                : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-sm"
+                            }`}
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground uppercase font-mono">
+                                  {course.subject || "Khóa học"}
+                                </span>
+                                <span className="text-warning font-bold text-xs flex items-center gap-1 font-mono">
+                                  <Star
+                                    className="w-3 h-3 fill-warning text-warning"
+                                    aria-hidden="true"
                                   />
-                                  {/* Phần đang học */}
-                                  <div
-                                    style={{
-                                      width: `${course.totalStudents > 0 ? (course.inProgressCount / course.totalStudents) * 100 : 0}%`,
-                                    }}
-                                    className="h-full bg-primary transition-all"
-                                    title={`Đang học tích cực: ${course.inProgressCount} SV`}
+                                  {course.rating.toFixed(1)}
+                                </span>
+                              </div>
+
+                              <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[32px]">
+                                {course.title}
+                              </h4>
+                            </div>
+
+                            {/* Vòng tròn SVG Radial Donut */}
+                            <div className="my-3 flex items-center justify-center">
+                              <div className="relative w-24 h-24 flex items-center justify-center">
+                                <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+                                  <circle
+                                    cx="40"
+                                    cy="40"
+                                    r={radius}
+                                    stroke="currentColor"
+                                    strokeWidth="6"
+                                    fill="transparent"
+                                    className="text-muted/40"
                                   />
-                                </div>
-
-                                {/* Footer hàng: Chú thích & Nút xem chi tiết */}
-                                <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-2">
-                                  <div className="flex items-center gap-3">
-                                    <span className="flex items-center gap-1">
-                                      <span className="w-2 h-2 rounded-full bg-success" />{" "}
-                                      {course.completedCount} đã cấp chứng chỉ
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <span className="w-2 h-2 rounded-full bg-primary" />{" "}
-                                      {course.inProgressCount} đang tiến hành
-                                    </span>
-                                  </div>
-                                  <span className="text-primary font-bold inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                                    Xem phân tích môn này →
+                                  <circle
+                                    cx="40"
+                                    cy="40"
+                                    r={radius}
+                                    stroke="currentColor"
+                                    strokeWidth="6"
+                                    strokeDasharray={circumference}
+                                    strokeDashoffset={strokeDashoffset}
+                                    strokeLinecap="round"
+                                    fill="transparent"
+                                    className={
+                                      course.compRate >= 70
+                                        ? "text-success transition-all duration-700"
+                                        : course.compRate >= 30
+                                          ? "text-primary transition-all duration-700"
+                                          : "text-muted-foreground transition-all duration-700"
+                                    }
+                                  />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                  <span className="text-base font-black font-mono text-foreground leading-none">
+                                    {course.compRate}%
+                                  </span>
+                                  <span className="text-[9px] text-muted-foreground uppercase tracking-tight mt-0.5">
+                                    Hoàn thành
                                   </span>
                                 </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      /* CÁCH 2: LƯỚI THẺ VÒNG TRÒN TỶ LỆ (RADIAL RING CARDS) */
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                        {enrichedCoursesForComparison.map((course) => {
-                          const isCurrentActive = course.id === activeCourse?.id;
-                          const radius = 32;
-                          const circumference = 2 * Math.PI * radius;
-                          const strokeDashoffset =
-                            circumference - (course.compRate / 100) * circumference;
-
-                          return (
-                            <button
-                              type="button"
-                              key={course.id}
-                              onClick={() => handleSelectCourse(course.id)}
-                              className={`w-full text-left group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                isCurrentActive
-                                  ? "bg-primary/5 border-primary ring-1 ring-primary/30"
-                                  : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-sm"
-                              }`}
-                            >
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground uppercase font-mono">
-                                    {course.subject || "Khóa học"}
-                                  </span>
-                                  <span className="text-warning font-bold text-xs flex items-center gap-1 font-mono">
-                                    <Star
-                                      className="w-3 h-3 fill-warning text-warning"
-                                      aria-hidden="true"
-                                    />
-                                    {course.rating.toFixed(1)}
-                                  </span>
-                                </div>
-
-                                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[32px]">
-                                  {course.title}
-                                </h4>
                               </div>
+                            </div>
 
-                              {/* Vòng tròn SVG Radial Donut */}
-                              <div className="my-3 flex items-center justify-center">
-                                <div className="relative w-24 h-24 flex items-center justify-center">
-                                  <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
-                                    <circle
-                                      cx="40"
-                                      cy="40"
-                                      r={radius}
-                                      stroke="currentColor"
-                                      strokeWidth="6"
-                                      fill="transparent"
-                                      className="text-muted/40"
-                                    />
-                                    <circle
-                                      cx="40"
-                                      cy="40"
-                                      r={radius}
-                                      stroke="currentColor"
-                                      strokeWidth="6"
-                                      strokeDasharray={circumference}
-                                      strokeDashoffset={strokeDashoffset}
-                                      strokeLinecap="round"
-                                      fill="transparent"
-                                      className={
-                                        course.compRate >= 70
-                                          ? "text-success transition-all duration-700"
-                                          : course.compRate >= 30
-                                            ? "text-primary transition-all duration-700"
-                                            : "text-muted-foreground transition-all duration-700"
-                                      }
-                                    />
-                                  </svg>
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                                    <span className="text-base font-black font-mono text-foreground leading-none">
-                                      {course.compRate}%
-                                    </span>
-                                    <span className="text-[9px] text-muted-foreground uppercase tracking-tight mt-0.5">
-                                      Hoàn thành
-                                    </span>
-                                  </div>
-                                </div>
+                            {/* Thông số dưới chân thẻ */}
+                            <div className="pt-2.5 border-t border-outline-variant/40 space-y-2 w-full">
+                              <div className="grid grid-cols-2 text-[11px] font-mono text-muted-foreground">
+                                <span>👥 {course.totalStudents} học viên</span>
+                                <span className="text-right">📚 {course.weekCount} tuần học</span>
                               </div>
-
-                              {/* Thông số dưới chân thẻ */}
-                              <div className="pt-2.5 border-t border-outline-variant/40 space-y-2 w-full">
-                                <div className="grid grid-cols-2 text-[11px] font-mono text-muted-foreground">
-                                  <span>👥 {course.totalStudents} học viên</span>
-                                  <span className="text-right">📚 {course.weekCount} tuần học</span>
-                                </div>
-                                <div className="text-[11px] font-bold text-primary flex items-center justify-between group-hover:underline">
-                                  <span>Mở chi tiết lớp</span>
-                                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                                </div>
+                              <div className="text-[11px] font-bold text-primary flex items-center justify-between group-hover:underline">
+                                <span>Mở chi tiết lớp</span>
+                                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                               </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -1420,15 +1288,16 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             {/* CỘT TRÁI (8/12 - 67%): BIỂU ĐỒ MÔN HỌC & BẢNG HỌC VIÊN TƯƠNG TÁC */}
             <div className="lg:col-span-8 space-y-5">
               {/* Card 1: Khung Biểu Đồ & Tab Phân Tích Lớp Học */}
-              <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/60">
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60">
+              <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
+                <div className="space-y-3 pb-3 border-b border-outline-variant/60">
+                  {/* Hàng 1: Tabs biểu đồ môn học */}
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
                     <button
                       type="button"
                       onClick={() => setChartTab("bar")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         chartTab === "bar"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -1455,9 +1324,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setChartTab("funnel")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         chartTab === "funnel"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -1468,9 +1337,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     <button
                       type="button"
                       onClick={() => setChartTab("certs")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                         chartTab === "certs"
-                          ? "bg-surface text-foreground shadow-xs"
+                          ? "bg-surface text-foreground shadow-xs font-black"
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -1479,152 +1348,70 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                     </button>
                   </div>
 
-                  {/* Thanh điều khiển góc phải Card 1: Tìm kiếm & Lọc học viên / Thời gian */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* 1. Ô tìm kiếm sinh viên trong lớp học trực diện */}
-                    <div className="relative min-w-[170px] max-w-[220px]">
-                      <Search
-                        className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                        aria-hidden="true"
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Tìm học viên trong lớp…"
-                        value={studentSearchQuery}
-                        onChange={(e) => {
-                          setStudentSearchQuery(e.target.value);
-                          if (selectedStudentId) setSelectedStudentId(null);
-                        }}
-                        className="w-full pl-8 pr-7 py-1 text-[11px] rounded-lg bg-surface border-outline-variant focus:ring-1 focus:ring-primary"
-                        aria-label="Tìm kiếm sinh viên trong khóa học"
-                      />
-                      {studentSearchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setStudentSearchQuery("")}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer text-xs p-0.5"
-                          aria-label="Xóa tìm kiếm"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
+                  {/* Hàng 2: Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                      <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                      <span>Bộ lọc hiển thị:</span>
                     </div>
 
-                    {/* 2. Bộ chọn khoảng thời gian (Khi ở Tab Biểu đồ) */}
-                    {chartTab === "bar" && (
-                      <>
-                        <select
-                          value={chartDateRange}
-                          onChange={(e) => setChartDateRange(e.target.value)}
-                          className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                          aria-label="Chọn khoảng thời gian biểu đồ"
-                        >
-                          <option value="today">Hôm nay (24h)</option>
-                          <option value="this_week">Tuần này (T2 - CN)</option>
-                          <option value="7d">7 ngày qua (Mặc định)</option>
-                          <option value="last_week">Tuần trước</option>
-                          <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
-                          <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
-                          <option value="custom">Tùy chọn khoảng ngày...</option>
-                        </select>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Bộ chọn khoảng thời gian (Khi ở Tab Biểu đồ) */}
+                      {chartTab === "bar" && (
+                        <>
+                          <select
+                            value={chartDateRange}
+                            onChange={(e) => setChartDateRange(e.target.value)}
+                            className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                            aria-label="Chọn khoảng thời gian biểu đồ"
+                          >
+                            <option value="today">Hôm nay (24h)</option>
+                            <option value="this_week">Tuần này (T2 - CN)</option>
+                            <option value="7d">7 ngày qua (Mặc định)</option>
+                            <option value="last_week">Tuần trước</option>
+                            <option value="this_month">
+                              Tháng này (Tháng {currentMonthNumber})
+                            </option>
+                            <option value="last_month">
+                              Tháng trước (Tháng {lastMonthNumber})
+                            </option>
+                            <option value="custom">Tùy chọn khoảng ngày...</option>
+                          </select>
 
-                        {chartDateRange === "custom" && (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-primary/40 text-xs animate-in fade-in duration-150">
-                            <span className="text-[10px] text-muted-foreground font-semibold">
-                              Từ:
-                            </span>
-                            <input
-                              type="date"
-                              value={customStartDate}
-                              onChange={(e) => setCustomStartDate(e.target.value)}
-                              className="px-1.5 py-0.5 rounded bg-muted/50 border border-outline-variant/60 text-[11px] font-mono text-foreground outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                              aria-label="Từ ngày"
+                          {chartDateRange === "custom" && (
+                            <InstructorDateRangeForm
+                              startDate={customStartDate}
+                              endDate={customEndDate}
+                              onChange={(s, e) => {
+                                setCustomStartDate(s);
+                                setCustomEndDate(e);
+                              }}
                             />
-                            <span className="text-[10px] text-muted-foreground font-semibold">
-                              Đến:
-                            </span>
-                            <input
-                              type="date"
-                              value={customEndDate}
-                              onChange={(e) => setCustomEndDate(e.target.value)}
-                              className="px-1.5 py-0.5 rounded bg-muted/50 border border-outline-variant/60 text-[11px] font-mono text-foreground outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                              aria-label="Đến ngày"
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
+                          )}
+                        </>
+                      )}
 
-                    {/* 3. Dropdown Học viên thông minh: Chọn nhóm hoặc chọn đích danh sinh viên trong lớp */}
-                    <select
-                      value={
-                        selectedStudentId ? `student-${selectedStudentId}` : chartLearnerFilter
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.startsWith("student-")) {
-                          const sId = val.replace("student-", "");
-                          setSelectedStudentId(sId);
-                          const found = rawStudentsWithPacing.find((s) => s.userId === sId);
-                          if (found) {
-                            const studentWeekNum =
-                              found.progressPercent >= 100
-                                ? calculatedWeeks.length || 1
-                                : Math.min(
-                                    calculatedWeeks.length || 1,
-                                    Math.floor(
-                                      (found.progressPercent / 100) * (calculatedWeeks.length || 1),
-                                    ) + 1,
-                                  );
-                            const currentWeekTitle =
-                              calculatedWeeks.find((w) => w.weekNumber === studentWeekNum)?.title ||
-                              `Tuần ${studentWeekNum}`;
-                            setSelectedStudentForDetail({
-                              userId: found.userId,
-                              userName: found.userName,
-                              userEmail: found.userEmail,
-                              progressPercent: found.progressPercent,
-                              pace: found.pace,
-                              currentWeekNumber: studentWeekNum,
-                              currentWeekTitle,
-                              currentLessonTitle:
-                                found.pace === "BEHIND"
-                                  ? "Chưa hoàn thành video và bài quiz tuần"
-                                  : "Đang xem video bài giảng",
-                              quizScore: 8.5,
-                              lastActiveTime: found.pace === "BEHIND" ? "4 ngày trước" : "Hôm nay",
-                              isCompleted: found.progressPercent >= 100,
-                            });
-                            setIsStudentDetailModalOpen(true);
-                          }
-                        } else {
-                          setSelectedStudentId(null);
-                          setChartLearnerFilter(val as "all" | "in_progress" | "completed");
+                      {/* Dropdown lọc theo nhóm học viên */}
+                      <select
+                        value={chartLearnerFilter}
+                        onChange={(e) =>
+                          setChartLearnerFilter(
+                            e.target.value as "all" | "in_progress" | "completed",
+                          )
                         }
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer max-w-[190px] truncate"
-                      aria-label="Chọn nhóm hoặc sinh viên cụ thể trong lớp"
-                      title="Chọn phân loại hoặc chọn trực tiếp học viên trong lớp để xem chi tiết"
-                    >
-                      <optgroup label="── Phân loại chung ──">
-                        <option value="all">Tất cả học viên ({rawStudents.length})</option>
+                        className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                        aria-label="Chọn nhóm học viên trong lớp"
+                        title="Lọc biểu đồ theo nhóm đối tượng học viên"
+                      >
+                        <option value="all">Nhóm: Tất cả học viên ({rawStudents.length})</option>
                         <option value="in_progress">
-                          Đang học ({coursePacingCounts.all - completedStudents.length})
+                          Nhóm: Đang học ({coursePacingCounts.all - completedStudents.length})
                         </option>
                         <option value="completed">
-                          Đã hoàn thành ({completedStudents.length})
+                          Nhóm: Đã hoàn thành ({completedStudents.length})
                         </option>
-                      </optgroup>
-                      {rawStudents.length > 0 && (
-                        <optgroup label={`── Từng học viên trong lớp (${rawStudents.length}) ──`}>
-                          {rawStudentsWithPacing.map((st) => (
-                            <option key={st.userId} value={`student-${st.userId}`}>
-                              👤 {st.userName} ({st.progressPercent}%)
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </select>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -1985,18 +1772,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                   {coursePacingCounts.behind > 0 && (
                     <button
                       type="button"
-                      onClick={() => {
-                        rawStudentsWithPacing
-                          .filter((s) => s.pace === "BEHIND")
-                          .forEach((s) =>
-                            setNudgedSpecificStudentIds((prev) => new Set(prev).add(s.userId)),
-                          );
-                        toast.success(
-                          `Đã gửi thông báo & email nhắc nhở tới ${coursePacingCounts.behind} học viên chậm tiến độ!`,
-                          { description: `Môn: ${activeCourse?.title}` },
-                        );
-                      }}
+                      onClick={() => setIsBulkReminderModalOpen(true)}
                       className="px-3 py-1.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
+                      title="Mở hộp thoại xem trước và tùy chỉnh thông báo nhắc nhở gửi tới học viên chậm tiến độ"
                     >
                       <Zap className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Nhắc nhở {coursePacingCounts.behind} SV chậm</span>
@@ -2153,26 +1931,23 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 {(selectedDayFilter ||
                   selectedWeekFilter !== null ||
                   studentPacingFilter !== "ALL" ||
-                  selectedStudentId !== null ||
                   studentSearchQuery.trim() !== "") && (
                   <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary flex items-center justify-between">
                     <span className="flex items-center gap-1.5 font-semibold">
                       <Filter className="w-3.5 h-3.5" aria-hidden="true" />
                       Đang lọc theo:{" "}
                       <strong>
-                        {selectedStudentId
-                          ? `👤 ${rawStudentsWithPacing.find((s) => s.userId === selectedStudentId)?.userName}`
-                          : studentSearchQuery.trim()
-                            ? `Tìm kiếm "${studentSearchQuery}"`
-                            : studentPacingFilter === "AHEAD"
-                              ? "🚀 Học viên Vượt tiến độ"
-                              : studentPacingFilter === "ON_TRACK"
-                                ? "⏱️ Học viên Đúng tiến độ"
-                                : studentPacingFilter === "BEHIND"
-                                  ? "⚠️ Học viên Chậm tiến độ"
-                                  : selectedDayFilter
-                                    ? `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`
-                                    : `Tuần học thứ ${selectedWeekFilter}`}
+                        {studentSearchQuery.trim()
+                          ? `Tìm kiếm "${studentSearchQuery}"`
+                          : studentPacingFilter === "AHEAD"
+                            ? "🚀 Học viên Vượt tiến độ"
+                            : studentPacingFilter === "ON_TRACK"
+                              ? "⏱️ Học viên Đúng tiến độ"
+                              : studentPacingFilter === "BEHIND"
+                                ? "⚠️ Học viên Chậm tiến độ"
+                                : selectedDayFilter
+                                  ? `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`
+                                  : `Tuần học thứ ${selectedWeekFilter}`}
                       </strong>
                     </span>
                     <div className="flex items-center gap-2">
@@ -2192,7 +1967,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                           setSelectedDayFilter(null);
                           setSelectedWeekFilter(null);
                           setStudentPacingFilter("ALL");
-                          setSelectedStudentId(null);
                           setStudentSearchQuery("");
                         }}
                         className="text-xs underline hover:opacity-80 flex items-center gap-1 cursor-pointer font-bold"
@@ -2229,21 +2003,23 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                       ) : (
                         filteredStudents.map((st) => {
                           const isDone = st.progressPercent >= 100;
+                          const totalWeeks = calculatedWeeks.length || 2;
+                          const courseDurationDays = Math.max(14, totalWeeks * 7);
                           const enrolledDate = st.enrolledAt
                             ? new Date(st.enrolledAt)
                             : currentTimeMs > 0
                               ? new Date(currentTimeMs)
                               : new Date("2026-11-01");
                           const deadlineDate = new Date(
-                            enrolledDate.getTime() + 30 * 24 * 60 * 60 * 1000,
+                            enrolledDate.getTime() + courseDurationDays * 24 * 60 * 60 * 1000,
                           );
                           const daysLeft =
                             currentTimeMs > 0
                               ? Math.ceil(
                                   (deadlineDate.getTime() - currentTimeMs) / (1000 * 60 * 60 * 24),
                                 )
-                              : 30;
-                          const isNearDeadline = !isDone && daysLeft <= 3;
+                              : courseDurationDays;
+                          const isNearDeadline = !isDone && daysLeft <= 3 && daysLeft > 0;
                           const isNudged = nudgedSpecificStudentIds.has(st.userId);
 
                           const studentWeekNum =
@@ -2351,19 +2127,21 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                                   <div>
                                     <div
                                       className={`text-[11px] font-mono ${
-                                        daysLeft <= 0
+                                        daysLeft <= 0 && st.pace === "BEHIND"
                                           ? "text-destructive font-semibold"
                                           : isNearDeadline
                                             ? "text-warning font-semibold"
-                                            : "text-foreground"
+                                            : "text-foreground font-semibold"
                                       }`}
                                     >
                                       {daysLeft > 0
                                         ? `${deadlineDate.toLocaleDateString("vi-VN")} (Còn ${daysLeft} ngày)`
-                                        : `Quá hạn chuẩn (${Math.abs(daysLeft)} ngày)`}
+                                        : st.progressPercent >= 80
+                                          ? `${deadlineDate.toLocaleDateString("vi-VN")} (Đang hoàn thành)`
+                                          : `Quá hạn chuẩn (${Math.abs(daysLeft)} ngày)`}
                                     </div>
                                     <div className="text-[10px] text-muted-foreground">
-                                      Lộ trình chuẩn theo ngày mua
+                                      {`Lộ trình chuẩn ${courseDurationDays} ngày`}
                                     </div>
                                   </div>
                                 )}
@@ -2431,19 +2209,21 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </div>
             </div>
 
-            {/* CỘT PHẢI (4/12 - 33%): AI COPILOT & CẢNH BÁO ĐIỂM NGHẼN */}
+            {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN LÀM & AI COPILOT & ĐIỂM NGHẼN */}
             <div className="lg:col-span-4 space-y-4">
-              {/* Box 1: AI Teaching Copilot (Agent Cố Vấn & Phân Tích Sư Phạm) */}
+              {/* Box 1: Việc Cần Xử Lý (Hàng chờ chấm bài, Khiếu nại & Link Cockpit) */}
+              <InstructorActionTasksCard
+                courseId={activeCourse?.id}
+                courseTitle={activeCourse?.title}
+                behindCount={coursePacingCounts.behind}
+                onFilterBehind={() => setStudentPacingFilter("BEHIND")}
+              />
+
+              {/* Box 2: AI Teaching Copilot (Agent Cố Vấn & Phân Tích Sư Phạm) */}
               <InstructorAIAssistantCard
                 courseId={activeCourse?.id}
                 courseTitle={activeCourse?.title}
-                behindStudents={rawStudentsWithPacing
-                  .filter((s) => s.pace === "BEHIND")
-                  .map((s) => ({
-                    userId: s.userId,
-                    userName: s.userName,
-                    progressPercent: s.progressPercent,
-                  }))}
+                behindStudents={rawStudentsWithPacing.filter((s) => s.pace === "BEHIND")}
                 bottleneckWeek={bottleneckWeek}
               />
 
@@ -2530,6 +2310,32 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           }
           onSendReminder={(studentId) => {
             setNudgedSpecificStudentIds((prev) => new Set(prev).add(studentId));
+          }}
+        />
+      )}
+
+      {/* Modal Nhắc nhở hàng loạt học viên chậm tiến độ theo điểm nghẽn học tập */}
+      {isBulkReminderModalOpen && activeCourse && (
+        <InstructorBulkReminderModal
+          key={`${activeCourse.id}-${isBulkReminderModalOpen}`}
+          open={isBulkReminderModalOpen}
+          onOpenChange={setIsBulkReminderModalOpen}
+          courseId={activeCourse.id}
+          courseTitle={activeCourse.title}
+          students={rawStudentsWithPacing
+            .filter((s) => s.pace === "BEHIND")
+            .map((s) => ({
+              userId: s.userId,
+              userName: s.userName,
+              userEmail: s.userEmail,
+              progressPercent: s.progressPercent,
+              paceDesc: s.paceDesc,
+            }))}
+          bottleneckWeek={bottleneckWeek}
+          onSuccess={(studentIds) => {
+            studentIds.forEach((id) =>
+              setNudgedSpecificStudentIds((prev) => new Set(prev).add(id)),
+            );
           }}
         />
       )}

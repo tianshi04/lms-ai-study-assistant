@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { useSendStudentReminderMutation } from "@/lib/query_hooks";
 import {
   Bell,
   CheckCircle2,
@@ -54,6 +55,7 @@ export function InstructorStudentDetailModal({
   onSendReminder,
 }: InstructorStudentDetailModalProps) {
   const { success, error } = useToast();
+  const sendReminderMutation = useSendStudentReminderMutation();
   const [activeTab, setActiveTab] = useState<"reminder" | "announcement">("reminder");
 
   // Soạn sẵn mẫu thông báo nhắc nhở đôn đốc cá nhân
@@ -82,19 +84,42 @@ export function InstructorStudentDetailModal({
 
   if (!student) return null;
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    if (!reminderSubject.trim()) {
+      error("Vui lòng nhập tiêu đề thông điệp.");
+      return;
+    }
     if (!reminderBody.trim()) {
       error("Vui lòng nhập nội dung thông báo nhắc nhở.");
       return;
     }
+    if (!courseId) {
+      error("Không xác định được mã khóa học.");
+      return;
+    }
 
     setIsSending(true);
-    setTimeout(() => {
+    try {
+      const res = await sendReminderMutation.mutateAsync({
+        courseId,
+        studentIds: [student.userId],
+        title: reminderSubject.trim(),
+        content: reminderBody.trim(),
+      });
+      if (res.sentCount === 0) {
+        error(
+          "Không thể gửi thông điệp tới học viên (học viên không còn ghi danh trong khóa học).",
+        );
+        return;
+      }
       onSendReminder(student.userId, reminderBody);
-      setIsSending(false);
-      onOpenChange(false);
       success(`Đã gửi thông báo nhắc nhở học tập tới ${student.userName}!`);
-    }, 400);
+      onOpenChange(false);
+    } catch (err: unknown) {
+      error(err instanceof Error ? err.message : "Không thể gửi thông báo nhắc nhở.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
