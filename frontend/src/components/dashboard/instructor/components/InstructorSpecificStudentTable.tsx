@@ -67,7 +67,7 @@ export function InstructorSpecificStudentTable({
   totalItemsInActiveCourse,
   currentTimeMs,
   nudgedSpecificStudentIds,
-  onNudgeStudent,
+  onNudgeStudent: _onNudgeStudent,
   onNudgeAllBehind,
   onSelectStudentForDetail,
 }: InstructorSpecificStudentTableProps) {
@@ -496,16 +496,20 @@ export function InstructorSpecificStudentTable({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onNudgeStudent(st);
+                              onSelectStudentForDetail(studentDetailRecord);
                             }}
                             className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                               isNudged
-                                ? "bg-muted text-muted-foreground opacity-60 cursor-default"
+                                ? "bg-muted text-muted-foreground hover:bg-muted/80 border border-outline-variant/60"
                                 : st.pace === "BEHIND"
                                   ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/30"
                                   : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30"
                             }`}
-                            title="Gửi thông báo nhắc nhở học tập"
+                            title={
+                              isNudged
+                                ? "Đã gửi nhắc nhở gần đây • Nhấn để xem hoặc gửi thông điệp mới"
+                                : "Soạn tin nhắn nhắc nhở học tập"
+                            }
                           >
                             {isNudged ? (
                               <>

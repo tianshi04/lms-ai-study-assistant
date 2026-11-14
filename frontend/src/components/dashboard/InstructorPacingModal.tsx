@@ -194,13 +194,9 @@ export function InstructorPacingModal({
                     <TrendingUp className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <Dialog.Title className="text-base font-bold text-foreground">
-                    Bảng Kiểm Soát Nhịp Độ & Tiến Độ Học Tập
+                    Bảng Nhịp Độ & Tiến Độ Học Tập
                   </Dialog.Title>
                 </div>
-                <Dialog.Description className="text-xs text-muted-foreground mt-1">
-                  Theo dõi {counts.all} học viên, phát hiện sớm người học chậm để can thiệp sư phạm
-                  kịp thời
-                </Dialog.Description>
               </div>
             </div>
           </Dialog.Header>
@@ -591,7 +587,6 @@ export function InstructorPacingModal({
                 {counts.behind}
               </span>
             </div>
-            <span>Dữ liệu nhịp độ được tính toán thời gian thực từ cơ sở dữ liệu</span>
           </div>
         </Dialog.Content>
       </Dialog>
