@@ -275,7 +275,7 @@ export function InstructorBulkReminderModal({
                   htmlFor="bulk-reminder-content"
                   className="text-xs font-bold text-foreground"
                 >
-                  Nội dung thông báo (Bạn có thể tự do chỉnh sửa):
+                  Nội dung thông báo:
                 </label>
                 <button
                   type="button"
