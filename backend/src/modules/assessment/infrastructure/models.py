@@ -1,9 +1,11 @@
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
     ARRAY,
     JSON,
     Boolean,
+    DateTime,
     Float,
     ForeignKey,
     Index,
@@ -142,6 +144,42 @@ class PeerAssignmentSubmissionModel(Base):
     final_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     graded_by_staff: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
+    )
+    attempt_number: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
+    staff_feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    graded_by_user_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    grader_role: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    grade_source: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="PEER_REVIEW", server_default="PEER_REVIEW"
+    )
+    locked_by_user_id: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, index=True
+    )
+    locked_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    lock_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+    rubric_scores_json: Mapped[dict[str, Any]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+    staff_evaluations_json: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=False,
+        default=list,
+        server_default="[]",
+    )
+    published_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="SUBMITTED",
+        server_default="SUBMITTED",
+        index=True,
     )
 
 

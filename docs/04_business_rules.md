@@ -104,7 +104,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ---
 
-## 2. Quy tắc Đánh giá Năng lực & Chấm điểm (BR_HONOR, BR_QUIZ, BR_AUTOGRADE & BR_PEER)
+## 2. Quy tắc Đánh giá Năng lực & Chấm điểm (BR_HONOR, BR_QUIZ, BR_AUTOGRADE, BR_PEER & BR_GRADE)
 
 * **BR_HONOR_001 (Xác nhận Honor Code):**
   * Hệ thống bắt buộc học viên phải tích chọn xác nhận *"Academic Honor Code"* trước khi cho phép bấm nút mở làm bài Graded Quiz, nộp bài Auto-Graded Lab, hoặc nộp bài Peer Assignment.
@@ -166,8 +166,38 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_PEER_006 (Xử lý Thiếu bài chấm chéo do Ít bài nộp - Cold Start Dynamic Requirement):**
   * Đối với lớp học mới (Cold Start), nếu số lượng bài nộp khả thi trong pool ít hơn 3 bài, số lượt chấm chéo bắt buộc đối với học viên tự động điều chỉnh theo công thức $\min(3, \text{Pool\_Size})$.
   * Sau 48 giờ kể từ khi nộp bài mà hệ thống không tìm đủ bài phân bổ hoặc không đủ reviewers, bài nộp tự động đưa vào **Staff Regrade Queue** cho TA/Instructor chấm trực tiếp (thay vì bắt học viên chờ đủ 5 ngày).
-* **BR_PEER_007 (Quy định Hạn chấm chéo Review Window):**
+* **BR_PEER_007 (Ràng buộc Khiếu nại Điểm Bài tập Peer Assignment - Grade Appeal Constraints):**
+  * Học viên chỉ được quyền nộp đơn Khiếu nại điểm (Grade Appeal) trong vòng **7 ngày** kể từ thời điểm điểm số của bài tập được công bố chính thức (`PUBLISHED`) (`GRADE_APPEAL_WINDOW_DAYS = 7`).
+  * Mỗi bài nộp chỉ được khiếu nại **tối đa 01 lần duy nhất** (`MAX_GRADE_APPEAL_PER_SUBMISSION = 1`). Khi đơn khiếu nại đã được xử lý (được Trợ giảng chấm lại và duyệt với điểm mới hoặc bị từ chối kèm lý do), học viên không thể tiếp tục gửi khiếu nại cho bài nộp đó.
+* **BR_PEER_008 (Chính sách Nộp lại Bài & Nguyên tắc Điểm Cao Nhất - Resubmission Policy & Highest Score Wins):**
+  * Học viên được phép nộp lại bài tập dự án tối đa **3 lần** trước thời hạn chót (`MAX_PEER_ASSIGNMENT_SUBMISSIONS = 3`).
+  * Hệ thống lưu trữ snapshot đầy đủ các phiên bản bài nộp. Điểm chính thức ghi nhận vào hồ sơ học tập và tính tiến độ hoàn thành môn học tuân thủ nguyên tắc **Highest Score Wins** (Ghi nhận điểm số cao nhất trong các lần nộp đã được chấm và công bố).
+* **BR_PEER_009 (Quy định Hạn chấm chéo Review Window):**
   * Hệ thống áp dụng mốc **Hạn chấm chéo (Review Window)** gia hạn thêm **3 ngày** tính từ mốc Hạn nộp bài (Submission Deadline). Học viên phải hoàn thành việc chấm chéo 3 bài của bạn học trong khoảng thời gian này.
+* **BR_GRADE_001 (Trọng số Điểm Tổng kết Khóa học - Course Final Grade Weighting & Passing Calculation):**
+  * Điểm tổng kết khóa học được tính toán tự động dựa trên tổng điểm có trọng số của toàn bộ các bài tập tính điểm (`Graded Items`):
+    $$\text{Final Grade} = \sum_{i=1}^{N} \left( w_i \times \text{Score}_i \right) \quad \text{với} \quad \sum_{i=1}^{N} w_i = 100\%$$
+  * *Ràng buộc trọng số:* Tổng trọng số của tất cả các cột điểm bắt buộc phải bằng đúng 100% ($1.0$). Giảng viên có quyền cấu hình tỷ trọng cho từng bài Graded Item trong Course Builder; nếu chưa thiết lập tùy biến, hệ thống tự động phân bổ trọng số đồng đều cho các bài.
+  * *Điều kiện hoàn thành khóa học:* Học viên được công nhận hoàn thành khóa học và đủ điều kiện cấp chứng chỉ khi: (1) Điểm tổng kết $\text{Final Grade} \ge 80.0\%$ (hoặc ngưỡng `passing_threshold_percent` do khóa học quy định), và (2) 100% các Graded Items bắt buộc phải được nộp và có điểm công bố (không bỏ trống bất kỳ bài tính điểm nào).
+* **BR_GRADE_002 (Minh bạch Nhãn Nguồn gốc Người chấm - Grading Provenance Transparency & Audit Trail):**
+  * Mọi con điểm trong hệ thống (hiển thị trên Hàng chờ Chấm bài và giao diện Học viên) bắt buộc phải mang nhãn nguồn gốc xuất xứ rõ ràng (`Grading Provenance Label`):
+    1. `AUTO`: Hệ thống tự động chấm (Graded Quiz, Sandbox Auto-grader).
+    2. `PEER`: Điểm trung bình cộng đồng thuận từ bạn học qua rubric chấm chéo.
+    3. `TA`: Trợ giảng chấm trực tiếp hoặc giải cứu (Cold start, Outlier queue, Appeal).
+    4. `INSTRUCTOR`: Giảng viên phụ trách chấm hoặc ghi đè tối cao (Master Override).
+  * *Thẩm quyền ghi đè phân cấp:* Điểm số tuân theo thứ bậc thẩm quyền $\text{AUTO} \le \text{PEER} < \text{TA} < \text{INSTRUCTOR}$. Điểm của cấp cao hơn được phép ghi đè điểm của cấp thấp hơn. Giảng viên phụ trách (`INSTRUCTOR`) sở hữu thẩm quyền cao nhất (`Master Override`) để chốt hoặc điều chỉnh điểm số sau cùng; điểm chấm sau cùng của Giảng viên có hiệu lực tuyệt đối và thay thế trực tiếp kết quả chấm trước đó (không bị ràng buộc bởi `max()`).
+  * *Nhật ký Audit Log bất biến:* Khi điểm số bị ghi đè bởi cấp thẩm quyền cao hơn, hệ thống ghi vết vào bảng audit log với đầy đủ thông tin: điểm cũ, điểm mới, người chấm (`actor_user_id`), vai trò (`actor_role`), lý do can thiệp và timestamp để đảm bảo tính minh bạch học thuật.
+* **BR_GRADE_003 (Cơ chế Khóa mềm Chống chấm trùng & Tự động nhả khóa - Atomic Soft Lock 30 mins & Automatic Expiry):**
+  * *Khóa độc quyền có thời hạn (Task Lease):* Khi một Trợ giảng hoặc Giảng viên mở bài nộp trong hàng chờ để chấm, hệ thống thực thi câu lệnh SQL nguyên tử cấp quyền khóa mềm trong **30 phút** (`TASK_LEASE_TIMEOUT_MINUTES = 30`):
+    `UPDATE peer_assignment_submissions SET locked_by_user_id = :user_id, lock_expires_at = :expires_at WHERE id = :id AND (locked_by_user_id IS NULL OR lock_expires_at < :now OR locked_by_user_id = :user_id)`
+  * *Chống xung đột chấm trùng:* Khi bài nộp đang có khóa hiệu lực (`lock_expires_at > now()`), hệ thống chặn các nhân sự khác mở bài để chấm, hiển thị trạng thái `BEING_GRADED` kèm tên người đang chấm và thời gian đếm ngược.
+  * *Gia hạn khóa (Lease Renewal Policy - Reset from Current Time):* Cho phép gửi heartbeat ngầm gia hạn khi người chấm đang tích cực tương tác hoặc bấm nút *"Gia hạn (+15p)"*. Khi gia hạn, thời hạn khóa được tái thiết lập tính từ thời điểm hiện tại (`new_expires = now + timeout_minutes`), **tuyệt đối không cộng dồn lũy kế** (`not accumulating/stacking`) vào mốc hết hạn cũ. Quy tắc này vừa đảm bảo người chấm có đủ thời gian làm việc chuẩn mực tính từ thời điểm yêu cầu, vừa triệt tiêu khả năng người dùng bấm gia hạn dồn dập nhiều lần để "ôm giữ bài" vô thời hạn (hoarding prevention), duy trì tính thông suốt và công bằng của hàng chờ chấm bài.
+  * *Tự động nhả khóa khi hết hạn:* Nếu phiên làm việc bị bỏ dở hoặc quá 30 phút không hoàn tất (`now() >= lock_expires_at`), hệ thống tự động giải phóng khóa, trả bài nộp về hàng chờ công khai.
+  * *Nhả khóa chủ động:* Khi người chấm bấm *"Hủy & Nhả bài"* hoặc điều hướng quay lại, khóa được gỡ bỏ ngay lập tức (`locked_by_user_id = NULL`, `lock_expires_at = NULL`).
+* **BR_GRADE_004 (Quy định Chấm & Công bố Điểm Tức Thì - Immediate Publishing on Staff Grading):**
+  * *Chấm & Công bố Trực tiếp (Direct Final Grading):* Khi Trợ giảng (`TA`) hoặc Giảng viên (`INSTRUCTOR`) hoàn tất biểu mẫu chấm điểm tại Cockpit và bấm *"Hoàn tất chấm bài"*, điểm số lập tức có giá trị chính thức (`published_at = now()`) và không qua bước phê duyệt trung gian, giúp giải phóng hoàn toàn thời gian cho Giảng viên chính.
+  * *Tự động kích hoạt chuỗi sự kiện:* Ngay khi điểm được công bố: (1) Bắn sự kiện `PeerAssignmentGradedDomainEvent` lên `EventBus`, (2) Tự động tính toán lại Điểm tổng kết và Phần trăm tiến độ hoàn thành môn (`overall_progress_percent`), (3) Nếu học viên đạt 100% tiến độ, tự động kích hoạt cấp Chứng chỉ số hóa OpenBadges 2.0, và (4) Gửi thông báo in-app `ACADEMIC` cho học viên.
+  * *Giải phóng khóa mềm:* Ngay khi điểm được lưu và công bố thành công, khóa mềm (`locked_by_user_id`) tự động được giải phóng để dọn sạch trạng thái hàng chờ.
 
 ---
 
@@ -417,6 +447,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Giảng viên đăng thông báo (`CreateCourseAnnouncement`) phải cung cấp Tiêu đề (`title`) và Nội dung (`content`). Thông báo sau khi đăng được lưu kèm mốc thời gian và hiển thị công khai cho tất cả học viên ghi danh khóa học qua RPC `ListCourseAnnouncements`.
 * **BR_INSTRUCTOR_004 (Thống kê Tiến độ Lớp học & Danh sách Học viên Instructor Analytics):**
   * Giảng viên truy xuất báo cáo lớp học qua RPC `GetInstructorAnalytics` nhận thông tin thống kê thời gian thực: Tổng số học viên (`total_enrolled_students`), Tỷ lệ hoàn thành trung bình (`average_completion_rate`), Điểm đánh giá trung bình (`average_rating`), và Danh sách chi tiết tiến độ từng học viên (`students`).
+* **BR_INSTRUCTOR_006 (Thống kê Hoạt động Chuỗi thời gian & Bản đồ nhiệt Heatmap):**
+  * Giảng viên truy xuất dữ liệu chuỗi thời gian qua RPC `GetInstructorActivityTimeline` được phân quyền chặt chẽ (`enforce_course_ownership` khi truyền `course_id`, hoặc tự động giới hạn phạm vi các khóa học mà giảng viên sở hữu hoặc là đồng giảng dạy khi `course_id` rỗng).
+  * Chuỗi dữ liệu thời gian (`timeline`) phân nhóm hoạt động theo khung giờ (`today`) hoặc theo ngày (`7d`, `this_week`, `last_week`, `this_month`, `last_month`, `custom`).
+  * Bản đồ nhiệt (`heatmap`) bao gồm 28 ô cố định (7 ngày x 4 khung giờ: Sáng, Chiều, Tối, Đêm), tự động phát hiện ô cao điểm nhất với điều kiện `count > 0 && count == max_count` để gán nhãn `is_peak = True`.
+
 * **BR_INSTRUCTOR_005 (Kéo thả & Sắp xếp Thứ tự Cấu trúc Bài giảng Batch Reordering):**
   * Giảng viên/Admin được phép sắp xếp lại thứ tự của Tuần học (`ReorderWeekModules`), Bài học (`ReorderLessons`) và Học liệu (`ReorderLearningItems`) bằng giao diện Kéo thả (Drag & Drop) hoặc Nút di chuyển Nhanh (Up/Down).
   - Thứ tự vị trí mới được cập nhật đồng bộ trong 1 DB Transaction Atomic và duy trì chỉ số `order_index` cố định để hiển thị đồng nhất cho cả Học viên và Giảng viên.

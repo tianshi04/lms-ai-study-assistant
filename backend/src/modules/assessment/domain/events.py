@@ -29,3 +29,14 @@ class PeerReviewSubmittedDomainEvent(DomainEvent):
     submission_id: str = ""
     author_id: str = ""
     score: float = 0.0
+
+
+@dataclass
+class PeerAssignmentGradedDomainEvent(DomainEvent):
+    user_id: str = ""
+    course_id: str = ""
+    item_id: str = ""
+    submission_id: str = ""
+    final_score: float = 0.0
+    passed: bool = False
+    grader_id: str = ""

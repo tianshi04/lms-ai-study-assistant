@@ -216,9 +216,13 @@ export function UserDropdown() {
 
         {isInstructorOrAdmin && (
           <>
+            <Menu.Item render={<Link href="/instructor/dashboard" />} className={itemClasses}>
+              <LayoutDashboard aria-hidden="true" className={iconClasses} />
+              <span>{"Bảng điều khiển Giảng viên"}</span>
+            </Menu.Item>
             <Menu.Item render={<Link href="/instructor/courses" />} className={itemClasses}>
               <Layers aria-hidden="true" className={iconClasses} />
-              <span>{"Giảng Viên"}</span>
+              <span>{"Khóa học Giảng dạy"}</span>
             </Menu.Item>
             <Menu.Item render={<Link href="/instructor/profile" />} className={itemClasses}>
               <Edit aria-hidden="true" className={iconClasses} />

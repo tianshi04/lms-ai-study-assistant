@@ -12,6 +12,8 @@ import {
   Megaphone,
   Plus,
   Users,
+  ClipboardCheck,
+  GraduationCap,
 } from "lucide-react";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Button } from "@/components/ui/Button";
@@ -189,6 +191,22 @@ export function CourseHeaderBanner({
             render={<Link href={`/instructor/courses/${courseId}/announcements`} />}
           >
             Đăng Thông báo
+          </Chip>
+
+          <Chip
+            variant="assist"
+            leadingIcon={<ClipboardCheck className="w-4 h-4" aria-hidden="true" />}
+            render={<Link href={`/instructor/courses/${courseId}/grading`} />}
+          >
+            Chấm bài
+          </Chip>
+
+          <Chip
+            variant="assist"
+            leadingIcon={<GraduationCap className="w-4 h-4" aria-hidden="true" />}
+            render={<Link href={`/instructor/courses/${courseId}/gradebook`} />}
+          >
+            Sổ điểm
           </Chip>
 
           {onOpenCollaboratorsModal && (

@@ -335,6 +335,11 @@ function LoginFormContent() {
                     roleTag: "Giảng viên AI",
                   },
                   {
+                    label: "PGS. TS. Trần Minh Tuấn",
+                    email: "tuan.tran@neu.edu.vn",
+                    roleTag: "Giảng viên Kinh tế",
+                  },
+                  {
                     label: "Học viên Cá nhân",
                     email: "learner@coursera.ai",
                     roleTag: "Learner",

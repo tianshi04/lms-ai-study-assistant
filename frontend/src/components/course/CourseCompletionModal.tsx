@@ -273,7 +273,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
           </div>
 
           <h2 className="relative z-20 text-2xl font-extrabold tracking-tight">
-            Course Completed!
+            Chúc mừng bạn đã hoàn thành khóa học!
           </h2>
           <p className="relative z-20 text-primary-foreground/90 text-sm mt-1 max-w-sm mx-auto min-w-0 line-clamp-2">
             {courseTitle}

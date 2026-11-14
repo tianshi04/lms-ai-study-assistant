@@ -1,5 +1,6 @@
 import {
   useQuery,
+  useQueries,
   useMutation,
   useQueryClient,
   keepPreviousData,
@@ -17,8 +18,12 @@ import {
   type CourseCollaboratorDetail,
   type GetCourseDetailResponse,
   type Specialization,
+  type InstructorAnalytics,
+  type GetInstructorActivityTimelineResponse,
   type CourseBookmark,
   type ToggleCourseReviewHelpfulResponse,
+  type GetCourseGradebookResponse,
+  type GetInstructorActionTasksResponse,
   type GetAdminCatalogStatsResponse,
   type GetAdminCatalogTrendResponse,
   type ListAdminCourseMetricsResponse,
@@ -353,6 +358,94 @@ export function useInstructorCoursesQuery(
 /**
  * Hook danh sách chuyên ngành do giảng viên phụ trách (Instructor Specializations)
  */
+/**
+ * Hook thống kê chi tiết khóa học cho giảng viên (Instructor Analytics & Student Roster)
+ */
+export function useInstructorAnalyticsQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<InstructorAnalytics | null, Error>>,
+) {
+  return useQuery<InstructorAnalytics | null, Error>({
+    queryKey: ["instructorAnalytics", courseId],
+    queryFn: async () => {
+      if (!courseId || courseId === "ALL") return null;
+      const client = getRpcClient(CatalogService);
+      const res = await client.getInstructorAnalytics({ courseId });
+      return res.analytics ?? null;
+    },
+    enabled: !!courseId && courseId !== "ALL",
+    staleTime: 60 * 1000,
+    ...options,
+  });
+}
+
+/**
+ * Hook thống kê chi tiết toàn bộ các khóa học của giảng viên (Multi-Course Parallel Analytics)
+ */
+export function useAllInstructorAnalyticsQueries(
+  courses: { id: string }[],
+  options?: { enabled?: boolean },
+) {
+  return useQueries({
+    queries: courses.map((c) => ({
+      queryKey: ["instructorAnalytics", c.id],
+      queryFn: async () => {
+        if (!c.id) return null;
+        const client = getRpcClient(CatalogService);
+        const res = await client.getInstructorAnalytics({ courseId: c.id });
+        return res.analytics ?? null;
+      },
+      enabled: (options?.enabled ?? true) && !!c.id,
+      staleTime: 60 * 1000,
+    })),
+  });
+}
+
+/**
+ * Hook truy vấn dữ liệu chuỗi thời gian hoạt động và biểu đồ heatmap của học viên theo khóa học
+ */
+export function useInstructorActivityTimelineQuery(
+  params: {
+    courseId?: string;
+    dateRange?: string;
+    startDate?: string;
+    endDate?: string;
+    learnerFilter?: string;
+  },
+  options?: Partial<UseQueryOptions<GetInstructorActivityTimelineResponse, Error>>,
+) {
+  const {
+    courseId = "",
+    dateRange = "7d",
+    startDate = "",
+    endDate = "",
+    learnerFilter = "all",
+  } = params;
+
+  return useQuery<GetInstructorActivityTimelineResponse, Error>({
+    queryKey: [
+      "instructorActivityTimeline",
+      courseId,
+      dateRange,
+      startDate,
+      endDate,
+      learnerFilter,
+    ],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return await client.getInstructorActivityTimeline({
+        courseId,
+        dateRange,
+        startDate,
+        endDate,
+        learnerFilter,
+      });
+    },
+    staleTime: 60 * 1000,
+    ...options,
+  });
+}
+
 export function useInstructorSpecializationsQuery(
   pageSize = 50,
   options?: Partial<UseQueryOptions<Specialization[], Error>>,
@@ -674,6 +767,51 @@ export function useRecordCourseSearchMutation(
       });
       return res.success;
     },
+    ...options,
+  });
+}
+
+export interface CourseGradebookQueryParams {
+  courseId: string;
+  searchQuery?: string;
+  statusFilter?: string;
+  pageSize?: number;
+  pageToken?: string;
+}
+
+export function useCourseGradebookQuery(
+  params: CourseGradebookQueryParams,
+  options?: Partial<UseQueryOptions<GetCourseGradebookResponse, Error>>,
+) {
+  return useQuery<GetCourseGradebookResponse, Error>({
+    queryKey: ["courseGradebook", params],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return await client.getCourseGradebook({
+        courseId: params.courseId,
+        searchQuery: params.searchQuery || "",
+        statusFilter: params.statusFilter || "",
+        pageSize: params.pageSize || 50,
+        pageToken: params.pageToken || "",
+      });
+    },
+    enabled: !!params.courseId,
+    placeholderData: keepPreviousData,
+    ...options,
+  });
+}
+
+export function useInstructorActionTasksQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<GetInstructorActionTasksResponse, Error>>,
+) {
+  return useQuery<GetInstructorActionTasksResponse, Error>({
+    queryKey: ["instructorActionTasks", courseId],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return await client.getInstructorActionTasks({ courseId });
+    },
+    enabled: !!courseId,
     ...options,
   });
 }

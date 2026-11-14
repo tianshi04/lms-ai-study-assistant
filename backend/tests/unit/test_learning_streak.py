@@ -11,6 +11,7 @@ from src.modules.catalog.domain import (
     WeekModule,
 )
 from src.modules.learning.application import LearningUseCase
+from src.modules.learning.application.learning_usecase import _resolve_study_date
 from src.modules.learning.domain import (
     DailyStudyRecord,
     LearningProgress,
@@ -197,7 +198,7 @@ async def test_record_learning_time_validation(
 @pytest.mark.asyncio
 async def test_get_learning_streak(mock_session_scope):
     mock_repo = AsyncMock()
-    today = date(2026, 11, 4)
+    today = _resolve_study_date("Asia/Ho_Chi_Minh")
     yesterday = today - timedelta(days=1)
 
     streak = UserLearningStreak(

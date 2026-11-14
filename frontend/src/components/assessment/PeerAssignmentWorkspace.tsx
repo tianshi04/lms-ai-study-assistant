@@ -232,7 +232,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-foreground" title={title}>
-            {title || "Peer-Graded Assignment: Supervised Machine Learning Model Design"}
+            {title || "Thiết kế Mô hình Học máy có Giám sát"}
           </h2>
         </div>
 
@@ -383,8 +383,8 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         >
           <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-xs text-warning leading-relaxed">
             <p className="font-semibold">
-              Đánh giá bài nộp của bạn học một cách khách quan dựa theo các tiêu chí Rubric bên
-              dưới. Cảnh báo bất thường sẽ tự động kích hoạt nếu độ lệch điểm vượt quá 30%.
+              Đánh giá bài nộp của bạn học một cách khách quan dựa theo các tiêu chí bên dưới. Cảnh
+              báo bất thường sẽ tự động kích hoạt nếu độ lệch điểm vượt quá 30%.
             </p>
           </div>
 
@@ -417,7 +417,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                 {/* Rubric Criteria Controls */}
                 <div className="space-y-3 pt-1">
                   <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Chấm điểm theo Tiêu chí Rubric:
+                    Chấm điểm theo tiêu chí:
                   </h5>
                   {peer.rubricCriteria.map((crit, cIdx) => (
                     <div

@@ -6,7 +6,7 @@ import { ReactNode } from "react";
 
 export function CopilotProvider({ children }: { children: ReactNode }) {
   return (
-    <CopilotKit runtimeUrl="/copilotkit" useSingleEndpoint={false}>
+    <CopilotKit runtimeUrl="/copilotkit" useSingleEndpoint={false} enableInspector={false}>
       {children}
     </CopilotKit>
   );

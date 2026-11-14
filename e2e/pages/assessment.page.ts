@@ -58,16 +58,24 @@ export class AssessmentPage {
 
   async switchTab(tab: 'quiz' | 'lab' | 'peer') {
     await this.page.waitForLoadState('domcontentloaded');
-    if (tab === 'quiz') {
-      await this.quizTab.click();
-    }
-    if (tab === 'lab') {
-      await this.labTab.click();
-    }
-    if (tab === 'peer') {
-      await this.peerTab.click();
-    }
+    const target = tab === 'quiz' ? this.quizTab : tab === 'lab' ? this.labTab : this.peerTab;
+    await expect(target).toBeVisible({ timeout: 10000 });
+    await expect(target).toBeEnabled({ timeout: 5000 });
     await this.page.waitForTimeout(300);
+
+    const expectedItemId = tab === 'quiz' ? 'item-ml-quiz-2' : tab === 'lab' ? 'item-ml-lab-1' : 'item-ml-peer-1';
+    const itemIdInput = this.page.locator('#itemId');
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await target.click();
+      try {
+        await expect(itemIdInput).toHaveValue(expectedItemId, { timeout: 2000 });
+        break;
+      } catch {
+        await this.page.waitForTimeout(500);
+      }
+    }
+    await expect(itemIdInput).toHaveValue(expectedItemId, { timeout: 10000 });
   }
 
   async agreeHonorCode() {
