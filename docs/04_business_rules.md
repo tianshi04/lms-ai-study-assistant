@@ -171,7 +171,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Mỗi bài nộp chỉ được khiếu nại **tối đa 01 lần duy nhất** (`MAX_GRADE_APPEAL_PER_SUBMISSION = 1`). Khi đơn khiếu nại đã được xử lý (được Trợ giảng chấm lại và duyệt với điểm mới hoặc bị từ chối kèm lý do), học viên không thể tiếp tục gửi khiếu nại cho bài nộp đó.
 * **BR_PEER_008 (Chính sách Nộp lại Bài & Nguyên tắc Điểm Cao Nhất - Resubmission Policy & Highest Score Wins):**
   * Học viên được phép nộp lại bài tập dự án tối đa **3 lần** trước thời hạn chót (`MAX_PEER_ASSIGNMENT_SUBMISSIONS = 3`).
-  * Hệ thống lưu trữ snapshot đầy đủ các phiên bản bài nộp. Điểm chính thức ghi nhận vào hồ sơ học tập và tính tiến độ hoàn thành môn học tuân thủ nguyên tắc **Highest Score Wins** (Ghi nhận điểm số cao nhất trong các lần nộp đã được chấm và công bố).
+  * Hệ thống lưu trữ snapshot đầy đủ các phiên bản bài nộp. Điểm chính thức ghi nhận vào Sổ điểm và tính tiến độ hoàn thành môn học tuân thủ nguyên tắc **Highest Score Wins** (Ghi nhận điểm số cao nhất trong các lần nộp đã được chấm và công bố).
 * **BR_PEER_009 (Quy định Hạn chấm chéo Review Window):**
   * Hệ thống áp dụng mốc **Hạn chấm chéo (Review Window)** gia hạn thêm **3 ngày** tính từ mốc Hạn nộp bài (Submission Deadline). Học viên phải hoàn thành việc chấm chéo 3 bài của bạn học trong khoảng thời gian này.
 * **BR_GRADE_001 (Trọng số Điểm Tổng kết Khóa học - Course Final Grade Weighting & Passing Calculation):**
@@ -180,18 +180,18 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Ràng buộc trọng số:* Tổng trọng số của tất cả các cột điểm bắt buộc phải bằng đúng 100% ($1.0$). Giảng viên có quyền cấu hình tỷ trọng cho từng bài Graded Item trong Course Builder; nếu chưa thiết lập tùy biến, hệ thống tự động phân bổ trọng số đồng đều cho các bài.
   * *Điều kiện hoàn thành khóa học:* Học viên được công nhận hoàn thành khóa học và đủ điều kiện cấp chứng chỉ khi: (1) Điểm tổng kết $\text{Final Grade} \ge 80.0\%$ (hoặc ngưỡng `passing_threshold_percent` do khóa học quy định), và (2) 100% các Graded Items bắt buộc phải được nộp và có điểm công bố (không bỏ trống bất kỳ bài tính điểm nào).
 * **BR_GRADE_002 (Minh bạch Nhãn Nguồn gốc Người chấm - Grading Provenance Transparency & Audit Trail):**
-  * Mọi con điểm trong hệ thống (hiển thị trên Hàng chờ Chấm bài và giao diện Học viên) bắt buộc phải mang nhãn nguồn gốc xuất xứ rõ ràng (`Grading Provenance Label`):
+  * Mọi con điểm trong hệ thống (hiển thị trên Sổ điểm Gradebook và giao diện Học viên) bắt buộc phải mang nhãn nguồn gốc xuất xứ rõ ràng (`Grading Provenance Label`):
     1. `AUTO`: Hệ thống tự động chấm (Graded Quiz, Sandbox Auto-grader).
     2. `PEER`: Điểm trung bình cộng đồng thuận từ bạn học qua rubric chấm chéo.
     3. `TA`: Trợ giảng chấm trực tiếp hoặc giải cứu (Cold start, Outlier queue, Appeal).
     4. `INSTRUCTOR`: Giảng viên phụ trách chấm hoặc ghi đè tối cao (Master Override).
-  * *Thẩm quyền ghi đè phân cấp:* Điểm số tuân theo thứ bậc thẩm quyền $\text{AUTO} \le \text{PEER} < \text{TA} < \text{INSTRUCTOR}$. Điểm của cấp cao hơn được phép ghi đè điểm của cấp thấp hơn. Giảng viên phụ trách (`INSTRUCTOR`) sở hữu thẩm quyền cao nhất (`Master Override`) để chốt hoặc điều chỉnh điểm số sau cùng; điểm chấm sau cùng của Giảng viên có hiệu lực tuyệt đối và thay thế trực tiếp kết quả chấm trước đó (không bị ràng buộc bởi `max()`).
+  * *Thẩm quyền ghi đè phân cấp:* Điểm số tuân theo thứ bậc thẩm quyền $\text{AUTO} \le \text{PEER} < \text{TA} < \text{INSTRUCTOR}$. Điểm của cấp cao hơn được phép ghi đè điểm của cấp thấp hơn.
   * *Nhật ký Audit Log bất biến:* Khi điểm số bị ghi đè bởi cấp thẩm quyền cao hơn, hệ thống ghi vết vào bảng audit log với đầy đủ thông tin: điểm cũ, điểm mới, người chấm (`actor_user_id`), vai trò (`actor_role`), lý do can thiệp và timestamp để đảm bảo tính minh bạch học thuật.
 * **BR_GRADE_003 (Cơ chế Khóa mềm Chống chấm trùng & Tự động nhả khóa - Atomic Soft Lock 30 mins & Automatic Expiry):**
   * *Khóa độc quyền có thời hạn (Task Lease):* Khi một Trợ giảng hoặc Giảng viên mở bài nộp trong hàng chờ để chấm, hệ thống thực thi câu lệnh SQL nguyên tử cấp quyền khóa mềm trong **30 phút** (`TASK_LEASE_TIMEOUT_MINUTES = 30`):
     `UPDATE peer_assignment_submissions SET locked_by_user_id = :user_id, lock_expires_at = :expires_at WHERE id = :id AND (locked_by_user_id IS NULL OR lock_expires_at < :now OR locked_by_user_id = :user_id)`
   * *Chống xung đột chấm trùng:* Khi bài nộp đang có khóa hiệu lực (`lock_expires_at > now()`), hệ thống chặn các nhân sự khác mở bài để chấm, hiển thị trạng thái `BEING_GRADED` kèm tên người đang chấm và thời gian đếm ngược.
-  * *Gia hạn khóa (Lease Renewal Policy - Reset from Current Time):* Cho phép gửi heartbeat ngầm gia hạn khi người chấm đang tích cực tương tác hoặc bấm nút *"Gia hạn (+15p)"*. Khi gia hạn, thời hạn khóa được tái thiết lập tính từ thời điểm hiện tại (`new_expires = now + timeout_minutes`), **tuyệt đối không cộng dồn lũy kế** (`not accumulating/stacking`) vào mốc hết hạn cũ. Quy tắc này vừa đảm bảo người chấm có đủ thời gian làm việc chuẩn mực tính từ thời điểm yêu cầu, vừa triệt tiêu khả năng người dùng bấm gia hạn dồn dập nhiều lần để "ôm giữ bài" vô thời hạn (hoarding prevention), duy trì tính thông suốt và công bằng của hàng chờ chấm bài.
+  * *Gia hạn khóa (Lease Renewal):* Cho phép gửi heartbeat ngầm gia hạn khi người chấm đang tích cực tương tác hoặc bấm nút *"Gia hạn thêm 15 phút"*.
   * *Tự động nhả khóa khi hết hạn:* Nếu phiên làm việc bị bỏ dở hoặc quá 30 phút không hoàn tất (`now() >= lock_expires_at`), hệ thống tự động giải phóng khóa, trả bài nộp về hàng chờ công khai.
   * *Nhả khóa chủ động:* Khi người chấm bấm *"Hủy & Nhả bài"* hoặc điều hướng quay lại, khóa được gỡ bỏ ngay lập tức (`locked_by_user_id = NULL`, `lock_expires_at = NULL`).
 * **BR_GRADE_004 (Quy định Chấm & Công bố Điểm Tức Thì - Immediate Publishing on Staff Grading):**
@@ -326,7 +326,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_LEARNING_001 (Tính toán Tiến độ, Khử trùng lặp & Ràng buộc Bảng Completed Items):**
   * Mỗi khi hoàn thành 1 bài học (Video, Reading, Quiz), hệ thống tự động lưu vết bản ghi trạng thái hoàn thành vào cơ sở dữ liệu (`user_item_completions`) với khóa chính duy nhất `(user_id, item_id)` (`uq_user_item_completion`) và timestamp `completed_at`, đồng thời thêm `item_id` vào danh sách `completed_item_ids` (sử dụng tập hợp `set` để khử trùng lặp).
   * *Theo dõi Thời gian & Vị trí Bài học gần nhất (Granular Resuming & Timestamps):*
-    * `enrolled_at`: Mốc thời gian ghi danh khóa học lần đầu (được khởi tạo khi học viên bắt đầu phiên học qua `GetProgress` trên `/learn/[courseId]`; các truy vấn kiểm tra chéo từ Review, Certificate, Enterprise Seat hay Enrollment Guard sử dụng hàm đọc thuần túy `find_progress` theo chuẩn CQS để không tự động ghi danh nhầm).
+    * `enrolled_at`: Mốc thời gian ghi danh khóa học lần đầu.
     * `completed_at`: Mốc thời gian hoàn thành 100% khóa học (chuyển sang trạng thái `COMPLETED`).
     * `last_accessed_at` & `last_accessed_item_id`: Tự động cập nhật mỗi khi học viên truy cập hoặc đổi bài học trong khóa học qua RPC `GetProgress(course_id, current_item_id)`.
     * Khi học viên bấm "Tiếp tục học" trên giao diện `/my-learning` hoặc mở `/learn/[courseId]`, hệ thống tự động đưa học viên tới bài học tương ứng với `last_accessed_item_id`.
@@ -345,7 +345,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Bảo mật & Kẹp chặn Dữ liệu (Anti-Cheating & Velocity Limit):*
     * `delta_seconds` bị kẹp trong khoảng $[1, 120]$ giây (`MAX_HEARTBEAT_DELTA_SECONDS = 120`).
     * Áp dụng Rate Limiting tối đa 1 heartbeat mỗi 5 giây cho mỗi `user_id` qua Redis token với cơ chế Fail-open an toàn.
-    * Bắt buộc kiểm tra Enrollment Guard (read-only qua `find_progress`): Học viên bắt buộc phải đã có bản ghi tiến độ ghi danh khóa học (`enrolled_at != ""`) và `item_id` phải thực sự thuộc cấu trúc khóa học; phía Frontend chỉ kích hoạt `useStudyTracker` khi `progress.enrolledAt` hợp lệ và tự dừng heartbeat nếu nhận `PERMISSION_DENIED` / `UNAUTHENTICATED`.
+    * Bắt buộc kiểm tra Enrollment Guard: Học viên bắt buộc phải đã ghi danh khóa học (`enrolled_at != ""`) và `item_id` phải thực sự thuộc cấu trúc khóa học.
   * *Phân giải Múi giờ Tuyệt đối (Server-Authoritative Timezone):*
     * Server sử dụng đồng hồ UTC tuyệt đối, chuyển đổi sang ngày địa phương bằng `zoneinfo.ZoneInfo(client_timezone)` (mặc định fallback `"Asia/Ho_Chi_Minh"` / UTC+7) để xác định `study_date` (YYYY-MM-DD), triệt tiêu nguy cơ mất chuỗi streak sau nửa đêm và chống gian lận ngày từ client.
   * *Quy tắc Tính Chuỗi Ngày Học Liên tục (Streak Engine):*
@@ -403,12 +403,20 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_FORUM_001 (Ràng buộc 1 Vote/User & Idempotent Toggle):**
   * Mỗi `user_id` chỉ được vote 1 lượt trên mỗi bài/câu trả lời. Bấm Upvote lần đầu sẽ tăng +1 điểm; bấm lại lần nữa sẽ hủy vote (Un-vote) và giảm -1 điểm.
 * **BR_FORUM_002 (Phân quyền & Tự động Ghim Thread khi Pin Staff Answer):**
-  * Chỉ tài khoản có vai trò `INSTRUCTOR`, `TA`, hoặc `SUPER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`).
+  * Chỉ Giảng viên phụ trách (`owner_id`), Đồng giảng viên (`co_instructor_ids`), Trợ giảng (`ta_ids`) của chính khóa học đó, hoặc `SUPER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`). Giảng viên của khóa học khác không có quyền can thiệp vào khóa học không thuộc phạm vi quản lý của mình.
   * Khi một câu trả lời được ghim làm `is_staff_answer = True`, bài thảo luận gốc (Thread) cũng tự động được đánh dấu `is_staff_pinned = True` để ưu tiên hiển thị trên đầu danh sách diễn đàn.
 * **BR_FORUM_003 (Phân quyền Tác giả/Moderation & Chỉ báo Bài viết đã Chỉnh sửa):**
   * *Quyền Chỉnh sửa & Xóa:* Tác giả bài viết (`author_user_id == current_user.id`) có quyền Cập nhật (`UpdateThread`, `UpdateReply`) hoặc Xóa (`DeleteThread`, `DeleteReply`) bài viết/bình luận của chính mình.
   * *Chỉ báo đã Chỉnh sửa (Edit State Indicator):* Ngay khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động cập nhật cờ `is_edited = True` và ghi lại mốc thời gian `edited_at` để tất cả người xem phân biệt được nội dung đã qua chỉnh sửa.
-  * *Ban kiểm duyệt (Staff Moderation):* Trợ giảng và Giảng viên (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền Xóa (Delete) bài viết hoặc bình luận vi phạm của bất kỳ người dùng nào nhưng không được quyền thay đổi nội dung (Update) bài đăng của người khác.
+  * *Ban kiểm duyệt (Staff Moderation):* Trợ giảng và Giảng viên phụ trách khóa học (`owner_id`, `co_instructor_ids`, `ta_ids`, `ADMIN`) có quyền Xóa (Delete) bài viết hoặc bình luận vi phạm của bất kỳ người dùng nào nhưng không được quyền thay đổi nội dung (Update) bài đăng của người khác.
+* **BR_FORUM_004 (Ràng buộc Vai trò theo Ngữ cảnh Khóa học & Ghi danh Thảo luận - Contextual Role Resolution & Enrollment Guard):**
+  * *Phân giải vai trò theo ngữ cảnh (Contextual Role Resolution):* Vai trò của người dùng trên diễn đàn được xác định động theo từng khóa học cụ thể thay vì lấy vai trò tài khoản toàn cục (`user.role`). Nếu một tài khoản Giảng viên tham gia vào khóa học của người khác (nơi họ không phải chủ sở hữu hay đồng giảng dạy), họ bắt buộc tham gia với tư cách **Học viên (`Learner`)**, các câu trả lời không được tự động gắn cờ `is_staff_answer`, và không được phép ghim bài.
+  * *Ràng buộc Ghi danh (Enrollment Guard):* Người dùng (ngoại trừ Đội ngũ giảng dạy phụ trách khóa và Admin) bắt buộc phải có bản ghi ghi danh/đăng ký khóa học (`LearningProgressModel.enrolled_at`) mới được phép tạo chủ đề (`create_thread`) hoặc gửi phản hồi (`post_reply`). Nếu chưa đăng ký, hệ thống từ chối với lỗi `PermissionError` (ConnectRPC `PERMISSION_DENIED`).
+  * *Kiểm soát Bàn làm việc Q&A Giảng viên (`/instructor/courses/[courseId]/discussions`):* Chỉ chủ sở hữu (`owner_id`), đồng giảng viên (`co_instructor_ids`), hoặc Admin mới có quyền truy cập màn hình quản trị hỏi đáp Q&A của khóa học. Các giảng viên khác khi truy cập sẽ nhận màn hình từ chối quyền truy cập (403 Bounded Context Guard) và nút chuyển hướng sang Diễn đàn học viên nếu họ đang theo học.
+* **BR_FORUM_005 (Cách ly Luồng Thảo luận Lớp học & Phạm vi Kiểm duyệt - Class-Scoped Discussion Feed & Moderation Boundary):**
+  * *Cách ly Nguồn dữ liệu (Feed Isolation):* Khi xem danh sách thảo luận (`ListThreads`), người dùng thông thường chỉ được xem các chủ đề thuộc các khóa học mà họ thực sự tham gia (đã đăng ký học hoặc đang phụ trách giảng dạy). Backend tự động lọc danh sách khóa học khả dụng (`accessible_course_ids = enrolled_course_ids | teaching_course_ids`). Nếu người dùng cố ý truyền `course_id` của một khóa học họ không tham gia, hệ thống trả về danh sách rỗng (`[]`). Chỉ Super Admin mới có quyền xem toàn bộ thảo luận trên nền tảng.
+  * *Bộ lọc Khóa học Frontend (Scoped Course Filter):* Dropdown chọn khóa học trên Diễn đàn (`/forum`) chỉ nạp danh sách các khóa học mà người dùng có quyền truy cập (khóa đã đăng ký và khóa phụ trách giảng dạy).
+  * *Phạm vi Kiểm duyệt theo Khóa học (Course-Specific Moderation):* Quyền Xóa bài (`DeleteThread`, `DeleteReply`) và Ghim câu trả lời (`PinStaffAnswer`) cho tài khoản Giảng viên chỉ được kích hoạt đối với các chủ đề/bình luận thuộc đúng khóa học mà Giảng viên đó sở hữu (`owner_id`) hoặc đồng phụ trách (`co_instructor_ids`). Không hiển thị hoặc cho phép can thiệp vào các bài đăng thuộc khóa học của Giảng viên khác.
 
 ---
 
