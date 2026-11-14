@@ -57,9 +57,16 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
     }
   };
 
-  const handlePostAnnouncement = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
+  const handlePostAnnouncement = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
+    const titleInput = document.getElementById("announcementTitle") as HTMLInputElement | null;
+    const contentInput = document.getElementById(
+      "announcementContent",
+    ) as HTMLTextAreaElement | null;
+    const finalTitle = (title || titleInput?.value || "").trim();
+    const finalContent = (content || contentInput?.value || "").trim();
+
+    if (!finalTitle || !finalContent) return;
 
     setSubmitting(true);
     setMessage(null);
@@ -68,13 +75,15 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
       const client = getRpcClient(CatalogService);
       const res = await client.createCourseAnnouncement({
         courseId,
-        title,
-        content,
+        title: finalTitle,
+        content: finalContent,
       });
 
       if (res.announcement) {
         setTitle("");
         setContent("");
+        if (titleInput) titleInput.value = "";
+        if (contentInput) contentInput.value = "";
         setMessage({ type: "success", text: "Đã đăng thông báo khóa học thành công!" });
         await refreshAnnouncements();
       }
@@ -150,7 +159,7 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
               Tạo Thông báo Mới
             </h2>
 
-            <form onSubmit={handlePostAnnouncement} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <label
                   htmlFor="announcementTitle"
@@ -186,11 +195,16 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={submitting} className="cursor-pointer font-bold">
+                <Button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => handlePostAnnouncement()}
+                  className="cursor-pointer font-bold"
+                >
                   <span aria-live="polite">{submitting ? "Đang gửi…" : "Đăng Thông báo Ngay"}</span>
                 </Button>
               </div>
-            </form>
+            </div>
           </Surface>
         )}
 
