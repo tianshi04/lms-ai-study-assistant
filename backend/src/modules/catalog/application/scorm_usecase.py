@@ -8,9 +8,9 @@ from typing import Any
 
 from uuid6 import uuid7
 
+from src.modules.catalog.application.helpers import verify_catalog_course_ownership
 from src.modules.catalog.domain import (
     Course,
-    CourseStatus,
     ICatalogRepository,
     InteractiveTranscript,
     InVideoQuiz,
@@ -25,7 +25,6 @@ from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
 from src.shared.permissions import (
     CoursePermission,
-    enforce_course_ownership,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,25 +50,16 @@ class ScormUseCase:
         allow_read_only_pending: bool = False,
         required_permission: CoursePermission | None = None,
         disallow_published_mutation: bool = False,
-    ) -> None:
-        if user and course_id:
-            course = await repo.get_course_detail(course_id)
-            if course:
-                enforce_course_ownership(
-                    course,
-                    user,
-                    required_permission=required_permission,
-                    action_name=action_name,
-                    allow_read_only_pending=allow_read_only_pending,
-                )
-                if (
-                    disallow_published_mutation
-                    and course.status == CourseStatus.PUBLISHED
-                    and not getattr(user, "is_admin", False)
-                ):
-                    raise PermissionError(
-                        f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
-                    )
+    ):
+        return await verify_catalog_course_ownership(
+            repo=repo,
+            course_id=course_id,
+            user=user,
+            action_name=action_name,
+            allow_read_only_pending=allow_read_only_pending,
+            required_permission=required_permission,
+            disallow_published_mutation=disallow_published_mutation,
+        )
 
     async def export_course_to_scorm(
         self, course_id: str, current_user: CurrentUser | None = None

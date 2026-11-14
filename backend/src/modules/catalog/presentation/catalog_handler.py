@@ -969,6 +969,43 @@ class CatalogHandler(CatalogService):
             ]
         )
 
+    async def send_student_reminder(
+        self,
+        request: pb.SendStudentReminderRequest,
+        ctx: RequestContext[
+            pb.SendStudentReminderRequest, pb.SendStudentReminderResponse
+        ],
+    ) -> pb.SendStudentReminderResponse:
+        user = require_current_user()
+        course_id = request.course_id.strip() if request.course_id else ""
+        if not course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
+        if not request.title or not request.title.strip():
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Tiêu đề thông báo không được để trống"
+            )
+        if not request.content or not request.content.strip():
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Nội dung thông báo không được để trống"
+            )
+        try:
+            sent_count, sent_ids = await self.use_case.send_student_reminder(
+                course_id=course_id,
+                student_ids=list(request.student_ids),
+                title=request.title.strip(),
+                content=request.content.strip(),
+                current_user=user,
+            )
+            return pb.SendStudentReminderResponse(
+                sent_count=sent_count,
+                success=True,
+                sent_student_ids=sent_ids,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
     async def get_instructor_activity_timeline(
         self,
         request: pb.GetInstructorActivityTimelineRequest,
