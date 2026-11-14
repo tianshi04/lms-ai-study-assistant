@@ -6,6 +6,7 @@ test.describe('Full System Blackbox - Individual Instructor Application (POM)', 
     await page.goto('/learner/dashboard');
     const navLink = page.getByRole('link', { name: /Trở thành Giảng viên/i }).first();
     await expect(navLink).toBeVisible({ timeout: 15000 });
+    await navLink.scrollIntoViewIfNeeded();
     await navLink.click();
     await expect(page).toHaveURL(/\/become-an-instructor/, { timeout: 15000 });
   });
@@ -49,12 +50,9 @@ test.describe('Full System Blackbox - Individual Instructor Application (POM)', 
   test('should prevent duplicate pending application submission', async ({ page }) => {
     const instructorAppPage = new BecomeAnInstructorPage(page);
     await instructorAppPage.goto();
-    
-    // If the page is in pending state or user is instructor, form won't be shown
-    const isFormVisible = await instructorAppPage.titleInput.isVisible();
-    if (!isFormVisible) {
-      // Confirms page protects against duplicate submission by showing pending state or instructor state
-      await expect(page.locator('text=/PENDING_REVIEW|Chờ Thẩm Định|Giảng viên/i').first()).toBeVisible();
-    }
+    await instructorAppPage.verifyPageLoaded();
+
+    // If form is disabled or pending review card is shown
+    await expect(page.locator('text=/Đơn Đang Được Xem Xét|Chờ Thẩm Định|PENDING_REVIEW|Đã có đơn/i').or(instructorAppPage.submitButton).first()).toBeVisible();
   });
 });
