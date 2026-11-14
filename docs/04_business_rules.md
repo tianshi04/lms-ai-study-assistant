@@ -456,6 +456,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Giảng viên/Admin được phép sắp xếp lại thứ tự của Tuần học (`ReorderWeekModules`), Bài học (`ReorderLessons`) và Học liệu (`ReorderLearningItems`) bằng giao diện Kéo thả (Drag & Drop) hoặc Nút di chuyển Nhanh (Up/Down).
   - Thứ tự vị trí mới được cập nhật đồng bộ trong 1 DB Transaction Atomic và duy trì chỉ số `order_index` cố định để hiển thị đồng nhất cho cả Học viên và Giảng viên.
 
+* **BR_INSTRUCTOR_007 (Quy định Nhắc nhở Học tập Đích danh Student Reminder):**
+  * Giảng viên thực hiện gửi thông báo đôn đốc học tập (`SendStudentReminder`) được xác thực quyền sở hữu khóa học (`enforce_course_ownership`).
+  * Yêu cầu cung cấp `course_id`, danh sách `student_ids`, `title` và `content`.
+  * Khác với `CreateCourseAnnouncement` (phát thanh công khai cho toàn thể lớp học `ANNOUNCEMENT`), `SendStudentReminder` chỉ gửi riêng tư đích danh cho các học viên được chỉ định (`NotificationCategory.ACADEMIC`), đảm bảo tính bảo mật và sự riêng tư về tiến độ học tập cá nhân.
+
 ---
 
 ## 9. Quy tắc Hệ thống Thông báo (BR_NOTIF)
