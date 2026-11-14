@@ -36,6 +36,8 @@ const InstructorStudentDetailModal = dynamic(
   { ssr: false },
 );
 
+import type { BulkReminderStudent } from "./InstructorBulkReminderModal";
+
 const InstructorBulkReminderModal = dynamic(
   () => import("./InstructorBulkReminderModal").then((m) => m.InstructorBulkReminderModal),
   { ssr: false },
@@ -111,13 +113,27 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     currentTimeMs,
   });
 
+  const [singleReminderStudent, setSingleReminderStudent] = useState<BulkReminderStudent | null>(
+    null,
+  );
+
   const handleSelectCourse = (courseId: string) => {
     setSelectedCourseId(courseId);
     setViewMode("specific");
   };
 
   const handleNudgeStudent = (student: StudentWithPacing) => {
-    setNudgedSpecificStudentIds((prev) => new Set(prev).add(student.userId));
+    setSingleReminderStudent({
+      userId: student.userId,
+      userName: student.userName,
+      userEmail: student.userEmail,
+      progressPercent: student.progressPercent,
+      pace: student.pace,
+      paceDesc: student.paceDesc,
+      courseId: activeCourse?.id,
+      courseTitle: activeCourse?.title,
+    });
+    setIsBulkReminderModalOpen(true);
   };
 
   return (
@@ -217,7 +233,10 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               lastMonthNumber={lastMonthNumber}
               nudgedSpecificStudentIds={nudgedSpecificStudentIds}
               onNudgeStudent={handleNudgeStudent}
-              onNudgeAllBehind={() => setIsBulkReminderModalOpen(true)}
+              onNudgeAllBehind={() => {
+                setSingleReminderStudent(null);
+                setIsBulkReminderModalOpen(true);
+              }}
               onSelectStudentForDetail={(record) => {
                 setSelectedStudentForDetail(record);
                 setIsStudentDetailModalOpen(true);
@@ -267,21 +286,31 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
       {isBulkReminderModalOpen && activeCourse && (
         <InstructorBulkReminderModal
-          key={`${activeCourse.id}-${isBulkReminderModalOpen}`}
+          key={`${activeCourse.id}-${isBulkReminderModalOpen}-${singleReminderStudent?.userId || "all"}`}
           open={isBulkReminderModalOpen}
-          onOpenChange={setIsBulkReminderModalOpen}
+          onOpenChange={(isOpen) => {
+            setIsBulkReminderModalOpen(isOpen);
+            if (!isOpen) setSingleReminderStudent(null);
+          }}
           courseId={activeCourse.id}
           courseTitle={activeCourse.title}
-          students={courseData.rawStudentsWithPacing
-            .filter((s) => s.pace === "BEHIND")
-            .map((s) => ({
-              userId: s.userId,
-              userName: s.userName,
-              userEmail: s.userEmail,
-              progressPercent: s.progressPercent,
-              paceDesc: s.paceDesc,
-            }))}
-          bottleneckWeek={courseData.bottleneckWeek}
+          students={
+            singleReminderStudent
+              ? [singleReminderStudent]
+              : courseData.rawStudentsWithPacing
+                  .filter((s) => s.pace === "BEHIND")
+                  .map((s) => ({
+                    userId: s.userId,
+                    userName: s.userName,
+                    userEmail: s.userEmail,
+                    progressPercent: s.progressPercent,
+                    pace: s.pace,
+                    paceDesc: s.paceDesc,
+                    courseId: activeCourse.id,
+                    courseTitle: activeCourse.title,
+                  }))
+          }
+          bottleneckWeek={singleReminderStudent ? null : courseData.bottleneckWeek}
           onSuccess={(studentIds) => {
             studentIds.forEach((id) =>
               setNudgedSpecificStudentIds((prev) => new Set(prev).add(id)),

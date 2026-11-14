@@ -243,7 +243,7 @@ export function InstructorCourseDeepDiveView({
       <div className="lg:col-span-8 space-y-5">
         {/* Card 1: Khung Biểu Đồ & Tab Phân Tích Lớp Học */}
         <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
-          <div className="space-y-3 pb-3 border-b border-outline-variant/60">
+          <div className="space-y-3 pb-1">
             {/* Hàng 1: Tabs biểu đồ môn học */}
             <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
               <button

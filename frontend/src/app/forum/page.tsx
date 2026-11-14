@@ -318,19 +318,31 @@ function ForumPageContent() {
     if (urlCourseId && urlCourseId !== "ALL") {
       setSelectedCourseId(urlCourseId);
     }
-  }, [urlCourseId]);
+    if (urlThreadId) {
+      setStatusFilter("ALL");
+    }
+  }, [urlCourseId, urlThreadId]);
 
   useEffect(() => {
     if (urlThreadId && !loading && threads.length > 0) {
-      setSelectedModalThreadId(urlThreadId);
       setExpandedThreads((prev) => ({ ...prev, [urlThreadId]: true }));
-      const timer = setTimeout(() => {
+      // Cuộn mượt mà trực tiếp tới bài thảo luận mục tiêu trên trang
+      const scrollToThread = () => {
         const el = document.getElementById(`thread-${urlThreadId}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
+          return true;
         }
-      }, 150);
-      return () => clearTimeout(timer);
+        return false;
+      };
+
+      if (!scrollToThread()) {
+        const timer = setTimeout(scrollToThread, 150);
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(scrollToThread, 300);
+        return () => clearTimeout(timer);
+      }
     }
   }, [urlThreadId, loading, threads]);
 
@@ -864,17 +876,21 @@ function ForumPageContent() {
                   shape="2xl"
                   key={thread.id}
                   id={`thread-${thread.id}`}
-                  className={`p-6 transition-colors [content-visibility:auto] [contain-intrinsic-size:auto_240px] ${
+                  className={`p-6 transition-all duration-300 ${
                     isTargetThread
-                      ? "border-primary ring-2 ring-primary/50 bg-primary/5"
-                      : "hover:border-accent-hover"
+                      ? "border-primary ring-4 ring-primary/40 bg-primary/5 shadow-md"
+                      : "hover:border-accent-hover [content-visibility:auto] [contain-intrinsic-size:auto_240px]"
                   }`}
                 >
                   {/* Thread Header */}
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
-                        {isTargetThread && <Badge variant="primary">📌 Bài từ thông báo</Badge>}
+                        {isTargetThread && (
+                          <Badge variant="primary" className="animate-pulse">
+                            📌 Bài thảo luận mục tiêu
+                          </Badge>
+                        )}
                         {thread.isStaffPinned && <Badge variant="warning">GHIM</Badge>}
                         {Boolean(
                           thread.title.trim().toLowerCase().startsWith("[thông báo]") ||
@@ -1020,123 +1036,131 @@ function ForumPageContent() {
                   {/* Replies List */}
                   {isExpanded && (
                     <div className="mt-4 space-y-4 border-l-2 border-border pl-4 md:pl-6 pt-2">
-                      {thread.replies.map((reply) => {
-                        const isReplyAuthor = Boolean(
-                          currentUserId && reply.authorUserId === currentUserId,
-                        );
-                        const canDeleteReply = isReplyAuthor || isCourseModerator(thread.courseId);
-                        const isEditingThisReply = editingReplyId === reply.id;
+                      {[...thread.replies]
+                        .sort((a, b) => {
+                          if (Boolean(a.isStaffAnswer) !== Boolean(b.isStaffAnswer)) {
+                            return a.isStaffAnswer ? -1 : 1;
+                          }
+                          return 0;
+                        })
+                        .map((reply) => {
+                          const isReplyAuthor = Boolean(
+                            currentUserId && reply.authorUserId === currentUserId,
+                          );
+                          const canDeleteReply =
+                            isReplyAuthor || isCourseModerator(thread.courseId);
+                          const isEditingThisReply = editingReplyId === reply.id;
 
-                        return (
-                          <div
-                            key={reply.id}
-                            className={`p-4 rounded-xl text-sm transition-colors ${
-                              reply.isStaffAnswer
-                                ? "bg-warning/10 border border-warning/20"
-                                : "bg-muted/50 border border-border"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2 mb-2">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold text-foreground">
-                                  {reply.authorName || "Thành viên LMS"}
-                                </span>
-                                {reply.isStaffAnswer && <Badge variant="warning">BQT</Badge>}
-                                <span className="text-xs text-muted-foreground">
-                                  ({formatRoleName(reply.authorRole)})
-                                </span>
-                                {reply.isEdited && (
-                                  <span className="text-xs text-warning font-medium italic">
-                                    {"(Đã chỉnh sửa)"}
+                          return (
+                            <div
+                              key={reply.id}
+                              className={`p-4 rounded-xl text-sm transition-colors ${
+                                reply.isStaffAnswer
+                                  ? "bg-warning/10 border border-warning/20"
+                                  : "bg-muted/50 border border-border"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-semibold text-foreground">
+                                    {reply.authorName || "Thành viên LMS"}
                                   </span>
-                                )}
-                              </div>
+                                  {reply.isStaffAnswer && <Badge variant="warning">BQT</Badge>}
+                                  <span className="text-xs text-muted-foreground">
+                                    ({formatRoleName(reply.authorRole)})
+                                  </span>
+                                  {reply.isEdited && (
+                                    <span className="text-xs text-warning font-medium italic">
+                                      {"(Đã chỉnh sửa)"}
+                                    </span>
+                                  )}
+                                </div>
 
-                              <div className="flex items-center gap-2">
-                                {isReplyAuthor && (
-                                  <Button
-                                    variant="text"
-                                    size="sm"
-                                    onClick={() => startEditReply(reply)}
-                                    className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
-                                  >
-                                    {"Sửa"}
-                                  </Button>
-                                )}
-                                {canDeleteReply && (
-                                  <Button
-                                    variant="text"
-                                    size="sm"
-                                    onClick={() => handleDeleteReply(reply.id)}
-                                    className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
-                                  >
-                                    {"Xóa"}
-                                  </Button>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {isReplyAuthor && (
+                                    <Button
+                                      variant="text"
+                                      size="sm"
+                                      onClick={() => startEditReply(reply)}
+                                      className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
+                                    >
+                                      {"Sửa"}
+                                    </Button>
+                                  )}
+                                  {canDeleteReply && (
+                                    <Button
+                                      variant="text"
+                                      size="sm"
+                                      onClick={() => handleDeleteReply(reply.id)}
+                                      className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
+                                    >
+                                      {"Xóa"}
+                                    </Button>
+                                  )}
 
-                                {isCourseModerator(thread.courseId) && !reply.isStaffAnswer && (
-                                  <Button
-                                    variant="outlined"
-                                    size="sm"
-                                    onClick={() => handlePinStaffAnswer(reply.id)}
-                                    className="text-xs text-warning bg-warning/10 hover:bg-warning/20 border-warning/30 px-3 py-1 rounded-full h-auto"
-                                  >
-                                    {"Ghim câu trả lời"}
-                                  </Button>
-                                )}
+                                  {isCourseModerator(thread.courseId) && !reply.isStaffAnswer && (
+                                    <Button
+                                      variant="outlined"
+                                      size="sm"
+                                      onClick={() => handlePinStaffAnswer(reply.id)}
+                                      className="text-xs text-warning bg-warning/10 hover:bg-warning/20 border-warning/30 px-3 py-1 rounded-full h-auto"
+                                    >
+                                      {"Ghim câu trả lời"}
+                                    </Button>
+                                  )}
 
-                                <Button
-                                  variant={reply.isUpvotedByMe ? "filled" : "outlined"}
-                                  size="sm"
-                                  onClick={() => handleVote(reply.id, true)}
-                                  className="rounded-full text-xs gap-1 px-3 py-1 h-auto"
-                                >
-                                  <ChevronUp aria-hidden="true" className="w-3.5 h-3.5" />
-                                  <span className="font-bold">{reply.upvoteCount}</span>
-                                </Button>
-                              </div>
-                            </div>
-
-                            {isEditingThisReply ? (
-                              <div className="mt-2 space-y-2">
-                                <Textarea
-                                  value={editReplyContent}
-                                  onChange={(e) => setEditReplyContent(e.target.value)}
-                                  rows={3}
-                                  className="bg-card p-3 text-sm"
-                                />
-                                <div className="flex justify-end gap-2">
                                   <Button
-                                    variant="text"
+                                    variant={reply.isUpvotedByMe ? "filled" : "outlined"}
                                     size="sm"
-                                    onClick={() => setEditingReplyId(null)}
-                                    className="text-xs font-medium"
+                                    onClick={() => handleVote(reply.id, true)}
+                                    className="rounded-full text-xs gap-1 px-3 py-1 h-auto"
                                   >
-                                    {"Hủy"}
-                                  </Button>
-                                  <Button
-                                    variant="filled"
-                                    size="sm"
-                                    onClick={() => handleUpdateReply(reply.id)}
-                                    disabled={
-                                      submittingEditReply ||
-                                      !editReplyContent.trim() ||
-                                      submittingEditReply
-                                    }
-                                    className="text-xs font-semibold"
-                                  >
-                                    {"Lưu thay đổi"}
+                                    <ChevronUp aria-hidden="true" className="w-3.5 h-3.5" />
+                                    <span className="font-bold">{reply.upvoteCount}</span>
                                   </Button>
                                 </div>
                               </div>
-                            ) : (
-                              <p className="text-foreground leading-relaxed whitespace-pre-line">
-                                {reply.content}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
+
+                              {isEditingThisReply ? (
+                                <div className="mt-2 space-y-2">
+                                  <Textarea
+                                    value={editReplyContent}
+                                    onChange={(e) => setEditReplyContent(e.target.value)}
+                                    rows={3}
+                                    className="bg-card p-3 text-sm"
+                                  />
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      variant="text"
+                                      size="sm"
+                                      onClick={() => setEditingReplyId(null)}
+                                      className="text-xs font-medium"
+                                    >
+                                      {"Hủy"}
+                                    </Button>
+                                    <Button
+                                      variant="filled"
+                                      size="sm"
+                                      onClick={() => handleUpdateReply(reply.id)}
+                                      disabled={
+                                        submittingEditReply ||
+                                        !editReplyContent.trim() ||
+                                        submittingEditReply
+                                      }
+                                      className="text-xs font-semibold"
+                                    >
+                                      {"Lưu thay đổi"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-foreground leading-relaxed whitespace-pre-line">
+                                  {reply.content}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
 
                       {/* Reply Input Form */}
                       <div className="pt-2">

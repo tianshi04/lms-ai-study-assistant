@@ -80,7 +80,6 @@ export function InstructorOverviewView({
   const [chartLearnerFilter, setChartLearnerFilter] = useState<"all" | "in_progress" | "completed">(
     "all",
   );
-  const [compareSortBy, setCompareSortBy] = useState<"rate" | "students" | "rating">("rate");
   const [certCourseFilter, setCertCourseFilter] = useState<string>("all");
   const [selectedDayFilter, setSelectedDayFilter] = useState<{ day: string; date: string } | null>(
     null,
@@ -225,7 +224,7 @@ export function InstructorOverviewView({
       <div className="lg:col-span-8 space-y-5">
         {/* Card 1: Khung Biểu Đồ Hoạt Động Toàn Sàn */}
         <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
-          <div className="space-y-3 pb-3 border-b border-outline-variant/60">
+          <div className="space-y-3 pb-1">
             {/* Tabs biểu đồ toàn sàn */}
             <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
               <button
@@ -348,7 +347,7 @@ export function InstructorOverviewView({
                     className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
                     aria-label="Lọc chứng chỉ theo khóa học"
                   >
-                    <option value="all">Tất cả khóa học ({allCompletedStudentsList.length})</option>
+                    <option value="all">Tất cả khóa học ({courses.length})</option>
                     {courses.map((c) => (
                       <option key={c.id} value={c.title}>
                         {c.title}
@@ -392,8 +391,6 @@ export function InstructorOverviewView({
             <InstructorCourseComparisonTab
               courses={enrichedCoursesForComparison}
               activeCourseId={activeCourse?.id}
-              compareSortBy={compareSortBy}
-              onChangeCompareSortBy={setCompareSortBy}
               onSelectCourse={onSelectCourse}
             />
           )}

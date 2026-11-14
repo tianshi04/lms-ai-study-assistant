@@ -14,6 +14,7 @@ export interface BulkReminderStudent {
   userName: string;
   userEmail?: string;
   progressPercent?: number;
+  pace?: "AHEAD" | "ON_TRACK" | "BEHIND";
   paceDesc?: string;
   courseId?: string;
   courseTitle?: string;
@@ -36,7 +37,33 @@ export interface InstructorBulkReminderModalProps {
 function getSmartTemplates(
   courseTitle: string,
   bottleneckWeek?: { weekNumber: number; title: string; dropRate?: number } | null,
+  singleStudent?: BulkReminderStudent | null,
 ) {
+  const isSingle = Boolean(singleStudent);
+  const effectiveCourseTitle =
+    singleStudent?.courseTitle || (courseTitle !== "Tất cả khóa học" ? courseTitle : "Khóa học");
+
+  if (isSingle && singleStudent) {
+    if (singleStudent.pace === "AHEAD") {
+      return {
+        subject: `[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${effectiveCourseTitle}`,
+        body: `Chào em ${singleStudent.userName},\n\nThầy/Cô rất vui mừng nhận thấy em đang học vượt tiến độ đề xuất môn "${effectiveCourseTitle}" (${Math.round(singleStudent.progressPercent ?? 0)}% đề cương).\n\nChúc em tiếp tục phát huy tinh thần tự học tuyệt vời này để sớm hoàn thành xuất sắc khóa học nhé!`,
+      };
+    }
+
+    if (bottleneckWeek) {
+      return {
+        subject: `[Đôn đốc học tập] Thầy/Cô hỗ trợ tiến độ môn ${effectiveCourseTitle}`,
+        body: `Chào em ${singleStudent.userName},\n\nQua theo dõi nhịp độ học tập môn "${effectiveCourseTitle}", Thầy/Cô nhận thấy em đang gặp khó khăn và dừng lại ở nội dung Tuần ${bottleneckWeek.weekNumber} (${bottleneckWeek.title}).\n\nEm hãy sắp xếp thời gian xem lại video bài giảng, trao đổi trên Diễn đàn thảo luận và hoàn thành các bài tập tuần này để bám sát lộ trình nhé!\n\nNếu gặp bất kỳ vướng mắc nào, em đừng ngần ngại nhắn Thầy/Cô hoặc đặt câu hỏi trên Diễn đàn để được trợ giúp kịp thời. Chúc em học tập hiệu quả!`,
+      };
+    }
+
+    return {
+      subject: `[Đôn đốc học tập] Thầy/Cô hỗ trợ tiến độ môn ${effectiveCourseTitle}`,
+      body: `Chào em ${singleStudent.userName},\n\nThầy/Cô gửi lời nhắc nhở và động viên tới em về tiến độ học tập môn "${effectiveCourseTitle}".\n\nEm hãy sắp xếp thời gian hoàn thành các bài học và bài kiểm tra tuần này để bám sát lộ trình và đạt chứng chỉ khóa học đúng hạn nhé!\n\nNếu gặp khó khăn trong quá trình học, em đừng ngần ngại trao đổi trên Diễn đàn môn học. Chúc em học tốt!`,
+    };
+  }
+
   const subject = `[Đôn đốc học tập] Thầy/Cô hỗ trợ tiến độ môn ${courseTitle}`;
 
   let body = "";
@@ -60,10 +87,25 @@ export function InstructorBulkReminderModal({
 }: InstructorBulkReminderModalProps) {
   const toast = useToast();
   const sendReminderMutation = useSendStudentReminderMutation();
-  const smartTemplates = getSmartTemplates(courseTitle, bottleneckWeek);
+
+  const isSingle = students.length === 1;
+  const singleStudent = isSingle ? students[0] : null;
+  const isAhead = singleStudent?.pace === "AHEAD";
+  const effectiveCourseTitle =
+    singleStudent?.courseTitle || (courseTitle !== "Tất cả khóa học" ? courseTitle : "Khóa học");
+
+  const smartTemplates = React.useMemo(
+    () => getSmartTemplates(courseTitle, bottleneckWeek, singleStudent),
+    [courseTitle, bottleneckWeek, singleStudent],
+  );
   const [subject, setSubject] = useState(smartTemplates.subject);
   const [content, setContent] = useState(smartTemplates.body);
   const [isSending, setIsSending] = useState(false);
+
+  React.useEffect(() => {
+    setSubject(smartTemplates.subject);
+    setContent(smartTemplates.body);
+  }, [smartTemplates]);
 
   const handleResetSmartTemplate = () => {
     setSubject(smartTemplates.subject);
@@ -131,10 +173,19 @@ export function InstructorBulkReminderModal({
       }
 
       if (totalSent > 0) {
-        toast.success(`Đã gửi thông báo nhắc nhở tới ${totalSent} học viên chậm tiến độ!`, {
-          description:
-            groups.size > 1 ? `Đã gửi trên ${groups.size} khóa học` : `Môn: ${courseTitle}`,
-        });
+        toast.success(
+          isSingle
+            ? isAhead
+              ? `Đã gửi lời khích lệ học tập tới học viên ${singleStudent?.userName}!`
+              : `Đã gửi thông báo nhắc nhở tới học viên ${singleStudent?.userName}!`
+            : `Đã gửi thông báo nhắc nhở tới ${totalSent} học viên!`,
+          {
+            description:
+              groups.size > 1
+                ? `Đã gửi trên ${groups.size} khóa học`
+                : `Môn: ${effectiveCourseTitle}`,
+          },
+        );
 
         if (onSuccess) {
           onSuccess(sentStudentIds);
@@ -148,7 +199,7 @@ export function InstructorBulkReminderModal({
             description:
               groups.size > 1
                 ? "Vui lòng kiểm tra lại trạng thái học viên."
-                : `Môn: ${courseTitle}`,
+                : `Môn: ${effectiveCourseTitle}`,
           },
         );
       }
@@ -166,17 +217,25 @@ export function InstructorBulkReminderModal({
       <Dialog.Content size="xl" className="space-y-4 max-h-[90vh] overflow-y-auto">
         <Dialog.Header>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
-              <Zap className="w-5 h-5 fill-destructive" aria-hidden="true" />
+            <div
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                isAhead ? "bg-warning/15 text-warning" : "bg-destructive/10 text-destructive"
+              }`}
+            >
+              {isAhead ? (
+                <Sparkles className="w-5 h-5 fill-warning/20 text-warning" aria-hidden="true" />
+              ) : (
+                <Zap className="w-5 h-5 fill-destructive" aria-hidden="true" />
+              )}
             </div>
             <div>
               <Dialog.Title className="text-base font-bold text-foreground">
-                Gửi Nhắc Nhở Học Tập Tới Học Viên Chậm Tiến Độ
+                {isSingle
+                  ? isAhead
+                    ? "Gửi Khích Lệ Học Tập Tới Học Viên"
+                    : "Gửi Nhắc Nhở Học Tập Tới Học Viên"
+                  : "Gửi Nhắc Nhở Học Tập Tới Học Viên Chậm Tiến Độ"}
               </Dialog.Title>
-              <Dialog.Description className="text-xs text-muted-foreground mt-0.5">
-                Xem trước và tùy chỉnh thông báo đôn đốc học tập trước khi gửi tới {students.length}{" "}
-                học viên môn &ldquo;{courseTitle}&rdquo;.
-              </Dialog.Description>
             </div>
           </div>
         </Dialog.Header>
@@ -218,7 +277,13 @@ export function InstructorBulkReminderModal({
                 <span>Danh sách học viên nhận thông báo ({students.length} SV)</span>
               </span>
               <span className="text-[10px] text-muted-foreground font-mono">
-                Nhóm: Chậm tiến độ
+                {isSingle
+                  ? isAhead
+                    ? "Nhóm: Vượt tiến độ"
+                    : singleStudent?.pace === "ON_TRACK"
+                      ? "Nhóm: Đúng tiến độ"
+                      : "Nhóm: Chậm tiến độ"
+                  : "Nhóm: Chậm tiến độ"}
               </span>
             </div>
 
@@ -300,7 +365,7 @@ export function InstructorBulkReminderModal({
         </div>
 
         {/* Footer Dialog */}
-        <Dialog.Footer className="pt-3 border-t border-outline-variant/60 flex items-center justify-between">
+        <Dialog.Footer className="pt-3 flex items-center justify-between">
           <Button
             type="button"
             variant="outlined"
@@ -314,11 +379,23 @@ export function InstructorBulkReminderModal({
             type="button"
             disabled={isSending || students.length === 0 || !subject.trim() || !content.trim()}
             onClick={handleConfirmSend}
-            className="text-xs font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className={`text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer ${
+              isAhead
+                ? "bg-primary hover:bg-primary-hover text-primary-foreground"
+                : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            }`}
           >
-            <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+            {isAhead ? (
+              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+            ) : (
+              <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+            )}
             <span>
-              {isSending ? "Đang gửi thông báo..." : `Xác nhận gửi cho ${students.length} học viên`}
+              {isSending
+                ? "Đang gửi thông báo..."
+                : isSingle
+                  ? "Xác nhận gửi thông báo"
+                  : `Xác nhận gửi cho ${students.length} học viên`}
             </span>
           </Button>
         </Dialog.Footer>

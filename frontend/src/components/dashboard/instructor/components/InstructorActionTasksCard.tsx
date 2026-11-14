@@ -32,18 +32,13 @@ export function InstructorActionTasksCard({
   totalPendingCount: _totalPendingCount,
   totalGradingCount,
   totalQaCount,
-  totalOverdueCount = 0,
+  totalOverdueCount: _totalOverdueCount = 0,
   primaryActionUrl,
   courseId,
   courseTitle = "Khóa học",
   behindCount = 0,
   onFilterBehind,
 }: InstructorActionTasksCardProps) {
-  const [currentTimeMs, setCurrentTimeMs] = React.useState(0);
-  React.useEffect(() => {
-    setCurrentTimeMs(Date.now());
-  }, []);
-
   const isOverview = !courseId;
 
   // 1. Dữ liệu khi xem ở Chế độ Chi tiết 1 môn học cụ thể
@@ -56,25 +51,6 @@ export function InstructorActionTasksCard({
 
   const coursePendingGradingCount = useMemo(() => {
     return queueItems.filter((i) => i.status !== GradingQueueStatus.GRADED).length;
-  }, [queueItems]);
-
-  const courseOverdueCount = useMemo(() => {
-    if (currentTimeMs === 0) return 0;
-    return queueItems.filter((item) => {
-      if (item.status === GradingQueueStatus.GRADED) return false;
-      if (item.isAppeal || item.isOutlier || item.lockedByUserId) return false;
-      if (!item.submittedAt) return false;
-      const isPast48h = currentTimeMs - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
-      return isPast48h && !item.staffScore && item.peerReviewsCount < 3;
-    }).length;
-  }, [queueItems, currentTimeMs]);
-
-  const courseAppealsCount = useMemo(() => {
-    return queueItems.filter((i) => i.isAppeal && i.status !== GradingQueueStatus.GRADED).length;
-  }, [queueItems]);
-
-  const courseOutliersCount = useMemo(() => {
-    return queueItems.filter((i) => i.isOutlier && i.status !== GradingQueueStatus.GRADED).length;
   }, [queueItems]);
 
   // 2. Dữ liệu khi xem ở Chế độ Tổng quan toàn bộ các môn học
@@ -90,25 +66,6 @@ export function InstructorActionTasksCard({
     return overviewTasks.filter((t) => t.type === "video_qa").length;
   }, [totalQaCount, overviewTasks]);
 
-  const overviewOverdueCount = useMemo(() => {
-    if (overviewGradingCount === 0) return 0;
-    if (totalOverdueCount !== undefined) {
-      return Math.min(totalOverdueCount, overviewGradingCount);
-    }
-    return overviewTasks.filter((t) => t.type === "grading" && t.isOverdue).length;
-  }, [totalOverdueCount, overviewGradingCount, overviewTasks]);
-
-  const overviewAppealsCount = useMemo(() => {
-    if (overviewGradingCount === 0) return 0;
-    return overviewTasks.filter((t) => t.type === "grading" && t.isAppeal).length;
-  }, [overviewGradingCount, overviewTasks]);
-
-  const overviewOutliersCount = useMemo(() => {
-    if (overviewGradingCount === 0) return 0;
-    return overviewTasks.filter((t) => t.type === "grading" && t.urgencyLabel === "Lệch điểm")
-      .length;
-  }, [overviewGradingCount, overviewTasks]);
-
   const topGradingTask = useMemo(() => {
     return overviewTasks.find((t) => t.type === "grading");
   }, [overviewTasks]);
@@ -119,20 +76,15 @@ export function InstructorActionTasksCard({
 
   // 3. Hợp nhất chỉ số giữa 2 chế độ (Unified Metrics)
   const effectiveGradingCount = isOverview ? overviewGradingCount : coursePendingGradingCount;
-  const effectiveOverdueCount = isOverview ? overviewOverdueCount : courseOverdueCount;
-  const effectiveAppealsCount = isOverview ? overviewAppealsCount : courseAppealsCount;
-  const effectiveOutliersCount = isOverview ? overviewOutliersCount : courseOutliersCount;
   const effectiveQaCount = isOverview ? overviewQaCount : 0;
   const effectiveBehindCount = behindCount;
-
-  const totalUrgentCount = effectiveGradingCount + effectiveBehindCount + effectiveQaCount;
 
   const isLoading = !isOverview && loadingGrading;
 
   return (
     <div className="p-4.5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-3">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-outline-variant/50">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <ClipboardList className="w-3.5 h-3.5" aria-hidden="true" />
@@ -141,24 +93,11 @@ export function InstructorActionTasksCard({
             <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
               Việc Cần Xử Lý
             </h3>
-            <span className="text-[10px] text-muted-foreground block truncate max-w-[190px]">
+            <span className="text-[10px] text-muted-foreground block">
               {courseId ? courseTitle : "Tất cả khóa học giảng dạy"}
             </span>
           </div>
         </div>
-        <span
-          className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
-            totalUrgentCount > 0
-              ? "bg-warning/15 text-warning border border-warning/20"
-              : "bg-success/15 text-success border border-success/20"
-          }`}
-        >
-          {isLoading
-            ? "..."
-            : totalUrgentCount > 0
-              ? `${totalUrgentCount} việc cần làm`
-              : "Hoàn thành"}
-        </span>
       </div>
 
       {/* Các Nhóm Công Việc Chức Năng (Trạm Điều Hành Cockpit) */}
@@ -179,44 +118,22 @@ export function InstructorActionTasksCard({
                     ? "Đang tải dữ liệu bài nộp..."
                     : effectiveGradingCount > 0
                       ? courseId
-                        ? `${effectiveGradingCount} bài tập tự luận đang chờ đánh giá`
-                        : `${effectiveGradingCount} bài tập tự luận đang chờ đánh giá trên các lớp`
-                      : "Không có bài nộp nào đang chờ chấm"}
+                        ? `${effectiveGradingCount} bài tập tự luận cần can thiệp`
+                        : `${effectiveGradingCount} bài tập tự luận cần can thiệp trên các lớp`
+                      : "Không có bài nộp nào cần can thiệp"}
                 </p>
                 {isOverview && topGradingTask?.courseTitle && effectiveGradingCount > 0 && (
-                  <p className="text-[10px] text-primary font-medium mt-0.5 truncate max-w-[200px]">
+                  <p className="text-[10px] text-primary font-medium mt-0.5">
                     <span className="text-muted-foreground">Ưu tiên chấm: </span>
                     <span className="font-bold">{topGradingTask.courseTitle}</span>
                   </p>
                 )}
               </div>
             </div>
-
-            {/* Badges cảnh báo SLA */}
-            <div className="flex flex-col items-end gap-1 shrink-0">
-              {effectiveOverdueCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-destructive/15 text-destructive border border-destructive/20 whitespace-nowrap">
-                  {effectiveOverdueCount} quá hạn 48h
-                </span>
-              )}
-              {effectiveAppealsCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-tertiary/15 text-tertiary border border-tertiary/30 whitespace-nowrap">
-                  {effectiveAppealsCount} khiếu nại
-                </span>
-              )}
-              {effectiveOutliersCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-warning/15 text-warning border border-warning/20 whitespace-nowrap">
-                  {effectiveOutliersCount} lệch điểm
-                </span>
-              )}
-            </div>
           </div>
 
           {/* CTA Link to Cockpit */}
-          <div className="pt-1 flex items-center justify-between border-t border-outline-variant/40">
-            <span className="text-[10px] text-muted-foreground font-mono">
-              {effectiveGradingCount > 0 ? "Cần xử lý sớm" : "Đã cập nhật"}
-            </span>
+          <div className="flex items-center justify-end pt-1">
             {effectiveGradingCount > 0 ? (
               <Link
                 href={
@@ -272,7 +189,7 @@ export function InstructorActionTasksCard({
                     : "Giải đáp thắc mắc và hỗ trợ sinh viên cộng đồng"}
               </p>
               {isOverview && topQaTask?.courseTitle && effectiveQaCount > 0 && (
-                <p className="text-[10px] text-warning font-medium mt-0.5 truncate max-w-[200px]">
+                <p className="text-[10px] text-warning font-medium mt-0.5">
                   <span className="text-muted-foreground">Ưu tiên phản hồi: </span>
                   <span className="font-bold">{topQaTask.courseTitle}</span>
                 </p>
@@ -281,11 +198,7 @@ export function InstructorActionTasksCard({
           </div>
 
           <Link
-            href={
-              courseId
-                ? `/instructor/courses/${courseId}/discussions`
-                : topQaTask?.actionUrl || "/forum"
-            }
+            href={courseId ? `/forum?courseId=${courseId}` : topQaTask?.actionUrl || "/forum"}
             className="font-bold text-primary hover:underline text-xs flex items-center gap-0.5 shrink-0"
             title={
               isOverview && topQaTask?.courseTitle

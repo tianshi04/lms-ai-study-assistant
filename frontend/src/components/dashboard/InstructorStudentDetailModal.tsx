@@ -138,7 +138,7 @@ export function InstructorStudentDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Dialog.Content size="xl" className="p-6 max-h-[92vh] overflow-hidden flex flex-col">
         {/* Header: Thông tin sinh viên & Môn học */}
-        <Dialog.Header className="pb-3 border-b border-outline-variant/60">
+        <Dialog.Header className="pb-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary font-black text-lg flex items-center justify-center shrink-0 border border-primary/20">
@@ -393,7 +393,7 @@ export function InstructorStudentDetailModal({
         </div>
 
         {/* Footer Dialog */}
-        <Dialog.Footer className="pt-3 border-t border-outline-variant/60 flex items-center justify-between">
+        <Dialog.Footer className="pt-3 flex items-center justify-between">
           <Button
             type="button"
             variant="outlined"

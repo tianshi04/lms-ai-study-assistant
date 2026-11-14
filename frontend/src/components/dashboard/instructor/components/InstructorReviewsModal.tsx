@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
-import { Star, Search, MessageSquareQuote, ExternalLink, X } from "lucide-react";
+import { Star, Search, MessageSquareQuote, X } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -91,20 +90,14 @@ export function InstructorReviewsModal({
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Content size="xl" className="max-h-[85vh] flex flex-col p-6 gap-0">
         {/* Header Modal */}
-        <div className="flex items-start justify-between pb-4 border-b border-border/80 gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
-                <MessageSquareQuote className="w-4 h-4" aria-hidden="true" />
-              </div>
-              <h2 className="text-base sm:text-lg font-bold text-foreground">
-                Tất Cả Phản Hồi & Đánh Giá Của Sinh Viên
-              </h2>
+        <div className="flex items-start justify-between pb-2 gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
+              <MessageSquareQuote className="w-4 h-4" aria-hidden="true" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Tổng hợp nhận xét thực tế từ sinh viên sau khi hoàn thành các khóa học do bạn phụ
-              trách.
-            </p>
+            <h2 className="text-base sm:text-lg font-bold text-foreground">
+              Tất Cả Phản Hồi & Đánh Giá Của Sinh Viên
+            </h2>
           </div>
         </div>
 
@@ -117,25 +110,15 @@ export function InstructorReviewsModal({
             </div>
             <div>
               <RatingStars rating={calculatedAvg} size="sm" />
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Điểm đánh giá trung bình từ <strong>{stats.total}</strong> lượt phản hồi
-              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Điểm đánh giá trung bình</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs flex-wrap w-full sm:w-auto justify-start sm:justify-end">
-            <span className="px-2.5 py-1 rounded-xl bg-surface border border-border text-foreground font-semibold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-success inline-block" />5 sao: {stats.count5}
+            <span className="px-3 py-1.5 rounded-xl bg-surface border border-border text-foreground font-bold text-xs flex items-center gap-1.5 shadow-xs">
+              <span className="font-mono">{stats.total}</span>
+              <span>lượt đánh giá</span>
             </span>
-            <span className="px-2.5 py-1 rounded-xl bg-surface border border-border text-foreground font-semibold flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-warning inline-block" />4 sao: {stats.count4}
-            </span>
-            {stats.count3Below > 0 && (
-              <span className="px-2.5 py-1 rounded-xl bg-surface border border-border text-foreground font-semibold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-destructive inline-block" />≤ 3 sao:{" "}
-                {stats.count3Below}
-              </span>
-            )}
           </div>
         </div>
 
@@ -178,24 +161,28 @@ export function InstructorReviewsModal({
             >
               Tất cả ({stats.total})
             </Button>
-            <Button
-              variant={ratingFilter === 5 ? "filled" : "outlined"}
-              size="sm"
-              onClick={() => setRatingFilter(5)}
-              className="h-6.5 text-[11px] px-2.5 rounded-lg shrink-0 gap-1"
-            >
-              <Star className="w-3 h-3 fill-warning text-warning" aria-hidden="true" />5 sao (
-              {stats.count5})
-            </Button>
-            <Button
-              variant={ratingFilter === 4 ? "filled" : "outlined"}
-              size="sm"
-              onClick={() => setRatingFilter(4)}
-              className="h-6.5 text-[11px] px-2.5 rounded-lg shrink-0 gap-1"
-            >
-              <Star className="w-3 h-3 fill-warning text-warning" aria-hidden="true" />4 sao (
-              {stats.count4})
-            </Button>
+            {stats.count5 > 0 && (
+              <Button
+                variant={ratingFilter === 5 ? "filled" : "outlined"}
+                size="sm"
+                onClick={() => setRatingFilter(5)}
+                className="h-6.5 text-[11px] px-2.5 rounded-lg shrink-0 gap-1"
+              >
+                <Star className="w-3 h-3 fill-warning text-warning" aria-hidden="true" />5 sao (
+                {stats.count5})
+              </Button>
+            )}
+            {stats.count4 > 0 && (
+              <Button
+                variant={ratingFilter === 4 ? "filled" : "outlined"}
+                size="sm"
+                onClick={() => setRatingFilter(4)}
+                className="h-6.5 text-[11px] px-2.5 rounded-lg shrink-0 gap-1"
+              >
+                <Star className="w-3 h-3 fill-warning text-warning" aria-hidden="true" />4 sao (
+                {stats.count4})
+              </Button>
+            )}
             {stats.count3Below > 0 && (
               <Button
                 variant={ratingFilter === 3 ? "filled" : "outlined"}
@@ -227,7 +214,7 @@ export function InstructorReviewsModal({
                     variant={courseFilter === course ? "filled" : "outlined"}
                     size="sm"
                     onClick={() => setCourseFilter(course)}
-                    className="h-6.5 text-[11px] px-2.5 rounded-lg shrink-0 max-w-[200px] truncate"
+                    className="h-6.5 text-[11px] px-2.5 rounded-lg shrink-0"
                     title={course}
                   >
                     {course}
@@ -267,7 +254,7 @@ export function InstructorReviewsModal({
                   {/* Top info row */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar name={rev.userName} size="sm" />
+                      <Avatar name={rev.userName} src={rev.avatarUrl} size="sm" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="text-xs sm:text-sm font-bold text-foreground">
@@ -279,7 +266,7 @@ export function InstructorReviewsModal({
                         </div>
                         <Badge
                           variant="secondary"
-                          className="text-[10px] py-0 px-2 font-normal mt-0.5 truncate max-w-[260px] inline-block"
+                          className="text-[10px] py-0 px-2 font-normal mt-0.5 inline-block"
                         >
                           {rev.courseTitle}
                         </Badge>
@@ -296,19 +283,6 @@ export function InstructorReviewsModal({
                   <div className="text-xs sm:text-sm text-foreground/90 bg-muted/20 p-3 rounded-xl leading-relaxed italic border border-border/40">
                     &ldquo;{rev.comment}&rdquo;
                   </div>
-
-                  {/* Course Action Link if courseId is available */}
-                  {rev.courseId && (
-                    <div className="flex justify-end pt-1">
-                      <Link
-                        href={`/instructor/courses/${rev.courseId}/curriculum`}
-                        className="text-[11px] font-semibold text-primary hover:text-primary-hover flex items-center gap-1 transition-colors"
-                      >
-                        <span>Quản lý nội dung khóa học</span>
-                        <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                      </Link>
-                    </div>
-                  )}
                 </div>
               );
             })
@@ -316,10 +290,7 @@ export function InstructorReviewsModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="pt-3 border-t border-border mt-3 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            Hiển thị <strong>{filteredReviews.length}</strong> / {reviews.length} đánh giá
-          </span>
+        <div className="pt-3 mt-3 flex items-center justify-end">
           <Button
             variant="outlined"
             size="sm"

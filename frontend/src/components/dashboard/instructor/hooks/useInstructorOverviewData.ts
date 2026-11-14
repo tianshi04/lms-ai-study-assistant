@@ -8,6 +8,7 @@ import {
   useForumThreadsQuery,
 } from "@/lib/query_hooks";
 import { GradingQueueStatus } from "@/gen/assessment/v1/assessment_pb";
+import { getAvatarDataUri } from "@/lib/avatar";
 import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import type { StudentPacingRecord } from "../../InstructorPacingModal";
 import type {
@@ -65,14 +66,24 @@ export function useInstructorOverviewData({
   // Danh sách chứng chỉ sinh viên đã hoàn thành trên tất cả các khóa học
   const allCompletedStudentsList = useMemo<OverviewCertificate[]>(() => {
     const list: OverviewCertificate[] = [];
+    const seen = new Set<string>();
     courses.forEach((c) => {
       const an = analyticsByCourseId.get(c.id);
       const students = an?.students || [];
       students
         .filter((st) => st.progressPercent >= 100)
-        .forEach((st) => {
+        .forEach((st, idx) => {
+          const uniqueKey = `${c.id}-${st.userId}`;
+          if (seen.has(uniqueKey)) return;
+          seen.add(uniqueKey);
+
+          const coursePrefix = c.id
+            .replace(/^course-/, "")
+            .slice(0, 8)
+            .toUpperCase();
+          const userSuffix = st.userId.replace(/^user_/, "").toUpperCase();
           list.push({
-            certId: `CERT-${st.userId.slice(0, 8).toUpperCase()}`,
+            certId: `CERT-${coursePrefix}-${userSuffix || idx}`,
             userName: st.userName || "Học viên",
             userEmail: st.userEmail || "",
             courseTitle: c.title,
@@ -125,6 +136,7 @@ export function useInstructorOverviewData({
           courseId: c.id,
           comment: r.commentText || "Khóa học rất hay và bổ ích!",
           timeAgo: r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN") : "Gần đây",
+          avatarUrl: getAvatarDataUri(r.userName || r.id || "learner"),
         });
       });
     });
@@ -319,8 +331,8 @@ export function useInstructorOverviewData({
         timeAgo: urgencyLabel,
         actionText: "Trả lời",
         actionUrl: targetCourseId
-          ? `/instructor/courses/${targetCourseId}/discussions?threadId=${thread.id}`
-          : "/forum",
+          ? `/forum?courseId=${targetCourseId}&threadId=${thread.id}`
+          : `/forum?threadId=${thread.id}`,
         urgencyLevel,
         urgencyLabel,
         isOverdue,

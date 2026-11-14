@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { ThumbsUp, MessageSquare, Pin, ExternalLink } from "lucide-react";
 import type { ForumThread, ForumReply } from "@/gen/forum/v1/forum_pb";
@@ -57,6 +57,17 @@ export function ThreadDetailModal({
   // Reply editing state inside modal
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editReplyContent, setEditReplyContent] = useState("");
+
+  const sortedReplies = useMemo(() => {
+    if (!thread?.replies) return [];
+    return [...thread.replies].sort((a, b) => {
+      // Pinned replies (isStaffAnswer) always appear first at the top
+      if (Boolean(a.isStaffAnswer) !== Boolean(b.isStaffAnswer)) {
+        return a.isStaffAnswer ? -1 : 1;
+      }
+      return 0;
+    });
+  }, [thread?.replies]);
 
   if (!thread) return null;
 
@@ -204,12 +215,13 @@ export function ThreadDetailModal({
                 <Button
                   variant={thread.isUpvotedByMe ? "filled" : "outlined"}
                   size="sm"
-                  onClick={() => onVote(thread.id, true)}
+                  onClick={() => onVote(thread.id, !thread.isUpvotedByMe)}
                   className="gap-1.5 font-bold shadow-xs text-xs"
+                  title={thread.isUpvotedByMe ? "Đã hữu ích (Bấm để hủy)" : "Đánh dấu hữu ích"}
                 >
                   <ThumbsUp
                     aria-hidden="true"
-                    className={`w-4 h-4 ${thread.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
+                    className={`w-4 h-4 ${thread.isUpvotedByMe ? "text-primary-foreground fill-current" : "text-primary"}`}
                   />
                   <span>{thread.upvoteCount} Hữu ích</span>
                 </Button>
@@ -246,13 +258,13 @@ export function ThreadDetailModal({
               Tất cả phản hồi ({thread.replies.length})
             </h3>
 
-            {thread.replies.length === 0 ? (
+            {sortedReplies.length === 0 ? (
               <div className="text-center py-8 text-xs text-muted-foreground bg-muted/20 rounded-xl border border-dashed border-border">
                 Chưa có phản hồi nào. Hãy là người đầu tiên trao đổi ý kiến!
               </div>
             ) : (
               <div className="space-y-3">
-                {thread.replies.map((reply) => (
+                {sortedReplies.map((reply) => (
                   <ForumReplyItem
                     key={reply.id}
                     reply={reply}

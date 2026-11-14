@@ -2,6 +2,7 @@ import * as React from "react";
 import { Avatar as BaseAvatar } from "@base-ui/react/avatar";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { getAvatarDataUri } from "@/lib/avatar";
 
 export const avatarVariants = cva("rounded-full object-cover shrink-0 select-none", {
   variants: {
@@ -40,6 +41,12 @@ function AvatarComponent({
         .toUpperCase()
     : "?";
 
+  const effectiveSrc = React.useMemo(() => {
+    if (src) return src;
+    if (name.trim()) return getAvatarDataUri(name.trim());
+    return undefined;
+  }, [src, name]);
+
   return (
     <BaseAvatar.Root
       ref={ref}
@@ -54,7 +61,13 @@ function AvatarComponent({
         children
       ) : (
         <>
-          {src && <BaseAvatar.Image src={src} alt={name} className="h-full w-full object-cover" />}
+          {effectiveSrc && (
+            <BaseAvatar.Image
+              src={effectiveSrc}
+              alt={name}
+              className="h-full w-full object-cover"
+            />
+          )}
           <BaseAvatar.Fallback className="flex h-full w-full items-center justify-center font-bold">
             {initials}
           </BaseAvatar.Fallback>

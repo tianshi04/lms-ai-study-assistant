@@ -213,7 +213,7 @@ export function CourseHeaderBanner({
           <Chip
             variant="assist"
             leadingIcon={<MessageSquare className="w-4 h-4 text-primary" aria-hidden="true" />}
-            render={<Link href={`/instructor/courses/${courseId}/discussions`} />}
+            render={<Link href={`/forum?courseId=${courseId}`} />}
           >
             Hỏi đáp & Thảo luận
           </Chip>

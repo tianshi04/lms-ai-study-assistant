@@ -22,7 +22,7 @@ export function InstructorWeeklyFunnelTab({
   return (
     <div className="space-y-4">
       {/* Header: Tiêu đề & Cảnh báo điểm nghẽn */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-outline-variant/50">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
         <div>
           <p className="text-xs font-bold text-foreground">
             Lộ Trình Tuần Học &amp; Phễu Tỷ Lệ Vượt Qua

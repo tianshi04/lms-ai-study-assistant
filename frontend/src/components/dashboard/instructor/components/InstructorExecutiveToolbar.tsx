@@ -94,7 +94,7 @@ export function InstructorExecutiveToolbar({
                 {hasNoCourses ? (
                   <select
                     disabled
-                    className="h-9 px-3 pr-8 rounded-xl bg-muted/50 border border-outline-variant/60 text-xs font-medium text-muted-foreground cursor-not-allowed max-w-[200px] truncate"
+                    className="h-9 px-3 pr-8 rounded-xl bg-muted/50 border border-outline-variant/60 text-xs font-medium text-muted-foreground cursor-not-allowed w-auto"
                     aria-label="Chưa có khóa học nào"
                   >
                     <option>Chưa có khóa học nào</option>
@@ -103,7 +103,7 @@ export function InstructorExecutiveToolbar({
                   <select
                     value={selectedCourseId}
                     onChange={(e) => onSelectCourse(e.target.value)}
-                    className="h-9 px-3 pr-8 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary outline-hidden appearance-none cursor-pointer max-w-[200px] sm:max-w-[260px] truncate shadow-2xs"
+                    className="h-9 px-3 pr-8 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary outline-hidden appearance-none cursor-pointer w-auto min-w-[200px] shadow-2xs"
                     aria-label="Chọn khóa học để xem phân tích chi tiết"
                     title={courses.find((c) => c.id === selectedCourseId)?.title}
                   >
