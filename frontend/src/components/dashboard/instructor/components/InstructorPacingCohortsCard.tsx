@@ -41,10 +41,6 @@ export function InstructorPacingCohortsCard({
               {totalStudents} học viên
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Phân bổ người học theo nhịp độ thực tế, phát hiện sớm nhóm học viên có nguy cơ tụt lại
-            để hỗ trợ kịp thời
-          </p>
         </div>
 
         <Button
@@ -101,7 +97,7 @@ export function InstructorPacingCohortsCard({
             <span className="w-2 h-2 rounded-full bg-primary" /> {onTrackPercent}% Đúng tiến độ
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-warning" /> {behindPercent}% Cần hỗ trợ
+            <span className="w-2 h-2 rounded-full bg-warning" /> {behindPercent}% Cần nhắc nhở
           </span>
         </div>
       </div>
@@ -162,7 +158,7 @@ export function InstructorPacingCohortsCard({
           </div>
         </button>
 
-        {/* Card Cần hỗ trợ (Chậm tiến độ) - Sử dụng tông Amber dịu mắt, nút CTA rõ ràng */}
+        {/* Card Cần nhắc nhở (Chậm tiến độ) - Sử dụng tông Amber dịu mắt, nút CTA rõ ràng */}
         <button
           type="button"
           onClick={() => onOpenModal("BEHIND")}
@@ -170,7 +166,7 @@ export function InstructorPacingCohortsCard({
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-warning flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-warning" /> CẦN HỖ TRỢ
+              <AlertTriangle className="w-3.5 h-3.5 text-warning" /> CẦN NHẮC NHỞ
             </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-warning/15 text-warning border border-warning/20">
               {behindPercent}%

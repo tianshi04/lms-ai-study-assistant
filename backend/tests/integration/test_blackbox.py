@@ -111,3 +111,73 @@ async def test_blackbox_identity_and_learning_flows(client: AsyncClient):
         },
     )
     assert resp.status_code == 200, f"Error: {resp.text}"
+
+
+@pytest.mark.asyncio
+async def test_blackbox_instructor_analytics_and_student_reminder(client: AsyncClient):
+    """
+    Kich ban kiem thu E2E tich hop:
+    1. Dang nhap tai khoan Giang vien (instructor@coursera.ai)
+    2. Goi GetInstructorAnalytics cho khoa hoc 'course-python-ai'
+    3. Xac minh so hoc vien, ty le hoan thanh trung binh, danh sach students kem progressPercent va enrolledAt
+    4. Gui nhac nho hoc vien qua SendStudentReminder
+    5. Xac minh ket qua tra ve sentCount, success, sentStudentIds
+    """
+    # 1. Dang nhap Giang vien
+    login_resp = await client.post(
+        "/identity.v1.IdentityService/Login",
+        json={"email": "instructor@coursera.ai", "password": "123456"},
+        headers={"Content-Type": "application/json"},
+    )
+    assert login_resp.status_code == 200, f"Login failed: {login_resp.text}"
+    login_data = login_resp.json()
+    token = login_data["accessToken"]
+    auth_headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    # 2. Goi GetInstructorAnalytics
+    analytics_resp = await client.post(
+        "/catalog.v1.CatalogService/GetInstructorAnalytics",
+        json={"courseId": "course-python-ai"},
+        headers=auth_headers,
+    )
+    assert analytics_resp.status_code == 200, (
+        f"GetInstructorAnalytics failed: {analytics_resp.text}"
+    )
+    analytics_data = analytics_resp.json()
+    assert "analytics" in analytics_data
+    analytics = analytics_data["analytics"]
+    assert analytics["courseId"] == "course-python-ai"
+    assert analytics["totalEnrolledStudents"] > 0
+    assert "averageCompletionRate" in analytics
+    assert "students" in analytics
+    students = analytics["students"]
+    assert len(students) > 0
+
+    first_student = students[0]
+    assert "userId" in first_student
+    assert "userName" in first_student
+    assert "progressPercent" in first_student
+    assert "enrolledAt" in first_student
+
+    # 3. Gui loi nhac nho hoc vien SendStudentReminder
+    target_student_id = first_student["userId"]
+    reminder_resp = await client.post(
+        "/catalog.v1.CatalogService/SendStudentReminder",
+        json={
+            "courseId": "course-python-ai",
+            "studentIds": [target_student_id],
+            "title": "Nhac nho tien do hoc tap tuan 2",
+            "content": "Chao ban, hay sap xep thoi gian hoan thanh bai quiz tuan nay nhe!",
+        },
+        headers=auth_headers,
+    )
+    assert reminder_resp.status_code == 200, (
+        f"SendStudentReminder failed: {reminder_resp.text}"
+    )
+    reminder_data = reminder_resp.json()
+    assert reminder_data.get("success") is True
+    assert reminder_data.get("sentCount") == 1
+    assert target_student_id in reminder_data.get("sentStudentIds", [])

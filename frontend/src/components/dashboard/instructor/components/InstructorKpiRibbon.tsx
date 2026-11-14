@@ -11,19 +11,19 @@ interface InstructorKpiRibbonProps {
   avgRating: string | number;
   reviewCount: number;
   totalCertificates: number;
-  totalLearningHours: number;
+  totalLearningHours?: number;
   loading?: boolean;
 }
 
 export function InstructorKpiRibbon({
   viewMode,
   totalStudents,
-  growthPercent = 18,
+  growthPercent: _growthPercent = 18,
   avgCompletionRate,
   avgRating,
   reviewCount,
   totalCertificates,
-  totalLearningHours,
+  totalLearningHours: _totalLearningHours = 0,
   loading = false,
 }: InstructorKpiRibbonProps) {
   return (
@@ -41,11 +41,6 @@ export function InstructorKpiRibbon({
             <span className="text-xl sm:text-2xl font-black text-foreground font-mono leading-none">
               {loading ? "…" : `${totalStudents} SV`}
             </span>
-            {viewMode === "all" && (
-              <span className="text-[10px] font-bold font-mono text-success flex items-center">
-                +{growthPercent}%
-              </span>
-            )}
           </div>
           <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
             {viewMode === "all" ? "Tất cả các khóa phụ trách" : "Sinh viên trong lớp này"}
@@ -66,7 +61,6 @@ export function InstructorKpiRibbon({
             <span className="text-xl sm:text-2xl font-black text-success font-mono leading-none">
               {loading ? "…" : `${Math.round(avgCompletionRate)}%`}
             </span>
-            <span className="text-[10px] font-bold text-muted-foreground">Mục tiêu: 60%</span>
           </div>
           <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
             {avgCompletionRate >= 60 ? "Vượt ngưỡng cam kết sàn" : "Cần tăng cường hỗ trợ"}
@@ -93,9 +87,6 @@ export function InstructorKpiRibbon({
               {reviewCount} đánh giá
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
-            100% phản hồi tích cực
-          </span>
         </div>
       </div>
 
@@ -112,11 +103,6 @@ export function InstructorKpiRibbon({
             <span className="text-xl sm:text-2xl font-black text-foreground font-mono leading-none">
               {loading ? "…" : `${totalCertificates} CC`}
             </span>
-            {viewMode === "all" && (
-              <span className="text-[10px] font-bold font-mono text-muted-foreground">
-                {totalLearningHours.toLocaleString()}h học
-              </span>
-            )}
           </div>
           <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
             {viewMode === "all" ? "Chứng chỉ số xác thực" : "Học viên đã tốt nghiệp"}

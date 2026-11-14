@@ -47,6 +47,7 @@ export interface OverviewReview {
   courseId?: string;
   comment: string;
   timeAgo: string;
+  avatarUrl?: string;
 }
 
 export interface OverviewCertificate {

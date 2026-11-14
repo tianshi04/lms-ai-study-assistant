@@ -43,7 +43,11 @@ class ForumRepository(IForumRepository):
     def _to_thread_entity(
         self, orm: ForumThreadORM, voted_post_ids: set[str] | None = None
     ) -> ForumThreadEntity:
-        replies = [self._to_reply_entity(r, voted_post_ids) for r in orm.replies]
+        sorted_replies = sorted(
+            orm.replies,
+            key=lambda r: (not r.is_staff_answer, r.created_at),
+        )
+        replies = [self._to_reply_entity(r, voted_post_ids) for r in sorted_replies]
         is_voted = (orm.id in voted_post_ids) if voted_post_ids else False
         return ForumThreadEntity(
             id=orm.id,

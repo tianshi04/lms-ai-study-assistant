@@ -17,9 +17,10 @@ import {
   GraduationCap,
   Sparkles,
 } from "lucide-react";
-import { useToast } from "@/components/ui/Toast";
-import { useSendStudentReminderMutation } from "@/lib/query_hooks";
-import { InstructorBulkReminderModal } from "./InstructorBulkReminderModal";
+import {
+  InstructorBulkReminderModal,
+  type BulkReminderStudent,
+} from "./InstructorBulkReminderModal";
 
 export type PacingCategory = "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND";
 
@@ -57,13 +58,14 @@ export function InstructorPacingModal({
   coursesList = [],
   students = [],
 }: InstructorPacingModalProps) {
-  const toast = useToast();
-  const sendReminderMutation = useSendStudentReminderMutation();
   const [selectedPace, setSelectedPace] = useState<PacingCategory>(initialCategory);
   const [selectedCourse, setSelectedCourse] = useState<string>(initialCourseId);
   const [searchQuery, setSearchQuery] = useState("");
   const [nudgedStudentIds, setNudgedStudentIds] = useState<Set<string>>(new Set());
   const [isBulkReminderModalOpen, setIsBulkReminderModalOpen] = useState(false);
+  const [reminderTargetStudents, setReminderTargetStudents] = useState<
+    BulkReminderStudent[] | null
+  >(null);
 
   // Phân trang & Tải động (Progressive Loading: Mặc định 25 học viên, lướt xuống tải thêm)
   const [visibleCount, setVisibleCount] = useState(25);
@@ -137,48 +139,21 @@ export function InstructorPacingModal({
     }
   };
 
-  // Tương tác sư phạm: Khích lệ (Vượt tiến độ) hoặc Nhắc nhở (Chậm/Đúng tiến độ)
-  const handleNudgeStudent = async (student: StudentPacingRecord) => {
-    if (!student.courseId) {
-      toast.error("Không xác định được mã khóa học của học viên.");
-      return;
-    }
-    const targetCourseId = student.courseId;
-    try {
-      const isAhead = student.pace === "AHEAD";
-      const courseName = student.courseTitle || "Khóa học";
-      const title = isAhead
-        ? `[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${courseName}`
-        : `[Nhắc nhở học tập] Tiến độ môn ${courseName}`;
-      const content = isAhead
-        ? `Chào ${student.name}, Thầy/Cô rất ấn tượng khi em đang học vượt tiến độ đề xuất ở môn ${courseName} (${student.progressPercent}% đề cương). Chúc em tiếp tục duy trì phong độ để sớm hoàn thành xuất sắc khóa học nhé!`
-        : `Chào ${student.name}, Thầy/Cô nhận thấy em đang dừng ở ${student.currentLesson}. Hãy sắp xếp thời gian hoàn thành bài học và bài kiểm tra tuần này để bám sát lộ trình nhé!`;
-
-      const res = await sendReminderMutation.mutateAsync({
-        courseId: targetCourseId,
-        studentIds: [student.id],
-        title,
-        content,
-      });
-
-      if (res.sentCount > 0) {
-        setNudgedStudentIds((prev) => new Set(prev).add(student.id));
-        toast.success(
-          isAhead
-            ? `Đã gửi lời khen ngợi & khích lệ tới học viên ${student.name}!`
-            : `Đã gửi thông báo & email nhắc nhở học tập tới học viên ${student.name}!`,
-          {
-            description: `Lộ trình hiện tại: ${student.currentLesson}`,
-          },
-        );
-      } else {
-        toast.error(
-          `Không thể gửi nhắc nhở tới ${student.name} (học viên không còn ghi danh trong khóa học).`,
-        );
-      }
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Không thể gửi thông điệp tới học viên.");
-    }
+  // Tương tác sư phạm: Khích lệ (Vượt tiến độ) hoặc Nhắc nhở (Chậm/Đúng tiến độ) -> Mở modal soạn nháp
+  const handleNudgeStudent = (student: StudentPacingRecord) => {
+    setReminderTargetStudents([
+      {
+        userId: student.id,
+        userName: student.name,
+        userEmail: student.email,
+        progressPercent: student.progressPercent,
+        pace: student.pace,
+        paceDesc: student.paceDescription,
+        courseId: student.courseId,
+        courseTitle: student.courseTitle,
+      },
+    ]);
+    setIsBulkReminderModalOpen(true);
   };
 
   return (
@@ -186,7 +161,7 @@ export function InstructorPacingModal({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <Dialog.Content size="2xl" className="p-6 max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header Dialog */}
-          <Dialog.Header className="pb-3 border-b border-outline-variant/60">
+          <Dialog.Header className="pb-2">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -327,11 +302,11 @@ export function InstructorPacingModal({
                 />
               </div>
 
-              <div className="relative min-w-[180px] max-w-[240px]">
+              <div className="relative min-w-[200px] w-auto">
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary focus:border-primary outline-hidden cursor-pointer truncate"
+                  className="w-full px-3 py-1.5 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary focus:border-primary outline-hidden cursor-pointer"
                 >
                   <option value="ALL">Tất cả môn học ({coursesList.length})</option>
                   {coursesList.map((c) => (
@@ -348,7 +323,22 @@ export function InstructorPacingModal({
               <button
                 type="button"
                 disabled={filteredStudents.filter((s) => s.pace === "BEHIND").length === 0}
-                onClick={() => setIsBulkReminderModalOpen(true)}
+                onClick={() => {
+                  const behindStudents = filteredStudents
+                    .filter((s) => s.pace === "BEHIND")
+                    .map((s) => ({
+                      userId: s.id,
+                      userName: s.name,
+                      userEmail: s.email,
+                      progressPercent: s.progressPercent,
+                      pace: s.pace,
+                      paceDesc: s.paceDescription,
+                      courseId: s.courseId,
+                      courseTitle: s.courseTitle,
+                    }));
+                  setReminderTargetStudents(behindStudents);
+                  setIsBulkReminderModalOpen(true);
+                }}
                 className="px-3.5 py-1.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 shrink-0 self-end sm:self-auto"
                 title="Mở hộp thoại xem trước và tùy chỉnh thông báo nhắc nhở"
               >
@@ -400,9 +390,9 @@ export function InstructorPacingModal({
                           <div className="text-[11px] text-muted-foreground font-mono">
                             {st.email}
                           </div>
-                          <div className="text-[10px] text-primary font-medium flex items-center gap-1 mt-0.5 truncate max-w-[220px]">
+                          <div className="text-[10px] text-primary font-medium flex items-center gap-1 mt-0.5">
                             <BookOpen className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
-                            <span className="truncate">{st.courseTitle}</span>
+                            <span>{st.courseTitle}</span>
                           </div>
                         </Table.Cell>
 
@@ -574,7 +564,7 @@ export function InstructorPacingModal({
           </div>
 
           {/* Footer thông số tóm tắt */}
-          <div className="pt-3 border-t border-outline-variant/60 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
+          <div className="pt-3 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-success" /> Vượt: {counts.ahead}
@@ -591,31 +581,35 @@ export function InstructorPacingModal({
         </Dialog.Content>
       </Dialog>
 
-      {/* Modal Nhắc nhở hàng loạt học viên chậm tiến độ */}
-      {isBulkReminderModalOpen && (
+      {/* Modal Nhắc nhở học viên (Đơn lẻ hoặc Hàng loạt) */}
+      {isBulkReminderModalOpen && reminderTargetStudents && (
         <InstructorBulkReminderModal
-          key={`pacing-bulk-${isBulkReminderModalOpen}`}
+          key={`pacing-reminder-${isBulkReminderModalOpen}-${reminderTargetStudents.map((s) => s.userId).join("-")}`}
           open={isBulkReminderModalOpen}
-          onOpenChange={setIsBulkReminderModalOpen}
-          courseId={selectedCourse}
-          courseTitle={
-            selectedCourse !== "ALL"
-              ? coursesList.find((c) => c.id === selectedCourse)?.title || "Khóa học"
-              : "Tất cả khóa học"
+          onOpenChange={(isOpen) => {
+            setIsBulkReminderModalOpen(isOpen);
+            if (!isOpen) {
+              setReminderTargetStudents(null);
+            }
+          }}
+          courseId={
+            reminderTargetStudents.length === 1
+              ? reminderTargetStudents[0].courseId || selectedCourse
+              : selectedCourse
           }
-          students={filteredStudents
-            .filter((s) => s.pace === "BEHIND")
-            .map((s) => ({
-              userId: s.id,
-              userName: s.name,
-              userEmail: s.email,
-              progressPercent: s.progressPercent,
-              paceDesc: s.paceDescription,
-              courseId: s.courseId,
-              courseTitle: s.courseTitle,
-            }))}
+          courseTitle={
+            reminderTargetStudents.length === 1
+              ? reminderTargetStudents[0].courseTitle ||
+                (selectedCourse !== "ALL"
+                  ? coursesList.find((c) => c.id === selectedCourse)?.title
+                  : "Khóa học")
+              : selectedCourse !== "ALL"
+                ? coursesList.find((c) => c.id === selectedCourse)?.title || "Khóa học"
+                : "các khóa học phụ trách"
+          }
+          students={reminderTargetStudents}
           bottleneckWeek={
-            filteredStudents.some((s) => s.bottleneckStuck)
+            reminderTargetStudents.some((s) => s.pace === "BEHIND")
               ? { weekNumber: 2, title: "Hành vi Người tiêu dùng & Độ co giãn", dropRate: 75 }
               : null
           }

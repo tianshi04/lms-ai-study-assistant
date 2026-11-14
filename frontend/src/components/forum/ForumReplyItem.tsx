@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ThumbsUp, Pin } from "lucide-react";
+import { ThumbsUp, Pin } from "lucide-react";
 import type { ForumReply } from "@/gen/forum/v1/forum_pb";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
@@ -73,14 +73,6 @@ export function ForumReplyItem({
           : "bg-card border-border/70 hover:border-border shadow-xs"
       }`}
     >
-      {/* Official Answer Header Banner */}
-      {reply.isStaffAnswer && (
-        <div className="flex items-center gap-1.5 text-xs font-bold text-warning mb-2.5 bg-warning/10 px-2.5 py-1 rounded-lg w-fit border border-warning/20">
-          <Check aria-hidden="true" className="w-3.5 h-3.5 text-warning" />
-          <span>Câu trả lời chính thức từ Giảng viên / BQT</span>
-        </div>
-      )}
-
       {/* Top Header: Author Info on Left, Actions Toolbar on Right */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -152,14 +144,14 @@ export function ForumReplyItem({
           <Button
             variant={reply.isUpvotedByMe ? "filled" : "outlined"}
             size="sm"
-            onClick={() => onVote(reply.id, true)}
+            onClick={() => onVote(reply.id, !reply.isUpvotedByMe)}
             title={reply.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Hữu ích"}
             aria-label="Upvote"
             className="h-7 px-2.5 gap-1.5 text-xs font-bold rounded-lg shadow-xs"
           >
             <ThumbsUp
               aria-hidden="true"
-              className={`w-3 h-3 ${reply.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
+              className={`w-3 h-3 ${reply.isUpvotedByMe ? "text-primary-foreground fill-current" : "text-primary"}`}
             />
             <span>{reply.upvoteCount}</span>
           </Button>

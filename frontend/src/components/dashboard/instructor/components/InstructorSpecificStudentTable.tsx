@@ -67,7 +67,7 @@ export function InstructorSpecificStudentTable({
   totalItemsInActiveCourse,
   currentTimeMs,
   nudgedSpecificStudentIds,
-  onNudgeStudent: _onNudgeStudent,
+  onNudgeStudent,
   onNudgeAllBehind,
   onSelectStudentForDetail,
 }: InstructorSpecificStudentTableProps) {
@@ -496,7 +496,7 @@ export function InstructorSpecificStudentTable({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onSelectStudentForDetail(studentDetailRecord);
+                              onNudgeStudent(st);
                             }}
                             className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                               isNudged

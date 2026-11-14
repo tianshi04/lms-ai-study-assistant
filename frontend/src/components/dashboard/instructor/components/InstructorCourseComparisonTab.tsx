@@ -7,41 +7,19 @@ import type { ComparisonCourseCardItem } from "../types";
 export interface InstructorCourseComparisonTabProps {
   courses: ComparisonCourseCardItem[];
   activeCourseId?: string;
-  compareSortBy: "rate" | "students" | "rating";
-  onChangeCompareSortBy: (sort: "rate" | "students" | "rating") => void;
   onSelectCourse: (courseId: string) => void;
 }
 
 export function InstructorCourseComparisonTab({
   courses,
   activeCourseId: _activeCourseId,
-  compareSortBy,
-  onChangeCompareSortBy,
   onSelectCourse,
 }: InstructorCourseComparisonTabProps) {
   return (
     <div className="space-y-4">
-      {/* Header điều khiển: Sắp xếp */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-outline-variant/50">
-        <div>
-          <p className="text-xs font-bold text-foreground">Đối Sánh Hiệu Suất Từng Khóa Học</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Bộ sắp xếp */}
-          <select
-            value={compareSortBy}
-            onChange={(e) =>
-              onChangeCompareSortBy(e.target.value as "rate" | "students" | "rating")
-            }
-            className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-            aria-label="Sắp xếp danh sách khóa học"
-          >
-            <option value="rate">Hoàn thành cao nhất</option>
-            <option value="students">Đông học viên nhất</option>
-            <option value="rating">Đánh giá cao nhất</option>
-          </select>
-        </div>
+      {/* Header: Tiêu đề đối sánh */}
+      <div>
+        <p className="text-xs font-bold text-foreground">Đối Sánh Hiệu Suất Từng Khóa Học</p>
       </div>
 
       {/* LƯỚI THẺ VÒNG TRÒN TỶ LỆ (RADIAL RING CARDS) */}

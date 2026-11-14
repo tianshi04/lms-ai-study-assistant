@@ -623,3 +623,81 @@ async def test_forum_pin_and_update_security_guards(monkeypatch):
             current_user_id="random_attacker",
         )
     assert "Chỉ tác giả mới có quyền chỉnh sửa" in str(exc_up_rep.value)
+
+
+@pytest.mark.asyncio
+async def test_to_thread_entity_prioritizes_pinned_replies():
+    from unittest.mock import AsyncMock, MagicMock
+
+    from src.modules.forum.infrastructure.repository import ForumRepository
+
+    mock_session = AsyncMock()
+    repo = ForumRepository(session=mock_session)
+
+    # Reply 1: student reply created earlier (not pinned)
+    r1 = MagicMock()
+    r1.id = "r1"
+    r1.thread_id = "th_1"
+    r1.author_user_id = "u1"
+    r1.author_name = "Student A"
+    r1.author_role = "Learner"
+    r1.content = "Earliest student comment"
+    r1.created_at = "2026-07-25T10:00:00Z"
+    r1.upvote_count = 10
+    r1.is_staff_answer = False
+    r1.is_edited = False
+    r1.edited_at = ""
+
+    # Reply 2: instructor reply created later (pinned)
+    r2 = MagicMock()
+    r2.id = "r2"
+    r2.thread_id = "th_1"
+    r2.author_user_id = "u2"
+    r2.author_name = "Instructor B"
+    r2.author_role = "Instructor"
+    r2.content = "Pinned official instructor answer"
+    r2.created_at = "2026-11-14T19:00:00Z"
+    r2.upvote_count = 1
+    r2.is_staff_answer = True
+    r2.is_edited = False
+    r2.edited_at = ""
+
+    # Reply 3: another student reply created even later (not pinned)
+    r3 = MagicMock()
+    r3.id = "r3"
+    r3.thread_id = "th_1"
+    r3.author_user_id = "u3"
+    r3.author_name = "Student C"
+    r3.author_role = "Learner"
+    r3.content = "Latest student comment"
+    r3.created_at = "2026-11-14T20:00:00Z"
+    r3.upvote_count = 0
+    r3.is_staff_answer = False
+    r3.is_edited = False
+    r3.edited_at = ""
+
+    thread_orm = MagicMock()
+    thread_orm.id = "th_1"
+    thread_orm.course_id = "c1"
+    thread_orm.item_id = ""
+    thread_orm.title = "Thread Title"
+    thread_orm.content = "Thread Content"
+    thread_orm.author_name = "Author"
+    thread_orm.author_role = "Learner"
+    thread_orm.author_user_id = "author_1"
+    thread_orm.created_at = "2026-07-25T09:00:00Z"
+    thread_orm.upvote_count = 5
+    thread_orm.is_staff_pinned = False
+    thread_orm.is_edited = False
+    thread_orm.edited_at = ""
+    thread_orm.replies = [r1, r2, r3]
+
+    entity = repo._to_thread_entity(thread_orm)
+
+    assert len(entity.replies) == 3
+    # Pinned reply r2 MUST be first
+    assert entity.replies[0].id == "r2"
+    assert entity.replies[0].is_staff_answer is True
+    # Followed by chronological unpinned replies
+    assert entity.replies[1].id == "r1"
+    assert entity.replies[2].id == "r3"
