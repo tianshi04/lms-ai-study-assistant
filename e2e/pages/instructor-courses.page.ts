@@ -44,4 +44,23 @@ export class InstructorCoursesPage {
     await newCoursePage.verifyPageLoaded();
     await newCoursePage.fillAndSubmitCourse(title, description);
   }
+
+  async deleteCourse(title: string) {
+    await this.goto();
+    await this.verifyPageLoaded();
+    const courseCard = this.page.locator('div.p-5').filter({ hasText: title }).first();
+    await expect(courseCard).toBeVisible({ timeout: 10000 });
+    const moreMenuTrigger = courseCard.getByRole('button', { name: 'Thao tác khóa học' });
+    await expect(moreMenuTrigger).toBeVisible({ timeout: 5000 });
+    await moreMenuTrigger.click();
+    const deleteMenuItem = this.page.getByRole('menuitem', { name: /Xóa khóa học/i });
+    await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
+    await deleteMenuItem.click();
+    const confirmDeleteButton = this.page.getByRole('button', { name: /Xóa khóa học/i });
+    await expect(confirmDeleteButton).toBeVisible({ timeout: 5000 });
+    await confirmDeleteButton.click();
+    await expect(confirmDeleteButton).toBeHidden({ timeout: 5000 });
+    await expect(this.page.locator('div.p-5').filter({ hasText: title })).toBeHidden({ timeout: 10000 });
+  }
 }
+

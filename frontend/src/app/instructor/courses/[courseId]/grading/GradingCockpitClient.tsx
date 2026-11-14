@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -8,12 +8,14 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  Award,
   Lock,
   UserCheck,
   Cpu,
   ShieldCheck,
   ArrowRight,
+  Eye,
+  RotateCcw,
+  Users,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Button } from "@/components/ui/Button";
@@ -40,6 +42,8 @@ interface GradingCockpitClientProps {
   courseId: string;
 }
 
+type CockpitTab = GradingQueueStatus | "OUTLIER";
+
 export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
   const { toast } = useToast();
   const { userId: currentUserId } = useAuth();
@@ -52,10 +56,11 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
     enabled: !isInvalidCourse,
   });
 
-  const [activeTab, setActiveTab] = useState<GradingQueueStatus>(GradingQueueStatus.ALL);
+  const [activeTab, setActiveTab] = useState<CockpitTab>(GradingQueueStatus.ALL);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
+  const [evaluationModalMode, setEvaluationModalMode] = useState<"view" | "grade">("grade");
   const [currentTimeMs, setCurrentTimeMs] = useState<number | null>(null);
 
   useEffect(() => {
@@ -64,121 +69,367 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
 
   const claimTaskMutation = useClaimGradingTaskMutation();
 
-  // Auto-open evaluation modal if submissionId was passed in URL query param
+  // Auto-open evaluation modal if submissionId was passed in URL query param (opens in safe view mode)
   useEffect(() => {
     if (urlSubmissionId && !selectedSubmissionId) {
-      claimTaskMutation
-        .mutateAsync({ submissionId: urlSubmissionId })
-        .catch(() => {
-          // If already claimed or failed, still open modal in inspected mode
-        })
-        .finally(() => {
-          setSelectedSubmissionId(urlSubmissionId);
-          setIsEvaluationModalOpen(true);
-        });
+      setSelectedSubmissionId(urlSubmissionId);
+      setEvaluationModalMode("view");
+      setIsEvaluationModalOpen(true);
     }
-  }, [urlSubmissionId, selectedSubmissionId, claimTaskMutation]);
+  }, [urlSubmissionId, selectedSubmissionId]);
 
-  // Fetch grading queue using TanStack Query
+  // Fetch full grading queue for the course using TanStack Query
   const { data, isLoading, isError, error, refetch } = useGradingQueueQuery(
     {
       courseId: isInvalidCourse ? "" : courseId,
-      status: activeTab,
-      searchQuery,
+      status: GradingQueueStatus.ALL,
+      searchQuery: "",
     },
     {
       enabled: !isInvalidCourse,
     },
   );
 
-  const queueItems = data?.items || [];
+  const rawItems = useMemo(() => data?.items || [], [data?.items]);
 
-  const isSubmissionOverdue = (item: GradingQueueItem) => {
-    // Only items that are NOT graded, NOT appealed, NOT outlier, NOT claimed, and past 48h
-    if (item.status === GradingQueueStatus.GRADED) return false;
-    if (item.isAppeal) return false;
-    if (item.isOutlier) return false;
-    if (item.lockedByUserId) return false;
-    if (!item.submittedAt || !currentTimeMs) return false;
-    const isPast48h = currentTimeMs - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
-    return isPast48h && !item.staffScore && item.peerReviewsCount < 3;
-  };
+  const isSubmissionOverdue = useCallback(
+    (item: GradingQueueItem) => {
+      // Only items that are NOT graded, NOT appealed, NOT outlier, NOT claimed, and past 48h
+      if (item.status === GradingQueueStatus.GRADED) return false;
+      if (item.isAppeal) return false;
+      if (item.isOutlier) return false;
+      if (item.lockedByUserId) return false;
+      if (!item.submittedAt || !currentTimeMs) return false;
+      const isPast48h = currentTimeMs - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
+      return isPast48h && !item.staffScore && item.peerReviewsCount < 3;
+    },
+    [currentTimeMs],
+  );
 
-  const overdueCount = queueItems.filter(isSubmissionOverdue).length;
+  const overdueCount = useMemo(
+    () => rawItems.filter(isSubmissionOverdue).length,
+    [rawItems, isSubmissionOverdue],
+  );
 
-  const getActionConfig = (item: GradingQueueItem, isOverdue: boolean) => {
-    if (item.isAppeal) {
-      return {
-        label: "Giải quyết khiếu nại",
-        className:
-          "bg-tertiary hover:bg-tertiary/90 text-on-tertiary shadow-sm font-bold border border-tertiary",
-        icon: AlertTriangle,
-      };
+  const outlierCount = useMemo(
+    () => rawItems.filter((i) => i.isOutlier && i.status !== GradingQueueStatus.GRADED).length,
+    [rawItems],
+  );
+
+  const queueItems = useMemo(() => {
+    let items = rawItems;
+
+    // Filter by active tab
+    if (activeTab === GradingQueueStatus.PENDING) {
+      items = items.filter((i) => i.status === GradingQueueStatus.PENDING);
+    } else if (activeTab === GradingQueueStatus.CLAIMED) {
+      items = items.filter((i) => i.status === GradingQueueStatus.CLAIMED);
+    } else if (activeTab === GradingQueueStatus.APPEALED) {
+      items = items.filter((i) => i.status === GradingQueueStatus.APPEALED);
+    } else if (activeTab === GradingQueueStatus.GRADED) {
+      items = items.filter((i) => i.status === GradingQueueStatus.GRADED);
+    } else if (activeTab === "OUTLIER") {
+      items = items.filter((i) => i.isOutlier && i.status !== GradingQueueStatus.GRADED);
     }
-    if (item.isOutlier) {
-      return {
-        label: "Xử lý lệch điểm",
-        className:
-          "bg-warning hover:bg-warning-hover text-warning-foreground shadow-sm font-bold border border-warning",
-        icon: AlertTriangle,
-      };
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      items = items.filter(
+        (i) =>
+          i.studentName.toLowerCase().includes(q) ||
+          i.itemTitle.toLowerCase().includes(q) ||
+          i.studentId.toLowerCase().includes(q),
+      );
     }
-    if (isOverdue) {
-      return {
-        label: "Quá hạn",
-        className:
-          "bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-sm font-bold border border-destructive",
-        icon: Clock,
-      };
-    }
+
+    return items;
+  }, [activeTab, rawItems, searchQuery]);
+
+  const renderStatusBadge = (item: GradingQueueItem, isOverdue: boolean) => {
     if (item.lockedByUserId) {
-      if (item.lockedByUserId === currentUserId) {
-        return {
-          label: "Tiếp tục chấm",
-          className:
-            "bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm font-bold border border-primary",
-          icon: ArrowRight,
-        };
-      }
-      return {
-        label: "Xem bài đang chấm",
-        className:
-          "bg-muted/70 hover:bg-muted text-muted-foreground border border-border font-medium",
-        icon: Lock,
-      };
+      return (
+        <Badge
+          variant="outlined"
+          className={cn(
+            "text-[11px] font-bold gap-1 px-2.5 py-0.5 whitespace-nowrap",
+            item.lockedByUserId === currentUserId
+              ? "bg-primary/10 text-primary border-primary/30"
+              : "bg-muted text-muted-foreground border-border",
+          )}
+        >
+          <Lock
+            className={cn(
+              "w-3.5 h-3.5 shrink-0",
+              item.lockedByUserId === currentUserId ? "text-primary" : "text-muted-foreground",
+            )}
+            aria-hidden="true"
+          />
+          {item.lockedByUserId === currentUserId
+            ? "Đang giữ: Bạn"
+            : item.lockedByName
+              ? `Đang giữ: ${item.lockedByName}`
+              : "Đang được chấm"}
+        </Badge>
+      );
+    }
+    if (item.isAppeal) {
+      return (
+        <Badge
+          variant="outlined"
+          className="text-[11px] font-bold bg-tertiary/15 text-tertiary border-tertiary/30 gap-1 px-2.5 py-0.5 whitespace-nowrap"
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-tertiary shrink-0" aria-hidden="true" />
+          Khiếu nại điểm
+        </Badge>
+      );
     }
     if (item.status === GradingQueueStatus.GRADED) {
-      return {
-        label: "Xem / Chấm lại",
-        className:
-          "bg-card hover:bg-muted/50 text-foreground border border-border font-semibold shadow-none",
-        icon: ArrowRight,
-      };
+      return (
+        <Badge
+          variant="success"
+          className="text-[11px] font-semibold bg-success/15 text-success border-success/30 gap-1 px-2.5 py-0.5 whitespace-nowrap"
+        >
+          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" aria-hidden="true" />
+          Đã chấm
+        </Badge>
+      );
     }
-    return {
-      label: "Tiếp nhận & Chấm",
-      className:
-        "bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm font-bold border border-primary",
-      icon: ArrowRight,
-    };
+    if (item.isOutlier) {
+      return (
+        <Badge
+          variant="warning"
+          className="text-[11px] font-bold bg-warning/15 text-warning border-warning/30 gap-1 px-2.5 py-0.5 whitespace-nowrap"
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-warning shrink-0" aria-hidden="true" />
+          Lệch điểm chuẩn
+        </Badge>
+      );
+    }
+    if (isOverdue) {
+      return (
+        <Badge
+          variant="error"
+          className="text-[11px] font-bold bg-destructive/10 text-destructive border-destructive/20 gap-1 px-2.5 py-0.5 whitespace-nowrap"
+        >
+          <Clock className="w-3.5 h-3.5 text-destructive shrink-0" aria-hidden="true" />
+          Quá hạn 48h
+        </Badge>
+      );
+    }
+    if (item.peerReviewsCount < 3) {
+      return (
+        <Badge
+          variant="outlined"
+          className="text-[11px] font-medium bg-muted text-muted-foreground border-border gap-1 px-2.5 py-0.5 whitespace-nowrap"
+        >
+          <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+          Đang chấm chéo
+        </Badge>
+      );
+    }
+    return (
+      <Badge
+        variant="outlined"
+        className="text-[11px] font-medium text-muted-foreground px-2.5 py-0.5 whitespace-nowrap"
+      >
+        Chờ chấm
+      </Badge>
+    );
+  };
+
+  const renderGradeActionButton = (item: GradingQueueItem, isOverdue: boolean) => {
+    // 1. Locked by another user
+    if (item.lockedByUserId && item.lockedByUserId !== currentUserId) {
+      return (
+        <Button
+          type="button"
+          variant="outlined"
+          disabled
+          className="w-[144px] h-8 text-xs font-medium gap-1 px-2.5 bg-muted text-muted-foreground border-border cursor-not-allowed opacity-75 shrink-0 whitespace-nowrap justify-center"
+          title={`Bài này đang được ${item.lockedByName || "giảng viên khác"} giữ để chấm`}
+        >
+          <Lock className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+          <span>Đang khóa</span>
+        </Button>
+      );
+    }
+
+    // 2. Currently locked by ME
+    if (item.lockedByUserId === currentUserId) {
+      return (
+        <Button
+          type="button"
+          onClick={() => handleGradeSubmission(item)}
+          disabled={claimTaskMutation.isPending}
+          className="w-[144px] h-8 text-xs font-bold gap-1 px-2.5 bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm shrink-0 whitespace-nowrap justify-center"
+        >
+          <span>Tiếp tục chấm</span>
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+        </Button>
+      );
+    }
+
+    // 3. Graded -> Regrade
+    if (item.status === GradingQueueStatus.GRADED) {
+      return (
+        <Button
+          type="button"
+          variant="tonal"
+          onClick={() => handleGradeSubmission(item)}
+          disabled={claimTaskMutation.isPending}
+          className="w-[144px] h-8 text-xs font-semibold gap-1 px-2.5 bg-card hover:bg-muted text-foreground border border-border shrink-0 whitespace-nowrap justify-center"
+        >
+          <RotateCcw className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+          <span>Chấm lại</span>
+        </Button>
+      );
+    }
+
+    // 4. Appeal
+    if (item.isAppeal) {
+      return (
+        <Button
+          type="button"
+          onClick={() => handleGradeSubmission(item)}
+          disabled={claimTaskMutation.isPending}
+          className="w-[144px] h-8 text-xs font-bold gap-1 px-2.5 bg-tertiary hover:bg-tertiary/90 text-on-tertiary border border-tertiary shadow-sm shrink-0 whitespace-nowrap justify-center"
+        >
+          <span>Xử lý khiếu nại</span>
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+        </Button>
+      );
+    }
+
+    // 5. Outlier
+    if (item.isOutlier) {
+      return (
+        <Button
+          type="button"
+          onClick={() => handleGradeSubmission(item)}
+          disabled={claimTaskMutation.isPending}
+          className="w-[144px] h-8 text-xs font-bold gap-1 px-2.5 bg-warning hover:bg-warning-hover text-warning-foreground border border-warning shadow-sm shrink-0 whitespace-nowrap justify-center"
+        >
+          <span>Xử lý lệch điểm</span>
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+        </Button>
+      );
+    }
+
+    // 6. Overdue
+    if (isOverdue) {
+      return (
+        <Button
+          type="button"
+          onClick={() => handleGradeSubmission(item)}
+          disabled={claimTaskMutation.isPending}
+          className="w-[144px] h-8 text-xs font-bold gap-1 px-2.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground border border-destructive shadow-sm shrink-0 whitespace-nowrap justify-center"
+        >
+          <span>Chấm quá hạn</span>
+          <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+        </Button>
+      );
+    }
+
+    // 7. In progress peer review (< 3 reviews and not overdue)
+    if (item.peerReviewsCount < 3) {
+      return (
+        <Button
+          type="button"
+          variant="tonal"
+          onClick={() => handleGradeSubmission(item)}
+          disabled={claimTaskMutation.isPending}
+          className="w-[144px] h-8 text-xs font-semibold gap-1 px-2.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 shrink-0 whitespace-nowrap justify-center"
+        >
+          <span>Chấm sớm</span>
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+        </Button>
+      );
+    }
+
+    // 8. Default
+    return (
+      <Button
+        type="button"
+        onClick={() => handleGradeSubmission(item)}
+        disabled={claimTaskMutation.isPending}
+        className="w-[144px] h-8 text-xs font-bold gap-1 px-2.5 bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm shrink-0 whitespace-nowrap justify-center"
+      >
+        <span>Tiếp nhận & Chấm</span>
+        <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+      </Button>
+    );
   };
 
   const getRowBorderClass = (item: GradingQueueItem, isOverdue: boolean) => {
+    if (item.lockedByUserId) {
+      return item.lockedByUserId === currentUserId
+        ? "border-l-4 border-l-primary bg-primary/[0.04]"
+        : "border-l-4 border-l-muted-foreground/30";
+    }
     if (item.isAppeal) return "border-l-4 border-l-tertiary bg-tertiary/[0.04]";
+    if (item.status === GradingQueueStatus.GRADED) return "border-l-4 border-l-success/30";
     if (item.isOutlier) return "border-l-4 border-l-warning bg-warning/[0.03]";
     if (isOverdue) return "border-l-4 border-l-destructive bg-destructive/[0.03]";
-    if (item.lockedByUserId) return "border-l-4 border-l-muted-foreground/30";
-    if (item.status === GradingQueueStatus.GRADED) return "border-l-4 border-l-success/30";
     return "border-l-4 border-l-transparent";
+  };
+
+  // Helper to resolve the authoritative score for a queue item
+  const resolveItemScore = (item: GradingQueueItem): number | null => {
+    // If not graded (no provenance or UNSPECIFIED), return null
+    if (!item.gradeSource) {
+      return null;
+    }
+
+    // 1. Staff score (INSTRUCTOR or TA)
+    if (
+      item.gradeSource === GradingProvenance.INSTRUCTOR ||
+      item.gradeSource === GradingProvenance.TA
+    ) {
+      if (
+        typeof item.staffScore === "number" &&
+        !Number.isNaN(item.staffScore) &&
+        item.staffScore >= 0
+      ) {
+        return item.staffScore;
+      }
+    }
+
+    // 2. Peer score (PEER)
+    // Only valid if completed (>= 3 reviews and GRADED / APPEALED / CLAIMED with existing peer grade) and has actual score > 0
+    if (item.gradeSource === GradingProvenance.PEER) {
+      const isPeerGraded =
+        (item.status === GradingQueueStatus.GRADED ||
+          item.status === GradingQueueStatus.APPEALED ||
+          item.status === GradingQueueStatus.CLAIMED) &&
+        item.peerReviewsCount >= 3;
+      if (
+        isPeerGraded &&
+        typeof item.peerScore === "number" &&
+        !Number.isNaN(item.peerScore) &&
+        item.peerScore > 0
+      ) {
+        return item.peerScore;
+      }
+    }
+
+    // 3. Fallback when provenance is AUTO
+    if (item.gradeSource === GradingProvenance.AUTO) {
+      if (typeof item.staffScore === "number" && item.staffScore >= 0) {
+        return item.staffScore;
+      }
+    }
+
+    return null;
   };
 
   // Helper render provenance badge
   const renderProvenanceBadge = (
     provenance: GradingProvenance,
-    score: number,
-    status: GradingQueueStatus,
+    score: number | null | undefined,
+    _status: GradingQueueStatus,
   ) => {
-    if (status !== GradingQueueStatus.GRADED && (!score || score <= 0)) {
+    if (score === null || score === undefined || Number.isNaN(score) || score < 0 || !provenance) {
       return <span className="text-xs text-muted-foreground italic">Chưa có điểm</span>;
     }
     switch (provenance) {
@@ -223,34 +474,41 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
           </Badge>
         );
       default:
-        return score > 0 ? (
+        return (
           <Badge
             variant="outlined"
             className="text-[11px] font-semibold bg-muted text-muted-foreground gap-1 px-2.5 py-0.5"
           >
             Điểm: {score.toFixed(1)}
           </Badge>
-        ) : (
-          <span className="text-xs text-muted-foreground italic">Chưa có điểm</span>
         );
     }
   };
 
-  // Handle open evaluation modal with claim
-  const handleOpenEvaluation = async (item: GradingQueueItem) => {
+  // Handle view submission without claiming (safe view-only mode)
+  const handleViewSubmission = (item: GradingQueueItem) => {
+    setSelectedSubmissionId(item.submissionId);
+    setEvaluationModalMode("view");
+    setIsEvaluationModalOpen(true);
+  };
+
+  // Handle grade submission with atomic claiming
+  const handleGradeSubmission = async (item: GradingQueueItem) => {
     try {
-      // If the task is not yet locked or locked by current user, claim it
-      if (!item.lockedByUserId) {
+      if (!item.lockedByUserId || item.lockedByUserId !== currentUserId) {
         await claimTaskMutation.mutateAsync({ submissionId: item.submissionId });
+        await refetch();
       }
       setSelectedSubmissionId(item.submissionId);
+      setEvaluationModalMode("grade");
       setIsEvaluationModalOpen(true);
     } catch {
       toast({
         title: "Không thể tiếp nhận bài nộp",
-        description: "Bài nộp này có thể đang được giảng viên khác xử lý. Vui lòng thử lại sau.",
+        description: "Bài nộp này có thể đang được nhân sự khác xử lý. Vui lòng thử lại sau.",
         type: "error",
       });
+      refetch();
     }
   };
 
@@ -294,13 +552,6 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               </Breadcrumb.Item>
             </Breadcrumb.List>
           </Breadcrumb>
-
-          <Link href={`/instructor/courses/${courseId}/gradebook`}>
-            <Button variant="outlined" className="text-xs font-bold gap-1.5 border-border">
-              <Award className="w-4 h-4 text-primary" aria-hidden="true" />
-              <span>Xem Sổ điểm Khóa học</span>
-            </Button>
-          </Link>
         </div>
 
         {/* Header Hero Section */}
@@ -310,21 +561,17 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                 Bàn điều khiển Chấm bài & Phúc khảo
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
-                Công bố điểm tức thì
-              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              Hàng chờ Xử lý Sư phạm
+              Hàng chờ Xử lý
             </h1>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Tiếp nhận bài làm cần trợ giảng can thiệp, bài có khiếu nại phúc khảo hoặc điểm số bất
-              thường. Điểm chấm sẽ được công bố ngay lập tức cho học viên.
+              Tiếp nhận bài làm cần can thiệp, bài có khiếu nại phúc khảo hoặc điểm số bất thường.
             </p>
           </div>
 
           {/* Quick Stats Pill */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full md:w-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 w-full md:w-auto">
             <div className="p-3 rounded-2xl bg-background border border-border text-center">
               <span className="text-xl font-black text-foreground block">
                 {data?.totalCount ?? 0}
@@ -341,6 +588,10 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               <span className="text-xl font-black text-destructive block">{overdueCount}</span>
               <span className="text-[11px] font-bold text-destructive">Quá hạn</span>
             </div>
+            <div className="p-3 rounded-2xl bg-warning/10 border border-warning/20 text-center">
+              <span className="text-xl font-black text-warning block">{outlierCount}</span>
+              <span className="text-[11px] font-bold text-warning">Lệch điểm</span>
+            </div>
             <div className="p-3 rounded-2xl bg-tertiary/10 border border-tertiary/20 text-center">
               <span className="text-xl font-black text-tertiary block">
                 {data?.appealedCount ?? 0}
@@ -355,23 +606,6 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
             </div>
           </div>
         </div>
-
-        {/* Overdue Warning Alert Banner */}
-        {overdueCount > 0 && (
-          <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <AlertTriangle
-                className="w-5 h-5 text-destructive flex-shrink-0"
-                aria-hidden="true"
-              />
-              <span>
-                <strong>{overdueCount} bài nộp đã quá hạn 48 giờ</strong> chưa hoàn thành đánh giá
-                đồng học. Cần Giảng viên / Trợ giảng can thiệp chấm bài ngay để giải phóng điểm cho
-                sinh viên.
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Toolbar & Filters */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -409,6 +643,17 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               }`}
             >
               Đang chấm ({data?.claimedCount ?? 0})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("OUTLIER")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
+                activeTab === "OUTLIER"
+                  ? "bg-warning text-warning-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Lệch điểm ({outlierCount})
             </button>
             <button
               type="button"
@@ -510,19 +755,19 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
               <Table>
                 <Table.Header className="bg-muted/30">
                   <Table.Row>
-                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[200px]">
+                    <Table.Head className="text-xs font-bold text-muted-foreground w-[220px] min-w-[200px] whitespace-nowrap">
                       Sinh viên & Thời gian
                     </Table.Head>
-                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[240px]">
-                      Bài tập / Nội dung
+                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[280px]">
+                      Bài tập
                     </Table.Head>
-                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[220px]">
+                    <Table.Head className="text-xs font-bold text-muted-foreground w-[210px] min-w-[200px] whitespace-nowrap">
                       Trạng thái & Cảnh báo
                     </Table.Head>
-                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[150px]">
+                    <Table.Head className="text-xs font-bold text-muted-foreground w-[150px] min-w-[140px] whitespace-nowrap">
                       Điểm hiện tại
                     </Table.Head>
-                    <Table.Head className="text-xs font-bold text-muted-foreground text-right min-w-[150px]">
+                    <Table.Head className="text-xs font-bold text-muted-foreground text-right w-[260px] min-w-[260px] whitespace-nowrap">
                       Thao tác
                     </Table.Head>
                   </Table.Row>
@@ -530,8 +775,6 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                 <Table.Body>
                   {queueItems.map((item) => {
                     const isItemOverdue = isSubmissionOverdue(item);
-                    const action = getActionConfig(item, isItemOverdue);
-                    const ActionIcon = action.icon;
 
                     return (
                       <Table.Row
@@ -542,20 +785,20 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                         )}
                       >
                         {/* Student info */}
-                        <Table.Cell className="py-4">
+                        <Table.Cell className="py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <Avatar className="w-9 h-9 border border-border">
+                            <Avatar className="w-9 h-9 border border-border shrink-0">
                               <Avatar.Image src={item.studentAvatarUrl} alt={item.studentName} />
                               <Avatar.Fallback className="bg-primary/10 text-primary text-xs font-bold">
                                 {item.studentName.slice(0, 2).toUpperCase()}
                               </Avatar.Fallback>
                             </Avatar>
-                            <div>
+                            <div className="min-w-0">
                               <span className="font-bold text-foreground text-sm block">
                                 {item.studentName}
                               </span>
                               <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                                <Clock className="w-3 h-3" aria-hidden="true" />
+                                <Clock className="w-3 h-3 shrink-0" aria-hidden="true" />
                                 {item.submittedAt
                                   ? new Date(item.submittedAt).toLocaleDateString("vi-VN", {
                                       hour: "2-digit",
@@ -570,111 +813,57 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                         </Table.Cell>
 
                         {/* Item Title */}
-                        <Table.Cell className="py-4">
-                          <div>
-                            <span className="font-bold text-foreground text-sm block">
-                              {item.itemTitle}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground truncate max-w-xs block">
-                              {item.courseTitle}
-                            </span>
-                          </div>
+                        <Table.Cell className="py-3.5 min-w-[280px] whitespace-normal">
+                          <span
+                            className="font-bold text-foreground text-sm leading-snug block break-words"
+                            title={item.itemTitle}
+                          >
+                            {item.itemTitle}
+                          </span>
                         </Table.Cell>
 
-                        {/* Badges / Warnings (Prioritized & Mutually Exclusive) */}
-                        <Table.Cell className="py-4">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {item.isAppeal ? (
-                              <Badge
-                                variant="outlined"
-                                className="text-[11px] font-bold bg-tertiary/15 text-tertiary border-tertiary/30 gap-1 px-2.5 py-0.5"
-                              >
-                                <AlertTriangle
-                                  className="w-3.5 h-3.5 text-tertiary"
-                                  aria-hidden="true"
-                                />
-                                Khiếu nại điểm
-                              </Badge>
-                            ) : item.isOutlier ? (
-                              <Badge
-                                variant="warning"
-                                className="text-[11px] font-bold bg-warning/15 text-warning border-warning/30 gap-1 px-2.5 py-0.5"
-                              >
-                                <AlertTriangle
-                                  className="w-3.5 h-3.5 text-warning"
-                                  aria-hidden="true"
-                                />
-                                Lệch điểm chuẩn
-                              </Badge>
-                            ) : item.lockedByUserId ? (
-                              <Badge
-                                variant="outlined"
-                                className="text-[11px] font-medium bg-muted text-muted-foreground gap-1 px-2.5 py-0.5"
-                              >
-                                <Lock
-                                  className="w-3.5 h-3.5 text-muted-foreground"
-                                  aria-hidden="true"
-                                />
-                                {item.lockedByName
-                                  ? `Đang giữ: ${item.lockedByName}`
-                                  : "Đang được chấm"}
-                              </Badge>
-                            ) : isItemOverdue ? (
-                              <Badge
-                                variant="error"
-                                className="text-[11px] font-bold bg-destructive/10 text-destructive border-destructive/20 gap-1 px-2.5 py-0.5"
-                              >
-                                <Clock
-                                  className="w-3.5 h-3.5 text-destructive"
-                                  aria-hidden="true"
-                                />
-                                Quá hạn 48h
-                              </Badge>
-                            ) : item.status === GradingQueueStatus.GRADED ? (
-                              <Badge
-                                variant="success"
-                                className="text-[11px] font-semibold bg-success/15 text-success border-success/30 gap-1 px-2.5 py-0.5"
-                              >
-                                <CheckCircle2
-                                  className="w-3.5 h-3.5 text-success"
-                                  aria-hidden="true"
-                                />
-                                Đã chấm
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outlined"
-                                className="text-[11px] font-medium text-muted-foreground px-2.5 py-0.5"
-                              >
-                                Chờ chấm
-                              </Badge>
-                            )}
+                        {/* Badges / Warnings (Structured Uniform 2-Tier) */}
+                        <Table.Cell className="py-3.5 whitespace-nowrap">
+                          <div className="flex flex-col items-start gap-1">
+                            <div>{renderStatusBadge(item, isItemOverdue)}</div>
+                            <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                              <Users
+                                className="w-3 h-3 text-muted-foreground shrink-0"
+                                aria-hidden="true"
+                              />
+                              Tiến độ: {item.peerReviewsCount}/3 bạn học
+                            </span>
                           </div>
                         </Table.Cell>
 
                         {/* Current Score / Provenance */}
-                        <Table.Cell className="py-4">
+                        <Table.Cell className="py-3.5 whitespace-nowrap">
                           {renderProvenanceBadge(
                             item.gradeSource,
-                            item.staffScore || item.peerScore,
+                            resolveItemScore(item),
                             item.status,
                           )}
                         </Table.Cell>
 
-                        {/* Context-Aware Color-Coded Action Button */}
-                        <Table.Cell className="py-4 text-right">
-                          <Button
-                            type="button"
-                            onClick={() => handleOpenEvaluation(item)}
-                            disabled={claimTaskMutation.isPending}
-                            className={cn(
-                              "text-xs gap-1.5 px-3.5 py-1.5 transition-all",
-                              action.className,
-                            )}
-                          >
-                            <span>{action.label}</span>
-                            <ActionIcon className="w-3.5 h-3.5" aria-hidden="true" />
-                          </Button>
+                        {/* Two-Button Action Column: View (Safe) + Grade (Claim) - Fixed Width & Straight Alignment */}
+                        <Table.Cell className="py-3.5 text-right w-[260px] min-w-[260px] whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                            <Button
+                              type="button"
+                              variant="outlined"
+                              onClick={() => handleViewSubmission(item)}
+                              className="w-[90px] h-8 text-xs font-semibold gap-1 px-2 border-border hover:bg-muted text-foreground shrink-0 whitespace-nowrap justify-center"
+                              title="Xem chi tiết bài nộp và tiến độ chấm (không khóa giữ bài)"
+                            >
+                              <Eye
+                                className="w-3.5 h-3.5 text-muted-foreground shrink-0"
+                                aria-hidden="true"
+                              />
+                              <span>Xem bài</span>
+                            </Button>
+
+                            {renderGradeActionButton(item, isItemOverdue)}
+                          </div>
                         </Table.Cell>
                       </Table.Row>
                     );
@@ -691,11 +880,19 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
         <EvaluationModal
           isOpen={isEvaluationModalOpen}
           submissionId={selectedSubmissionId}
+          initialMode={evaluationModalMode}
           onClose={() => {
             setIsEvaluationModalOpen(false);
             setSelectedSubmissionId(null);
+            refetch();
           }}
           onGradedSuccessfully={() => {
+            refetch();
+          }}
+          onTaskClaimed={() => {
+            refetch();
+          }}
+          onTaskReleased={() => {
             refetch();
           }}
         />

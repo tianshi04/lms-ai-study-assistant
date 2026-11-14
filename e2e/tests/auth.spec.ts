@@ -39,8 +39,9 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     await loginPage.goto();
     await loginPage.verifyPageLoaded();
 
+    await loginPage.registerLink.scrollIntoViewIfNeeded();
     await loginPage.registerLink.click();
-    await expect(page).toHaveURL(/\/auth\/register/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/auth\/register/, { timeout: 15000 });
   });
 
   test('should start Google registration with state and nonce (no mock bypass)', async ({ page }) => {

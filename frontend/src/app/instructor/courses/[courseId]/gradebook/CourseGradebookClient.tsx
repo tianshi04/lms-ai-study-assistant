@@ -29,6 +29,7 @@ import { useCourseGradebookQuery } from "@/lib/query_hooks";
 import type {
   GradebookStudentRow,
   GradebookColumn as ProtoGradebookColumn,
+  GradebookCell,
 } from "@/gen/catalog/v1/catalog_pb";
 
 interface CourseGradebookClientProps {
@@ -153,7 +154,9 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
           </div>
         ),
         cell: ({ row }) => {
-          const cellData = row.original.cells.find((c) => c.itemId === itemCol.itemId);
+          const cellData = row.original.cells.find(
+            (c: GradebookCell) => c.itemId === itemCol.itemId,
+          );
           if (!cellData || (!cellData.gradedAt && !cellData.submissionId && !cellData.provenance)) {
             return <span className="text-muted-foreground/60 text-xs italic">Chưa có bài</span>;
           }
@@ -245,7 +248,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
       student.isCourseCompleted ? "Đã tốt nghiệp" : student.enrollmentStatus,
       student.finalWeightedGrade.toFixed(2),
       ...columnsData.map((c) => {
-        const cell = student.cells.find((cellItem) => cellItem.itemId === c.itemId);
+        const cell = student.cells.find((cellItem: GradebookCell) => cellItem.itemId === c.itemId);
         return cell ? cell.score.toFixed(1) : "0";
       }),
     ]);
