@@ -22,6 +22,9 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
 
     // Verify new thread is displayed on page
     await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible({ timeout: 15000 });
+
+    // Clean up created thread
+    await forumPage.deleteThread(uniqueTitle);
   });
 
   test('should allow replying to an existing thread', async ({ page }) => {
@@ -38,6 +41,9 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
     await forumPage.postFirstReply(replyMessage);
 
     await expect(page.locator(`text=${replyMessage}`)).toBeVisible({ timeout: 15000 });
+
+    // Clean up created thread and its replies
+    await forumPage.deleteThread(uniqueTitle);
   });
 
   test('should allow upvoting a reply and enforcing 1 vote per user (BR_FORUM_001)', async ({ page }) => {
@@ -64,7 +70,18 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
     const submitBtn = page.getByRole('button', { name: /Đăng Thảo Luận/i });
     await submitBtn.click();
 
-    await expect(page.locator(`text=${playerQuestion}`)).toBeVisible({ timeout: 15000 });
+            await expect(page.locator(`text=${playerQuestion}`)).toBeVisible({ timeout: 15000 });
+
+    // Clean up question from player forum tab
+    const threadCard = page.locator('div[id^="thread-"]').filter({ hasText: playerQuestion }).first();
+    const deleteBtn = threadCard.getByRole('button', { name: /^Xóa$/i }).first();
+    if (await deleteBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await deleteBtn.click();
+      const confirmDialogBtn = page.getByRole('button', { name: /Xóa bài viết/i }).first();
+      await expect(confirmDialogBtn).toBeVisible({ timeout: 5000 });
+      await confirmDialogBtn.click();
+      await expect(confirmDialogBtn).toBeHidden({ timeout: 5000 });
+      await expect(page.locator(`text=${playerQuestion}`)).toBeHidden({ timeout: 10000 });
+    }
   });
 });
-

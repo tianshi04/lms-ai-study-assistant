@@ -48,6 +48,10 @@ setup.beforeAll(() => {
   }
 });
 
+setup.beforeEach(() => {
+  setup.setTimeout(60000);
+});
+
 setup('authenticate as learner', async ({ page }) => {
   const { email, password } = E2E_CONFIG.credentials.learner;
   await loginAndSave(page, email, password, path.join(AUTH_DIR, 'learner.json'));

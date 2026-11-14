@@ -89,7 +89,10 @@ class MockForumRepository:
     async def pin_staff_answer(self, reply_id: str, ta_user_id: str):
         r = self.replies.get(reply_id)
         if r:
-            r.is_staff_answer = not r.is_staff_answer
+            if getattr(r, "author_role", "") in ("Instructor", "Admin", "TA"):
+                r.is_staff_answer = True
+            else:
+                r.is_staff_answer = not r.is_staff_answer
         return True
 
     async def pin_thread(self, thread_id: str, is_pinned: bool):
@@ -111,7 +114,9 @@ class MockCatalogRepository:
         matched = [
             c
             for c in self.courses.values()
-            if c.owner_id == instructor_id or instructor_id in c.co_instructor_ids
+            if c.owner_id == instructor_id
+            or instructor_id in (c.co_instructor_ids or [])
+            or instructor_id in (getattr(c, "ta_ids", []) or [])
         ]
         return matched, len(matched)
 
@@ -623,3 +628,208 @@ async def test_forum_pin_and_update_security_guards(monkeypatch):
             current_user_id="random_attacker",
         )
     assert "Chỉ tác giả mới có quyền chỉnh sửa" in str(exc_up_rep.value)
+
+
+@pytest.mark.asyncio
+async def test_forum_vote_post_enforces_enrollment(monkeypatch):
+    """vote_post must verify course forum enrollment before recording vote."""
+    mock_forum = MockForumRepository()
+    mock_catalog = MockCatalogRepository()
+    mock_learning = MockLearningRepository()
+
+    course = Course(
+        id="course_vote_1",
+        title="Python Voting Course",
+        slug="python-voting-course",
+        owner_id="inst_1",
+    )
+    mock_catalog.courses["course_vote_1"] = course
+
+    thread = ForumThreadEntity(
+        id="thread_vote_1",
+        course_id="course_vote_1",
+        item_id="",
+        title="Sample Thread",
+        content="Content",
+        author_name="Student",
+        author_role="Learner",
+        author_user_id="user_author",
+        created_at=datetime.now(UTC).isoformat(),
+    )
+    mock_forum.threads["thread_vote_1"] = thread
+
+    use_case = ForumUseCase(
+        repo_factory=lambda _: mock_forum,
+        catalog_repo_factory=lambda _: mock_catalog,
+        learning_repo_factory=lambda _: mock_learning,
+    )
+
+    @asynccontextmanager
+    async def mock_scope():
+        yield MagicMock()
+
+    monkeypatch.setattr(
+        "src.modules.forum.application.forum_usecase.async_session_scope",
+        mock_scope,
+    )
+
+    user_not_enrolled = CurrentUser(
+        id="user_unregistered",
+        role="USER_ROLE_LEARNER",
+        email="unregistered@lms.local",
+    )
+
+    # 1. Unenrolled learner cannot vote -> PermissionError
+    with pytest.raises(PermissionError) as exc_info:
+        await use_case.vote_post(
+            post_id="thread_vote_1",
+            user_id="user_unregistered",
+            user=user_not_enrolled,
+        )
+    assert "Bạn cần đăng ký khóa học" in str(exc_info.value)
+
+    # 2. Enrolled learner can vote
+    mock_learning.enrolled_pairs.add(("user_registered", "course_vote_1"))
+    user_enrolled = CurrentUser(
+        id="user_registered",
+        role="USER_ROLE_LEARNER",
+        email="registered@lms.local",
+    )
+    res = await use_case.vote_post(
+        post_id="thread_vote_1",
+        user_id="user_registered",
+        user=user_enrolled,
+    )
+    assert res == 1
+
+
+@pytest.mark.asyncio
+async def test_forum_list_threads_ta_role_learner(monkeypatch):
+    """A TA user with global role LEARNER who is in course.ta_ids can list threads."""
+    mock_forum = MockForumRepository()
+    mock_catalog = MockCatalogRepository()
+    mock_learning = MockLearningRepository()
+
+    course = Course(
+        id="course_ta_1",
+        title="TA Course",
+        slug="ta-course",
+        owner_id="inst_owner",
+        ta_ids=["user_ta_learner"],
+    )
+    mock_catalog.courses["course_ta_1"] = course
+
+    thread = ForumThreadEntity(
+        id="thread_ta_1",
+        course_id="course_ta_1",
+        item_id="",
+        title="TA Thread",
+        content="TA Content",
+        author_name="Student",
+        author_role="Learner",
+        author_user_id="user_s",
+        created_at=datetime.now(UTC).isoformat(),
+    )
+    mock_forum.threads["thread_ta_1"] = thread
+
+    use_case = ForumUseCase(
+        repo_factory=lambda _: mock_forum,
+        catalog_repo_factory=lambda _: mock_catalog,
+        learning_repo_factory=lambda _: mock_learning,
+    )
+
+    @asynccontextmanager
+    async def mock_scope():
+        yield MagicMock()
+
+    monkeypatch.setattr(
+        "src.modules.forum.application.forum_usecase.async_session_scope",
+        mock_scope,
+    )
+
+    # User is globally LEARNER (is_staff=False), but is listed in course.ta_ids
+    ta_user = CurrentUser(
+        id="user_ta_learner",
+        role="USER_ROLE_LEARNER",
+        email="ta@lms.local",
+    )
+
+    threads = await use_case.list_threads(
+        course_id="course_ta_1",
+        current_user_id="user_ta_learner",
+        user=ta_user,
+    )
+    assert len(threads) == 1
+    assert threads[0].id == "thread_ta_1"
+
+
+@pytest.mark.asyncio
+async def test_forum_pin_staff_answer_and_pin_thread_state_separation(monkeypatch):
+    """pin_staff_answer does not mutate thread.is_staff_pinned and preserves staff answer flag."""
+    from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM
+    from src.modules.forum.infrastructure.repository import ForumRepository
+
+    mock_session = AsyncMock()
+    repo = ForumRepository(mock_session)
+
+    # Mock an instructor's reply
+    reply_orm = ForumReplyORM(
+        id="rep_inst_1",
+        thread_id="th_1",
+        author_name="Prof",
+        author_role="Instructor",
+        author_user_id="inst_1",
+        content="Official answer",
+        is_staff_answer=True,
+    )
+
+    thread_orm = ForumThreadORM(
+        id="th_1",
+        course_id="c1",
+        title="Question",
+        content="Details",
+        author_name="Student",
+        author_role="Learner",
+        author_user_id="stud_1",
+        is_staff_pinned=False,
+    )
+
+    async def mock_execute(stmt):
+        m = MagicMock()
+        # Check which model is selected
+        stmt_str = str(stmt)
+        if "forum_replies" in stmt_str:
+            m.scalar_one_or_none.return_value = reply_orm
+        elif "forum_threads" in stmt_str:
+            m.scalar_one_or_none.return_value = thread_orm
+        else:
+            m.scalar_one_or_none.return_value = None
+        return m
+
+    mock_session.execute.side_effect = mock_execute
+
+    # 1. Pin staff answer on instructor reply -> remains True (never inverted to False)
+    success = await repo.pin_staff_answer(reply_id="rep_inst_1")
+    assert success is True
+    assert reply_orm.is_staff_answer is True
+    # Thread's is_staff_pinned MUST remain untouched (False)
+    assert thread_orm.is_staff_pinned is False
+
+    # 2. Pin thread explicitly updates thread.is_staff_pinned
+    mock_thread_entity = ForumThreadEntity(
+        id="th_1",
+        course_id="c1",
+        item_id="",
+        title="Question",
+        content="Details",
+        author_name="Student",
+        author_role="Learner",
+        author_user_id="stud_1",
+        created_at=datetime.now(UTC).isoformat(),
+        is_staff_pinned=True,
+    )
+    repo.get_thread_by_id = AsyncMock(return_value=mock_thread_entity)
+
+    pinned = await repo.pin_thread(thread_id="th_1", is_pinned=True)
+    assert thread_orm.is_staff_pinned is True
+    assert pinned.is_staff_pinned is True

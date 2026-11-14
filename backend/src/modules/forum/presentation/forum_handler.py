@@ -151,12 +151,18 @@ class ForumHandler(ForumService):
     ) -> pb.VotePostResponse:
         current_user = require_current_user()
 
-        new_count = await self.use_case.vote_post(
-            post_id=request.post_id,
-            user_id=current_user.id,
-            is_upvote=request.is_upvote,
-        )
-        return pb.VotePostResponse(updated_upvote_count=new_count)
+        try:
+            new_count = await self.use_case.vote_post(
+                post_id=request.post_id,
+                user_id=current_user.id,
+                is_upvote=request.is_upvote,
+                user=current_user,
+            )
+            return pb.VotePostResponse(updated_upvote_count=new_count)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
 
     async def pin_staff_answer(
         self,

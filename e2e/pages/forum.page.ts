@@ -84,4 +84,17 @@ export class ForumPage {
       await upvoteBtn.click();
     }
   }
+
+  async deleteThread(title: string) {
+    const threadCard = this.page.locator('div[id^="thread-"]').filter({ hasText: title }).first();
+    const deleteBtn = threadCard.getByRole('button', { name: /^Xóa$/i }).first();
+    if (await deleteBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await deleteBtn.click();
+      const confirmDialogBtn = this.page.getByRole('button', { name: /Xóa bài viết/i }).first();
+      await expect(confirmDialogBtn).toBeVisible({ timeout: 5000 });
+      await confirmDialogBtn.click();
+      await expect(confirmDialogBtn).toBeHidden({ timeout: 5000 });
+      await expect(this.page.locator(`text=${title}`)).toBeHidden({ timeout: 10000 });
+    }
+  }
 }

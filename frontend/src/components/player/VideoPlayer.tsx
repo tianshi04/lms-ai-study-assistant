@@ -336,6 +336,8 @@ export function VideoPlayer({
             itemId={activeItem.id}
             title={activeItem.title}
             userId={userId}
+            instructionsMarkdown={activeItem.readingMarkdown}
+            rubricCriteriaJson={activeItem.rubricCriteriaJson}
           />
         </div>
       );

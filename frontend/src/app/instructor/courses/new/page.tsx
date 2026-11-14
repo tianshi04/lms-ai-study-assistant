@@ -117,6 +117,7 @@ export default function NewCoursePage() {
     if (e?.preventDefault) {
       e.preventDefault();
     }
+    if (submitting) return;
     if (!title.trim()) {
       toast.error("Vui lòng nhập Tiêu đề khóa học.");
       return;
@@ -253,9 +254,7 @@ export default function NewCoursePage() {
           variant="container"
           shape="3xl"
           padding="lg"
-          render={
-            <form onSubmit={handleSubmit} action="javascript:void(0)" method="POST" noValidate />
-          }
+          render={<form onSubmit={handleSubmit} method="POST" noValidate />}
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -586,7 +585,6 @@ export default function NewCoursePage() {
             </Link>
             <Button
               type="submit"
-              onClick={handleSubmit}
               variant="filled"
               disabled={submitting}
               className="px-6 py-2.5 rounded-xl text-xs font-bold"

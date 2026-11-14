@@ -105,19 +105,22 @@ class ForumUseCase:
         if user and getattr(user, "is_admin", False):
             return "Admin", True
 
+        actual_user_id = (user.id if user else "") or author_user_id
+
         # 2. Course Staff (Owner, Co-instructor, TA)
-        if user:
+        if actual_user_id:
             owner_id = getattr(course, "owner_id", "")
             co_instructors = getattr(course, "co_instructor_ids", []) or []
             ta_ids = getattr(course, "ta_ids", []) or []
 
-            if (owner_id and user.id == owner_id) or (user.id in co_instructors):
+            if (owner_id and actual_user_id == owner_id) or (
+                actual_user_id in co_instructors
+            ):
                 return "Instructor", True
-            if user.id in ta_ids:
+            if actual_user_id in ta_ids:
                 return "TA", True
 
         # 3. User is not staff in this course -> must be a Learner with active enrollment
-        actual_user_id = (user.id if user else "") or author_user_id
         if not actual_user_id:
             raise PermissionError("Vui lòng đăng nhập để tham gia thảo luận.")
 
@@ -129,6 +132,22 @@ class ForumUseCase:
             )
 
         return DEFAULT_FORUM_AUTHOR_ROLE, False
+
+    async def _verify_course_forum_access(
+        self,
+        session: Any,
+        course_id: str,
+        user: CurrentUser | None,
+        author_user_id: str = "",
+        action_name: str = "tham gia thảo luận",
+    ) -> tuple[str, bool]:
+        return await self._resolve_course_role_and_enforce_enrollment(
+            session=session,
+            course_id=course_id,
+            user=user,
+            author_user_id=author_user_id,
+            action_name=action_name,
+        )
 
     async def list_threads(
         self,
@@ -160,22 +179,35 @@ class ForumUseCase:
                 enrolled = await learning_repo.list_enrolled_courses(actual_user_id)
                 accessible_course_ids.update(s.course_id for s in enrolled)
 
-                # If instructor or staff, include their teaching courses
-                if user and (
-                    getattr(user, "is_staff", False)
-                    or getattr(user, "role", "") == "USER_ROLE_INSTRUCTOR"
-                ):
-                    catalog_repo: ICatalogRepository = self.catalog_repo_factory(
-                        session
-                    )
-                    teaching_courses, _ = await catalog_repo.list_instructor_courses(
-                        instructor_id=actual_user_id, page_size=200
-                    )
-                    accessible_course_ids.update(c.id for c in teaching_courses)
+                # Include teaching/TA courses regardless of user global role
+                catalog_repo: ICatalogRepository = self.catalog_repo_factory(session)
+                teaching_courses, _ = await catalog_repo.list_instructor_courses(
+                    instructor_id=actual_user_id, page_size=200
+                )
+                accessible_course_ids.update(c.id for c in teaching_courses)
 
             # If user explicitly requests a specific course
             if normalized_course_id:
-                if normalized_course_id not in accessible_course_ids:
+                target_course_id = normalized_course_id
+                if target_course_id not in accessible_course_ids:
+                    catalog_repo = self.catalog_repo_factory(session)
+                    course = await catalog_repo.get_course_detail(normalized_course_id)
+                    if course:
+                        target_course_id = course.id
+                        ta_ids = getattr(course, "ta_ids", []) or []
+                        co_instructors = getattr(course, "co_instructor_ids", []) or []
+                        owner_id = getattr(course, "owner_id", "")
+                        if (
+                            actual_user_id in ta_ids
+                            or actual_user_id in co_instructors
+                            or actual_user_id == owner_id
+                        ):
+                            accessible_course_ids.add(course.id)
+
+                if (
+                    target_course_id not in accessible_course_ids
+                    and normalized_course_id not in accessible_course_ids
+                ):
                     logger.info(
                         "User %s attempted to list threads for inaccessible course %s",
                         actual_user_id,
@@ -184,7 +216,7 @@ class ForumUseCase:
                     return []
                 repo = self._get_repo(session)
                 return await repo.list_threads(
-                    course_id=normalized_course_id,
+                    course_id=target_course_id,
                     item_id=item_id,
                     current_user_id=actual_user_id,
                 )
@@ -343,10 +375,30 @@ class ForumUseCase:
             return reply
 
     async def vote_post(
-        self, post_id: str, user_id: str, is_upvote: bool = True
+        self,
+        post_id: str,
+        user_id: str,
+        is_upvote: bool = True,
+        user: CurrentUser | None = None,
     ) -> int:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
+            thread = await repo.get_thread_by_id(post_id)
+            if not thread:
+                reply = await repo.get_reply_by_id(post_id)
+                if reply:
+                    thread = await repo.get_thread_by_id(reply.thread_id)
+
+            if not thread:
+                raise ValueError(f"Bài viết hoặc bình luận {post_id} không tồn tại.")
+
+            await self._verify_course_forum_access(
+                session=session,
+                course_id=thread.course_id,
+                user=user,
+                author_user_id=user_id,
+                action_name="bình chọn",
+            )
             return await repo.vote_post(post_id, user_id=user_id, is_upvote=is_upvote)
 
     async def pin_staff_answer(

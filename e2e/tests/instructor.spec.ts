@@ -38,6 +38,9 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
 
     // Verify course appears in list or builder header
     await expect(page.getByRole('heading', { name: uniqueTitle }).or(page.getByText(uniqueTitle)).first()).toBeVisible({ timeout: 25000 });
+
+    // Clean up created test course
+    await instructorPage.deleteCourse(uniqueTitle);
   });
 
   test('should load course builder page for specific course', async ({ page }) => {

@@ -79,6 +79,7 @@ message RubricCriteria {
   float max_score = 3;
   float score_given = 4;
   string feedback = 5;
+  string description = 6;
 }
 
 message PeerReviewItemToGrade {
