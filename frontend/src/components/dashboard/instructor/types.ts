@@ -33,6 +33,10 @@ export interface OverviewActionTask {
   timeAgo: string;
   actionText: string;
   actionUrl: string;
+  urgencyLevel?: "critical" | "warning" | "normal";
+  urgencyLabel?: string;
+  isAppeal?: boolean;
+  isOverdue?: boolean;
 }
 
 export interface OverviewReview {
@@ -40,6 +44,7 @@ export interface OverviewReview {
   userName: string;
   rating: number;
   courseTitle: string;
+  courseId?: string;
   comment: string;
   timeAgo: string;
 }
@@ -64,6 +69,16 @@ export interface OverviewData {
   actionTasks: OverviewActionTask[];
   recentReviews: OverviewReview[];
   mockCertificates: OverviewCertificate[];
+}
+
+export interface ComparisonCourseCardItem {
+  id: string;
+  title: string;
+  subject?: string;
+  rating: number;
+  totalStudents: number;
+  weekCount: number;
+  compRate: number;
 }
 
 export type EnrichedCourseComparisonItem = Course & {

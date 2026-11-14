@@ -105,12 +105,8 @@ export function InstructorAIAssistantCard({
 
   // Sinh danh sách Insight động theo ngữ cảnh môn học và dữ liệu thực tế
   const insights: InsightItem[] = useMemo(() => {
-    if (!courseId && behindStudents.length === 0 && !bottleneckWeek) {
-      return STATIC_DEFAULT_INSIGHTS;
-    }
+    if (!courseId) return STATIC_DEFAULT_INSIGHTS;
 
-    const currentCourseId = courseId || "all-courses";
-    const currentCourseTitle = courseTitle || "Toàn bộ khóa học đang giảng dạy";
     const items: InsightItem[] = [];
 
     // 1. Phân tích sinh viên nguy cơ bỏ học
@@ -122,44 +118,44 @@ export function InstructorAIAssistantCard({
       const extra = behindStudents.length > 3 ? ` và ${behindStudents.length - 3} bạn khác` : "";
 
       items.push({
-        id: `dyn-atrisk-${currentCourseId}`,
+        id: `dyn-atrisk-${courseId}`,
         type: "at_risk",
         tag: "Cảnh Báo Nguy Cơ Bỏ Học",
         badgeLabel: `${behindStudents.length} SV Nguy cơ`,
         tagColor: "bg-destructive/10 text-destructive border-destructive/20",
         title: `${behindStudents.length} sinh viên có nguy cơ tụt lại lộ trình`,
-        course: currentCourseTitle,
+        course: courseTitle,
         description: `${studentNames}${extra} đang có tiến độ chậm hơn lộ trình chuẩn. Đề xuất: Gửi thông báo khích lệ bám sát tuần học.`,
         actionText: "Gửi tin nhắn đôn đốc 1-Click",
         actionType: "nudge",
       });
     } else {
       items.push({
-        id: `dyn-onpace-${currentCourseId}`,
+        id: `dyn-onpace-${courseId}`,
         type: "at_risk",
         tag: "Nhịp Độ Hoàn Hảo",
         badgeLabel: "100% Ổn định",
         tagColor: "bg-success/10 text-success border-success/20",
         title: "Toàn bộ học viên duy trì nhịp độ tích cực",
-        course: currentCourseTitle,
+        course: courseTitle,
         description:
           "Không có học viên nào bị dừng học quá 7 ngày. Tỷ lệ hoàn thành bài tập tuần duy trì ở mức cao.",
         actionText: "Gửi lời khen cả lớp",
         actionType: "broadcast",
-        aiDraftContent: `Chào các em, Thầy/Cô rất vui vì cả lớp đã bám sát lộ trình tuần học môn "${currentCourseTitle}" rất tốt. Hãy tiếp tục phát huy tinh thần tự giác này nhé!`,
+        aiDraftContent: `Chào các em, Thầy/Cô rất vui vì cả lớp đã bám sát lộ trình tuần học môn "${courseTitle}" rất tốt. Hãy tiếp tục phát huy tinh thần tự giác này nhé!`,
       });
     }
 
     // 2. Phân tích điểm nghẽn kiến thức / tuần học khó
     if (bottleneckWeek) {
       items.push({
-        id: `dyn-friction-${currentCourseId}`,
+        id: `dyn-friction-${courseId}`,
         type: "friction",
         tag: "Điểm Nghẽn Kiến Thức",
         badgeLabel: `Tuần ${bottleneckWeek.weekNumber} (${bottleneckWeek.dropRate}% drop)`,
         tagColor: "bg-warning/10 text-warning border-warning/20",
         title: `Điểm nghẽn tại Tuần ${bottleneckWeek.weekNumber}: "${bottleneckWeek.title}"`,
-        course: currentCourseTitle,
+        course: courseTitle,
         description: `Tỷ lệ dừng học đạt ${bottleneckWeek.dropRate}% với ${bottleneckWeek.reachedCount - bottleneckWeek.completedCount} bạn chưa vượt qua. Đề xuất: Đăng bài hướng dẫn bổ trợ trên diễn đàn.`,
         actionText: "Soạn bài viết hỗ trợ nhanh",
         actionType: "broadcast",
@@ -167,13 +163,13 @@ export function InstructorAIAssistantCard({
       });
     } else {
       items.push({
-        id: `dyn-smooth-${currentCourseId}`,
+        id: `dyn-smooth-${courseId}`,
         type: "friction",
         tag: "Cấu Trúc Liền Mạch",
         badgeLabel: "Không nghẽn",
         tagColor: "bg-primary/10 text-primary border-primary/20",
         title: "Cấu trúc khóa học được tối ưu tốt",
-        course: currentCourseTitle,
+        course: courseTitle,
         description:
           "Các tuần học có tỷ lệ hoàn thành đồng đều, không ghi nhận điểm nghẽn nhận thức bất thường.",
         actionText: "Xem bảng xếp loại",
@@ -183,13 +179,13 @@ export function InstructorAIAssistantCard({
 
     // 3. Khung giờ học tập cao điểm
     items.push({
-      id: `dyn-timing-${currentCourseId}`,
+      id: `dyn-timing-${courseId}`,
       type: "timing",
       tag: "Khung Giờ Vàng Học Tập",
       badgeLabel: "Giờ cao điểm",
       tagColor: "bg-primary/10 text-primary border-primary/20",
       title: "Đỉnh điểm tương tác: 20h - 22h30",
-      course: currentCourseTitle,
+      course: courseTitle,
       description:
         "71% sinh viên môn này học tập tích cực vào buổi tối. Đề xuất: Đặt hạn nộp bài tập lớn vào 23h59 để tối ưu tỷ lệ nộp bài.",
       actionText: "Áp dụng lịch đề xuất",

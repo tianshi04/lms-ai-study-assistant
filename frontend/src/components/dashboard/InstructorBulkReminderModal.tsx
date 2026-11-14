@@ -68,7 +68,7 @@ export function InstructorBulkReminderModal({
   const handleResetSmartTemplate = () => {
     setSubject(smartTemplates.subject);
     setContent(smartTemplates.body);
-    toast.info("Đã khôi phục nội dung gợi ý AI theo điểm nghẽn học tập.");
+    toast.info("Đã khôi phục nội dung gợi ý mẫu theo điểm nghẽn học tập.");
   };
 
   const handleConfirmSend = async () => {
@@ -193,8 +193,7 @@ export function InstructorBulkReminderModal({
                 </span>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
                   Tỷ lệ học viên dừng lại tại tuần này là {bottleneckWeek.dropRate}%. Mẫu thông báo
-                  bên dưới đã được AI tự động tối ưu để tập trung tháo gỡ khó khăn tại điểm nghẽn
-                  này.
+                  bên dưới đã được tự động điều chỉnh phù hợp với điểm nghẽn này.
                 </p>
               </div>
             </div>
@@ -204,8 +203,8 @@ export function InstructorBulkReminderModal({
               <div className="space-y-0.5">
                 <span className="font-bold">Thông báo khích lệ học tập cá nhân hóa</span>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Học viên sẽ nhận chuông thông báo trên nền tảng Coursera AI và email nhắc nhở đôn
-                  đốc bám sát lộ trình môn học.
+                  Học viên sẽ nhận chuông thông báo trên hệ thống và email nhắc nhở đôn đốc bám sát
+                  lộ trình môn học.
                 </p>
               </div>
             </div>
@@ -282,10 +281,10 @@ export function InstructorBulkReminderModal({
                   type="button"
                   onClick={handleResetSmartTemplate}
                   className="text-[10px] text-primary hover:underline flex items-center gap-1 cursor-pointer"
-                  title="Khôi phục lại nội dung mẫu thông minh ban đầu"
+                  title="Khôi phục lại nội dung mẫu ban đầu"
                 >
                   <RotateCcw className="w-3 h-3" aria-hidden="true" />
-                  <span>Khôi phục mẫu AI</span>
+                  <span>Khôi phục mẫu</span>
                 </button>
               </div>
               <Textarea

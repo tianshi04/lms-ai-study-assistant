@@ -2,10 +2,10 @@
 
 import React from "react";
 import { Star, ChevronRight } from "lucide-react";
-import type { EnrichedCourseComparisonItem } from "../types";
+import type { ComparisonCourseCardItem } from "../types";
 
 export interface InstructorCourseComparisonTabProps {
-  courses: EnrichedCourseComparisonItem[];
+  courses: ComparisonCourseCardItem[];
   activeCourseId?: string;
   compareSortBy: "rate" | "students" | "rating";
   onChangeCompareSortBy: (sort: "rate" | "students" | "rating") => void;
