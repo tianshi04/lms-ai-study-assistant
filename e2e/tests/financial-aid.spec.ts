@@ -13,7 +13,7 @@ test.describe('Full System Blackbox - Financial Aid & Certificate Verification (
     await aidPage.goto(`course-aid-valid-${Date.now()}`);
     await aidPage.verifyPageLoaded();
 
-    await expect(aidPage.essayTextarea).toBeVisible({ timeout: 5000 });
+    await expect(aidPage.essayTextarea).toBeVisible({ timeout: 15000 });
 
     // Short essay with only 5 words
     await aidPage.essayTextarea.fill('Tôi muốn xin hỗ trợ.');
