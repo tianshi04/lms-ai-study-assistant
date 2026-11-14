@@ -22,7 +22,13 @@ from src.modules.catalog.domain import (
     WeekModule,
 )
 from src.modules.catalog.domain.constants import DEFAULT_RECOMMENDED_COURSES_COUNT
-from src.shared.auth import CurrentUser, get_current_user, require_current_user
+from src.shared.auth import (
+    CurrentUser,
+    CurrentUserContext,
+    get_current_user,
+    require_current_user,
+)
+from src.shared.permissions import CoursePermission, enforce_course_ownership
 
 logger = logging.getLogger(__name__)
 
@@ -963,6 +969,51 @@ class CatalogHandler(CatalogService):
             ]
         )
 
+    async def get_instructor_activity_timeline(
+        self,
+        request: pb.GetInstructorActivityTimelineRequest,
+        ctx: RequestContext[
+            pb.GetInstructorActivityTimelineRequest,
+            pb.GetInstructorActivityTimelineResponse,
+        ],
+    ) -> pb.GetInstructorActivityTimelineResponse:
+        user = self._verify_instructor_permission()
+        try:
+            res = await self.use_case.get_instructor_activity_timeline(
+                course_id=request.course_id,
+                date_range=request.date_range or "7d",
+                start_date=request.start_date,
+                end_date=request.end_date,
+                learner_filter=request.learner_filter or "all",
+                current_user=user,
+            )
+            return pb.GetInstructorActivityTimelineResponse(
+                timeline=[
+                    pb.ActivityDataPoint(
+                        timestamp=p.timestamp,
+                        label=p.label,
+                        active_learners=p.active_learners,
+                        completed_items=p.completed_items,
+                        in_progress=p.in_progress,
+                    )
+                    for p in res.timeline
+                ],
+                heatmap=[
+                    pb.HeatmapCell(
+                        day=h.day,
+                        time_slot=h.time_slot,
+                        count=h.count,
+                        is_peak=h.is_peak,
+                    )
+                    for h in res.heatmap
+                ],
+                total_active_in_period=res.total_active_in_period,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
     async def get_instructor_analytics(
         self,
         request: pb.GetInstructorAnalyticsRequest,
@@ -1344,6 +1395,146 @@ class CatalogHandler(CatalogService):
             for bm in bms
         ]
         return pb.ListMyBookmarkedCoursesResponse(bookmarks=pb_bms)
+
+    async def get_course_gradebook(
+        self,
+        request: pb.GetCourseGradebookRequest,
+        ctx: RequestContext[
+            pb.GetCourseGradebookRequest, pb.GetCourseGradebookResponse
+        ],
+    ) -> pb.GetCourseGradebookResponse:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_detail(request.course_id)
+            if not course:
+                raise ValueError(f"Khóa học {request.course_id} không tồn tại.")
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="truy cập Sổ điểm (Course Gradebook)",
+            )
+            from src.modules.assessment.application import AssessmentUseCase
+
+            assessment_usecase = AssessmentUseCase()
+            res = await assessment_usecase.get_course_gradebook(
+                course_id=course.id,
+                search_query=request.search_query,
+                status_filter=request.status_filter,
+                page_size=request.page_size or 50,
+                page_token=request.page_token,
+                current_user=current_user,
+            )
+            columns = [
+                pb.GradebookColumn(
+                    item_id=c["item_id"],
+                    item_title=c["item_title"],
+                    item_type=c["item_type"],
+                    weight=float(c["weight"]),
+                    max_score=float(c["max_score"]),
+                )
+                for c in res.get("columns", [])
+            ]
+            rows = [
+                pb.GradebookStudentRow(
+                    user_id=r["user_id"],
+                    full_name=r["full_name"],
+                    email=r["email"],
+                    avatar_url=r["avatar_url"],
+                    enrollment_status=r["enrollment_status"],
+                    final_weighted_grade=float(r["final_weighted_grade"]),
+                    is_course_completed=r["is_course_completed"],
+                    cells=[
+                        pb.GradebookCell(
+                            item_id=cell["item_id"],
+                            score=float(cell["score"]),
+                            is_passed=cell["is_passed"],
+                            provenance=cell["provenance"],
+                            graded_at=cell.get("graded_at", ""),
+                            submission_id=cell.get("submission_id", ""),
+                        )
+                        for cell in r.get("cells", [])
+                    ],
+                )
+                for r in res.get("rows", [])
+            ]
+            return pb.GetCourseGradebookResponse(
+                course_id=res.get("course_id", course.id),
+                course_title=res.get("course_title", course.title),
+                columns=columns,
+                rows=rows,
+                total_students=res.get("total_students", len(rows)),
+                next_page_token=res.get("next_page_token", ""),
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+    async def get_instructor_action_tasks(
+        self,
+        request: pb.GetInstructorActionTasksRequest,
+        ctx: RequestContext[
+            pb.GetInstructorActionTasksRequest, pb.GetInstructorActionTasksResponse
+        ],
+    ) -> pb.GetInstructorActionTasksResponse:
+        current_user = require_current_user()
+        try:
+            course = await self.use_case.get_course_detail(request.course_id)
+            if not course:
+                raise ValueError(f"Khóa học {request.course_id} không tồn tại.")
+            user_ctx = CurrentUserContext(
+                id=current_user.id, role=current_user.role, email=current_user.email
+            )
+            enforce_course_ownership(
+                course=course,
+                user=user_ctx,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                action_name="xem việc cần xử lý",
+            )
+            from src.modules.assessment.application import AssessmentUseCase
+
+            assessment_usecase = AssessmentUseCase()
+            res = await assessment_usecase.get_instructor_action_tasks(
+                course_id=course.id,
+                current_user=current_user,
+            )
+            tasks = [
+                pb.InstructorActionTask(
+                    id=t["id"],
+                    type=t["type"],
+                    title=t["title"],
+                    lesson_title=t["lesson_title"],
+                    student_name=t["student_name"],
+                    course_title=t["course_title"],
+                    time_ago=t["time_ago"],
+                    action_text=t["action_text"],
+                    action_url=t["action_url"],
+                    course_id=t["course_id"],
+                    priority=t["priority"],
+                    created_at=t["created_at"],
+                )
+                for t in res.get("tasks", [])
+            ]
+            appeals_count = sum(
+                1 for t in res.get("tasks", []) if t["type"] == "APPEAL"
+            )
+            grading_count = sum(
+                1 for t in res.get("tasks", []) if t["type"] == "OVERDUE_GRADING"
+            )
+            return pb.GetInstructorActionTasksResponse(
+                tasks=tasks,
+                pending_grading_count=grading_count,
+                pending_appeals_count=appeals_count,
+                pending_qa_count=0,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
 
     async def get_admin_catalog_stats(
         self,

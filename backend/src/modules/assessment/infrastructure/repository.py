@@ -1,15 +1,20 @@
-from datetime import UTC, datetime
+from collections import defaultdict
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from sqlalchemy import func, select, text
+from sqlalchemy import and_, func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
     ADMIN_ASSESSMENT_ALERT_LIMIT,
+    GRADING_LOCK_TIMEOUT_MINUTES,
     PENDING_APPEAL_STATUSES,
     REPORTED_REVIEW_PREFIX,
+    REQUIRED_PEER_REVIEWS_COUNT,
     AdminAssessmentAlert,
     AdminAssessmentAlertKind,
     AssessmentRepositoryInterface,
@@ -358,6 +363,38 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             for m in models
         ]
 
+    @staticmethod
+    def _to_peer_submission_entity(
+        model: PeerAssignmentSubmissionModel,
+    ) -> PeerAssignmentSubmission:
+        exp_at = (
+            model.lock_expires_at.isoformat()
+            if model.lock_expires_at is not None
+            else None
+        )
+        return PeerAssignmentSubmission(
+            id=model.id,
+            user_id=model.user_id,
+            item_id=model.item_id,
+            submission_url=model.submission_url,
+            text_content=model.text_content,
+            created_at=model.created_at,
+            final_score=model.final_score,
+            graded_by_staff=model.graded_by_staff,
+            attempt_number=model.attempt_number,
+            staff_feedback=model.staff_feedback,
+            graded_by_user_id=model.graded_by_user_id,
+            grader_role=model.grader_role,
+            grade_source=model.grade_source,
+            locked_by_user_id=model.locked_by_user_id,
+            locked_at=model.locked_at,
+            lock_expires_at=exp_at,
+            rubric_scores_json=model.rubric_scores_json,
+            published_at=model.published_at,
+            status=model.status,
+            staff_evaluations_json=list(model.staff_evaluations_json or []),
+        )
+
     async def save_peer_submission(self, submission: PeerAssignmentSubmission) -> None:
         model = await self.session.get(PeerAssignmentSubmissionModel, submission.id)
         if not model:
@@ -368,11 +405,33 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             res = await self.session.execute(stmt)
             model = res.scalar_one_or_none()
 
+        exp_dt = None
+        if submission.lock_expires_at:
+            try:
+                exp_dt = datetime.fromisoformat(submission.lock_expires_at)
+            except (ValueError, TypeError):
+                exp_dt = None
+
         if model:
             model.submission_url = submission.submission_url
             model.text_content = submission.text_content
+            model.created_at = submission.created_at
             model.final_score = submission.final_score
             model.graded_by_staff = submission.graded_by_staff
+            model.attempt_number = submission.attempt_number
+            model.staff_feedback = submission.staff_feedback
+            model.graded_by_user_id = submission.graded_by_user_id
+            model.grader_role = submission.grader_role
+            model.grade_source = submission.grade_source
+            model.locked_by_user_id = submission.locked_by_user_id
+            model.locked_at = submission.locked_at
+            model.lock_expires_at = exp_dt
+            model.rubric_scores_json = submission.rubric_scores_json
+            model.published_at = submission.published_at
+            model.status = submission.status
+            model.staff_evaluations_json = list(submission.staff_evaluations_json or [])
+            flag_modified(model, "staff_evaluations_json")
+            flag_modified(model, "rubric_scores_json")
         else:
             model = PeerAssignmentSubmissionModel(
                 id=submission.id,
@@ -383,6 +442,18 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 created_at=submission.created_at,
                 final_score=submission.final_score,
                 graded_by_staff=submission.graded_by_staff,
+                attempt_number=submission.attempt_number,
+                staff_feedback=submission.staff_feedback,
+                graded_by_user_id=submission.graded_by_user_id,
+                grader_role=submission.grader_role,
+                grade_source=submission.grade_source,
+                locked_by_user_id=submission.locked_by_user_id,
+                locked_at=submission.locked_at,
+                lock_expires_at=exp_dt,
+                rubric_scores_json=submission.rubric_scores_json,
+                published_at=submission.published_at,
+                status=submission.status,
+                staff_evaluations_json=list(submission.staff_evaluations_json or []),
             )
             self.session.add(model)
         await self.session.commit()
@@ -393,16 +464,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         model = await self.session.get(PeerAssignmentSubmissionModel, submission_id)
         if not model:
             return None
-        return PeerAssignmentSubmission(
-            id=model.id,
-            user_id=model.user_id,
-            item_id=model.item_id,
-            submission_url=model.submission_url,
-            text_content=model.text_content,
-            created_at=model.created_at,
-            final_score=model.final_score,
-            graded_by_staff=model.graded_by_staff,
-        )
+        return self._to_peer_submission_entity(model)
 
     async def get_user_peer_submission(
         self, user_id: str, item_id: str
@@ -415,16 +477,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         model = res.scalar_one_or_none()
         if not model:
             return None
-        return PeerAssignmentSubmission(
-            id=model.id,
-            user_id=model.user_id,
-            item_id=model.item_id,
-            submission_url=model.submission_url,
-            text_content=model.text_content,
-            created_at=model.created_at,
-            final_score=model.final_score,
-            graded_by_staff=model.graded_by_staff,
-        )
+        return self._to_peer_submission_entity(model)
 
     async def get_peer_submissions_for_item(
         self, item_id: str, exclude_user_id: str = ""
@@ -436,19 +489,85 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             stmt = stmt.where(PeerAssignmentSubmissionModel.user_id != exclude_user_id)
         res = await self.session.execute(stmt)
         models = res.scalars().all()
-        return [
-            PeerAssignmentSubmission(
-                id=m.id,
-                user_id=m.user_id,
-                item_id=m.item_id,
-                submission_url=m.submission_url,
-                text_content=m.text_content,
-                created_at=m.created_at,
-                final_score=m.final_score,
-                graded_by_staff=m.graded_by_staff,
+        return [self._to_peer_submission_entity(m) for m in models]
+
+    async def claim_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        now = datetime.now(UTC)
+        lock_expires = now + timedelta(minutes=timeout_minutes)
+        stmt = (
+            update(PeerAssignmentSubmissionModel)
+            .where(
+                PeerAssignmentSubmissionModel.id == submission_id,
+                PeerAssignmentSubmissionModel.user_id != user_id,
+                or_(
+                    PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
+                    PeerAssignmentSubmissionModel.locked_by_user_id == user_id,
+                    PeerAssignmentSubmissionModel.lock_expires_at < now,
+                    and_(
+                        PeerAssignmentSubmissionModel.lock_expires_at.is_(None),
+                        PeerAssignmentSubmissionModel.locked_at
+                        < (now - timedelta(minutes=timeout_minutes)).isoformat(),
+                    ),
+                ),
             )
-            for m in models
-        ]
+            .values(
+                locked_by_user_id=user_id,
+                locked_at=now.isoformat(),
+                lock_expires_at=lock_expires,
+            )
+        )
+        res = await self.session.execute(stmt)
+        await self.session.commit()
+        return int(getattr(res, "rowcount", 0) or 0) > 0
+
+    async def renew_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        sub = await self.session.get(PeerAssignmentSubmissionModel, submission_id)
+        if not sub or sub.locked_by_user_id != user_id:
+            return False
+
+        now = datetime.now(UTC)
+        new_expires = now + timedelta(minutes=timeout_minutes)
+
+        sub.locked_at = now.isoformat()
+        sub.lock_expires_at = new_expires
+        await self.session.commit()
+        return True
+
+    async def release_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str | None = None,
+    ) -> bool:
+        where_conditions = [PeerAssignmentSubmissionModel.id == submission_id]
+        if user_id:
+            where_conditions.append(
+                or_(
+                    PeerAssignmentSubmissionModel.locked_by_user_id == user_id,
+                    PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
+                )
+            )
+        stmt = (
+            update(PeerAssignmentSubmissionModel)
+            .where(*where_conditions)
+            .values(
+                locked_by_user_id=None,
+                locked_at=None,
+                lock_expires_at=None,
+            )
+        )
+        res = await self.session.execute(stmt)
+        await self.session.commit()
+        return int(getattr(res, "rowcount", 0) or 0) > 0
 
     async def save_peer_review(self, review: PeerReview) -> None:
         rubric_data = [
@@ -491,20 +610,30 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         models = res.scalars().all()
         reviews: list[PeerReview] = []
         for m in models:
-            items = (
-                m.rubric_criteria_json.get("items", [])
-                if isinstance(m.rubric_criteria_json, dict)
-                else []
-            )
+            raw_rc = m.rubric_criteria_json or {}
+            items = []
+            if isinstance(raw_rc, dict):
+                if "items" in raw_rc and isinstance(raw_rc["items"], list):
+                    items = raw_rc["items"]
+                else:
+                    items = [
+                        {"criteria_id": k, "score_given": float(v)}
+                        for k, v in raw_rc.items()
+                        if isinstance(v, (int, float))
+                    ]
+            elif isinstance(raw_rc, list):
+                items = raw_rc
+
             criteria = [
                 RubricCriteria(
-                    criteria_id=c.get("criteria_id", ""),
-                    title=c.get("title", ""),
-                    max_score=c.get("max_score", 10.0),
-                    score_given=c.get("score_given", 0.0),
-                    feedback=c.get("feedback", ""),
+                    criteria_id=str(c.get("criteria_id", "") or ""),
+                    title=str(c.get("title", "") or ""),
+                    max_score=float(c.get("max_score", 10.0) or 10.0),
+                    score_given=float(c.get("score_given", 0.0) or 0.0),
+                    feedback=str(c.get("feedback", "") or ""),
                 )
                 for c in items
+                if isinstance(c, dict)
             ]
             reviews.append(
                 PeerReview(
@@ -530,20 +659,30 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         models = res.scalars().all()
         reviews: list[PeerReview] = []
         for m in models:
-            items = (
-                m.rubric_criteria_json.get("items", [])
-                if isinstance(m.rubric_criteria_json, dict)
-                else []
-            )
+            raw_rc = m.rubric_criteria_json or {}
+            items = []
+            if isinstance(raw_rc, dict):
+                if "items" in raw_rc and isinstance(raw_rc["items"], list):
+                    items = raw_rc["items"]
+                else:
+                    items = [
+                        {"criteria_id": k, "score_given": float(v)}
+                        for k, v in raw_rc.items()
+                        if isinstance(v, (int, float))
+                    ]
+            elif isinstance(raw_rc, list):
+                items = raw_rc
+
             criteria = [
                 RubricCriteria(
-                    criteria_id=c.get("criteria_id", ""),
-                    title=c.get("title", ""),
-                    max_score=c.get("max_score", 10.0),
-                    score_given=c.get("score_given", 0.0),
-                    feedback=c.get("feedback", ""),
+                    criteria_id=str(c.get("criteria_id", "") or ""),
+                    title=str(c.get("title", "") or ""),
+                    max_score=float(c.get("max_score", 10.0) or 10.0),
+                    score_given=float(c.get("score_given", 0.0) or 0.0),
+                    feedback=str(c.get("feedback", "") or ""),
                 )
                 for c in items
+                if isinstance(c, dict)
             ]
             reviews.append(
                 PeerReview(
@@ -972,6 +1111,22 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
 
+    async def get_course_id_by_bank_id(self, bank_id: str) -> str | None:
+        stmt = select(QuestionBankModel.course_id).where(
+            QuestionBankModel.id == bank_id
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def get_course_id_by_question_id(self, question_id: str) -> str | None:
+        stmt = (
+            select(QuestionBankModel.course_id)
+            .join(QuestionModel, QuestionModel.bank_id == QuestionBankModel.id)
+            .where(QuestionModel.id == question_id)
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         from src.modules.catalog.infrastructure.models import LearningItemModel
 
@@ -980,6 +1135,506 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         )
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
+
+    async def get_item_rubric_criteria_json(self, item_id: str) -> str | None:
+        from src.modules.catalog.infrastructure.models import LearningItemModel
+
+        stmt = select(LearningItemModel.rubric_criteria_json).where(
+            LearningItemModel.id == item_id
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def get_item_reading_markdown(self, item_id: str) -> str:
+        from src.modules.catalog.infrastructure.models import LearningItemModel
+
+        stmt = select(LearningItemModel.reading_markdown).where(
+            LearningItemModel.id == item_id
+        )
+        res = await self.session.execute(stmt)
+        val = res.scalar_one_or_none()
+        return val or ""
+
+    async def list_grading_queue_items(
+        self,
+        course_id: str = "",
+        item_id: str = "",
+    ) -> list[dict[str, Any]]:
+        from src.modules.catalog.infrastructure.models import (
+            CourseModel,
+            LearningItemModel,
+            LessonModel,
+            WeekModuleModel,
+        )
+        from src.modules.identity.infrastructure.models import UserModel
+
+        stmt = (
+            select(
+                PeerAssignmentSubmissionModel,
+                LearningItemModel.title.label("item_title"),
+                CourseModel.id.label("course_id"),
+                CourseModel.title.label("course_title"),
+                UserModel.full_name.label("student_name"),
+                UserModel.avatar_url.label("student_avatar_url"),
+            )
+            .join(
+                LearningItemModel,
+                LearningItemModel.id == PeerAssignmentSubmissionModel.item_id,
+            )
+            .join(LessonModel, LessonModel.id == LearningItemModel.lesson_id)
+            .join(WeekModuleModel, WeekModuleModel.id == LessonModel.week_module_id)
+            .join(CourseModel, CourseModel.id == WeekModuleModel.course_id)
+            .join(UserModel, UserModel.id == PeerAssignmentSubmissionModel.user_id)
+        )
+        if course_id:
+            stmt = stmt.where(CourseModel.id == course_id)
+        elif item_id:
+            stmt = stmt.where(PeerAssignmentSubmissionModel.item_id == item_id)
+        else:
+            return []
+
+        if item_id and course_id:
+            stmt = stmt.where(PeerAssignmentSubmissionModel.item_id == item_id)
+
+        stmt = stmt.order_by(PeerAssignmentSubmissionModel.created_at.desc())
+        res = await self.session.execute(stmt)
+        rows = res.all()
+
+        results: list[dict[str, Any]] = []
+        if not rows:
+            return results
+
+        now = datetime.now(UTC)
+        sub_ids = [row[0].id for row in rows]
+        locked_user_ids = {
+            row[0].locked_by_user_id for row in rows if row[0].locked_by_user_id
+        }
+
+        # Batch 1: Query user names for locked submissions
+        user_names: dict[str, str] = {}
+        if locked_user_ids:
+            user_stmt = select(UserModel.id, UserModel.full_name).where(
+                UserModel.id.in_(locked_user_ids)
+            )
+            u_res = await self.session.execute(user_stmt)
+            user_names = {uid: name for uid, name in u_res.all() if name}
+
+        # Batch 2: Query appeals for submissions
+        appeal_stmt = select(GradeAppealModel).where(
+            GradeAppealModel.submission_id.in_(sub_ids)
+        )
+        app_res = await self.session.execute(appeal_stmt)
+        appeals_map: dict[str, GradeAppealModel] = {
+            app.submission_id: app for app in app_res.scalars().all()
+        }
+
+        # Batch 3: Query peer reviews for submissions
+        rev_stmt = select(PeerReviewModel).where(
+            PeerReviewModel.submission_id.in_(sub_ids)
+        )
+        rev_res = await self.session.execute(rev_stmt)
+        reviews_map: dict[str, list[PeerReviewModel]] = defaultdict(list)
+        for rev in rev_res.scalars().all():
+            reviews_map[rev.submission_id].append(rev)
+
+        for row in rows:
+            sub = row[0]
+            item_title = row[1] or ""
+            c_id = row[2] or ""
+            c_title = row[3] or ""
+            student_name = row[4] or ""
+            student_avatar_url = row[5] or ""
+
+            # Check locker name and lock expiration
+            locked_by_name = ""
+            lock_expires_at = ""
+            is_currently_locked = False
+            if sub.locked_by_user_id:
+                exp_dt = sub.lock_expires_at
+                if not exp_dt and sub.locked_at:
+                    try:
+                        lock_dt = datetime.fromisoformat(sub.locked_at)
+                        if lock_dt.tzinfo is None:
+                            lock_dt = lock_dt.replace(tzinfo=UTC)
+                        exp_dt = lock_dt + timedelta(
+                            minutes=GRADING_LOCK_TIMEOUT_MINUTES
+                        )
+                    except (ValueError, TypeError):
+                        exp_dt = None
+                if exp_dt:
+                    if exp_dt.tzinfo is None:
+                        exp_dt = exp_dt.replace(tzinfo=UTC)
+                    if now < exp_dt:
+                        is_currently_locked = True
+                        lock_expires_at = exp_dt.isoformat()
+                        locked_by_name = (
+                            user_names.get(sub.locked_by_user_id)
+                            or sub.locked_by_user_id
+                        )
+
+            # Check appeals
+            appeal = appeals_map.get(sub.id)
+            is_appeal = bool(appeal and appeal.status != "RESOLVED")
+            appeal_reason = appeal.appeal_reason if appeal else ""
+
+            # Check reviews
+            reviews = reviews_map.get(sub.id, [])
+            reviews_count = len(reviews)
+            is_outlier = (reviews_count >= REQUIRED_PEER_REVIEWS_COUNT) and any(
+                r.is_outlier for r in reviews
+            )
+            peer_score = (
+                round(sum(r.total_score for r in reviews) / reviews_count, 2)
+                if reviews_count > 0
+                else 0.0
+            )
+
+            # Determine status
+            if is_currently_locked:
+                status_str = "CLAIMED"
+            elif is_appeal:
+                status_str = "APPEALED"
+            elif sub.status == "PUBLISHED" or (
+                sub.final_score is not None and sub.status != "SUBMITTED"
+            ):
+                status_str = "GRADED"
+            else:
+                status_str = "PENDING"
+
+            results.append(
+                {
+                    "submission_id": sub.id,
+                    "item_id": sub.item_id,
+                    "item_title": item_title,
+                    "course_id": c_id,
+                    "course_title": c_title,
+                    "student_id": sub.user_id,
+                    "student_name": student_name,
+                    "student_avatar_url": student_avatar_url,
+                    "submitted_at": sub.created_at,
+                    "is_outlier": is_outlier,
+                    "is_appeal": is_appeal,
+                    "appeal_reason": appeal_reason,
+                    "locked_by_user_id": sub.locked_by_user_id or ""
+                    if is_currently_locked
+                    else "",
+                    "locked_by_name": locked_by_name,
+                    "lock_expires_at": lock_expires_at,
+                    "grade_source": (
+                        sub.grade_source
+                        if (sub.final_score is not None and sub.status != "SUBMITTED")
+                        else ("PEER_REVIEW" if is_appeal and peer_score > 0 else None)
+                    ),
+                    "staff_score": (
+                        float(sub.final_score)
+                        if sub.final_score is not None
+                        and sub.graded_by_staff
+                        and sub.status != "SUBMITTED"
+                        else 0.0
+                    ),
+                    "status": status_str,
+                    "peer_score": (
+                        float(peer_score)
+                        if (
+                            (sub.final_score is not None and sub.status != "SUBMITTED")
+                            or is_appeal
+                        )
+                        else 0.0
+                    ),
+                    "peer_reviews_count": reviews_count,
+                }
+            )
+        return results
+
+    async def get_user_display_profiles(
+        self, user_ids: list[str]
+    ) -> dict[str, dict[str, str]]:
+        if not user_ids:
+            return {}
+        from src.modules.identity.infrastructure.models import UserModel
+
+        stmt = select(
+            UserModel.id, UserModel.full_name, UserModel.avatar_url, UserModel.role
+        ).where(UserModel.id.in_(user_ids))
+        res = await self.session.execute(stmt)
+        return {
+            uid: {
+                "name": fname or "",
+                "avatar_url": avurl or "",
+                "role": urole.value if hasattr(urole, "value") else str(urole or ""),
+            }
+            for uid, fname, avurl, urole in res.all()
+        }
+
+    async def get_course_gradebook_data(
+        self,
+        course_id: str,
+        search_query: str = "",
+        status_filter: str = "",
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> dict[str, Any]:
+        from src.modules.catalog.infrastructure.models import (
+            CourseModel,
+            LearningItemModel,
+            LessonModel,
+            WeekModuleModel,
+        )
+        from src.modules.identity.infrastructure.models import UserModel
+        from src.modules.learning.infrastructure.models import LearningProgressModel
+
+        # 1. Course title
+        course_stmt = select(CourseModel).where(CourseModel.id == course_id)
+        course_res = await self.session.execute(course_stmt)
+        course = course_res.scalar_one_or_none()
+        course_title = course.title if course else f"Khóa học #{course_id}"
+
+        # 2. Query graded items
+        items_stmt = (
+            select(LearningItemModel)
+            .join(LessonModel, LessonModel.id == LearningItemModel.lesson_id)
+            .join(WeekModuleModel, WeekModuleModel.id == LessonModel.week_module_id)
+            .where(WeekModuleModel.course_id == course_id)
+            .order_by(
+                WeekModuleModel.week_number.asc(),
+                LessonModel.order_index.asc(),
+                LearningItemModel.order_index.asc(),
+            )
+        )
+        items_res = await self.session.execute(items_stmt)
+        all_items = items_res.scalars().all()
+
+        graded_types = {
+            "GRADED_QUIZ",
+            "ITEM_TYPE_GRADED_QUIZ",
+            "4",
+            "AUTO_GRADED_LAB",
+            "CODING_LAB",
+            "ITEM_TYPE_CODING_LAB",
+            "5",
+            "PEER_REVIEW",
+            "PEER_ASSIGNMENT",
+            "ITEM_TYPE_PEER_REVIEW",
+            "6",
+        }
+        graded_items = [
+            item
+            for item in all_items
+            if getattr(item, "is_graded", False)
+            or (item.type and item.type.upper() in graded_types)
+            or "GRADED" in (item.type or "").upper()
+            or "PEER" in (item.type or "").upper()
+            or "LAB" in (item.type or "").upper()
+        ]
+
+        graded_item_ids = [item.id for item in graded_items]
+        num_graded = len(graded_items)
+        default_weight = round(1.0 / num_graded, 4) if num_graded > 0 else 0.0
+
+        columns: list[dict[str, Any]] = [
+            {
+                "item_id": item.id,
+                "item_title": item.title,
+                "item_type": item.type,
+                "weight": default_weight,
+                "max_score": 100.0,
+            }
+            for item in graded_items
+        ]
+
+        # 3. Query enrolled students
+        progress_query = (
+            select(LearningProgressModel, UserModel)
+            .join(UserModel, UserModel.id == LearningProgressModel.user_id)
+            .where(LearningProgressModel.course_id == course_id)
+        )
+        count_query = (
+            select(func.count(LearningProgressModel.id))
+            .select_from(LearningProgressModel)
+            .join(UserModel, UserModel.id == LearningProgressModel.user_id)
+            .where(LearningProgressModel.course_id == course_id)
+        )
+
+        if search_query and search_query.strip():
+            term = f"%{search_query.strip()}%"
+            filter_search = or_(
+                UserModel.full_name.ilike(term),
+                UserModel.email.ilike(term),
+            )
+            progress_query = progress_query.where(filter_search)
+            count_query = count_query.where(filter_search)
+
+        if status_filter and status_filter.upper() != "ALL":
+            sf = status_filter.upper()
+            if sf == "COMPLETED":
+                filter_status = LearningProgressModel.completed_at.isnot(None)
+            elif sf == "IN_PROGRESS":
+                filter_status = and_(
+                    LearningProgressModel.overall_progress_percent > 0.0,
+                    LearningProgressModel.completed_at.is_(None),
+                )
+            elif sf == "ACTIVE":
+                filter_status = and_(
+                    LearningProgressModel.overall_progress_percent == 0.0,
+                    LearningProgressModel.completed_at.is_(None),
+                )
+            else:
+                filter_status = None
+
+            if filter_status is not None:
+                progress_query = progress_query.where(filter_status)
+                count_query = count_query.where(filter_status)
+
+        total_count_res = await self.session.execute(count_query)
+        total_students = total_count_res.scalar() or 0
+
+        offset = int(page_token) if (page_token and page_token.isdigit()) else 0
+        limit = max(1, min(page_size, 100))
+
+        progress_query = (
+            progress_query.order_by(LearningProgressModel.enrolled_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        rows_res = await self.session.execute(progress_query)
+        student_progress_rows = rows_res.all()
+
+        user_ids = [row[0].user_id for row in student_progress_rows]
+
+        # 4. Batch query submissions
+        quiz_scores: dict[tuple[str, str], float] = {}
+        quiz_timestamps: dict[tuple[str, str], str] = {}
+        lab_scores: dict[tuple[str, str], float] = {}
+        lab_timestamps: dict[tuple[str, str], str] = {}
+        peer_submissions_map: dict[tuple[str, str], Any] = {}
+
+        if user_ids and graded_item_ids:
+            quiz_stmt = select(QuizSubmissionModel).where(
+                QuizSubmissionModel.item_id.in_(graded_item_ids),
+                QuizSubmissionModel.user_id.in_(user_ids),
+            )
+            quiz_rows = (await self.session.execute(quiz_stmt)).scalars().all()
+            for q in quiz_rows:
+                key = (q.user_id, q.item_id)
+                score = float(q.score_percent or 0.0)
+                if key not in quiz_scores or score > quiz_scores[key]:
+                    quiz_scores[key] = score
+                    quiz_timestamps[key] = q.created_at or ""
+
+            lab_stmt = select(LabSubmissionModel).where(
+                LabSubmissionModel.item_id.in_(graded_item_ids),
+                LabSubmissionModel.user_id.in_(user_ids),
+            )
+            lab_rows = (await self.session.execute(lab_stmt)).scalars().all()
+            for lab in lab_rows:
+                key = (lab.user_id, lab.item_id)
+                score = float(lab.score_percent or 0.0)
+                if key not in lab_scores or score > lab_scores[key]:
+                    lab_scores[key] = score
+                    lab_timestamps[key] = lab.created_at or ""
+
+            peer_stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.item_id.in_(graded_item_ids),
+                PeerAssignmentSubmissionModel.user_id.in_(user_ids),
+            )
+            peer_rows = (await self.session.execute(peer_stmt)).scalars().all()
+            for p_sub in peer_rows:
+                key = (p_sub.user_id, p_sub.item_id)
+                peer_submissions_map[key] = p_sub
+
+        # 5. Build rows and cells
+        rows: list[dict[str, Any]] = []
+        for lp, user in student_progress_rows:
+            cells: list[dict[str, Any]] = []
+            total_weighted_grade = 0.0
+
+            for col in columns:
+                item_id_val = str(col["item_id"])
+                item_weight = float(col["weight"])
+                key: tuple[str, str] = (str(lp.user_id), item_id_val)
+
+                score = 0.0
+                is_passed = False
+                provenance = "AUTO"
+                graded_at = ""
+                submission_id = ""
+
+                if key in peer_submissions_map:
+                    p_sub = peer_submissions_map[key]
+                    submission_id = p_sub.id
+                    score = float(p_sub.final_score or 0.0)
+                    is_passed = score >= 80.0
+                    graded_at = p_sub.published_at or p_sub.created_at or ""
+                    source = p_sub.grade_source or "PEER_REVIEW"
+                    if "INSTRUCTOR" in source.upper():
+                        provenance = "INSTRUCTOR"
+                    elif "TA" in source.upper():
+                        provenance = "TA"
+                    else:
+                        provenance = "PEER"
+                elif key in quiz_scores:
+                    score = quiz_scores[key]
+                    is_passed = score >= 80.0
+                    provenance = "AUTO"
+                    graded_at = quiz_timestamps.get(key, "")
+                elif key in lab_scores:
+                    score = lab_scores[key]
+                    is_passed = score >= 80.0
+                    provenance = "AUTO"
+                    graded_at = lab_timestamps.get(key, "")
+
+                total_weighted_grade += item_weight * score
+
+                cells.append(
+                    {
+                        "item_id": item_id_val,
+                        "score": round(score, 2),
+                        "is_passed": is_passed,
+                        "provenance": provenance,
+                        "graded_at": graded_at,
+                        "submission_id": submission_id,
+                    }
+                )
+
+            final_grade = round(total_weighted_grade, 2)
+            is_completed = bool(
+                lp.completed_at is not None
+                or (lp.overall_progress_percent >= 100.0 and final_grade >= 80.0)
+            )
+            enrollment_status = (
+                "COMPLETED"
+                if is_completed
+                else ("IN_PROGRESS" if lp.overall_progress_percent > 0 else "ACTIVE")
+            )
+
+            rows.append(
+                {
+                    "user_id": user.id,
+                    "full_name": user.full_name or "Học viên",
+                    "email": user.email,
+                    "avatar_url": user.avatar_url or "",
+                    "enrollment_status": enrollment_status,
+                    "final_weighted_grade": final_grade,
+                    "is_course_completed": is_completed,
+                    "cells": cells,
+                }
+            )
+
+        if status_filter and status_filter.upper() != "ALL":
+            rows = [r for r in rows if r["enrollment_status"] == status_filter.upper()]
+
+        next_page_token = (
+            str(offset + limit) if (offset + limit) < total_students else ""
+        )
+
+        return {
+            "course_id": course_id,
+            "course_title": course_title,
+            "columns": columns,
+            "rows": rows,
+            "total_students": total_students,
+            "next_page_token": next_page_token,
+        }
 
     async def list_admin_assessment_alerts(
         self, limit: int = ADMIN_ASSESSMENT_ALERT_LIMIT

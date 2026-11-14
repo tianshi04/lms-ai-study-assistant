@@ -28,11 +28,26 @@ export class CourseCatalogPage {
     await this.page.waitForLoadState('domcontentloaded');
     await expect(this.searchInput).toBeVisible({ timeout: 10000 });
     await expect(this.searchInput).toBeEnabled({ timeout: 5000 });
-    await this.searchInput.click();
-    await this.searchInput.fill(query);
+    await this.page.waitForTimeout(400);
+
+    const clearButton = this.page.locator('button[aria-label="Xóa tìm kiếm"]');
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.searchInput.click();
+      await this.searchInput.fill(query);
+      if (query.trim().length > 0) {
+        try {
+          await expect(clearButton).toBeVisible({ timeout: 2000 });
+          break;
+        } catch {
+          await this.page.waitForTimeout(400);
+        }
+      } else {
+        break;
+      }
+    }
     await expect(this.searchInput).toHaveValue(query, { timeout: 10000 });
-    // Wait for 500ms debounce + query resolution
-    await this.page.waitForTimeout(1000);
+    // Wait for debounce + query resolution
+    await this.page.waitForTimeout(800);
   }
 
   async getCourseCardsCount(): Promise<number> {

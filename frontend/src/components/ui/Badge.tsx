@@ -22,8 +22,11 @@ export const badgeVariants = cva(
       },
       size: {
         dot: "h-[6px] w-[6px] p-0 rounded-full", // Small Badge: 6dp x 6dp, 3dp corner radius, no text
+        counter:
+          "h-4 min-w-4 max-w-[34px] px-1 rounded-full text-[11px] font-medium leading-none tracking-tight overflow-hidden whitespace-nowrap", // Counter Badge: max 34px
+        sm: "min-h-4 px-2 py-0.5 rounded-full text-[10px] font-semibold leading-tight whitespace-nowrap w-fit",
         large:
-          "h-4 min-w-4 max-w-[34px] px-1 rounded-full text-[11px] font-medium leading-none tracking-tight overflow-hidden whitespace-nowrap", // Large Badge: 16dp height, 16dp min-width, 34dp max-width, 8dp radius, 4dp padding
+          "min-h-5 px-2.5 py-0.5 rounded-full text-xs font-semibold leading-tight whitespace-nowrap w-fit",
         pill: "px-2.5 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap",
       },
     },

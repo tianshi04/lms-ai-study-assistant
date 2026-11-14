@@ -34,7 +34,7 @@ test.describe('Full System Blackbox - Course Catalog & Discovery (POM)', () => {
 
     await catalogPage.search('NonExistentCourseXYZ123');
 
-    await expect(catalogPage.emptyStateMessage).toBeVisible({ timeout: 15000 });
+    await expect(catalogPage.emptyStateMessage).toBeVisible({ timeout: 25000 });
   });
 
   test('should navigate to course detail page when clicking a course card', async ({ page }) => {

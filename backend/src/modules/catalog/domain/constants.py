@@ -45,6 +45,24 @@ PUBLIC_ASSET_PREFIXES: tuple[str, ...] = ("public/",)
 MIN_SEARCH_QUERY_LENGTH: int = 2
 MAX_SEARCH_QUERY_LENGTH: int = 200
 SEARCH_HISTORY_THROTTLE_SECONDS: int = 5
+# Instructor Activity Timeline & Heatmap constants
+DEFAULT_TIMELINE_DATE_RANGE: str = "7d"
+VALID_TIMELINE_DATE_RANGES: set[str] = {
+    "today",
+    "7d",
+    "this_week",
+    "last_week",
+    "this_month",
+    "last_month",
+    "custom",
+}
+HEATMAP_DAYS: list[str] = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+HEATMAP_TIME_SLOTS: list[str] = [
+    "Sáng (06h-12h)",
+    "Chiều (12h-18h)",
+    "Tối (18h-22h)",
+    "Đêm (22h-02h)",
+]
 
 # Admin Catalog Moderation & Quality Analytics
 ADMIN_LOW_RATING_MAX_STARS: int = 2

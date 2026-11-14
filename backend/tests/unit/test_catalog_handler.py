@@ -635,3 +635,77 @@ async def test_list_my_bookmarked_courses():
         assert res.bookmarks[0].course.title == "Python 101"
     finally:
         set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_get_instructor_activity_timeline_success():
+    from src.modules.catalog.domain.entities import (
+        ActivityDataPoint,
+        HeatmapCell,
+        InstructorActivityTimeline,
+    )
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    usecase_mock.get_instructor_activity_timeline.return_value = (
+        InstructorActivityTimeline(
+            timeline=[
+                ActivityDataPoint(
+                    timestamp="2026-11-04",
+                    label="T4",
+                    active_learners=12,
+                    completed_items=5,
+                    in_progress=7,
+                )
+            ],
+            heatmap=[
+                HeatmapCell(
+                    day="T4",
+                    time_slot="Tối (18h-22h)",
+                    count=12,
+                    is_peak=True,
+                )
+            ],
+            total_active_in_period=12,
+        )
+    )
+
+    handler = CatalogHandler(usecase_mock)
+    instructor = CurrentUser(
+        id="inst-1", email="instructor@test.com", role="INSTRUCTOR"
+    )
+    set_current_user(instructor)
+    try:
+        req = pb.GetInstructorActivityTimelineRequest(
+            course_id="course-ml",
+            date_range="7d",
+            learner_filter="all",
+        )
+        ctx = MagicMock()
+        res = await handler.get_instructor_activity_timeline(req, ctx)
+        assert len(res.timeline) == 1
+        assert res.timeline[0].label == "T4"
+        assert res.timeline[0].active_learners == 12
+        assert len(res.heatmap) == 1
+        assert res.heatmap[0].is_peak is True
+        assert res.total_active_in_period == 12
+    finally:
+        set_current_user(None)
+
+
+@pytest.mark.asyncio
+async def test_get_instructor_activity_timeline_unauthorized():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    handler = CatalogHandler(usecase_mock)
+    learner = CurrentUser(id="learner-1", email="learner@test.com", role="LEARNER")
+    set_current_user(learner)
+    try:
+        req = pb.GetInstructorActivityTimelineRequest(course_id="course-ml")
+        ctx = MagicMock()
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.get_instructor_activity_timeline(req, ctx)
+        assert exc_info.value.code == Code.PERMISSION_DENIED
+    finally:
+        set_current_user(None)

@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
-from src.modules.assessment.domain.constants import ADMIN_ASSESSMENT_ALERT_LIMIT
+from src.modules.assessment.domain.constants import (
+    ADMIN_ASSESSMENT_ALERT_LIMIT,
+    GRADING_LOCK_TIMEOUT_MINUTES,
+)
 from src.modules.assessment.domain.entities import (
     AdminAssessmentAlert,
     GradeAppeal,
@@ -116,6 +120,32 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def claim_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        """Atomically claims a soft lock on a submission if unlocked, already held by user, or expired."""
+
+    @abstractmethod
+    async def renew_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        """Renews an active soft lock held by user."""
+
+    @abstractmethod
+    async def release_submission_lock(
+        self,
+        submission_id: str,
+        user_id: str | None = None,
+    ) -> bool:
+        """Releases the soft lock on a submission."""
+
+    @abstractmethod
     async def save_peer_review(self, review: PeerReview) -> None:
         pass
 
@@ -216,8 +246,49 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_course_id_by_bank_id(self, bank_id: str) -> str | None:
+        pass
+
+    @abstractmethod
+    async def get_course_id_by_question_id(self, question_id: str) -> str | None:
+        pass
+
+    @abstractmethod
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         pass
+
+    @abstractmethod
+    async def get_item_rubric_criteria_json(self, item_id: str) -> str | None:
+        pass
+
+    @abstractmethod
+    async def get_item_reading_markdown(self, item_id: str) -> str:
+        pass
+
+    @abstractmethod
+    async def list_grading_queue_items(
+        self,
+        course_id: str = "",
+        item_id: str = "",
+    ) -> list[dict[str, Any]]:
+        """Lists grading queue items for peer assignments across course or specific item."""
+
+    @abstractmethod
+    async def get_user_display_profiles(
+        self, user_ids: list[str]
+    ) -> dict[str, dict[str, str]]:
+        """Queries user display profile info (full_name, avatar_url) by user IDs."""
+
+    @abstractmethod
+    async def get_course_gradebook_data(
+        self,
+        course_id: str,
+        search_query: str = "",
+        status_filter: str = "",
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> dict[str, Any]:
+        """Queries course gradebook data including columns and student rows."""
 
     @abstractmethod
     async def list_admin_assessment_alerts(
