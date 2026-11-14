@@ -21,7 +21,7 @@ export class QuestionBankPage {
   constructor(page: Page) {
     this.page = page;
     this.addQuestionBankButton = page.getByRole('button', { name: /Tạo Kho Ngân hàng Đề|Create Question Bank/i });
-    this.bankTitleInput = page.locator('div.z-modal input, input[placeholder*="Kho thi"], input[aria-label*="Tên Kho"]').first();
+    this.bankTitleInput = page.getByRole('dialog').locator('input[placeholder*="Kho thi"], input[aria-label*="Tên Kho"]').or(page.locator('input[placeholder*="Kho thi"], input[aria-label*="Tên Kho"]')).first();
     this.bankCategorySelect = page.locator('form select').first();
     this.bankDescriptionInput = page.locator('form textarea').first();
     this.submitBankButton = page.getByRole('button', { name: /Xác nhận tạo Kho|Confirm Create/i });
@@ -50,10 +50,15 @@ export class QuestionBankPage {
     await expect(this.addQuestionBankButton).toBeVisible({ timeout: 10000 });
     await expect(this.addQuestionBankButton).toBeEnabled({ timeout: 5000 });
 
+    await this.page.waitForTimeout(300);
     for (let i = 0; i < 3; i++) {
       await this.addQuestionBankButton.click();
-      await this.page.waitForTimeout(400);
-      if (await this.bankTitleInput.isVisible()) break;
+      try {
+        await expect(this.bankTitleInput).toBeVisible({ timeout: 2000 });
+        break;
+      } catch {
+        await this.page.waitForTimeout(500);
+      }
     }
 
     await expect(this.bankTitleInput).toBeVisible({ timeout: 15000 });

@@ -6,7 +6,10 @@ from src.modules.assessment.domain import (
     PeerReviewSubmittedDomainEvent,
     QuizSubmittedDomainEvent,
 )
-from src.modules.catalog.domain import CourseAnnouncementCreatedDomainEvent
+from src.modules.catalog.domain import (
+    CourseAnnouncementCreatedDomainEvent,
+    StudentReminderSentDomainEvent,
+)
 from src.modules.certificate.domain import (
     CertificateIssuedDomainEvent,
     FinancialAidReviewedDomainEvent,
@@ -117,6 +120,21 @@ async def handle_course_announcement_created(
         category=NotificationCategory.ANNOUNCEMENT,
         title=title_prefix,
         content=content_snippet,
+        action_url=f"/learn/{event.course_id}" if event.course_id else "",
+    )
+
+
+async def handle_student_reminder_sent(
+    event: StudentReminderSentDomainEvent,
+) -> None:
+    if not event.student_ids:
+        return
+    notif_uc = NotificationUseCase()
+    await notif_uc.send_batch_notifications(
+        recipient_ids=event.student_ids,
+        category=NotificationCategory.ACADEMIC,
+        title=event.title or "Nhắc nhở học tập từ Giảng viên",
+        content=event.content,
         action_url=f"/learn/{event.course_id}" if event.course_id else "",
     )
 
@@ -256,6 +274,7 @@ def register_notification_event_handlers() -> None:
     EventBus.subscribe(
         CourseAnnouncementCreatedDomainEvent, handle_course_announcement_created
     )
+    EventBus.subscribe(StudentReminderSentDomainEvent, handle_student_reminder_sent)
     EventBus.subscribe(FinancialAidReviewedDomainEvent, handle_financial_aid_reviewed)
     EventBus.subscribe(CertificateIssuedDomainEvent, handle_certificate_issued)
     EventBus.subscribe(

@@ -223,16 +223,28 @@ async def test_create_and_update_course_financial_aid_toggle(
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
 
+    instructor = CurrentUser(
+        id="inst-1", email="instructor@coursera.ai", role="INSTRUCTOR"
+    )
+    mock_repo.get_course_detail.return_value = Course(
+        id="c2",
+        title="AI Course",
+        slug="ai-course",
+        owner_id="inst-1",
+        financial_aid_enabled=False,
+    )
     mock_repo.create_course.return_value = Course(
         id="c2",
         title="AI Course",
         slug="ai-course",
+        owner_id="inst-1",
         financial_aid_enabled=False,
     )
     mock_repo.update_course.return_value = Course(
         id="c2",
         title="AI Course Updated",
         slug="ai-course",
+        owner_id="inst-1",
         financial_aid_enabled=True,
     )
 
@@ -255,6 +267,7 @@ async def test_create_and_update_course_financial_aid_toggle(
         partner_logo_url="",
         instructor_names=["Instructor"],
         financial_aid_enabled=True,
+        current_user=instructor,
     )
     assert updated.financial_aid_enabled is True
 
@@ -446,6 +459,9 @@ async def test_import_course_from_scorm_native(
     mock_scope.return_value = mock_ctx
 
     # Setup repo mocks
+    instructor = CurrentUser(
+        id="inst_1", email="instructor@test.com", role="INSTRUCTOR"
+    )
     mock_repo.get_course_detail.return_value = Course(
         id="c1",
         title="Original",
@@ -455,12 +471,13 @@ async def test_import_course_from_scorm_native(
         partner_logo_url="",
         instructor_names=[],
         week_modules=[],
+        owner_id="inst_1",
     )
     mock_repo.create_week_module.return_value = AsyncMock(id="w1_new")
     mock_repo.create_lesson.return_value = AsyncMock(id="l1_new")
 
     course, item = await catalog_usecase.import_course_from_scorm(
-        scorm_object_key="some-key", course_id="c1", current_user=None
+        scorm_object_key="some-key", course_id="c1", current_user=instructor
     )
 
     assert course is not None
@@ -960,4 +977,23 @@ async def test_update_course_exceeds_max_foundational_courses(catalog_usecase):
             instructor_names=[],
             foundational_course_ids=[f"fc-{i}" for i in range(11)],
             current_user=user,
+        )
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.course_usecase.async_session_scope")
+async def test_verify_ownership_course_not_found_raises_value_error(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+    mock_repo.get_course_detail.return_value = None
+
+    instructor = CurrentUser(
+        id="inst-1", email="instructor@test.com", role="INSTRUCTOR"
+    )
+    with pytest.raises(ValueError, match="Khóa học không tồn tại"):
+        await catalog_usecase.submit_course_for_launch(
+            "non-existent-course", current_user=instructor
         )

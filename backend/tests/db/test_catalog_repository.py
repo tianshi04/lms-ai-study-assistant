@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -470,3 +470,55 @@ async def test_is_course_bookmarked(repo, mock_session):
 
     res = await repo.is_course_bookmarked("u1", "c1")
     assert res is True
+
+
+@pytest.mark.asyncio
+async def test_get_instructor_analytics_excludes_teaching_personnel(repo, mock_session):
+    repo.get_course_id_by_slug_or_id = AsyncMock(return_value="c1")
+    repo.get_course_rating_stats = AsyncMock(return_value=(4.8, 12))
+
+    res_owner = MagicMock()
+    res_owner.scalar_one_or_none.return_value = "inst-1"
+
+    res_collab = MagicMock()
+    res_collab.scalars.return_value.all.return_value = ["inst-ta-1"]
+
+    progress_inst = MagicMock(
+        user_id="inst-1",
+        overall_progress_percent=100.0,
+        enrolled_at="2026-01-01T00:00:00Z",
+    )
+    progress_ta = MagicMock(
+        user_id="inst-ta-1",
+        overall_progress_percent=80.0,
+        enrolled_at="2026-01-01T00:00:00Z",
+    )
+    progress_student = MagicMock(
+        user_id="student-1",
+        overall_progress_percent=50.0,
+        enrolled_at="",
+    )
+
+    res_progress = MagicMock()
+    res_progress.scalars.return_value.all.return_value = [
+        progress_inst,
+        progress_ta,
+        progress_student,
+    ]
+
+    mock_session.execute.side_effect = [res_owner, res_collab, res_progress]
+
+    with patch(
+        "src.modules.identity.infrastructure.repository.IdentityRepository.get_by_id",
+        new_callable=AsyncMock,
+    ) as mock_get_user:
+        user_entity = MagicMock(full_name="Nguyễn Văn A", email="student@test.com")
+        mock_get_user.return_value = user_entity
+
+        analytics = await repo.get_instructor_analytics("c1")
+
+        assert analytics.total_enrolled_students == 1
+        assert len(analytics.students) == 1
+        assert analytics.students[0].user_id == "student-1"
+        assert analytics.students[0].enrolled_at == ""
+        assert analytics.average_completion_rate == 50.0
