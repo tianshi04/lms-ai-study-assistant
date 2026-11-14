@@ -8,6 +8,7 @@ from src.modules.catalog.domain import (
     CourseBookmark,
     CourseStatus,
     ICatalogRepository,
+    InstructorActivityTimeline,
     Specialization,
 )
 from src.modules.catalog.domain.constants import (
@@ -459,6 +460,38 @@ class CourseUseCase:
                 disallow_published_mutation=True,
             )
             return await repo.delete_course(course_id)
+
+    async def get_instructor_activity_timeline(
+        self,
+        course_id: str = "",
+        date_range: str = "7d",
+        start_date: str = "",
+        end_date: str = "",
+        learner_filter: str = "all",
+        current_user: CurrentUser | None = None,
+    ) -> InstructorActivityTimeline:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            if course_id:
+                await self._verify_ownership(
+                    repo, course_id, current_user, "xem thống kê hoạt động"
+                )
+                real_id = await repo.get_course_id_by_slug_or_id(course_id)
+                course_ids = [real_id]
+            else:
+                instructor_id = current_user.id if current_user else ""
+                courses, _ = await repo.list_instructor_courses(
+                    instructor_id=instructor_id, page_size=200
+                )
+                course_ids = [c.id for c in courses]
+
+            return await repo.get_instructor_activity_timeline(
+                course_ids=course_ids,
+                date_range=date_range,
+                start_date=start_date,
+                end_date=end_date,
+                learner_filter=learner_filter,
+            )
 
     async def get_instructor_analytics(
         self, course_id: str, current_user: CurrentUser | None = None

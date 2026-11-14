@@ -12,6 +12,7 @@ from src.modules.catalog.domain.entities import (
     CourseBookmark,
     CourseReview,
     CourseStatus,
+    InstructorActivityTimeline,
     InstructorAnalytics,
     ItemType,
     Lesson,
@@ -323,6 +324,17 @@ class ICatalogRepository(ABC):
     async def list_course_announcements(
         self, course_id: str
     ) -> list[CourseAnnouncement]:
+        pass
+
+    @abstractmethod
+    async def get_instructor_activity_timeline(
+        self,
+        course_ids: list[str],
+        date_range: str,
+        start_date: str = "",
+        end_date: str = "",
+        learner_filter: str = "all",
+    ) -> InstructorActivityTimeline:
         pass
 
     @abstractmethod

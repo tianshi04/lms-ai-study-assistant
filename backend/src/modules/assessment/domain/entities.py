@@ -9,6 +9,7 @@ from src.modules.assessment.domain.constants import (
     DEFAULT_QUIZ_HARD_COUNT,
     DEFAULT_QUIZ_MEDIUM_COUNT,
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+    GRADING_LOCK_TIMEOUT_MINUTES,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
     QUIZ_COOLDOWN_HOURS,
     TOPIC_MASTERY_THRESHOLD_MASTERED,
@@ -24,6 +25,7 @@ class RubricCriteria(ValueObject):
     max_score: float
     score_given: float = 0.0
     feedback: str = ""
+    description: str = ""
 
 
 class HonorCodeAgreement(Entity):
@@ -231,6 +233,18 @@ class PeerAssignmentSubmission(Entity):
         created_at: str,
         final_score: float | None = None,
         graded_by_staff: bool = False,
+        attempt_number: int = 1,
+        staff_feedback: str | None = None,
+        graded_by_user_id: str | None = None,
+        grader_role: str | None = None,
+        grade_source: str = "PEER_REVIEW",
+        locked_by_user_id: str | None = None,
+        locked_at: str | None = None,
+        lock_expires_at: str | None = None,
+        rubric_scores_json: dict[str, Any] | None = None,
+        published_at: str | None = None,
+        status: str = "SUBMITTED",
+        staff_evaluations_json: list[dict[str, Any]] | None = None,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -240,12 +254,131 @@ class PeerAssignmentSubmission(Entity):
         self.created_at = created_at
         self.final_score = final_score
         self.graded_by_staff = graded_by_staff
+        self.attempt_number = attempt_number
+        self.staff_feedback = staff_feedback
+        self.graded_by_user_id = graded_by_user_id
+        self.grader_role = grader_role
+        self.grade_source = grade_source
+        self.locked_by_user_id = locked_by_user_id
+        self.locked_at = locked_at
+        self.lock_expires_at = lock_expires_at
+        self.rubric_scores_json = rubric_scores_json or {}
+        self.published_at = published_at
+        self.status = status
+        self.staff_evaluations_json = staff_evaluations_json or []
 
-    def assign_grade(self, score: float, is_staff: bool = False) -> None:
-        if score < 0.0 or score > 100.0:
-            raise ValueError("Điểm số phải nằm trong khoảng từ 0 đến 100.")
+    def assign_grade(
+        self,
+        score: float,
+        is_staff: bool = False,
+        graded_by_user_id: str | None = None,
+        grader_role: str | None = None,
+        grade_source: str = "PEER_REVIEW",
+        staff_feedback: str | None = None,
+        rubric_scores_json: dict[str, Any] | None = None,
+        appeal_resolution_notes: str | None = None,
+    ) -> None:
+        import math
+
+        if not math.isfinite(score) or score < 0.0 or score > 100.0:
+            raise ValueError(
+                "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
+            )
         self.final_score = round(score, 2)
         self.graded_by_staff = is_staff
+        if graded_by_user_id is not None:
+            self.graded_by_user_id = graded_by_user_id
+        if grader_role is not None:
+            self.grader_role = grader_role
+        self.grade_source = grade_source
+        if staff_feedback is not None:
+            self.staff_feedback = staff_feedback
+        if rubric_scores_json is not None:
+            self.rubric_scores_json = rubric_scores_json
+        self.status = "GRADED"
+
+        if is_staff and graded_by_user_id:
+            eval_entry = {
+                "staff_id": graded_by_user_id,
+                "grader_role": grader_role or "TA",
+                "grade_source": grade_source,
+                "score": round(score, 2),
+                "feedback": staff_feedback or "",
+                "rubric_scores_json": rubric_scores_json or {},
+                "graded_at": datetime.now(UTC).isoformat(),
+                "appeal_resolution_notes": appeal_resolution_notes or "",
+            }
+            self.staff_evaluations_json.append(eval_entry)
+
+    def is_lock_active(
+        self, now: datetime, timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES
+    ) -> bool:
+        if not self.locked_by_user_id or not self.locked_at:
+            return False
+        try:
+            lock_dt = datetime.fromisoformat(self.locked_at)
+            if lock_dt.tzinfo is None and now.tzinfo is not None:
+                lock_dt = lock_dt.replace(tzinfo=UTC)
+            elif lock_dt.tzinfo is not None and now.tzinfo is None:
+                lock_dt = lock_dt.replace(tzinfo=None)
+            if now >= lock_dt + timedelta(minutes=timeout_minutes):
+                return False
+        except (ValueError, TypeError):
+            return False
+
+        if self.lock_expires_at:
+            try:
+                exp_dt = datetime.fromisoformat(self.lock_expires_at)
+                if exp_dt.tzinfo is None and now.tzinfo is not None:
+                    exp_dt = exp_dt.replace(tzinfo=UTC)
+                elif exp_dt.tzinfo is not None and now.tzinfo is None:
+                    exp_dt = exp_dt.replace(tzinfo=None)
+                if now >= exp_dt:
+                    return False
+            except (ValueError, TypeError):
+                pass
+
+        return True
+
+    def can_claim_lock(
+        self,
+        user_id: str,
+        now: datetime,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        if not self.is_lock_active(now, timeout_minutes):
+            return True
+        return self.locked_by_user_id == user_id
+
+    def claim_lock(
+        self,
+        user_id: str,
+        now: datetime,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> None:
+        if not self.can_claim_lock(user_id, now, timeout_minutes):
+            raise PermissionError("Bài nộp đang được nhân sự khác chấm.")
+        self.locked_by_user_id = user_id
+        self.locked_at = now.isoformat()
+        self.lock_expires_at = (now + timedelta(minutes=timeout_minutes)).isoformat()
+
+    def renew_lock(
+        self,
+        user_id: str,
+        now: datetime,
+        extend_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> None:
+        if self.locked_by_user_id != user_id:
+            raise PermissionError("Bạn không sở hữu khóa chấm bài này.")
+        self.locked_at = now.isoformat()
+        self.lock_expires_at = (now + timedelta(minutes=extend_minutes)).isoformat()
+
+    def release_lock(self, user_id: str) -> None:
+        if self.locked_by_user_id and self.locked_by_user_id != user_id:
+            raise PermissionError("Bạn không thể nhả khóa của người khác.")
+        self.locked_by_user_id = None
+        self.locked_at = None
+        self.lock_expires_at = None
 
 
 class PeerReview(Entity):
@@ -279,6 +412,9 @@ class GradeAppeal(Entity):
         appeal_reason: str,
         status: str = "PENDING",
         created_at: str | None = None,
+        reviewer_id: str | None = None,
+        final_score: float | None = None,
+        rejection_reason: str | None = None,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -286,6 +422,9 @@ class GradeAppeal(Entity):
         self.appeal_reason = appeal_reason
         self.status = status
         self.created_at = created_at
+        self.reviewer_id = reviewer_id
+        self.final_score = final_score
+        self.rejection_reason = rejection_reason
 
     def approve(self, reviewer_id: str = "", final_score: float = 0.0) -> None:
         self.status = "APPROVED"

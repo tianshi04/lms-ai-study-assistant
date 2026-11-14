@@ -22,6 +22,7 @@ from src.shared.infrastructure.database import async_session_scope
 from .base_usecase import BaseAssessmentUseCase
 from .coding_lab_usecase import CodingLabUseCase
 from .grade_appeal_usecase import GradeAppealUseCase
+from .gradebook_usecase import CourseGradebookUseCase
 from .peer_review_usecase import PeerReviewUseCase
 from .quiz_usecase import QuizUseCase, _clean_explanation
 
@@ -31,6 +32,7 @@ __all__ = [
     "AssessmentUseCase",
     "BaseAssessmentUseCase",
     "CodingLabUseCase",
+    "CourseGradebookUseCase",
     "GradeAppealUseCase",
     "PeerReviewUseCase",
     "QuizUseCase",
@@ -44,6 +46,7 @@ class AssessmentUseCase(
     CodingLabUseCase,
     PeerReviewUseCase,
     GradeAppealUseCase,
+    CourseGradebookUseCase,
 ):
     """Application Use Case coordinator and unified Facade for Assessment domain."""
 
@@ -52,13 +55,17 @@ class AssessmentUseCase(
         repository: AssessmentRepositoryInterface | None = None,
         repo_factory: Callable[[Any], AssessmentRepositoryInterface] | None = None,
         sandbox_executor: PythonCodeSandboxExecutor | None = None,
+        catalog_repo_factory: Callable[[Any], Any] | None = None,
         identity_repo_factory: Callable[[Any], IIdentityRepository] | None = None,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             repository=repository,
             repo_factory=repo_factory,
             sandbox_executor=sandbox_executor,
+            catalog_repo_factory=catalog_repo_factory,
             identity_repo_factory=identity_repo_factory,
+            **kwargs,
         )
 
         # Composition sub-usecases for direct modular access
