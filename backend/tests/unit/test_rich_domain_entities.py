@@ -5,6 +5,10 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from src.modules.assessment.domain import (
+    GRADING_LOCK_TIMEOUT_MINUTES,
+    MAX_APPEAL_WINDOW_DAYS,
+    MAX_APPEALS_PER_SUBMISSION,
+    MAX_PEER_SUBMISSION_ATTEMPTS,
     GradeAppeal,
     PeerAssignmentSubmission,
     QuizActiveSession,
@@ -138,6 +142,80 @@ def test_quiz_active_session_expiration():
     assert not session.is_expired(now + timedelta(minutes=44))
     assert session.is_expired(now + timedelta(minutes=45))
     assert session.is_expired(now + timedelta(minutes=50))
+
+
+def test_peer_assignment_submission_constants_and_locking():
+    assert GRADING_LOCK_TIMEOUT_MINUTES == 30
+    assert MAX_APPEAL_WINDOW_DAYS == 7
+    assert MAX_APPEALS_PER_SUBMISSION == 1
+    assert MAX_PEER_SUBMISSION_ATTEMPTS == 3
+
+    now = datetime(2026, 8, 14, 12, 0, 0, tzinfo=UTC)
+    sub = PeerAssignmentSubmission(
+        id="sub-lock-1",
+        user_id="student-1",
+        item_id="item-lock-1",
+        submission_url="https://example.com/repo",
+        text_content="Submission",
+        created_at=now.isoformat(),
+    )
+
+    # Defaults
+    assert sub.attempt_number == 1
+    assert sub.grade_source == "PEER_REVIEW"
+    assert sub.status == "SUBMITTED"
+    assert sub.rubric_scores_json == {}
+    assert not sub.is_lock_active(now)
+    assert sub.can_claim_lock("ta-1", now)
+
+    # Claim lock
+    sub.claim_lock("ta-1", now)
+    assert sub.locked_by_user_id == "ta-1"
+    assert sub.is_lock_active(now)
+    assert sub.can_claim_lock("ta-1", now)
+    assert not sub.can_claim_lock("ta-2", now)
+
+    # Another TA claiming lock raises PermissionError
+    with pytest.raises(PermissionError, match="đang được nhân sự khác chấm"):
+        sub.claim_lock("ta-2", now)
+
+    # Renew lock
+    renew_time = now + timedelta(minutes=15)
+    sub.renew_lock("ta-1", renew_time)
+    assert sub.locked_at == renew_time.isoformat()
+
+    # Another TA cannot renew or release lock
+    with pytest.raises(PermissionError, match="Bạn không sở hữu khóa"):
+        sub.renew_lock("ta-2", renew_time)
+    with pytest.raises(PermissionError, match="Bạn không thể nhả khóa của người khác"):
+        sub.release_lock("ta-2")
+
+    # Lock expires after 30 minutes from last renewal
+    expired_time = renew_time + timedelta(minutes=31)
+    assert not sub.is_lock_active(expired_time)
+    assert sub.can_claim_lock("ta-2", expired_time)
+
+    # Release lock actively
+    sub.release_lock("ta-1")
+    assert sub.locked_by_user_id is None
+    assert sub.locked_at is None
+
+    # Staff grading
+    sub.assign_grade(
+        score=95.0,
+        is_staff=True,
+        graded_by_user_id="instructor-1",
+        grader_role="INSTRUCTOR",
+        grade_source="INSTRUCTOR",
+        staff_feedback="Xuất sắc",
+        rubric_scores_json={"criteria_1": 10},
+    )
+    assert sub.final_score == 95.0
+    assert sub.graded_by_user_id == "instructor-1"
+    assert sub.grader_role == "INSTRUCTOR"
+    assert sub.grade_source == "INSTRUCTOR"
+    assert sub.staff_feedback == "Xuất sắc"
+    assert sub.status == "GRADED"
 
 
 def test_peer_assignment_submission_grading():

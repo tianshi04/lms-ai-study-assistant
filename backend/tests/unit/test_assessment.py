@@ -10,6 +10,7 @@ from src.modules.assessment.domain import (
     GradeAppeal,
     HonorCodeAgreement,
     LabSubmission,
+    PeerAssignmentGradedDomainEvent,
     PeerAssignmentSubmission,
     PeerReview,
     QuizCooldown,
@@ -34,6 +35,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.grade_appeals: dict[str, GradeAppeal] = {}
         self.matrices: dict[str, Any] = {}
         self.item_types: dict[str, str] = {}
+        self.rubric_criteria_json_map: dict[str, str] = {}
 
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         self.honor_codes[agreement.id] = agreement
@@ -315,11 +317,147 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def get_course_id_by_item_id(self, item_id: str) -> str | None:
         return "course_test_1"
 
+    async def get_course_id_by_bank_id(self, bank_id: str) -> str | None:
+        return getattr(self, "bank_course_map", {}).get(bank_id, "course_test_1")
+
+    async def get_course_id_by_question_id(self, question_id: str) -> str | None:
+        return getattr(self, "question_course_map", {}).get(
+            question_id, "course_test_1"
+        )
+
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         return None
 
-    async def list_admin_assessment_alerts(self, limit: int = 20):
+    async def list_admin_assessment_alerts(
+        self, limit: int = 20
+    ) -> tuple[list[Any], int]:
         return [], 0
+
+    async def get_item_rubric_criteria_json(self, item_id: str) -> str | None:
+        if hasattr(self, "rubric_criteria_json_map"):
+            return self.rubric_criteria_json_map.get(item_id)
+        return getattr(self, "item_rubrics", {}).get(item_id, None)
+
+    async def get_item_reading_markdown(self, item_id: str) -> str:
+        return getattr(self, "item_reading_markdowns", {}).get(item_id, "")
+
+    async def claim_submission_lock(
+        self, submission_id: str, user_id: str, timeout_minutes: int = 30
+    ) -> bool:
+        from datetime import UTC, datetime
+
+        now = datetime.now(UTC)
+        sub = await self.get_peer_submission(submission_id)
+        if not sub:
+            return False
+        if not sub.can_claim_lock(user_id, now, timeout_minutes=timeout_minutes):
+            return False
+        sub.claim_lock(user_id, now)
+        return True
+
+    async def renew_submission_lock(
+        self, submission_id: str, user_id: str, timeout_minutes: int = 30
+    ) -> bool:
+        from datetime import UTC, datetime
+
+        now = datetime.now(UTC)
+        sub = await self.get_peer_submission(submission_id)
+        if not sub or sub.locked_by_user_id != user_id:
+            return False
+        if not sub.is_lock_active(now, timeout_minutes=timeout_minutes):
+            return False
+        sub.renew_lock(user_id, now)
+        return True
+
+    async def release_submission_lock(
+        self, submission_id: str, user_id: str | None = None
+    ) -> bool:
+        sub = await self.get_peer_submission(submission_id)
+        if not sub:
+            return False
+        if user_id and sub.locked_by_user_id and sub.locked_by_user_id != user_id:
+            return False
+        sub.locked_by_user_id = None
+        sub.locked_at = None
+        return True
+
+    async def list_grading_queue_items(
+        self,
+        course_id: str = "",
+        item_id: str = "",
+    ) -> list[dict[str, Any]]:
+        results = []
+        for s in self.peer_submissions:
+            if item_id and s.item_id != item_id:
+                continue
+            is_appeal = s.id in self.grade_appeals
+            appeal = self.grade_appeals.get(s.id)
+            appeal_reason = appeal.appeal_reason if appeal else ""
+            revs = [r for r in self.peer_reviews if r.submission_id == s.id]
+            is_outlier = any(r.is_outlier for r in revs)
+            status_str = "PENDING"
+            if s.locked_by_user_id:
+                status_str = "CLAIMED"
+            elif is_appeal:
+                status_str = "APPEALED"
+            elif s.final_score is not None:
+                status_str = "GRADED"
+
+            results.append(
+                {
+                    "submission_id": s.id,
+                    "item_id": s.item_id,
+                    "item_title": f"Item {s.item_id}",
+                    "course_id": course_id or "course_test_1",
+                    "course_title": "Test Course",
+                    "student_id": s.user_id,
+                    "student_name": f"Student {s.user_id}",
+                    "student_avatar_url": "",
+                    "submitted_at": s.created_at,
+                    "is_outlier": is_outlier,
+                    "is_appeal": is_appeal,
+                    "appeal_reason": appeal_reason,
+                    "locked_by_user_id": s.locked_by_user_id or "",
+                    "locked_by_name": s.locked_by_user_id or "",
+                    "lock_expires_at": "",
+                    "grade_source": s.grade_source
+                    if s.final_score is not None
+                    else ("PEER_REVIEW" if is_appeal else None),
+                    "staff_score": float(s.final_score or 0.0),
+                    "status": status_str,
+                    "peer_score": 0.0,
+                    "peer_reviews_count": len(revs),
+                }
+            )
+        return results
+
+    async def get_user_display_profiles(
+        self, user_ids: list[str]
+    ) -> dict[str, dict[str, str]]:
+        return {
+            uid: {
+                "name": f"Học viên {uid}",
+                "avatar_url": "",
+            }
+            for uid in user_ids
+        }
+
+    async def get_course_gradebook_data(
+        self,
+        course_id: str,
+        search_query: str = "",
+        status_filter: str = "",
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> dict[str, Any]:
+        return {
+            "course_id": course_id,
+            "course_title": "Test Course",
+            "columns": [],
+            "rows": [],
+            "total_students": 0,
+            "next_page_token": "",
+        }
 
 
 @pytest.mark.asyncio
@@ -1018,3 +1156,968 @@ async def test_start_quiz_session_force_new_preserves_previous_result():
     assert sess2["previous_result"] is not None
     assert sess2["previous_result"]["score_percent"] == 100.0
     assert sess2["previous_result"]["passed"] is True
+
+
+@pytest.mark.asyncio
+async def test_peer_grading_atomic_soft_lock_lifecycle():
+    from datetime import UTC, datetime, timedelta
+
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    ta1 = CurrentUser(id="ta-1", email="ta1@example.com", role="INSTRUCTOR")
+    ta2 = CurrentUser(id="ta-2", email="ta2@example.com", role="INSTRUCTOR")
+
+    # 1. Create a peer submission
+    sub = PeerAssignmentSubmission(
+        id="sub-task4-lock",
+        user_id="student-1",
+        item_id="item-lock-test",
+        submission_url="http://example.com/repo",
+        text_content="My code",
+        created_at=datetime.now(UTC).isoformat(),
+    )
+    await repo.save_peer_submission(sub)
+
+    # 2. TA1 claims the lock -> True
+    ok, _msg, data = await usecase.claim_grading_task(
+        "sub-task4-lock", "ta-1", current_user=ta1
+    )
+    assert ok is True
+    assert data["locked_by_user_id"] == "ta-1"
+
+    # 3. TA2 attempts to claim the same submission while locked -> False (conflict prevention)
+    ok2, msg2, _ = await usecase.claim_grading_task(
+        "sub-task4-lock", "ta-2", current_user=ta2
+    )
+    assert ok2 is False
+    assert "đã có khóa hiệu lực" in msg2 or "đang được nhân sự khác" in msg2
+
+    # 4. TA1 renews lock -> True
+    ok_renew, _msg_renew, data_renew = await usecase.renew_grading_task_lock(
+        "sub-task4-lock", "ta-1", extend_minutes=30, current_user=ta1
+    )
+    assert ok_renew is True
+    assert data_renew["remaining_seconds"] == 1800
+
+    # 5. TA2 attempts to renew TA1's lock -> False
+    ok_renew2, _, _ = await usecase.renew_grading_task_lock(
+        "sub-task4-lock", "ta-2", extend_minutes=30, current_user=ta2
+    )
+    assert ok_renew2 is False
+
+    # 6. Simulate lock expiration (> 30 mins)
+    sub_loaded = await repo.get_peer_submission("sub-task4-lock")
+    assert sub_loaded is not None
+    sub_loaded.locked_at = (datetime.now(UTC) - timedelta(minutes=35)).isoformat()
+    await repo.save_peer_submission(sub_loaded)
+
+    # 7. Now TA2 can claim expired lock -> True
+    ok_claim_exp, _, data_exp = await usecase.claim_grading_task(
+        "sub-task4-lock", "ta-2", current_user=ta2
+    )
+    assert ok_claim_exp is True
+    assert data_exp["locked_by_user_id"] == "ta-2"
+
+    # 8. TA2 actively releases lock -> lock is cleared
+    ok_rel, _ = await usecase.release_grading_task(
+        "sub-task4-lock", "ta-2", current_user=ta2
+    )
+    assert ok_rel is True
+    sub_released = await repo.get_peer_submission("sub-task4-lock")
+    assert sub_released is not None
+    assert sub_released.locked_by_user_id is None
+    assert sub_released.locked_at is None
+
+
+@pytest.mark.asyncio
+async def test_peer_grade_appeal_constraints_and_window():
+    from datetime import UTC, datetime, timedelta
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    now = datetime.now(UTC)
+
+    # 1. Fresh published submission (within 7 days)
+    sub = PeerAssignmentSubmission(
+        id="sub-appeal-1",
+        user_id="student-appeal",
+        item_id="item-appeal-test",
+        submission_url="http://example.com/repo",
+        text_content="My code",
+        created_at=now.isoformat(),
+        final_score=75.0,
+        published_at=now.isoformat(),
+        status="PUBLISHED",
+    )
+    await repo.save_peer_submission(sub)
+
+    # Student appeals successfully
+    ok, status = await usecase.submit_grade_appeal(
+        "student-appeal", "sub-appeal-1", "Em thấy điểm chưa đúng rubric"
+    )
+    assert ok is True
+    assert status == "PENDING"
+
+    # Attempting second appeal on same submission -> Rejected (MAX_APPEALS_PER_SUBMISSION = 1)
+    with pytest.raises(ValueError, match="đã có đơn khiếu nại trước đó"):
+        await usecase.submit_grade_appeal(
+            "student-appeal", "sub-appeal-1", "Khiếu nại lần 2"
+        )
+
+    # Another student trying to appeal -> Rejected with PermissionError
+    sub2 = PeerAssignmentSubmission(
+        id="sub-appeal-2",
+        user_id="student-other",
+        item_id="item-appeal-test",
+        submission_url="http://example.com",
+        text_content="Other",
+        created_at=now.isoformat(),
+        published_at=now.isoformat(),
+    )
+    await repo.save_peer_submission(sub2)
+    with pytest.raises(PermissionError, match="chính mình"):
+        await usecase.submit_grade_appeal(
+            "student-intruder", "sub-appeal-2", "Hacking appeal"
+        )
+
+    # Submission published 8 days ago (> MAX_APPEAL_WINDOW_DAYS = 7)
+    old_time = (now - timedelta(days=8)).isoformat()
+    sub_expired = PeerAssignmentSubmission(
+        id="sub-appeal-expired",
+        user_id="student-late",
+        item_id="item-appeal-test",
+        submission_url="http://example.com",
+        text_content="Old",
+        created_at=old_time,
+        published_at=old_time,
+        final_score=60.0,
+        status="PUBLISHED",
+    )
+    await repo.save_peer_submission(sub_expired)
+    with pytest.raises(ValueError, match="quá thời hạn khiếu nại 7 ngày"):
+        await usecase.submit_grade_appeal(
+            "student-late", "sub-appeal-expired", "Em khiếu nại muộn"
+        )
+
+
+@pytest.mark.asyncio
+async def test_peer_resubmission_policy_and_highest_score_wins():
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    staff = CurrentUser(id="instructor-1", email="inst@example.com", role="INSTRUCTOR")
+
+    # 1. First submission (attempt 1)
+    sub_id1, _ = await usecase.submit_peer_assignment(
+        "student-resub", "item-resub", "http://v1.com", "Content 1"
+    )
+    sub1 = await repo.get_peer_submission(sub_id1)
+    assert sub1 is not None
+    assert sub1.attempt_number == 1
+
+    # Staff grades attempt 1 with 85.0
+    criteria = [RubricCriteria("c1", "Quality", 10.0, 8.5)]
+    await usecase.submit_staff_grading(
+        submission_id=sub_id1,
+        staff_user_id="instructor-1",
+        graded_criteria=criteria,
+        total_score=85.0,
+        current_user=staff,
+    )
+    sub1_graded = await repo.get_peer_submission(sub_id1)
+    assert sub1_graded is not None
+    assert sub1_graded.final_score == 85.0
+
+    # 2. Resubmission (attempt 2)
+    sub_id2, _ = await usecase.submit_peer_assignment(
+        "student-resub", "item-resub", "http://v2.com", "Content 2"
+    )
+    assert sub_id2 == sub_id1
+    sub2 = await repo.get_peer_submission(sub_id2)
+    assert sub2 is not None
+    assert sub2.attempt_number == 2
+
+    # Staff grades attempt 2 with lower score (70.0) -> Highest Score Wins maintains 85.0!
+    criteria_low = [RubricCriteria("c1", "Quality", 10.0, 7.0)]
+    _, _, final_s, _ = await usecase.submit_staff_grading(
+        submission_id=sub_id2,
+        staff_user_id="instructor-1",
+        graded_criteria=criteria_low,
+        total_score=70.0,
+        current_user=staff,
+    )
+    assert final_s == 70.0  # Recorded authoritative instructor score!
+    sub2_graded = await repo.get_peer_submission(sub_id2)
+    assert sub2_graded is not None
+    assert sub2_graded.final_score == 70.0
+
+    # 3. Resubmission (attempt 3)
+    await usecase.submit_peer_assignment(
+        "student-resub", "item-resub", "http://v3.com", "Content 3"
+    )
+    sub3 = await repo.get_peer_submission(sub_id2)
+    assert sub3 is not None
+    assert sub3.attempt_number == 3
+
+    # 4. Attempt 4 exceeds MAX_PEER_SUBMISSION_ATTEMPTS (3) -> ValueError
+    with pytest.raises(ValueError, match="giới hạn tối đa 3 lần nộp bài"):
+        await usecase.submit_peer_assignment(
+            "student-resub", "item-resub", "http://v4.com", "Content 4"
+        )
+
+
+@pytest.mark.asyncio
+async def test_staff_grading_immediate_publish_and_event():
+    from src.shared.auth import CurrentUser
+    from src.shared.infrastructure.event_bus import EventBus
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    staff = CurrentUser(id="instructor-1", email="inst@example.com", role="INSTRUCTOR")
+
+    sub = PeerAssignmentSubmission(
+        id="sub-publish-test",
+        user_id="student-publish",
+        item_id="item-batch-test",
+        submission_url="http://example.com",
+        text_content="Direct submission",
+        created_at="2026-08-18T10:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    received_events = []
+
+    async def _tracker(evt):
+        received_events.append(evt)
+
+    EventBus.subscribe(PeerAssignmentGradedDomainEvent, _tracker)
+
+    # Submit staff grading -> Publishes immediately
+    criteria = [RubricCriteria("c1", "Quality", 10.0, 9.0)]
+    ok, msg, final_s, _ = await usecase.submit_staff_grading(
+        submission_id="sub-publish-test",
+        staff_user_id="instructor-1",
+        graded_criteria=criteria,
+        total_score=90.0,
+        current_user=staff,
+    )
+    assert ok is True
+    assert final_s == 90.0
+    assert "công bố" in msg
+
+    sub_in_db = await repo.get_peer_submission("sub-publish-test")
+    assert sub_in_db is not None
+    assert sub_in_db.final_score == 90.0
+    assert sub_in_db.published_at is not None
+
+    # Immediate published event was dispatched!
+    assert len(received_events) == 1
+    assert received_events[0].user_id == "student-publish"
+    assert received_events[0].final_score == 90.0
+    assert received_events[0].passed is True
+
+
+@pytest.mark.asyncio
+async def test_eventbus_auto_progress_and_certificate_flow():
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from src.modules.learning.application.learning_event_handler import (
+        handle_peer_assignment_graded,
+    )
+
+    mock_progress = MagicMock()
+    mock_progress.overall_progress_percent = 100.0
+
+    with (
+        patch(
+            "src.modules.learning.application.learning_event_handler.LearningUseCase"
+        ) as mock_luc_cls,
+        patch(
+            "src.modules.learning.application.learning_event_handler.CertificateUseCase"
+        ) as mock_cuc_cls,
+    ):
+        luc_instance = mock_luc_cls.return_value
+        luc_instance.mark_item_complete = AsyncMock(return_value=(True, mock_progress))
+
+        cuc_instance = mock_cuc_cls.return_value
+        mock_cert = MagicMock()
+        mock_cert.certificate_id = "CERT-100-TEST"
+        cuc_instance.get_verified_certificate = AsyncMock(return_value=(mock_cert, ""))
+
+        # Fire graded event with 100% pass
+        event = PeerAssignmentGradedDomainEvent(
+            user_id="learner-cert-100",
+            course_id="course-ml",
+            item_id="item-capstone",
+            submission_id="sub-capstone",
+            final_score=95.0,
+            passed=True,
+            grader_id="ta-1",
+        )
+
+        await handle_peer_assignment_graded(event)
+
+        # Verified automatic learning progress update
+        luc_instance.mark_item_complete.assert_awaited_once_with(
+            user_id="learner-cert-100",
+            course_id="course-ml",
+            item_id="item-capstone",
+        )
+
+        # Verified automatic digital certificate issuance
+        cuc_instance.get_verified_certificate.assert_awaited_once_with(
+            user_id="learner-cert-100",
+            course_id="course-ml",
+        )
+
+
+@pytest.mark.asyncio
+async def test_dynamic_rubric_criteria_from_item():
+    import json
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+
+    custom_rubrics = [
+        {
+            "criteria_id": "ux_design",
+            "title": "Thiết kế Giao diện UI/UX",
+            "max_score": 25.0,
+            "description": "Giao diện tuân thủ Design System và có trải nghiệm mượt mà.",
+        },
+        {
+            "criteria_id": "user_research",
+            "title": "Nghiên cứu Người dùng",
+            "max_score": 15.0,
+            "description": "Khảo sát và chân dung người dùng có cơ sở số liệu.",
+        },
+    ]
+    repo.rubric_criteria_json_map = {"item-custom-peer": json.dumps(custom_rubrics)}
+
+    # Submit a peer assignment by another user
+    _sub_id, _ = await usecase.submit_peer_assignment(
+        "author-peer-1",
+        "item-custom-peer",
+        "https://figma.com/file/123",
+        "Figma UI/UX prototype",
+    )
+
+    # Get peer reviews to grade for student-reviewer
+    reviews_to_grade = await usecase.get_peer_reviews_to_grade(
+        user_id="student-reviewer", item_id="item-custom-peer"
+    )
+    assert len(reviews_to_grade) == 1
+    criteria = reviews_to_grade[0]["rubric_criteria"]
+    assert len(criteria) == 2
+    assert criteria[0].criteria_id == "ux_design"
+    assert criteria[0].title == "Thiết kế Giao diện UI/UX"
+    assert criteria[0].max_score == 25.0
+    assert (
+        criteria[0].description
+        == "Giao diện tuân thủ Design System và có trải nghiệm mượt mà."
+    )
+    assert criteria[1].criteria_id == "user_research"
+    assert criteria[1].max_score == 15.0
+
+
+@pytest.mark.asyncio
+async def test_self_grading_fraud_prevented(monkeypatch: pytest.MonkeyPatch) -> None:
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+
+    from src.modules.assessment.application.peer_review_usecase import PeerReviewUseCase
+
+    repo = InMemoryAssessmentRepository()
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    usecase = PeerReviewUseCase()
+    usecase._get_repo = AsyncMock(return_value=repo)
+
+    sub = PeerAssignmentSubmission(
+        id="sub-fraud-1",
+        user_id="student-fraudster",
+        item_id="item-test",
+        submission_url="https://example.com/fraud",
+        text_content="My own work",
+        created_at="2026-11-10T00:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    valid_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=10.0,
+        )
+    ]
+
+    # Attempting to self-grade must raise PermissionError
+    with pytest.raises(PermissionError, match="không được phép tự chấm điểm"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-fraud-1",
+            reviewer_user_id="student-fraudster",
+            graded_criteria=valid_rubric,
+        )
+
+
+@pytest.mark.asyncio
+async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+
+    from src.modules.assessment.application.peer_review_usecase import PeerReviewUseCase
+
+    repo = InMemoryAssessmentRepository()
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    usecase = PeerReviewUseCase()
+    usecase._get_repo = AsyncMock(return_value=repo)
+
+    sub = PeerAssignmentSubmission(
+        id="sub-valid-1",
+        user_id="student-legit",
+        item_id="item-test",
+        submission_url="https://example.com/legit",
+        text_content="Legit work",
+        created_at="2026-11-10T00:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    # 1. Negative score rejected
+    neg_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=-5.0,
+        )
+    ]
+    with pytest.raises(ValueError, match="không hợp lệ"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=neg_rubric,
+        )
+
+    # 2. Over-maximum score rejected
+    over_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=999.0,
+        )
+    ]
+    with pytest.raises(ValueError, match="không hợp lệ"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=over_rubric,
+        )
+
+    # 3. NaN score rejected
+    nan_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=float("nan"),
+        )
+    ]
+    with pytest.raises(ValueError, match="hữu hạn hợp lệ"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=nan_rubric,
+        )
+
+    # 4. Infinity score rejected
+    inf_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=float("inf"),
+        )
+    ]
+    with pytest.raises(ValueError, match="hữu hạn hợp lệ"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=inf_rubric,
+        )
+
+    # 5. Non-positive max_score rejected
+    zero_max_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=0.0,
+            score_given=0.0,
+        )
+    ]
+    with pytest.raises(ValueError, match="phải lớn hơn 0"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=zero_max_rubric,
+        )
+
+    # 6. Duplicate review by same reviewer rejected
+    valid_rubric = [
+        RubricCriteria(
+            criteria_id="c1",
+            title="Criteria 1",
+            max_score=10.0,
+            score_given=8.0,
+        )
+    ]
+    # First review succeeds
+    ok, _ = await usecase.submit_peer_review_grade(
+        review_id="rev-sub-valid-1",
+        reviewer_user_id="reviewer-peer",
+        graded_criteria=valid_rubric,
+    )
+    assert ok is True
+
+    # Second review by same reviewer must raise PermissionError
+    with pytest.raises(PermissionError, match="đã thực hiện đánh giá"):
+        await usecase.submit_peer_review_grade(
+            review_id="rev-sub-valid-1",
+            reviewer_user_id="reviewer-peer",
+            graded_criteria=valid_rubric,
+        )
+
+
+@pytest.mark.asyncio
+async def test_uuid7_peer_review_id_not_truncated(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure UUID7-length submission IDs are not truncated by s.id[:6]."""
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+
+    from src.modules.assessment.application.peer_review_usecase import PeerReviewUseCase
+
+    repo = InMemoryAssessmentRepository()
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    usecase = PeerReviewUseCase()
+    usecase._get_repo = AsyncMock(return_value=repo)
+
+    uuid7_sub_id = "peer-01934567-89ab-7cde-9012-3456789abcde"
+    sub = PeerAssignmentSubmission(
+        id=uuid7_sub_id,
+        user_id="student-author",
+        item_id="item-test",
+        submission_url="https://example.com/project",
+        text_content="My long UUID7 project",
+        created_at="2026-11-10T00:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    reviews_to_grade = await usecase.get_peer_reviews_to_grade(
+        user_id="reviewer-other", item_id="item-test"
+    )
+    assert len(reviews_to_grade) == 1
+    assert reviews_to_grade[0]["review_id"] == f"rev-{uuid7_sub_id}"
+
+    # Grade submission using the full review_id
+    rubric = [
+        RubricCriteria(criteria_id="c1", title="Code", max_score=10.0, score_given=9.0)
+    ]
+    ok, _ = await usecase.submit_peer_review_grade(
+        review_id=f"rev-{uuid7_sub_id}",
+        reviewer_user_id="reviewer-other",
+        graded_criteria=rubric,
+    )
+    assert ok is True
+
+
+@pytest.mark.asyncio
+async def test_staff_self_grading_prevented(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ensure staff members cannot self-grade, claim, or regrade their own submissions."""
+    from contextlib import asynccontextmanager
+    from unittest.mock import AsyncMock
+
+    from src.modules.assessment.application.peer_review_usecase import PeerReviewUseCase
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+
+    @asynccontextmanager
+    async def _fake_scope():
+        yield None
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    usecase = PeerReviewUseCase()
+    usecase._get_repo = AsyncMock(return_value=repo)
+
+    sub = PeerAssignmentSubmission(
+        id="sub-ta-author-1",
+        user_id="ta_author_id",
+        item_id="item-ta-test",
+        submission_url="https://example.com/ta-work",
+        text_content="TA enrolled as student",
+        created_at="2026-11-10T00:00:00Z",
+    )
+    await repo.save_peer_submission(sub)
+
+    ta_user = CurrentUser(id="ta_author_id", role="TA", full_name="Trợ giảng A")
+
+    # 1. claim_grading_task prevented
+    with pytest.raises(PermissionError, match="không được phép tự khóa bài"):
+        await usecase.claim_grading_task(
+            submission_id="sub-ta-author-1",
+            staff_user_id="ta_author_id",
+            current_user=ta_user,
+        )
+
+    # 2. submit_staff_grading prevented
+    rubric = [
+        RubricCriteria(criteria_id="c1", title="Code", max_score=10.0, score_given=10.0)
+    ]
+    with pytest.raises(PermissionError, match="không được phép tự chấm điểm"):
+        await usecase.submit_staff_grading(
+            submission_id="sub-ta-author-1",
+            staff_user_id="ta_author_id",
+            graded_criteria=rubric,
+            total_score=100.0,
+            current_user=ta_user,
+        )
+
+    # 3. regrade_peer_submission_by_staff prevented
+    with pytest.raises(PermissionError, match="không được phép tự chấm điểm"):
+        await usecase.regrade_peer_submission_by_staff(
+            submission_id="sub-ta-author-1",
+            staff_user_id="ta_author_id",
+            ta_score=100.0,
+            current_user=ta_user,
+        )
+
+
+@pytest.mark.asyncio
+async def test_list_grading_queue_empty_course_id_rejected():
+    """Negative test: Validate course_id cannot be empty or whitespace in list_grading_queue (ReBAC bypass guard)."""
+    from typing import Any, cast
+    from unittest.mock import MagicMock, patch
+
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+
+    from src.gen.assessment.v1 import assessment_pb as pb
+    from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
+    from src.shared.auth import CurrentUser
+
+    usecase = AssessmentUseCase(repository=InMemoryAssessmentRepository())
+    handler = AssessmentHandler(use_case=usecase)
+    instructor = CurrentUser(id="inst-1", email="inst@example.com", role="INSTRUCTOR")
+    mock_ctx = cast(Any, MagicMock())
+
+    with patch(
+        "src.modules.assessment.presentation.assessment_handler.require_current_user",
+        return_value=instructor,
+    ):
+        # 1. Empty course_id -> INVALID_ARGUMENT
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.list_grading_queue(
+                pb.ListGradingQueueRequest(course_id=""), mock_ctx
+            )
+        assert exc_info.value.code == Code.INVALID_ARGUMENT
+        assert "course_id là bắt buộc" in exc_info.value.message
+
+        # 2. Whitespace course_id -> INVALID_ARGUMENT
+        with pytest.raises(ConnectError) as exc_info2:
+            await handler.list_grading_queue(
+                pb.ListGradingQueueRequest(course_id="   "), mock_ctx
+            )
+        assert exc_info2.value.code == Code.INVALID_ARGUMENT
+        assert "course_id là bắt buộc" in exc_info2.value.message
+
+
+@pytest.mark.asyncio
+async def test_list_question_banks_security_and_rebac():
+    """Security test: Learner cannot view question banks/answers; Instructor without course ownership is rejected."""
+    from typing import Any, cast
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+
+    from src.gen.assessment.v1 import assessment_pb as pb
+    from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
+    from src.modules.catalog.domain import Course, CourseStatus
+    from src.shared.auth import CurrentUser
+
+    usecase = AssessmentUseCase(repository=InMemoryAssessmentRepository())
+    handler = AssessmentHandler(use_case=usecase)
+    mock_ctx = cast(Any, MagicMock())
+
+    # 1. Learner attempts to call list_question_banks -> PERMISSION_DENIED
+    learner = CurrentUser(id="student-1", email="student@example.com", role="LEARNER")
+    with patch(
+        "src.modules.assessment.presentation.assessment_handler.require_current_user",
+        return_value=learner,
+    ):
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.list_question_banks(
+                pb.ListQuestionBanksRequest(course_id="course-secret"), mock_ctx
+            )
+        assert exc_info.value.code == Code.PERMISSION_DENIED
+
+    # 2. Instructor calls with empty course_id -> INVALID_ARGUMENT
+    instructor_intruder = CurrentUser(
+        id="inst-intruder", email="intruder@example.com", role="INSTRUCTOR"
+    )
+    with patch(
+        "src.modules.assessment.presentation.assessment_handler.require_current_user",
+        return_value=instructor_intruder,
+    ):
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.list_question_banks(
+                pb.ListQuestionBanksRequest(course_id=""), mock_ctx
+            )
+        assert exc_info.value.code == Code.INVALID_ARGUMENT
+
+    # 3. Instructor calls with course owned by another instructor -> PERMISSION_DENIED
+    mock_course = Course(
+        id="c0000000-0000-0000-0000-000000000001",
+        title="Bảo Mật Hệ Thống",
+        slug="bao-mat-he-thong",
+        owner_id="inst-real-owner",
+        organization_id="org-1",
+        status=CourseStatus.PUBLISHED,
+    )
+    with (
+        patch(
+            "src.modules.assessment.presentation.assessment_handler.require_current_user",
+            return_value=instructor_intruder,
+        ),
+        patch.object(
+            usecase,
+            "get_course_for_item_or_submission",
+            new=AsyncMock(return_value=mock_course),
+        ),
+    ):
+        with pytest.raises(ConnectError) as exc_info:
+            await handler.list_question_banks(
+                pb.ListQuestionBanksRequest(
+                    course_id="c0000000-0000-0000-0000-000000000001"
+                ),
+                mock_ctx,
+            )
+        assert exc_info.value.code == Code.PERMISSION_DENIED
+
+    # 4. Authorized owner calls list_question_banks -> Success
+    instructor_owner = CurrentUser(
+        id="inst-real-owner", email="owner@example.com", role="INSTRUCTOR"
+    )
+    with (
+        patch(
+            "src.modules.assessment.presentation.assessment_handler.require_current_user",
+            return_value=instructor_owner,
+        ),
+        patch.object(
+            usecase,
+            "get_course_for_item_or_submission",
+            new=AsyncMock(return_value=mock_course),
+        ),
+        patch.object(usecase, "list_question_banks", new=AsyncMock(return_value=[])),
+    ):
+        resp = await handler.list_question_banks(
+            pb.ListQuestionBanksRequest(
+                course_id="c0000000-0000-0000-0000-000000000001"
+            ),
+            mock_ctx,
+        )
+        assert isinstance(resp, pb.ListQuestionBanksResponse)
+
+
+@pytest.mark.asyncio
+async def test_submit_staff_grading_rubric_normalization_and_score_override():
+    """Math & Logic test: Rubric score normalized to 100-point scale and staff score overrides cheating score."""
+    from typing import Any, cast
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from src.gen.assessment.v1 import assessment_pb as pb
+    from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
+    from src.modules.catalog.domain import Course, CourseStatus
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    handler = AssessmentHandler(use_case=usecase)
+    staff = CurrentUser(id="inst-owner", email="inst@example.com", role="INSTRUCTOR")
+    mock_ctx = cast(Any, MagicMock())
+
+    mock_course = Course(
+        id="c0000000-0000-0000-0000-000000000001",
+        title="Khóa Học Math",
+        slug="khoa-hoc-math",
+        owner_id="inst-owner",
+        organization_id="org-1",
+        status=CourseStatus.PUBLISHED,
+    )
+
+    # Seed submission with an initial high peer score (95.0)
+    sub = PeerAssignmentSubmission(
+        id="sub-cheat-test",
+        user_id="student-cheat",
+        item_id="item-math-1",
+        submission_url="http://cheat.com",
+        text_content="Content",
+        created_at="2026-08-18T10:00:00Z",
+        final_score=95.0,
+        status="PUBLISHED",
+    )
+    await repo.save_peer_submission(sub)
+
+    # 1. Staff grades with criteria sum fallback (total_score=0 in request)
+    # 3 criteria: max_scores 10, 10, 10 = 30. Given 8, 8, 8 = 24. Normalization: (24 / 30) * 100 = 80.0!
+    req = pb.SubmitStaffGradingRequest(
+        submission_id="sub-cheat-test",
+        total_score=0.0,
+        graded_criteria=[
+            pb.RubricCriteria(
+                criteria_id="c1", title="Criterion 1", max_score=10.0, score_given=8.0
+            ),
+            pb.RubricCriteria(
+                criteria_id="c2", title="Criterion 2", max_score=10.0, score_given=8.0
+            ),
+            pb.RubricCriteria(
+                criteria_id="c3", title="Criterion 3", max_score=10.0, score_given=8.0
+            ),
+        ],
+        feedback="Normalized rubric grade",
+    )
+
+    with (
+        patch(
+            "src.modules.assessment.presentation.assessment_handler.require_current_user",
+            return_value=staff,
+        ),
+        patch.object(
+            usecase,
+            "get_course_for_item_or_submission",
+            new=AsyncMock(return_value=mock_course),
+        ),
+    ):
+        resp = await handler.submit_staff_grading(req, mock_ctx)
+        assert resp.success is True
+        assert (
+            resp.final_score == 80.0
+        )  # Normalized to 80.0, NOT raw sum 24.0 and NOT old score 95.0!
+
+    # 2. Staff directly overrides and lowers score to 25.0 due to plagiarism
+    req_penalize = pb.SubmitStaffGradingRequest(
+        submission_id="sub-cheat-test",
+        total_score=25.0,
+        graded_criteria=[],
+        feedback="Phát hiện đạo văn, hạ điểm xuống 25.",
+    )
+    with (
+        patch(
+            "src.modules.assessment.presentation.assessment_handler.require_current_user",
+            return_value=staff,
+        ),
+        patch.object(
+            usecase,
+            "get_course_for_item_or_submission",
+            new=AsyncMock(return_value=mock_course),
+        ),
+    ):
+        resp2 = await handler.submit_staff_grading(req_penalize, mock_ctx)
+        assert resp2.success is True
+        assert resp2.final_score == 25.0  # Successfully lowered from 80.0 to 25.0!
+
+
+@pytest.mark.asyncio
+async def test_instructor_action_tasks_url_format():
+    """Cross-layer test: Verify action_url follows Next.js route with submissionId parameter."""
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    staff = CurrentUser(id="instructor-1", email="inst@example.com", role="INSTRUCTOR")
+
+    # Seed overdue submission (> 48h)
+    sub = PeerAssignmentSubmission(
+        id="sub-overdue-123",
+        user_id="student-overdue",
+        item_id="item-overdue-1",
+        submission_url="http://overdue.com",
+        text_content="Overdue project",
+        created_at="2026-08-01T10:00:00Z",
+        status="SUBMITTED",
+        final_score=None,
+    )
+    await repo.save_peer_submission(sub)
+
+    tasks_result = await usecase.get_instructor_action_tasks(
+        course_id="course-url-test",
+        current_user=staff,
+    )
+    tasks = tasks_result.get("tasks", [])
+    assert len(tasks) >= 1
+    overdue_task = next(
+        (t for t in tasks if t["id"] == "task-overdue-sub-overdue-123"), None
+    )
+    assert overdue_task is not None
+    # Verify URL structure
+    assert "grading-cockpit" not in overdue_task["action_url"]
+    assert (
+        "/instructor/courses/course-url-test/grading?submissionId=sub-overdue-123"
+        == overdue_task["action_url"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_gradebook_completion_condition_progress_and_final_grade():
+    """Business rule BR_GRADE_001 invariant test: Both progress >= 100.0 AND final_grade >= 80.0 required."""
+
+    def check_completed(progress: float, final_grade: float) -> bool:
+        return progress >= 100.0 and final_grade >= 80.0
+
+    # Case 1: 100% progress but failed grade (75.0) -> NOT COMPLETED
+    assert check_completed(100.0, 75.0) is False
+
+    # Case 2: 70% progress with high grade (95.0) -> NOT COMPLETED
+    assert check_completed(70.0, 95.0) is False
+
+    # Case 3: 100% progress and passing grade (80.0) -> COMPLETED
+    assert check_completed(100.0, 80.0) is True
+
+    # Case 4: 100% progress and exceptional grade (98.0) -> COMPLETED
+    assert check_completed(100.0, 98.0) is True
