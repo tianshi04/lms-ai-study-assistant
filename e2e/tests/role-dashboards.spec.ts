@@ -23,7 +23,7 @@ test.describe('Learner Dashboard @ /', () => {
   test('learner: / should render the learning dashboard', async ({ page }) => {
     await page.goto('/');
     // Learner dashboard must NOT show other role-specific KPI headers
-    await expect(page.locator('text=BẢNG ĐIỀU KHIỂN GIẢNG VIÊN')).not.toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Thầy/Cô')).not.toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=BẢNG ĐIỀU KHIỂN TRỢ GIẢNG (TA)')).not.toBeVisible();
     // Page loads successfully (no error boundary)
     await expect(page).not.toHaveTitle(/Error|500/);
@@ -40,19 +40,19 @@ test.describe('Instructor Dashboard', () => {
 
   test('instructor: / should render the instructor dashboard', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText(/Bảng Điều Khiển Giảng Viên/i).first()).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/Tổng Học Viên/i).first()).toBeVisible();
-    await expect(page.getByText(/Tỷ Lệ Hoàn Thành/i).first()).toBeVisible();
+    await expect(page.getByText(/Thầy\/Cô/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Tổng học viên/i).first()).toBeVisible();
+    await expect(page.getByText(/Tỷ lệ hoàn thành/i).first()).toBeVisible();
   });
 
   test('instructor: /instructor/dashboard should render the instructor dashboard', async ({ page }) => {
     await page.goto('/instructor/dashboard', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText(/Bảng Điều Khiển Giảng Viên/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Thầy\/Cô/i).first()).toBeVisible({ timeout: 15000 });
   });
 
   test('instructor: quick action - create course link should be visible', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=TẠO KHÓA HỌC MỚI').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('link', { name: /Tạo khóa học mới/i }).first()).toBeVisible({ timeout: 15000 });
   });
 });
 
