@@ -243,10 +243,10 @@ class LearningUseCase:
         if item_id not in valid_item_ids:
             raise ValueError(f"Bài học {item_id} không thuộc khóa học {course_id}.")
 
-        # Enrollment guard: verify user has registered/enrolled in the course
+        # Enrollment guard: verify user has registered/enrolled in the course (read-only)
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            progress = await repo.get_progress(user_id, course.id)
+            progress = await repo.find_progress(user_id, course.id)
             if not progress or not progress.enrolled_at:
                 raise PermissionError(
                     f"Người dùng {user_id} chưa ghi danh khóa học {course_id}."

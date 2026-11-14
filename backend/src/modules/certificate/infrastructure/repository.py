@@ -269,7 +269,7 @@ class CertificateRepository(ICertificateRepository):
             fromlist=["SQLAlchemyLearningRepository"],
         ).SQLAlchemyLearningRepository
         learning_repo = learning_repo_factory(self._session)
-        progress = await learning_repo.get_progress(user_id, course_id)
+        progress = await learning_repo.find_progress(user_id, course_id)
         return progress.overall_progress_percent if progress else 0.0
 
     async def check_graded_items_and_appeals_eligibility(

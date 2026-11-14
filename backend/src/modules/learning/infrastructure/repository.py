@@ -104,6 +104,19 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         week_numbers = sorted({int(w) for w in week_res.scalars().all() if w > 0})
         return week_numbers or fallback_weeks or [1, 2]
 
+    async def find_progress(
+        self, user_id: str, course_id: str
+    ) -> LearningProgress | None:
+        key = self._get_key(user_id, course_id)
+        stmt = (
+            select(LearningProgressModel)
+            .where(LearningProgressModel.id == key)
+            .options(selectinload(LearningProgressModel.weekly_deadlines))
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        return _model_to_domain_progress(model) if model else None
+
     async def get_progress(
         self, user_id: str, course_id: str, current_item_id: str | None = None
     ) -> LearningProgress:
@@ -154,6 +167,11 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                     model = res.scalar_one()
         else:
             dirty = False
+            if not model.enrolled_at:
+                model.enrolled_at = (
+                    model.last_accessed_at or model.last_reset_at or now_str
+                )
+                dirty = True
             if current_item_id:
                 model.last_accessed_at = now_str
                 model.last_accessed_item_id = current_item_id
