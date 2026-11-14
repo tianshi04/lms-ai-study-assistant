@@ -7,7 +7,6 @@ import {
   MessageSquare,
   ChevronRight,
   ClipboardList,
-  GraduationCap,
   AlertTriangle,
   ArrowRight,
 } from "lucide-react";
@@ -92,16 +91,30 @@ export function InstructorActionTasksCard({
   }, [totalQaCount, overviewTasks]);
 
   const overviewOverdueCount = useMemo(() => {
-    if (totalOverdueCount > 0) return totalOverdueCount;
-    return overviewTasks.filter((t) => t.isOverdue).length;
-  }, [totalOverdueCount, overviewTasks]);
+    if (overviewGradingCount === 0) return 0;
+    if (totalOverdueCount !== undefined) {
+      return Math.min(totalOverdueCount, overviewGradingCount);
+    }
+    return overviewTasks.filter((t) => t.type === "grading" && t.isOverdue).length;
+  }, [totalOverdueCount, overviewGradingCount, overviewTasks]);
 
   const overviewAppealsCount = useMemo(() => {
-    return overviewTasks.filter((t) => t.isAppeal).length;
-  }, [overviewTasks]);
+    if (overviewGradingCount === 0) return 0;
+    return overviewTasks.filter((t) => t.type === "grading" && t.isAppeal).length;
+  }, [overviewGradingCount, overviewTasks]);
 
   const overviewOutliersCount = useMemo(() => {
-    return overviewTasks.filter((t) => t.urgencyLabel === "Lệch điểm").length;
+    if (overviewGradingCount === 0) return 0;
+    return overviewTasks.filter((t) => t.type === "grading" && t.urgencyLabel === "Lệch điểm")
+      .length;
+  }, [overviewGradingCount, overviewTasks]);
+
+  const topGradingTask = useMemo(() => {
+    return overviewTasks.find((t) => t.type === "grading");
+  }, [overviewTasks]);
+
+  const topQaTask = useMemo(() => {
+    return overviewTasks.find((t) => t.type === "video_qa");
   }, [overviewTasks]);
 
   // 3. Hợp nhất chỉ số giữa 2 chế độ (Unified Metrics)
@@ -148,7 +161,7 @@ export function InstructorActionTasksCard({
         </span>
       </div>
 
-      {/* 4 Nhóm Công Việc Chức Năng (Trạm Điều Hành Cockpit) */}
+      {/* Các Nhóm Công Việc Chức Năng (Trạm Điều Hành Cockpit) */}
       <div className="space-y-2">
         {/* Nhóm 1: Bàn chấm bài tập & Đồ án */}
         <div className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all space-y-2 group">
@@ -170,6 +183,12 @@ export function InstructorActionTasksCard({
                         : `${effectiveGradingCount} bài tập tự luận đang chờ đánh giá trên các lớp`
                       : "Không có bài nộp nào đang chờ chấm"}
                 </p>
+                {isOverview && topGradingTask?.courseTitle && effectiveGradingCount > 0 && (
+                  <p className="text-[10px] text-primary font-medium mt-0.5 truncate max-w-[200px]">
+                    <span className="text-muted-foreground">Ưu tiên chấm: </span>
+                    <span className="font-bold">{topGradingTask.courseTitle}</span>
+                  </p>
+                )}
               </div>
             </div>
 
@@ -198,49 +217,37 @@ export function InstructorActionTasksCard({
             <span className="text-[10px] text-muted-foreground font-mono">
               {effectiveGradingCount > 0 ? "Cần xử lý sớm" : "Đã cập nhật"}
             </span>
-            <Link
-              href={
-                courseId
-                  ? `/instructor/courses/${courseId}/grading`
-                  : primaryActionUrl || "/instructor/courses"
-              }
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs transition-colors"
-              title="Mở Bàn làm việc chấm bài"
-            >
-              <span>Chấm bài ngay</span>
-              <ArrowRight className="w-3 h-3" aria-hidden="true" />
-            </Link>
+            {effectiveGradingCount > 0 ? (
+              <Link
+                href={
+                  courseId
+                    ? `/instructor/courses/${courseId}/grading`
+                    : topGradingTask?.actionUrl || primaryActionUrl || "/instructor/courses"
+                }
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs transition-colors"
+                title={
+                  isOverview && topGradingTask?.courseTitle
+                    ? `Chấm bài ngay cho môn ${topGradingTask.courseTitle}`
+                    : "Mở Bàn làm việc chấm bài"
+                }
+              >
+                <span>Chấm bài ngay</span>
+                <ArrowRight className="w-3 h-3" aria-hidden="true" />
+              </Link>
+            ) : (
+              <Link
+                href={courseId ? `/instructor/courses/${courseId}/grading` : "/instructor/courses"}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+                title="Xem danh sách khóa học"
+              >
+                <span>Xem khóa học</span>
+                <ChevronRight className="w-3 h-3" aria-hidden="true" />
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* Nhóm 2: Sổ điểm khóa học */}
-        <div className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all flex items-center justify-between gap-2 group">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="p-1 rounded-md shrink-0 bg-primary/10 text-primary">
-              <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
-            </span>
-            <div>
-              <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
-                {courseId ? "Sổ Điểm Khóa Học" : "Sổ Điểm & Báo Cáo"}
-              </h4>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                {courseId
-                  ? "Bảng tổng hợp điểm danh & xếp loại sinh viên"
-                  : "Bảng tổng hợp điểm danh & xếp loại sinh viên các lớp"}
-              </p>
-            </div>
-          </div>
-
-          <Link
-            href={courseId ? `/instructor/courses/${courseId}/gradebook` : "/instructor/courses"}
-            className="font-bold text-primary hover:underline text-xs flex items-center gap-0.5 shrink-0"
-          >
-            <span>Xem sổ điểm</span>
-            <ChevronRight className="w-3 h-3" aria-hidden="true" />
-          </Link>
-        </div>
-
-        {/* Nhóm 3: Hỏi đáp & Thảo luận môn học / cộng đồng */}
+        {/* Nhóm 2: Hỏi đáp & Thảo luận môn học / cộng đồng */}
         <div className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all flex items-center justify-between gap-2 group">
           <div className="flex items-center gap-2 min-w-0">
             <span className="p-1 rounded-md shrink-0 bg-warning/10 text-warning">
@@ -264,12 +271,27 @@ export function InstructorActionTasksCard({
                     ? `${effectiveQaCount} câu hỏi cần Giảng viên giải đáp trên Diễn đàn`
                     : "Giải đáp thắc mắc và hỗ trợ sinh viên cộng đồng"}
               </p>
+              {isOverview && topQaTask?.courseTitle && effectiveQaCount > 0 && (
+                <p className="text-[10px] text-warning font-medium mt-0.5 truncate max-w-[200px]">
+                  <span className="text-muted-foreground">Ưu tiên phản hồi: </span>
+                  <span className="font-bold">{topQaTask.courseTitle}</span>
+                </p>
+              )}
             </div>
           </div>
 
           <Link
-            href={courseId ? `/instructor/courses/${courseId}/discussions` : "/forum"}
+            href={
+              courseId
+                ? `/instructor/courses/${courseId}/discussions`
+                : topQaTask?.actionUrl || "/forum"
+            }
             className="font-bold text-primary hover:underline text-xs flex items-center gap-0.5 shrink-0"
+            title={
+              isOverview && topQaTask?.courseTitle
+                ? `Xem thảo luận môn ${topQaTask.courseTitle}`
+                : "Vào diễn đàn thảo luận"
+            }
           >
             <span>Vào thảo luận</span>
             <ChevronRight className="w-3 h-3" aria-hidden="true" />

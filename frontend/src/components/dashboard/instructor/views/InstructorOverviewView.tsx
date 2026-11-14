@@ -474,9 +474,7 @@ export function InstructorOverviewView({
           onFilterBehind={onOpenPacingModal}
           primaryActionUrl={
             overviewActionTasks.find((t) => t.type === "grading")?.actionUrl ||
-            (activeCourse?.id || courses[0]?.id
-              ? `/instructor/courses/${activeCourse?.id || courses[0]?.id}/grading`
-              : "/instructor/courses")
+            "/instructor/courses"
           }
         />
 
