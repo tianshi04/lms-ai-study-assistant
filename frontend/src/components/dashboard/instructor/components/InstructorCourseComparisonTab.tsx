@@ -14,7 +14,7 @@ export interface InstructorCourseComparisonTabProps {
 
 export function InstructorCourseComparisonTab({
   courses,
-  activeCourseId,
+  activeCourseId: _activeCourseId,
   compareSortBy,
   onChangeCompareSortBy,
   onSelectCourse,
@@ -25,9 +25,6 @@ export function InstructorCourseComparisonTab({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-outline-variant/50">
         <div>
           <p className="text-xs font-bold text-foreground">Đối Sánh Hiệu Suất Từng Khóa Học</p>
-          <p className="text-[11px] text-muted-foreground">
-            Dữ liệu thực tế từ hệ thống theo dõi học tập của từng lớp (Click môn để xem chi tiết):
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -50,7 +47,6 @@ export function InstructorCourseComparisonTab({
       {/* LƯỚI THẺ VÒNG TRÒN TỶ LỆ (RADIAL RING CARDS) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {courses.map((course) => {
-          const isCurrentActive = course.id === activeCourseId;
           const radius = 32;
           const circumference = 2 * Math.PI * radius;
           const strokeDashoffset = circumference - (course.compRate / 100) * circumference;
@@ -60,11 +56,7 @@ export function InstructorCourseComparisonTab({
               type="button"
               key={course.id}
               onClick={() => onSelectCourse(course.id)}
-              className={`w-full text-left group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                isCurrentActive
-                  ? "bg-primary/5 border-primary ring-1 ring-primary/30"
-                  : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-sm"
-              }`}
+              className="w-full text-left group p-4 rounded-2xl border border-outline-variant/60 bg-surface hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
