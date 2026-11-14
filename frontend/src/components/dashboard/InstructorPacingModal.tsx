@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
@@ -14,6 +14,8 @@ import {
   BookOpen,
   Mail,
   X,
+  GraduationCap,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { useSendStudentReminderMutation } from "@/lib/query_hooks";
@@ -63,9 +65,14 @@ export function InstructorPacingModal({
   const [nudgedStudentIds, setNudgedStudentIds] = useState<Set<string>>(new Set());
   const [isBulkReminderModalOpen, setIsBulkReminderModalOpen] = useState(false);
 
-  const effectiveStudents = useMemo(() => students ?? [], [students]);
+  // Phân trang & Tải động (Progressive Loading: Mặc định 25 học viên, lướt xuống tải thêm)
+  const [visibleCount, setVisibleCount] = useState(25);
 
-  // Sync state when dialog opens or initialCategory/initialCourseId changes
+  useEffect(() => {
+    setVisibleCount(25);
+  }, [searchQuery, selectedPace, selectedCourse]);
+
+  // Đồng bộ state khi mở hộp thoại hoặc bộ lọc ban đầu thay đổi
   const [prevOpenState, setPrevOpenState] = useState({ open, initialCategory, initialCourseId });
   if (
     prevOpenState.open !== open ||
@@ -79,19 +86,19 @@ export function InstructorPacingModal({
     }
   }
 
-  // Bộ đếm phân loại trên toàn hệ thống (dữ liệu thực)
+  // Bộ đếm phân loại trên toàn hệ thống dựa trên dữ liệu thật
   const counts = useMemo(() => {
     return {
-      all: effectiveStudents.length,
-      ahead: effectiveStudents.filter((s) => s.pace === "AHEAD").length,
-      onTrack: effectiveStudents.filter((s) => s.pace === "ON_TRACK").length,
-      behind: effectiveStudents.filter((s) => s.pace === "BEHIND").length,
+      all: students.length,
+      ahead: students.filter((s) => s.pace === "AHEAD").length,
+      onTrack: students.filter((s) => s.pace === "ON_TRACK").length,
+      behind: students.filter((s) => s.pace === "BEHIND").length,
     };
-  }, [effectiveStudents]);
+  }, [students]);
 
-  // Lọc danh sách học viên
+  // Lọc danh sách học viên theo Pace, Môn học và Từ khóa tìm kiếm
   const filteredStudents = useMemo(() => {
-    return effectiveStudents.filter((st) => {
+    return students.filter((st) => {
       // 1. Lọc theo pace
       if (selectedPace === "AHEAD" && st.pace !== "AHEAD") return false;
       if (selectedPace === "ON_TRACK" && st.pace !== "ON_TRACK") return false;
@@ -111,9 +118,26 @@ export function InstructorPacingModal({
 
       return true;
     });
-  }, [effectiveStudents, selectedPace, selectedCourse, searchQuery]);
+  }, [students, selectedPace, selectedCourse, searchQuery]);
 
-  // Nhắc nhở 1 học viên
+  // Giới hạn số học viên hiển thị theo phân trang 25 mục
+  const pagedStudents = useMemo(() => {
+    return filteredStudents.slice(0, visibleCount);
+  }, [filteredStudents, visibleCount]);
+
+  const hasMore = visibleCount < filteredStudents.length;
+
+  // Lướt xuống gần đáy tự động tải thêm 25 học viên tiếp theo
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 80) {
+      if (hasMore) {
+        setVisibleCount((prev) => Math.min(prev + 25, filteredStudents.length));
+      }
+    }
+  };
+
+  // Tương tác sư phạm: Khích lệ (Vượt tiến độ) hoặc Nhắc nhở (Chậm/Đúng tiến độ)
   const handleNudgeStudent = async (student: StudentPacingRecord) => {
     if (!student.courseId) {
       toast.error("Không xác định được mã khóa học của học viên.");
@@ -153,7 +177,7 @@ export function InstructorPacingModal({
         );
       }
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Không thể gửi nhắc nhở học viên.");
+      toast.error(err instanceof Error ? err.message : "Không thể gửi thông điệp tới học viên.");
     }
   };
 
@@ -170,12 +194,9 @@ export function InstructorPacingModal({
                     <TrendingUp className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <Dialog.Title className="text-base font-bold text-foreground">
-                    Bảng Kiểm Soát Nhịp Độ & Tiến Độ Học Tập
+                    Bảng Nhịp Độ & Tiến Độ Học Tập
                   </Dialog.Title>
                 </div>
-                <Dialog.Description className="text-xs text-muted-foreground mt-1">
-                  Theo dõi 200 học viên, phát hiện sớm người học chậm để can thiệp sư phạm kịp thời
-                </Dialog.Description>
               </div>
             </div>
           </Dialog.Header>
@@ -198,7 +219,9 @@ export function InstructorPacingModal({
               <div className="text-lg font-black text-foreground font-mono mt-0.5">
                 {counts.all} SV
               </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">Toàn bộ 3 khóa học</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">
+                Toàn bộ các khóa phụ trách
+              </div>
             </button>
 
             {/* Vượt tiến độ */}
@@ -213,10 +236,10 @@ export function InstructorPacingModal({
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-success uppercase tracking-wider flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
+                  <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-success/20 text-success font-bold">
-                  {Math.round((counts.ahead / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.ahead / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-success font-mono mt-0.5">
@@ -237,10 +260,10 @@ export function InstructorPacingModal({
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> Đúng tiến độ
+                  <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-bold">
-                  {Math.round((counts.onTrack / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.onTrack / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-primary font-mono mt-0.5">
@@ -261,10 +284,10 @@ export function InstructorPacingModal({
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
+                  <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-destructive/20 text-destructive font-bold">
-                  {Math.round((counts.behind / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.behind / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-destructive font-mono mt-0.5">
@@ -337,9 +360,12 @@ export function InstructorPacingModal({
             ) : null}
           </div>
 
-          {/* Bảng Danh Sách Học Viên Chi Tiết */}
-          <div className="flex-1 overflow-y-auto rounded-2xl border border-outline-variant/60 bg-surface min-h-[300px]">
-            <Table>
+          {/* Bảng Danh Sách Học Viên Chi Tiết với Thanh cuộn tải động 25 SV */}
+          <div
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto overflow-x-auto rounded-2xl border border-outline-variant/60 bg-surface min-h-[300px]"
+          >
+            <Table className="min-w-[650px] w-full">
               <Table.Header className="sticky top-0 z-10 bg-surface shadow-xs">
                 <Table.Row className="text-[11px] text-muted-foreground border-b border-outline-variant/60">
                   <Table.Head>Học viên & Môn học</Table.Head>
@@ -360,11 +386,14 @@ export function InstructorPacingModal({
                     </Table.Cell>
                   </Table.Row>
                 ) : (
-                  filteredStudents.map((st) => {
+                  pagedStudents.map((st) => {
                     const isNudged = nudgedStudentIds.has(st.id);
 
                     return (
-                      <Table.Row key={st.id} className="text-xs hover:bg-muted/30">
+                      <Table.Row
+                        key={`${st.courseId}-${st.id}`}
+                        className="text-xs hover:bg-muted/30"
+                      >
                         {/* Cột 1: Thông tin học viên */}
                         <Table.Cell>
                           <div className="font-bold text-foreground">{st.name}</div>
@@ -410,15 +439,15 @@ export function InstructorPacingModal({
                         <Table.Cell>
                           {st.pace === "AHEAD" ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
-                              <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
+                              <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
                             </span>
                           ) : st.pace === "ON_TRACK" ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
-                              <Clock className="w-3 h-3" /> Đúng tiến độ
+                              <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
-                              <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
+                              <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
                             </span>
                           )}
                           <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug max-w-[190px]">
@@ -428,51 +457,91 @@ export function InstructorPacingModal({
 
                         {/* Cột 4: Hoạt động gần nhất */}
                         <Table.Cell>
-                          <span
-                            className={`text-[11px] font-mono block ${
-                              st.daysInactive >= 7
-                                ? "text-destructive font-bold"
-                                : st.daysInactive >= 3
-                                  ? "text-warning font-semibold"
-                                  : "text-muted-foreground"
-                            }`}
-                          >
-                            {st.lastActive}
-                          </span>
-                          {st.daysInactive >= 7 && (
-                            <span className="text-[9px] text-destructive block font-bold">
-                              Không học &gt; {st.daysInactive} ngày
-                            </span>
+                          {st.progressPercent >= 100 ? (
+                            <div className="space-y-0.5">
+                              <span className="text-[11px] font-mono text-success font-semibold flex items-center gap-1">
+                                <CheckCircle2
+                                  className="w-3 h-3 text-success shrink-0"
+                                  aria-hidden="true"
+                                />
+                                Đã tốt nghiệp
+                              </span>
+                              <span className="text-[10px] text-muted-foreground block">
+                                Hoàn tất chương trình
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="space-y-0.5">
+                              <span
+                                className={`text-[11px] font-mono block ${
+                                  st.pace === "BEHIND" && st.daysInactive >= 7
+                                    ? "text-destructive font-bold"
+                                    : st.daysInactive >= 3
+                                      ? "text-warning font-semibold"
+                                      : "text-muted-foreground"
+                                }`}
+                              >
+                                {st.lastActive}
+                              </span>
+                              {st.pace === "BEHIND" && st.daysInactive >= 7 ? (
+                                <span className="text-[9px] text-destructive block font-bold">
+                                  Không học &gt; {st.daysInactive} ngày
+                                </span>
+                              ) : st.pace === "AHEAD" && st.daysInactive >= 7 ? (
+                                <span className="text-[9px] text-muted-foreground block font-medium">
+                                  Tạm nghỉ {st.daysInactive} ngày
+                                </span>
+                              ) : null}
+                            </div>
                           )}
                         </Table.Cell>
 
-                        {/* Cột 5: Hành động sư phạm */}
+                        {/* Cột 5: Nút thao tác sư phạm */}
                         <Table.Cell className="text-right">
-                          <button
-                            type="button"
-                            disabled={isNudged}
-                            onClick={() => handleNudgeStudent(st)}
-                            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer ${
-                              isNudged
-                                ? "bg-muted text-muted-foreground opacity-60 cursor-default"
-                                : st.pace === "BEHIND"
-                                  ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/30"
-                                  : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30"
-                            }`}
-                            title="Gửi email và thông báo nhắc nhở học tập"
-                          >
-                            {isNudged ? (
-                              <>
-                                <CheckCircle2 className="w-3 h-3 text-success" />
-                                <span>Đã gửi nhắc</span>
-                              </>
-                            ) : (
-                              <>
-                                <Mail className="w-3 h-3" />
-                                <span>Nhắc nhở</span>
-                              </>
-                            )}
-                          </button>
+                          {st.progressPercent >= 100 ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-success/15 text-success border border-success/30">
+                              <GraduationCap
+                                className="w-3.5 h-3.5 text-success"
+                                aria-hidden="true"
+                              />
+                              <span>Đã tốt nghiệp</span>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={isNudged}
+                              onClick={() => handleNudgeStudent(st)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
+                                isNudged
+                                  ? "bg-success/15 text-success border border-success/30 cursor-default"
+                                  : st.pace === "BEHIND"
+                                    ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 shadow-xs"
+                                    : st.pace === "AHEAD"
+                                      ? "bg-warning/10 text-warning hover:bg-warning/20 border border-warning/30 shadow-xs"
+                                      : "bg-surface-container-high hover:bg-primary hover:text-on-primary text-foreground border border-outline-variant"
+                              }`}
+                            >
+                              {isNudged ? (
+                                <>
+                                  <CheckCircle2
+                                    className="w-3 h-3 text-success"
+                                    aria-hidden="true"
+                                  />
+                                  <span>{st.pace === "AHEAD" ? "Đã khích lệ" : "Đã nhắc"}</span>
+                                </>
+                              ) : st.pace === "AHEAD" ? (
+                                <>
+                                  <Sparkles className="w-3 h-3 text-warning" aria-hidden="true" />
+                                  <span>Khích lệ</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Mail className="w-3 h-3" aria-hidden="true" />
+                                  <span>Nhắc nhở</span>
+                                </>
+                              )}
+                            </button>
+                          )}
                         </Table.Cell>
                       </Table.Row>
                     );
@@ -480,27 +549,49 @@ export function InstructorPacingModal({
                 )}
               </Table.Body>
             </Table>
+
+            {/* Thanh trạng thái tải trang & Nút tải thêm 25 */}
+            {filteredStudents.length > 0 && (
+              <div className="p-3 border-t border-outline-variant/60 bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground px-4">
+                <span>
+                  Đang hiển thị <strong className="text-foreground">{pagedStudents.length}</strong>{" "}
+                  trên tổng số{" "}
+                  <strong className="text-foreground">{filteredStudents.length}</strong> học viên
+                </span>
+                {hasMore && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleCount((prev) => Math.min(prev + 25, filteredStudents.length))
+                    }
+                    className="px-3 py-1 rounded-xl text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors cursor-pointer"
+                  >
+                    Tải thêm 25 học viên
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Footer Modal: Tổng kết & Hướng dẫn */}
-          <div className="pt-3 border-t border-outline-variant/60 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Đang hiển thị <strong>{filteredStudents.length}</strong> học viên
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="px-4 py-1.5 rounded-xl bg-surface hover:bg-muted text-foreground border border-outline-variant font-bold cursor-pointer"
-              >
-                Đóng
-              </button>
+          {/* Footer thông số tóm tắt */}
+          <div className="pt-3 border-t border-outline-variant/60 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-success" /> Vượt: {counts.ahead}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-primary" /> Đúng hạn: {counts.onTrack}
+              </span>
+              <span className="flex items-center gap-1.5 font-bold text-destructive">
+                <span className="w-2 h-2 rounded-full bg-destructive" /> Cần can thiệp:{" "}
+                {counts.behind}
+              </span>
             </div>
           </div>
         </Dialog.Content>
       </Dialog>
 
-      {/* Modal Tùy chỉnh & Xác nhận nhắc nhở hàng loạt theo điểm nghẽn */}
+      {/* Modal Nhắc nhở hàng loạt học viên chậm tiến độ */}
       {isBulkReminderModalOpen && (
         <InstructorBulkReminderModal
           key={`pacing-bulk-${isBulkReminderModalOpen}`}

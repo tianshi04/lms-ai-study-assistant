@@ -20,7 +20,7 @@ export class TAGradingPage {
     this.appealedTab = page.locator('button:has-text("Có đơn kháng nghị")');
     this.gradedTab = page.locator('button:has-text("Đã hoàn thành")');
     this.firstGradeButton = page.locator('button:has-text("Chấm điểm ngay"), button:has-text("Xem & Sửa điểm")').first();
-    this.gradeModalTitle = page.locator('h2:has-text("Chấm Điểm Bài Tập Tự Luận")');
+    this.gradeModalTitle = page.getByRole('heading', { name: /Chấm Điểm Bài Tập Tự Luận/i }).or(page.locator('text=Chấm Điểm Bài Tập Tự Luận')).first();
     this.scoreInput = page.locator('input[type="number"]');
     this.submitGradeButton = page.locator('button:has-text("Lưu & Xác Nhận Điểm Trợ Giảng")');
   }
@@ -38,13 +38,12 @@ export class TAGradingPage {
     await expect(this.firstGradeButton).toBeVisible({ timeout: 10000 });
     await expect(this.firstGradeButton).toBeEnabled({ timeout: 5000 });
 
-    for (let i = 0; i < 3; i++) {
-      await this.firstGradeButton.click();
-      await this.page.waitForTimeout(400);
-      if (await this.gradeModalTitle.isVisible()) break;
-    }
-
-    await expect(this.gradeModalTitle).toBeVisible({ timeout: 10000 });
+    await expect(async () => {
+      if (!(await this.gradeModalTitle.isVisible())) {
+        await this.firstGradeButton.click();
+      }
+      await expect(this.gradeModalTitle).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
   }
 
   async submitGrade(score: number) {

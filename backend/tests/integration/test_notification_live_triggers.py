@@ -82,13 +82,45 @@ async def test_live_instructor_approval_trigger():
 @pytest.mark.asyncio
 async def test_live_forum_reply_trigger():
     """Verify that posting a forum reply automatically creates a COMMUNITY notification for thread author."""
+    from src.modules.catalog.infrastructure.models import CourseModel
+    from src.modules.learning.infrastructure.models import LearningProgressModel
+
     author_id = f"author_{uuid.uuid4().hex[:6]}"
     replier_id = f"replier_{uuid.uuid4().hex[:6]}"
+    course_id = f"course_test_{uuid.uuid4().hex[:6]}"
+
+    # Seed course and enrollments in DB
+    async with async_session_scope() as session:
+        course = CourseModel(
+            id=course_id,
+            title="Khóa học Thử nghiệm",
+            slug=f"course-slug-{uuid.uuid4().hex[:6]}",
+            owner_id="instructor_demo",
+            status="PUBLISHED",
+        )
+        session.add(course)
+        session.add(
+            LearningProgressModel(
+                id=f"{author_id}:{course_id}",
+                user_id=author_id,
+                course_id=course_id,
+                enrolled_at="2026-11-09T00:00:00Z",
+            )
+        )
+        session.add(
+            LearningProgressModel(
+                id=f"{replier_id}:{course_id}",
+                user_id=replier_id,
+                course_id=course_id,
+                enrolled_at="2026-11-09T00:00:00Z",
+            )
+        )
+        await session.commit()
 
     forum_uc = ForumUseCase()
     # 1. Author creates a thread
     thread = await forum_uc.create_thread(
-        course_id="course_test_123",
+        course_id=course_id,
         item_id="item_test_123",
         title="Thắc mắc về Thuật toán Gradient Descent",
         content="Cho mình hỏi làm sao chọn Learning Rate phù hợp?",

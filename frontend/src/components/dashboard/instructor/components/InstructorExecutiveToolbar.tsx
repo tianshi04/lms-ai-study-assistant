@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Plus, Users, CheckCircle2, ChevronDown, Sparkles } from "lucide-react";
+import { Plus, Users, ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 
@@ -46,13 +46,6 @@ export function InstructorExecutiveToolbar({
             {userName ? userName.charAt(0).toUpperCase() : "P"}
           </div>
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 mb-1">
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-primary animate-ping"
-                aria-hidden="true"
-              />
-              Bảng Điều Khiển Giảng Viên
-            </div>
             <span
               suppressHydrationWarning
               className="text-xs text-muted-foreground font-medium block"
@@ -62,13 +55,6 @@ export function InstructorExecutiveToolbar({
             <h1 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
               {userName || "PGS. TS. Trần Minh Tuấn"}
             </h1>
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
-              <span>Đang phụ trách {courses.length} khóa học</span>
-              <span>•</span>
-              <span className="inline-flex items-center gap-1 text-success font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> SLA phản hồi: 3.4h (Tốt)
-              </span>
-            </p>
           </div>
         </div>
 

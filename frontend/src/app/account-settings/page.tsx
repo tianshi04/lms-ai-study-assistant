@@ -13,7 +13,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Check, ShieldCheck, KeyRound, UserCheck, AlertCircle, Lock, Globe } from "lucide-react";
+import { Check, KeyRound, UserCheck, Lock, Globe } from "lucide-react";
 import { Progress } from "@/components/ui/Progress";
 import { Switch } from "@/components/ui/Switch";
 import { Field } from "@/components/ui/Field";
@@ -55,30 +55,6 @@ export default function AccountSettingsPage() {
       toast.error(msg);
     } finally {
       setSavingKey(false);
-    }
-  };
-
-  const [verifyingIdentity, setVerifyingIdentity] = useState(false);
-
-  const handleVerifyIdentity = async () => {
-    if (!user) return;
-    setVerifyingIdentity(true);
-    try {
-      const client = getRpcClient(IdentityService);
-      const res = await client.verifyIdentity({
-        userId: user.id,
-      });
-      if (res.success) {
-        toast.success(res.message || "Giả lập xác minh danh tính KYC thành công!");
-        queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
-      } else {
-        toast.error(res.message || "Xác minh thất bại.");
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Lỗi khi xác minh danh tính.";
-      toast.error(msg);
-    } finally {
-      setVerifyingIdentity(false);
     }
   };
 
@@ -127,58 +103,6 @@ export default function AccountSettingsPage() {
                       : "TA / Admin"}
                 </span>
               </span>
-
-              {user?.isIdentityVerified ? (
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-success/15 border border-success/30 text-success text-xs font-bold shadow-xs">
-                  <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-                  <span>{"Đã xác minh KYC"}</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-warning/15 border border-warning/30 text-warning text-xs font-bold shadow-xs">
-                  <AlertCircle className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
-                  <span>{"Chưa xác minh KYC"}</span>
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Identity Verification (KYC Mock) Section */}
-        <div className="mt-8 pb-8 border-b border-outline-variant">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-bold text-on-surface mb-1 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-primary" aria-hidden="true" />
-                <span>{"Xác minh Danh tính Sinh trắc học (KYC Verification)"}</span>
-              </h2>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                {user?.isIdentityVerified
-                  ? "Tài khoản của bạn đã hoàn tất xác minh danh tính CCCD/Hộ chiếu. Bạn đủ điều kiện nhận Chứng chỉ Verified Certificate."
-                  : "Yêu cầu hoàn tất xác minh danh tính bằng CCCD/Hộ chiếu trước khi nhận Chứng chỉ Verified Certificate lần đầu tiên."}
-              </p>
-            </div>
-            <div className="shrink-0">
-              {user?.isIdentityVerified ? (
-                <Button
-                  disabled
-                  variant="outlined"
-                  size="sm"
-                  className="rounded-full bg-success/10 text-success border-success/20 font-bold cursor-default px-4"
-                >
-                  <Check className="w-4 h-4 mr-1.5 text-success" aria-hidden="true" />
-                  <span>{"Đã xác minh"}</span>
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleVerifyIdentity}
-                  disabled={verifyingIdentity}
-                  variant="filled"
-                  size="sm"
-                  className="rounded-full px-6 py-2.5 bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-colors"
-                >
-                  {"Giả lập Xác minh KYC (Mock Verification)"}
-                </Button>
-              )}
             </div>
           </div>
         </div>
