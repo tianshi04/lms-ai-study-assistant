@@ -46,13 +46,6 @@ export function InstructorExecutiveToolbar({
             {userName ? userName.charAt(0).toUpperCase() : "P"}
           </div>
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 mb-1">
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-primary animate-ping"
-                aria-hidden="true"
-              />
-              Bảng Điều Khiển Giảng Viên
-            </div>
             <span
               suppressHydrationWarning
               className="text-xs text-muted-foreground font-medium block"
