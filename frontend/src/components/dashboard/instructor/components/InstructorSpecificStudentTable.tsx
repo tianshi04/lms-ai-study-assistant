@@ -253,7 +253,7 @@ export function InstructorSpecificStudentTable({
           />
           <Input
             type="text"
-            placeholder="Tìm tên, email, MSSV…"
+            placeholder="Tìm tên..."
             value={studentSearchQuery}
             onChange={(e) => onChangeStudentSearchQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-surface"
