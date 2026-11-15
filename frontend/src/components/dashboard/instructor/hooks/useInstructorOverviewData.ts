@@ -4,10 +4,10 @@ import { useMemo } from "react";
 import {
   useAllInstructorAnalyticsQueries,
   useAllCourseReviewsQueries,
-  useGradingQueueQuery,
+  useAllGradingQueueQueries,
   useForumThreadsQuery,
 } from "@/lib/query_hooks";
-import { GradingQueueStatus } from "@/gen/assessment/v1/assessment_pb";
+import { GradingQueueStatus, type GradingQueueItem } from "@/gen/assessment/v1/assessment_pb";
 import { getAvatarDataUri } from "@/lib/avatar";
 import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import type { StudentPacingRecord } from "../../InstructorPacingModal";
@@ -213,11 +213,18 @@ export function useInstructorOverviewData({
     return 0;
   }, []);
 
-  // Truy vấn hàng đợi bài chấm thi trên toàn bộ các môn học phụ trách
-  const { data: allGradingData } = useGradingQueueQuery(
-    { courseId: "", status: GradingQueueStatus.ALL },
-    { enabled },
-  );
+  // Truy vấn hàng đợi bài chấm thi trên toàn bộ các môn học phụ trách (Multi-Course Grading Queue)
+  const allGradingQueries = useAllGradingQueueQueries(courses, { enabled });
+
+  const allGradingItems = useMemo(() => {
+    const items: GradingQueueItem[] = [];
+    allGradingQueries.forEach((q) => {
+      if (q.data?.items) {
+        items.push(...q.data.items);
+      }
+    });
+    return items;
+  }, [allGradingQueries]);
 
   // Truy vấn chủ đề thảo luận trên toàn bộ các môn học phụ trách
   const { data: allThreads = [] } = useForumThreadsQuery("", {
@@ -234,7 +241,7 @@ export function useInstructorOverviewData({
     const allScoredTasks: ScoredTask[] = [];
 
     // 1. Bàn chấm bài tập tự luận (Grading Queue Items)
-    const pendingGrading = (allGradingData?.items || []).filter(
+    const pendingGrading = allGradingItems.filter(
       (i) =>
         i.status !== GradingQueueStatus.GRADED &&
         (courses.length === 0 || instructorCourseIds.has(i.courseId)),
@@ -401,18 +408,17 @@ export function useInstructorOverviewData({
       totalOverdueTasksCount: totalOverdueGrading,
       overdueGradingByCourseId: overdueByCourse,
     };
-  }, [allGradingData, allThreads, courses, currentTimeMs]);
+  }, [allGradingItems, allThreads, courses, currentTimeMs]);
 
   const pendingGradingByCourseId = useMemo(() => {
     const map = new Map<string, number>();
-    const items = allGradingData?.items || [];
-    items.forEach((item) => {
+    allGradingItems.forEach((item) => {
       if (item.status !== GradingQueueStatus.GRADED && item.courseId) {
         map.set(item.courseId, (map.get(item.courseId) || 0) + 1);
       }
     });
     return map;
-  }, [allGradingData]);
+  }, [allGradingItems]);
 
   const pendingQaByCourseId = useMemo(() => {
     const map = new Map<string, number>();
@@ -524,12 +530,12 @@ export function useInstructorOverviewData({
 
   const totalPendingGradingCount = useMemo(() => {
     const instructorCourseIds = new Set(courses.map((c) => c.id));
-    return (allGradingData?.items || []).filter(
+    return allGradingItems.filter(
       (i) =>
         i.status !== GradingQueueStatus.GRADED &&
         (courses.length === 0 || instructorCourseIds.has(i.courseId)),
     ).length;
-  }, [allGradingData, courses]);
+  }, [allGradingItems, courses]);
 
   const totalPendingQaCount = useMemo(() => {
     const instructorCourseIds = new Set(courses.map((c) => c.id));
