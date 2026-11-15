@@ -6,12 +6,14 @@ import {
   AlertTriangle,
   Send,
   CheckCircle2,
-  X,
   FileText,
   Clock,
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 import { useSendStudentReminderMutation } from "@/lib/query_hooks";
 import { getRpcClient } from "@/lib/connect_client";
@@ -206,9 +208,9 @@ export function InstructorAIAssistantCard({
     if (current.actionType === "nudge") {
       if (!courseId) {
         toast({
-          title: "Không thể gửi đôn đốc",
-          description: "Vui lòng chọn một khóa học cụ thể để thực hiện đôn đốc học viên.",
-          type: "error",
+          title: "Vui lòng chọn khóa học cụ thể",
+          description: "Cần chọn một khóa học xác định từ danh sách để thực hiện đôn đốc học viên.",
+          type: "warning",
         });
         return;
       }
@@ -221,18 +223,26 @@ export function InstructorAIAssistantCard({
         return;
       }
       try {
-        const studentIds = behindStudents.map((s) => s.userId);
-        const res = await sendReminderMutation.mutateAsync({
-          courseId,
-          studentIds,
-          title: `[Đôn đốc học tập] Tiếp tục bài học môn ${courseTitle}`,
-          content: `Chào các em, Trợ lý AI Teaching Copilot nhắc nhở các bạn học viên đang chậm tiến độ hãy dành thời gian hoàn thành các bài học tuần này để đạt chứng chỉ đúng hạn nhé!`,
-        });
-        if (res.sentCount > 0) {
+        const allStudentIds = behindStudents.map((s) => s.userId).filter(Boolean);
+        const CHUNK_SIZE = 100;
+        let totalSent = 0;
+
+        for (let i = 0; i < allStudentIds.length; i += CHUNK_SIZE) {
+          const chunk = allStudentIds.slice(i, i + CHUNK_SIZE);
+          const res = await sendReminderMutation.mutateAsync({
+            courseId,
+            studentIds: chunk,
+            title: `[Đôn đốc học tập] Tiếp tục bài học môn ${courseTitle}`,
+            content: `Chào các em, Trợ lý AI Teaching Copilot nhắc nhở các bạn học viên đang chậm tiến độ hãy dành thời gian hoàn thành các bài học tuần này để đạt chứng chỉ đúng hạn nhé!`,
+          });
+          totalSent += res.sentCount;
+        }
+
+        if (totalSent > 0) {
           setNudged(true);
           toast({
             title: "Đã gửi đôn đốc",
-            description: `Đã gửi thông báo đôn đốc học tập tới ${res.sentCount} sinh viên qua hệ thống!`,
+            description: `Đã gửi thông báo đôn đốc học tập tới ${totalSent} sinh viên qua hệ thống!`,
             type: "success",
           });
           setTimeout(() => setNudged(false), 3500);
@@ -253,13 +263,22 @@ export function InstructorAIAssistantCard({
         });
       }
     } else if (current.actionType === "broadcast") {
+      if (!courseId) {
+        toast({
+          title: "Vui lòng chọn khóa học cụ thể",
+          description: "Cần chọn một khóa học xác định để đăng thông báo hỗ trợ học tập.",
+          type: "warning",
+        });
+        return;
+      }
       setIsBroadcastOpen(true);
       setBroadcastTitle(`[Hỗ trợ kiến thức] ${current.title}`);
       setBroadcastBody(current.aiDraftContent || "");
     } else if (current.actionType === "review") {
       toast({
-        title: "Trợ lý AI",
-        description: "Đã ghi nhận gợi ý tối ưu lịch học tập của Trợ lý AI.",
+        title: "Khuyến nghị từ Trợ lý AI",
+        description:
+          "Khuyến nghị thiết lập hạn nộp bài tập lớn vào 23:59 Chủ Nhật trong phần Cài đặt Khóa học để tối ưu tỷ lệ nộp bài.",
         type: "info",
       });
     }
@@ -268,30 +287,43 @@ export function InstructorAIAssistantCard({
   const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!broadcastTitle.trim()) return;
-    setBroadcastSent(true);
-
-    if (courseId) {
-      try {
-        const client = getRpcClient(CatalogService);
-        await client.createCourseAnnouncement({
-          courseId,
-          title: broadcastTitle,
-          content: broadcastBody,
-        });
-      } catch {
-        // Fallback
-      }
+    if (!courseId) {
+      toast({
+        title: "Chưa chọn khóa học",
+        description: "Vui lòng chọn khóa học cụ thể để đăng thông báo hỗ trợ.",
+        type: "warning",
+      });
+      return;
     }
 
-    setBroadcastSent(false);
-    setIsBroadcastOpen(false);
-    setBroadcastTitle("");
-    setBroadcastBody("");
-    toast({
-      title: "Đăng bài thành công",
-      description: "Đã đăng thông báo hỗ trợ học tập tới toàn thể sinh viên!",
-      type: "success",
-    });
+    setBroadcastSent(true);
+    try {
+      const client = getRpcClient(CatalogService);
+      await client.createCourseAnnouncement({
+        courseId,
+        title: broadcastTitle.trim(),
+        content: broadcastBody.trim(),
+      });
+      setBroadcastSent(false);
+      setIsBroadcastOpen(false);
+      setBroadcastTitle("");
+      setBroadcastBody("");
+      toast({
+        title: "Đăng bài thành công",
+        description: "Đã đăng thông báo hỗ trợ học tập tới toàn thể sinh viên!",
+        type: "success",
+      });
+    } catch (err: unknown) {
+      setBroadcastSent(false);
+      toast({
+        title: "Lỗi đăng bài thông báo",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Không thể đăng bài viết hỗ trợ. Vui lòng thử lại sau.",
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -419,96 +451,90 @@ export function InstructorAIAssistantCard({
       </div>
 
       {/* Modal soạn nhanh bài viết thông báo/giải đáp của AI */}
-      {isBroadcastOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-lg bg-surface border border-outline-variant rounded-3xl p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/60">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-foreground">
-                    Soạn Bài Viết Hỗ Trợ Sinh Viên (AI Draft)
-                  </h4>
-                  <span className="text-[10px] text-muted-foreground">{courseTitle}</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsBroadcastOpen(false)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+      <Dialog open={isBroadcastOpen} onOpenChange={setIsBroadcastOpen}>
+        <Dialog.Content size="lg" aria-describedby="broadcast-dialog-desc">
+          <div className="flex items-center gap-2 pb-2 border-b border-outline-variant/60">
+            <div className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <Sparkles className="w-4 h-4" aria-hidden="true" />
+            </div>
+            <div>
+              <Dialog.Title className="text-sm font-bold text-foreground">
+                Soạn Bài Viết Hỗ Trợ Sinh Viên (AI Draft)
+              </Dialog.Title>
+              <Dialog.Description
+                id="broadcast-dialog-desc"
+                className="text-[10px] text-muted-foreground"
               >
-                <X className="w-4 h-4" />
-              </button>
+                {courseTitle}
+              </Dialog.Description>
+            </div>
+          </div>
+
+          <form onSubmit={handleSendBroadcast} className="space-y-3 mt-3">
+            <div>
+              <label
+                htmlFor="broadcast-title"
+                className="text-[11px] font-bold text-foreground block mb-1"
+              >
+                Tiêu đề thông báo
+              </label>
+              <Input
+                id="broadcast-title"
+                type="text"
+                value={broadcastTitle}
+                onChange={(e) => setBroadcastTitle(e.target.value)}
+                className="text-xs font-bold"
+                required
+              />
             </div>
 
-            <form onSubmit={handleSendBroadcast} className="space-y-3">
-              <div>
-                <label
-                  htmlFor="broadcast-title"
-                  className="text-[11px] font-bold text-foreground block mb-1"
-                >
-                  Tiêu đề thông báo
-                </label>
-                <input
-                  id="broadcast-title"
-                  type="text"
-                  value={broadcastTitle}
-                  onChange={(e) => setBroadcastTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant text-xs font-bold text-foreground focus:outline-hidden focus:border-primary"
-                  required
-                />
-              </div>
+            <div>
+              <label
+                htmlFor="broadcast-body"
+                className="text-[11px] font-bold text-foreground block mb-1"
+              >
+                Nội dung AI gợi ý (Giảng viên có thể chỉnh sửa tự do)
+              </label>
+              <Textarea
+                id="broadcast-body"
+                rows={5}
+                value={broadcastBody}
+                onChange={(e) => setBroadcastBody(e.target.value)}
+                className="text-xs leading-relaxed"
+                required
+              />
+            </div>
 
-              <div>
-                <label
-                  htmlFor="broadcast-body"
-                  className="text-[11px] font-bold text-foreground block mb-1"
-                >
-                  Nội dung AI gợi ý (Giảng viên có thể chỉnh sửa tự do)
-                </label>
-                <textarea
-                  id="broadcast-body"
-                  rows={5}
-                  value={broadcastBody}
-                  onChange={(e) => setBroadcastBody(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant text-xs text-foreground focus:outline-hidden focus:border-primary leading-relaxed"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-outline-variant/50">
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => setIsBroadcastOpen(false)}
-                  className="text-xs"
-                >
-                  Hủy
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={broadcastSent}
-                  className="text-xs font-bold bg-primary text-primary-foreground hover:bg-primary-hover flex items-center gap-1.5"
-                >
-                  {broadcastSent ? (
-                    <>
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Đang đăng thông báo...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Đăng Thông Báo Ngay</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-outline-variant/50">
+              <Button
+                type="button"
+                variant="outlined"
+                onClick={() => setIsBroadcastOpen(false)}
+                className="text-xs"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                disabled={broadcastSent}
+                className="text-xs font-bold bg-primary text-primary-foreground hover:bg-primary-hover flex items-center gap-1.5"
+              >
+                {broadcastSent ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Đang đăng thông báo...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Đăng Thông Báo Ngay</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

@@ -260,8 +260,6 @@ class CourseReviewUseCase:
         unique_student_ids = list(
             dict.fromkeys(sid.strip() for sid in student_ids if sid and sid.strip())
         )
-        if not unique_student_ids:
-            return 0, []
         if len(unique_student_ids) > 100:
             raise ValueError(
                 "Số lượng học viên nhận thông báo vượt quá giới hạn cho phép (tối đa 100 học viên mỗi lần gửi)."
@@ -272,6 +270,8 @@ class CourseReviewUseCase:
             await self._verify_ownership(
                 repo, clean_course_id, current_user, "gửi thông báo nhắc nhở học viên"
             )
+            if not unique_student_ids:
+                return 0, []
             real_id = await repo.get_course_id_by_slug_or_id(clean_course_id)
             target_ids = list({clean_course_id, real_id})
             enrolled_ids = set(await repo.get_enrolled_user_ids(target_ids))

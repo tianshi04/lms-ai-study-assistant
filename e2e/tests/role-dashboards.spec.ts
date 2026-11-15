@@ -50,6 +50,16 @@ test.describe('Instructor Dashboard', () => {
     await expect(page.getByText(/Bảng Điều Khiển Giảng Viên/i).first()).toBeVisible({ timeout: 15000 });
   });
 
+  test('instructor: should open pacing modal and render pacing metrics without NaN', async ({ page }) => {
+    await page.goto('/instructor/dashboard', { waitUntil: 'domcontentloaded' });
+    const pacingCard = page.locator('text=Kiểm Soát Nhịp Độ').or(page.locator('text=Nhịp Độ Học Tập')).first();
+    if (await pacingCard.isVisible()) {
+      await pacingCard.click();
+      await expect(page.locator('text=Vượt tiến độ').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('text=NaN%')).toHaveCount(0);
+    }
+  });
+
   test('instructor: quick action - create course link should be visible', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('text=TẠO KHÓA HỌC MỚI').first()).toBeVisible({ timeout: 15000 });

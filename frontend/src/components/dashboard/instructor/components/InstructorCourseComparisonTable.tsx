@@ -12,7 +12,7 @@ interface EnrichedCourseItem {
   course: Course;
   stats?: OverviewCourseStat;
   code: string;
-  credits: number;
+  weekCount: number;
 }
 
 interface InstructorCourseComparisonTableProps {
@@ -30,21 +30,22 @@ export function InstructorCourseComparisonTable({
 
   // Làm giàu thông tin khóa học với mã môn và dữ liệu thống kê
   const enrichedCourses: EnrichedCourseItem[] = useMemo(() => {
-    return courses.map((course, idx) => {
+    return courses.map((course) => {
       const stats = courseStats.find(
         (s) =>
           course.id.toLowerCase().includes(s.keyword) ||
           course.title.toLowerCase().includes(s.keyword),
       );
 
-      const codes = ["ECO101", "BEH201", "MET301", "FIN401", "MGT501"];
-      const code = codes[idx % codes.length];
+      const code = course.slug
+        ? course.slug.toUpperCase().slice(0, 8)
+        : `CRS-${course.id.slice(0, 4).toUpperCase()}`;
 
       return {
         course,
         stats,
         code,
-        credits: 3,
+        weekCount: course.weekModules?.length || 0,
       };
     });
   }, [courses, courseStats]);
@@ -114,11 +115,11 @@ export function InstructorCourseComparisonTable({
               </Table.Row>
             ) : (
               filtered.map((item) => {
-                const { course, stats, code, credits } = item;
-                const totalStudents = stats?.totalStudents ?? 45;
-                const compRate = stats?.compRate ?? 50;
-                const pendingAssignments = stats?.pendingAssignments ?? 1;
-                const pendingQuestions = stats?.pendingQuestions ?? 1;
+                const { course, stats, code, weekCount } = item;
+                const totalStudents = stats?.totalStudents ?? 0;
+                const compRate = stats?.compRate ?? 0;
+                const pendingAssignments = stats?.pendingAssignments ?? 0;
+                const pendingQuestions = stats?.pendingQuestions ?? 0;
 
                 return (
                   <Table.Row
@@ -134,10 +135,10 @@ export function InstructorCourseComparisonTable({
                       <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
                         <span className="font-mono font-bold text-primary">{code}</span>
                         <span>•</span>
-                        <span>{credits} Tín chỉ</span>
+                        <span>{weekCount} tuần học</span>
                         <span>•</span>
                         <span className="truncate max-w-[150px]">
-                          {course.partnerName || "NEU Business School"}
+                          {course.partnerName || "Coursera LMS"}
                         </span>
                       </div>
                     </Table.Cell>
@@ -192,7 +193,11 @@ export function InstructorCourseComparisonTable({
 
                     {/* Đánh giá */}
                     <Table.Cell className="text-right font-mono font-bold text-warning py-3 px-3">
-                      {stats?.rating ? stats.rating.toFixed(1) : "5.0"} ★
+                      {stats?.rating
+                        ? `${stats.rating.toFixed(1)} ★`
+                        : course.averageRating
+                          ? `${course.averageRating.toFixed(1)} ★`
+                          : "—"}
                     </Table.Cell>
 
                     {/* Thao tác */}

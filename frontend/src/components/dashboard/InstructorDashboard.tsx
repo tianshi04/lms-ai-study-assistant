@@ -206,7 +206,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
       );
       const completedCount = an?.students?.filter((s) => s.progressPercent >= 100).length ?? 0;
       const inProgressCount = Math.max(0, totalStudents - completedCount);
-      const rating = an?.averageRating || course.averageRating || 5.0;
+      const rating = an?.averageRating || course.averageRating || 0;
       const reviewCount = an?.reviewCount || 0;
       const pendingAssignments = 0;
       const pendingQuestions = 0;
@@ -329,7 +329,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
   const avgRatingAllCourses = useMemo(() => {
     const ratings = courses.map((c) => c.averageRating).filter((r) => r > 0);
-    if (ratings.length === 0) return "5.0";
+    if (ratings.length === 0) return "0.0";
     return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
   }, [courses]);
 
@@ -575,92 +575,34 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
   // Dữ liệu tương tác biểu đồ cho môn học cụ thể theo khoảng thời gian và bộ lọc đối tượng
   const weekDaysData = useMemo(() => {
-    const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
-    const totalCount = rawStudents.length;
-    const completedCount = completedStudents.length;
-    const inProgressCount = Math.max(0, totalCount - completedCount);
-
-    if (totalCount === 0) {
-      return labels.map((l) => ({
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: l.isFuture,
-        count: 0,
-        completed: 0,
-        inProgress: 0,
-      }));
-    }
-
-    let activeCap = totalCount;
-    if (chartLearnerFilter === "in_progress") {
-      activeCap = inProgressCount;
-    } else if (chartLearnerFilter === "completed") {
-      activeCap = completedCount;
-    }
-
-    if (activeCap === 0) {
-      return labels.map((l) => ({
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: l.isFuture,
-        count: 0,
-        completed: 0,
-        inProgress: 0,
-      }));
-    }
-
-    return labels.map((l, idx) => {
-      if (l.isFuture) {
+    if (activityTimelineData?.timeline && activityTimelineData.timeline.length > 0) {
+      return activityTimelineData.timeline.map((p) => {
+        const parts = p.label.split(" ");
         return {
-          day: l.day,
-          date: l.date,
-          fullDateLabel: l.fullDateLabel,
-          showTick: l.showTick,
-          isFuture: true,
-          count: 0,
-          completed: 0,
-          inProgress: 0,
+          day: parts[0] || p.label,
+          date: p.label,
+          fullDateLabel: p.label,
+          showTick: true,
+          isFuture: false,
+          count: p.activeLearners,
+          completed: p.completedItems,
+          inProgress: p.inProgress,
         };
-      }
+      });
+    }
 
-      let active = 0;
-      if (activeCap <= 2) {
-        const isRecent = idx >= labels.length - Math.min(3, labels.length);
-        active = isRecent ? activeCap : 0;
-      } else {
-        const factor = Math.sin(idx * 0.6) * 0.3 + 0.7;
-        active = Math.min(activeCap, Math.max(1, Math.round(activeCap * factor)));
-      }
-
-      const done =
-        chartLearnerFilter === "in_progress"
-          ? 0
-          : Math.min(completedCount, Math.round(completedCount * (active / (activeCap || 1))));
-      const inProg = chartLearnerFilter === "completed" ? 0 : Math.max(0, active - done);
-
-      return {
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: false,
-        count: active,
-        completed: done,
-        inProgress: inProg,
-      };
-    });
-  }, [
-    rawStudents.length,
-    completedStudents.length,
-    chartDateRange,
-    chartLearnerFilter,
-    customStartDate,
-    customEndDate,
-  ]);
+    const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
+    return labels.map((l) => ({
+      day: l.day,
+      date: l.date,
+      fullDateLabel: l.fullDateLabel,
+      showTick: l.showTick,
+      isFuture: l.isFuture,
+      count: 0,
+      completed: 0,
+      inProgress: 0,
+    }));
+  }, [activityTimelineData?.timeline, chartDateRange, customStartDate, customEndDate]);
 
   // Dữ liệu tương tác biểu đồ cho TOÀN BỘ CÁC MÔN HỌC theo khoảng thời gian và bộ lọc đối tượng (Dữ liệu thực tế 100%)
   const allCoursesWeekDaysData = useMemo(() => {
@@ -808,7 +750,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 ? analytics.averageRating
                 : activeCourse?.averageRating
                   ? activeCourse.averageRating
-                  : 5.0
+                  : 0
           }
           reviewCount={
             viewMode === "all"
@@ -979,9 +921,11 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                           <option value="all">
                             Tất cả khóa học ({allCompletedStudentsList.length})
                           </option>
-                          <option value="Vi mô">Kinh tế học Vi mô Căn bản</option>
-                          <option value="Hành vi">Kinh tế học Hành vi &amp; Định giá</option>
-                          <option value="Kinh tế lượng">Kinh tế lượng Ứng dụng</option>
+                          {courses.map((c) => (
+                            <option key={c.id} value={c.title}>
+                              {c.title}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -1258,8 +1202,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             <div className="lg:col-span-4 space-y-4">
               {/* Box 1: AI Teaching Copilot (Agent Cố Vấn & Phân Tích Sư Phạm) */}
               <InstructorAIAssistantCard
-                courseId={activeCourse?.id || courses[0]?.id || ""}
-                courseTitle={activeCourse?.title || courses[0]?.title || "Tất cả khóa học"}
+                courseId={undefined}
+                courseTitle="Tất cả khóa học"
                 behindStudents={allPacingStudents
                   .filter((s) => s.pace === "BEHIND")
                   .map((s) => ({
@@ -2292,6 +2236,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           initialCategory={pacingModalCategory}
           coursesList={courses.map((c) => ({ id: c.id, title: c.title }))}
           students={allPacingStudents}
+          bottleneckWeek={bottleneckWeek}
         />
       )}
 

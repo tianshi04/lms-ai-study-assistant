@@ -201,6 +201,16 @@ async def test_send_student_reminder_unauthenticated(mock_repo):
 
 @pytest.mark.asyncio
 async def test_send_student_reminder_empty_student_ids(mock_repo):
+    course = Course(
+        id="course-123",
+        title="Kinh tế học Vi mô Căn bản",
+        slug="kinh-te-hoc-vi-mo",
+        owner_id="inst-1",
+        co_instructor_ids=[],
+        status=CourseStatus.PUBLISHED,
+    )
+    mock_repo.get_course_detail.return_value = course
+
     uc = CourseReviewUseCase(repo_factory=lambda _: mock_repo)
     instructor = CurrentUser(
         id="inst-1",
@@ -208,16 +218,59 @@ async def test_send_student_reminder_empty_student_ids(mock_repo):
         role="INSTRUCTOR",
     )
 
-    count, sent_ids = await uc.send_student_reminder(
-        course_id="course-123",
-        student_ids=[],
-        title="Nhắc nhở",
-        content="Nội dung",
-        current_user=instructor,
+    with patch(
+        "src.modules.catalog.application.course_review_usecase.async_session_scope"
+    ) as mock_scope:
+        mock_ctx = AsyncMock()
+        mock_scope.return_value.__aenter__.return_value = mock_ctx
+
+        count, sent_ids = await uc.send_student_reminder(
+            course_id="course-123",
+            student_ids=[],
+            title="Nhắc nhở",
+            content="Nội dung",
+            current_user=instructor,
+        )
+        assert count == 0
+        assert sent_ids == []
+        mock_repo.get_course_detail.assert_called_once_with("course-123")
+
+
+@pytest.mark.asyncio
+async def test_send_student_reminder_empty_student_ids_unauthorized(mock_repo):
+    course = Course(
+        id="course-123",
+        title="Kinh tế học Vi mô Căn bản",
+        slug="kinh-te-hoc-vi-mo",
+        owner_id="inst-1",
+        co_instructor_ids=[],
+        status=CourseStatus.PUBLISHED,
     )
-    assert count == 0
-    assert sent_ids == []
-    mock_repo.get_course_detail.assert_not_called()
+    mock_repo.get_course_detail.return_value = course
+
+    uc = CourseReviewUseCase(repo_factory=lambda _: mock_repo)
+    stranger = CurrentUser(
+        id="stranger-999",
+        email="stranger@test.com",
+        role="INSTRUCTOR",
+    )
+
+    with patch(
+        "src.modules.catalog.application.course_review_usecase.async_session_scope"
+    ) as mock_scope:
+        mock_ctx = AsyncMock()
+        mock_scope.return_value.__aenter__.return_value = mock_ctx
+
+        with pytest.raises(
+            PermissionError, match="Bạn không có quyền gửi thông báo nhắc nhở học viên"
+        ):
+            await uc.send_student_reminder(
+                course_id="course-123",
+                student_ids=[],
+                title="Nhắc nhở",
+                content="Nội dung",
+                current_user=stranger,
+            )
 
 
 @pytest.mark.asyncio
@@ -448,7 +501,7 @@ async def test_handle_student_reminder_sent_event():
         mock_uc_instance.send_batch_notifications.assert_called_once_with(
             recipient_ids=["student-1", "student-2"],
             category=NotificationCategory.ACADEMIC,
-            title="Nhắc nhở nộp bài tập",
+            title="Nhắc nhở học tập từ Giảng viên Thầy Ba: Nhắc nhở nộp bài tập",
             content="Hãy vào học đúng hạn nhé",
             action_url="/learn/course-123",
         )

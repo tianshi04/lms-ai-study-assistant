@@ -833,12 +833,15 @@ export function useSendStudentReminderMutation(
   >,
 ) {
   const queryClient = useQueryClient();
+  const { onSuccess, ...restOptions } = options || {};
+
   return useMutation<SendStudentReminderResponse, Error, SendStudentReminderInput>({
+    ...restOptions,
     mutationFn: async (input) => {
       const client = getRpcClient(CatalogService);
       return await client.sendStudentReminder(input);
     },
-    onSuccess: (res, variables, context) => {
+    onSuccess: (res, variables, context, mutation) => {
       if (variables.courseId) {
         queryClient.invalidateQueries({
           queryKey: ["instructorAnalytics", variables.courseId],
@@ -847,8 +850,7 @@ export function useSendStudentReminderMutation(
           queryKey: ["instructorActionTasks", variables.courseId],
         });
       }
-      options?.onSuccess?.(res, variables, context as unknown as never, queryClient as never);
+      onSuccess?.(res, variables, context, mutation);
     },
-    ...options,
   });
 }

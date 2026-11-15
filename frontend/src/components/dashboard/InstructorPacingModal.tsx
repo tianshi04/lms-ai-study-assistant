@@ -45,6 +45,11 @@ export interface InstructorPacingModalProps {
   initialCourseId?: string;
   coursesList?: { id: string; title: string }[];
   students?: StudentPacingRecord[];
+  bottleneckWeek?: {
+    weekNumber: number;
+    title: string;
+    dropRate: number;
+  } | null;
 }
 
 export function InstructorPacingModal({
@@ -54,6 +59,7 @@ export function InstructorPacingModal({
   initialCourseId = "ALL",
   coursesList = [],
   students = [],
+  bottleneckWeek = null,
 }: InstructorPacingModalProps) {
   const toast = useToast();
   const sendReminderMutation = useSendStudentReminderMutation();
@@ -216,7 +222,7 @@ export function InstructorPacingModal({
                   <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-success/20 text-success font-bold">
-                  {Math.round((counts.ahead / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.ahead / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-success font-mono mt-0.5">
@@ -240,7 +246,7 @@ export function InstructorPacingModal({
                   <Clock className="w-3 h-3" /> Đúng tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-bold">
-                  {Math.round((counts.onTrack / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.onTrack / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-primary font-mono mt-0.5">
@@ -264,7 +270,7 @@ export function InstructorPacingModal({
                   <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-destructive/20 text-destructive font-bold">
-                  {Math.round((counts.behind / counts.all) * 100)}%
+                  {counts.all > 0 ? Math.round((counts.behind / counts.all) * 100) : 0}%
                 </span>
               </div>
               <div className="text-lg font-black text-destructive font-mono mt-0.5">
@@ -523,11 +529,7 @@ export function InstructorPacingModal({
               courseId: s.courseId,
               courseTitle: s.courseTitle,
             }))}
-          bottleneckWeek={
-            filteredStudents.some((s) => s.bottleneckStuck)
-              ? { weekNumber: 2, title: "Hành vi Người tiêu dùng & Độ co giãn", dropRate: 75 }
-              : null
-          }
+          bottleneckWeek={bottleneckWeek ?? null}
           onSuccess={(studentIds) => {
             setNudgedStudentIds((prev) => {
               const next = new Set(prev);
