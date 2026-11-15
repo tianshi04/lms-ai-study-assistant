@@ -221,9 +221,13 @@ export function InstructorStudentDetailModal({
                 Điểm Quiz TB
               </span>
               <span className="text-base font-black text-foreground font-mono">
-                {student.quizScore ? `${student.quizScore}/10` : "8.5/10"}
+                {student.quizScore !== undefined ? `${student.quizScore}/10` : "Chưa có"}
               </span>
-              <span className="text-[10px] text-success font-semibold block">Đạt chuẩn</span>
+              {student.quizScore !== undefined ? (
+                <span className="text-[10px] text-success font-semibold block">
+                  {student.quizScore >= 8 ? "Đạt chuẩn" : "Cần nỗ lực"}
+                </span>
+              ) : null}
             </div>
 
             <div>
@@ -231,10 +235,14 @@ export function InstructorStudentDetailModal({
                 Lần học gần nhất
               </span>
               <span className="text-xs font-bold text-foreground mt-0.5 block">
-                {student.lastActiveTime || "Hôm qua lúc 20:30"}
+                {student.lastActiveTime || "Chưa ghi nhận"}
               </span>
               <span className="text-[10px] text-muted-foreground">
-                {student.pace === "BEHIND" ? "Đã nghỉ 4 ngày" : "Truy cập đều đặn"}
+                {student.pace === "BEHIND"
+                  ? "Cần đôn đốc"
+                  : student.pace === "AHEAD"
+                    ? "Vượt tiến độ"
+                    : "Truy cập đều đặn"}
               </span>
             </div>
           </div>

@@ -187,20 +187,23 @@ export function InstructorBulkReminderModal({
 
       let totalSent = 0;
       const sentStudentIds: string[] = [];
+      const CHUNK_SIZE = 100;
 
       for (const [targetCourseId, group] of groups.entries()) {
-        const res = await sendReminderMutation.mutateAsync({
-          courseId: targetCourseId,
-          studentIds: group.studentIds,
-          title: subject.trim(),
-          content: content.trim(),
-        });
-        if (res.sentCount > 0) {
-          totalSent += res.sentCount;
-          const returnedIds = res.sentStudentIds?.length
-            ? res.sentStudentIds
-            : group.studentIds.slice(0, res.sentCount);
-          sentStudentIds.push(...returnedIds);
+        for (let i = 0; i < group.studentIds.length; i += CHUNK_SIZE) {
+          const chunk = group.studentIds.slice(i, i + CHUNK_SIZE);
+          const res = await sendReminderMutation.mutateAsync({
+            courseId: targetCourseId,
+            studentIds: chunk,
+            title: subject.trim(),
+            content: content.trim(),
+          });
+          if (res.sentCount > 0) {
+            totalSent += res.sentCount;
+            if (res.sentStudentIds && res.sentStudentIds.length > 0) {
+              sentStudentIds.push(...res.sentStudentIds);
+            }
+          }
         }
       }
 

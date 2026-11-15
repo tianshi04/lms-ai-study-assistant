@@ -48,6 +48,11 @@ export interface InstructorPacingModalProps {
   initialCourseId?: string;
   coursesList?: { id: string; title: string }[];
   students?: StudentPacingRecord[];
+  bottleneckWeek?: {
+    weekNumber: number;
+    title: string;
+    dropRate: number;
+  } | null;
 }
 
 export function InstructorPacingModal({
@@ -57,6 +62,7 @@ export function InstructorPacingModal({
   initialCourseId = "ALL",
   coursesList = [],
   students = [],
+  bottleneckWeek = null,
 }: InstructorPacingModalProps) {
   const [selectedPace, setSelectedPace] = useState<PacingCategory>(initialCategory);
   const [selectedCourse, setSelectedCourse] = useState<string>(initialCourseId);
@@ -608,11 +614,7 @@ export function InstructorPacingModal({
                 : "các khóa học phụ trách"
           }
           students={reminderTargetStudents}
-          bottleneckWeek={
-            reminderTargetStudents.some((s) => s.pace === "BEHIND")
-              ? { weekNumber: 2, title: "Hành vi Người tiêu dùng & Độ co giãn", dropRate: 75 }
-              : null
-          }
+          bottleneckWeek={bottleneckWeek ?? null}
           onSuccess={(studentIds) => {
             setNudgedStudentIds((prev) => {
               const next = new Set(prev);

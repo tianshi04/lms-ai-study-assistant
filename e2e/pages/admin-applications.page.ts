@@ -33,17 +33,9 @@ export class AdminApplicationsPage {
     await expect(tab).toBeVisible({ timeout: 10000 });
     await expect(tab).toBeEnabled({ timeout: 5000 });
 
-    await this.page.waitForTimeout(300);
-    for (let i = 0; i < 3; i++) {
+    await expect(async () => {
       await tab.click();
-      try {
-        await expect(tab).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
-        break;
-      } catch {
-        await this.page.waitForTimeout(500);
-      }
-    }
-
-    await expect(tab).toHaveAttribute('aria-pressed', 'true', { timeout: 10000 });
+      await expect(tab).toHaveAttribute('aria-pressed', 'true', { timeout: 2000 });
+    }).toPass({ timeout: 10000 });
   }
 }

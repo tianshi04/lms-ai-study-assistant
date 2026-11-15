@@ -263,6 +263,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           initialCategory={pacingModalCategory}
           coursesList={courses.map((c) => ({ id: c.id, title: c.title }))}
           students={overviewData.allPacingStudents}
+          bottleneckWeek={viewMode === "specific" ? courseData.bottleneckWeek : null}
         />
       )}
 

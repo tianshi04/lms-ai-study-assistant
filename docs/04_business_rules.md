@@ -465,9 +465,9 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   - Thứ tự vị trí mới được cập nhật đồng bộ trong 1 DB Transaction Atomic và duy trì chỉ số `order_index` cố định để hiển thị đồng nhất cho cả Học viên và Giảng viên.
 
 * **BR_INSTRUCTOR_007 (Quy định Nhắc nhở Học tập Đích danh Student Reminder):**
-  * Giảng viên thực hiện gửi thông báo đôn đốc học tập (`SendStudentReminder`) được xác thực quyền sở hữu khóa học (`enforce_course_ownership`).
-  * Yêu cầu cung cấp `course_id`, danh sách `student_ids`, `title` và `content`.
-  * Khác với `CreateCourseAnnouncement` (phát thanh công khai cho toàn thể lớp học `ANNOUNCEMENT`), `SendStudentReminder` chỉ gửi riêng tư đích danh cho các học viên được chỉ định (`NotificationCategory.ACADEMIC`), đảm bảo tính bảo mật và sự riêng tư về tiến độ học tập cá nhân.
+  * Giảng viên sở hữu (`owner_id`), Giảng viên đồng giảng dạy (`co_instructor_ids`) hoặc Quản trị viên (Admin) có thẩm quyền gửi thông báo đôn đốc học tập (`SendStudentReminder`). Tài khoản bắt buộc có quyền Giảng viên (`is_instructor`) hoặc Quản trị viên (`is_admin`) và vượt qua xác thực quyền sở hữu khóa học (`enforce_course_ownership`).
+  * Yêu cầu cung cấp `course_id`, danh sách `student_ids` (tối đa 100 học viên/lần gửi, tự động loại bỏ trùng lặp và chỉ gửi tới học viên đang ghi danh thực tế), `title` và `content` không rỗng.
+  * Khác với `CreateCourseAnnouncement` (phát thanh công khai cho toàn thể lớp học `ANNOUNCEMENT`), `SendStudentReminder` chỉ gửi riêng tư đích danh cho các học viên được chỉ định (`NotificationCategory.ACADEMIC`), đảm bảo tính bảo mật và sự riêng tư về tiến độ học tập cá nhân. Tiêu đề thông báo tự động đính kèm tên giảng viên gửi nhắc nhở.
 
 ---
 

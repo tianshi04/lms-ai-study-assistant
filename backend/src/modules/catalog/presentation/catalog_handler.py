@@ -976,7 +976,7 @@ class CatalogHandler(CatalogService):
             pb.SendStudentReminderRequest, pb.SendStudentReminderResponse
         ],
     ) -> pb.SendStudentReminderResponse:
-        user = require_current_user()
+        user = self._verify_instructor_permission()
         course_id = request.course_id.strip() if request.course_id else ""
         if not course_id:
             raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")

@@ -50,16 +50,10 @@ export class QuestionBankPage {
     await expect(this.addQuestionBankButton).toBeVisible({ timeout: 10000 });
     await expect(this.addQuestionBankButton).toBeEnabled({ timeout: 5000 });
 
-    await this.page.waitForTimeout(300);
-    for (let i = 0; i < 3; i++) {
+    await expect(async () => {
       await this.addQuestionBankButton.click();
-      try {
-        await expect(this.bankTitleInput).toBeVisible({ timeout: 2000 });
-        break;
-      } catch {
-        await this.page.waitForTimeout(500);
-      }
-    }
+      await expect(this.bankTitleInput).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 10000 });
 
     await expect(this.bankTitleInput).toBeVisible({ timeout: 15000 });
     await this.bankTitleInput.fill(title);
