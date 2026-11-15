@@ -1,15 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import {
-  BarChart3,
-  TrendingDown,
-  Award,
-  Filter,
-  AlertTriangle,
-  CheckCircle2,
-  ArrowRight,
-} from "lucide-react";
+import { BarChart3, TrendingDown, Award, Filter } from "lucide-react";
 import type { Course, EnrolledStudent } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
@@ -340,9 +332,9 @@ export function InstructorCourseDeepDiveView({
         />
       </div>
 
-      {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN LÀM & ĐIỂM NGHẼN */}
+      {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN XỬ LÝ */}
       <div className="lg:col-span-4 space-y-4">
-        {/* Box 1: Việc Cần Xử Lý */}
+        {/* Box: Việc Cần Xử Lý */}
         <InstructorActionTasksCard
           courseId={activeCourse?.id}
           courseTitle={activeCourse?.title}
@@ -350,50 +342,6 @@ export function InstructorCourseDeepDiveView({
           behindCount={coursePacingCounts.behind}
           onFilterBehind={() => setStudentPacingFilter("BEHIND")}
         />
-
-        {/* Box 2: Cảnh Báo Điểm Nghẽn */}
-        {bottleneckWeek ? (
-          <div className="p-4 rounded-3xl bg-destructive/5 border border-destructive/20 space-y-3">
-            <div className="flex items-center gap-2 text-destructive font-bold text-xs">
-              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Điểm Nghẽn Cần Khắc Phục</span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong>
-                Tuần {bottleneckWeek.weekNumber}: &ldquo;{bottleneckWeek.title}&rdquo;
-              </strong>{" "}
-              có tỷ lệ dừng học cao nhất ({bottleneckWeek.dropRate}%). Hiện có{" "}
-              {bottleneckWeek.reachedCount - bottleneckWeek.completedCount} sinh viên đang dừng lại
-              tại tuần này.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedWeekFilter(bottleneckWeek.weekNumber);
-                setSelectedDayFilter(null);
-                setChartTab("funnel");
-              }}
-              className="w-full py-1.5 px-3 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <span>Xem danh sách học viên dừng ở Tuần {bottleneckWeek.weekNumber}</span>
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        ) : (
-          <div className="p-4 rounded-3xl bg-success/5 border border-success/20 space-y-2">
-            <div className="flex items-center gap-2 text-success font-bold text-xs">
-              <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>Tiến Độ Học Tập Ổn Định</span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {rawStudents.length === 0
-                ? "Khóa học hiện chưa có dữ liệu học viên để phát hiện điểm nghẽn."
-                : calculatedWeeks.length === 0
-                  ? "Khóa học chưa cấu hình các tuần học trong đề cương."
-                  : "Chưa ghi nhận điểm nghẽn học tập. Tất cả sinh viên đang duy trì tiến độ hoàn thành tốt."}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
