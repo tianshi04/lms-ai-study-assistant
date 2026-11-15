@@ -286,7 +286,7 @@ export function InstructorPacingModal({
               <div className="flex-1 max-w-sm">
                 <Input
                   type="text"
-                  placeholder="Tìm tên học viên, email, bài học..."
+                  placeholder="Tìm tên..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   startAdornment={
