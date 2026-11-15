@@ -211,8 +211,8 @@ export function InstructorActionTasksCard({
           </Link>
         </div>
 
-        {/* Nhóm 4: Học viên chậm tiến độ (Can thiệp sư phạm) */}
-        {effectiveBehindCount > 0 && (
+        {/* Nhóm 4: Học viên chậm tiến độ (Chỉ hiện ở Overview khi không có Cảnh báo điểm nghẽn) */}
+        {!courseId && effectiveBehindCount > 0 && (
           <div className="p-3 rounded-2xl bg-destructive/5 border border-destructive/20 transition-all flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="p-1 rounded-md shrink-0 bg-destructive/10 text-destructive">

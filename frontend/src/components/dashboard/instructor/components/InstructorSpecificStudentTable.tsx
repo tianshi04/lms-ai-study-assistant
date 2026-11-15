@@ -89,20 +89,20 @@ export function InstructorSpecificStudentTable({
   const activeFilterLabel = React.useMemo(() => {
     if (isStudentFiltered) {
       const st = rawStudentsWithPacing.find((s) => s.userId === selectedStudentId);
-      return `👤 ${st?.userName || "Học viên"}`;
+      return st?.userName || "Học viên";
     }
     if (isSearchFiltered) {
       return `Tìm kiếm "${studentSearchQuery}"`;
     }
     if (isPacingFiltered) {
-      if (studentPacingFilter === "AHEAD") return "🚀 Học viên Vượt tiến độ";
-      if (studentPacingFilter === "ON_TRACK") return "⏱️ Học viên Đúng tiến độ";
-      if (studentPacingFilter === "BEHIND") return "⚠️ Học viên Chậm tiến độ";
+      if (studentPacingFilter === "AHEAD") return "Học viên Vượt tiến độ";
+      if (studentPacingFilter === "ON_TRACK") return "Học viên Đúng tiến độ";
+      if (studentPacingFilter === "BEHIND") return "Học viên Chậm tiến độ";
     }
     if (isStatusFiltered) {
-      if (studentStatusFilter === "IN_PROGRESS") return "📖 Học viên Đang học";
-      if (studentStatusFilter === "COMPLETED") return "🎓 Học viên Đã xong";
-      if (studentStatusFilter === "OVERDUE") return "⏳ Học viên Quá hạn";
+      if (studentStatusFilter === "IN_PROGRESS") return "Học viên Đang học";
+      if (studentStatusFilter === "COMPLETED") return "Học viên Đã xong";
+      if (studentStatusFilter === "OVERDUE") return "Học viên Quá hạn";
     }
     if (isDayFiltered && selectedDayFilter) {
       return `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`;
