@@ -292,7 +292,7 @@ export function useInstructorOverviewData({
         timeAgo: urgencyLabel,
         actionText: "Chấm ngay",
         actionUrl: targetCourseId
-          ? `/instructor/courses/${targetCourseId}/grading?submissionId=${item.submissionId}`
+          ? `/instructor/courses/${targetCourseId}/grading`
           : "/instructor/courses",
         urgencyLevel,
         urgencyLabel,
@@ -357,9 +357,7 @@ export function useInstructorOverviewData({
         courseTitle: course?.title || "Khóa học",
         timeAgo: urgencyLabel,
         actionText: "Trả lời",
-        actionUrl: targetCourseId
-          ? `/forum?courseId=${targetCourseId}&threadId=${thread.id}`
-          : `/forum?threadId=${thread.id}`,
+        actionUrl: targetCourseId ? `/forum?courseId=${targetCourseId}` : "/forum",
         urgencyLevel,
         urgencyLabel,
         isOverdue,
