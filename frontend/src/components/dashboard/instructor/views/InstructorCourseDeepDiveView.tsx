@@ -14,7 +14,6 @@ import {
 import type { Course, EnrolledStudent } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
 import { InstructorHeatmap } from "../../InstructorHeatmap";
-import { InstructorAIAssistantCard } from "../../InstructorAIAssistantCard";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
 import { InstructorWeeklyFunnelTab } from "../components/InstructorWeeklyFunnelTab";
 import {
@@ -184,16 +183,6 @@ export function InstructorCourseDeepDiveView({
     setStudentStatusFilter("ALL");
     setStudentSearchQuery("");
   };
-
-  const behindStudentsThisCourse = useMemo(() => {
-    return rawStudentsWithPacing
-      .filter((s) => s.pace === "BEHIND")
-      .map((s) => ({
-        userId: s.userId,
-        userName: s.userName,
-        progressPercent: s.progressPercent,
-      }));
-  }, [rawStudentsWithPacing]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -399,7 +388,7 @@ export function InstructorCourseDeepDiveView({
         />
       </div>
 
-      {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN LÀM & AI COPILOT & ĐIỂM NGHẼN */}
+      {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN LÀM & ĐIỂM NGHẼN */}
       <div className="lg:col-span-4 space-y-4">
         {/* Box 1: Việc Cần Xử Lý */}
         <InstructorActionTasksCard
@@ -409,15 +398,7 @@ export function InstructorCourseDeepDiveView({
           onFilterBehind={() => setStudentPacingFilter("BEHIND")}
         />
 
-        {/* Box 2: AI Teaching Copilot */}
-        <InstructorAIAssistantCard
-          courseId={activeCourse?.id}
-          courseTitle={activeCourse?.title}
-          behindStudents={behindStudentsThisCourse}
-          bottleneckWeek={bottleneckWeek}
-        />
-
-        {/* Box 3: Cảnh Báo Điểm Nghẽn */}
+        {/* Box 2: Cảnh Báo Điểm Nghẽn */}
         {bottleneckWeek ? (
           <div className="p-4 rounded-3xl bg-destructive/5 border border-destructive/20 space-y-3">
             <div className="flex items-center gap-2 text-destructive font-bold text-xs">

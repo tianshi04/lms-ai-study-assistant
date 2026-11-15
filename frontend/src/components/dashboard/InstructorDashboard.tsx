@@ -215,7 +215,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 setIsPacingModalOpen(true);
               }}
               enrichedCoursesForComparison={overviewData.enrichedCoursesForComparison}
-              allPacingStudents={overviewData.allPacingStudents}
               currentMonthNumber={currentMonthNumber}
               lastMonthNumber={lastMonthNumber}
             />

@@ -12,10 +12,8 @@ import { InstructorCertificatesTab } from "../components/InstructorCertificatesT
 import { InstructorPacingCohortsCard } from "../components/InstructorPacingCohortsCard";
 import { InstructorRecentReviewsCard } from "../components/InstructorRecentReviewsCard";
 import { InstructorActionTasksCard } from "../components/InstructorActionTasksCard";
-import { InstructorAIAssistantCard } from "../../InstructorAIAssistantCard";
 import { useInstructorActivityTimelineQuery } from "@/lib/queries/useCatalogQueries";
 import { generateTimeLabels } from "../utils/time_labels";
-import type { StudentPacingRecord } from "../../InstructorPacingModal";
 import type {
   OverviewActionTask,
   OverviewReview,
@@ -53,7 +51,6 @@ export interface InstructorOverviewViewProps {
   };
   onOpenPacingModal: (category?: "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND") => void;
   enrichedCoursesForComparison: EnrichedCourseComparisonItem[];
-  allPacingStudents?: StudentPacingRecord[];
   currentMonthNumber: number;
   lastMonthNumber: number;
 }
@@ -79,7 +76,6 @@ export function InstructorOverviewView({
   pacingCohortSummary,
   onOpenPacingModal,
   enrichedCoursesForComparison,
-  allPacingStudents = [],
   currentMonthNumber,
   lastMonthNumber,
 }: InstructorOverviewViewProps) {
@@ -197,17 +193,6 @@ export function InstructorOverviewView({
       };
     });
   }, [courses, analyticsByCourseId, pendingGradingByCourseId, pendingQaByCourseId]);
-
-  // Danh sách học viên chậm tiến độ trên toàn bộ các môn học
-  const behindStudentsAllCourses = useMemo(() => {
-    return allPacingStudents
-      .filter((s) => s.pace === "BEHIND")
-      .map((s) => ({
-        userId: s.id,
-        userName: s.name,
-        progressPercent: s.progressPercent,
-      }));
-  }, [allPacingStudents]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -440,15 +425,7 @@ export function InstructorOverviewView({
 
       {/* CỘT PHẢI (4/12 - 33%): ACTION CENTER & ĐIỀU HÀNH GIẢNG DẠY */}
       <div className="lg:col-span-4 space-y-4">
-        {/* Box 1: AI Teaching Copilot */}
-        <InstructorAIAssistantCard
-          courseId={activeCourse?.id || courses[0]?.id || ""}
-          courseTitle={activeCourse?.title || "toàn bộ các khóa học đang giảng dạy"}
-          behindStudents={behindStudentsAllCourses}
-          bottleneckWeek={null}
-        />
-
-        {/* Box 2: Việc Cần Xử Lý */}
+        {/* Box 1: Việc Cần Xử Lý */}
         <InstructorActionTasksCard
           tasks={overviewActionTasks}
           totalPendingCount={totalPendingTasksCount}
@@ -457,7 +434,7 @@ export function InstructorOverviewView({
           totalOverdueCount={totalOverdueTasksCount}
         />
 
-        {/* Box 3: Phản Hồi Sinh Viên */}
+        {/* Box 2: Phản Hồi Sinh Viên */}
         <InstructorRecentReviewsCard
           reviews={overviewReviews}
           avgRating={avgRatingAllCourses || "0.0"}
