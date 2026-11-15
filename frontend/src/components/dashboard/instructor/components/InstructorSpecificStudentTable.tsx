@@ -36,7 +36,7 @@ export interface InstructorSpecificStudentTableProps {
   onChangeStudentSearchQuery: (query: string) => void;
   selectedDayFilter: { day: string; date: string } | null;
   selectedWeekFilter: number | null;
-  selectedStudentId: string | null;
+  selectedStudentId?: string | null;
   onClearFilters: () => void;
   activeCourse: Course | null;
   calculatedWeeks: CalculatedWeek[];
@@ -71,6 +71,62 @@ export function InstructorSpecificStudentTable({
   onNudgeAllBehind,
   onSelectStudentForDetail,
 }: InstructorSpecificStudentTableProps) {
+  const isWeekFiltered = selectedWeekFilter != null;
+  const isDayFiltered = Boolean(selectedDayFilter);
+  const isPacingFiltered = studentPacingFilter !== "ALL";
+  const isStatusFiltered = studentStatusFilter !== "ALL";
+  const isSearchFiltered = studentSearchQuery.trim() !== "";
+  const isStudentFiltered = Boolean(selectedStudentId);
+
+  const hasActiveFilter =
+    isWeekFiltered ||
+    isDayFiltered ||
+    isPacingFiltered ||
+    isStatusFiltered ||
+    isSearchFiltered ||
+    isStudentFiltered;
+
+  const activeFilterLabel = React.useMemo(() => {
+    if (isStudentFiltered) {
+      const st = rawStudentsWithPacing.find((s) => s.userId === selectedStudentId);
+      return `👤 ${st?.userName || "Học viên"}`;
+    }
+    if (isSearchFiltered) {
+      return `Tìm kiếm "${studentSearchQuery}"`;
+    }
+    if (isPacingFiltered) {
+      if (studentPacingFilter === "AHEAD") return "🚀 Học viên Vượt tiến độ";
+      if (studentPacingFilter === "ON_TRACK") return "⏱️ Học viên Đúng tiến độ";
+      if (studentPacingFilter === "BEHIND") return "⚠️ Học viên Chậm tiến độ";
+    }
+    if (isStatusFiltered) {
+      if (studentStatusFilter === "IN_PROGRESS") return "📖 Học viên Đang học";
+      if (studentStatusFilter === "COMPLETED") return "🎓 Học viên Đã xong";
+      if (studentStatusFilter === "OVERDUE") return "⏳ Học viên Quá hạn";
+    }
+    if (isDayFiltered && selectedDayFilter) {
+      return `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`;
+    }
+    if (isWeekFiltered) {
+      return `Tuần học thứ ${selectedWeekFilter}`;
+    }
+    return "";
+  }, [
+    isStudentFiltered,
+    selectedStudentId,
+    rawStudentsWithPacing,
+    isSearchFiltered,
+    studentSearchQuery,
+    isPacingFiltered,
+    studentPacingFilter,
+    isStatusFiltered,
+    studentStatusFilter,
+    isDayFiltered,
+    selectedDayFilter,
+    isWeekFiltered,
+    selectedWeekFilter,
+  ]);
+
   return (
     <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4">
       {/* Header Danh Sách Học Viên */}
@@ -84,9 +140,6 @@ export function InstructorSpecificStudentTable({
               {filteredStudents.length}/{rawStudentsWithPacing.length} SV
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Theo dõi tiến độ từng học viên, can thiệp hỗ trợ kịp thời cho các sinh viên học chậm
-          </p>
         </div>
 
         {coursePacingCounts.behind > 0 && (
@@ -116,7 +169,7 @@ export function InstructorSpecificStudentTable({
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-success uppercase tracking-wider flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
+              <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-success/20 text-success font-bold">
               {coursePacingCounts.ahead} SV
@@ -145,7 +198,7 @@ export function InstructorSpecificStudentTable({
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Đúng tiến độ
+              <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-primary/20 text-primary font-bold">
               {coursePacingCounts.onTrack} SV
@@ -174,7 +227,7 @@ export function InstructorSpecificStudentTable({
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
+              <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-destructive/20 text-destructive font-bold">
               {coursePacingCounts.behind} SV
@@ -245,39 +298,20 @@ export function InstructorSpecificStudentTable({
       </div>
 
       {/* Tag trạng thái lọc đang hoạt động */}
-      {(selectedDayFilter ||
-        selectedWeekFilter !== null ||
-        studentPacingFilter !== "ALL" ||
-        selectedStudentId !== null ||
-        studentSearchQuery.trim() !== "") && (
+      {hasActiveFilter && (
         <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-semibold">
             <Filter className="w-3.5 h-3.5" aria-hidden="true" />
-            Đang lọc theo:{" "}
-            <strong>
-              {selectedStudentId
-                ? `👤 ${rawStudentsWithPacing.find((s) => s.userId === selectedStudentId)?.userName}`
-                : studentSearchQuery.trim()
-                  ? `Tìm kiếm "${studentSearchQuery}"`
-                  : studentPacingFilter === "AHEAD"
-                    ? "🚀 Học viên Vượt tiến độ"
-                    : studentPacingFilter === "ON_TRACK"
-                      ? "⏱️ Học viên Đúng tiến độ"
-                      : studentPacingFilter === "BEHIND"
-                        ? "⚠️ Học viên Chậm tiến độ"
-                        : selectedDayFilter
-                          ? `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`
-                          : `Tuần học thứ ${selectedWeekFilter}`}
-            </strong>
+            Đang lọc theo: <strong>{activeFilterLabel}</strong>
           </span>
           <div className="flex items-center gap-2">
-            {selectedWeekFilter !== null && activeCourse?.id && (
+            {isWeekFiltered && activeCourse?.id && (
               <Link
                 href={`/instructor/courses/${activeCourse.id}/announcements`}
                 className="px-2 py-0.5 rounded-lg bg-primary text-primary-foreground text-[11px] font-bold inline-flex items-center gap-1 shadow-xs hover:bg-primary/90 transition-all cursor-pointer"
                 title="Tạo thông báo hướng dẫn toàn lớp cho tuần này"
               >
-                <BookOpen className="w-3 h-3" />
+                <BookOpen className="w-3 h-3" aria-hidden="true" />
                 <span>Đăng thông báo Tuần {selectedWeekFilter}</span>
               </Link>
             )}
@@ -294,15 +328,17 @@ export function InstructorSpecificStudentTable({
       )}
 
       {/* Bảng Danh Sách Học Viên */}
-      <div className="rounded-2xl border border-outline-variant/60 overflow-hidden bg-surface max-h-80 overflow-y-auto">
-        <Table>
+      <div className="rounded-2xl border border-outline-variant/60 overflow-x-auto bg-surface max-h-96 overflow-y-auto">
+        <Table className="table-fixed min-w-[700px] w-full">
           <Table.Header className="sticky top-0 z-10 bg-surface shadow-xs">
             <Table.Row className="text-[11px] text-muted-foreground border-b border-outline-variant/60">
-              <Table.Head>Học viên</Table.Head>
-              <Table.Head>Tiến độ khóa học</Table.Head>
-              <Table.Head>Phân loại nhịp độ</Table.Head>
-              <Table.Head>Lộ trình &amp; Hạn chuẩn</Table.Head>
-              <Table.Head className="text-right">Kiểm soát sư phạm</Table.Head>
+              <Table.Head className="w-[28%] min-w-[180px]">Học viên</Table.Head>
+              <Table.Head className="w-[18%] min-w-[130px]">Tiến độ khóa học</Table.Head>
+              <Table.Head className="w-[18%] min-w-[130px]">Phân loại nhịp độ</Table.Head>
+              <Table.Head className="w-[20%] min-w-[150px]">Lộ trình &amp; Hạn chuẩn</Table.Head>
+              <Table.Head className="w-[16%] min-w-[120px] text-right">
+                Kiểm soát sư phạm
+              </Table.Head>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -319,7 +355,7 @@ export function InstructorSpecificStudentTable({
                   ? new Date(st.enrolledAt)
                   : currentTimeMs > 0
                     ? new Date(currentTimeMs)
-                    : new Date("2026-11-01");
+                    : new Date();
                 const deadlineDate = new Date(enrolledDate.getTime() + 30 * 24 * 60 * 60 * 1000);
                 const daysLeft =
                   currentTimeMs > 0
@@ -362,7 +398,7 @@ export function InstructorSpecificStudentTable({
                     onClick={() => onSelectStudentForDetail(studentDetailRecord)}
                     className="text-xs hover:bg-primary/5 cursor-pointer transition-colors"
                   >
-                    <Table.Cell>
+                    <Table.Cell className="w-[28%] min-w-[180px]">
                       <div className="font-bold text-foreground hover:text-primary transition-colors flex items-center gap-1.5">
                         <span>{st.userName}</span>
                       </div>
@@ -371,7 +407,7 @@ export function InstructorSpecificStudentTable({
                       </div>
                     </Table.Cell>
 
-                    <Table.Cell>
+                    <Table.Cell className="w-[18%] min-w-[130px]">
                       <div className="space-y-1 max-w-[140px]">
                         <div className="flex items-center justify-between text-[11px] font-mono">
                           <span className="font-bold text-foreground">{st.progressPercent}%</span>
@@ -400,18 +436,18 @@ export function InstructorSpecificStudentTable({
                       </div>
                     </Table.Cell>
 
-                    <Table.Cell>
+                    <Table.Cell className="w-[18%] min-w-[130px]">
                       {st.pace === "AHEAD" ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
-                          <CheckCircle2 className="w-3 h-3" /> Vượt tiến độ
+                          <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
                         </span>
                       ) : st.pace === "ON_TRACK" ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
-                          <Clock className="w-3 h-3" /> Đúng tiến độ
+                          <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
-                          <AlertTriangle className="w-3 h-3" /> Chậm tiến độ
+                          <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
                         </span>
                       )}
                       <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
@@ -419,7 +455,7 @@ export function InstructorSpecificStudentTable({
                       </div>
                     </Table.Cell>
 
-                    <Table.Cell>
+                    <Table.Cell className="w-[20%] min-w-[150px]">
                       {isDone ? (
                         <span className="text-[11px] font-mono text-success font-semibold">
                           Đã hoàn thành khóa
@@ -446,40 +482,46 @@ export function InstructorSpecificStudentTable({
                       )}
                     </Table.Cell>
 
-                    <Table.Cell className="text-right">
-                      {isDone ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
-                          Đã cấp chứng chỉ
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onNudgeStudent(st);
-                          }}
-                          className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer ${
-                            isNudged
-                              ? "bg-muted text-muted-foreground opacity-60 cursor-default"
-                              : st.pace === "BEHIND"
-                                ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/30"
-                                : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30"
-                          }`}
-                          title="Gửi thông báo nhắc nhở học tập"
-                        >
-                          {isNudged ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3 text-success" />
-                              <span>Đã gửi</span>
-                            </>
-                          ) : (
-                            <>
-                              <Mail className="w-3 h-3" />
-                              <span>Nhắc nhở</span>
-                            </>
-                          )}
-                        </button>
-                      )}
+                    <Table.Cell className="w-[16%] min-w-[120px] text-right">
+                      <div className="flex items-center justify-end">
+                        {isDone ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20 whitespace-nowrap">
+                            Đã cấp chứng chỉ
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onNudgeStudent(st);
+                            }}
+                            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
+                              isNudged
+                                ? "bg-muted text-muted-foreground hover:bg-muted/80 border border-outline-variant/60"
+                                : st.pace === "BEHIND"
+                                  ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/30"
+                                  : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30"
+                            }`}
+                            title={
+                              isNudged
+                                ? "Đã gửi nhắc nhở gần đây • Nhấn để xem hoặc gửi thông điệp mới"
+                                : "Soạn tin nhắn nhắc nhở học tập"
+                            }
+                          >
+                            {isNudged ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3 text-success" aria-hidden="true" />
+                                <span>Đã gửi</span>
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="w-3 h-3" aria-hidden="true" />
+                                <span>Nhắc nhở</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </Table.Cell>
                   </Table.Row>
                 );

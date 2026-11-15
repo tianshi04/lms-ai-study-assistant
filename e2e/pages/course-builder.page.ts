@@ -35,7 +35,8 @@ export class CourseBuilderPage {
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/instructor\/courses\/.+/);
     await expect(this.page.locator('body')).toBeVisible();
-    await expect(this.addWeekButton).toBeVisible();
+    await expect(this.page.getByText(/Đang tải cấu trúc bài giảng/i).first()).not.toBeVisible({ timeout: 20000 });
+    await expect(this.addWeekButton).toBeVisible({ timeout: 15000 });
   }
 
   async createWeekModule(title: string, summary: string) {
