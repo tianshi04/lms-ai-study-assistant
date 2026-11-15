@@ -1,5 +1,6 @@
 import {
   useQuery,
+  useQueries,
   useMutation,
   useQueryClient,
   type UseQueryOptions,
@@ -321,6 +322,34 @@ export function useGradingQueueQuery(
     enabled:
       options?.enabled !== undefined ? options.enabled : !!params.courseId || !!params.itemId,
     ...options,
+  });
+}
+
+/**
+ * Hook truy vấn hàng đợi chấm bài của toàn bộ các khóa học của giảng viên (Multi-Course Grading Queue)
+ */
+export function useAllGradingQueueQueries(
+  courses: { id: string }[],
+  options?: { enabled?: boolean },
+) {
+  return useQueries({
+    queries: courses.map((c) => ({
+      queryKey: ["gradingQueue", { courseId: c.id, status: GradingQueueStatus.ALL }],
+      queryFn: async () => {
+        if (!c.id) return { items: [], nextPageToken: "", totalCount: 0 };
+        const client = getRpcClient(AssessmentService);
+        return await client.listGradingQueue({
+          courseId: c.id,
+          itemId: "",
+          status: GradingQueueStatus.ALL,
+          pageSize: 50,
+          pageToken: "",
+          searchQuery: "",
+        });
+      },
+      enabled: (options?.enabled ?? true) && !!c.id,
+      staleTime: 60 * 1000,
+    })),
   });
 }
 

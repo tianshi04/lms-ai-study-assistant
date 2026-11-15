@@ -110,9 +110,16 @@ export function InstructorActionTasksCard({
                 <CheckSquare className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
               <div>
-                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
-                  Hàng Chờ Chấm Bài
-                </h4>
+                <div className="flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                    Hàng Chờ Chấm Bài
+                  </h4>
+                  {effectiveGradingCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 font-mono">
+                      {effectiveGradingCount} bài chờ chấm
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   {isLoading
                     ? "Đang tải dữ liệu bài nộp..."
