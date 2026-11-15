@@ -8,7 +8,6 @@ import {
   ChevronRight,
   ClipboardList,
   AlertTriangle,
-  ArrowRight,
 } from "lucide-react";
 import type { OverviewActionTask } from "../types";
 import { useGradingQueueQuery } from "@/lib/query_hooks";
@@ -103,72 +102,56 @@ export function InstructorActionTasksCard({
       {/* Các Nhóm Công Việc Chức Năng (Trạm Điều Hành Cockpit) */}
       <div className="space-y-2">
         {/* Nhóm 1: Bàn chấm bài tập & Đồ án */}
-        <div className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all space-y-2 group">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="p-1 rounded-md shrink-0 bg-primary/10 text-primary">
-                <CheckSquare className="w-3.5 h-3.5" aria-hidden="true" />
-              </span>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
-                    Hàng Chờ Chấm Bài
-                  </h4>
-                  {effectiveGradingCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 font-mono">
-                      {effectiveGradingCount} bài chờ chấm
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {isLoading
-                    ? "Đang tải dữ liệu bài nộp..."
-                    : effectiveGradingCount > 0
-                      ? courseId
-                        ? `${effectiveGradingCount} bài tập tự luận cần can thiệp`
-                        : `${effectiveGradingCount} bài tập tự luận cần can thiệp trên các lớp`
-                      : "Không có bài nộp nào cần can thiệp"}
-                </p>
-                {isOverview && topGradingTask?.courseTitle && effectiveGradingCount > 0 && (
-                  <p className="text-[10px] text-primary font-medium mt-0.5">
-                    <span className="text-muted-foreground">Ưu tiên chấm: </span>
-                    <span className="font-bold">{topGradingTask.courseTitle}</span>
-                  </p>
+        <div className="p-3 rounded-2xl bg-surface border border-outline-variant/60 hover:border-primary/40 transition-all flex items-center justify-between gap-2 group">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="p-1 rounded-md shrink-0 bg-primary/10 text-primary">
+              <CheckSquare className="w-3.5 h-3.5" aria-hidden="true" />
+            </span>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+                  Hàng Chờ Chấm Bài
+                </h4>
+                {effectiveGradingCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                    {effectiveGradingCount} bài chờ chấm
+                  </span>
                 )}
               </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {isLoading
+                  ? "Đang tải dữ liệu bài nộp..."
+                  : effectiveGradingCount > 0
+                    ? courseId
+                      ? `${effectiveGradingCount} bài tập tự luận cần can thiệp`
+                      : `${effectiveGradingCount} bài tập tự luận cần can thiệp trên các lớp`
+                    : "Không có bài nộp nào cần can thiệp"}
+              </p>
+              {isOverview && topGradingTask?.courseTitle && effectiveGradingCount > 0 && (
+                <p className="text-[10px] text-primary font-medium mt-0.5">
+                  <span className="text-muted-foreground">Ưu tiên chấm: </span>
+                  <span className="font-bold">{topGradingTask.courseTitle}</span>
+                </p>
+              )}
             </div>
           </div>
 
-          {/* CTA Link to Cockpit */}
-          <div className="flex items-center justify-end pt-1">
-            {effectiveGradingCount > 0 ? (
-              <Link
-                href={
-                  courseId
-                    ? `/instructor/courses/${courseId}/grading`
-                    : topGradingTask?.actionUrl || primaryActionUrl || "/instructor/courses"
-                }
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs transition-colors"
-                title={
-                  isOverview && topGradingTask?.courseTitle
-                    ? `Chấm bài ngay cho môn ${topGradingTask.courseTitle}`
-                    : "Mở Bàn làm việc chấm bài"
-                }
-              >
-                <span>Chấm bài ngay</span>
-                <ArrowRight className="w-3 h-3" aria-hidden="true" />
-              </Link>
-            ) : (
-              <Link
-                href={courseId ? `/instructor/courses/${courseId}/grading` : "/instructor/courses"}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
-                title="Xem danh sách khóa học"
-              >
-                <span>Xem khóa học</span>
-                <ChevronRight className="w-3 h-3" aria-hidden="true" />
-              </Link>
-            )}
-          </div>
+          <Link
+            href={
+              courseId
+                ? `/instructor/courses/${courseId}/grading`
+                : topGradingTask?.actionUrl || primaryActionUrl || "/instructor/courses"
+            }
+            className="font-bold text-primary hover:underline text-xs flex items-center gap-0.5 shrink-0"
+            title={
+              isOverview && topGradingTask?.courseTitle
+                ? `Vào chấm bài môn ${topGradingTask.courseTitle}`
+                : "Vào bàn làm việc chấm bài"
+            }
+          >
+            <span>{effectiveGradingCount > 0 || courseId ? "Vào chấm bài" : "Xem khóa học"}</span>
+            <ChevronRight className="w-3 h-3" aria-hidden="true" />
+          </Link>
         </div>
 
         {/* Nhóm 2: Hỏi đáp & Thảo luận môn học / cộng đồng */}
@@ -178,8 +161,8 @@ export function InstructorActionTasksCard({
               <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
             </span>
             <div>
-              <div className="flex items-center gap-1.5">
-                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
                   Hỏi Đáp & Thảo Luận
                 </h4>
                 {isOverview && effectiveQaCount > 0 && (
