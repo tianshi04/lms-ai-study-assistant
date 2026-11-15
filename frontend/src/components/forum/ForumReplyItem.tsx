@@ -26,12 +26,12 @@ export interface ForumReplyItemProps {
 function formatRole(role: string): { label: string; variant: "warning" | "primary" | "secondary" } {
   if (!role) return { label: "Học viên", variant: "secondary" };
   const r = role.toUpperCase();
-  if (r.includes("INSTRUCTOR") || r === "2") return { label: "Giảng viên", variant: "warning" };
-  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3") {
-    return { label: "Trợ giảng (TA)", variant: "warning" };
-  }
-  if (r.includes("ADMIN") || r.includes("SUPER_ADMIN")) {
+  if (r.includes("ADMIN") || r.includes("SUPER_ADMIN") || r === "3") {
     return { label: "Quản trị viên", variant: "primary" };
+  }
+  if (r.includes("INSTRUCTOR") || r === "2") return { label: "Giảng viên", variant: "warning" };
+  if (r.includes("TA") || r.includes("TEACHING ASSISTANT")) {
+    return { label: "Trợ giảng (TA)", variant: "warning" };
   }
   return { label: "Học viên", variant: "secondary" };
 }
