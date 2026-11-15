@@ -273,7 +273,12 @@ export function useCourseBuilder(courseId: string) {
                 explanation: q.explanation,
               }))
             : [],
-        readingMarkdown: payload.type === ItemType.READING ? payload.readingMarkdown : "",
+        readingMarkdown:
+          payload.type === ItemType.READING ||
+          payload.type === ItemType.AUTO_GRADED_LAB ||
+          payload.type === ItemType.PEER_REVIEW
+            ? payload.readingMarkdown || ""
+            : "",
         starterCode: payload.type === ItemType.AUTO_GRADED_LAB ? payload.starterCode : "",
         testCasesJson: payload.type === ItemType.AUTO_GRADED_LAB ? payload.testCasesJson : "",
         language: payload.type === ItemType.AUTO_GRADED_LAB ? payload.language : "",
@@ -331,7 +336,12 @@ export function useCourseBuilder(courseId: string) {
         videoUrl: payload.type === ItemType.VIDEO ? payload.videoUrl : undefined,
         vttSubtitleUrl: payload.type === ItemType.VIDEO ? payload.vttSubtitleUrl : undefined,
         autoTranscribe: payload.type === ItemType.VIDEO ? payload.autoTranscribe : undefined,
-        readingMarkdown: payload.type === ItemType.READING ? payload.readingMarkdown : undefined,
+        readingMarkdown:
+          payload.type === ItemType.READING ||
+          payload.type === ItemType.AUTO_GRADED_LAB ||
+          payload.type === ItemType.PEER_REVIEW
+            ? payload.readingMarkdown
+            : undefined,
         inVideoQuizzes:
           payload.type === ItemType.VIDEO
             ? payload.inVideoQuizzes?.map((q) => ({
