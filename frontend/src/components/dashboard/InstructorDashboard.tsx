@@ -70,18 +70,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     setCurrentTimeMs(Date.now());
   }, []);
 
-  const currentMonthNumber = useMemo(() => {
-    const d = currentTimeMs > 0 ? new Date(currentTimeMs) : new Date();
-    return d.getMonth() + 1;
-  }, [currentTimeMs]);
-
-  const lastMonthNumber = useMemo(() => {
-    const d = currentTimeMs > 0 ? new Date(currentTimeMs) : new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - 1);
-    return d.getMonth() + 1;
-  }, [currentTimeMs]);
-
   // Tự động gán khóa học đầu tiên làm active course dự phòng
   useEffect(() => {
     if (!selectedCourseId && courses.length > 0) {
@@ -216,8 +204,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 setIsPacingModalOpen(true);
               }}
               enrichedCoursesForComparison={overviewData.enrichedCoursesForComparison}
-              currentMonthNumber={currentMonthNumber}
-              lastMonthNumber={lastMonthNumber}
             />
           ) : (
             <InstructorCourseDeepDiveView
@@ -230,8 +216,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               completedStudents={courseData.completedStudents}
               totalItemsInActiveCourse={courseData.totalItemsInActiveCourse}
               currentTimeMs={currentTimeMs}
-              currentMonthNumber={currentMonthNumber}
-              lastMonthNumber={lastMonthNumber}
               nudgedSpecificStudentIds={nudgedSpecificStudentIds}
               onNudgeStudent={handleNudgeStudent}
               onNudgeAllBehind={() => {

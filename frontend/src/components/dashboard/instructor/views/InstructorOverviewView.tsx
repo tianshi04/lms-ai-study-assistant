@@ -48,8 +48,6 @@ export interface InstructorOverviewViewProps {
   };
   onOpenPacingModal: (category?: "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND") => void;
   enrichedCoursesForComparison: EnrichedCourseComparisonItem[];
-  currentMonthNumber: number;
-  lastMonthNumber: number;
 }
 
 export function InstructorOverviewView({
@@ -73,8 +71,6 @@ export function InstructorOverviewView({
   pacingCohortSummary,
   onOpenPacingModal,
   enrichedCoursesForComparison,
-  currentMonthNumber,
-  lastMonthNumber,
 }: InstructorOverviewViewProps) {
   // Tab biểu đồ ở chế độ tất cả môn: "trend" | "compare" | "certs"
   const [allChartTab, setAllChartTab] = useState<"trend" | "compare" | "certs">("trend");
@@ -216,8 +212,8 @@ export function InstructorOverviewView({
                     <option value="7d">7 ngày gần nhất</option>
                     <option value="this_week">Tuần này</option>
                     <option value="last_week">Tuần trước</option>
-                    <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
-                    <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
+                    <option value="this_month">Tháng này</option>
+                    <option value="last_month">Tháng trước</option>
                     {allChartTab === "trend" && <option value="custom">Chọn thời gian</option>}
                   </select>
 

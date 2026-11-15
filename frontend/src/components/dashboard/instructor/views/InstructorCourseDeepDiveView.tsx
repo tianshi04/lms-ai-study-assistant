@@ -40,8 +40,6 @@ export interface InstructorCourseDeepDiveViewProps {
   completedStudents: SpecificCompletedStudent[];
   totalItemsInActiveCourse: number;
   currentTimeMs: number;
-  currentMonthNumber: number;
-  lastMonthNumber: number;
   nudgedSpecificStudentIds: Set<string>;
   onNudgeStudent: (student: StudentWithPacing) => void;
   onNudgeAllBehind: () => void;
@@ -58,8 +56,6 @@ export function InstructorCourseDeepDiveView({
   completedStudents,
   totalItemsInActiveCourse,
   currentTimeMs,
-  currentMonthNumber,
-  lastMonthNumber,
   nudgedSpecificStudentIds,
   onNudgeStudent,
   onNudgeAllBehind,
@@ -240,8 +236,8 @@ export function InstructorCourseDeepDiveView({
                     <option value="7d">7 ngày gần nhất</option>
                     <option value="this_week">Tuần này</option>
                     <option value="last_week">Tuần trước</option>
-                    <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
-                    <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
+                    <option value="this_month">Tháng này</option>
+                    <option value="last_month">Tháng trước</option>
                     {chartTab === "bar" && <option value="custom">Chọn thời gian</option>}
                   </select>
 
