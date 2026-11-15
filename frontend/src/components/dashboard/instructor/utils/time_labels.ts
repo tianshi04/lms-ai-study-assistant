@@ -113,8 +113,8 @@ export function generateTimeLabels(
         dayNum === totalDays;
       const isFuture = isDateInFuture(d, now);
       list.push({
-        day: `${dayNum}`,
-        date: dateStr,
+        day: dateStr,
+        date: "",
         fullDateLabel: `${fullDayName}, ${dateStr}/${year}`,
         showTick: isKeyTick,
         isFuture,
@@ -145,8 +145,8 @@ export function generateTimeLabels(
         dayNum === 25 ||
         dayNum === totalDays;
       list.push({
-        day: `${dayNum}`,
-        date: dateStr,
+        day: dateStr,
+        date: "",
         fullDateLabel: `${fullDayName}, ${dateStr}/${actualYear}`,
         showTick: isKeyTick,
         isFuture: false,
@@ -179,9 +179,11 @@ export function generateTimeLabels(
         const dateStr = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
         const isKeyTick = i === 0 || i === maxPoints - 1 || i % stride === 0;
         const isFuture = isDateInFuture(d, now);
+        const dayLabel = maxPoints > 14 ? dateStr : dayName;
+        const subDateLabel = maxPoints > 14 ? "" : dateStr;
         list.push({
-          day: dayName,
-          date: dateStr,
+          day: dayLabel,
+          date: subDateLabel,
           fullDateLabel: `${fullDayName}, ${dateStr}/${d.getFullYear()}`,
           showTick: isKeyTick,
           isFuture,

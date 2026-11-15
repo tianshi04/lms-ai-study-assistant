@@ -291,7 +291,10 @@ function InstructorSplineChartComponent({
         {points.map((pt, i) => {
           const isSelected = selectedDay === pt.data.day || selectedDay === pt.data.date;
           const isHovered = hoveredIdx === i;
-          const showLabel = pt.data.showTick !== false;
+          const candidateTickCount = points.filter((p) => p.data.showTick !== false).length;
+          const autoStride = candidateTickCount > 10 ? Math.ceil(points.length / 6) : 1;
+          const isAutoKeyTick = i === 0 || i === points.length - 1 || i % autoStride === 0;
+          const showLabel = pt.data.showTick !== undefined ? pt.data.showTick : isAutoKeyTick;
           const isFuture = pt.data.isFuture;
 
           return (
@@ -390,7 +393,7 @@ function InstructorSplineChartComponent({
                   >
                     {pt.data.day}
                   </text>
-                  {pt.data.date && (
+                  {pt.data.date && pt.data.date !== pt.data.day && (
                     <text
                       suppressHydrationWarning
                       x={pt.x}

@@ -118,38 +118,28 @@ export function InstructorOverviewView({
 
   // Dữ liệu biểu đồ từ API thực tế 100% (Zero-Fallback & No Mock Math.sin)
   const allCoursesWeekDaysData = useMemo(() => {
-    if (activityTimelineData?.timeline && activityTimelineData.timeline.length > 0) {
-      return activityTimelineData.timeline.map((p) => {
-        const parts = p.label.split(" ");
-        return {
-          day: parts[0] || p.label,
-          date: p.label,
-          fullDateLabel: p.label,
-          showTick: true,
-          isFuture: false,
-          count:
-            chartLearnerFilter === "in_progress"
-              ? p.inProgress
-              : chartLearnerFilter === "completed"
-                ? p.completedItems
-                : p.activeLearners,
-          completed: chartLearnerFilter === "in_progress" ? 0 : p.completedItems,
-          inProgress: chartLearnerFilter === "completed" ? 0 : p.inProgress,
-        };
-      });
-    }
-
     const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
-    return labels.map((l) => ({
-      day: l.day,
-      date: l.date,
-      fullDateLabel: l.fullDateLabel,
-      showTick: l.showTick,
-      isFuture: l.isFuture,
-      count: 0,
-      completed: 0,
-      inProgress: 0,
-    }));
+    const timeline = activityTimelineData?.timeline || [];
+
+    return labels.map((l, idx) => {
+      const p = timeline[idx];
+      return {
+        day: l.day,
+        date: l.date,
+        fullDateLabel: l.fullDateLabel,
+        showTick: l.showTick,
+        isFuture: l.isFuture,
+        count: !p
+          ? 0
+          : chartLearnerFilter === "in_progress"
+            ? p.inProgress
+            : chartLearnerFilter === "completed"
+              ? p.completedItems
+              : p.activeLearners,
+        completed: !p ? 0 : chartLearnerFilter === "in_progress" ? 0 : p.completedItems,
+        inProgress: !p ? 0 : chartLearnerFilter === "completed" ? 0 : p.inProgress,
+      };
+    });
   }, [
     activityTimelineData?.timeline,
     chartDateRange,
