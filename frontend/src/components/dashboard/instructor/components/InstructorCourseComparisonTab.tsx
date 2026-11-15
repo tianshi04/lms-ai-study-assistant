@@ -1,8 +1,39 @@
 "use client";
 
 import React from "react";
-import { BarChart3, LayoutGrid, Star, ChevronRight } from "lucide-react";
+import { BarChart3, LayoutGrid, Star, ChevronRight, Users, BookOpen } from "lucide-react";
 import type { EnrichedCourseComparisonItem } from "../types";
+
+const SUBJECT_LABELS: Record<string, string> = {
+  "cat-subj-biz": "Kinh doanh & Kinh tế",
+  "cat-subj-cs": "Khoa học Máy tính",
+  "cat-subj-ds": "Khoa học Dữ liệu",
+  "cat-subj-ai": "Trí tuệ Nhân tạo & ML",
+  "cat-subj-it": "Công nghệ Thông tin",
+  biz: "Kinh doanh & Kinh tế",
+  business: "Kinh doanh & Kinh tế",
+  cs: "Khoa học Máy tính",
+  ds: "Khoa học Dữ liệu",
+  ai: "Trí tuệ Nhân tạo",
+  it: "Công nghệ Thông tin",
+  tech: "Công nghệ Thông tin",
+};
+
+export function formatSubjectName(subject?: string): string {
+  if (!subject) return "Khóa học";
+  const normalized = subject.trim().toLowerCase();
+  if (SUBJECT_LABELS[normalized]) {
+    return SUBJECT_LABELS[normalized];
+  }
+  if (normalized.startsWith("cat-subj-")) {
+    const raw = normalized.replace("cat-subj-", "");
+    if (SUBJECT_LABELS[raw]) {
+      return SUBJECT_LABELS[raw];
+    }
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }
+  return subject;
+}
 
 export interface InstructorCourseComparisonTabProps {
   courses: EnrichedCourseComparisonItem[];
@@ -16,13 +47,26 @@ export interface InstructorCourseComparisonTabProps {
 
 export function InstructorCourseComparisonTab({
   courses,
-  activeCourseId,
   compareViewType,
   onChangeCompareViewType,
   compareSortBy,
   onChangeCompareSortBy,
   onSelectCourse,
 }: InstructorCourseComparisonTabProps) {
+  const sortedCourses = React.useMemo(() => {
+    return [...courses].sort((a, b) => {
+      if (compareSortBy === "rate") {
+        return b.compRate - a.compRate;
+      }
+      if (compareSortBy === "students") {
+        return b.totalStudents - a.totalStudents;
+      }
+      if (compareSortBy === "rating") {
+        return b.rating - a.rating;
+      }
+      return 0;
+    });
+  }, [courses, compareSortBy]);
   return (
     <div className="space-y-4">
       {/* Header điều khiển: Chuyển kiểu hiển thị & Sắp xếp */}
@@ -34,34 +78,34 @@ export function InstructorCourseComparisonTab({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Toggle 2 chế độ hiển thị Sơ đồ */}
-          <div className="p-0.5 rounded-lg bg-muted flex items-center gap-1">
+          <div className="p-0.5 rounded-lg bg-muted flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={() => onChangeCompareViewType("bars")}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
                 compareViewType === "bars"
                   ? "bg-surface text-primary shadow-xs font-black"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               aria-label="Xem dạng thước đo đối sánh"
             >
-              <BarChart3 className="w-3 h-3" aria-hidden="true" />
-              <span>Thước đo</span>
+              <BarChart3 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="whitespace-nowrap">Thước đo</span>
             </button>
             <button
               type="button"
               onClick={() => onChangeCompareViewType("cards")}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
                 compareViewType === "cards"
                   ? "bg-surface text-primary shadow-xs font-black"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               aria-label="Xem dạng thẻ vòng tròn"
             >
-              <LayoutGrid className="w-3 h-3" aria-hidden="true" />
-              <span>Thẻ tròn</span>
+              <LayoutGrid className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="whitespace-nowrap">Thẻ tròn</span>
             </button>
           </div>
 
@@ -71,7 +115,7 @@ export function InstructorCourseComparisonTab({
             onChange={(e) =>
               onChangeCompareSortBy(e.target.value as "rate" | "students" | "rating")
             }
-            className="px-2.5 py-1 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+            className="px-2.5 py-1 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer shrink-0"
             aria-label="Sắp xếp danh sách khóa học"
           >
             <option value="rate">Hoàn thành cao nhất</option>
@@ -95,24 +139,19 @@ export function InstructorCourseComparisonTab({
 
           {/* Danh sách các thanh đối sánh */}
           <div className="space-y-3">
-            {courses.map((course) => {
-              const isCurrentActive = course.id === activeCourseId;
+            {sortedCourses.map((course) => {
               return (
                 <button
                   type="button"
                   key={course.id}
                   onClick={() => onSelectCourse(course.id)}
-                  className={`w-full text-left group p-3.5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    isCurrentActive
-                      ? "bg-primary/5 border-primary ring-1 ring-primary/30"
-                      : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-xs"
-                  }`}
+                  className="w-full text-left group p-3.5 rounded-2xl border border-outline-variant/60 bg-surface hover:border-primary/50 hover:shadow-xs transition-all cursor-pointer relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {/* Header hàng: Tên môn, Trạng thái & Rating */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground uppercase font-mono shrink-0">
-                        {course.subject || "Khóa học"}
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-muted text-muted-foreground shrink-0">
+                        {formatSubjectName(course.subject)}
                       </span>
                       <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">
                         {course.title}
@@ -188,8 +227,7 @@ export function InstructorCourseComparisonTab({
       ) : (
         /* CÁCH 2: LƯỚI THẺ VÒNG TRÒN TỶ LỆ (RADIAL RING CARDS) */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {courses.map((course) => {
-            const isCurrentActive = course.id === activeCourseId;
+          {sortedCourses.map((course) => {
             const radius = 32;
             const circumference = 2 * Math.PI * radius;
             const strokeDashoffset = circumference - (course.compRate / 100) * circumference;
@@ -199,16 +237,12 @@ export function InstructorCourseComparisonTab({
                 type="button"
                 key={course.id}
                 onClick={() => onSelectCourse(course.id)}
-                className={`w-full text-left group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                  isCurrentActive
-                    ? "bg-primary/5 border-primary ring-1 ring-primary/30"
-                    : "bg-surface border-outline-variant/60 hover:border-primary/50 hover:shadow-sm"
-                }`}
+                className="w-full text-left group p-4 rounded-2xl border border-outline-variant/60 bg-surface hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground uppercase font-mono">
-                      {course.subject || "Khóa học"}
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-muted text-muted-foreground shrink-0">
+                      {formatSubjectName(course.subject)}
                     </span>
                     <span className="text-warning font-bold text-xs flex items-center gap-1 font-mono">
                       <Star className="w-3 h-3 fill-warning text-warning" aria-hidden="true" />
@@ -267,8 +301,14 @@ export function InstructorCourseComparisonTab({
                 {/* Thông số dưới chân thẻ */}
                 <div className="pt-2.5 border-t border-outline-variant/40 space-y-2 w-full">
                   <div className="grid grid-cols-2 text-[11px] font-mono text-muted-foreground">
-                    <span>👥 {course.totalStudents} học viên</span>
-                    <span className="text-right">📚 {course.weekCount} tuần học</span>
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                      <span>{course.totalStudents} học viên</span>
+                    </span>
+                    <span className="flex items-center justify-end gap-1 text-right">
+                      <BookOpen className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                      <span>{course.weekCount} tuần học</span>
+                    </span>
                   </div>
                   <div className="text-[11px] font-bold text-primary flex items-center justify-between group-hover:underline">
                     <span>Mở chi tiết lớp</span>

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 import { useSendStudentReminderMutation } from "@/lib/query_hooks";
-import { Zap, AlertTriangle, Users, RotateCcw, Sparkles, Clock, Loader2 } from "lucide-react";
+import { Users, RotateCcw, Loader2, Send } from "lucide-react";
 
 export interface BulkReminderStudent {
   userId: string;
@@ -254,66 +254,18 @@ export function InstructorBulkReminderModal({
       <Dialog.Content size="xl" className="space-y-4 max-h-[90vh] overflow-y-auto">
         <Dialog.Header>
           <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                isAhead
-                  ? "bg-warning/15 text-warning"
-                  : isOnTrack
-                    ? "bg-primary/10 text-primary"
-                    : "bg-destructive/10 text-destructive"
-              }`}
-            >
-              {isAhead ? (
-                <Sparkles className="w-5 h-5 fill-warning/20 text-warning" aria-hidden="true" />
-              ) : isOnTrack ? (
-                <Clock className="w-5 h-5 text-primary" aria-hidden="true" />
-              ) : (
-                <Zap className="w-5 h-5 fill-destructive" aria-hidden="true" />
-              )}
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs bg-primary/10 text-primary">
+              <Send className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
               <Dialog.Title className="text-base font-bold text-foreground">
-                {isSingle
-                  ? isAhead
-                    ? "Gửi Khích Lệ Học Tập Tới Học Viên"
-                    : isOnTrack
-                      ? "Gửi Đôn Đốc Tiến Độ Tới Học Viên"
-                      : "Gửi Nhắc Nhở Học Tập Tới Học Viên"
-                  : "Gửi Nhắc Nhở Học Tập Tới Học Viên Chậm Tiến Độ"}
+                Gửi thông báo học tập
               </Dialog.Title>
             </div>
           </div>
         </Dialog.Header>
 
         <div className="space-y-3.5 text-xs">
-          {/* Card cảnh báo điểm nghẽn nếu có và nhóm học viên thực sự cần can thiệp */}
-          {bottleneckWeek && (!isSingle || singleStudent?.pace === "BEHIND") ? (
-            <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-start gap-2.5 text-xs text-destructive">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="space-y-0.5">
-                <span className="font-bold">
-                  Phát hiện điểm nghẽn học tập: Tuần {bottleneckWeek.weekNumber} &mdash; &ldquo;
-                  {bottleneckWeek.title}&rdquo;
-                </span>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Tỷ lệ học viên dừng lại tại tuần này là {bottleneckWeek.dropRate}%. Mẫu thông báo
-                  bên dưới đã được tự động điều chỉnh phù hợp với điểm nghẽn này.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20 flex items-start gap-2.5 text-xs text-primary">
-              <Sparkles className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-              <div className="space-y-0.5">
-                <span className="font-bold">Thông báo khích lệ học tập cá nhân hóa</span>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Học viên sẽ nhận chuông thông báo trên hệ thống và email nhắc nhở đôn đốc bám sát
-                  lộ trình môn học.
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Danh sách học viên nhận tin (Scrollable gọn gàng) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
@@ -429,20 +381,12 @@ export function InstructorBulkReminderModal({
             type="button"
             disabled={isSending || students.length === 0 || !subject.trim() || !content.trim()}
             onClick={handleConfirmSend}
-            className={`text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer ${
-              isAhead || isOnTrack
-                ? "bg-primary hover:bg-primary-hover text-primary-foreground"
-                : "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-            }`}
+            className="text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer bg-primary hover:bg-primary-hover text-primary-foreground"
           >
             {isSending ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-            ) : isAhead ? (
-              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-            ) : isOnTrack ? (
-              <Clock className="w-3.5 h-3.5" aria-hidden="true" />
             ) : (
-              <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+              <Send className="w-3.5 h-3.5" aria-hidden="true" />
             )}
             <span>
               {isSending

@@ -9,11 +9,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   ArrowRight,
-  Flame,
 } from "lucide-react";
 import type { Course, EnrolledStudent } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
-import { InstructorHeatmap } from "../../InstructorHeatmap";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
 import { InstructorWeeklyFunnelTab } from "../components/InstructorWeeklyFunnelTab";
 import {
@@ -67,8 +65,8 @@ export function InstructorCourseDeepDiveView({
   onNudgeAllBehind,
   onSelectStudentForDetail,
 }: InstructorCourseDeepDiveViewProps) {
-  // Tab biểu đồ ở chế độ môn học: "bar" | "heatmap" | "funnel" | "certs"
-  const [chartTab, setChartTab] = useState<"bar" | "heatmap" | "funnel" | "certs">("bar");
+  // Tab biểu đồ ở chế độ môn học: "bar" | "funnel" | "certs"
+  const [chartTab, setChartTab] = useState<"bar" | "funnel" | "certs">("bar");
   const [chartDateRange, setChartDateRange] = useState("7d");
   const [chartLearnerFilter, setChartLearnerFilter] = useState<"all" | "in_progress" | "completed">(
     "all",
@@ -224,19 +222,6 @@ export function InstructorCourseDeepDiveView({
 
               <button
                 type="button"
-                onClick={() => setChartTab("heatmap")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  chartTab === "heatmap"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Flame className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
-                <span>Bản đồ nhiệt giờ học</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setChartTab("funnel")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                   chartTab === "funnel"
@@ -263,7 +248,7 @@ export function InstructorCourseDeepDiveView({
             </div>
 
             {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
-            {chartTab === "bar" || chartTab === "heatmap" ? (
+            {chartTab === "bar" ? (
               <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
                   <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
@@ -339,11 +324,6 @@ export function InstructorCourseDeepDiveView({
                 }
               />
             </div>
-          )}
-
-          {/* Tab 2: Bản đồ nhiệt giờ học (Heatmap) */}
-          {chartTab === "heatmap" && (
-            <InstructorHeatmap dateRange={chartDateRange} learnerFilter={chartLearnerFilter} />
           )}
 
           {/* Tab 3: Phễu hoàn thành theo tuần */}
