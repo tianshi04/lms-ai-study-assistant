@@ -52,7 +52,7 @@ export interface InstructorOverviewViewProps {
 
 export function InstructorOverviewView({
   courses,
-  activeCourse,
+  activeCourse: _activeCourse,
   onSelectCourse,
   analyticsByCourseId: _analyticsByCourseId,
   pendingGradingByCourseId: _pendingGradingByCourseId,
@@ -83,7 +83,6 @@ export function InstructorOverviewView({
     null,
   );
 
-  const [compareViewType, setCompareViewType] = useState<"bars" | "cards">("cards");
   const [compareSortBy, setCompareSortBy] = useState<"rate" | "students" | "rating">("rate");
 
   const [customStartDate, setCustomStartDate] = useState(() => {
@@ -300,9 +299,6 @@ export function InstructorOverviewView({
           {allChartTab === "compare" && (
             <InstructorCourseComparisonTab
               courses={enrichedCoursesForComparison}
-              activeCourseId={activeCourse?.id}
-              compareViewType={compareViewType}
-              onChangeCompareViewType={setCompareViewType}
               compareSortBy={compareSortBy}
               onChangeCompareSortBy={setCompareSortBy}
               onSelectCourse={onSelectCourse}
