@@ -208,6 +208,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           ) : (
             <InstructorCourseDeepDiveView
               activeCourse={activeCourse}
+              pendingQaCount={
+                activeCourse ? overviewData.pendingQaByCourseId.get(activeCourse.id) || 0 : 0
+              }
               rawStudents={courseData.rawStudents}
               rawStudentsWithPacing={courseData.rawStudentsWithPacing}
               coursePacingCounts={courseData.coursePacingCounts}

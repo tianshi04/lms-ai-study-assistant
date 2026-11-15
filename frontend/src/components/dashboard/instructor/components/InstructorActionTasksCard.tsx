@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { OverviewActionTask } from "../types";
 import { useGradingQueueQuery } from "@/lib/query_hooks";
+import { useForumThreadsQuery } from "@/lib/queries/useForumQueries";
 import { GradingQueueStatus } from "@/gen/assessment/v1/assessment_pb";
 
 interface InstructorActionTasksCardProps {
@@ -46,11 +47,37 @@ export function InstructorActionTasksCard({
     { enabled: !!courseId },
   );
 
+  const { data: courseThreads, isLoading: loadingThreads } = useForumThreadsQuery(courseId || "", {
+    enabled: !!courseId && totalQaCount === undefined,
+  });
+
   const queueItems = useMemo(() => gradingData?.items || [], [gradingData]);
 
   const coursePendingGradingCount = useMemo(() => {
     return queueItems.filter((i) => i.status !== GradingQueueStatus.GRADED).length;
   }, [queueItems]);
+
+  const coursePendingQaCount = useMemo(() => {
+    if (totalQaCount !== undefined) return totalQaCount;
+    if (!courseThreads) return 0;
+    return courseThreads.filter((th) => {
+      const r = (th.authorRole || "").toUpperCase();
+      const isStaff =
+        r.includes("INSTRUCTOR") ||
+        r.includes("GIẢNG VIÊN") ||
+        r === "2" ||
+        r.includes("TA") ||
+        r === "3" ||
+        r.includes("ADMIN");
+      const titleLower = th.title.trim().toLowerCase();
+      const isAnnouncement =
+        titleLower.startsWith("[thông báo]") ||
+        titleLower.startsWith("[thong bao]") ||
+        titleLower.startsWith("[announcement]");
+      const hasStaffReply = th.replies?.some((reply) => reply.isStaffAnswer);
+      return !th.isStaffPinned && !isStaff && !isAnnouncement && !hasStaffReply;
+    }).length;
+  }, [totalQaCount, courseThreads]);
 
   // 2. Dữ liệu khi xem ở Chế độ Tổng quan toàn bộ các môn học
   const overviewTasks = useMemo(() => tasks || [], [tasks]);
@@ -75,10 +102,11 @@ export function InstructorActionTasksCard({
 
   // 3. Hợp nhất chỉ số giữa 2 chế độ (Unified Metrics)
   const effectiveGradingCount = isOverview ? overviewGradingCount : coursePendingGradingCount;
-  const effectiveQaCount = isOverview ? overviewQaCount : 0;
+  const effectiveQaCount = isOverview ? overviewQaCount : coursePendingQaCount;
   const effectiveBehindCount = behindCount;
 
-  const isLoading = !isOverview && loadingGrading;
+  const isLoadingGrading = !isOverview && loadingGrading;
+  const isLoadingQa = !isOverview && totalQaCount === undefined && loadingThreads;
 
   return (
     <div className="p-4.5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-3">
@@ -112,7 +140,7 @@ export function InstructorActionTasksCard({
                 Hàng Chờ Chấm Bài
               </h4>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                {isLoading
+                {isLoadingGrading
                   ? "Đang tải dữ liệu bài nộp..."
                   : effectiveGradingCount > 0
                     ? courseId
@@ -158,11 +186,13 @@ export function InstructorActionTasksCard({
                 Hỏi Đáp & Thảo Luận
               </h4>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                {courseId
-                  ? "Giải đáp thắc mắc và hỗ trợ sinh viên trong lớp"
+                {isLoadingQa
+                  ? "Đang tải dữ liệu thảo luận..."
                   : effectiveQaCount > 0
-                    ? `${effectiveQaCount} câu hỏi cần Giảng viên giải đáp trên Diễn đàn`
-                    : "Giải đáp thắc mắc và hỗ trợ sinh viên cộng đồng"}
+                    ? courseId
+                      ? `${effectiveQaCount} câu hỏi cần Giảng viên giải đáp trong lớp`
+                      : `${effectiveQaCount} câu hỏi cần Giảng viên giải đáp trên các lớp`
+                    : "Không có câu hỏi nào cần giải đáp"}
               </p>
               {isOverview && topQaTask?.courseTitle && effectiveQaCount > 0 && (
                 <p className="text-[10px] text-warning font-medium mt-0.5">
@@ -177,12 +207,14 @@ export function InstructorActionTasksCard({
             href={courseId ? `/forum?courseId=${courseId}` : topQaTask?.actionUrl || "/forum"}
             className="font-bold text-primary hover:underline text-xs flex items-center gap-0.5 shrink-0"
             title={
-              isOverview && topQaTask?.courseTitle
-                ? `Xem thảo luận môn ${topQaTask.courseTitle}`
-                : "Vào diễn đàn thảo luận"
+              courseId
+                ? `Vào diễn đàn thảo luận môn ${courseTitle}`
+                : isOverview && topQaTask?.courseTitle
+                  ? `Xem thảo luận môn ${topQaTask.courseTitle}`
+                  : "Vào diễn đàn thảo luận"
             }
           >
-            <span>Vào thảo luận</span>
+            <span>{effectiveQaCount > 0 || courseId ? "Vào thảo luận" : "Xem diễn đàn"}</span>
             <ChevronRight className="w-3 h-3" aria-hidden="true" />
           </Link>
         </div>

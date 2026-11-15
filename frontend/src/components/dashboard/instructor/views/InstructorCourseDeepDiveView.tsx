@@ -27,6 +27,7 @@ import type { CalculatedWeek, StudentWithPacing } from "../types";
 
 export interface InstructorCourseDeepDiveViewProps {
   activeCourse: Course | null;
+  pendingQaCount?: number;
   rawStudents: EnrolledStudent[];
   rawStudentsWithPacing: StudentWithPacing[];
   coursePacingCounts: {
@@ -48,6 +49,7 @@ export interface InstructorCourseDeepDiveViewProps {
 
 export function InstructorCourseDeepDiveView({
   activeCourse,
+  pendingQaCount,
   rawStudents,
   rawStudentsWithPacing,
   coursePacingCounts,
@@ -344,6 +346,7 @@ export function InstructorCourseDeepDiveView({
         <InstructorActionTasksCard
           courseId={activeCourse?.id}
           courseTitle={activeCourse?.title}
+          totalQaCount={pendingQaCount}
           behindCount={coursePacingCounts.behind}
           onFilterBehind={() => setStudentPacingFilter("BEHIND")}
         />
