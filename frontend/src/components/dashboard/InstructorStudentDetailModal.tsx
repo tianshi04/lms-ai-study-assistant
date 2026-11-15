@@ -314,21 +314,16 @@ export function InstructorStudentDetailModal({
                 </div>
 
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="reminder-body-textarea"
-                      className="text-xs font-bold text-foreground"
-                    >
-                      {isDone
-                        ? "Nội dung thư chúc mừng tốt nghiệp:"
-                        : isAhead
-                          ? "Nội dung thư khích lệ học tập:"
-                          : "Nội dung thông báo nhắc nhở:"}
-                    </label>
-                    <span className="text-[10px] text-muted-foreground">
-                      Học viên sẽ nhận chuông thông báo & email
-                    </span>
-                  </div>
+                  <label
+                    htmlFor="reminder-body-textarea"
+                    className="block text-xs font-bold text-foreground"
+                  >
+                    {isDone
+                      ? "Nội dung thư chúc mừng tốt nghiệp:"
+                      : isAhead
+                        ? "Nội dung thư khích lệ học tập:"
+                        : "Nội dung thông báo nhắc nhở:"}
+                  </label>
                   <Textarea
                     id="reminder-body-textarea"
                     rows={6}
