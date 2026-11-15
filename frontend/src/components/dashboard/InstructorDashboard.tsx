@@ -34,7 +34,6 @@ import {
 } from "lucide-react";
 import { InstructorSplineChart } from "./InstructorSplineChart";
 import { InstructorHeatmap } from "./InstructorHeatmap";
-import { InstructorAIAssistantCard } from "./InstructorAIAssistantCard";
 import type { StudentDetailRecord } from "./InstructorStudentDetailModal";
 import type { StudentPacingRecord } from "./InstructorPacingModal";
 
@@ -1198,26 +1197,12 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               />
             </div>
 
-            {/* CỘT PHẢI (4/12 - 33%): AI COPILOT & VIỆC CẦN XỬ LÝ & PHẢN HỒI */}
+            {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN XỬ LÝ & PHẢN HỒI */}
             <div className="lg:col-span-4 space-y-4">
-              {/* Box 1: AI Teaching Copilot (Agent Cố Vấn & Phân Tích Sư Phạm) */}
-              <InstructorAIAssistantCard
-                courseId={undefined}
-                courseTitle="Tất cả khóa học"
-                behindStudents={allPacingStudents
-                  .filter((s) => s.pace === "BEHIND")
-                  .map((s) => ({
-                    userId: s.id,
-                    userName: s.name,
-                    progressPercent: s.progressPercent,
-                  }))}
-                bottleneckWeek={bottleneckWeek}
-              />
-
-              {/* Box 2: Việc Cần Xử Lý */}
+              {/* Box 1: Việc Cần Xử Lý */}
               <InstructorActionTasksCard tasks={realActionTasks} />
 
-              {/* Box 3: Phản Hồi Sinh Viên */}
+              {/* Box 2: Phản Hồi Sinh Viên */}
               <InstructorRecentReviewsCard
                 reviews={realRecentReviews}
                 avgRating={avgRatingAllCourses || "5.0"}
@@ -2161,14 +2146,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 courseTitle={activeCourse?.title}
                 behindCount={coursePacingCounts.behind}
                 onFilterBehind={() => setStudentPacingFilter("BEHIND")}
-              />
-
-              {/* Box 2: AI Teaching Copilot (Agent Cố Vấn & Phân Tích Sư Phạm) */}
-              <InstructorAIAssistantCard
-                courseId={activeCourse?.id}
-                courseTitle={activeCourse?.title}
-                behindStudents={rawStudentsWithPacing.filter((s) => s.pace === "BEHIND")}
-                bottleneckWeek={bottleneckWeek}
               />
 
               {/* Box 2: Cảnh Báo Điểm Nghẽn */}
