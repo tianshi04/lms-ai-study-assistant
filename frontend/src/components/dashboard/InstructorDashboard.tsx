@@ -77,6 +77,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
   const lastMonthNumber = useMemo(() => {
     const d = currentTimeMs > 0 ? new Date(currentTimeMs) : new Date();
+    d.setDate(1);
     d.setMonth(d.getMonth() - 1);
     return d.getMonth() + 1;
   }, [currentTimeMs]);

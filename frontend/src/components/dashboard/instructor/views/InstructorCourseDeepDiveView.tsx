@@ -191,23 +191,7 @@ export function InstructorCourseDeepDiveView({
                 }`}
               >
                 <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                <span>
-                  Hoạt động (
-                  {chartDateRange === "today"
-                    ? "Hôm nay"
-                    : chartDateRange === "this_week"
-                      ? "Tuần này"
-                      : chartDateRange === "last_week"
-                        ? "Tuần trước"
-                        : chartDateRange === "this_month"
-                          ? `Tháng ${currentMonthNumber}`
-                          : chartDateRange === "last_month"
-                            ? `Tháng ${lastMonthNumber}`
-                            : chartDateRange === "custom"
-                              ? "Tùy chọn"
-                              : "7 ngày"}
-                  )
-                </span>
+                <span>Hoạt động</span>
               </button>
 
               <button
@@ -256,8 +240,8 @@ export function InstructorCourseDeepDiveView({
                     <option value="7d">7 ngày gần nhất</option>
                     <option value="this_week">Tuần này</option>
                     <option value="last_week">Tuần trước</option>
-                    <option value="this_month">Tháng này</option>
-                    <option value="last_month">Tháng trước</option>
+                    <option value="this_month">Tháng này (Tháng {currentMonthNumber})</option>
+                    <option value="last_month">Tháng trước (Tháng {lastMonthNumber})</option>
                     {chartTab === "bar" && <option value="custom">Chọn thời gian</option>}
                   </select>
 
