@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { ForumReplyItem } from "./ForumReplyItem";
+import { getRpcClient } from "@/lib/connect_client";
+import { ForumService } from "@/gen/forum/v1/forum_pb";
 
 interface ThreadDetailModalProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ interface ThreadDetailModalProps {
   isStaffOrAdmin: boolean;
   onVote: (postId: string, isUpvote: boolean) => void;
   onPostReply: (threadId: string, content: string) => Promise<void>;
+  onEditReply?: (replyId: string, content: string) => Promise<void>;
   onDeleteThread?: (threadId: string) => void;
   onDeleteReply?: (replyId: string) => void;
   onPinStaffAnswer?: (replyId: string) => void;
@@ -29,11 +32,12 @@ interface ThreadDetailModalProps {
 function formatRoleName(role: string): string {
   if (!role) return "Học viên";
   const r = role.toUpperCase();
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
-  if (r.includes("INSTRUCTOR") || r === "2") return "Giảng viên";
-  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3") return "Trợ giảng (TA)";
-  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN"))
+  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN") || r === "3")
     return "Quản trị viên";
+  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "COURSE_TA")
+    return "Trợ giảng (TA)";
+  if (r.includes("INSTRUCTOR") || r === "2") return "Giảng viên";
+  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
   return role;
 }
 
@@ -45,6 +49,7 @@ export function ThreadDetailModal({
   isStaffOrAdmin,
   onVote,
   onPostReply,
+  onEditReply,
   onDeleteThread,
   onDeleteReply,
   onPinStaffAnswer,
@@ -57,6 +62,28 @@ export function ThreadDetailModal({
   // Reply editing state inside modal
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editReplyContent, setEditReplyContent] = useState("");
+  const [submittingEditReply, setSubmittingEditReply] = useState(false);
+
+  const handleSaveEditReply = async (replyId: string) => {
+    if (!editReplyContent.trim() || submittingEditReply) return;
+    setSubmittingEditReply(true);
+    try {
+      if (onEditReply) {
+        await onEditReply(replyId, editReplyContent.trim());
+      } else {
+        const client = getRpcClient(ForumService);
+        await client.updateReply({
+          replyId,
+          content: editReplyContent.trim(),
+        });
+      }
+      setEditingReplyId(null);
+    } catch (err) {
+      console.error("Failed to edit reply:", err);
+    } finally {
+      setSubmittingEditReply(false);
+    }
+  };
 
   const sortedReplies = useMemo(() => {
     if (!thread?.replies) return [];
@@ -121,7 +148,7 @@ export function ThreadDetailModal({
                 {Boolean(
                   thread.title.trim().toLowerCase().startsWith("[thông báo]") ||
                   thread.title.trim().toLowerCase().startsWith("[thong bao]") ||
-                  (thread.authorRole || "").toUpperCase().includes("INSTRUCTOR"),
+                  thread.title.trim().toLowerCase().startsWith("[announcement]"),
                 ) && (
                   <Badge variant="primary" className="gap-1 px-3 py-1 shadow-xs font-bold text-xs">
                     <span>📢 Thông báo từ Giảng viên</span>
@@ -272,10 +299,10 @@ export function ThreadDetailModal({
                     isStaffOrAdmin={isStaffOrAdmin}
                     isEditing={editingReplyId === reply.id}
                     editReplyContent={editReplyContent}
-                    submittingEditReply={false}
+                    submittingEditReply={submittingEditReply}
                     onStartEdit={startEditReply}
                     onCancelEdit={() => setEditingReplyId(null)}
-                    onSaveEdit={() => {}}
+                    onSaveEdit={() => handleSaveEditReply(reply.id)}
                     onDelete={onDeleteReply ? onDeleteReply : () => {}}
                     onVote={onVote}
                     onContentChange={setEditReplyContent}

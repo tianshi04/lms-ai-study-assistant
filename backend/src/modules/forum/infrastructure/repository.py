@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -287,6 +287,25 @@ class ForumRepository(IForumRepository):
 
         return 0
 
+    async def get_post_course_id(self, post_id: str) -> str | None:
+        # 1. Check if post_id is a thread
+        thread_stmt = select(ForumThreadORM.course_id).where(
+            ForumThreadORM.id == post_id
+        )
+        res = await self.session.execute(thread_stmt)
+        course_id = res.scalar_one_or_none()
+        if course_id:
+            return course_id
+
+        # 2. Check if post_id is a reply
+        reply_stmt = (
+            select(ForumThreadORM.course_id)
+            .join(ForumReplyORM, ForumThreadORM.id == ForumReplyORM.thread_id)
+            .where(ForumReplyORM.id == post_id)
+        )
+        r_res = await self.session.execute(reply_stmt)
+        return r_res.scalar_one_or_none()
+
     async def pin_staff_answer(self, reply_id: str, _ta_user_id: str = "") -> bool:
         stmt = select(ForumReplyORM).where(ForumReplyORM.id == reply_id)
         res = await self.session.execute(stmt)
@@ -296,14 +315,23 @@ class ForumRepository(IForumRepository):
 
         reply_orm.is_staff_answer = not reply_orm.is_staff_answer
 
-        if reply_orm.is_staff_answer:
-            thread_stmt = select(ForumThreadORM).where(
-                ForumThreadORM.id == reply_orm.thread_id
-            )
-            t_res = await self.session.execute(thread_stmt)
-            thread_orm = t_res.scalar_one_or_none()
-            if thread_orm:
+        thread_stmt = select(ForumThreadORM).where(
+            ForumThreadORM.id == reply_orm.thread_id
+        )
+        t_res = await self.session.execute(thread_stmt)
+        thread_orm = t_res.scalar_one_or_none()
+        if thread_orm:
+            if reply_orm.is_staff_answer:
                 thread_orm.is_staff_pinned = True
+            else:
+                count_stmt = select(func.count(ForumReplyORM.id)).where(
+                    ForumReplyORM.thread_id == reply_orm.thread_id,
+                    ForumReplyORM.is_staff_answer.is_(True),
+                    ForumReplyORM.id != reply_id,
+                )
+                c_res = await self.session.execute(count_stmt)
+                remaining_pinned = c_res.scalar_one() or 0
+                thread_orm.is_staff_pinned = remaining_pinned > 0
 
         await self.session.commit()
         return True

@@ -119,11 +119,17 @@ export function useInstructorCourseData({
             : "Có nguy cơ tụt lại bài học";
       }
 
+      const currentWeekNumber = Math.max(
+        1,
+        Math.min(totalWeeks, Math.ceil((st.progressPercent / 100) * totalWeeks)),
+      );
+
       return {
         ...st,
         pace,
         paceLabel,
         paceDesc,
+        currentWeekNumber,
       };
     });
   }, [rawStudents, calculatedWeeks.length, currentTimeMs, bottleneckWeek]);

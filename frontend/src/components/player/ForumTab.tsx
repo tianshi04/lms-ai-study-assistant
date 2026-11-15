@@ -14,6 +14,7 @@ import {
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useCourseDetailQuery } from "@/lib/queries/useCatalogQueries";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -29,9 +30,12 @@ interface ForumTabProps {
 function formatRoleName(role: string): string {
   if (!role) return "Học viên";
   const r = role.toUpperCase();
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
+  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN") || r === "3")
+    return "Quản trị viên";
+  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "COURSE_TA")
+    return "Trợ giảng (TA)";
   if (r.includes("INSTRUCTOR") || r === "2") return "Giảng viên";
-  if (r.includes("ADMIN") || r === "3") return "Quản trị viên";
+  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
   return role;
 }
 
@@ -42,8 +46,18 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   const [newContent, setNewContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { userId: authUserId, isStaff: isStaffOrAdmin } = useAuth();
+  const { userId: authUserId, isStaff: isGlobalStaff } = useAuth();
   const currentUserId = authUserId || "";
+  const { data: courseRes } = useCourseDetailQuery(courseId);
+  const course = courseRes?.course;
+
+  const isCourseStaffOrAdmin = Boolean(
+    isGlobalStaff ||
+    (course &&
+      (course.ownerId === currentUserId ||
+        course.coInstructorIds?.includes(currentUserId) ||
+        course.taIds?.includes(currentUserId))),
+  );
 
   // Thread Edit State
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
@@ -367,7 +381,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         <div className="w-full space-y-3">
           {threads.map((thread) => {
             const isThreadAuthor = Boolean(currentUserId && thread.authorUserId === currentUserId);
-            const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
+            const canDeleteThread = isThreadAuthor || isCourseStaffOrAdmin;
             const isEditingThisThread = editingThreadId === thread.id;
             const isTarget = targetThreadId === thread.id;
 
@@ -512,7 +526,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                           key={reply.id}
                           reply={reply}
                           currentUserId={currentUserId}
-                          isStaffOrAdmin={isStaffOrAdmin}
+                          isStaffOrAdmin={isCourseStaffOrAdmin}
                           isEditing={editingReplyId === reply.id}
                           editReplyContent={editReplyContent}
                           submittingEditReply={submittingEditReply}
@@ -560,7 +574,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         onClose={() => setSelectedModalThreadId(null)}
         thread={threads.find((t) => t.id === selectedModalThreadId) || null}
         currentUserId={currentUserId}
-        isStaffOrAdmin={isStaffOrAdmin}
+        isStaffOrAdmin={isCourseStaffOrAdmin}
         onVote={handleVote}
         onPostReply={async (threadId, content) => {
           const client = getRpcClient(ForumService);

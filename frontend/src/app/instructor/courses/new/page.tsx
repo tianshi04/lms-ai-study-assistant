@@ -253,9 +253,7 @@ export default function NewCoursePage() {
           variant="container"
           shape="3xl"
           padding="lg"
-          render={
-            <form onSubmit={handleSubmit} action="javascript:void(0)" method="POST" noValidate />
-          }
+          render={<form onSubmit={handleSubmit} noValidate />}
           className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

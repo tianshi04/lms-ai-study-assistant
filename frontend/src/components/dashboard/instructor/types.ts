@@ -110,4 +110,5 @@ export type StudentWithPacing = EnrolledStudent & {
   pace: "AHEAD" | "ON_TRACK" | "BEHIND";
   paceLabel: string;
   paceDesc: string;
+  currentWeekNumber?: number;
 };

@@ -214,8 +214,8 @@ function ForumPageContent() {
             }
           }
 
-          // 2. Fetch Teaching Courses if Instructor or Staff
-          if (isStaffOrAdmin) {
+          // 2. Fetch Teaching / Assisting Courses if logged in
+          if (isAuthenticated || authUserId) {
             try {
               const teachingRes = await catalogClient.listInstructorCourses({ pageSize: 100 });
               teachingRes.courses.forEach((c) => {
@@ -225,18 +225,6 @@ function ForumPageContent() {
             } catch (err) {
               console.error("Error fetching instructor courses for forum:", err);
             }
-          }
-        }
-
-        // Fallback: If no enrolled or teaching courses found, provide public catalog courses
-        if (combinedMap.size === 0) {
-          try {
-            const publicRes = await catalogClient.listCourses({ pageSize: 50 });
-            publicRes.courses.forEach((c) => {
-              combinedMap.set(c.id, { id: c.id, title: c.title });
-            });
-          } catch (err) {
-            console.error("Error fetching fallback courses for forum:", err);
           }
         }
 
@@ -1098,14 +1086,20 @@ function ForumPageContent() {
                                     </Button>
                                   )}
 
-                                  {isCourseModerator(thread.courseId) && !reply.isStaffAnswer && (
+                                  {isCourseModerator(thread.courseId) && (
                                     <Button
-                                      variant="outlined"
+                                      variant={reply.isStaffAnswer ? "filled" : "outlined"}
                                       size="sm"
                                       onClick={() => handlePinStaffAnswer(reply.id)}
-                                      className="text-xs text-warning bg-warning/10 hover:bg-warning/20 border-warning/30 px-3 py-1 rounded-full h-auto"
+                                      className={`text-xs px-3 py-1 rounded-full h-auto ${
+                                        reply.isStaffAnswer
+                                          ? "text-warning-foreground bg-warning hover:bg-warning/90 border-transparent"
+                                          : "text-warning bg-warning/10 hover:bg-warning/20 border-warning/30"
+                                      }`}
                                     >
-                                      {"Ghim câu trả lời"}
+                                      {reply.isStaffAnswer
+                                        ? "Bỏ ghim câu trả lời"
+                                        : "Ghim câu trả lời"}
                                     </Button>
                                   )}
 
@@ -1365,6 +1359,11 @@ function ForumPageContent() {
         onPostReply={async (threadId, content) => {
           const client = getRpcClient(ForumService);
           await client.postReply({ threadId, content });
+          fetchThreads();
+        }}
+        onEditReply={async (replyId, content) => {
+          const client = getRpcClient(ForumService);
+          await client.updateReply({ replyId, content });
           fetchThreads();
         }}
         onDeleteThread={handleDeleteThread}

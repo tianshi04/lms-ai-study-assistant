@@ -9,9 +9,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   ArrowRight,
+  Flame,
 } from "lucide-react";
 import type { Course, EnrolledStudent } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
+import { InstructorHeatmap } from "../../InstructorHeatmap";
+import { InstructorAIAssistantCard } from "../../InstructorAIAssistantCard";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
 import { InstructorWeeklyFunnelTab } from "../components/InstructorWeeklyFunnelTab";
 import {
@@ -20,6 +23,7 @@ import {
 } from "../components/InstructorCertificatesTab";
 import { InstructorSpecificStudentTable } from "../components/InstructorSpecificStudentTable";
 import { InstructorActionTasksCard } from "../components/InstructorActionTasksCard";
+import { useInstructorActivityTimelineQuery } from "@/lib/queries/useCatalogQueries";
 import { generateTimeLabels } from "../utils/time_labels";
 import type { StudentDetailRecord } from "../../InstructorStudentDetailModal";
 import type { CalculatedWeek, StudentWithPacing } from "../types";
@@ -64,8 +68,8 @@ export function InstructorCourseDeepDiveView({
   onNudgeAllBehind,
   onSelectStudentForDetail,
 }: InstructorCourseDeepDiveViewProps) {
-  // Tab biểu đồ ở chế độ môn học: "bar" | "funnel" | "certs"
-  const [chartTab, setChartTab] = useState<"bar" | "funnel" | "certs">("bar");
+  // Tab biểu đồ ở chế độ môn học: "bar" | "heatmap" | "funnel" | "certs"
+  const [chartTab, setChartTab] = useState<"bar" | "heatmap" | "funnel" | "certs">("bar");
   const [chartDateRange, setChartDateRange] = useState("7d");
   const [chartLearnerFilter, setChartLearnerFilter] = useState<"all" | "in_progress" | "completed">(
     "all",
@@ -91,160 +95,114 @@ export function InstructorCourseDeepDiveView({
     return new Date().toISOString().split("T")[0];
   });
 
-  // Dữ liệu tương tác biểu đồ cho môn học cụ thể theo khoảng thời gian và bộ lọc đối tượng
+  // Truy vấn dữ liệu chuỗi thời gian hoạt động thực tế của khóa học này
+  const { data: activityTimelineData } = useInstructorActivityTimelineQuery({
+    courseId: activeCourse?.id || "",
+    dateRange: chartDateRange,
+    startDate: customStartDate,
+    endDate: customEndDate,
+    learnerFilter: chartLearnerFilter,
+  });
+
+  // Dữ liệu biểu đồ từ API thực tế 100% (Zero-Fallback & No Mock Math.sin)
   const currentSplineData = useMemo(() => {
-    const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
-    const totalCount = rawStudents.length;
-    const completedCount = completedStudents.length;
-    const inProgressCount = Math.max(0, totalCount - completedCount);
-
-    if (totalCount === 0) {
-      return labels.map((l) => ({
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: l.isFuture,
-        count: 0,
-        completed: 0,
-        inProgress: 0,
-      }));
-    }
-
-    let activeCap = totalCount;
-    if (chartLearnerFilter === "in_progress") {
-      activeCap = inProgressCount;
-    } else if (chartLearnerFilter === "completed") {
-      activeCap = completedCount;
-    }
-
-    if (activeCap === 0) {
-      return labels.map((l) => ({
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: l.isFuture,
-        count: 0,
-        completed: 0,
-        inProgress: 0,
-      }));
-    }
-
-    return labels.map((l, idx) => {
-      if (l.isFuture) {
+    if (activityTimelineData?.timeline && activityTimelineData.timeline.length > 0) {
+      return activityTimelineData.timeline.map((p) => {
+        const parts = p.label.split(" ");
         return {
-          day: l.day,
-          date: l.date,
-          fullDateLabel: l.fullDateLabel,
-          showTick: l.showTick,
-          isFuture: true,
-          count: 0,
-          completed: 0,
-          inProgress: 0,
+          day: parts[0] || p.label,
+          date: p.label,
+          fullDateLabel: p.label,
+          showTick: true,
+          isFuture: false,
+          count:
+            chartLearnerFilter === "in_progress"
+              ? p.inProgress
+              : chartLearnerFilter === "completed"
+                ? p.completedItems
+                : p.activeLearners,
+          completed: chartLearnerFilter === "in_progress" ? 0 : p.completedItems,
+          inProgress: chartLearnerFilter === "completed" ? 0 : p.inProgress,
         };
-      }
+      });
+    }
 
-      let active = 0;
-      if (activeCap <= 2) {
-        const isRecent = idx >= labels.length - Math.min(3, labels.length);
-        active = isRecent ? activeCap : 0;
-      } else {
-        const factor = Math.sin(idx * 0.6) * 0.3 + 0.7;
-        active = Math.min(activeCap, Math.max(1, Math.round(activeCap * factor)));
-      }
-
-      const done =
-        chartLearnerFilter === "in_progress"
-          ? 0
-          : Math.min(completedCount, Math.round(completedCount * (active / (activeCap || 1))));
-      const inProg = chartLearnerFilter === "completed" ? 0 : Math.max(0, active - done);
-
-      return {
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: false,
-        count: active,
-        completed: done,
-        inProgress: inProg,
-      };
-    });
+    const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
+    return labels.map((l) => ({
+      day: l.day,
+      date: l.date,
+      fullDateLabel: l.fullDateLabel,
+      showTick: l.showTick,
+      isFuture: l.isFuture,
+      count: 0,
+      completed: 0,
+      inProgress: 0,
+    }));
   }, [
-    rawStudents.length,
-    completedStudents.length,
+    activityTimelineData?.timeline,
     chartDateRange,
     chartLearnerFilter,
     customStartDate,
     customEndDate,
   ]);
 
-  // Lọc học viên theo từ khóa tìm kiếm, nhịp độ học tập (Pacing) và bộ lọc trạng thái / tuần
+  // Bộ lọc danh sách sinh viên
   const filteredStudents = useMemo(() => {
-    return rawStudentsWithPacing.filter((st) => {
-      if (studentSearchQuery.trim()) {
-        const q = studentSearchQuery.toLowerCase();
-        const matchName = st.userName.toLowerCase().includes(q);
-        const matchEmail = st.userEmail.toLowerCase().includes(q);
-        const matchId = st.userId.toLowerCase().includes(q);
-        if (!matchName && !matchEmail && !matchId) return false;
+    return rawStudentsWithPacing.filter((student) => {
+      if (studentStatusFilter === "IN_PROGRESS" && student.progressPercent >= 100) return false;
+      if (studentStatusFilter === "COMPLETED" && student.progressPercent < 100) return false;
+      if (studentStatusFilter === "OVERDUE" && student.pace !== "BEHIND") return false;
+
+      if (studentPacingFilter !== "ALL" && student.pace !== studentPacingFilter) return false;
+
+      if (selectedWeekFilter !== null && student.currentWeekNumber !== selectedWeekFilter) {
+        return false;
       }
 
-      // Lọc theo nhịp độ học tập (Pacing)
-      if (studentPacingFilter === "AHEAD" && st.pace !== "AHEAD") return false;
-      if (studentPacingFilter === "ON_TRACK" && st.pace !== "ON_TRACK") return false;
-      if (studentPacingFilter === "BEHIND" && st.pace !== "BEHIND") return false;
-
-      // Lọc theo trạng thái hoàn thành
-      if (studentStatusFilter === "COMPLETED" && st.progressPercent < 100) return false;
-      if (
-        studentStatusFilter === "IN_PROGRESS" &&
-        (st.progressPercent >= 100 || st.progressPercent <= 0)
-      )
-        return false;
-      if (
-        studentStatusFilter === "OVERDUE" &&
-        (st.progressPercent >= 80 || st.progressPercent === 0)
-      )
-        return false;
-
-      if (selectedWeekFilter !== null) {
-        const weekCount = activeCourse?.weekModules?.length || 1;
-        const week = Math.min(
-          weekCount,
-          Math.max(1, Math.ceil((st.progressPercent || 1) / (100 / weekCount))),
-        );
-        if (week !== selectedWeekFilter) return false;
+      if (studentSearchQuery.trim()) {
+        const q = studentSearchQuery.toLowerCase();
+        const matchName = student.userName.toLowerCase().includes(q);
+        const matchEmail = student.userEmail.toLowerCase().includes(q);
+        const matchId = student.userId.toLowerCase().includes(q);
+        if (!matchName && !matchEmail && !matchId) return false;
       }
 
       return true;
     });
   }, [
     rawStudentsWithPacing,
-    studentSearchQuery,
-    studentPacingFilter,
     studentStatusFilter,
+    studentPacingFilter,
     selectedWeekFilter,
-    activeCourse?.weekModules?.length,
+    studentSearchQuery,
   ]);
 
   const handleClearFilters = () => {
-    setStudentSearchQuery("");
+    setSelectedDayFilter(null);
+    setSelectedWeekFilter(null);
     setStudentPacingFilter("ALL");
     setStudentStatusFilter("ALL");
-    setSelectedWeekFilter(null);
-    setSelectedDayFilter(null);
+    setStudentSearchQuery("");
   };
+
+  const behindStudentsThisCourse = useMemo(() => {
+    return rawStudentsWithPacing
+      .filter((s) => s.pace === "BEHIND")
+      .map((s) => ({
+        userId: s.userId,
+        userName: s.userName,
+        progressPercent: s.progressPercent,
+      }));
+  }, [rawStudentsWithPacing]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-      {/* CỘT TRÁI (8/12 - 67%): BIỂU ĐỒ MÔN HỌC & BẢNG HỌC VIÊN TƯƠNG TÁC */}
+      {/* CỘT TRÁI (8/12 - 67%): BIỂU ĐỒ & BẢNG HỌC VIÊN CHI TIẾT */}
       <div className="lg:col-span-8 space-y-5">
-        {/* Card 1: Khung Biểu Đồ & Tab Phân Tích Lớp Học */}
+        {/* Card 1: Khung Biểu Đồ Khóa Học */}
         <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
           <div className="space-y-3 pb-1">
-            {/* Hàng 1: Tabs biểu đồ môn học */}
+            {/* Tabs biểu đồ */}
             <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
               <button
                 type="button"
@@ -257,7 +215,7 @@ export function InstructorCourseDeepDiveView({
               >
                 <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                 <span>
-                  Biểu đồ (
+                  Hoạt động (
                   {chartDateRange === "today"
                     ? "Hôm nay"
                     : chartDateRange === "this_week"
@@ -277,6 +235,19 @@ export function InstructorCourseDeepDiveView({
 
               <button
                 type="button"
+                onClick={() => setChartTab("heatmap")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
+                  chartTab === "heatmap"
+                    ? "bg-surface text-foreground shadow-xs font-black"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
+                <span>Bản đồ nhiệt giờ học</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setChartTab("funnel")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                   chartTab === "funnel"
@@ -284,8 +255,8 @@ export function InstructorCourseDeepDiveView({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <TrendingDown className="w-3.5 h-3.5 text-destructive" aria-hidden="true" />
-                <span>Phễu rơi rụng (Tuần)</span>
+                <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
+                <span>Phễu hoàn thành theo tuần ({calculatedWeeks.length} tuần)</span>
               </button>
 
               <button
@@ -302,47 +273,41 @@ export function InstructorCourseDeepDiveView({
               </button>
             </div>
 
-            {/* Hàng 2: Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
-                <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                <span>Bộ lọc hiển thị:</span>
-              </div>
+            {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
+            {chartTab === "bar" || chartTab === "heatmap" ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                  <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                  <span>Bộ lọc hiển thị:</span>
+                </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Bộ chọn khoảng thời gian (Khi ở Tab Biểu đồ) */}
-                {chartTab === "bar" && (
-                  <>
-                    <select
-                      value={chartDateRange}
-                      onChange={(e) => setChartDateRange(e.target.value)}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                      aria-label="Chọn khoảng thời gian biểu đồ"
-                    >
-                      <option value="today">Hôm nay</option>
-                      <option value="7d">7 ngày gần nhất</option>
-                      <option value="this_week">Tuần này</option>
-                      <option value="last_week">Tuần trước</option>
-                      <option value="this_month">Tháng này</option>
-                      <option value="last_month">Tháng trước</option>
-                      <option value="custom">Chọn thời gian</option>
-                    </select>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={chartDateRange}
+                    onChange={(e) => setChartDateRange(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
+                    aria-label="Chọn khoảng thời gian biểu đồ môn học"
+                  >
+                    <option value="today">Hôm nay</option>
+                    <option value="7d">7 ngày gần nhất</option>
+                    <option value="this_week">Tuần này</option>
+                    <option value="last_week">Tuần trước</option>
+                    <option value="this_month">Tháng này</option>
+                    <option value="last_month">Tháng trước</option>
+                    {chartTab === "bar" && <option value="custom">Chọn thời gian</option>}
+                  </select>
 
-                    {chartDateRange === "custom" && (
-                      <InstructorDateRangeForm
-                        startDate={customStartDate}
-                        endDate={customEndDate}
-                        onChange={(s, e) => {
-                          setCustomStartDate(s);
-                          setCustomEndDate(e);
-                        }}
-                      />
-                    )}
-                  </>
-                )}
+                  {chartTab === "bar" && chartDateRange === "custom" && (
+                    <InstructorDateRangeForm
+                      startDate={customStartDate}
+                      endDate={customEndDate}
+                      onChange={(s, e) => {
+                        setCustomStartDate(s);
+                        setCustomEndDate(e);
+                      }}
+                    />
+                  )}
 
-                {/* Phân khúc nhóm học viên (Chỉ hiện khi ở tab Biểu đồ) */}
-                {chartTab === "bar" && (
                   <select
                     value={chartLearnerFilter}
                     onChange={(e) =>
@@ -353,27 +318,24 @@ export function InstructorCourseDeepDiveView({
                   >
                     <option value="all">Nhóm: Tất cả học viên</option>
                     <option value="in_progress">Nhóm: Đang học</option>
-                    <option value="completed">Nhóm: Đã hoàn thành</option>
+                    <option value="completed">Nhóm: Đã tốt nghiệp</option>
                   </select>
-                )}
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
 
-          {/* Tab 1: Biểu đồ đường cong Spline theo tuần/ngày của môn học */}
+          {/* Tab 1: Biểu đồ Hoạt động học tập (Spline Chart) */}
           {chartTab === "bar" && (
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
-                <span>
-                  Tương tác học tập của học viên môn{" "}
-                  <strong>{activeCourse?.title || "đang chọn"}</strong>:
-                </span>
+                <span>Số lượng sinh viên tương tác hàng ngày:</span>
                 <div className="flex items-center gap-3 text-xs">
                   <span className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-primary" /> Lượt truy cập
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-success" /> Hoàn thành bài
+                    <span className="w-2.5 h-2.5 rounded-full bg-success" /> Hoàn thành bài học
                   </span>
                 </div>
               </div>
@@ -390,7 +352,12 @@ export function InstructorCourseDeepDiveView({
             </div>
           )}
 
-          {/* Tab 2: Phễu rơi rụng theo tuần học (Weekly Funnel Tab) */}
+          {/* Tab 2: Bản đồ nhiệt giờ học (Heatmap) */}
+          {chartTab === "heatmap" && (
+            <InstructorHeatmap dateRange={chartDateRange} learnerFilter={chartLearnerFilter} />
+          )}
+
+          {/* Tab 3: Phễu hoàn thành theo tuần */}
           {chartTab === "funnel" && (
             <InstructorWeeklyFunnelTab
               calculatedWeeks={calculatedWeeks}
@@ -401,7 +368,7 @@ export function InstructorCourseDeepDiveView({
             />
           )}
 
-          {/* Tab 3: Sinh viên nhận chứng chỉ môn học */}
+          {/* Tab 4: Sinh viên nhận chứng chỉ môn học */}
           {chartTab === "certs" && (
             <InstructorCertificatesTab mode="specific" completedStudents={completedStudents} />
           )}
@@ -432,7 +399,7 @@ export function InstructorCourseDeepDiveView({
         />
       </div>
 
-      {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN LÀM & ĐIỂM NGHẼN */}
+      {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN LÀM & AI COPILOT & ĐIỂM NGHẼN */}
       <div className="lg:col-span-4 space-y-4">
         {/* Box 1: Việc Cần Xử Lý */}
         <InstructorActionTasksCard
@@ -442,7 +409,15 @@ export function InstructorCourseDeepDiveView({
           onFilterBehind={() => setStudentPacingFilter("BEHIND")}
         />
 
-        {/* Box 2: Cảnh Báo Điểm Nghẽn */}
+        {/* Box 2: AI Teaching Copilot */}
+        <InstructorAIAssistantCard
+          courseId={activeCourse?.id}
+          courseTitle={activeCourse?.title}
+          behindStudents={behindStudentsThisCourse}
+          bottleneckWeek={bottleneckWeek}
+        />
+
+        {/* Box 3: Cảnh Báo Điểm Nghẽn */}
         {bottleneckWeek ? (
           <div className="p-4 rounded-3xl bg-destructive/5 border border-destructive/20 space-y-3">
             <div className="flex items-center gap-2 text-destructive font-bold text-xs">

@@ -86,6 +86,15 @@ class MockForumRepository:
     async def vote_post(self, post_id: str, user_id: str = "", is_upvote: bool = True):
         return 1
 
+    async def get_post_course_id(self, post_id: str):
+        if post_id in self.threads:
+            return self.threads[post_id].course_id
+        if post_id in self.replies:
+            thread_id = self.replies[post_id].thread_id
+            if thread_id in self.threads:
+                return self.threads[thread_id].course_id
+        return None
+
     async def pin_staff_answer(self, reply_id: str, ta_user_id: str):
         r = self.replies.get(reply_id)
         if r:
@@ -105,13 +114,20 @@ class MockCatalogRepository:
         self.courses: dict[str, Course] = {}
 
     async def get_course_detail(self, course_id: str):
-        return self.courses.get(course_id)
+        if course_id in self.courses:
+            return self.courses[course_id]
+        for c in self.courses.values():
+            if getattr(c, "slug", "") == course_id:
+                return c
+        return None
 
     async def list_instructor_courses(self, instructor_id: str, page_size: int = 200):
         matched = [
             c
             for c in self.courses.values()
-            if c.owner_id == instructor_id or instructor_id in c.co_instructor_ids
+            if c.owner_id == instructor_id
+            or instructor_id in c.co_instructor_ids
+            or instructor_id in getattr(c, "ta_ids", [])
         ]
         return matched, len(matched)
 
@@ -172,7 +188,7 @@ async def test_forum_instructor_of_course_posts_as_instructor():
     )
     assert thread.author_role == "Instructor"
     assert len(thread.replies) == 1
-    assert thread.replies[0].is_staff_answer is True
+    assert thread.replies[0].is_staff_answer is False
 
     # 2. Reply as course instructor
     reply = await use_case.post_reply(
@@ -183,13 +199,14 @@ async def test_forum_instructor_of_course_posts_as_instructor():
         user=prof_user,
     )
     assert reply.author_role == "Instructor"
-    assert reply.is_staff_answer is True
+    assert reply.is_staff_answer is False
 
     # 3. Pin staff answer -> allowed
     success = await use_case.pin_staff_answer(
         reply_id=reply.id, ta_user_id=prof_user.id, user=prof_user
     )
     assert success is True
+    assert reply.is_staff_answer is True
 
 
 @pytest.mark.asyncio
@@ -701,3 +718,122 @@ async def test_to_thread_entity_prioritizes_pinned_replies():
     # Followed by chronological unpinned replies
     assert entity.replies[1].id == "r1"
     assert entity.replies[2].id == "r3"
+
+
+@pytest.mark.asyncio
+async def test_vote_post_requires_enrollment_or_staff():
+    mock_forum_repo = MockForumRepository()
+    mock_catalog_repo = MockCatalogRepository()
+    mock_learning_repo = MockLearningRepository()
+
+    course = Course(
+        id="c_vote_1",
+        title="Python 101",
+        slug="python-101",
+        owner_id="prof_py",
+    )
+    mock_catalog_repo.courses["c_vote_1"] = course
+
+    use_case = ForumUseCase(
+        repo_factory=lambda session: mock_forum_repo,
+        catalog_repo_factory=lambda session: mock_catalog_repo,
+        learning_repo_factory=lambda session: mock_learning_repo,
+    )
+
+    prof_user = CurrentUser(
+        id="prof_py", role="USER_ROLE_INSTRUCTOR", email="py@edu.vn"
+    )
+    thread = await use_case.create_thread(
+        course_id="c_vote_1",
+        item_id="",
+        title="Intro question",
+        content="What is a variable?",
+        author_user_id=prof_user.id,
+        author_name="Prof Py",
+        user=prof_user,
+    )
+
+    # 1. Unenrolled learner attempts to vote -> PermissionError
+    learner_user = CurrentUser(
+        id="learner_anon", role="USER_ROLE_LEARNER", email="anon@learner.vn"
+    )
+    with pytest.raises(PermissionError, match="Bạn cần đăng ký khóa học"):
+        await use_case.vote_post(
+            post_id=thread.id,
+            user_id=learner_user.id,
+            is_upvote=True,
+            user=learner_user,
+        )
+
+    # 2. Enrolled learner votes -> OK
+    mock_learning_repo.enrolled_pairs.add(("learner_anon", "c_vote_1"))
+    votes = await use_case.vote_post(
+        post_id=thread.id,
+        user_id=learner_user.id,
+        is_upvote=True,
+        user=learner_user,
+    )
+    assert votes == 1
+
+
+@pytest.mark.asyncio
+async def test_create_thread_empty_course_id_rejected():
+    mock_forum_repo = MockForumRepository()
+    mock_catalog_repo = MockCatalogRepository()
+    mock_learning_repo = MockLearningRepository()
+
+    use_case = ForumUseCase(
+        repo_factory=lambda session: mock_forum_repo,
+        catalog_repo_factory=lambda session: mock_catalog_repo,
+        learning_repo_factory=lambda session: mock_learning_repo,
+    )
+    user = CurrentUser(id="user_1", role="USER_ROLE_LEARNER", email="u1@edu.vn")
+
+    with pytest.raises(
+        ValueError, match="Mã khóa học không được để trống khi thao tác diễn đàn."
+    ):
+        await use_case.create_thread(
+            course_id="",
+            item_id="",
+            title="Question",
+            content="Content",
+            author_user_id=user.id,
+            user=user,
+        )
+
+
+@pytest.mark.asyncio
+async def test_course_ta_access_and_canonical_uuid():
+    mock_forum_repo = MockForumRepository()
+    mock_catalog_repo = MockCatalogRepository()
+    mock_learning_repo = MockLearningRepository()
+
+    course = Course(
+        id="uuid_c_123",
+        title="Database Systems",
+        slug="database-systems",
+        owner_id="prof_db",
+        ta_ids=["ta_bob"],
+    )
+    mock_catalog_repo.courses["uuid_c_123"] = course
+
+    use_case = ForumUseCase(
+        repo_factory=lambda session: mock_forum_repo,
+        catalog_repo_factory=lambda session: mock_catalog_repo,
+        learning_repo_factory=lambda session: mock_learning_repo,
+    )
+
+    ta_user = CurrentUser(id="ta_bob", role="USER_ROLE_LEARNER", email="bob@ta.vn")
+
+    # TA creates thread using slug -> saved with canonical UUID id
+    thread = await use_case.create_thread(
+        course_id="database-systems",
+        item_id="",
+        title="TA Office Hours",
+        content="Welcome to office hours",
+        author_user_id=ta_user.id,
+        author_name="Bob TA",
+        user=ta_user,
+    )
+    assert thread.author_role == "TA"
+    assert thread.course_id == "uuid_c_123"

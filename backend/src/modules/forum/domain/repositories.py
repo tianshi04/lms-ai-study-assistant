@@ -34,6 +34,10 @@ class IForumRepository(ABC):
         """Vote on a thread or reply by post_id. Toggles vote per user and returns updated upvote count."""
 
     @abstractmethod
+    async def get_post_course_id(self, post_id: str) -> str | None:
+        """Get course_id associated with a thread or reply (post_id)."""
+
+    @abstractmethod
     async def pin_staff_answer(self, reply_id: str, _ta_user_id: str = "") -> bool:
         """Pin a reply as staff answer."""
 

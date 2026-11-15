@@ -15,7 +15,7 @@ import type {
   OverviewActionTask,
   OverviewReview,
   OverviewCertificate,
-  ComparisonCourseCardItem,
+  EnrichedCourseComparisonItem,
 } from "../types";
 
 export interface UseInstructorOverviewDataProps {
@@ -99,21 +99,41 @@ export function useInstructorOverviewData({
   const totalCertificatesAllCourses = allCompletedStudentsList.length;
 
   // Dữ liệu enriched phục vụ Sơ đồ so sánh tỷ lệ hoàn thành theo môn
-  const enrichedCoursesForComparison = useMemo<ComparisonCourseCardItem[]>(() => {
+  const enrichedCoursesForComparison = useMemo<EnrichedCourseComparisonItem[]>(() => {
     return courses.map((course) => {
       const an = analyticsByCourseId.get(course.id);
       const totalStudents = an?.totalEnrolledStudents ?? an?.students?.length ?? 0;
-      const compRate = an?.averageCompletionRate != null ? Math.round(an.averageCompletionRate) : 0;
-      const rating = an?.averageRating || course.averageRating || 5.0;
+      const completedCount = an?.students?.filter((s) => s.progressPercent >= 100).length ?? 0;
+      const inProgressCount = Math.max(0, totalStudents - completedCount);
+      const compRate =
+        an?.averageCompletionRate != null
+          ? Math.round(an.averageCompletionRate)
+          : totalStudents > 0
+            ? Math.round((completedCount / totalStudents) * 100)
+            : 0;
+      const rating = an?.averageRating || course.averageRating || 0;
+      const reviewCount = an?.reviewCount || course.reviewCount || 0;
+      const weekCount = course.weekModules?.length || 0;
+      const itemCount = course.weekModules
+        ? course.weekModules.reduce(
+            (acc, wm) =>
+              acc + (wm.lessons?.reduce((lAcc, l) => lAcc + (l.items?.length || 0), 0) || 0),
+            0,
+          )
+        : 0;
 
       return {
-        id: course.id,
-        title: course.title,
-        subject: course.subject,
-        rating,
+        ...course,
         totalStudents,
-        weekCount: course.weekModules?.length || 1,
         compRate,
+        completedCount,
+        inProgressCount,
+        rating,
+        reviewCount,
+        pendingAssignments: 0,
+        pendingQuestions: 0,
+        weekCount,
+        itemCount,
       };
     });
   }, [courses, analyticsByCourseId]);
@@ -150,7 +170,7 @@ export function useInstructorOverviewData({
       return (sum / overviewReviews.length).toFixed(1);
     }
     const ratings = courses.map((c) => c.averageRating).filter((r) => r > 0);
-    if (ratings.length === 0) return "5.0";
+    if (ratings.length === 0) return "0.0";
     return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
   }, [overviewReviews, courses]);
 
@@ -190,8 +210,8 @@ export function useInstructorOverviewData({
   }, [courses, analyticsByCourseId, totalStudentsAllCourses]);
 
   const growthPercent = useMemo(() => {
-    return totalStudentsAllCourses > 0 ? 15 : 0;
-  }, [totalStudentsAllCourses]);
+    return 0;
+  }, []);
 
   // Truy vấn hàng đợi bài chấm thi trên toàn bộ các môn học phụ trách
   const { data: allGradingData } = useGradingQueueQuery(
@@ -411,7 +431,7 @@ export function useInstructorOverviewData({
         titleLower.startsWith("[thong bao]") ||
         titleLower.startsWith("[announcement]");
       const hasStaffReply = th.replies?.some((reply) => reply.isStaffAnswer);
-      if (!isStaff && !isAnnouncement && !hasStaffReply && th.courseId) {
+      if (!th.isStaffPinned && !isStaff && !isAnnouncement && !hasStaffReply && th.courseId) {
         map.set(th.courseId, (map.get(th.courseId) || 0) + 1);
       }
     });
@@ -473,7 +493,7 @@ export function useInstructorOverviewData({
               : `Tiến độ ${Math.round(st.progressPercent)}% đề cương`,
           currentWeekNumber,
           lastActive: "Gần đây",
-          daysInactive: Math.min(daysElapsed, 7),
+          daysInactive: 0,
           pace,
           paceDescription,
           bottleneckStuck: pace === "BEHIND",

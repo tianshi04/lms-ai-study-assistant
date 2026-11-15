@@ -87,6 +87,8 @@ class ForumHandler(ForumService):
         request: pb.CreateThreadRequest,
         ctx: RequestContext[pb.CreateThreadRequest, pb.CreateThreadResponse],
     ) -> pb.CreateThreadResponse:
+        if not request.course_id.strip():
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
         if not request.title.strip():
             raise ConnectError(
                 Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được để trống"
@@ -151,11 +153,18 @@ class ForumHandler(ForumService):
     ) -> pb.VotePostResponse:
         current_user = require_current_user()
 
-        new_count = await self.use_case.vote_post(
-            post_id=request.post_id,
-            user_id=current_user.id,
-            is_upvote=request.is_upvote,
-        )
+        try:
+            new_count = await self.use_case.vote_post(
+                post_id=request.post_id,
+                user_id=current_user.id,
+                is_upvote=request.is_upvote,
+                user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
         return pb.VotePostResponse(updated_upvote_count=new_count)
 
     async def pin_staff_answer(

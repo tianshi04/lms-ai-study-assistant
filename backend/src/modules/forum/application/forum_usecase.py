@@ -68,42 +68,35 @@ class ForumUseCase:
         user: CurrentUser | None,
         author_user_id: str = "",
         action_name: str = "tham gia thảo luận",
-    ) -> tuple[str, bool]:
+    ) -> tuple[str, bool, str]:
         """Resolves the user's role within the course context and verifies enrollment.
 
         Returns:
-            (contextual_role: str, is_staff: bool)
+            (contextual_role: str, is_staff: bool, canonical_course_id: str)
 
         Rules:
-        1. If user is Super Admin -> Role is 'Admin', is_staff = True.
-        2. If user is course owner, co-instructor, or TA -> Role is 'Instructor' / 'TA', is_staff = True.
-        3. Otherwise, the user is a Learner in this course (regardless of whether they have
+        1. course_id MUST NOT be empty and MUST exist in catalog.
+        2. If user is Super Admin -> Role is 'Admin', is_staff = True.
+        3. If user is course owner, co-instructor, or TA -> Role is 'Instructor' / 'TA', is_staff = True.
+        4. Otherwise, the user is a Learner in this course (regardless of whether they have
            an Instructor role on other courses).
-        4. If the user is a Learner, they MUST be enrolled in the course. If not enrolled,
+        5. If the user is a Learner, they MUST be enrolled in the course. If not enrolled,
            raises PermissionError.
         """
-        if not course_id:
-            is_staff_global = bool(
-                user
-                and (
-                    getattr(user, "is_admin", False) or getattr(user, "is_staff", False)
-                )
-            )
-            role = (
-                "Admin"
-                if (user and user.is_admin)
-                else ("Instructor" if is_staff_global else DEFAULT_FORUM_AUTHOR_ROLE)
-            )
-            return role, is_staff_global
+        clean_course_id = course_id.strip() if course_id else ""
+        if not clean_course_id:
+            raise ValueError("Mã khóa học không được để trống khi thao tác diễn đàn.")
 
         catalog_repo: ICatalogRepository = self.catalog_repo_factory(session)
-        course = await catalog_repo.get_course_detail(course_id)
+        course = await catalog_repo.get_course_detail(clean_course_id)
         if not course:
-            raise ValueError(f"Khóa học '{course_id}' không tồn tại.")
+            raise ValueError(f"Khóa học '{clean_course_id}' không tồn tại.")
+
+        canonical_course_id = course.id
 
         # 1. Super Admin
         if user and getattr(user, "is_admin", False):
-            return "Admin", True
+            return "Admin", True, canonical_course_id
 
         # 2. Course Staff (Owner, Co-instructor, TA)
         if user:
@@ -112,9 +105,9 @@ class ForumUseCase:
             ta_ids = getattr(course, "ta_ids", []) or []
 
             if (owner_id and user.id == owner_id) or (user.id in co_instructors):
-                return "Instructor", True
+                return "Instructor", True, canonical_course_id
             if user.id in ta_ids:
-                return "TA", True
+                return "TA", True, canonical_course_id
 
         # 3. User is not staff in this course -> must be a Learner with active enrollment
         actual_user_id = (user.id if user else "") or author_user_id
@@ -122,13 +115,15 @@ class ForumUseCase:
             raise PermissionError("Vui lòng đăng nhập để tham gia thảo luận.")
 
         learning_repo: ILearningRepository = self.learning_repo_factory(session)
-        is_enrolled = await learning_repo.check_enrollment(actual_user_id, course.id)
+        is_enrolled = await learning_repo.check_enrollment(
+            actual_user_id, canonical_course_id
+        )
         if not is_enrolled:
             raise PermissionError(
                 f"Bạn cần đăng ký khóa học '{course.title}' để {action_name}."
             )
 
-        return DEFAULT_FORUM_AUTHOR_ROLE, False
+        return DEFAULT_FORUM_AUTHOR_ROLE, False, canonical_course_id
 
     async def list_threads(
         self,
@@ -160,22 +155,19 @@ class ForumUseCase:
                 enrolled = await learning_repo.list_enrolled_courses(actual_user_id)
                 accessible_course_ids.update(s.course_id for s in enrolled)
 
-                # If instructor or staff, include their teaching courses
-                if user and (
-                    getattr(user, "is_staff", False)
-                    or getattr(user, "role", "") == "USER_ROLE_INSTRUCTOR"
-                ):
-                    catalog_repo: ICatalogRepository = self.catalog_repo_factory(
-                        session
-                    )
-                    teaching_courses, _ = await catalog_repo.list_instructor_courses(
-                        instructor_id=actual_user_id, page_size=200
-                    )
-                    accessible_course_ids.update(c.id for c in teaching_courses)
+                # Always include courses the user teaches or assists (Owner, Co-instructor, TA)
+                catalog_repo: ICatalogRepository = self.catalog_repo_factory(session)
+                teaching_courses, _ = await catalog_repo.list_instructor_courses(
+                    instructor_id=actual_user_id, page_size=200
+                )
+                accessible_course_ids.update(c.id for c in teaching_courses)
 
             # If user explicitly requests a specific course
             if normalized_course_id:
-                if normalized_course_id not in accessible_course_ids:
+                catalog_repo = self.catalog_repo_factory(session)
+                c_detail = await catalog_repo.get_course_detail(normalized_course_id)
+                target_id = c_detail.id if c_detail else normalized_course_id
+                if target_id not in accessible_course_ids:
                     logger.info(
                         "User %s attempted to list threads for inaccessible course %s",
                         actual_user_id,
@@ -184,7 +176,7 @@ class ForumUseCase:
                     return []
                 repo = self._get_repo(session)
                 return await repo.list_threads(
-                    course_id=normalized_course_id,
+                    course_id=target_id,
                     item_id=item_id,
                     current_user_id=actual_user_id,
                 )
@@ -216,6 +208,7 @@ class ForumUseCase:
             (
                 contextual_role,
                 is_staff,
+                canonical_course_id,
             ) = await self._resolve_course_role_and_enforce_enrollment(
                 session=session,
                 course_id=course_id,
@@ -229,7 +222,7 @@ class ForumUseCase:
 
             thread_entity = ForumThreadEntity(
                 id=thread_id,
-                course_id=course_id,
+                course_id=canonical_course_id,
                 item_id=item_id,
                 title=title,
                 content=content,
@@ -248,7 +241,7 @@ class ForumUseCase:
                 "User %s created forum thread %s in course %s (role: %s, staff: %s)",
                 author_user_id,
                 thread_id,
-                course_id,
+                canonical_course_id,
                 contextual_role,
                 is_staff,
             )
@@ -261,7 +254,7 @@ class ForumUseCase:
                     author_name=author_name,
                     author_role=contextual_role,
                     content=content,
-                    is_staff_answer=is_staff,
+                    is_staff_answer=False,
                     upvote_count=0,
                     created_at=created_at,
                     author_user_id=author_user_id,
@@ -294,7 +287,8 @@ class ForumUseCase:
             # Contextual role resolution & enrollment enforcement
             (
                 contextual_role,
-                is_staff,
+                _is_staff,
+                _canonical_course_id,
             ) = await self._resolve_course_role_and_enforce_enrollment(
                 session=session,
                 course_id=thread.course_id,
@@ -309,7 +303,7 @@ class ForumUseCase:
                 author_name=author_name,
                 author_role=contextual_role,
                 content=content,
-                is_staff_answer=is_staff,
+                is_staff_answer=False,
                 upvote_count=0,
                 created_at=created_at,
                 author_user_id=author_user_id,
@@ -322,7 +316,7 @@ class ForumUseCase:
                 reply_id,
                 thread_id,
                 contextual_role,
-                is_staff,
+                False,
             )
 
             # Trigger domain event
@@ -343,11 +337,34 @@ class ForumUseCase:
             return reply
 
     async def vote_post(
-        self, post_id: str, user_id: str, is_upvote: bool = True
+        self,
+        post_id: str,
+        user_id: str,
+        is_upvote: bool = True,
+        user: CurrentUser | None = None,
     ) -> int:
+        clean_post_id = post_id.strip() if post_id else ""
+        if not clean_post_id:
+            raise ValueError("Mã bài viết không được để trống khi biểu quyết.")
+
         async with async_session_scope() as session:
             repo = self._get_repo(session)
-            return await repo.vote_post(post_id, user_id=user_id, is_upvote=is_upvote)
+            course_id = await repo.get_post_course_id(clean_post_id)
+            if not course_id:
+                raise ValueError(
+                    "Bài viết không tồn tại hoặc không thuộc khóa học hợp lệ."
+                )
+
+            await self._resolve_course_role_and_enforce_enrollment(
+                session=session,
+                course_id=course_id,
+                user=user,
+                author_user_id=user_id,
+                action_name="biểu quyết bài viết",
+            )
+            return await repo.vote_post(
+                clean_post_id, user_id=user_id, is_upvote=is_upvote
+            )
 
     async def pin_staff_answer(
         self, reply_id: str, ta_user_id: str, user: CurrentUser | None = None

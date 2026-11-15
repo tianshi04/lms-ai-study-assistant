@@ -1,20 +1,27 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { BarChart3, TrendingDown, Award, Filter } from "lucide-react";
+import { BarChart3, TrendingDown, Award, Filter, Flame } from "lucide-react";
 import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
+import { InstructorHeatmap } from "../../InstructorHeatmap";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
 import { InstructorCourseComparisonTab } from "../components/InstructorCourseComparisonTab";
+import { InstructorCourseComparisonTable } from "../components/InstructorCourseComparisonTable";
 import { InstructorCertificatesTab } from "../components/InstructorCertificatesTab";
 import { InstructorPacingCohortsCard } from "../components/InstructorPacingCohortsCard";
 import { InstructorRecentReviewsCard } from "../components/InstructorRecentReviewsCard";
+import { InstructorActionTasksCard } from "../components/InstructorActionTasksCard";
+import { InstructorAIAssistantCard } from "../../InstructorAIAssistantCard";
+import { useInstructorActivityTimelineQuery } from "@/lib/queries/useCatalogQueries";
 import { generateTimeLabels } from "../utils/time_labels";
+import type { StudentPacingRecord } from "../../InstructorPacingModal";
 import type {
   OverviewActionTask,
   OverviewReview,
   OverviewCertificate,
-  ComparisonCourseCardItem,
+  EnrichedCourseComparisonItem,
+  OverviewCourseStat,
 } from "../types";
 
 export interface InstructorOverviewViewProps {
@@ -45,7 +52,8 @@ export interface InstructorOverviewViewProps {
     behindPercent: number;
   };
   onOpenPacingModal: (category?: "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND") => void;
-  enrichedCoursesForComparison: ComparisonCourseCardItem[];
+  enrichedCoursesForComparison: EnrichedCourseComparisonItem[];
+  allPacingStudents?: StudentPacingRecord[];
   currentMonthNumber: number;
   lastMonthNumber: number;
 }
@@ -54,14 +62,14 @@ export function InstructorOverviewView({
   courses,
   activeCourse,
   onSelectCourse,
-  analyticsByCourseId: _analyticsByCourseId,
-  pendingGradingByCourseId: _pendingGradingByCourseId,
-  pendingQaByCourseId: _pendingQaByCourseId,
-  overviewActionTasks: _overviewActionTasks,
-  totalPendingTasksCount: _totalPendingTasksCount,
-  totalPendingGradingCount: _totalPendingGradingCount,
-  totalPendingQaCount: _totalPendingQaCount,
-  totalOverdueTasksCount: _totalOverdueTasksCount = 0,
+  analyticsByCourseId,
+  pendingGradingByCourseId,
+  pendingQaByCourseId,
+  overviewActionTasks,
+  totalPendingTasksCount,
+  totalPendingGradingCount,
+  totalPendingQaCount,
+  totalOverdueTasksCount = 0,
   overdueGradingByCourseId: _overdueGradingByCourseId,
   overviewReviews,
   avgRatingAllCourses,
@@ -71,11 +79,14 @@ export function InstructorOverviewView({
   pacingCohortSummary,
   onOpenPacingModal,
   enrichedCoursesForComparison,
+  allPacingStudents = [],
   currentMonthNumber,
   lastMonthNumber,
 }: InstructorOverviewViewProps) {
-  // Tab biểu đồ ở chế độ tất cả môn: "trend" | "compare" | "certs"
-  const [allChartTab, setAllChartTab] = useState<"trend" | "compare" | "certs">("trend");
+  // Tab biểu đồ ở chế độ tất cả môn: "trend" | "heatmap" | "compare" | "certs"
+  const [allChartTab, setAllChartTab] = useState<"trend" | "heatmap" | "compare" | "certs">(
+    "trend",
+  );
   const [chartDateRange, setChartDateRange] = useState("7d");
   const [chartLearnerFilter, setChartLearnerFilter] = useState<"all" | "in_progress" | "completed">(
     "all",
@@ -84,6 +95,9 @@ export function InstructorOverviewView({
   const [selectedDayFilter, setSelectedDayFilter] = useState<{ day: string; date: string } | null>(
     null,
   );
+
+  const [compareViewType, setCompareViewType] = useState<"bars" | "cards">("cards");
+  const [compareSortBy, setCompareSortBy] = useState<"rate" | "students" | "rating">("rate");
 
   const [customStartDate, setCustomStartDate] = useState(() => {
     const d = new Date();
@@ -94,6 +108,15 @@ export function InstructorOverviewView({
     return new Date().toISOString().split("T")[0];
   });
 
+  // Truy vấn dữ liệu chuỗi thời gian hoạt động thực tế từ database
+  const { data: activityTimelineData } = useInstructorActivityTimelineQuery({
+    courseId: "",
+    dateRange: chartDateRange,
+    startDate: customStartDate,
+    endDate: customEndDate,
+    learnerFilter: chartLearnerFilter,
+  });
+
   // Lọc danh sách chứng chỉ theo bộ lọc khóa học
   const filteredCertificates = useMemo(() => {
     if (certCourseFilter === "all") return allCompletedStudentsList;
@@ -102,121 +125,89 @@ export function InstructorOverviewView({
     );
   }, [allCompletedStudentsList, certCourseFilter]);
 
-  // Dữ liệu tương tác biểu đồ cho TOÀN BỘ CÁC MÔN HỌC theo khoảng thời gian và bộ lọc đối tượng
+  // Dữ liệu biểu đồ từ API thực tế 100% (Zero-Fallback & No Mock Math.sin)
   const allCoursesWeekDaysData = useMemo(() => {
+    if (activityTimelineData?.timeline && activityTimelineData.timeline.length > 0) {
+      return activityTimelineData.timeline.map((p) => {
+        const parts = p.label.split(" ");
+        return {
+          day: parts[0] || p.label,
+          date: p.label,
+          fullDateLabel: p.label,
+          showTick: true,
+          isFuture: false,
+          count:
+            chartLearnerFilter === "in_progress"
+              ? p.inProgress
+              : chartLearnerFilter === "completed"
+                ? p.completedItems
+                : p.activeLearners,
+          completed: chartLearnerFilter === "in_progress" ? 0 : p.completedItems,
+          inProgress: chartLearnerFilter === "completed" ? 0 : p.inProgress,
+        };
+      });
+    }
+
     const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
+    return labels.map((l) => ({
+      day: l.day,
+      date: l.date,
+      fullDateLabel: l.fullDateLabel,
+      showTick: l.showTick,
+      isFuture: l.isFuture,
+      count: 0,
+      completed: 0,
+      inProgress: 0,
+    }));
+  }, [
+    activityTimelineData?.timeline,
+    chartDateRange,
+    chartLearnerFilter,
+    customStartDate,
+    customEndDate,
+  ]);
 
-    if (chartDateRange === "today") {
-      const baseCounts = [4, 2, 8, 24, 38, 32, 46, 42, 18];
-      return labels.map((l, idx) => {
-        if (l.isFuture) {
-          return {
-            day: l.day,
-            date: l.date,
-            fullDateLabel: l.fullDateLabel,
-            showTick: l.showTick,
-            isFuture: true,
-            count: 0,
-            completed: 0,
-            inProgress: 0,
-          };
-        }
-        const count = baseCounts[idx % baseCounts.length];
-        const done = Math.round(count * 0.35);
-        const inProg = count - done;
-        return {
-          day: l.day,
-          date: l.date,
-          fullDateLabel: l.fullDateLabel,
-          showTick: l.showTick,
-          isFuture: false,
-          count:
-            chartLearnerFilter === "in_progress"
-              ? inProg
-              : chartLearnerFilter === "completed"
-                ? done
-                : count,
-          completed: chartLearnerFilter === "in_progress" ? 0 : done,
-          inProgress: chartLearnerFilter === "completed" ? 0 : inProg,
-        };
-      });
-    }
+  // Dữ liệu thống kê đối sánh chi tiết từng khóa học
+  const courseStats = useMemo<OverviewCourseStat[]>(() => {
+    return courses.map((c) => {
+      const an = analyticsByCourseId.get(c.id);
+      const totalStudents = an?.totalEnrolledStudents ?? an?.students?.length ?? 0;
+      const completedCount = an?.students?.filter((s) => s.progressPercent >= 100).length ?? 0;
+      const inProgressCount = Math.max(0, totalStudents - completedCount);
+      const compRate =
+        an?.averageCompletionRate != null
+          ? Math.round(an.averageCompletionRate)
+          : totalStudents > 0
+            ? Math.round((completedCount / totalStudents) * 100)
+            : 0;
 
-    if (
-      chartDateRange === "this_week" ||
-      chartDateRange === "7d" ||
-      chartDateRange === "last_week"
-    ) {
-      const baseCounts = [26, 34, 28, 39, 46, 36, 42];
-      return labels.map((l, idx) => {
-        if (l.isFuture) {
-          return {
-            day: l.day,
-            date: l.date,
-            fullDateLabel: l.fullDateLabel,
-            showTick: l.showTick,
-            isFuture: true,
-            count: 0,
-            completed: 0,
-            inProgress: 0,
-          };
-        }
-        const count = baseCounts[idx % baseCounts.length];
-        const done = Math.round(count * 0.34);
-        const inProg = count - done;
-        return {
-          day: l.day,
-          date: l.date,
-          fullDateLabel: l.fullDateLabel,
-          showTick: l.showTick,
-          isFuture: false,
-          count:
-            chartLearnerFilter === "in_progress"
-              ? inProg
-              : chartLearnerFilter === "completed"
-                ? done
-                : count,
-          completed: chartLearnerFilter === "in_progress" ? 0 : done,
-          inProgress: chartLearnerFilter === "completed" ? 0 : inProg,
-        };
-      });
-    }
-
-    return labels.map((l, idx) => {
-      if (l.isFuture) {
-        return {
-          day: l.day,
-          date: l.date,
-          fullDateLabel: l.fullDateLabel,
-          showTick: l.showTick,
-          isFuture: true,
-          count: 0,
-          completed: 0,
-          inProgress: 0,
-        };
-      }
-      const wave = Math.sin(idx * 0.55) * 10 + Math.cos(idx * 0.3) * 6;
-      const base = Math.round(32 + wave);
-      const count = Math.max(12, Math.min(50, base));
-      const done = Math.round(count * 0.36);
-      const inProg = count - done;
       return {
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: false,
-        count:
-          chartLearnerFilter === "in_progress"
-            ? inProg
-            : chartLearnerFilter === "completed"
-              ? done
-              : count,
-        completed: chartLearnerFilter === "in_progress" ? 0 : done,
-        inProgress: chartLearnerFilter === "completed" ? 0 : inProg,
+        keyword: c.id.toLowerCase(),
+        totalStudents,
+        activeStudents: inProgressCount,
+        compRate,
+        completedCount,
+        inProgressCount,
+        videoDiscussionCount: 0,
+        pendingDiscussions: pendingQaByCourseId.get(c.id) || 0,
+        rating: typeof c.averageRating === "number" ? c.averageRating : 0,
+        reviewCount: c.reviewCount || 0,
+        pendingAssignments: pendingGradingByCourseId.get(c.id) || 0,
+        pendingQuestions: pendingQaByCourseId.get(c.id) || 0,
       };
     });
-  }, [chartDateRange, chartLearnerFilter, customStartDate, customEndDate]);
+  }, [courses, analyticsByCourseId, pendingGradingByCourseId, pendingQaByCourseId]);
+
+  // Danh sách học viên chậm tiến độ trên toàn bộ các môn học
+  const behindStudentsAllCourses = useMemo(() => {
+    return allPacingStudents
+      .filter((s) => s.pace === "BEHIND")
+      .map((s) => ({
+        userId: s.id,
+        userName: s.name,
+        progressPercent: s.progressPercent,
+      }));
+  }, [allPacingStudents]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -258,6 +249,19 @@ export function InstructorOverviewView({
 
               <button
                 type="button"
+                onClick={() => setAllChartTab("heatmap")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
+                  allChartTab === "heatmap"
+                    ? "bg-surface text-foreground shadow-xs font-black"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
+                <span>Bản đồ nhiệt giờ học</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setAllChartTab("compare")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
                   allChartTab === "compare"
@@ -266,7 +270,7 @@ export function InstructorOverviewView({
                 }`}
               >
                 <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-                <span>Tỷ lệ hoàn thành theo môn</span>
+                <span>Đối sánh môn học</span>
               </button>
 
               <button
@@ -284,7 +288,7 @@ export function InstructorOverviewView({
             </div>
 
             {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
-            {allChartTab === "trend" ? (
+            {allChartTab === "trend" || allChartTab === "heatmap" ? (
               <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
                   <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
@@ -386,16 +390,32 @@ export function InstructorOverviewView({
             </div>
           )}
 
-          {/* Tab 2: So sánh tỷ lệ hoàn thành & hiệu suất giữa các môn */}
-          {allChartTab === "compare" && (
-            <InstructorCourseComparisonTab
-              courses={enrichedCoursesForComparison}
-              activeCourseId={activeCourse?.id}
-              onSelectCourse={onSelectCourse}
-            />
+          {/* Tab 2: Bản đồ nhiệt giờ học (Heatmap) */}
+          {allChartTab === "heatmap" && (
+            <InstructorHeatmap dateRange={chartDateRange} learnerFilter={chartLearnerFilter} />
           )}
 
-          {/* Tab 3: Danh sách toàn bộ chứng chỉ đã cấp */}
+          {/* Tab 3: So sánh tỷ lệ hoàn thành & hiệu suất giữa các môn */}
+          {allChartTab === "compare" && (
+            <div className="space-y-6">
+              <InstructorCourseComparisonTab
+                courses={enrichedCoursesForComparison}
+                activeCourseId={activeCourse?.id}
+                compareViewType={compareViewType}
+                onChangeCompareViewType={setCompareViewType}
+                compareSortBy={compareSortBy}
+                onChangeCompareSortBy={setCompareSortBy}
+                onSelectCourse={onSelectCourse}
+              />
+              <InstructorCourseComparisonTable
+                courses={courses}
+                courseStats={courseStats}
+                onSelectCourse={onSelectCourse}
+              />
+            </div>
+          )}
+
+          {/* Tab 4: Danh sách toàn bộ chứng chỉ đã cấp */}
           {allChartTab === "certs" && (
             <InstructorCertificatesTab
               mode="all"
@@ -420,10 +440,27 @@ export function InstructorOverviewView({
 
       {/* CỘT PHẢI (4/12 - 33%): ACTION CENTER & ĐIỀU HÀNH GIẢNG DẠY */}
       <div className="lg:col-span-4 space-y-4">
-        {/* Phản Hồi Sinh Viên */}
+        {/* Box 1: AI Teaching Copilot */}
+        <InstructorAIAssistantCard
+          courseId={activeCourse?.id || courses[0]?.id || ""}
+          courseTitle={activeCourse?.title || "toàn bộ các khóa học đang giảng dạy"}
+          behindStudents={behindStudentsAllCourses}
+          bottleneckWeek={null}
+        />
+
+        {/* Box 2: Việc Cần Xử Lý */}
+        <InstructorActionTasksCard
+          tasks={overviewActionTasks}
+          totalPendingCount={totalPendingTasksCount}
+          totalGradingCount={totalPendingGradingCount}
+          totalQaCount={totalPendingQaCount}
+          totalOverdueCount={totalOverdueTasksCount}
+        />
+
+        {/* Box 3: Phản Hồi Sinh Viên */}
         <InstructorRecentReviewsCard
           reviews={overviewReviews}
-          avgRating={avgRatingAllCourses || "5.0"}
+          avgRating={avgRatingAllCourses || "0.0"}
         />
       </div>
     </div>
