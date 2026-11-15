@@ -108,16 +108,9 @@ export function InstructorActionTasksCard({
               <CheckSquare className="w-3.5 h-3.5" aria-hidden="true" />
             </span>
             <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
-                  Hàng Chờ Chấm Bài
-                </h4>
-                {effectiveGradingCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
-                    {effectiveGradingCount} bài chờ chấm
-                  </span>
-                )}
-              </div>
+              <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                Hàng Chờ Chấm Bài
+              </h4>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {isLoading
                   ? "Đang tải dữ liệu bài nộp..."
@@ -161,16 +154,9 @@ export function InstructorActionTasksCard({
               <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
             </span>
             <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
-                  Hỏi Đáp & Thảo Luận
-                </h4>
-                {isOverview && effectiveQaCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono bg-destructive/15 text-destructive border border-destructive/20 whitespace-nowrap">
-                    {effectiveQaCount} cần phản hồi
-                  </span>
-                )}
-              </div>
+              <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                Hỏi Đáp & Thảo Luận
+              </h4>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {courseId
                   ? "Giải đáp thắc mắc và hỗ trợ sinh viên trong lớp"
