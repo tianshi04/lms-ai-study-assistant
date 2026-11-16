@@ -393,6 +393,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             published_at=model.published_at,
             status=model.status,
             staff_evaluations_json=list(model.staff_evaluations_json or []),
+            review_duty_status=getattr(model, "review_duty_status", "PENDING")
+            or "PENDING",
+            review_duty_waived_reason=getattr(model, "review_duty_waived_reason", None),
         )
 
     async def save_peer_submission(self, submission: PeerAssignmentSubmission) -> None:
@@ -429,6 +432,12 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             model.rubric_scores_json = submission.rubric_scores_json
             model.published_at = submission.published_at
             model.status = submission.status
+            model.review_duty_status = (
+                getattr(submission, "review_duty_status", "PENDING") or "PENDING"
+            )
+            model.review_duty_waived_reason = getattr(
+                submission, "review_duty_waived_reason", None
+            )
             model.staff_evaluations_json = list(submission.staff_evaluations_json or [])
             flag_modified(model, "staff_evaluations_json")
             flag_modified(model, "rubric_scores_json")
@@ -453,6 +462,11 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 rubric_scores_json=submission.rubric_scores_json,
                 published_at=submission.published_at,
                 status=submission.status,
+                review_duty_status=getattr(submission, "review_duty_status", "PENDING")
+                or "PENDING",
+                review_duty_waived_reason=getattr(
+                    submission, "review_duty_waived_reason", None
+                ),
                 staff_evaluations_json=list(submission.staff_evaluations_json or []),
             )
             self.session.add(model)

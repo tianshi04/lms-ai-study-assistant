@@ -181,6 +181,14 @@ class PeerAssignmentSubmissionModel(Base):
         server_default="SUBMITTED",
         index=True,
     )
+    review_duty_status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="PENDING",
+        server_default="PENDING",
+        index=True,
+    )
+    review_duty_waived_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class PeerReviewModel(Base):

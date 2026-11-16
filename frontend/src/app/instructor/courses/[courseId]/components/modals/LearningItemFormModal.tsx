@@ -381,11 +381,11 @@ export function LearningItemFormModal({
       }
     }
 
-    // ── Peer Review validation ──
+    // ── Bài tập tự luận validation ──
     if (itemType === ItemType.PEER_REVIEW) {
       const parsed = safeParseRubricJson(peerRubricJson);
       if (!parsed || parsed.length === 0) {
-        setPeerError("Bài tập chấm chéo bắt buộc phải có ít nhất 1 tiêu chí Rubric hợp lệ.");
+        setPeerError("Bài tập tự luận bắt buộc phải có ít nhất 1 tiêu chí Rubric hợp lệ.");
         return;
       }
       for (let i = 0; i < parsed.length; i++) {
@@ -516,7 +516,7 @@ export function LearningItemFormModal({
                     <Select.Item value={String(ItemType.PEER_REVIEW)}>
                       <div className="flex items-center gap-2">
                         <Users className="w-3.5 h-3.5 text-accent" />
-                        <span>Bài tập Chấm chéo (Peer Review)</span>
+                        <span>Bài tập tự luận</span>
                       </div>
                     </Select.Item>
                   </Select.Content>
