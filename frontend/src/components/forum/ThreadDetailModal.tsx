@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
+import { ForumSolvedBadge } from "@/components/forum/ForumSolvedBadge";
+import { formatForumRoleName, isThreadSolved } from "@/components/forum/forumHelpers";
 import { ForumReplyItem } from "./ForumReplyItem";
 import { getRpcClient } from "@/lib/connect_client";
 import { ForumService } from "@/gen/forum/v1/forum_pb";
@@ -27,18 +29,6 @@ interface ThreadDetailModalProps {
   onPinStaffAnswer?: (replyId: string) => void;
   onTogglePinThread?: (threadId: string, isPinned: boolean) => void;
   isNotificationTarget?: boolean;
-}
-
-function formatRoleName(role: string): string {
-  if (!role) return "Học viên";
-  const r = role.toUpperCase();
-  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN") || r === "3")
-    return "Quản trị viên";
-  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "COURSE_TA")
-    return "Trợ giảng (TA)";
-  if (r.includes("INSTRUCTOR") || r === "2") return "Giảng viên";
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
-  return role;
 }
 
 export function ThreadDetailModal({
@@ -86,7 +76,7 @@ export function ThreadDetailModal({
   };
 
   const sortedReplies = useMemo(() => {
-    if (!thread?.replies) return [];
+    if (!thread) return [];
     return [...thread.replies].sort((a, b) => {
       // Pinned replies (isStaffAnswer) always appear first at the top
       if (Boolean(a.isStaffAnswer) !== Boolean(b.isStaffAnswer)) {
@@ -94,7 +84,7 @@ export function ThreadDetailModal({
       }
       return 0;
     });
-  }, [thread?.replies]);
+  }, [thread]);
 
   if (!thread) return null;
 
@@ -171,6 +161,7 @@ export function ThreadDetailModal({
                     <span>Giảng viên đã ghim</span>
                   </Badge>
                 )}
+                {isThreadSolved(thread) && <ForumSolvedBadge />}
               </div>
 
               {/* 2-Way Deep Link Button to Classroom */}
@@ -195,7 +186,7 @@ export function ThreadDetailModal({
                       {thread.authorName || "Thành viên LMS"}
                     </h4>
                     <Badge variant="outlined" className="text-[10px] py-0 px-1.5 font-semibold">
-                      {formatRoleName(thread.authorRole)}
+                      {formatForumRoleName(thread.authorRole)}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">

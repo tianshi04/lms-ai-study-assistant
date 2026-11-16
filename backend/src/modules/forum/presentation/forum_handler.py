@@ -7,13 +7,26 @@ from connectrpc.request import RequestContext
 from src.gen.forum.v1 import forum_pb as pb
 from src.gen.forum.v1.forum_connect import ForumService
 from src.modules.forum.application import ForumUseCase
-from src.modules.forum.domain import ForumReplyEntity, ForumThreadEntity
+from src.modules.forum.domain import (
+    FORUM_FILTER_SOLVED,
+    FORUM_FILTER_UNSOLVED,
+    ForumReplyEntity,
+    ForumThreadEntity,
+)
 from src.shared.auth import require_current_user
+
+_RESOLUTION_FILTER_MAP: dict[pb.ThreadResolutionFilter, str] = {
+    pb.ThreadResolutionFilter.SOLVED: FORUM_FILTER_SOLVED,
+    pb.ThreadResolutionFilter.UNSOLVED: FORUM_FILTER_UNSOLVED,
+}
 
 ROLE_MAP = {
     "USER_ROLE_LEARNER": "Learner",
     "USER_ROLE_INSTRUCTOR": "Instructor",
+    "USER_ROLE_TA": "TA",
     "USER_ROLE_ADMIN": "Admin",
+    "USER_ROLE_SUPER_ADMIN": "Admin",
+    "USER_ROLE_ORG_ADMIN": "Admin",
     "1": "Learner",
     "2": "Instructor",
     "3": "Admin",
@@ -24,7 +37,8 @@ def _format_author_role(role_or_user: Any) -> str:
     if not role_or_user:
         return "Learner"
     role_val = getattr(role_or_user, "role", role_or_user)
-    return ROLE_MAP.get(str(role_val), str(role_val))
+    raw = str(role_val)
+    return ROLE_MAP.get(raw.upper(), raw)
 
 
 def _to_pb_reply(reply: ForumReplyEntity) -> pb.ForumReply:
@@ -61,6 +75,7 @@ def _to_pb_thread(thread: ForumThreadEntity) -> pb.ForumThread:
         is_edited=thread.is_edited,
         edited_at=thread.edited_at,
         author_user_id=thread.author_user_id,
+        is_solved=thread.is_solved,
     )
 
 
@@ -74,11 +89,14 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.ListThreadsRequest, pb.ListThreadsResponse],
     ) -> pb.ListThreadsResponse:
         current_user = require_current_user()
+        resolution_filter = _RESOLUTION_FILTER_MAP.get(request.resolution_filter, "")
         threads = await self.use_case.list_threads(
             course_id=request.course_id,
             item_id=request.item_id,
             current_user_id=current_user.id,
             user=current_user,
+            search_query=request.search_query,
+            resolution_filter=resolution_filter,
         )
         return pb.ListThreadsResponse(threads=[_to_pb_thread(t) for t in threads])
 

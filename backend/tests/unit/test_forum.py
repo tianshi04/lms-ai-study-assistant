@@ -7,7 +7,13 @@ from sqlalchemy.exc import IntegrityError
 
 from src.modules.catalog.domain import Course
 from src.modules.forum.application import ForumUseCase
-from src.modules.forum.domain import ForumReplyEntity, ForumThreadEntity
+from src.modules.forum.domain import (
+    FORUM_FILTER_SOLVED,
+    FORUM_FILTER_UNSOLVED,
+    MAX_FORUM_SEARCH_QUERY_LEN,
+    ForumReplyEntity,
+    ForumThreadEntity,
+)
 from src.modules.forum.infrastructure.repository import ForumRepository
 from src.shared.auth import CurrentUser
 
@@ -16,6 +22,7 @@ class MockForumRepository:
     def __init__(self, session=None):
         self.threads: dict[str, ForumThreadEntity] = {}
         self.replies: dict[str, ForumReplyEntity] = {}
+        self.last_list_args: dict[str, str] = {}
 
     async def list_threads(
         self,
@@ -23,15 +30,43 @@ class MockForumRepository:
         item_id: str = "",
         current_user_id: str = "",
         course_ids: list[str] | None = None,
+        search_query: str = "",
+        resolution_filter: str = "",
     ):
-        res = list(self.threads.values())
-        if course_id:
-            res = [t for t in res if t.course_id == course_id]
+        self.last_list_args = {
+            "course_id": course_id,
+            "item_id": item_id,
+            "current_user_id": current_user_id,
+            "search_query": search_query,
+            "resolution_filter": resolution_filter,
+        }
+        items = list(self.threads.values())
+        if course_id and course_id.upper() != "ALL":
+            items = [t for t in items if t.course_id == course_id]
         elif course_ids is not None:
-            res = [t for t in res if t.course_id in course_ids]
+            items = [t for t in items if t.course_id in course_ids]
         if item_id:
-            res = [t for t in res if t.item_id == item_id]
-        return res
+            items = [t for t in items if t.item_id == item_id]
+        if resolution_filter == FORUM_FILTER_SOLVED:
+            items = [t for t in items if t.is_solved]
+        elif resolution_filter == FORUM_FILTER_UNSOLVED:
+            items = [t for t in items if not t.is_solved]
+        if search_query:
+            tokens = search_query.lower().split()
+            filtered = []
+            for thread in items:
+                haystack = " ".join(
+                    [
+                        thread.title.lower(),
+                        thread.content.lower(),
+                        thread.author_name.lower(),
+                        *[r.content.lower() for r in thread.replies],
+                    ]
+                )
+                if all(tok in haystack for tok in tokens):
+                    filtered.append(thread)
+            items = filtered
+        return items
 
     async def get_thread_by_id(self, thread_id: str):
         return self.threads.get(thread_id)
@@ -63,8 +98,11 @@ class MockForumRepository:
 
     async def create_reply(self, reply: ForumReplyEntity):
         self.replies[reply.id] = reply
-        if reply.thread_id in self.threads:
-            self.threads[reply.thread_id].replies.append(reply)
+        thread = self.threads.get(reply.thread_id)
+        if thread:
+            thread.replies.append(reply)
+            if reply.is_staff_answer:
+                thread.mark_solved()
         return reply
 
     async def update_reply(self, reply_id: str, content: str, edited_at: str):
@@ -78,10 +116,14 @@ class MockForumRepository:
         return r
 
     async def delete_reply(self, reply_id: str):
-        if reply_id in self.replies:
-            del self.replies[reply_id]
-            return True
-        return False
+        reply = self.replies.pop(reply_id, None)
+        if not reply:
+            return False
+        thread = self.threads.get(reply.thread_id)
+        if thread:
+            thread.replies = [r for r in thread.replies if r.id != reply_id]
+            thread.sync_solved_state()
+        return True
 
     async def vote_post(self, post_id: str, user_id: str = "", is_upvote: bool = True):
         return 1
@@ -95,10 +137,16 @@ class MockForumRepository:
                 return self.threads[thread_id].course_id
         return None
 
-    async def pin_staff_answer(self, reply_id: str, ta_user_id: str):
-        r = self.replies.get(reply_id)
-        if r:
-            r.is_staff_answer = not r.is_staff_answer
+    async def pin_staff_answer(self, reply_id: str, _ta_user_id: str = ""):
+        reply = self.replies.get(reply_id)
+        if not reply:
+            return False
+        reply.is_staff_answer = not reply.is_staff_answer
+        thread = self.threads.get(reply.thread_id)
+        if thread:
+            has_staff = any(r.is_staff_answer for r in thread.replies)
+            thread.is_staff_pinned = True if reply.is_staff_answer else has_staff
+            thread.sync_solved_state()
         return True
 
     async def pin_thread(self, thread_id: str, is_pinned: bool):
@@ -190,7 +238,7 @@ async def test_forum_instructor_of_course_posts_as_instructor():
     assert len(thread.replies) == 1
     assert thread.replies[0].is_staff_answer is False
 
-    # 2. Reply as course instructor
+    # 2. Reply as course instructor -> auto-marked as staff answer & solved
     reply = await use_case.post_reply(
         thread_id=thread.id,
         content="Here is extra material",
@@ -199,14 +247,23 @@ async def test_forum_instructor_of_course_posts_as_instructor():
         user=prof_user,
     )
     assert reply.author_role == "Instructor"
-    assert reply.is_staff_answer is False
+    assert reply.is_staff_answer is True
+    assert mock_forum_repo.threads[thread.id].is_solved is True
 
-    # 3. Pin staff answer -> allowed
-    success = await use_case.pin_staff_answer(
+    # 3. Toggle unpin -> False, then re-pin -> True
+    unpinned = await use_case.pin_staff_answer(
         reply_id=reply.id, ta_user_id=prof_user.id, user=prof_user
     )
-    assert success is True
+    assert unpinned is True
+    assert reply.is_staff_answer is False
+    assert mock_forum_repo.threads[thread.id].is_solved is False
+
+    repinned = await use_case.pin_staff_answer(
+        reply_id=reply.id, ta_user_id=prof_user.id, user=prof_user
+    )
+    assert repinned is True
     assert reply.is_staff_answer is True
+    assert mock_forum_repo.threads[thread.id].is_solved is True
 
 
 @pytest.mark.asyncio
@@ -837,3 +894,204 @@ async def test_course_ta_access_and_canonical_uuid():
     )
     assert thread.author_role == "TA"
     assert thread.course_id == "uuid_c_123"
+
+
+@pytest.mark.asyncio
+async def test_post_reply_solved_lifecycle_with_staff_roles():
+    mock_repo = MockForumRepository()
+    mock_catalog = MockCatalogRepository()
+    mock_learning = MockLearningRepository()
+
+    course = Course(
+        id="course-ai",
+        title="AI Foundations",
+        slug="course-ai",
+        owner_id="inst_1",
+        ta_ids=["user_user_role_ta"],
+    )
+    mock_catalog.courses["course-ai"] = course
+    mock_learning.enrolled_pairs.add(("learner_1", "course-ai"))
+
+    use_case = ForumUseCase(
+        repo_factory=lambda _session: mock_repo,
+        catalog_repo_factory=lambda _session: mock_catalog,
+        learning_repo_factory=lambda _session: mock_learning,
+    )
+
+    inst_user = CurrentUser(
+        id="inst_1", role="USER_ROLE_INSTRUCTOR", email="nam@edu.vn"
+    )
+    learner_user = CurrentUser(
+        id="learner_1", role="USER_ROLE_LEARNER", email="tri@edu.vn"
+    )
+
+    # Even if an instructor creates a thread with opening content, it starts unsolved
+    thread = await use_case.create_thread(
+        course_id="course-ai",
+        item_id="item-1",
+        title="Học Gradient Descent",
+        content="Làm sao chỉnh alpha?",
+        author_user_id="inst_1",
+        author_name="Prof. Nam",
+        user=inst_user,
+    )
+    assert thread.is_solved is False
+
+    # Learner reply leaves thread unsolved
+    learner_reply = await use_case.post_reply(
+        thread_id=thread.id,
+        content="Mình cũng đang thắc mắc",
+        author_user_id="learner_1",
+        author_name="Trí",
+        user=learner_user,
+    )
+    assert learner_reply.is_staff_answer is False
+    assert mock_repo.threads[thread.id].is_solved is False
+
+    # Course instructor reply automatically marks solved
+    staff_reply = await use_case.post_reply(
+        thread_id=thread.id,
+        content="Bạn thử learning rate 0.01 nhé",
+        author_user_id="inst_1",
+        author_name="Prof. Nam",
+        user=inst_user,
+    )
+    assert staff_reply.is_staff_answer is True
+    assert mock_repo.threads[thread.id].is_solved is True
+
+    # Deleting the only staff reply reverts solved back to False
+    deleted = await use_case.delete_reply(
+        reply_id=staff_reply.id,
+        current_user_id="inst_1",
+        user=inst_user,
+    )
+    assert deleted is True
+    assert mock_repo.threads[thread.id].is_solved is False
+
+    # Super Admin and Course TA roles also qualify as staff answers
+    for role in ("USER_ROLE_SUPER_ADMIN", "USER_ROLE_ADMIN", "USER_ROLE_TA"):
+        staff_actor = CurrentUser(
+            id=f"user_{role.lower()}",
+            role=role,
+            email=f"{role.lower()}@edu.vn",
+        )
+        role_reply = await use_case.post_reply(
+            thread_id=thread.id,
+            content=f"Phản hồi từ {role}",
+            author_user_id=staff_actor.id,
+            author_name=role,
+            user=staff_actor,
+        )
+        assert role_reply.is_staff_answer is True
+        assert mock_repo.threads[thread.id].is_solved is True
+        await use_case.delete_reply(
+            reply_id=role_reply.id,
+            current_user_id=staff_actor.id,
+            user=staff_actor,
+        )
+        assert mock_repo.threads[thread.id].is_solved is False
+
+
+@pytest.mark.asyncio
+async def test_list_threads_normalizes_search_and_forwards_resolution_filter():
+    mock_repo = MockForumRepository()
+    mock_catalog = MockCatalogRepository()
+    mock_learning = MockLearningRepository()
+    mock_catalog.courses["course-1"] = Course(
+        id="course-1", title="Course 1", slug="course-1", owner_id="inst_1"
+    )
+    mock_learning.enrolled_pairs.add(("learner_1", "course-1"))
+
+    use_case = ForumUseCase(
+        repo_factory=lambda _session: mock_repo,
+        catalog_repo_factory=lambda _session: mock_catalog,
+        learning_repo_factory=lambda _session: mock_learning,
+    )
+    learner_user = CurrentUser(
+        id="learner_1", role="USER_ROLE_LEARNER", email="l1@edu.vn"
+    )
+
+    oversized_query = "   " + ("a" * (MAX_FORUM_SEARCH_QUERY_LEN + 50)) + "   "
+    await use_case.list_threads(
+        course_id="course-1",
+        user=learner_user,
+        search_query=oversized_query,
+        resolution_filter=FORUM_FILTER_SOLVED,
+    )
+
+    assert len(mock_repo.last_list_args["search_query"]) == MAX_FORUM_SEARCH_QUERY_LEN
+    assert mock_repo.last_list_args["resolution_filter"] == FORUM_FILTER_SOLVED
+
+
+@pytest.mark.asyncio
+async def test_forum_handler_maps_resolution_filter_and_is_solved(monkeypatch):
+    from typing import cast
+    from unittest.mock import MagicMock
+
+    from connectrpc.request import RequestContext
+
+    from src.gen.forum.v1 import forum_pb as pb
+    from src.modules.forum.presentation.forum_handler import ForumHandler
+
+    mock_repo = MockForumRepository()
+    mock_catalog = MockCatalogRepository()
+    mock_learning = MockLearningRepository()
+    mock_catalog.courses["c1"] = Course(
+        id="c1", title="Course C1", slug="c1", owner_id="inst_1"
+    )
+    mock_learning.enrolled_pairs.add(("u1", "c1"))
+
+    mock_repo.threads["t1"] = ForumThreadEntity(
+        id="t1",
+        course_id="c1",
+        item_id="i1",
+        title="Solved thread",
+        content="Solved body",
+        author_name="Minh",
+        author_role="USER_ROLE_LEARNER",
+        is_solved=True,
+    )
+    mock_repo.threads["t2"] = ForumThreadEntity(
+        id="t2",
+        course_id="c1",
+        item_id="i1",
+        title="Unsolved thread",
+        content="Pending body",
+        author_name="Lan",
+        author_role="USER_ROLE_LEARNER",
+        is_solved=False,
+    )
+
+    use_case = ForumUseCase(
+        repo_factory=lambda _session: mock_repo,
+        catalog_repo_factory=lambda _session: mock_catalog,
+        learning_repo_factory=lambda _session: mock_learning,
+    )
+    handler = ForumHandler(use_case=use_case)
+    monkeypatch.setattr(
+        "src.modules.forum.presentation.forum_handler.require_current_user",
+        lambda: CurrentUser(id="u1", email="u1@example.com", role="USER_ROLE_LEARNER"),
+    )
+
+    req_solved = pb.ListThreadsRequest(
+        course_id="c1",
+        search_query="Solved",
+        resolution_filter=pb.ThreadResolutionFilter.SOLVED,
+    )
+    ctx_solved = cast(
+        RequestContext[pb.ListThreadsRequest, pb.ListThreadsResponse], MagicMock()
+    )
+    res_solved = await handler.list_threads(req_solved, ctx_solved)
+    assert [t.id for t in res_solved.threads] == ["t1"]
+    assert res_solved.threads[0].is_solved is True
+
+    req_unsolved = pb.ListThreadsRequest(
+        course_id="c1",
+        resolution_filter=pb.ThreadResolutionFilter.UNSOLVED,
+    )
+    ctx_unsolved = cast(
+        RequestContext[pb.ListThreadsRequest, pb.ListThreadsResponse], MagicMock()
+    )
+    res_unsolved = await handler.list_threads(req_unsolved, ctx_unsolved)
+    assert [t.id for t in res_unsolved.threads] == ["t2"]
+    assert res_unsolved.threads[0].is_solved is False

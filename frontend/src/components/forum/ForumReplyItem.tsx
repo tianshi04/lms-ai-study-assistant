@@ -1,6 +1,6 @@
 "use client";
 
-import { ThumbsUp, Pin } from "lucide-react";
+import { CheckCircle2, ThumbsUp, Pin } from "lucide-react";
 import type { ForumReply } from "@/gen/forum/v1/forum_pb";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
@@ -85,6 +85,16 @@ export function ForumReplyItem({
               <Badge variant={roleInfo.variant} className="text-[10px] py-0 px-1.5 font-semibold">
                 {roleInfo.label}
               </Badge>
+              {reply.isStaffAnswer && (
+                <Badge
+                  variant="warning"
+                  size="pill"
+                  className="gap-0.5 text-warning font-bold text-[10px] py-0 px-1.5"
+                >
+                  <CheckCircle2 aria-hidden="true" className="w-3 h-3 text-warning" />
+                  <span>Phản hồi chính thức</span>
+                </Badge>
+              )}
               {reply.isEdited && (
                 <span className="text-[10px] text-warning font-medium italic">
                   {"(Đã chỉnh sửa)"}

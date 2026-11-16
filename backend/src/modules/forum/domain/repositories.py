@@ -12,8 +12,10 @@ class IForumRepository(ABC):
         item_id: str = "",
         current_user_id: str = "",
         course_ids: Sequence[str] | None = None,
+        search_query: str = "",
+        resolution_filter: str = "",
     ) -> Sequence[ForumThreadEntity]:
-        """List forum threads matching course_id, optional item_id, or scoped by course_ids."""
+        """List forum threads filtered by course/scope, item, search query, and resolution."""
 
     @abstractmethod
     async def get_thread_by_id(self, thread_id: str) -> ForumThreadEntity | None:

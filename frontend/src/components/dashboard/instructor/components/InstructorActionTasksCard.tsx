@@ -47,9 +47,13 @@ export function InstructorActionTasksCard({
     { enabled: !!courseId },
   );
 
-  const { data: courseThreads, isLoading: loadingThreads } = useForumThreadsQuery(courseId || "", {
-    enabled: !!courseId && totalQaCount === undefined,
-  });
+  const { data: courseThreads, isLoading: loadingThreads } = useForumThreadsQuery(
+    courseId || "",
+    undefined,
+    {
+      enabled: !!courseId && totalQaCount === undefined,
+    },
+  );
 
   const queueItems = useMemo(() => gradingData?.items || [], [gradingData]);
 

@@ -1,11 +1,14 @@
 from collections.abc import Sequence
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select, union, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.modules.forum.domain import (
+    FORUM_FILTER_SOLVED,
+    FORUM_FILTER_UNSOLVED,
+    MAX_FORUM_SEARCH_TOKENS,
     ForumReplyEntity,
     ForumThreadEntity,
     IForumRepository,
@@ -15,6 +18,7 @@ from src.modules.forum.infrastructure.models import (
     ForumThreadORM,
     ForumVoteORM,
 )
+from src.shared.domain import escape_like_pattern
 
 
 class ForumRepository(IForumRepository):
@@ -49,6 +53,7 @@ class ForumRepository(IForumRepository):
         )
         replies = [self._to_reply_entity(r, voted_post_ids) for r in sorted_replies]
         is_voted = (orm.id in voted_post_ids) if voted_post_ids else False
+        is_solved = bool(orm.is_solved or any(r.is_staff_answer for r in replies))
         return ForumThreadEntity(
             id=orm.id,
             course_id=orm.course_id,
@@ -65,6 +70,7 @@ class ForumRepository(IForumRepository):
             is_edited=orm.is_edited,
             edited_at=orm.edited_at,
             author_user_id=orm.author_user_id,
+            is_solved=is_solved,
         )
 
     async def list_threads(
@@ -73,6 +79,8 @@ class ForumRepository(IForumRepository):
         item_id: str = "",
         current_user_id: str = "",
         course_ids: Sequence[str] | None = None,
+        search_query: str = "",
+        resolution_filter: str = "",
     ) -> Sequence[ForumThreadEntity]:
         voted_post_ids: set[str] = set()
         if current_user_id:
@@ -91,6 +99,39 @@ class ForumRepository(IForumRepository):
             query = query.where(ForumThreadORM.course_id.in_(list(course_ids)))
         if item_id:
             query = query.where(ForumThreadORM.item_id == item_id)
+        if resolution_filter == FORUM_FILTER_SOLVED:
+            query = query.where(ForumThreadORM.is_solved.is_(True))
+        elif resolution_filter == FORUM_FILTER_UNSOLVED:
+            query = query.where(ForumThreadORM.is_solved.is_(False))
+
+        tokens = list(dict.fromkeys(search_query.strip().split()))[
+            :MAX_FORUM_SEARCH_TOKENS
+        ]
+        for token in tokens:
+            pattern = func.immutable_unaccent(escape_like_pattern(token.lower()))
+            # Combine thread and reply matches via UNION so PostgreSQL can use BitmapOr
+            # across all forum_threads pg_trgm GIN indexes rather than forcing a Seq Scan.
+            threads_match = select(ForumThreadORM.id).where(
+                or_(
+                    func.immutable_unaccent(func.lower(ForumThreadORM.title)).like(
+                        pattern, escape="\\"
+                    ),
+                    func.immutable_unaccent(func.lower(ForumThreadORM.content)).like(
+                        pattern, escape="\\"
+                    ),
+                    func.immutable_unaccent(
+                        func.lower(ForumThreadORM.author_name)
+                    ).like(pattern, escape="\\"),
+                )
+            )
+            replies_match = select(ForumReplyORM.thread_id).where(
+                func.immutable_unaccent(func.lower(ForumReplyORM.content)).like(
+                    pattern, escape="\\"
+                )
+            )
+            query = query.where(
+                ForumThreadORM.id.in_(union(threads_match, replies_match))
+            )
 
         query = query.order_by(
             ForumThreadORM.is_staff_pinned.desc(),
@@ -134,6 +175,7 @@ class ForumRepository(IForumRepository):
             created_at=thread.created_at,
             upvote_count=thread.upvote_count,
             is_staff_pinned=thread.is_staff_pinned,
+            is_solved=thread.is_solved,
             is_edited=thread.is_edited,
             edited_at=thread.edited_at,
         )
@@ -186,6 +228,12 @@ class ForumRepository(IForumRepository):
             edited_at=reply.edited_at,
         )
         self.session.add(orm)
+        if reply.is_staff_answer:
+            await self.session.execute(
+                update(ForumThreadORM)
+                .where(ForumThreadORM.id == reply.thread_id)
+                .values(is_solved=True)
+            )
         await self.session.commit()
 
         return self._to_reply_entity(orm)
@@ -211,13 +259,32 @@ class ForumRepository(IForumRepository):
         orm = res.scalar_one_or_none()
         if not orm:
             return False
+
+        thread_id = orm.thread_id
+        was_staff_answer = orm.is_staff_answer
         await self.session.delete(orm)
+        await self.session.flush()
+
+        if was_staff_answer:
+            remaining_staff_stmt = (
+                select(ForumReplyORM.id)
+                .where(
+                    ForumReplyORM.thread_id == thread_id,
+                    ForumReplyORM.is_staff_answer.is_(True),
+                )
+                .limit(1)
+            )
+            has_other_staff = (
+                await self.session.execute(remaining_staff_stmt)
+            ).scalar_one_or_none() is not None
+            await self.session.execute(
+                update(ForumThreadORM)
+                .where(ForumThreadORM.id == thread_id)
+                .values(is_solved=has_other_staff)
+            )
+
         await self.session.commit()
         return True
-        self.session.add(orm)
-        await self.session.commit()
-
-        return self._to_reply_entity(orm)
 
     async def _get_post_upvote_count(self, post_id: str) -> int:
         thread_stmt = select(ForumThreadORM.upvote_count).where(
@@ -323,6 +390,7 @@ class ForumRepository(IForumRepository):
         if thread_orm:
             if reply_orm.is_staff_answer:
                 thread_orm.is_staff_pinned = True
+                thread_orm.is_solved = True
             else:
                 count_stmt = select(func.count(ForumReplyORM.id)).where(
                     ForumReplyORM.thread_id == reply_orm.thread_id,
@@ -331,7 +399,9 @@ class ForumRepository(IForumRepository):
                 )
                 c_res = await self.session.execute(count_stmt)
                 remaining_pinned = c_res.scalar_one() or 0
-                thread_orm.is_staff_pinned = remaining_pinned > 0
+                has_remaining = remaining_pinned > 0
+                thread_orm.is_staff_pinned = has_remaining
+                thread_orm.is_solved = has_remaining
 
         await self.session.commit()
         return True

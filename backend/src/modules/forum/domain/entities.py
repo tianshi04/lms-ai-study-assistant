@@ -74,6 +74,7 @@ class ForumThreadEntity(Entity):
         is_edited: bool = False,
         edited_at: str = "",
         author_user_id: str = "",
+        is_solved: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.course_id = course_id
@@ -90,12 +91,27 @@ class ForumThreadEntity(Entity):
         self.is_edited = is_edited
         self.edited_at = edited_at
         self.author_user_id = author_user_id
+        self.is_solved = bool(
+            is_solved or any(reply.is_staff_answer for reply in self.replies)
+        )
 
     def pin(self) -> None:
         self.is_staff_pinned = True
 
     def unpin(self) -> None:
         self.is_staff_pinned = False
+
+    def mark_solved(self) -> None:
+        """Mark the thread as solved."""
+        self.is_solved = True
+
+    def mark_unsolved(self) -> None:
+        """Mark the thread as unsolved."""
+        self.is_solved = False
+
+    def sync_solved_state(self) -> None:
+        """Synchronize is_solved from whether any reply is marked as staff answer."""
+        self.is_solved = any(reply.is_staff_answer for reply in self.replies)
 
     def edit(self, new_title: str, new_content: str, edited_at: str) -> None:
         if not new_title or not new_title.strip():
