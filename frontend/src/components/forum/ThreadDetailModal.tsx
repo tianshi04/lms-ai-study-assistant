@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
+import { ForumSolvedBadge } from "@/components/forum/ForumSolvedBadge";
+import { formatForumRoleName, isThreadSolved } from "@/components/forum/forumHelpers";
 import { ForumReplyItem } from "./ForumReplyItem";
 
 interface ThreadDetailModalProps {
@@ -24,17 +26,6 @@ interface ThreadDetailModalProps {
   onDeleteReply?: (replyId: string) => void;
   onPinStaffAnswer?: (replyId: string) => void;
   isNotificationTarget?: boolean;
-}
-
-function formatRoleName(role: string): string {
-  if (!role) return "Học viên";
-  const r = role.toUpperCase();
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
-  if (r.includes("INSTRUCTOR") || r === "2") return "Giảng viên";
-  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3") return "Trợ giảng (TA)";
-  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN"))
-    return "Quản trị viên";
-  return role;
 }
 
 export function ThreadDetailModal({
@@ -114,6 +105,7 @@ export function ThreadDetailModal({
                     <span>Giảng viên đã ghim</span>
                   </Badge>
                 )}
+                {isThreadSolved(thread) && <ForumSolvedBadge />}
               </div>
 
               {/* 2-Way Deep Link Button to Classroom */}
@@ -138,7 +130,7 @@ export function ThreadDetailModal({
                       {thread.authorName || "Thành viên LMS"}
                     </h4>
                     <Badge variant="outlined" className="text-[10px] py-0 px-1.5 font-semibold">
-                      {formatRoleName(thread.authorRole)}
+                      {formatForumRoleName(thread.authorRole)}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -263,7 +255,7 @@ export function ThreadDetailModal({
           <Button
             variant="filled"
             onClick={handleSendReply}
-            disabled={!replyContent.trim() || submittingReply || submittingReply}
+            disabled={!replyContent.trim() || submittingReply}
             className="shrink-0 font-semibold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-primary/20"
           >
             {"Đăng phản hồi"}

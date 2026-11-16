@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ThumbsUp } from "lucide-react";
+import { CheckCircle2, ThumbsUp } from "lucide-react";
 import { type ForumReply } from "@/gen/forum/v1/forum_pb";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
@@ -51,9 +51,10 @@ export function ForumReplyItem({
             {reply.isStaffAnswer && (
               <Badge
                 variant="warning"
-                className="gap-0.5 text-warning font-extrabold text-[10px] py-0 px-1"
+                size="pill"
+                className="gap-0.5 text-warning font-extrabold text-[10px] py-0 px-1.5"
               >
-                <Check aria-hidden="true" className="w-3 h-3 text-warning" />
+                <CheckCircle2 aria-hidden="true" className="w-3 h-3 text-warning" />
                 (TA Staff)
               </Badge>
             )}
@@ -119,7 +120,7 @@ export function ForumReplyItem({
               variant="filled"
               size="sm"
               onClick={() => onSaveEdit(reply.id)}
-              disabled={submittingEditReply || !editReplyContent.trim() || submittingEditReply}
+              disabled={submittingEditReply || !editReplyContent.trim()}
               className="px-2 py-0.5 text-[10px] font-semibold h-auto"
             >
               {"Lưu thay đổi"}

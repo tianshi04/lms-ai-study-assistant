@@ -8,6 +8,11 @@ export class ForumPage {
   readonly modalSubmitButton: Locator;
   readonly replyInput: Locator;
   readonly submitReplyButton: Locator;
+  readonly searchInput: Locator;
+  readonly clearSearchButton: Locator;
+  readonly filterAllButton: Locator;
+  readonly filterSolvedButton: Locator;
+  readonly filterUnsolvedButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -19,6 +24,11 @@ export class ForumPage {
       .locator('textarea[placeholder*="Nội dung"], textarea[placeholder*="thảo luận"], input[placeholder*="Trả lời"]')
       .first();
     this.submitReplyButton = page.getByRole('button', { name: /Đăng bài|Gửi phản hồi|Post Reply|Gửi/i }).first();
+    this.searchInput = page.locator('input[name="forumSearch"]').first();
+    this.clearSearchButton = page.getByRole('button', { name: /Xóa tìm kiếm/i }).first();
+    this.filterAllButton = page.getByRole('button', { name: /^Tất cả$/i }).first();
+    this.filterSolvedButton = page.getByRole('button', { name: /^Đã giải quyết$/i }).first();
+    this.filterUnsolvedButton = page.getByRole('button', { name: /^Chưa giải quyết$/i }).first();
   }
 
   async goto() {
@@ -83,5 +93,29 @@ export class ForumPage {
     if (await upvoteBtn.isVisible()) {
       await upvoteBtn.click();
     }
+  }
+
+  async searchThreads(query: string) {
+    await expect(this.searchInput).toBeVisible({ timeout: 10000 });
+    await this.searchInput.fill(query);
+  }
+
+  async clearSearch() {
+    if (await this.clearSearchButton.isVisible()) {
+      await this.clearSearchButton.click();
+    } else {
+      await this.searchInput.fill('');
+    }
+  }
+
+  async filterByResolution(status: 'all' | 'solved' | 'unsolved') {
+    const target =
+      status === 'solved'
+        ? this.filterSolvedButton
+        : status === 'unsolved'
+          ? this.filterUnsolvedButton
+          : this.filterAllButton;
+    await expect(target).toBeVisible({ timeout: 10000 });
+    await target.click();
   }
 }

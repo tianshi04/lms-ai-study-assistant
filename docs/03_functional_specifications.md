@@ -186,8 +186,9 @@ flowchart TD
 ### 2.4. Quản lý Khóa học & Diễn đàn (Course Ownership, Forum Moderation & Announcements)
 * **Quyền sở hữu Khóa học (Course Ownership & Co-Instructors):** Mỗi khóa học gắn với một Chủ sở hữu chính (`owner_id`) và danh sách Giảng viên đồng phụ trách (`co_instructor_ids`). Giảng viên chỉ có quyền chỉnh sửa/xóa khóa học do mình sở hữu hoặc phụ trách.
 * **Thông báo Khóa học (`CreateCourseAnnouncement`, `ListCourseAnnouncements`):** Giảng viên/Admin gửi thông báo truyền thông, lịch livestream hoặc nhắc nhở nộp bài tới toàn bộ học viên đăng ký khóa học.
-* **Điều phối & Kiểm duyệt Diễn đàn (Forum Moderation, Editing & Pinning):** 
-  * Trợ giảng/Giảng viên/Quản trị viên có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
+* **Điều phối & Kiểm duyệt Diễn đàn (Forum Moderation, Pinning & Solved Status):** 
+  * Trợ giảng/Giảng viên/Quản trị viên có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` và `is_solved = True` trên bài thảo luận gốc (Thread).
+  * Khi Staff/Giảng viên/Trợ giảng/Admin phản hồi trực tiếp (`PostReply` với `is_staff_answer = True`), chủ đề cũng tự động được đánh dấu **Đã giải quyết** (`is_solved = True`); nếu toàn bộ phản hồi từ Staff bị xóa hết, trạng thái `is_solved` tự động cập nhật về `False` (`BR_FORUM_004`).
   * Tác giả bài viết (`author_user_id == current_user.id`) có quyền cập nhật (`UpdateThread`, `UpdateReply`) hoặc xóa bài đăng của mình. Khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động đánh dấu `is_edited = True` và ghi nhận timestamp `edited_at` để người xem dễ dàng phân biệt bài viết đã qua chỉnh sửa.
   * Ban kiểm duyệt (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền xóa bài viết/bình luận vi phạm quy chuẩn cộng đồng của bất kỳ người dùng nào.
 * **Hỗ trợ Giải đáp:** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) để giải thích kiến thức nâng cao cho học viên.
@@ -284,6 +285,7 @@ flowchart TD
 
 ### 3.4. Diễn đàn Thảo luận theo Bài học (Discussion Forum)
 * **Thảo luận gắn với Item (Item-level Discussion):** Dưới mỗi bài học video/bài đọc có mục "Discussion". Học viên gửi câu hỏi và nhận câu trả lời từ bạn học trên khắp thế giới.
+* **Tìm kiếm Đa từ khóa Tiếng Việt & Bộ lọc "Đã giải quyết":** Cả trang diễn đàn chung (`/forum`) và tab Thảo luận trong trình học (`ForumTab`) cung cấp ô tìm kiếm đa từ khóa (tìm trên tiêu đề, nội dung, tên tác giả và nội dung phản hồi, hỗ trợ tiếng Việt có dấu lẫn không dấu nhờ GIN index + `pg_trgm` + `unaccent` của PostgreSQL) cùng nhóm Chip lọc trạng thái **Tất cả / Đã giải quyết / Chưa giải quyết** (`BR_FORUM_004`, `BR_FORUM_005`). Huy hiệu **"Đã giải quyết"** (`is_solved = True`) tự động hiển thị trên thẻ bài viết và modal chi tiết khi chủ đề có câu trả lời chính thức từ Giảng viên/TA/Admin.
 * **Chỉnh sửa & Chỉ báo Chỉnh sửa (`is_edited`):** Học viên có thể cập nhật bài hỏi hoặc câu trả lời của chính mình. Nội dung sau khi chỉnh sửa sẽ hiển thị nhãn chỉ báo "Đã chỉnh sửa" (`is_edited = True`) kèm mốc thời gian `edited_at`.
 * **Upvote & Staff Pinning:** Học viên có thể Upvote câu trả lời hữu ích. Các câu trả lời được Trợ giảng ghim (Staff Answer) sẽ được làm nổi bật với huy hiệu đặc biệt.
 

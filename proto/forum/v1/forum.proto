@@ -35,11 +35,20 @@ message ForumThread {
   string edited_at = 13;
   string author_user_id = 14;
   string content = 15;
+  bool is_solved = 16;
+}
+
+enum ThreadResolutionFilter {
+  THREAD_RESOLUTION_FILTER_UNSPECIFIED = 0;
+  THREAD_RESOLUTION_FILTER_SOLVED = 1;
+  THREAD_RESOLUTION_FILTER_UNSOLVED = 2;
 }
 
 message ListThreadsRequest {
   string course_id = 1;
   string item_id = 2;
+  string search_query = 3;
+  ThreadResolutionFilter resolution_filter = 4;
 }
 
 message ListThreadsResponse {

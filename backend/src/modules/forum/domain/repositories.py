@@ -7,9 +7,14 @@ from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntit
 class IForumRepository(ABC):
     @abstractmethod
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = ""
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        search_query: str = "",
+        resolution_filter: str = "",
     ) -> Sequence[ForumThreadEntity]:
-        """List forum threads matching course_id and optional item_id."""
+        """List forum threads filtered by course, item, search query, and resolution."""
 
     @abstractmethod
     async def get_thread_by_id(self, thread_id: str) -> ForumThreadEntity | None:
