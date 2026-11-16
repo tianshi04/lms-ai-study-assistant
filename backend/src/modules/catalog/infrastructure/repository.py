@@ -111,6 +111,10 @@ def _model_to_domain_lesson(l_model: LessonModel) -> Lesson:
                 rubric_criteria_json=getattr(i_model, "rubric_criteria_json", ""),
                 quiz_matrix_id=getattr(i_model, "quiz_matrix_id", ""),
                 auto_transcribe=getattr(i_model, "auto_transcribe", False),
+                essay_grading_mode=getattr(i_model, "essay_grading_mode", "PEER_REVIEW")
+                or "PEER_REVIEW",
+                required_peer_reviews=getattr(i_model, "required_peer_reviews", 3) or 3,
+                cold_start_hours=getattr(i_model, "cold_start_hours", 48) or 48,
             )
         )
     return Lesson(
@@ -1148,6 +1152,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=language or "",
             rubric_criteria_json=rubric_criteria_json or "",
             quiz_matrix_id=quiz_matrix_id or "",
+            essay_grading_mode="PEER_REVIEW",
+            required_peer_reviews=3,
+            cold_start_hours=48,
         )
         self.session.add(item_model)
 
@@ -1211,6 +1218,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=language or "",
             rubric_criteria_json=rubric_criteria_json or "",
             quiz_matrix_id=quiz_matrix_id or "",
+            essay_grading_mode="PEER_REVIEW",
+            required_peer_reviews=3,
+            cold_start_hours=48,
         )
 
     async def submit_course_review(
@@ -1646,6 +1656,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=item.language,
             rubric_criteria_json=item.rubric_criteria_json,
             quiz_matrix_id=item.quiz_matrix_id,
+            essay_grading_mode=getattr(item, "essay_grading_mode", "PEER_REVIEW")
+            or "PEER_REVIEW",
+            required_peer_reviews=getattr(item, "required_peer_reviews", 3) or 3,
+            cold_start_hours=getattr(item, "cold_start_hours", 48) or 48,
         )
 
     async def delete_learning_item(self, item_id: str, course_id: str) -> bool:

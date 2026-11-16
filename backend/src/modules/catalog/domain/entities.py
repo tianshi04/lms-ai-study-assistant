@@ -103,6 +103,9 @@ class LearningItem(Entity):
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
         auto_transcribe: bool = False,
+        essay_grading_mode: str = "PEER_REVIEW",
+        required_peer_reviews: int = 3,
+        cold_start_hours: int = 48,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -120,6 +123,9 @@ class LearningItem(Entity):
         self.rubric_criteria_json = rubric_criteria_json
         self.quiz_matrix_id = quiz_matrix_id
         self.auto_transcribe = auto_transcribe
+        self.essay_grading_mode = essay_grading_mode
+        self.required_peer_reviews = required_peer_reviews
+        self.cold_start_hours = cold_start_hours
 
 
 class Lesson(Entity):

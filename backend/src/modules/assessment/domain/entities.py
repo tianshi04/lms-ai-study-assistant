@@ -341,6 +341,8 @@ class PeerAssignmentSubmission(Entity):
         published_at: str | None = None,
         status: str = "SUBMITTED",
         staff_evaluations_json: list[dict[str, Any]] | None = None,
+        review_duty_status: str = "PENDING",
+        review_duty_waived_reason: str | None = None,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -362,6 +364,8 @@ class PeerAssignmentSubmission(Entity):
         self.published_at = published_at
         self.status = status
         self.staff_evaluations_json = staff_evaluations_json or []
+        self.review_duty_status = review_duty_status
+        self.review_duty_waived_reason = review_duty_waived_reason
 
     def assign_grade(
         self,
