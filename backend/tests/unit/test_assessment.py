@@ -36,6 +36,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.matrices: dict[str, Any] = {}
         self.item_types: dict[str, str] = {}
         self.rubric_criteria_json_map: dict[str, str] = {}
+        self.learning_items_details: dict[str, dict[str, Any]] = {}
 
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         self.honor_codes[agreement.id] = agreement
@@ -138,6 +139,67 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             if s.item_id == item_id
             and (not exclude_user_id or s.user_id != exclude_user_id)
         ]
+
+    async def get_learning_item_details(self, item_id: str) -> dict[str, Any] | None:
+        if item_id in self.learning_items_details:
+            return self.learning_items_details[item_id]
+        rubric_json = self.rubric_criteria_json_map.get(item_id, "")
+        return {
+            "id": item_id,
+            "title": f"Learning Item {item_id}",
+            "reading_markdown": "Test instructions",
+            "rubric_criteria_json": rubric_json,
+            "essay_grading_mode": "PEER_REVIEW",
+            "required_peer_reviews": 3,
+            "cold_start_hours": 48,
+        }
+
+    async def count_user_completed_reviews(
+        self, item_id: str, reviewer_user_id: str
+    ) -> int:
+        return sum(
+            1
+            for r in self.peer_reviews
+            if r.item_id == item_id and r.reviewer_user_id == reviewer_user_id
+        )
+
+    async def count_available_pool_submissions(
+        self, item_id: str, reviewer_user_id: str
+    ) -> int:
+        reviewed_sub_ids = {
+            r.submission_id
+            for r in self.peer_reviews
+            if r.reviewer_user_id == reviewer_user_id and r.item_id == item_id
+        }
+        return sum(
+            1
+            for s in self.peer_submissions
+            if s.item_id == item_id
+            and s.user_id != reviewer_user_id
+            and s.id not in reviewed_sub_ids
+        )
+
+    async def get_eligible_peer_submissions_to_review(
+        self, item_id: str, reviewer_user_id: str, limit: int = 3
+    ) -> list[PeerAssignmentSubmission]:
+        reviewed_sub_ids = {
+            r.submission_id
+            for r in self.peer_reviews
+            if r.reviewer_user_id == reviewer_user_id and r.item_id == item_id
+        }
+        eligible = [
+            s
+            for s in self.peer_submissions
+            if s.item_id == item_id
+            and s.user_id != reviewer_user_id
+            and s.id not in reviewed_sub_ids
+        ]
+
+        def _rev_count(sub):
+            return sum(1 for r in self.peer_reviews if r.submission_id == sub.id)
+
+        eligible.sort(key=lambda s: (_rev_count(s), s.created_at))
+        return eligible[:limit]
 
     async def save_peer_review(self, review: PeerReview) -> None:
         self.peer_reviews.append(review)
@@ -981,7 +1043,7 @@ async def test_peer_assignment_resubmission_updates_existing():
         "Initial submission text",
     )
     assert sub_id1.startswith("peer-")
-    assert "Assignment submitted successfully" in msg1
+    assert "Nộp bài tự luận thành công" in msg1
     assert len(repo.peer_submissions) == 1
 
     # 2. Resubmission / Update by same user on same item
@@ -993,7 +1055,7 @@ async def test_peer_assignment_resubmission_updates_existing():
     )
     # Must preserve the same submission ID
     assert sub_id2 == sub_id1
-    assert "Assignment submitted successfully" in msg2
+    assert "Nộp bài tự luận thành công" in msg2
     assert len(repo.peer_submissions) == 1
 
     # 3. Verify repository data was updated
@@ -1497,12 +1559,18 @@ async def test_dynamic_rubric_criteria_from_item():
     ]
     repo.rubric_criteria_json_map = {"item-custom-peer": json.dumps(custom_rubrics)}
 
-    # Submit a peer assignment by another user
+    # Submit a peer assignment by another user and by student-reviewer (BR_PEER_001)
     _sub_id, _ = await usecase.submit_peer_assignment(
         "author-peer-1",
         "item-custom-peer",
         "https://figma.com/file/123",
         "Figma UI/UX prototype",
+    )
+    await usecase.submit_peer_assignment(
+        "student-reviewer",
+        "item-custom-peer",
+        "https://figma.com/file/456",
+        "Reviewer own prototype",
     )
 
     # Get peer reviews to grade for student-reviewer
@@ -1743,6 +1811,17 @@ async def test_uuid7_peer_review_id_not_truncated(
         created_at="2026-11-10T00:00:00Z",
     )
     await repo.save_peer_submission(sub)
+    # Reviewer must submit first under BR_PEER_001
+    await repo.save_peer_submission(
+        PeerAssignmentSubmission(
+            id="peer-reviewer-other",
+            user_id="reviewer-other",
+            item_id="item-test",
+            submission_url="https://example.com/reviewer",
+            text_content="Reviewer submission",
+            created_at="2026-11-10T01:00:00Z",
+        )
+    )
 
     reviews_to_grade = await usecase.get_peer_reviews_to_grade(
         user_id="reviewer-other", item_id="item-test"
@@ -2121,3 +2200,225 @@ async def test_gradebook_completion_condition_progress_and_final_grade():
 
     # Case 4: 100% progress and exceptional grade (98.0) -> COMPLETED
     assert check_completed(100.0, 98.0) is True
+
+
+@pytest.mark.asyncio
+async def test_br_peer_001_blocks_review_before_submission():
+    """BR_PEER_001 strict enforcement: Must submit assignment before fetching peer reviews."""
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+
+    await usecase.submit_peer_assignment(
+        "author-1", "item-strict-1", "https://example.com/a1", "Essay 1"
+    )
+
+    with pytest.raises(ValueError, match="cần nộp bài trước"):
+        await usecase.get_peer_reviews_to_grade(
+            user_id="lurker-user", item_id="item-strict-1"
+        )
+
+
+@pytest.mark.asyncio
+async def test_essay_instructor_only_mode_workflow():
+    """INSTRUCTOR_ONLY mode: no peer review duty, immediate publish on staff grading."""
+    from src.shared.auth import CurrentUser
+    from src.shared.infrastructure.event_bus import EventBus
+
+    repo = InMemoryAssessmentRepository()
+    item_id = "item-inst-only"
+    repo.learning_items_details[item_id] = {
+        "id": item_id,
+        "title": "Bài tập tự luận Giảng viên chấm",
+        "reading_markdown": "Viết báo cáo kiến trúc.",
+        "rubric_criteria_json": "",
+        "essay_grading_mode": "INSTRUCTOR_ONLY",
+        "required_peer_reviews": 3,
+        "cold_start_hours": 48,
+    }
+    usecase = AssessmentUseCase(repository=repo)
+    staff = CurrentUser(id="inst-1", email="inst@example.com", role="INSTRUCTOR")
+
+    sub_id, _ = await usecase.submit_peer_assignment(
+        "stu-1", item_id, "https://example.com/essay", "My essay content"
+    )
+    sub = await repo.get_peer_submission(sub_id)
+    assert sub is not None
+    assert sub.review_duty_status == "NOT_APPLICABLE"
+
+    # Peer review queue always empty in INSTRUCTOR_ONLY mode
+    queue = await usecase.get_peer_reviews_to_grade("stu-1", item_id)
+    assert queue == []
+
+    status = await usecase.get_my_peer_submission_status("stu-1", item_id)
+    assert status["has_submission"] is True
+    assert status["essay_grading_mode"] == "INSTRUCTOR_ONLY"
+    assert status["review_duty_status"] == "NOT_APPLICABLE"
+    assert status["target_reviews_required"] == 0
+
+    received_events: list[Any] = []
+
+    async def _tracker(evt):
+        received_events.append(evt)
+
+    EventBus.subscribe(PeerAssignmentGradedDomainEvent, _tracker)
+    criteria = [RubricCriteria("c1", "Chất lượng nội dung & Giải pháp", 10.0, 9.0)]
+    ok, _, score, _ = await usecase.submit_staff_grading(
+        submission_id=sub_id,
+        staff_user_id="inst-1",
+        graded_criteria=criteria,
+        total_score=90.0,
+        feedback="Rất tốt",
+        current_user=staff,
+    )
+    assert ok is True
+    assert score == 90.0
+    assert any(
+        e.user_id == "stu-1" and e.submission_id == sub_id for e in received_events
+    )
+
+
+@pytest.mark.asyncio
+async def test_essay_dynamic_quota_two_student_class():
+    """Dynamic Quota: 2-student class with required=3 -> target=min(3,1)=1 completes duty."""
+    repo = InMemoryAssessmentRepository()
+    item_id = "item-2stu"
+    repo.learning_items_details[item_id] = {
+        "id": item_id,
+        "title": "Essay 2-student",
+        "reading_markdown": "",
+        "rubric_criteria_json": "",
+        "essay_grading_mode": "PEER_REVIEW",
+        "required_peer_reviews": 3,
+        "cold_start_hours": 48,
+    }
+    usecase = AssessmentUseCase(repository=repo)
+
+    _sub_a, _ = await usecase.submit_peer_assignment(
+        "stu-a", item_id, "https://example.com/a", "A essay"
+    )
+    sub_b, _ = await usecase.submit_peer_assignment(
+        "stu-b", item_id, "https://example.com/b", "B essay"
+    )
+
+    reviews_for_a = await usecase.get_peer_reviews_to_grade("stu-a", item_id)
+    assert len(reviews_for_a) == 1
+    assert reviews_for_a[0]["review_id"] == f"rev-{sub_b}"
+
+    # Before grading B, A's target_reviews_required is min(3, 0+1) = 1
+    status_before = await usecase.get_my_peer_submission_status("stu-a", item_id)
+    assert status_before["target_reviews_required"] == 1
+    assert status_before["reviews_completed_by_user"] == 0
+    assert status_before["review_duty_status"] == "PENDING"
+
+    # A grades B -> completes A's dynamic quota!
+    criteria = [
+        RubricCriteria("c1", "Chất lượng nội dung & Giải pháp", 10.0, 9.0, "Tốt"),
+        RubricCriteria("c2", "Bố cục, Trình bày & Minh chứng", 10.0, 8.0, "Rõ"),
+        RubricCriteria("c3", "Tính ứng dụng & Đóng góp", 10.0, 9.0, "Hay"),
+    ]
+    ok, _ = await usecase.submit_peer_review_grade(
+        review_id=f"rev-{sub_b}",
+        reviewer_user_id="stu-a",
+        graded_criteria=criteria,
+        item_id=item_id,
+    )
+    assert ok is True
+
+    status_after = await usecase.get_my_peer_submission_status("stu-a", item_id)
+    assert status_after["reviews_completed_by_user"] == 1
+    assert status_after["review_duty_status"] == "COMPLETED"
+
+    # Student B sees anonymous peer feedback
+    status_b = await usecase.get_my_peer_submission_status("stu-b", item_id)
+    assert len(status_b["peer_feedbacks"]) == 1
+    assert status_b["peer_feedbacks"][0]["feedback_label"] == "Bạn học #1"
+
+
+@pytest.mark.asyncio
+async def test_essay_empty_pool_waiver_and_anti_laziness():
+    """Dual-Release: empty pool -> WAIVED_EMPTY_POOL + event; non-empty pool -> grade visible but PENDING until review done."""
+    from src.shared.auth import CurrentUser
+    from src.shared.infrastructure.event_bus import EventBus
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    staff = CurrentUser(id="inst-1", email="inst@example.com", role="INSTRUCTOR")
+
+    received_events: list[Any] = []
+
+    async def _tracker(evt):
+        received_events.append(evt)
+
+    EventBus.subscribe(PeerAssignmentGradedDomainEvent, _tracker)
+
+    # Scenario A: Alone in pool -> WAIVED_EMPTY_POOL when staff grades
+    item_solo = "item-solo"
+    sub_solo, _ = await usecase.submit_peer_assignment(
+        "solo-stu", item_solo, "https://example.com/solo", "Solo essay"
+    )
+    assert await usecase.get_peer_reviews_to_grade("solo-stu", item_solo) == []
+    status_waiting = await usecase.get_my_peer_submission_status("solo-stu", item_solo)
+    assert status_waiting["review_duty_status"] == "WAITING_POOL"
+
+    ok, _, _, _ = await usecase.submit_staff_grading(
+        submission_id=sub_solo,
+        staff_user_id="inst-1",
+        graded_criteria=[
+            RubricCriteria("c1", "Chất lượng nội dung & Giải pháp", 10.0, 9.0)
+        ],
+        total_score=90.0,
+        feedback="Giải cứu 48h",
+        current_user=staff,
+    )
+    assert ok is True
+    status_waived = await usecase.get_my_peer_submission_status("solo-stu", item_solo)
+    assert status_waived["review_duty_status"] == "WAIVED_EMPTY_POOL"
+    assert status_waived["is_graded"] is True
+    assert any(e.user_id == "solo-stu" for e in received_events)
+
+    # Scenario B: Anti-laziness — lazy student has classmate in pool but refuses to review
+    received_events.clear()
+    item_lazy = "item-lazy"
+    sub_lazy, _ = await usecase.submit_peer_assignment(
+        "lazy-stu", item_lazy, "https://example.com/lazy", "Lazy essay"
+    )
+    sub_peer, _ = await usecase.submit_peer_assignment(
+        "diligent-stu", item_lazy, "https://example.com/diligent", "Diligent essay"
+    )
+
+    ok2, _, _, _ = await usecase.submit_staff_grading(
+        submission_id=sub_lazy,
+        staff_user_id="inst-1",
+        graded_criteria=[
+            RubricCriteria("c1", "Chất lượng nội dung & Giải pháp", 10.0, 8.5)
+        ],
+        total_score=85.0,
+        feedback="GV đã chấm, hãy chấm nốt bài bạn học",
+        current_user=staff,
+    )
+    assert ok2 is True
+    # Completion event must NOT fire yet because pool has sub_peer waiting!
+    assert not any(e.user_id == "lazy-stu" for e in received_events)
+
+    status_lazy = await usecase.get_my_peer_submission_status("lazy-stu", item_lazy)
+    assert status_lazy["is_graded"] is True
+    assert status_lazy["final_score"] == 85.0
+    assert status_lazy["review_duty_status"] == "PENDING"
+    assert status_lazy["available_pool_count"] == 1
+
+    # Now lazy-stu reviews sub_peer -> Dual-Release completes and fires completion event!
+    await usecase.submit_peer_review_grade(
+        review_id=f"rev-{sub_peer}",
+        reviewer_user_id="lazy-stu",
+        graded_criteria=[
+            RubricCriteria("c1", "Chất lượng nội dung & Giải pháp", 10.0, 8.0, "Ok"),
+            RubricCriteria("c2", "Bố cục, Trình bày & Minh chứng", 10.0, 8.0, "Ok"),
+            RubricCriteria("c3", "Tính ứng dụng & Đóng góp", 10.0, 8.0, "Ok"),
+        ],
+        item_id=item_lazy,
+    )
+    status_lazy_done = await usecase.get_my_peer_submission_status(
+        "lazy-stu", item_lazy
+    )
+    assert status_lazy_done["review_duty_status"] == "COMPLETED"
+    assert any(e.user_id == "lazy-stu" for e in received_events)

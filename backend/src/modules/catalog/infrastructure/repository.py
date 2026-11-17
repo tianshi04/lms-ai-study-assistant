@@ -1090,6 +1090,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
+        essay_grading_mode: str = "PEER_REVIEW",
+        required_peer_reviews: int = 3,
+        cold_start_hours: int = 48,
     ) -> LearningItem:
         _ = course_id
         item_id = f"item-{uuid7().hex}"
@@ -1152,9 +1155,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=language or "",
             rubric_criteria_json=rubric_criteria_json or "",
             quiz_matrix_id=quiz_matrix_id or "",
-            essay_grading_mode="PEER_REVIEW",
-            required_peer_reviews=3,
-            cold_start_hours=48,
+            essay_grading_mode=essay_grading_mode or "PEER_REVIEW",
+            required_peer_reviews=required_peer_reviews or 3,
+            cold_start_hours=cold_start_hours or 48,
         )
         self.session.add(item_model)
 
@@ -1218,9 +1221,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=language or "",
             rubric_criteria_json=rubric_criteria_json or "",
             quiz_matrix_id=quiz_matrix_id or "",
-            essay_grading_mode="PEER_REVIEW",
-            required_peer_reviews=3,
-            cold_start_hours=48,
+            essay_grading_mode=essay_grading_mode or "PEER_REVIEW",
+            required_peer_reviews=required_peer_reviews or 3,
+            cold_start_hours=cold_start_hours or 48,
         )
 
     async def submit_course_review(
@@ -1568,6 +1571,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
+        essay_grading_mode: str | None = None,
+        required_peer_reviews: int | None = None,
+        cold_start_hours: int | None = None,
     ) -> LearningItem | None:
         _ = course_id
         stmt = (
@@ -1606,6 +1612,12 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         item.rubric_criteria_json = rubric_criteria_json
         if quiz_matrix_id:
             item.quiz_matrix_id = quiz_matrix_id
+        if essay_grading_mode is not None:
+            item.essay_grading_mode = essay_grading_mode
+        if required_peer_reviews is not None:
+            item.required_peer_reviews = required_peer_reviews
+        if cold_start_hours is not None:
+            item.cold_start_hours = cold_start_hours
 
         if lesson_id:
             item.lesson_id = lesson_id

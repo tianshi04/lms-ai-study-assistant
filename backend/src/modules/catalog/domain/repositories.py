@@ -285,6 +285,9 @@ class ICatalogRepository(ABC):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
+        essay_grading_mode: str = "PEER_REVIEW",
+        required_peer_reviews: int = 3,
+        cold_start_hours: int = 48,
     ):
         pass
 
@@ -307,6 +310,9 @@ class ICatalogRepository(ABC):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
+        essay_grading_mode: str | None = None,
+        required_peer_reviews: int | None = None,
+        cold_start_hours: int | None = None,
     ):
         pass
 

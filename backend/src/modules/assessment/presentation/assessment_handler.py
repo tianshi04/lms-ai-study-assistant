@@ -118,6 +118,84 @@ class AssessmentHandler(AssessmentService):
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
         return pb.SubmitPeerAssignmentResponse(submission_id=sub_id, status_message=msg)
 
+    async def get_my_peer_submission_status(
+        self,
+        request: pb.GetMyPeerSubmissionStatusRequest,
+        ctx: RequestContext[
+            pb.GetMyPeerSubmissionStatusRequest, pb.GetMyPeerSubmissionStatusResponse
+        ],
+    ) -> pb.GetMyPeerSubmissionStatusResponse:
+        current_user = require_current_user()
+        try:
+            status_data = await self.use_case.get_my_peer_submission_status(
+                user_id=current_user.id,
+                item_id=request.item_id,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+        pb_feedbacks: list[pb.AnonymousPeerFeedback] = []
+        for fb in status_data.get("peer_feedbacks", []):
+            pb_rubrics = [
+                pb.RubricCriteria(
+                    criteria_id=c.criteria_id,
+                    title=c.title,
+                    max_score=c.max_score,
+                    score_given=c.score_given,
+                    feedback=c.feedback,
+                    description=getattr(c, "description", "") or "",
+                )
+                for c in fb.get("graded_criteria", [])
+            ]
+            pb_feedbacks.append(
+                pb.AnonymousPeerFeedback(
+                    feedback_label=fb.get("feedback_label", ""),
+                    total_score=fb.get("total_score", 0.0),
+                    graded_criteria=pb_rubrics,
+                    submitted_at=fb.get("submitted_at", ""),
+                )
+            )
+
+        pb_criteria = [
+            pb.RubricCriteria(
+                criteria_id=c.criteria_id,
+                title=c.title,
+                max_score=c.max_score,
+                score_given=c.score_given,
+                feedback=c.feedback,
+                description=getattr(c, "description", "") or "",
+            )
+            for c in status_data.get("rubric_criteria", [])
+        ]
+
+        return pb.GetMyPeerSubmissionStatusResponse(
+            has_submission=status_data.get("has_submission", False),
+            submission_id=status_data.get("submission_id", ""),
+            status=status_data.get("status", ""),
+            submission_url=status_data.get("submission_url", ""),
+            text_content=status_data.get("text_content", ""),
+            created_at=status_data.get("created_at", ""),
+            attempt_number=status_data.get("attempt_number", 0),
+            is_graded=status_data.get("is_graded", False),
+            final_score=status_data.get("final_score", 0.0),
+            grade_source=status_data.get("grade_source", ""),
+            staff_feedback=status_data.get("staff_feedback", ""),
+            rubric_criteria=pb_criteria,
+            peer_feedbacks=pb_feedbacks,
+            essay_grading_mode=status_data.get("essay_grading_mode", "PEER_REVIEW"),
+            review_duty_status=status_data.get("review_duty_status", "PENDING"),
+            review_duty_waived_reason=status_data.get("review_duty_waived_reason", ""),
+            reviews_completed_by_user=status_data.get("reviews_completed_by_user", 0),
+            target_reviews_required=status_data.get("target_reviews_required", 0),
+            available_pool_count=status_data.get("available_pool_count", 0),
+            can_appeal=status_data.get("can_appeal", False),
+            appeal_status=status_data.get("appeal_status", ""),
+            assignment_title=status_data.get("assignment_title", ""),
+            assignment_instructions=status_data.get("assignment_instructions", ""),
+        )
+
     async def get_peer_reviews_to_grade(
         self,
         request: pb.GetPeerReviewsToGradeRequest,
@@ -126,9 +204,14 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.GetPeerReviewsToGradeResponse:
         current_user = require_current_user()
-        items = await self.use_case.get_peer_reviews_to_grade(
-            user_id=current_user.id, item_id=request.item_id
-        )
+        try:
+            items = await self.use_case.get_peer_reviews_to_grade(
+                user_id=current_user.id, item_id=request.item_id
+            )
+        except ValueError as e:
+            raise ConnectError(Code.FAILED_PRECONDITION, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         pb_items: list[pb.PeerReviewItemToGrade] = []
         for item in items:
             rubrics = [

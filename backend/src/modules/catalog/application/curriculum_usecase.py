@@ -225,6 +225,9 @@ class CurriculumUseCase:
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
+        essay_grading_mode: str = "PEER_REVIEW",
+        required_peer_reviews: int = 3,
+        cold_start_hours: int = 48,
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
@@ -246,6 +249,9 @@ class CurriculumUseCase:
                 language=language,
                 rubric_criteria_json=rubric_criteria_json,
                 quiz_matrix_id=quiz_matrix_id,
+                essay_grading_mode=essay_grading_mode,
+                required_peer_reviews=required_peer_reviews,
+                cold_start_hours=cold_start_hours,
             )
             logger.info(
                 "Created learning item %s in course %s",
@@ -272,6 +278,9 @@ class CurriculumUseCase:
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
+        essay_grading_mode: str | None = None,
+        required_peer_reviews: int | None = None,
+        cold_start_hours: int | None = None,
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
@@ -296,6 +305,9 @@ class CurriculumUseCase:
                 language=language,
                 rubric_criteria_json=rubric_criteria_json,
                 quiz_matrix_id=quiz_matrix_id,
+                essay_grading_mode=essay_grading_mode,
+                required_peer_reviews=required_peer_reviews,
+                cold_start_hours=cold_start_hours,
             )
 
     async def delete_learning_item(

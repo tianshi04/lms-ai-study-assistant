@@ -97,6 +97,20 @@ def _to_pb_quiz(q: InVideoQuiz) -> pb.InVideoQuiz:
     )
 
 
+def _to_pb_essay_grading_mode(mode: str | None) -> pb.EssayGradingMode:
+    if mode == "INSTRUCTOR_ONLY":
+        return pb.EssayGradingMode.INSTRUCTOR_ONLY
+    if mode == "PEER_REVIEW":
+        return pb.EssayGradingMode.PEER_REVIEW
+    return pb.EssayGradingMode.UNSPECIFIED
+
+
+def _parse_pb_essay_grading_mode(mode: pb.EssayGradingMode) -> str:
+    if mode == pb.EssayGradingMode.INSTRUCTOR_ONLY:
+        return "INSTRUCTOR_ONLY"
+    return "PEER_REVIEW"
+
+
 def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
     return pb.LearningItem(
         id=item.id or "",
@@ -117,6 +131,11 @@ def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
         language=getattr(item, "language", "") or "",
         rubric_criteria_json=getattr(item, "rubric_criteria_json", "") or "",
         quiz_matrix_id=getattr(item, "quiz_matrix_id", "") or "",
+        essay_grading_mode=_to_pb_essay_grading_mode(
+            getattr(item, "essay_grading_mode", "PEER_REVIEW")
+        ),
+        required_peer_reviews=int(getattr(item, "required_peer_reviews", 3) or 3),
+        cold_start_hours=int(getattr(item, "cold_start_hours", 48) or 48),
     )
 
 
@@ -654,6 +673,11 @@ class CatalogHandler(CatalogService):
                 language=request.language or "",
                 rubric_criteria_json=request.rubric_criteria_json or "",
                 quiz_matrix_id=request.quiz_matrix_id or "",
+                essay_grading_mode=_parse_pb_essay_grading_mode(
+                    request.essay_grading_mode
+                ),
+                required_peer_reviews=request.required_peer_reviews or 3,
+                cold_start_hours=request.cold_start_hours or 48,
                 current_user=user,
             )
             return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
@@ -891,6 +915,9 @@ class CatalogHandler(CatalogService):
             language=request.language,
             rubric_criteria_json=request.rubric_criteria_json,
             quiz_matrix_id=request.quiz_matrix_id,
+            essay_grading_mode=_parse_pb_essay_grading_mode(request.essay_grading_mode),
+            required_peer_reviews=request.required_peer_reviews or 3,
+            cold_start_hours=request.cold_start_hours or 48,
             current_user=user,
         )
         if not item:
