@@ -1378,6 +1378,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 CourseModel.title.label("course_title"),
                 UserModel.full_name.label("student_name"),
                 UserModel.avatar_url.label("student_avatar_url"),
+                LearningItemModel.essay_grading_mode.label("essay_grading_mode"),
+                LearningItemModel.required_peer_reviews.label("required_peer_reviews"),
+                LearningItemModel.cold_start_hours.label("cold_start_hours"),
             )
             .join(
                 LearningItemModel,
@@ -1446,6 +1449,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             c_title = row[3] or ""
             student_name = row[4] or ""
             student_avatar_url = row[5] or ""
+            essay_grading_mode = row[6] or "PEER_REVIEW"
+            required_peer_reviews = int(row[7] or REQUIRED_PEER_REVIEWS_COUNT)
+            cold_start_hours = int(row[8] or 48)
 
             # Check locker name and lock expiration
             locked_by_name = ""
@@ -1482,8 +1488,10 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             # Check reviews
             reviews = reviews_map.get(sub.id, [])
             reviews_count = len(reviews)
-            is_outlier = (reviews_count >= REQUIRED_PEER_REVIEWS_COUNT) and any(
-                r.is_outlier for r in reviews
+            is_outlier = (
+                essay_grading_mode == "PEER_REVIEW"
+                and reviews_count >= required_peer_reviews
+                and any(r.is_outlier for r in reviews)
             )
             peer_score = (
                 round(sum(r.total_score for r in reviews) / reviews_count, 2)
@@ -1544,6 +1552,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                         else 0.0
                     ),
                     "peer_reviews_count": reviews_count,
+                    "essay_grading_mode": essay_grading_mode,
+                    "required_peer_reviews": required_peer_reviews,
+                    "cold_start_hours": cold_start_hours,
                 }
             )
         return results

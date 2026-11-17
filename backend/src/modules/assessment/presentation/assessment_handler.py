@@ -1,3 +1,5 @@
+from typing import Any
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -1050,6 +1052,33 @@ class AssessmentHandler(AssessmentService):
         }
         return mapping.get(prov_str.upper(), pb.GradingProvenance.UNSPECIFIED)
 
+    def _to_pb_grading_queue_item(self, d: dict[str, Any]) -> pb.GradingQueueItem:
+        return pb.GradingQueueItem(
+            submission_id=d["submission_id"],
+            item_id=d["item_id"],
+            item_title=d["item_title"],
+            course_id=d["course_id"],
+            course_title=d["course_title"],
+            student_id=d["student_id"],
+            student_name=d["student_name"],
+            student_avatar_url=d["student_avatar_url"],
+            submitted_at=d["submitted_at"],
+            is_outlier=d["is_outlier"],
+            is_appeal=d["is_appeal"],
+            appeal_reason=d["appeal_reason"],
+            locked_by_user_id=d["locked_by_user_id"],
+            locked_by_name=d["locked_by_name"],
+            lock_expires_at=d["lock_expires_at"],
+            grade_source=self._to_pb_provenance(d.get("grade_source")),
+            staff_score=float(d["staff_score"]),
+            status=self._to_pb_queue_status(d["status"]),
+            peer_score=float(d["peer_score"]),
+            peer_reviews_count=d["peer_reviews_count"],
+            essay_grading_mode=d.get("essay_grading_mode", "PEER_REVIEW"),
+            required_peer_reviews=int(d.get("required_peer_reviews", 3) or 3),
+            cold_start_hours=int(d.get("cold_start_hours", 48) or 48),
+        )
+
     async def list_grading_queue(
         self,
         request: pb.ListGradingQueueRequest,
@@ -1089,31 +1118,7 @@ class AssessmentHandler(AssessmentService):
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
 
-        items = [
-            pb.GradingQueueItem(
-                submission_id=i["submission_id"],
-                item_id=i["item_id"],
-                item_title=i["item_title"],
-                course_id=i["course_id"],
-                course_title=i["course_title"],
-                student_id=i["student_id"],
-                student_name=i["student_name"],
-                student_avatar_url=i["student_avatar_url"],
-                submitted_at=i["submitted_at"],
-                is_outlier=i["is_outlier"],
-                is_appeal=i["is_appeal"],
-                appeal_reason=i["appeal_reason"],
-                locked_by_user_id=i["locked_by_user_id"],
-                locked_by_name=i["locked_by_name"],
-                lock_expires_at=i["lock_expires_at"],
-                grade_source=self._to_pb_provenance(i.get("grade_source")),
-                staff_score=float(i["staff_score"]),
-                status=self._to_pb_queue_status(i["status"]),
-                peer_score=float(i["peer_score"]),
-                peer_reviews_count=i["peer_reviews_count"],
-            )
-            for i in res["items"]
-        ]
+        items = [self._to_pb_grading_queue_item(i) for i in res["items"]]
 
         return pb.ListGradingQueueResponse(
             items=items,
@@ -1269,29 +1274,7 @@ class AssessmentHandler(AssessmentService):
         except ValueError as e:
             raise ConnectError(Code.NOT_FOUND, str(e)) from e
 
-        sub_dict = res["submission"]
-        sub_pb = pb.GradingQueueItem(
-            submission_id=sub_dict["submission_id"],
-            item_id=sub_dict["item_id"],
-            item_title=sub_dict["item_title"],
-            course_id=sub_dict["course_id"],
-            course_title=sub_dict["course_title"],
-            student_id=sub_dict["student_id"],
-            student_name=sub_dict["student_name"],
-            student_avatar_url=sub_dict["student_avatar_url"],
-            submitted_at=sub_dict["submitted_at"],
-            is_outlier=sub_dict["is_outlier"],
-            is_appeal=sub_dict["is_appeal"],
-            appeal_reason=sub_dict["appeal_reason"],
-            locked_by_user_id=sub_dict["locked_by_user_id"],
-            locked_by_name=sub_dict["locked_by_name"],
-            lock_expires_at=sub_dict["lock_expires_at"],
-            grade_source=self._to_pb_provenance(sub_dict.get("grade_source")),
-            staff_score=float(sub_dict["staff_score"]),
-            status=self._to_pb_queue_status(sub_dict["status"]),
-            peer_score=float(sub_dict["peer_score"]),
-            peer_reviews_count=sub_dict["peer_reviews_count"],
-        )
+        sub_pb = self._to_pb_grading_queue_item(res["submission"])
 
         rubric_pbs = [
             pb.RubricCriteria(

@@ -123,7 +123,16 @@ export function EvaluationModal({
     isLockActive,
   );
 
+  const isInstructorOnly = detail?.submission?.essayGradingMode === "INSTRUCTOR_ONLY";
+  const reqPeers =
+    (detail?.submission?.requiredPeerReviews ?? 0) > 0
+      ? detail!.submission!.requiredPeerReviews
+      : 3;
+  const coldHours =
+    (detail?.submission?.coldStartHours ?? 0) > 0 ? detail!.submission!.coldStartHours : 48;
+
   const isOverdue = Boolean(
+    !isInstructorOnly &&
     currentTimeMs &&
     !isLockedByOther &&
     !detail?.submission?.lockedByUserId &&
@@ -131,9 +140,9 @@ export function EvaluationModal({
     !detail?.submission?.isOutlier &&
     detail?.submission?.status !== GradingQueueStatus.GRADED &&
     detail?.submission?.submittedAt &&
-    currentTimeMs - new Date(detail.submission.submittedAt).getTime() > 48 * 3600 * 1000 &&
+    currentTimeMs - new Date(detail.submission.submittedAt).getTime() > coldHours * 3600 * 1000 &&
     !detail?.submission?.staffScore &&
-    (detail?.peerReviews?.length ?? 0) < 3,
+    (detail?.peerReviews?.length ?? 0) < reqPeers,
   );
 
   const staffGradingsList = useMemo(() => {
@@ -598,13 +607,22 @@ export function EvaluationModal({
                       </Badge>
                     ) : (
                       <>
+                        {isInstructorOnly && (
+                          <Badge
+                            variant="outlined"
+                            className="font-bold text-xs bg-primary/10 text-primary border-primary/25"
+                          >
+                            Chỉ Giảng viên chấm
+                          </Badge>
+                        )}
                         {isOverdue && (
                           <Badge
                             variant="error"
                             className="font-bold text-xs bg-destructive/10 text-destructive border-destructive/20 gap-1"
                           >
                             <Clock className="w-3 h-3 text-destructive" aria-hidden="true" />
-                            Quá hạn 48h ({detail.peerReviews?.length ?? 0}/3 bạn học)
+                            Quá hạn {coldHours}h ({detail.peerReviews?.length ?? 0}/{reqPeers} bạn
+                            học)
                           </Badge>
                         )}
                         {detail.submission?.isAppeal && (
@@ -647,17 +665,17 @@ export function EvaluationModal({
                   </div>
                 )}
 
-                {/* Overdue Alert Callout (if overdue > 48h) */}
+                {/* Overdue Alert Callout (if overdue > coldHours) */}
                 {isOverdue && (
                   <div className="p-4 rounded-2xl bg-destructive/10 border-l-4 border-l-destructive border-y border-r border-destructive/20 text-destructive space-y-1">
                     <div className="flex items-center gap-2 font-bold text-sm">
                       <Clock className="w-4 h-4 shrink-0 text-destructive" aria-hidden="true" />
-                      <span>Bài nộp quá hạn 48 giờ — Cần can thiệp chấm bài</span>
+                      <span>Bài nộp quá hạn {coldHours} giờ — Cần can thiệp chấm bài</span>
                     </div>
                     <p className="text-xs text-destructive/90 leading-relaxed pl-6">
-                      Bài nộp đã quá 48 giờ nhưng chưa nhận đủ đánh giá từ đồng học. Giảng viên hoặc
-                      Trợ giảng vui lòng trực tiếp đánh giá các tiêu chí bên phải và lưu điểm cho
-                      học viên.
+                      Bài nộp đã quá {coldHours} giờ nhưng chưa nhận đủ đánh giá từ đồng học. Giảng
+                      viên hoặc Trợ giảng vui lòng trực tiếp đánh giá các tiêu chí bên phải và lưu
+                      điểm cho học viên.
                     </p>
                   </div>
                 )}
@@ -926,112 +944,114 @@ export function EvaluationModal({
                   </div>
                 </div>
 
-                {/* Peer Review History Section */}
-                <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
-                  <div className="px-5 py-3.5 bg-muted/40 border-b border-border flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
-                      <h3 className="text-sm font-bold text-foreground">
-                        Lịch sử chấm điểm và đánh giá của học viên
-                      </h3>
-                    </div>
-                    {detail.submission?.isOutlier && (
-                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20">
-                        Độ lệch điểm &gt; 20%
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-5 space-y-3">
-                    {!detail.peerReviews || detail.peerReviews.length === 0 ? (
-                      <div className="p-5 rounded-xl bg-muted/20 border border-dashed border-border/80 text-center space-y-1">
-                        <p className="text-xs font-semibold text-muted-foreground">
-                          Chưa có học viên nào chấm điểm hoặc đánh giá bài nộp này.
-                        </p>
+                {/* Peer Review History Section (only for PEER_REVIEW mode) */}
+                {!isInstructorOnly && (
+                  <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
+                    <div className="px-5 py-3.5 bg-muted/40 border-b border-border flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
+                        <h3 className="text-sm font-bold text-foreground">
+                          Lịch sử chấm điểm và đánh giá của học viên
+                        </h3>
                       </div>
-                    ) : (
-                      detail.peerReviews.map((peer, idx) => (
-                        <div
-                          key={peer.reviewId || idx}
-                          className="p-4 rounded-xl bg-muted/25 border border-border/80 space-y-3 text-xs"
-                        >
-                          <div className="flex items-center justify-between gap-3 flex-wrap">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <Avatar
-                                src={peer.reviewerAvatarUrl}
-                                name={peer.reviewerName || `Học viên #${idx + 1}`}
-                                className="w-9 h-9 border border-border shrink-0"
-                              />
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-bold text-foreground text-sm truncate">
-                                    {peer.reviewerName || `Học viên #${idx + 1}`}
-                                  </span>
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                    Học viên
-                                  </span>
-                                </div>
-                                <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                                  <Clock className="w-3 h-3 shrink-0" aria-hidden="true" />
-                                  {peer.reviewedAt
-                                    ? new Date(peer.reviewedAt).toLocaleDateString("vi-VN", {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                        day: "2-digit",
-                                        month: "2-digit",
-                                        year: "numeric",
-                                      })
-                                    : "Chưa ghi nhận thời gian"}
-                                </span>
-                              </div>
-                            </div>
-                            <span className="font-bold text-muted-foreground text-xs px-2.5 py-1 rounded-lg bg-muted border border-border shrink-0">
-                              {peer.totalScore.toFixed(1)} / 100 điểm
-                            </span>
-                          </div>
-                          {peer.feedback && (
-                            <div className="p-3 rounded-xl bg-background/80 border border-border/60 text-xs text-foreground space-y-1">
-                              <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                                <MessageSquare
-                                  className="w-3.5 h-3.5 text-primary shrink-0"
-                                  aria-hidden="true"
+                      {detail.submission?.isOutlier && (
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20">
+                          Độ lệch điểm &gt; 20%
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-5 space-y-3">
+                      {!detail.peerReviews || detail.peerReviews.length === 0 ? (
+                        <div className="p-5 rounded-xl bg-muted/20 border border-dashed border-border/80 text-center space-y-1">
+                          <p className="text-xs font-semibold text-muted-foreground">
+                            Chưa có học viên nào chấm điểm hoặc đánh giá bài nộp này.
+                          </p>
+                        </div>
+                      ) : (
+                        detail.peerReviews.map((peer, idx) => (
+                          <div
+                            key={peer.reviewId || idx}
+                            className="p-4 rounded-xl bg-muted/25 border border-border/80 space-y-3 text-xs"
+                          >
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <Avatar
+                                  src={peer.reviewerAvatarUrl}
+                                  name={peer.reviewerName || `Học viên #${idx + 1}`}
+                                  className="w-9 h-9 border border-border shrink-0"
                                 />
-                                Nhận xét của học viên:
-                              </span>
-                              <p className="text-muted-foreground italic leading-relaxed pl-5">
-                                &ldquo;{peer.feedback}&rdquo;
-                              </p>
-                            </div>
-                          )}
-                          {peer.gradedCriteria && peer.gradedCriteria.length > 0 && (
-                            <div className="pt-2 border-t border-border/60">
-                              <span className="text-[11px] font-semibold text-muted-foreground block mb-1.5">
-                                Điểm theo tiêu chí:
-                              </span>
-                              <div className="flex flex-col gap-1.5 pt-0.5">
-                                {peer.gradedCriteria.map((c) => (
-                                  <div
-                                    key={c.criteriaId}
-                                    className="px-3 py-2 rounded-xl bg-card border border-border/70 text-xs flex items-center justify-between gap-3 shadow-2xs hover:border-border transition-colors"
-                                  >
-                                    <span className="font-medium text-foreground text-xs leading-snug break-words">
-                                      {c.title}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-bold text-foreground text-sm truncate">
+                                      {peer.reviewerName || `Học viên #${idx + 1}`}
                                     </span>
-                                    <span className="font-bold text-primary font-mono text-xs shrink-0 px-2.5 py-0.5 rounded-md bg-primary/10 border border-primary/20">
-                                      {c.scoreGiven}{" "}
-                                      <span className="text-muted-foreground font-normal">
-                                        / {c.maxScore}
-                                      </span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                      Học viên
                                     </span>
                                   </div>
-                                ))}
+                                  <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                    <Clock className="w-3 h-3 shrink-0" aria-hidden="true" />
+                                    {peer.reviewedAt
+                                      ? new Date(peer.reviewedAt).toLocaleDateString("vi-VN", {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          day: "2-digit",
+                                          month: "2-digit",
+                                          year: "numeric",
+                                        })
+                                      : "Chưa ghi nhận thời gian"}
+                                  </span>
+                                </div>
                               </div>
+                              <span className="font-bold text-muted-foreground text-xs px-2.5 py-1 rounded-lg bg-muted border border-border shrink-0">
+                                {peer.totalScore.toFixed(1)} / 100 điểm
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      ))
-                    )}
+                            {peer.feedback && (
+                              <div className="p-3 rounded-xl bg-background/80 border border-border/60 text-xs text-foreground space-y-1">
+                                <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                                  <MessageSquare
+                                    className="w-3.5 h-3.5 text-primary shrink-0"
+                                    aria-hidden="true"
+                                  />
+                                  Nhận xét của học viên:
+                                </span>
+                                <p className="text-muted-foreground italic leading-relaxed pl-5">
+                                  &ldquo;{peer.feedback}&rdquo;
+                                </p>
+                              </div>
+                            )}
+                            {peer.gradedCriteria && peer.gradedCriteria.length > 0 && (
+                              <div className="pt-2 border-t border-border/60">
+                                <span className="text-[11px] font-semibold text-muted-foreground block mb-1.5">
+                                  Điểm theo tiêu chí:
+                                </span>
+                                <div className="flex flex-col gap-1.5 pt-0.5">
+                                  {peer.gradedCriteria.map((c) => (
+                                    <div
+                                      key={c.criteriaId}
+                                      className="px-3 py-2 rounded-xl bg-card border border-border/70 text-xs flex items-center justify-between gap-3 shadow-2xs hover:border-border transition-colors"
+                                    >
+                                      <span className="font-medium text-foreground text-xs leading-snug break-words">
+                                        {c.title}
+                                      </span>
+                                      <span className="font-bold text-primary font-mono text-xs shrink-0 px-2.5 py-0.5 rounded-md bg-primary/10 border border-primary/20">
+                                        {c.scoreGiven}{" "}
+                                        <span className="text-muted-foreground font-normal">
+                                          / {c.maxScore}
+                                        </span>
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* RIGHT PANE: Rubric Grading Workbench (40%) */}

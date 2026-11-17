@@ -579,6 +579,9 @@ message GradingQueueItem {
   GradingQueueStatus status = 18;
   float peer_score = 19;
   int32 peer_reviews_count = 20;
+  string essay_grading_mode = 21;
+  int32 required_peer_reviews = 22;
+  int32 cold_start_hours = 23;
 }
 
 message ListGradingQueueRequest {

@@ -156,35 +156,42 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * **Quy tắc Tự động Ẩn (Auto-Hidden Test Cases Assignment):** Trường hợp Giảng viên không gắn cờ `is_hidden` thủ công cho bất kỳ Test Case nào, hệ thống tự động ẩn khoảng 1/3 số Test Cases cuối (tính từ chỉ số $\lceil N \times 2 / 3 \rceil$) khi bấm lưu để bảo đảm độ chính xác khi chấm bài.
   * **Bảo mật Test Case Ẩn (Hidden Test Privacy & Log Masking):** Học viên xem được dữ liệu Input/Expected của các Test Cases công khai (`Visible`). Đối với các Test Cases ẩn (`Hidden`), thông tin Input, Expected Output và câu lệnh `assertion` bị **mask bảo mật hoàn toàn** trong Execution Logs (chỉ hiển thị trạng thái `[PASS]` hoặc `[FAIL] Test Case #X: [Hidden]`).
   * **Tính điểm:** Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%.
-* **BR_PEER_001 (Điều kiện Nộp & Chấm chéo Peer Review):**
-  * Học viên nộp bài làm theo các hình thức linh hoạt do Giảng viên yêu cầu trong Đề bài: Đường dẫn liên kết sản phẩm (Figma, Canva, Google Drive, Slide, Github, Website...) kết hợp bài luận hoặc bản tóm tắt giải pháp văn bản.
-  * Học viên bắt buộc phải nộp bài cá nhân trước mới được phân bổ quyền chấm chéo bài của bạn học (hệ thống tự động loại trừ bài nộp của chính mình `exclude_user_id`).
-  * Học viên bắt buộc phải **chấm đủ lượt bài làm theo phân bổ** $\min(3, N)$ (với $N$ là số bài nộp khả thi trong hàng chờ) thì hệ thống mới mở hiển thị điểm bài nộp của chính mình.
+* **BR_PEER_001 (Bài tập Tự luận - Hai chế độ Chấm & Điều kiện Nộp bài):**
+  * Học phần loại `ITEM_TYPE_PEER_REVIEW` mang danh xưng hiển thị tiếng Việt chuẩn là **"Bài tập tự luận"**. Học viên nộp bài làm linh hoạt qua đường dẫn liên kết sản phẩm (Figma, Canva, Google Drive, Slide, Github, Website...) kết hợp bài luận hoặc bản tóm tắt giải pháp văn bản.
+  * Giảng viên cấu hình trên từng bài một trong hai chế độ chấm (`essay_grading_mode`):
+    1. `PEER_REVIEW` (*Chấm chéo bạn học & Giảng viên giải cứu - Mặc định*): Học viên **bắt buộc phải nộp bài cá nhân trước** mới được phân bổ bài bạn học (`GetPeerReviewsToGrade` kiểm tra nghiêm ngặt ở Backend và trả `FAILED_PRECONDITION` nếu chưa nộp). Học viên phải hoàn thành nghĩa vụ chấm $\min(\text{required\_peer\_reviews}, \text{Pool\_Size})$ bài bạn học mới được tính hoàn thành học phần.
+    2. `INSTRUCTOR_ONLY` (*Chỉ Giảng viên / Trợ giảng chấm trực tiếp*): Không áp dụng chấm chéo (`review_duty_status = NOT_APPLICABLE`); bài nộp đi thẳng vào hàng chờ Giảng viên chấm ngay khi nộp, học viên hoàn tất học phần ngay khi Giảng viên công bố điểm.
 * **BR_PEER_002 (Bộ Tiêu chí Rubric Động & Nguyên tắc TA Regrade Override):**
   * Thang điểm đánh giá chéo tuân thủ Bộ Tiêu chí Rubric do Giảng viên thiết lập linh hoạt cho từng bài học trong Course Builder (hỗ trợ đa ngành: Bài luận, Báo cáo, Đồ án Thiết kế Figma/UI-UX, Đề án Kinh doanh hoặc Đồ án Lập trình). Mỗi tiêu chí gồm: `title` (Tên tiêu chí), `max_score` (Thang điểm tối đa), và `description` (Chỉ dẫn hướng dẫn chấm cụ thể).
   * Trường hợp học liệu chưa cấu hình Rubric tùy biến, hệ thống áp dụng Bộ Tiêu chí tiêu chuẩn gồm 3 khía cạnh: (1) Chất lượng nội dung & Giải pháp (max 10đ), (2) Bố cục, Trình bày & Minh chứng (max 10đ), (3) Tính ứng dụng & Đóng góp (max 10đ).
   * Điểm số bài nộp = $\frac{\sum \text{Score Given}}{\sum \text{Max Score}} \times 100\%$.
   * *Cảnh báo chấm điểm bất thường (Outlier Detection):* Khi có bài chấm chéo mới, hệ thống tự động tính khoảng chênh lệch tuyệt đối giữa điểm cao nhất và thấp nhất của tất cả reviewers: $Max(Scores) - Min(Scores) > 30.0\%$. Nếu thỏa mãn, hệ thống gắn cờ `is_outlier = True` trên bản ghi `PeerReview` và gửi cảnh báo về bảng tin Trợ giảng (TA).
 * **BR_PEER_003 (Khiếu nại điểm & Thẩm quyền TA Regrade Override):**
-  * Học viên có quyền nộp đơn Khiếu nại điểm (Grade Appeal) với lý do chi tiết. Hệ thống khởi tạo đơn ở trạng thái `"PENDING"`.
-  * Trợ giảng (TA) trực tiếp rà soát và chấm lại bài làm. Khi TA chấm bài (`graded_by_staff = True`), điểm số của TA trở thành điểm chính thức (`final_score = TA_Score`), ghi đè 100% kết quả chấm chéo của bạn học (các bản ghi `PeerReview` cũ vẫn được lưu trong nhật ký phục vụ audit).
+  * Học viên có quyền nộp đơn Khiếu nại/Phúc khảo điểm (`SubmitGradeAppeal`) với lý do chi tiết. Hệ thống khởi tạo đơn ở trạng thái `"PENDING"`.
+  * Giảng viên/Trợ giảng (TA) trực tiếp rà soát và chấm lại bài làm. Khi nhân sự chấm bài (`graded_by_staff = True`), điểm số mới trở thành điểm chính thức (`INSTRUCTOR` hoặc `TA`), ghi đè kết quả chấm chéo của bạn học (các bản ghi `PeerReview` cũ vẫn được lưu phục vụ audit, phản hồi hiển thị cho học viên được ẩn danh 100% dưới dạng `Bạn học #1`, `#2`...).
 * **BR_PEER_004 (Xử lý Hàng chờ Staff Regrade Queue & Chấm chéo muộn):**
-  * Nếu sau **48 giờ (2 ngày)** kể từ khi nộp bài mà bài dự án chưa nhận đủ 3 lượt chấm chéo, hệ thống tự động chuyển bài nộp vào Hàng chờ xét duyệt của Trợ giảng (Staff Regrade Queue - `PEER_REVIEW_COLD_START_HOURS = 48`).
-  * Hệ thống không khóa quyền chấm chéo muộn của học viên khác. Khi bài nộp nhận đủ 3 lượt chấm chéo và Trợ giảng chưa chấm (`graded_by_staff = False`), hệ thống tự động tính điểm trung bình và giải phóng bài nộp khỏi hàng chờ của TA. Ngược lại nếu TA đã chấm trước (`graded_by_staff = True`), kết quả của TA giữ nguyên làm điểm chính thức.
+  * Với chế độ `PEER_REVIEW`, nếu sau `cold_start_hours` (24h / 48h / 72h, mặc định **48 giờ**) kể từ khi nộp bài mà bài dự án chưa nhận đủ `required_peer_reviews` lượt chấm chéo, hệ thống tự động gắn cờ quá hạn và đẩy lên hàng đầu trong Hàng chờ xét duyệt của Giảng viên/TA (`GetInstructorActionTasks` & `GradingCockpit`).
+  * Hệ thống không khóa quyền chấm chéo muộn của học viên khác. Khi bài nộp nhận đủ lượt chấm chéo và nhân sự chưa chấm (`graded_by_staff = False`), hệ thống tự động tính điểm trung bình và giải phóng bài nộp khỏi hàng chờ. Ngược lại nếu nhân sự đã chấm trước (`graded_by_staff = True`), kết quả của nhân sự giữ nguyên làm điểm chính thức.
 * **BR_PEER_005 (Báo cáo Bài chấm chéo bất thường & Chống lạm dụng Report):**
   * Học viên có quyền bấm nút **"Report Review"** đối với các lượt chấm chéo có dấu hiệu spam, vụ lợi hoặc cố tình cho điểm thấp không khách quan.
   * *Chống lạm dụng nộp đơn để nhận bằng:* Bài chấm chéo bị báo cáo sẽ chuyển sang trạng thái `PENDING_STAFF_REVIEW` và gửi về Hàng chờ kiểm tra của Trợ giảng (TA Review Queue). Điểm bài nộp sẽ ở trạng thái **tạm hoãn công nhận Pass & tạm dừng phát hành chứng chỉ** cho tới khi Trợ giảng (TA) rà soát xong để ngăn chặn hành vi cố tình gạch điểm thấp nhằm pass môn gian lận.
-* **BR_PEER_006 (Xử lý Thiếu bài chấm chéo do Ít bài nộp - Cold Start Dynamic Requirement):**
-  * Đối với lớp học mới (Cold Start), nếu số lượng bài nộp khả thi trong pool ít hơn 3 bài, số lượt chấm chéo bắt buộc đối với học viên tự động điều chỉnh theo công thức $\min(3, \text{Pool\_Size})$.
-  * Sau 48 giờ kể từ khi nộp bài mà hệ thống không tìm đủ bài phân bổ hoặc không đủ reviewers, bài nộp tự động đưa vào **Staff Regrade Queue** cho TA/Instructor chấm trực tiếp (thay vì bắt học viên chờ đủ 5 ngày).
-* **BR_PEER_007 (Ràng buộc Khiếu nại Điểm Bài tập Peer Assignment - Grade Appeal Constraints):**
-  * Học viên chỉ được quyền nộp đơn Khiếu nại điểm (Grade Appeal) trong vòng **7 ngày** kể từ thời điểm điểm số của bài tập được công bố chính thức (`PUBLISHED`) (`GRADE_APPEAL_WINDOW_DAYS = 7`).
-  * Mỗi bài nộp chỉ được khiếu nại **tối đa 01 lần duy nhất** (`MAX_GRADE_APPEAL_PER_SUBMISSION = 1`). Khi đơn khiếu nại đã được xử lý (được Trợ giảng chấm lại và duyệt với điểm mới hoặc bị từ chối kèm lý do), học viên không thể tiếp tục gửi khiếu nại cho bài nộp đó.
+* **BR_PEER_006 (Phân bổ Công bằng Least-Reviewed First, Soft-Lock & Ngưỡng động Cold Start):**
+  * Truy vấn phân bổ `GetPeerReviewsToGrade` chỉ thực hiện lười (lazy-load) khi học viên mở tab chấm bài: lọc bỏ bài của chính mình, bài đã chấm, bài đang bị khóa hợp lệ (`lock_expires_at > now`) và sắp xếp theo thứ tự `reviews_count ASC, created_at ASC`. Mỗi bài khi cấp phát được gắn khóa mềm 30 phút (`GRADING_LOCK_TIMEOUT_MINUTES = 30`).
+  * Đối với lớp học ít người (Cold Start), ngưỡng nghĩa vụ chấm tự động tính theo công thức động: $\text{Target} = \min(\text{required\_peer\_reviews}, \text{Eligible\_Pool\_Size})$. Khi kho bài rỗng (`Pool = 0`), trạng thái nghĩa vụ chuyển sang `WAITING_POOL`.
+  * Sau thời gian `cold_start_hours` mà không đủ reviewers, bài nộp được đưa vào hàng chờ của Giảng viên/TA để chấm giải cứu.
+* **BR_PEER_007 (Ràng buộc Khiếu nại Điểm Bài tập Tự luận - Grade Appeal Constraints):**
+  * Học viên chỉ được quyền nộp đơn Khiếu nại/Phúc khảo điểm (Grade Appeal) trong vòng **7 ngày** kể từ thời điểm điểm số của bài tập được công bố chính thức (`PUBLISHED`) (`MAX_APPEAL_WINDOW_DAYS = 7`).
+  * Mỗi bài nộp chỉ được khiếu nại **tối đa 01 lần duy nhất** (`MAX_APPEALS_PER_SUBMISSION = 1`). Khi đơn khiếu nại đã được xử lý, học viên không thể tiếp tục gửi khiếu nại cho bài nộp đó.
 * **BR_PEER_008 (Chính sách Nộp lại Bài & Nguyên tắc Điểm Cao Nhất - Resubmission Policy & Highest Score Wins):**
-  * Học viên được phép nộp lại bài tập dự án tối đa **3 lần** trước thời hạn chót (`MAX_PEER_ASSIGNMENT_SUBMISSIONS = 3`).
-  * Hệ thống lưu trữ snapshot đầy đủ các phiên bản bài nộp. Điểm chính thức ghi nhận vào Sổ điểm và tính tiến độ hoàn thành môn học tuân thủ nguyên tắc **Highest Score Wins** (Ghi nhận điểm số cao nhất trong các lần nộp đã được chấm và công bố).
+  * Học viên được phép nộp lại bài tập tự luận tối đa **3 lần** (`MAX_PEER_SUBMISSION_ATTEMPTS = 3`).
+  * Hệ thống lưu trữ lịch sử bài nộp và điểm chính thức ghi nhận vào Sổ điểm tuân thủ nguyên tắc **Highest Score Wins**.
 * **BR_PEER_009 (Quy định Hạn chấm chéo Review Window):**
-  * Hệ thống áp dụng mốc **Hạn chấm chéo (Review Window)** gia hạn thêm **3 ngày** tính từ mốc Hạn nộp bài (Submission Deadline). Học viên phải hoàn thành việc chấm chéo 3 bài của bạn học trong khoảng thời gian này.
+  * Hệ thống áp dụng mốc **Hạn chấm chéo (Review Window)** gia hạn thêm **3 ngày** tính từ mốc Hạn nộp bài (Submission Deadline).
+* **BR_PEER_010 (Cơ chế Giải thoát Kép & Chống Lười biếng - Dual-Release Policy):**
+  * Trạng thái bài làm hiển thị cho học viên được truy xuất hoàn toàn từ Server qua RPC `GetMyPeerSubmissionStatus` (cấm lưu trạng thái nộp/điểm tạm bằng `localStorage`).
+  * Ở chế độ `PEER_REVIEW`, khi bài của học viên A được Giảng viên hoặc đủ bạn học chấm:
+    1. *Trường hợp 1 (Kho rỗng hoặc Đã chấm đủ Quota):* Nếu `available_pool == 0` hoặc học viên A đã chấm $\ge \text{Target}$ bài, hệ thống tự động đặt `review_duty_status` thành `WAIVED_EMPTY_POOL` (hoặc `COMPLETED`) và phát `PeerAssignmentGradedDomainEvent` để ghi nhận hoàn thành học phần và cấp chứng chỉ ngay.
+    2. *Trường hợp 2 (Chống lười biếng):* Nếu vẫn còn bài khả dụng trong kho (`available_pool >= 1`) nhưng A chưa chấm đủ, A vẫn xem được điểm từ Giảng viên nhưng `review_duty_status` giữ nguyên `PENDING` và hệ thống **chưa công nhận hoàn thành học phần** cho tới khi A vào tab Chấm bài bạn học chấm đủ số lượt yêu cầu.
 * **BR_GRADE_001 (Trọng số Điểm Tổng kết Khóa học - Course Final Grade Weighting & Passing Calculation):**
   * Điểm tổng kết khóa học được tính toán tự động dựa trên tổng điểm có trọng số của toàn bộ các bài tập tính điểm (`Graded Items`):
     $$\text{Final Grade} = \sum_{i=1}^{N} \left( w_i \times \text{Score}_i \right) \quad \text{với} \quad \sum_{i=1}^{N} w_i = 100\%$$

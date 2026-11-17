@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
-import { ItemType } from "@/gen/catalog/v1/catalog_pb";
+import { EssayGradingMode, ItemType } from "@/gen/catalog/v1/catalog_pb";
 import { type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
+import { RadioGroup, RadioItem } from "@/components/ui/RadioGroup";
 import { Textarea } from "@/components/ui/Textarea";
 import { VideoUploadWidget } from "@/components/course/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/course/InVideoQuizEditor";
@@ -222,7 +223,18 @@ export function LearningItemFormModal({
     initialData?.quizCooldownHours ?? "8",
   );
 
-  // Peer review fields
+  // Peer review / Essay fields
+  const [essayGradingMode, setEssayGradingMode] = useState<EssayGradingMode>(() =>
+    initialData?.essayGradingMode === EssayGradingMode.INSTRUCTOR_ONLY
+      ? EssayGradingMode.INSTRUCTOR_ONLY
+      : EssayGradingMode.PEER_REVIEW,
+  );
+  const [requiredPeerReviews, setRequiredPeerReviews] = useState<number>(
+    () => initialData?.requiredPeerReviews || 3,
+  );
+  const [coldStartHours, setColdStartHours] = useState<number>(
+    () => initialData?.coldStartHours || 48,
+  );
   const [rubricItems, setRubricItems] = useState<RubricCriterionItem[]>(() =>
     parseRubricJsonWithFallback(initialData?.rubricCriteriaJson),
   );
@@ -324,6 +336,13 @@ export function LearningItemFormModal({
       setQuizHardCount(initialData.quizHardCount ?? 2);
       setQuizMaxAttempts(initialData.quizMaxAttempts ?? 3);
       setQuizCooldownHours(initialData.quizCooldownHours ?? 8);
+      setEssayGradingMode(
+        initialData.essayGradingMode === EssayGradingMode.INSTRUCTOR_ONLY
+          ? EssayGradingMode.INSTRUCTOR_ONLY
+          : EssayGradingMode.PEER_REVIEW,
+      );
+      setRequiredPeerReviews(initialData.requiredPeerReviews || 3);
+      setColdStartHours(initialData.coldStartHours || 48);
       const parsedRubrics = parseRubricJsonWithFallback(initialData.rubricCriteriaJson);
       setRubricItems(parsedRubrics);
       setPeerRubricJson(
@@ -421,6 +440,10 @@ export function LearningItemFormModal({
       testCasesJson: finalTestCasesJson,
       language: labLanguage,
       rubricCriteriaJson: itemType === ItemType.PEER_REVIEW ? peerRubricJson : "",
+      essayGradingMode:
+        itemType === ItemType.PEER_REVIEW ? essayGradingMode : EssayGradingMode.UNSPECIFIED,
+      requiredPeerReviews: itemType === ItemType.PEER_REVIEW ? requiredPeerReviews : 3,
+      coldStartHours: itemType === ItemType.PEER_REVIEW ? coldStartHours : 48,
       quizBankId,
       quizTimeLimit,
       quizPassingThreshold,
@@ -895,7 +918,7 @@ export function LearningItemFormModal({
               </div>
             )}
 
-            {/* Peer review specific fields */}
+            {/* Essay / Peer review specific fields */}
             {itemType === ItemType.PEER_REVIEW && (
               <div className="space-y-4 pt-2 border-t border-border">
                 {peerError && (
@@ -904,6 +927,92 @@ export function LearningItemFormModal({
                     <span>{peerError}</span>
                   </div>
                 )}
+
+                {/* ─── 0. Chế độ chấm điểm Bài tập tự luận ─── */}
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-border pb-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-primary" aria-hidden="true" /> Hình thức Chấm
+                      điểm Bài tập tự luận
+                    </span>
+                  </div>
+
+                  <RadioGroup
+                    value={String(essayGradingMode)}
+                    onValueChange={(val) => setEssayGradingMode(Number(val) as EssayGradingMode)}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                  >
+                    <div
+                      className={`p-3 rounded-xl border transition-colors ${
+                        essayGradingMode === EssayGradingMode.PEER_REVIEW
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-surface-container-low/40"
+                      }`}
+                    >
+                      <RadioItem
+                        value={String(EssayGradingMode.PEER_REVIEW)}
+                        label="Chấm chéo bạn học & Giảng viên giải cứu"
+                        description="Học viên chấm chéo ẩn danh cho nhau theo Rubric; tự động giải cứu nếu quá thời gian chờ."
+                      />
+                    </div>
+                    <div
+                      className={`p-3 rounded-xl border transition-colors ${
+                        essayGradingMode === EssayGradingMode.INSTRUCTOR_ONLY
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-surface-container-low/40"
+                      }`}
+                    >
+                      <RadioItem
+                        value={String(EssayGradingMode.INSTRUCTOR_ONLY)}
+                        label="Chỉ Giảng viên / Trợ giảng chấm trực tiếp"
+                        description="Không áp dụng chấm chéo; bài nộp chuyển thẳng vào hàng chờ Giảng viên chấm ngay."
+                      />
+                    </div>
+                  </RadioGroup>
+
+                  {essayGradingMode === EssayGradingMode.PEER_REVIEW && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border/60">
+                      <div>
+                        <label className="block text-[11px] font-bold text-foreground mb-1">
+                          Số bài bạn học cần chấm (Quota)
+                        </label>
+                        <Select
+                          value={String(requiredPeerReviews)}
+                          onValueChange={(val) => setRequiredPeerReviews(Number(val) || 3)}
+                        >
+                          <Select.Trigger className="w-full text-xs font-semibold">
+                            <Select.Value />
+                          </Select.Trigger>
+                          <Select.Content>
+                            {[1, 2, 3, 4, 5].map((cnt) => (
+                              <Select.Item key={cnt} value={String(cnt)}>
+                                {cnt} bài bạn học {cnt === 3 ? "(Mặc định)" : ""}
+                              </Select.Item>
+                            ))}
+                          </Select.Content>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-foreground mb-1">
+                          Thời gian chờ Giảng viên giải cứu
+                        </label>
+                        <Select
+                          value={String(coldStartHours)}
+                          onValueChange={(val) => setColdStartHours(Number(val) || 48)}
+                        >
+                          <Select.Trigger className="w-full text-xs font-semibold">
+                            <Select.Value />
+                          </Select.Trigger>
+                          <Select.Content>
+                            <Select.Item value="24">24 giờ (1 ngày)</Select.Item>
+                            <Select.Item value="48">48 giờ (2 ngày - Mặc định)</Select.Item>
+                            <Select.Item value="72">72 giờ (3 ngày)</Select.Item>
+                          </Select.Content>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* ─── 1. Đề bài bài tập & Hướng dẫn nộp bài (Markdown Preview) ─── */}
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
