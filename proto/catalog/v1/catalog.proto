@@ -14,6 +14,12 @@ enum ItemType {
   ITEM_TYPE_PEER_REVIEW = 6;
 }
 
+enum EssayGradingMode {
+  ESSAY_GRADING_MODE_UNSPECIFIED = 0;
+  ESSAY_GRADING_MODE_PEER_REVIEW = 1;
+  ESSAY_GRADING_MODE_INSTRUCTOR_ONLY = 2;
+}
+
 enum CourseStatus {
   COURSE_STATUS_UNSPECIFIED = 0;
   COURSE_STATUS_DRAFT = 1;
@@ -52,6 +58,9 @@ message LearningItem {
   string rubric_criteria_json = 14;
   string quiz_matrix_id = 15;
   bool auto_transcribe = 16;
+  EssayGradingMode essay_grading_mode = 17;
+  int32 required_peer_reviews = 18;
+  int32 cold_start_hours = 19;
 }
 
 message Lesson {
@@ -342,6 +351,9 @@ message CreateLearningItemRequest {
   string quiz_matrix_id = 13;
   string vtt_subtitle_url = 14;
   bool auto_transcribe = 15;
+  EssayGradingMode essay_grading_mode = 16;
+  int32 required_peer_reviews = 17;
+  int32 cold_start_hours = 18;
 }
 
 message CreateLearningItemResponse {
@@ -366,6 +378,9 @@ message UpdateLearningItemRequest {
   string quiz_matrix_id = 14;
   string vtt_subtitle_url = 15;
   bool auto_transcribe = 16;
+  EssayGradingMode essay_grading_mode = 17;
+  int32 required_peer_reviews = 18;
+  int32 cold_start_hours = 19;
 }
 
 message UpdateLearningItemResponse {

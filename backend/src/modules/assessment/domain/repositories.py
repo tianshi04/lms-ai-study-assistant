@@ -138,6 +138,28 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_learning_item_details(self, item_id: str) -> dict[str, Any] | None:
+        pass
+
+    @abstractmethod
+    async def count_user_completed_reviews(
+        self, item_id: str, reviewer_user_id: str
+    ) -> int:
+        pass
+
+    @abstractmethod
+    async def count_available_pool_submissions(
+        self, item_id: str, reviewer_user_id: str
+    ) -> int:
+        pass
+
+    @abstractmethod
+    async def get_eligible_peer_submissions_to_review(
+        self, item_id: str, reviewer_user_id: str, limit: int = 3
+    ) -> list[PeerAssignmentSubmission]:
+        pass
+
+    @abstractmethod
     async def claim_submission_lock(
         self,
         submission_id: str,

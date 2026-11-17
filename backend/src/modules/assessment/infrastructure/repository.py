@@ -567,6 +567,93 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         models = res.scalars().all()
         return [self._to_peer_submission_entity(m) for m in models]
 
+    async def get_learning_item_details(self, item_id: str) -> dict[str, Any] | None:
+        from src.modules.catalog.infrastructure.models import LearningItemModel
+
+        stmt = select(LearningItemModel).where(LearningItemModel.id == item_id)
+        res = await self.session.execute(stmt)
+        item = res.scalar_one_or_none()
+        if not item:
+            return None
+        return {
+            "id": item.id,
+            "title": item.title,
+            "reading_markdown": item.reading_markdown or "",
+            "rubric_criteria_json": item.rubric_criteria_json or "",
+            "essay_grading_mode": getattr(item, "essay_grading_mode", "PEER_REVIEW")
+            or "PEER_REVIEW",
+            "required_peer_reviews": int(
+                getattr(item, "required_peer_reviews", 3) or 3
+            ),
+            "cold_start_hours": int(getattr(item, "cold_start_hours", 48) or 48),
+        }
+
+    async def count_user_completed_reviews(
+        self, item_id: str, reviewer_user_id: str
+    ) -> int:
+        stmt = select(func.count(PeerReviewModel.id)).where(
+            PeerReviewModel.item_id == item_id,
+            PeerReviewModel.reviewer_user_id == reviewer_user_id,
+        )
+        res = await self.session.execute(stmt)
+        return int(res.scalar() or 0)
+
+    async def count_available_pool_submissions(
+        self, item_id: str, reviewer_user_id: str
+    ) -> int:
+        already_reviewed_sub = select(PeerReviewModel.submission_id).where(
+            PeerReviewModel.reviewer_user_id == reviewer_user_id,
+            PeerReviewModel.item_id == item_id,
+        )
+        stmt = select(func.count(PeerAssignmentSubmissionModel.id)).where(
+            PeerAssignmentSubmissionModel.item_id == item_id,
+            PeerAssignmentSubmissionModel.user_id != reviewer_user_id,
+            PeerAssignmentSubmissionModel.id.not_in(already_reviewed_sub),
+        )
+        res = await self.session.execute(stmt)
+        return int(res.scalar() or 0)
+
+    async def get_eligible_peer_submissions_to_review(
+        self, item_id: str, reviewer_user_id: str, limit: int = 3
+    ) -> list[PeerAssignmentSubmission]:
+        now = datetime.now(UTC)
+        already_reviewed_sub = select(PeerReviewModel.submission_id).where(
+            PeerReviewModel.reviewer_user_id == reviewer_user_id,
+            PeerReviewModel.item_id == item_id,
+        )
+        reviews_count_sub = (
+            select(func.count(PeerReviewModel.id))
+            .where(PeerReviewModel.submission_id == PeerAssignmentSubmissionModel.id)
+            .scalar_subquery()
+        )
+        stmt = (
+            select(PeerAssignmentSubmissionModel)
+            .where(
+                PeerAssignmentSubmissionModel.item_id == item_id,
+                PeerAssignmentSubmissionModel.user_id != reviewer_user_id,
+                PeerAssignmentSubmissionModel.id.not_in(already_reviewed_sub),
+                or_(
+                    PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
+                    PeerAssignmentSubmissionModel.locked_by_user_id == reviewer_user_id,
+                    PeerAssignmentSubmissionModel.lock_expires_at < now,
+                    and_(
+                        PeerAssignmentSubmissionModel.lock_expires_at.is_(None),
+                        PeerAssignmentSubmissionModel.locked_at
+                        < (
+                            now - timedelta(minutes=GRADING_LOCK_TIMEOUT_MINUTES)
+                        ).isoformat(),
+                    ),
+                ),
+            )
+            .order_by(
+                reviews_count_sub.asc(), PeerAssignmentSubmissionModel.created_at.asc()
+            )
+            .limit(limit)
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [self._to_peer_submission_entity(m) for m in models]
+
     async def claim_submission_lock(
         self,
         submission_id: str,
