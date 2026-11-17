@@ -453,6 +453,8 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 created_at=now_iso,
             )
             await repo.save_peer_review(review)
+            sub.release_lock(reviewer_user_id)
+            await repo.release_submission_lock(submission_id, reviewer_user_id)
             logger.info(
                 "User %s submitted peer review %s for submission %s with score %s",
                 reviewer_user_id,
