@@ -1377,10 +1377,14 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         overdue_count = 0
 
         for i in items:
+            essay_mode = i.get("essay_grading_mode") or ESSAY_GRADING_MODE_PEER_REVIEW
+            cold_hours = int(i.get("cold_start_hours") or PEER_REVIEW_COLD_START_HOURS)
             is_overdue = False
             try:
                 sub_dt = datetime.fromisoformat(i["submitted_at"])
-                if (now - sub_dt) > timedelta(hours=48):
+                if sub_dt.tzinfo is None:
+                    sub_dt = sub_dt.replace(tzinfo=UTC)
+                if (now - sub_dt) > timedelta(hours=cold_hours):
                     is_overdue = True
                     overdue_count += 1
             except (ValueError, TypeError):
@@ -1403,16 +1407,36 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         "created_at": i["submitted_at"],
                     }
                 )
+            elif (
+                essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY
+                and i["status"] == "PENDING"
+            ):
+                tasks.append(
+                    {
+                        "id": f"task-direct-{i['submission_id']}",
+                        "type": "DIRECT_GRADING",
+                        "title": f"Chờ Giảng viên chấm: {i['item_title']}",
+                        "lesson_title": i["item_title"],
+                        "student_name": i["student_name"],
+                        "course_title": i["course_title"],
+                        "time_ago": "Cần chấm ngay",
+                        "action_text": "Chấm ngay",
+                        "action_url": f"/instructor/courses/{course_id}/grading?submissionId={i['submission_id']}",
+                        "course_id": course_id,
+                        "priority": "HIGH",
+                        "created_at": i["submitted_at"],
+                    }
+                )
             elif is_overdue and i["status"] == "PENDING":
                 tasks.append(
                     {
                         "id": f"task-overdue-{i['submission_id']}",
                         "type": "OVERDUE_GRADING",
-                        "title": f"Bài nộp quá hạn 48h: {i['item_title']}",
+                        "title": f"Bài nộp quá hạn {cold_hours}h: {i['item_title']}",
                         "lesson_title": i["item_title"],
                         "student_name": i["student_name"],
                         "course_title": i["course_title"],
-                        "time_ago": "Quá 48h",
+                        "time_ago": f"Quá {cold_hours}h",
                         "action_text": "Chấm ngay",
                         "action_url": f"/instructor/courses/{course_id}/grading?submissionId={i['submission_id']}",
                         "course_id": course_id,

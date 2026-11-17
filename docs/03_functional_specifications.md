@@ -179,9 +179,9 @@ flowchart TD
    * **Ràng buộc & Tự động Ẩn Test Case (`BR_AUTOGRADE_001`):** Yêu cầu tối thiểu 3 Test Cases cho mỗi bài lab. Tự động chuyển 1/3 Test Case cuối thành bài kiểm tra ẩn (Hidden) nếu Giảng viên không thiết lập thủ công.
    * **Bảo mật Học viên & Masking Log:** Che hoàn toàn thông tin Input/Output của các Test Cases ẩn trong bảng log thi hành bài nộp của Học viên.
    * **Cấu hình Môi trường & Starter Code:** Thiết lập file mẫu ban đầu (`Starter Code`), ngôn ngữ lập trình (Python, Node.js, C++...) và giới hạn tài nguyên (Timeout 30s, Memory 512MB).
-3. **Peer-Graded Assignment Builder:**
-   * Giảng viên soạn đề bài nộp dự án (yêu cầu đính kèm file, văn bản hoặc link).
-   * **Bộ tiêu chí Rubric:** Giảng viên chia các tiêu chí chấm điểm chi tiết (ví dụ: Tiêu chí 1: Cấu trúc code - Max 5 điểm; Tiêu chí 2: Giao diện - Max 5 điểm) kèm hướng dẫn chi tiết cho học viên chấm chéo.
+3. **Bài tập Tự luận (Essay Assignment Builder - `ITEM_TYPE_PEER_REVIEW`):**
+   * Giảng viên soạn đề bài tự luận (Markdown Live Preview) và chọn **Chế độ chấm điểm**: **Chấm chéo bạn học (`PEER_REVIEW`)** hoặc **Chỉ Giảng viên / Trợ giảng chấm trực tiếp (`INSTRUCTOR_ONLY`)**. Khi chọn chấm chéo, Giảng viên tùy chỉnh số bài yêu cầu chấm (`1–5`, mặc định `3`) và thời gian chờ giải cứu (`24h / 48h / 72h`, mặc định `48h`).
+   * **Bộ tiêu chí Rubric:** Giảng viên chia các tiêu chí chấm điểm chi tiết (Tiêu chí, Điểm tối đa, Chỉ dẫn chấm) phục vụ chấm chéo hoặc làm khung chấm cho Giảng viên/TA.
 
 ### 2.4. Quản lý Khóa học & Diễn đàn (Course Ownership, Forum Moderation & Announcements)
 * **Quyền sở hữu Khóa học (Course Ownership & Co-Instructors):** Mỗi khóa học gắn với một Chủ sở hữu chính (`owner_id`) và danh sách Giảng viên đồng phụ trách (`co_instructor_ids`). Giảng viên chỉ có quyền chỉnh sửa/xóa khóa học do mình sở hữu hoặc phụ trách.
@@ -232,7 +232,7 @@ flowchart TD
   * **Cột phải (40% - Evaluation & Rubric Pane):**
     * Bảng tiêu chí Rubric chuẩn hóa: Hiển thị từng tiêu chí đánh giá (Tiêu đề, Mô tả chỉ dẫn sư phạm, Điểm tối đa), cho phép người chấm chọn mức điểm trực quan qua radio button hoặc slider.
     * Ô nhập nhận xét sư phạm (`Feedback / Pedagogical Critique`): Hỗ trợ trình soạn thảo Markdown để giảng viên viết nhận xét chi tiết, hướng dẫn sửa bài và động viên học viên.
-    * Khu vực Tham chiếu Lịch sử Chấm chéo (Peer Reviews Reference): Đối với bài nộp chuyển từ diện Outlier hoặc Appeal, cột phải hiển thị lịch sử nhận xét và điểm số của các bạn học trước đó để người chấm có góc nhìn đa chiều.
+    * Khu vực Tham chiếu Lịch sử Chấm chéo (Peer Reviews Reference): Chỉ hiển thị đối với các bài tập cấu hình chế độ `PEER_REVIEW`; với chế độ `INSTRUCTOR_ONLY`, hàng chờ hiển thị trạng thái *"Chờ Giảng viên chấm"* ngay khi học viên nộp bài mà không qua bước chấm chéo 48h.
     * Khối điều khiển hành động: Nút *"Hoàn tất chấm bài"* (`Submit Grade`) và *"Hủy & Nhả bài"* (`Release Lease`).
 * **Cơ chế Khóa Bài Có Thời Hạn (Atomic Task Lease 30 Phút):**
   * Để ngăn chặn xung đột chấm trùng (Race Condition) khi nhiều Trợ giảng cùng làm việc trong một lớp học đông học viên, khi một nhân sự mở bài nộp trong hàng chờ, hệ thống tự động cấp phát một quyền sở hữu tạm thời gọi là **Atomic Task Lease** với thời hạn **30 phút** (`TASK_LEASE_TIMEOUT_MINUTES = 30`).
@@ -293,12 +293,12 @@ flowchart TD
 * **Cam kết Liêm chính Học thuật (Academic Honor Code):** Bắt buộc tích chọn xác nhận trước khi làm bài. Nếu từ chối (`is_agreed = False`), hệ thống chặn nộp bài và trả về thông báo lỗi kèm điểm số 0.
 * **Graded Quiz:** Ngân hàng câu hỏi xáo trộn (`BR_QUIZ_002`), đồng bộ đếm ngược Server-side (`BR_QUIZ_003`), tự động chấm điểm và áp dụng nguyên tắc *Highest Score Wins* (giữ điểm thi cao nhất). Cho phép làm lại không giới hạn lượt thi không giới hạn cooldown (`BR_QUIZ_001`). Hỗ trợ quy trình 2 bước: Màn hình Tổng quan bài thi (hiển thị kết quả cao nhất đã làm) -> Chế độ Làm bài Tập trung (Full-Focus Mode).
 * **Auto-Graded Lab:** Học viên tải file code lên -> Sandbox gửi tới Auto-Grader chạy Test Cases -> Trả về danh sách Pass/Fail test cases, log stdout/stderr và điểm số tức thì.
-* **Peer-Graded Assignment Sub-system:**
-  1. **Nộp bài:** Học viên nộp bài dự án trước deadline.
-  2. **Chấm chéo:** Hệ thống phân bổ các bài làm của bạn học ngẫu nhiên (tự động loại trừ bài của chính mình `exclude_user_id`), số lượt bắt buộc tự động điều chỉnh theo $\min(3, \text{Pool\_Size})$ đối với lớp học mới (`BR_PEER_001`, `BR_PEER_006`). Học viên chấm theo bộ 3 tiêu chí Rubric (Code Quality, Documentation, Test Coverage - mỗi tiêu chí max 10đ).
-  3. **Tính điểm & Outlier:** Điểm chính thức = Tổng điểm đạt / Tổng điểm tối đa * 100%. Nếu chênh lệch $Max(Scores) - Min(Scores) > 30.0\%$, hệ thống tự động gắn cờ Outlier (`is_outlier = True`) và gửi cảnh báo đến Trợ giảng (TA).
-  4. **Fallback khi thiếu bài chấm chéo & Report:** Nếu sau 48h chưa đủ bài phân bổ hoặc bị học viên bấm Report Review, bài làm sẽ ở trạng thái `PENDING_STAFF_REVIEW` và chuyển vào Staff Regrade Queue cho TA chấm/xác minh trực tiếp để chống gian lận (`BR_PEER_004`, `BR_PEER_005`).
-  5. **Khiếu nại điểm (Grade Appeal):** Học viên gửi đơn khiếu nại với lý do chi tiết (trạng thái `"PENDING"`) để Trợ giảng (TA) chấm lại thủ công.
+* **Bài tập Tự luận (`AssessmentService.GetMyPeerSubmissionStatus` & Peer-Review Sub-system):**
+  1. **Nộp bài & Trạng thái Server-side:** Học viên nộp đường dẫn/bài tự luận (tối đa 3 lượt); toàn bộ trạng thái (`has_submission`, `is_graded`, `review_duty_status`, `peer_feedbacks`) được truy vấn trực tiếp qua `GetMyPeerSubmissionStatus` (không lưu bằng `localStorage`). Nếu học phần cấu hình `INSTRUCTOR_ONLY`, tab chấm chéo được ẩn hoàn toàn và bài nộp chờ Giảng viên/TA chấm trực tiếp.
+  2. **Phân bổ công bằng Least-Reviewed First & Soft-Lock (`PEER_REVIEW`):** Chỉ khi học viên đã nộp bài và mở tab Chấm bài bạn học (`GetPeerReviewsToGrade`), hệ thống mới lazy-fetch danh sách bài ít lượt chấm nhất (khác mình, chưa chấm, không bị khóa) và khóa mềm 30 phút. Ngưỡng nghĩa vụ động tự điều chỉnh theo $\min(\text{required\_peer\_reviews}, \text{Eligible\_Pool\_Size})$ (`BR_PEER_001`, `BR_PEER_006`).
+  3. **Tính điểm, Ẩn danh & Outlier:** Phản hồi bạn học hiển thị ẩn danh (`Bạn học #1`, `#2`...). Nếu chênh lệch $Max(Scores) - Min(Scores) > 30.0\%$, hệ thống tự động gắn cờ Outlier (`is_outlier = True`).
+  4. **Giải cứu & Giải thoát kép (`BR_PEER_004`, `BR_PEER_010`):** Sau `cold_start_hours` nếu chưa đủ lượt chấm, Giảng viên/TA chấm giải cứu. Kho rỗng (`pool = 0`) tự động miễn (`WAIVED_EMPTY_POOL`) và hoàn thành học phần; ngược lại nếu còn bài trong kho mà chưa chấm đủ, điểm vẫn hiển thị nhưng học phần giữ `PENDING` cho tới khi chấm xong nghĩa vụ.
+  5. **Khiếu nại / Phúc khảo điểm (Grade Appeal):** Học viên gửi đơn phúc khảo trong vòng 7 ngày kể từ khi công bố điểm để Giảng viên/TA xem xét và chấm lại.
 
 ### 3.6. Chứng nhận & Xác thực Thành tích (Verified Certificate & OpenBadges)
 * **Quy trình Xác minh Danh tính (Identity Verification):** Trước khi phát hành chứng chỉ Verified Certificate lần đầu tiên, học viên thực hiện bước xác minh danh tính bằng cách tải ảnh CCCD/Hộ chiếu và chụp ảnh sinh trắc học khuôn mặt qua Webcam (`BR_CERT_003`).

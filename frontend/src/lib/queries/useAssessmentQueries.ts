@@ -27,6 +27,7 @@ import {
   type SubmitStaffGradingResponse,
   type RubricCriteria,
   type ListAdminAssessmentAlertsResponse,
+  type GetMyPeerSubmissionStatusResponse,
 } from "@/gen/assessment/v1/assessment_pb";
 
 /**
@@ -480,6 +481,22 @@ export function useSubmitStaffGradingMutation(
       queryClient.invalidateQueries({ queryKey: ["courseGradebook"] });
       queryClient.invalidateQueries({ queryKey: ["instructorActionTasks"] });
     },
+    ...options,
+  });
+}
+
+export function useMyPeerSubmissionStatusQuery(
+  itemId: string,
+  options?: Partial<UseQueryOptions<GetMyPeerSubmissionStatusResponse, Error>>,
+) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<GetMyPeerSubmissionStatusResponse, Error>({
+    queryKey: ["myPeerSubmissionStatus", itemId],
+    queryFn: async () => {
+      const client = getRpcClient(AssessmentService);
+      return await client.getMyPeerSubmissionStatus({ itemId });
+    },
+    enabled: isAuthenticated && !!itemId && (options?.enabled ?? true),
     ...options,
   });
 }

@@ -94,14 +94,18 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
 
   const isSubmissionOverdue = useCallback(
     (item: GradingQueueItem) => {
-      // Only items that are NOT graded, NOT appealed, NOT outlier, NOT claimed, and past 48h
+      // Only PEER_REVIEW items that are NOT graded, NOT appealed, NOT outlier, NOT claimed, and past coldStartHours
+      if (item.essayGradingMode === "INSTRUCTOR_ONLY") return false;
       if (item.status === GradingQueueStatus.GRADED) return false;
       if (item.isAppeal) return false;
       if (item.isOutlier) return false;
       if (item.lockedByUserId) return false;
       if (!item.submittedAt || !currentTimeMs) return false;
-      const isPast48h = currentTimeMs - new Date(item.submittedAt).getTime() > 48 * 3600 * 1000;
-      return isPast48h && !item.staffScore && item.peerReviewsCount < 3;
+      const coldHours = item.coldStartHours > 0 ? item.coldStartHours : 48;
+      const reqPeers = item.requiredPeerReviews > 0 ? item.requiredPeerReviews : 3;
+      const isPastThreshold =
+        currentTimeMs - new Date(item.submittedAt).getTime() > coldHours * 3600 * 1000;
+      return isPastThreshold && !item.staffScore && item.peerReviewsCount < reqPeers;
     },
     [currentTimeMs],
   );
@@ -207,17 +211,29 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
       );
     }
     if (isOverdue) {
+      const coldHours = item.coldStartHours > 0 ? item.coldStartHours : 48;
       return (
         <Badge
           variant="error"
           className="text-[11px] font-bold bg-destructive/10 text-destructive border-destructive/20 gap-1 px-2.5 py-0.5 whitespace-nowrap"
         >
           <Clock className="w-3.5 h-3.5 text-destructive shrink-0" aria-hidden="true" />
-          Quá hạn 48h
+          Quá hạn {coldHours}h
         </Badge>
       );
     }
-    if (item.peerReviewsCount < 3) {
+    if (item.essayGradingMode === "INSTRUCTOR_ONLY") {
+      return (
+        <Badge
+          variant="outlined"
+          className="text-[11px] font-bold bg-primary/10 text-primary border-primary/25 gap-1 px-2.5 py-0.5 whitespace-nowrap"
+        >
+          Chờ Giảng viên chấm
+        </Badge>
+      );
+    }
+    const reqPeers = item.requiredPeerReviews > 0 ? item.requiredPeerReviews : 3;
+    if (item.peerReviewsCount < reqPeers) {
       return (
         <Badge
           variant="outlined"
@@ -331,8 +347,9 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
       );
     }
 
-    // 7. In progress peer review (< 3 reviews and not overdue)
-    if (item.peerReviewsCount < 3) {
+    // 7. In progress peer review (< required reviews and not overdue, PEER_REVIEW mode only)
+    const reqPeers = item.requiredPeerReviews > 0 ? item.requiredPeerReviews : 3;
+    if (item.essayGradingMode !== "INSTRUCTOR_ONLY" && item.peerReviewsCount < reqPeers) {
       return (
         <Button
           type="button"
@@ -398,11 +415,12 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
     // 2. Peer score (PEER)
     // Only valid if completed (>= 3 reviews and GRADED / APPEALED / CLAIMED with existing peer grade) and has actual score > 0
     if (item.gradeSource === GradingProvenance.PEER) {
+      const reqPeers = item.requiredPeerReviews > 0 ? item.requiredPeerReviews : 3;
       const isPeerGraded =
         (item.status === GradingQueueStatus.GRADED ||
           item.status === GradingQueueStatus.APPEALED ||
           item.status === GradingQueueStatus.CLAIMED) &&
-        item.peerReviewsCount >= 3;
+        item.peerReviewsCount >= reqPeers;
       if (
         isPeerGraded &&
         typeof item.peerScore === "number" &&
@@ -831,7 +849,11 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                                 className="w-3 h-3 text-muted-foreground shrink-0"
                                 aria-hidden="true"
                               />
-                              Tiến độ: {item.peerReviewsCount}/3 bạn học
+                              {item.essayGradingMode === "INSTRUCTOR_ONLY"
+                                ? "Chế độ: Chỉ Giảng viên chấm"
+                                : `Tiến độ: ${item.peerReviewsCount}/${
+                                    item.requiredPeerReviews > 0 ? item.requiredPeerReviews : 3
+                                  } bạn học`}
                             </span>
                           </div>
                         </Table.Cell>
