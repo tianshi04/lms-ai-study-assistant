@@ -10,13 +10,6 @@ from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepos
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 
-
-def _default_identity_repo_factory(session: Any) -> Any:
-    from src.modules.identity.infrastructure.repository import IdentityRepository
-
-    return IdentityRepository(session)
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -31,9 +24,7 @@ class CourseCollaboratorUseCase:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyCatalogRepository(session)
         )
-        self.identity_repo_factory = (
-            identity_repo_factory or _default_identity_repo_factory
-        )
+        self.identity_repo_factory = identity_repo_factory
 
     async def _verify_course_owner_permission(
         self,
@@ -62,6 +53,10 @@ class CourseCollaboratorUseCase:
         role: str,
         current_user: CurrentUser | None = None,
     ) -> dict:
+        if self.identity_repo_factory is None:
+            raise RuntimeError(
+                "CourseCollaboratorUseCase requires identity_repo_factory to be configured at the composition root."
+            )
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             identity_repo = self.identity_repo_factory(session)

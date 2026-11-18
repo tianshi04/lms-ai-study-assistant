@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useQuery,
   useMutation,
   useQueryClient,
@@ -19,6 +20,8 @@ import {
   type UserOrganizationDetail,
   type Invitation,
   type GetAdminIdentityStatsResponse,
+  type GetOrganizationIdentityStatsResponse,
+  type ListOrganizationSeatHoldersResponse,
 } from "@/gen/identity/v1/identity_pb";
 
 /**
@@ -63,6 +66,64 @@ export function useUserProfileQuery(
   });
 }
 
+export function useOrganizationIdentityStatsQuery(
+  organizationId: string,
+  options?: Partial<UseQueryOptions<GetOrganizationIdentityStatsResponse, Error>>,
+) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<GetOrganizationIdentityStatsResponse, Error>({
+    queryKey: ["organizationIdentityStats", organizationId],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      return client.getOrganizationIdentityStats({ organizationId });
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && !!organizationId && (options?.enabled ?? true),
+  });
+}
+
+export interface OrganizationSeatHoldersParams {
+  organizationId: string;
+  page: number;
+  pageSize: number;
+  searchQuery: string;
+  revocableOnly?: boolean;
+}
+
+export function useOrganizationSeatHoldersQuery({
+  organizationId,
+  page,
+  pageSize,
+  searchQuery,
+  revocableOnly = false,
+}: OrganizationSeatHoldersParams) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<ListOrganizationSeatHoldersResponse, Error>({
+    queryKey: [
+      "organizationSeatHolders",
+      organizationId,
+      page,
+      pageSize,
+      searchQuery,
+      revocableOnly,
+    ],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      return client.listOrganizationSeatHolders({
+        organizationId,
+        page,
+        pageSize,
+        searchQuery,
+        revocableOnly,
+      });
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    enabled: isAuthenticated && !!organizationId,
+  });
+}
+
 /**
  * Custom TanStack Mutation hook for assigning enterprise seat key.
  */
@@ -75,6 +136,7 @@ export function useSaveEnterpriseKeyMutation(
     >
   >,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<
     { success: boolean; message: string },
     Error,
@@ -86,18 +148,33 @@ export function useSaveEnterpriseKeyMutation(
       return { success: res.success, message: res.message };
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["enterpriseSeats"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationSeatHolders"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationIdentityStats"] });
+      queryClient.invalidateQueries({ queryKey: ["userProfile", variables.userId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 
+export interface EnterpriseSeatsFilter {
+  partnerName?: string;
+  organizationId?: string;
+}
+
 export function useEnterpriseSeatsQuery(
+  filters?: EnterpriseSeatsFilter,
   options?: Partial<UseQueryOptions<EnterpriseSeat[], Error>>,
 ) {
   const { isAuthenticated } = useAuth();
+  const partnerName = filters?.partnerName ?? "";
+  const organizationId = filters?.organizationId ?? "";
   return useQuery<EnterpriseSeat[], Error>({
-    queryKey: ["enterpriseSeats"],
+    queryKey: ["enterpriseSeats", partnerName, organizationId],
     queryFn: async () => {
       const client = getRpcClient(IdentityService);
-      const res = await client.listEnterpriseSeats({});
+      const res = await client.listEnterpriseSeats({ partnerName, organizationId });
       return res.seats;
     },
     ...options,
@@ -113,6 +190,7 @@ export function useRevokeEnterpriseSeatMutation(
     UseMutationOptions<{ success: boolean; message: string }, Error, { userId: string }>
   >,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<{ success: boolean; message: string }, Error, { userId: string }>({
     mutationFn: async ({ userId }) => {
       const client = getRpcClient(IdentityService);
@@ -120,6 +198,13 @@ export function useRevokeEnterpriseSeatMutation(
       return { success: res.success, message: res.message };
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["enterpriseSeats"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationSeatHolders"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationIdentityStats"] });
+      queryClient.invalidateQueries({ queryKey: ["userProfile", variables.userId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 
@@ -297,6 +382,7 @@ export function useAddOrganizationMemberMutation(
     onSuccess: (data, variables, context) => {
       const orgId = variables.organizationId || "org_default";
       queryClient.invalidateQueries({ queryKey: ["organizationMembers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["organizationIdentityStats"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
@@ -322,6 +408,7 @@ export function useRemoveOrganizationMemberMutation(
       const orgId = variables.organizationId || "org_default";
       queryClient.invalidateQueries({ queryKey: ["organizationMembers", orgId] });
       queryClient.invalidateQueries({ queryKey: ["organizationAuditLogs", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["organizationIdentityStats"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
@@ -429,6 +516,7 @@ export function useCreateInvitationMutation(
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["sentInvitations"] });
       queryClient.invalidateQueries({ queryKey: ["myInvitations"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationIdentityStats"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
     ...options,

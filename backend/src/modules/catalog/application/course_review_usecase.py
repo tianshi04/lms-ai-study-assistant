@@ -24,15 +24,6 @@ from src.shared.permissions import (
     CoursePermission,
 )
 
-
-def _default_learning_repo_factory(session: Any) -> ILearningRepository:
-    from src.modules.learning.infrastructure.repository import (
-        SQLAlchemyLearningRepository,
-    )
-
-    return SQLAlchemyLearningRepository(session)
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -47,9 +38,7 @@ class CourseReviewUseCase:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyCatalogRepository(session)
         )
-        self.learning_repo_factory = (
-            learning_repo_factory or _default_learning_repo_factory
-        )
+        self.learning_repo_factory = learning_repo_factory
 
     async def _verify_ownership(
         self,
@@ -129,8 +118,12 @@ class CourseReviewUseCase:
                 )
 
             # BR_REVIEW_001: Check if user completed at least 50% of the course via Learning domain
+            if self.learning_repo_factory is None:
+                raise RuntimeError(
+                    "CourseReviewUseCase requires learning_repo_factory to be configured at the composition root."
+                )
             learning_repo = self.learning_repo_factory(session)
-            progress = await learning_repo.find_progress(user_id, real_course_id)
+            progress = await learning_repo.get_progress(user_id, real_course_id)
 
             if (
                 not progress

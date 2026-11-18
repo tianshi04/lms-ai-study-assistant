@@ -45,6 +45,12 @@ class SpecializationModel(Base):
         server_default=INTERNAL_SYSTEM_ORG_ID,
         index=True,
     )
+    issuer_partner_id: Mapped[str | None] = mapped_column(
+        String(64),
+        ForeignKey("partners.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
 
 class CategoryModel(Base):
@@ -66,6 +72,12 @@ class CourseModel(Base):
         nullable=False,
         default=INTERNAL_SYSTEM_ORG_ID,
         server_default=INTERNAL_SYSTEM_ORG_ID,
+        index=True,
+    )
+    issuer_partner_id: Mapped[str | None] = mapped_column(
+        String(64),
+        ForeignKey("partners.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)

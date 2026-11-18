@@ -113,6 +113,12 @@ class EnterpriseLicenseModel(Base):
     __tablename__ = "enterprise_licenses"
 
     key: Mapped[str] = mapped_column(String(128), primary_key=True)
+    organization_id: Mapped[str | None] = mapped_column(
+        String(64),
+        ForeignKey("organizations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     partner_name: Mapped[str] = mapped_column(String(255), nullable=False)
     total_seats: Mapped[int] = mapped_column(
         Integer, nullable=False, default=DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS
