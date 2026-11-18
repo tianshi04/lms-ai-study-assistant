@@ -39,15 +39,6 @@ from src.shared.domain import (
 )
 from src.shared.infrastructure.database import async_session_scope
 
-
-def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
-    from src.modules.catalog.infrastructure.repository import (
-        SQLAlchemyCatalogRepository,
-    )
-
-    return SQLAlchemyCatalogRepository(session)
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -58,9 +49,14 @@ class PaymentUseCase:
         catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
     ):
         self.repository = repo
-        self._catalog_repo_factory = (
-            catalog_repo_factory or _default_catalog_repo_factory
-        )
+        self._catalog_repo_factory = catalog_repo_factory
+
+    def _require_catalog_repo(self, session: Any) -> ICatalogRepository:
+        if self._catalog_repo_factory is None:
+            raise RuntimeError(
+                "PaymentUseCase requires catalog_repo_factory to be configured at the composition root."
+            )
+        return self._catalog_repo_factory(session)
 
     async def get_user_payment_access(
         self, user_id: str, course_id: str
@@ -97,7 +93,7 @@ class PaymentUseCase:
                     None,
                 )
 
-            catalog_repo = self._catalog_repo_factory(session)
+            catalog_repo = self._require_catalog_repo(session)
             course = await catalog_repo.get_course_detail(course_id)
 
             raw_price = (
@@ -246,7 +242,7 @@ class PaymentUseCase:
                 already_purchased = await repo.has_active_purchase(user_id, target_id)
                 if already_purchased:
                     return False, "Bạn đã mua và sở hữu khóa học này.", "", "", ""
-                catalog_repo = self._catalog_repo_factory(session)
+                catalog_repo = self._require_catalog_repo(session)
                 course = await catalog_repo.get_course_detail(target_id)
                 raw_course_price = (
                     getattr(course, "price", DEFAULT_SINGLE_COURSE_PRICE_VND)

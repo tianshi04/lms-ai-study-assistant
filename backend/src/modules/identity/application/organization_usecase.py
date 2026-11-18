@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+from src.modules.identity.domain import OrganizationIdentityStats
 from src.modules.identity.infrastructure import repository as repo_module
 from src.shared import permissions
 from src.shared.auth import (
@@ -10,6 +11,7 @@ from src.shared.infrastructure import database
 from src.shared.permissions import (
     OrgPermission,
     OrgRole,
+    enforce_strict_organization_permission,
 )
 
 logger = logging.getLogger(__name__)
@@ -189,3 +191,27 @@ class OrganizationUseCase:
         async with database.async_session_scope() as session:
             org_repo = repo_module.OrganizationRepository(session)
             return await org_repo.list_user_organization_details(current_user.id)
+
+    async def get_organization_identity_stats(
+        self,
+        organization_id: str,
+        current_user: CurrentUser | None,
+    ) -> OrganizationIdentityStats:
+        clean_org_id = (organization_id or "").strip()
+        async with database.async_session_scope() as session:
+            org_repo = repo_module.OrganizationRepository(session)
+            org = (
+                await org_repo.get_organization_by_id(clean_org_id)
+                if clean_org_id
+                else None
+            )
+            target_org_id = org.id if org else clean_org_id
+            await enforce_strict_organization_permission(
+                session,
+                current_user,
+                target_org_id,
+                required_permission=OrgPermission.VIEW_ANALYTICS,
+            )
+            if not org:
+                raise KeyError(f"Không tìm thấy tổ chức '{clean_org_id}'")
+            return await org_repo.get_organization_identity_stats(org.id)

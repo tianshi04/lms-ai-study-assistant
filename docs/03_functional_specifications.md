@@ -96,7 +96,7 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Phân quyền Phân cấp Lời mời (Role-Based Invitation Restrictions):**
   * **Tổ chức (Organization)**: Org Owner gửi lời mời thành viên với vai trò `INSTRUCTOR`, `MEMBER`. Nghiêm cấm gửi lời mời cho vai trò `ORG_OWNER`.
   * **Khóa học (Course)**: Chủ sở hữu / Giảng viên khóa học gửi lời mời làm `CO_INSTRUCTOR`, `TA`... Nghiêm cấm gửi lời mời cho vai trò `COURSE_OWNER`.
-  * **Suất học Doanh nghiệp (Enterprise Seat)**: Chỉ Quản trị viên hệ thống (Super Admin) mới có quyền khởi tạo và gửi lời mời kích hoạt Suất học Doanh nghiệp. Hệ thống tự động kiểm tra hạn mức `used_seats < total_seats` và ghi nhận tăng nguyên tử số suất đã dùng khi người nhận chấp nhận lời mời.
+  * **Suất học Doanh nghiệp (Enterprise Seat)**: Quản trị viên hệ thống (`SUPER_ADMIN`) hoặc Chủ sở hữu Tổ chức (`ORG_OWNER` đối với gói `EnterpriseLicense` thuộc tổ chức mình — `license.organization_id == org.id`) có quyền gửi lời mời kích hoạt Suất học Doanh nghiệp qua Email. Hệ thống tự động kiểm tra hạn mức `used_seats < total_seats` và ghi nhận tăng nguyên tử số suất đã dùng khi người nhận chấp nhận lời mời.
 * **Mã hóa Token SHA-256 & Vòng đời Đơn kỳ (Single-Use Token Lifecycle):**
   * Token lời mời ngẫu nhiên (`inv_tok_<uuid>`) chỉ tồn tại tạm thời trên bộ nhớ và được gửi qua link. Trong Database chỉ lưu trữ chuỗi băm Hex SHA-256 của token (`token_hash`), chống lộ token khi bị rò rỉ cơ sở dữ liệu.
   * Lời mời có thời hạn mặc định 7 ngày (`DEFAULT_INVITATION_EXPIRATION_DAYS = 7`). Khi quá hạn, trạng thái tự động chuyển sang `EXPIRED`.
@@ -367,10 +367,14 @@ flowchart TD
 
 ## 4. VAI TRÒ: ĐỐI TÁC PHÁT HÀNH (PARTNER / ORGANIZATION ADMIN)
 
-### 4.1. Quản lý Thương hiệu & Logo Tổ chức (Partner Branding & Identity)
-* **Cấu hình Hồ sơ Đối tác:** Cập nhật Tên đối tác (ví dụ: Stanford University, DeepLearning.AI), biểu tượng Logo chính thức (Partner Logo URL) và chữ ký xác thực đại diện.
-* **Đồng thương hiệu:** Hiển thị thương hiệu đối tác trên toàn bộ giao diện khóa học phát hành và nhúng thông tin đối tác vào Chứng chỉ xác minh (Verified Certificate).
+### 4.1. Quản lý Thương hiệu, Ký số ECDSA & OpenBadges (`/organizations/[slug]/settings` & `/partner/settings`)
+* **Cấu hình Hồ sơ Đối tác Self-Service:** Chủ sở hữu Tổ chức (`ORG_OWNER`) và Quản trị viên hệ thống (`SUPER_ADMIN`) cập nhật Tên đối tác, Mô tả, Website, Logo, Banner, danh sách Tên miền Email ủy quyền (`allowed_domains`), chữ ký đại diện mặc định và danh sách nhiều người ký (Multi-Signatories) thông qua component dùng chung `frontend/src/components/partner/PartnerSelfServiceForm.tsx` gọi RPC `PartnerService.UpdatePartner`.
+* **Xoay Khóa Ký số ECDSA P-256 & Lịch sử Khóa (`historical_public_keys`):** Cho phép `ORG_OWNER` chủ động xoay cặp khóa bất đối xứng qua `PartnerService.RotatePartnerKeyPair`. Khóa công khai cũ được lưu trữ bền vững trong cột PostgreSQL `partners.historical_public_keys` (`TEXT[]`), và hệ thống xuất tệp tĩnh `openbadges-issuer.json` chuẩn W3C OpenBadges 2.0 chứa đầy đủ mảng `CryptographicKey` (cả khóa hiện hành lẫn khóa lịch sử).
+* **Tách biệt Ngữ cảnh Hiển thị & Tổ chức Phát hành (`issuer_partner_id`):** Các khóa học và chuỗi chuyên ngành thương mại công khai giữ `organization_id = "partner_community"` để hiển thị rộng rãi cho mọi học viên B2C, đồng thời lưu định danh pháp lý của trường/viện phát hành tại `issuer_partner_id` (`BR_PARTNER_003`).
 
-### 4.2. Quản lý Gói Suất học & Báo cáo Tổ chức (Enterprise Seats & Organization Dashboard)
-* **Kích hoạt Suất học:** Quản lý danh sách mã Suất học Doanh nghiệp (Enterprise Keys), theo dõi hạn mức (`used_seats / total_seats`).
-* **Báo cáo Hoàn thành:** Xem thống kê tỷ lệ hoàn thành chương trình học và danh sách học viên thuộc tổ chức nhận Verified Certificate.
+### 4.2. Bảng Điều khiển Tổ chức Phân tách Theo Bounded Context (`/organizations/[slug]/manage`)
+* **Kiến trúc Truy vấn Song song Theo Bounded Context (DDD Multi-Service Aggregation):** Trang quản trị tổ chức gọi song song 6 RPC chuyên biệt thuộc đúng từng phân hệ sở hữu dữ liệu (không JOIN SQL chéo module ở tầng Application):
+  * `IdentityService.GetOrganizationIdentityStats` & `IdentityService.ListOrganizationSeatHolders` (`proto/identity/v1/identity.proto`): Thống kê tổng thành viên, số giảng viên, lời mời đang chờ, hạn mức giấy phép (`used_seats / total_seats`), và danh sách phân trang học viên đang sử dụng Seat kèm trạng thái bảo vệ thu hồi (`can_revoke`, `revoke_reason_hint` theo `BR_ACCESS_003`).
+  * `CatalogService.GetOrganizationCatalogStats` & `CatalogService.ListOrganizationCourseMetrics` (`proto/catalog/v1/catalog.proto`): Thống kê số lượng khóa học theo trạng thái (`PUBLISHED`, `PENDING_REVIEW`, `DRAFT`, `REJECTED`), điểm CSAT trung bình, và bảng phân trang hiệu quả khóa học (ghi danh, tỷ lệ hoàn thành, đánh giá, doanh thu). Cho phép `ORG_OWNER` phê duyệt (`APPROVE`) hoặc từ chối (`REJECT`) trực tiếp các khóa học thuộc tổ chức qua `CatalogService.ReviewCourse` (`BR_AUTH_006`).
+  * `CertificateService.GetOrganizationCertificateStats` & `CertificateService.ListOrganizationCertificates` (`proto/certificate/v1/certificate.proto`): Tổng hợp số chứng chỉ đã cấp/đã thu hồi cho các khóa học của tổ chức và bảng tra cứu chứng chỉ phân trang phía máy chủ kèm liên kết xác minh công khai `/verify/[certId]`.
+* **Cấp phát & Thu hồi Suất học Doanh nghiệp:** Hỗ trợ tự động cấp Seat ngay khi người dùng đăng ký tài khoản có email khớp `Partner.allowed_domains` (`Register`, `CompleteGoogleRegistration`, `GoogleLogin`), gửi lời mời cấp Seat qua email (`CreateInvitation` với `ENTERPRISE_SEAT`), và thu hồi hoàn quỹ Seat an toàn (`RevokeEnterpriseSeat`).

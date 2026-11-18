@@ -154,6 +154,12 @@ service CertificateService {
   rpc ListAdminCertificates(ListAdminCertificatesRequest) returns (ListAdminCertificatesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetOrganizationCertificateStats(GetOrganizationCertificateStatsRequest) returns (GetOrganizationCertificateStatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListOrganizationCertificates(ListOrganizationCertificatesRequest) returns (ListOrganizationCertificatesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message GetAdminCertificateStatsRequest {}
@@ -204,6 +210,30 @@ message ListAdminCertificatesRequest {
 }
 
 message ListAdminCertificatesResponse {
+  repeated AdminCertificateSummary certificates = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message GetOrganizationCertificateStatsRequest {
+  string organization_id = 1;
+}
+
+message GetOrganizationCertificateStatsResponse {
+  int32 certificates_issued = 1;
+  int32 certificates_revoked = 2;
+}
+
+message ListOrganizationCertificatesRequest {
+  string organization_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string search_query = 4;
+  AdminCertificateStatusFilter status = 5;
+}
+
+message ListOrganizationCertificatesResponse {
   repeated AdminCertificateSummary certificates = 1;
   int32 total_count = 2;
   int32 page = 3;

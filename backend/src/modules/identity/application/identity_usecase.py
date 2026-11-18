@@ -4,11 +4,15 @@ from typing import Any
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.identity.domain import (
     AdminIdentityStats,
+    EnterpriseSeatSummary,
     IIdentityRepository,
     InstructorApplication,
+    OrganizationIdentityStats,
+    OrganizationSeatHoldersPage,
     User,
 )
 from src.modules.learning.domain import ILearningRepository
+from src.modules.partner.domain import IPartnerRepository
 from src.shared.auth import (
     CurrentUser,
 )
@@ -44,8 +48,9 @@ class IdentityUseCase:
         learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
         catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
         repo_factory: Callable[[Any], IIdentityRepository] | None = None,
+        partner_repo_factory: Callable[[Any], IPartnerRepository] | None = None,
     ) -> None:
-        self.auth = AuthUseCase()
+        self.auth = AuthUseCase(partner_repo_factory=partner_repo_factory)
         self.user_profile = UserProfileUseCase(repo_factory=repo_factory)
         self.organization = OrganizationUseCase()
         self.enterprise = EnterpriseLicenseUseCase(
@@ -249,6 +254,16 @@ class IdentityUseCase:
     ) -> list[dict[str, Any]]:
         return await self.organization.list_my_organizations(current_user=current_user)
 
+    async def get_organization_identity_stats(
+        self,
+        organization_id: str,
+        current_user: CurrentUser | None = None,
+    ) -> OrganizationIdentityStats:
+        return await self.organization.get_organization_identity_stats(
+            organization_id=organization_id,
+            current_user=current_user,
+        )
+
     # -------------------------------------------------------------------------
     # Enterprise Licenses & Seats (EnterpriseLicenseUseCase)
     # -------------------------------------------------------------------------
@@ -268,10 +283,12 @@ class IdentityUseCase:
     async def list_enterprise_seats(
         self,
         partner_name: str = "",
+        organization_id: str = "",
         current_user: CurrentUser | None = None,
-    ) -> list[dict]:
+    ) -> list[EnterpriseSeatSummary]:
         return await self.enterprise.list_enterprise_seats(
             partner_name=partner_name,
+            organization_id=organization_id,
             current_user=current_user,
         )
 
@@ -281,14 +298,36 @@ class IdentityUseCase:
         seat_key: str,
         scope_type: str = "ALL_COURSES",
         allowed_course_ids: list[str] | None = None,
+        organization_id: str = "",
+        total_seats: int = 0,
         current_user: CurrentUser | None = None,
-    ) -> dict:
+    ) -> EnterpriseSeatSummary:
         return await self.enterprise.create_enterprise_seat(
             partner_name=partner_name,
             seat_key=seat_key,
             scope_type=scope_type,
             allowed_course_ids=allowed_course_ids,
+            organization_id=organization_id,
+            total_seats=total_seats,
             current_user=current_user,
+        )
+
+    async def list_organization_seat_holders(
+        self,
+        organization_id: str,
+        current_user: CurrentUser | None = None,
+        page: int = 1,
+        page_size: int = 10,
+        search_query: str = "",
+        revocable_only: bool = False,
+    ) -> OrganizationSeatHoldersPage:
+        return await self.enterprise.list_organization_seat_holders(
+            organization_id=organization_id,
+            current_user=current_user,
+            page=page,
+            page_size=page_size,
+            search_query=search_query,
+            revocable_only=revocable_only,
         )
 
     async def revoke_enterprise_seat(

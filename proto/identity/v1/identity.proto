@@ -67,16 +67,17 @@ message EnterpriseSeat {
   string id = 1;
   string partner_name = 2;
   string seat_key = 3;
-  string assigned_user_id = 4;
-  string assigned_user_email = 5;
-  string status = 6;
-  string created_at = 7;
-  string scope_type = 8;
-  repeated string allowed_course_ids = 9;
+  int32 total_seats = 4;
+  int32 used_seats = 5;
+  bool is_active = 6;
+  string scope_type = 7;
+  repeated string allowed_course_ids = 8;
+  string organization_id = 9;
 }
 
 message ListEnterpriseSeatsRequest {
   string partner_name = 1;
+  string organization_id = 2;
 }
 
 message ListEnterpriseSeatsResponse {
@@ -88,6 +89,8 @@ message CreateEnterpriseSeatRequest {
   string seat_key = 2;
   string scope_type = 3;
   repeated string allowed_course_ids = 4;
+  string organization_id = 5;
+  int32 total_seats = 6;
 }
 
 message CreateEnterpriseSeatResponse {
@@ -420,6 +423,12 @@ service IdentityService {
   rpc ListOrganizationAuditLogs(ListOrganizationAuditLogsRequest) returns (ListOrganizationAuditLogsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetOrganizationIdentityStats(GetOrganizationIdentityStatsRequest) returns (GetOrganizationIdentityStatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListOrganizationSeatHolders(ListOrganizationSeatHoldersRequest) returns (ListOrganizationSeatHoldersResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 
   rpc CreateInvitation(CreateInvitationRequest) returns (CreateInvitationResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -538,4 +547,45 @@ message CancelInvitationRequest {
 
 message CancelInvitationResponse {
   bool success = 1;
+}
+
+message GetOrganizationIdentityStatsRequest {
+  string organization_id = 1;
+}
+
+message GetOrganizationIdentityStatsResponse {
+  int32 member_count = 1;
+  int32 instructor_count = 2;
+  int32 pending_invitation_count = 3;
+  int32 active_license_count = 4;
+  int32 total_seats = 5;
+  int32 used_seats = 6;
+}
+
+message OrganizationSeatHolder {
+  string user_id = 1;
+  string full_name = 2;
+  string email = 3;
+  string avatar_url = 4;
+  string seat_key = 5;
+  string seat_assigned_at = 6;
+  int32 enrolled_courses_count = 7;
+  double max_progress_percent = 8;
+  bool can_revoke = 9;
+  string revoke_reason_hint = 10;
+}
+
+message ListOrganizationSeatHoldersRequest {
+  string organization_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string search_query = 4;
+  bool revocable_only = 5;
+}
+
+message ListOrganizationSeatHoldersResponse {
+  repeated OrganizationSeatHolder holders = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
 }

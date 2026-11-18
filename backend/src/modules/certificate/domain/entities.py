@@ -143,3 +143,11 @@ class CertificatePdfRenderInput:
     verification_url: str
     partner_logo_bytes: bytes | None = None
     signature_image_bytes: bytes | None = None
+
+
+@dataclass(frozen=True)
+class OrganizationCertificateStats:
+    """Organization/Partner-scoped issued & revoked certificate counters."""
+
+    certificates_issued: int = 0
+    certificates_revoked: int = 0

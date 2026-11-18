@@ -4,21 +4,22 @@ import { Suspense, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { usePartnersQuery, useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Surface } from "@/components/ui/Surface";
-import { Progress } from "@/components/ui/Progress";
-import { Chip } from "@/components/ui/Chip";
 import {
   AlertTriangle,
-  ExternalLink,
   BookOpen,
-  PenTool,
+  ExternalLink,
   Globe,
   GraduationCap,
+  PenTool,
   Star,
 } from "lucide-react";
+
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
+import { Progress } from "@/components/ui/Progress";
+import { Surface } from "@/components/ui/Surface";
+import { useCategoriesQuery, useCoursesQuery, usePartnerDetailQuery } from "@/lib/query_hooks";
 
 function PartnerPublicContent() {
   const params = useParams();
@@ -27,7 +28,7 @@ function PartnerPublicContent() {
   const [logoError, setLogoError] = useState(false);
   const [signatureError, setSignatureError] = useState(false);
 
-  const { data: partners = [], isLoading: partnersLoading } = usePartnersQuery();
+  const { data: partner, isLoading: partnerLoading } = usePartnerDetailQuery(slug);
   const { data: courses = [], isLoading: coursesLoading } = useCoursesQuery();
   const { data: subjects } = useCategoriesQuery("SUBJECT", { staleTime: 5 * 60 * 1000 });
   const { data: levels } = useCategoriesQuery("LEVEL", { staleTime: 5 * 60 * 1000 });
@@ -38,17 +39,17 @@ function PartnerPublicContent() {
   );
   const levelMap = useMemo(() => new Map((levels ?? []).map((l) => [l.id, l.name])), [levels]);
 
-  const partner = partners.find((p) => p.slug === slug || p.id === slug);
-
   const partnerCourses = partner
     ? courses.filter(
         (c) =>
+          c.issuerPartnerId === partner.id ||
+          c.organizationId === partner.id ||
           c.partnerName.toLowerCase() === partner.name.toLowerCase() ||
           (c.partnerLogoUrl && partner.logoUrl && c.partnerLogoUrl === partner.logoUrl),
       )
     : [];
 
-  if (partnersLoading || coursesLoading) {
+  if (partnerLoading || coursesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">
@@ -270,7 +271,6 @@ function PartnerPublicContent() {
 
           {/* Right Sidebar Column: Verification & Signer Info */}
           <div className="space-y-6">
-            {/* Signer Info Box */}
             {(partner.signerName || partner.signerTitle) && (
               <Surface variant="low" shape="2xl" className="p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-4">
@@ -311,7 +311,6 @@ function PartnerPublicContent() {
               </Surface>
             )}
 
-            {/* Allowed Domains Box */}
             {partner.allowedDomains && partner.allowedDomains.length > 0 && (
               <Surface variant="low" shape="2xl" className="p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-3">
@@ -337,7 +336,6 @@ function PartnerPublicContent() {
               </Surface>
             )}
 
-            {/* OpenBadges Compliance Badge */}
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20">
               <div className="flex items-center space-x-3 mb-2">
                 <GraduationCap aria-hidden="true" className="w-6 h-6 text-primary shrink-0" />

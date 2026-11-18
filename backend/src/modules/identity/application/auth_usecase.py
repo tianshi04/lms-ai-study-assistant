@@ -3,6 +3,9 @@ import hashlib
 import hmac
 import logging
 import os
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
 from urllib.parse import urlsplit
 
 import httpx
@@ -13,11 +16,13 @@ from uuid6 import uuid7
 from src.modules.identity.domain import (
     DEFAULT_PBKDF2_ITERATIONS,
     PASSWORD_MIN_LENGTH,
+    EnterpriseSeatAssignedDomainEvent,
     User,
     UserRegisteredDomainEvent,
     UserRole,
 )
 from src.modules.identity.infrastructure import repository as repo_module
+from src.modules.partner.domain import IPartnerRepository
 from src.shared import auth
 from src.shared.infrastructure import database, rate_limiter
 from src.shared.infrastructure.event_bus import EventBus
@@ -189,6 +194,56 @@ def validate_password(password: str) -> str | None:
 
 
 class AuthUseCase:
+    def __init__(
+        self,
+        partner_repo_factory: Callable[[Any], IPartnerRepository] | None = None,
+    ) -> None:
+        self._partner_repo_factory = partner_repo_factory
+
+    async def _try_auto_assign_partner_seat(
+        self, session: Any, user: User
+    ) -> EnterpriseSeatAssignedDomainEvent | None:
+        """Auto-assigns an active Enterprise Seat when email matches Partner.allowed_domains (BR_PARTNER_001, BR_ACCESS_002)."""
+        if (
+            self._partner_repo_factory is None
+            or not user.email
+            or user.enterprise_seat_key
+        ):
+            return None
+
+        partner_repo = self._partner_repo_factory(session)
+        partners = await partner_repo.list_all()
+        matched_partner = next(
+            (p for p in partners if p.matches_email_domain(user.email)),
+            None,
+        )
+        if not matched_partner:
+            return None
+
+        license_repo = repo_module.EnterpriseLicenseRepository(session)
+        license_entity = await license_repo.get_active_available_license_for_org(
+            matched_partner.id
+        )
+        if not license_entity:
+            return None
+
+        if not await license_repo.increment_enterprise_seat(license_entity.key):
+            return None
+
+        user.enterprise_seat_key = license_entity.key
+        user.seat_assigned_at = datetime.now(UTC).isoformat()
+        logger.info(
+            "Auto-assigned enterprise seat %s (%s) to user %s via email domain match",
+            license_entity.key,
+            matched_partner.id,
+            user.id,
+        )
+        return EnterpriseSeatAssignedDomainEvent(
+            user_id=user.id,
+            partner_name=license_entity.partner_name,
+            seat_key=license_entity.key,
+        )
+
     async def login(
         self, email: str, password: str
     ) -> tuple[User | None, str, str, str]:
@@ -287,6 +342,7 @@ class AuthUseCase:
                 password_hash=hashed_pw,
             )
 
+            seat_event = await self._try_auto_assign_partner_seat(session, user)
             saved_user = await repo.save(user)
             logger.info(
                 "Successfully registered new user %s with email %s", new_id, email
@@ -300,6 +356,8 @@ class AuthUseCase:
                     full_name=full_name,
                 )
             )
+            if seat_event is not None:
+                await EventBus.publish(seat_event)
 
             return saved_user, ""
 
@@ -394,6 +452,7 @@ class AuthUseCase:
             if existing:
                 return None, "", "", "Tài khoản với email này đã tồn tại."
 
+            seat_event = await self._try_auto_assign_partner_seat(session, new_user)
             saved_user = await repo.save(new_user)
 
             await EventBus.publish(
@@ -403,6 +462,8 @@ class AuthUseCase:
                     full_name=final_name,
                 )
             )
+            if seat_event is not None:
+                await EventBus.publish(seat_event)
 
             access_token = auth.create_access_token(
                 user_id=saved_user.id,
@@ -458,6 +519,7 @@ class AuthUseCase:
                     google_id=google_id,
                     is_identity_verified=False,
                 )
+                seat_event = await self._try_auto_assign_partner_seat(session, user)
                 user = await repo.save(user)
 
                 await EventBus.publish(
@@ -467,6 +529,8 @@ class AuthUseCase:
                         full_name=full_name,
                     )
                 )
+                if seat_event is not None:
+                    await EventBus.publish(seat_event)
             else:
                 updated = False
                 if not user.google_id:

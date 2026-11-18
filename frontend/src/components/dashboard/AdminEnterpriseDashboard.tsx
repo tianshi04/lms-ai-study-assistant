@@ -1,66 +1,143 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
-  useReactTable,
+  createColumnHelper,
+  flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  flexRender,
-  createColumnHelper,
+  useReactTable,
 } from "@tanstack/react-table";
-import { getRpcClient } from "@/lib/connect_client";
-import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
-import { Dialog } from "@/components/ui/Dialog";
-import { Progress } from "@/components/ui/Progress";
+import { AlertTriangle, Check, Plus, RefreshCw, UserPlus, X } from "lucide-react";
 
 import { useAuth } from "@/components/providers/AuthProvider";
-import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
-import { useIsMobile } from "@/lib/hooks/useIsMobile";
-import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Surface } from "@/components/ui/Surface";
+import { Dialog } from "@/components/ui/Dialog";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Table } from "@/components/ui/Table";
+import { Progress } from "@/components/ui/Progress";
 import { Select } from "@/components/ui/Select";
+import { Surface } from "@/components/ui/Surface";
+import { Table } from "@/components/ui/Table";
+import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
+import { getRpcClient } from "@/lib/connect_client";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
+import { useEnterpriseSeatsQuery, usePartnersQuery } from "@/lib/query_hooks";
 
+const DEFAULT_SEAT_QUOTA = "500";
+const KEY_CHARSET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 const columnHelper = createColumnHelper<EnterpriseSeat>();
 
+function generateRandomKeySuffix(length = 4): string {
+  const bytes = new Uint8Array(length);
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < length; i += 1) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  return Array.from(bytes, (b) => KEY_CHARSET[b % KEY_CHARSET.length]).join("");
+}
+
+function buildEnterpriseKey(slugOrName: string, suffix: string, isSlug = false): string {
+  const trimmed = slugOrName.trim();
+  if (isSlug && trimmed) {
+    const cleanSlug = trimmed
+      .toUpperCase()
+      .replace(/[^A-Z0-9-]+/g, "")
+      .slice(0, 12)
+      .replace(/^-+|-+$/g, "");
+    if (cleanSlug) {
+      return `${cleanSlug}-ENT-${suffix}`;
+    }
+  }
+
+  if (trimmed) {
+    const ascii = trimmed
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "D")
+      .toUpperCase();
+    const words = ascii.match(/[A-Z0-9]+/g) ?? [];
+    let prefix = "";
+    if (words.length === 1) {
+      prefix = words[0].slice(0, 10);
+    } else if (words.length === 2 && words[0].length + words[1].length <= 10) {
+      prefix = `${words[0]}${words[1]}`;
+    } else if (words.length >= 2) {
+      prefix = words
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 8);
+    }
+    if (prefix) {
+      return `${prefix}-ENT-${suffix}`;
+    }
+  }
+
+  return `ENT-${new Date().getFullYear()}-${suffix}`;
+}
+
 export function AdminEnterpriseDashboard() {
-  const { isInstructorOrAdmin: isAdmin } = useAuth();
+  const { isSuperAdmin: isAdmin } = useAuth();
   const isMobile = useIsMobile();
 
   const {
     data: seats = [],
     isLoading: loading,
     refetch: fetchEnterpriseSeats,
-  } = useEnterpriseSeatsQuery();
+  } = useEnterpriseSeatsQuery(undefined, { enabled: isAdmin });
+  const { data: partners = [] } = usePartnersQuery({ enabled: isAdmin });
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Modals visibility
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Form States
   const [targetUserId, setTargetUserId] = useState("");
   const [selectedSeatKey, setSelectedSeatKey] = useState("");
 
   const [newPartnerName, setNewPartnerName] = useState("");
   const [newSeatKey, setNewSeatKey] = useState("");
+  const [keySuffix, setKeySuffix] = useState("");
+  const [isCustomSeatKey, setIsCustomSeatKey] = useState(false);
+  const [newOrganizationId, setNewOrganizationId] = useState("");
+  const [newTotalSeats, setNewTotalSeats] = useState(DEFAULT_SEAT_QUOTA);
 
-  // Dynamic stat calculations
+  const ensureKeySuffix = () => {
+    if (keySuffix) return keySuffix;
+    const next = generateRandomKeySuffix();
+    setKeySuffix(next);
+    return next;
+  };
 
-  const totalUsedSeats = seats.reduce((sum, s) => {
-    const match = s.assignedUserId?.match(/^(\d+)\/(\d+)/);
-    return sum + (match ? parseInt(match[1], 10) : 0);
-  }, 0);
+  const handleOpenCreateModal = () => {
+    const suffix = generateRandomKeySuffix();
+    setKeySuffix(suffix);
+    setIsCustomSeatKey(false);
+    setNewOrganizationId("");
+    setNewPartnerName("");
+    setNewSeatKey(buildEnterpriseKey("", suffix));
+    setNewTotalSeats(DEFAULT_SEAT_QUOTA);
+    setShowCreateModal(true);
+  };
 
-  const totalCapacitySeats = seats.reduce((sum, s) => {
-    const match = s.assignedUserId?.match(/^(\d+)\/(\d+)/);
-    return sum + (match ? parseInt(match[2], 10) : 500);
-  }, 0);
+  const handleRegenerateSeatKey = () => {
+    const suffix = generateRandomKeySuffix();
+    setKeySuffix(suffix);
+    setIsCustomSeatKey(false);
+    const linked = partners.find((p) => p.id === newOrganizationId);
+    setNewSeatKey(
+      buildEnterpriseKey(linked?.slug || newPartnerName, suffix, Boolean(linked?.slug)),
+    );
+  };
+
+  const totalUsedSeats = seats.reduce((sum, s) => sum + (s.usedSeats || 0), 0);
+  const totalCapacitySeats = seats.reduce((sum, s) => sum + (s.totalSeats || 0), 0);
+  const activeSeatLicenses = seats.filter((s) => s.isActive).length;
 
   const activationRate =
     totalCapacitySeats > 0 ? ((totalUsedSeats / totalCapacitySeats) * 100).toFixed(1) : "0.0";
@@ -69,25 +146,26 @@ export function AdminEnterpriseDashboard() {
     () => [
       columnHelper.accessor("partnerName", {
         header: "Đối Tác Doanh Nghiệp",
-        cell: (info) => info.getValue() || "N/A",
+        cell: (info) => info.getValue() || "—",
       }),
       columnHelper.accessor("seatKey", {
         header: "Mã Suất Học (License Key)",
         cell: (info) => info.getValue(),
       }),
-      columnHelper.accessor("assignedUserId", {
-        header: "Học Viên / Tỷ Lệ Kích Hoạt",
-        cell: (info) => info.getValue() || "Chưa gán",
+      columnHelper.display({
+        id: "utilization",
+        header: "Sử Dụng / Hạn Mức",
+        cell: ({ row }) => `${row.original.usedSeats} / ${row.original.totalSeats}`,
       }),
-      columnHelper.accessor("status", {
+      columnHelper.accessor("isActive", {
         header: "Trạng Thái Giấy Phép",
-        cell: (info) => info.getValue() || "Sẵn sàng",
+        cell: (info) => (info.getValue() ? "Đang hoạt động" : "Tạm ngưng"),
       }),
     ],
     [],
   );
 
-  // eslint-disable-next-library
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: seats,
     columns,
@@ -95,7 +173,6 @@ export function AdminEnterpriseDashboard() {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  // Handlers
   const handleAssignSeat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetUserId.trim() || !selectedSeatKey.trim()) return;
@@ -106,8 +183,8 @@ export function AdminEnterpriseDashboard() {
     try {
       const client = getRpcClient(IdentityService);
       const res = await client.assignEnterpriseSeat({
-        userId: targetUserId,
-        enterpriseSeatKey: selectedSeatKey,
+        userId: targetUserId.trim(),
+        enterpriseSeatKey: selectedSeatKey.trim(),
       });
 
       if (res.success) {
@@ -127,25 +204,34 @@ export function AdminEnterpriseDashboard() {
 
   const handleCreateSeatKey = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPartnerName.trim() || !newSeatKey.trim()) return;
+    if (!newPartnerName.trim()) return;
 
     setSaving(true);
     setMessage(null);
 
     try {
       const client = getRpcClient(IdentityService);
-      await client.createEnterpriseSeat({
-        partnerName: newPartnerName,
-        seatKey: newSeatKey,
+      const parsedTotal = Number.parseInt(newTotalSeats, 10);
+      const res = await client.createEnterpriseSeat({
+        partnerName: newPartnerName.trim(),
+        seatKey: newSeatKey.trim(),
+        organizationId: newOrganizationId,
+        totalSeats: Number.isFinite(parsedTotal) && parsedTotal > 0 ? parsedTotal : 0,
       });
 
+      const issuedKey = res.seat?.seatKey || newSeatKey.trim();
       setMessage({
         type: "success",
-        text: `Đã cấp mã Enterprise mới cho ${newPartnerName} thành công!`,
+        text: issuedKey
+          ? `Đã cấp mã Enterprise ${issuedKey} cho ${newPartnerName} thành công!`
+          : `Đã cấp mã Enterprise mới cho ${newPartnerName} thành công!`,
       });
       setShowCreateModal(false);
       setNewPartnerName("");
       setNewSeatKey("");
+      setIsCustomSeatKey(false);
+      setNewOrganizationId("");
+      setNewTotalSeats(DEFAULT_SEAT_QUOTA);
       await fetchEnterpriseSeats();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Tạo mã Enterprise thất bại.";
@@ -176,11 +262,11 @@ export function AdminEnterpriseDashboard() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-foreground/10 text-primary-foreground border border-primary-foreground/20 backdrop-blur-md">
-                Admin Enterprise Portal
+                Cổng Quản trị Enterprise
               </span>
               {isAdmin && (
                 <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-warning/20 text-warning-foreground border border-warning/30">
-                  Super Admin
+                  Quản trị viên Hệ thống
                 </span>
               )}
             </div>
@@ -188,15 +274,15 @@ export function AdminEnterpriseDashboard() {
               Quản trị Suất học Enterprise & Đối tác Doanh nghiệp
             </h1>
             <p className="text-sm opacity-80 max-w-2xl">
-              Quản lý danh sách giấy phép tài trợ học tập (Enterprise Seat Licenses), gán suất học
-              trực tiếp cho tài khoản học viên và theo dõi chỉ số kích hoạt.
+              Quản lý danh sách giấy phép tài trợ học tập, liên kết với Tổ chức Đối tác và theo dõi
+              hạn mức suất học đang lưu hành.
             </p>
           </div>
 
           {isAdmin && (
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <Button
-                onClick={() => setShowCreateModal(true)}
+                onClick={handleOpenCreateModal}
                 variant="outlined"
                 className="w-full sm:w-auto border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
               >
@@ -219,10 +305,10 @@ export function AdminEnterpriseDashboard() {
         {/* Access Guard Notice */}
         {!isAdmin && (
           <div className="p-5 rounded-2xl bg-warning/10 border border-warning/30 text-warning text-xs leading-relaxed flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+            <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden="true" />
             <span>
-              Lưu ý: Bạn đang đăng nhập với tài khoản không có quyền Admin đầy đủ. Tính năng khởi
-              tạo và gán suất học yêu cầu tài khoản Quản trị viên hệ thống (Super Admin).
+              Lưu ý: Tính năng khởi tạo và cấp phát giấy phép Enterprise toàn sàn yêu cầu tài khoản
+              Quản trị viên hệ thống.
             </span>
           </div>
         )}
@@ -271,7 +357,7 @@ export function AdminEnterpriseDashboard() {
               Trạng thái Hoạt động
             </span>
             <div className="text-3xl font-extrabold text-success font-mono">
-              {seats.filter((s) => s.status === "ACTIVE").length} / {seats.length}
+              {activeSeatLicenses} / {seats.length}
             </div>
             <p className="text-xs text-muted-foreground">Gói doanh nghiệp đang kích hoạt</p>
           </Surface>
@@ -302,7 +388,7 @@ export function AdminEnterpriseDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
             <div>
               <h2 className="text-lg font-extrabold text-foreground">
-                Danh sách Giấy phép Suất học Doanh nghiệp (Enterprise Seat Keys)
+                Danh sách Giấy phép Suất học Doanh nghiệp
               </h2>
               <p className="text-xs text-muted-foreground">
                 Các tổ chức, trường đại học và doanh nghiệp đang liên kết cấp quyền học miễn phí cho
@@ -325,21 +411,33 @@ export function AdminEnterpriseDashboard() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-bold text-foreground">{seat.partnerName}</p>
+                      {seat.organizationId && (
+                        <p className="text-xs font-mono text-muted-foreground">
+                          Tổ chức: {seat.organizationId}
+                        </p>
+                      )}
                       <p className="font-mono text-xs font-bold text-primary break-all">
                         {seat.seatKey}
                       </p>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20 shrink-0">
-                      {seat.status === "ACTIVE" ? "Đang hoạt động" : seat.status}
-                    </span>
+                    {seat.isActive ? (
+                      <Badge size="pill" variant="success" className="shrink-0">
+                        Đang hoạt động
+                      </Badge>
+                    ) : (
+                      <Badge size="pill" variant="muted" className="shrink-0">
+                        Tạm ngưng
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <span className="text-xs font-mono font-semibold text-muted-foreground">
-                      {(seat.assignedUserId || "").replace(/\s*seats\b/i, " suất")}
+                      {seat.usedSeats} / {seat.totalSeats}
                     </span>
                     <Button
                       size="sm"
                       variant="outlined"
+                      disabled={!seat.isActive || seat.usedSeats >= seat.totalSeats}
                       onClick={() => {
                         setSelectedSeatKey(seat.seatKey);
                         setShowAssignModal(true);
@@ -371,22 +469,36 @@ export function AdminEnterpriseDashboard() {
                 <Table.Body>
                   {seats.map((seat) => (
                     <Table.Row key={seat.id}>
-                      <Table.Cell className="font-bold">{seat.partnerName}</Table.Cell>
+                      <Table.Cell>
+                        <p className="font-bold text-foreground">{seat.partnerName}</p>
+                        {seat.organizationId && (
+                          <p className="text-xs font-mono text-muted-foreground">
+                            Tổ chức: {seat.organizationId}
+                          </p>
+                        )}
+                      </Table.Cell>
                       <Table.Cell className="font-mono font-bold text-primary">
                         {seat.seatKey}
                       </Table.Cell>
                       <Table.Cell className="font-mono font-semibold">
-                        {(seat.assignedUserId || "").replace(/\s*seats\b/i, " suất")}
+                        {seat.usedSeats} / {seat.totalSeats}
                       </Table.Cell>
                       <Table.Cell>
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
-                          {seat.status === "ACTIVE" ? "Đang hoạt động" : seat.status}
-                        </span>
+                        {seat.isActive ? (
+                          <Badge size="pill" variant="success">
+                            Đang hoạt động
+                          </Badge>
+                        ) : (
+                          <Badge size="pill" variant="muted">
+                            Tạm ngưng
+                          </Badge>
+                        )}
                       </Table.Cell>
                       <Table.Cell className="text-right">
                         <Button
                           size="sm"
                           variant="outlined"
+                          disabled={!seat.isActive || seat.usedSeats >= seat.totalSeats}
                           onClick={() => {
                             setSelectedSeatKey(seat.seatKey);
                             setShowAssignModal(true);
@@ -416,7 +528,7 @@ export function AdminEnterpriseDashboard() {
               type="text"
               value={targetUserId}
               onChange={(e) => setTargetUserId(e.target.value)}
-              placeholder="Ví dụ: user-learner-demo"
+              placeholder="Ví dụ: user_learner_03"
               className="font-mono"
               required
             />
@@ -475,26 +587,109 @@ export function AdminEnterpriseDashboard() {
 
       {/* Modal: Tạo Mã Enterprise Key Mới */}
       <Dialog open={showCreateModal} onOpenChange={(open) => setShowCreateModal(open)}>
-        <Dialog.Content size="md">
+        <Dialog.Content size="lg">
           <Dialog.Header>
             <Dialog.Title>{"Tạo Mã Enterprise Mới"}</Dialog.Title>
           </Dialog.Header>
           <form onSubmit={handleCreateSeatKey} className="space-y-4 pt-2">
+            <div>
+              <label
+                htmlFor="enterpriseOrgSelect"
+                className="block text-xs font-semibold text-foreground mb-1.5"
+              >
+                Liên kết với Tổ chức Đối tác (Tùy chọn)
+              </label>
+              <Select
+                value={newOrganizationId}
+                onValueChange={(val) => {
+                  const nextId = String(val ?? "");
+                  setNewOrganizationId(nextId);
+                  const found = partners.find((p) => p.id === nextId);
+                  const nextPartnerName = found ? found.name : newPartnerName;
+                  if (found) {
+                    setNewPartnerName(found.name);
+                  }
+                  if (!isCustomSeatKey) {
+                    const suffix = ensureKeySuffix();
+                    setNewSeatKey(
+                      buildEnterpriseKey(
+                        found?.slug || nextPartnerName,
+                        suffix,
+                        Boolean(found?.slug),
+                      ),
+                    );
+                  }
+                }}
+              >
+                <Select.Trigger id="enterpriseOrgSelect" className="w-full text-xs">
+                  <Select.Value placeholder="Không liên kết (Giấy phép độc lập)">
+                    {(() => {
+                      if (!newOrganizationId) return "Không liên kết (Giấy phép độc lập)";
+                      const found = partners.find((p) => p.id === newOrganizationId);
+                      return found ? found.name : newOrganizationId;
+                    })()}
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="">Không liên kết (Giấy phép độc lập)</Select.Item>
+                  {partners.map((p) => (
+                    <Select.Item key={p.id} value={p.id}>
+                      {p.name}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </div>
+
             <Input
               label="Tên Trường học / Doanh nghiệp Đối tác"
               type="text"
               value={newPartnerName}
-              onChange={(e) => setNewPartnerName(e.target.value)}
+              onChange={(e) => {
+                const nextName = e.target.value;
+                setNewPartnerName(nextName);
+                const linked = partners.find((p) => p.id === newOrganizationId);
+                if (!isCustomSeatKey && !linked?.slug) {
+                  const suffix = ensureKeySuffix();
+                  setNewSeatKey(buildEnterpriseKey(nextName, suffix, false));
+                }
+              }}
               placeholder="Ví dụ: Trường Đại học Bách Khoa TP.HCM"
               required
             />
 
             <Input
-              label="Mã Enterprise Key"
+              label="Mã Enterprise Key (Tự động tạo)"
               type="text"
               value={newSeatKey}
-              onChange={(e) => setNewSeatKey(e.target.value)}
-              placeholder="Ví dụ: BKTPHCM-ENTERPRISE-2026"
+              onChange={(e) => {
+                const nextVal = e.target.value.toUpperCase();
+                setNewSeatKey(nextVal);
+                setIsCustomSeatKey(Boolean(nextVal.trim()));
+              }}
+              placeholder="Để trống hệ thống sẽ tự cấp (VD: STANFORD-ENT-7K4P)"
+              helperText="Tự động sinh mã theo đối tác. Bấm nút xoay để đổi mã khác, sửa tay, hoặc để trống."
+              className="font-mono tracking-wide"
+              endAdornment={
+                <IconButton
+                  type="button"
+                  size="xs"
+                  variant="standard"
+                  aria-label="Tạo mã Enterprise ngẫu nhiên mới"
+                  title="Tạo mã mới"
+                  onClick={handleRegenerateSeatKey}
+                >
+                  <RefreshCw className="w-4 h-4" aria-hidden="true" />
+                </IconButton>
+              }
+            />
+
+            <Input
+              label="Tổng số suất học (Total Seats)"
+              type="number"
+              min={1}
+              value={newTotalSeats}
+              onChange={(e) => setNewTotalSeats(e.target.value)}
               className="font-mono"
               required
             />

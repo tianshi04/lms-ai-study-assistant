@@ -1,29 +1,29 @@
 "use client";
 
-import React, { useMemo, useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useAuth } from "@/components/providers/AuthProvider";
-import { getAvatarDataUri } from "@/lib/avatar";
-import { getRpcClient } from "@/lib/connect_client";
-import { IdentityService } from "@/gen/identity/v1/identity_pb";
-
 import {
   BookOpen,
-  ShoppingBag,
-  Layers,
-  Edit,
-  Settings,
-  LayoutDashboard,
-  CheckCircle2,
   Building2,
+  CheckCircle2,
+  Edit,
+  Layers,
+  LayoutDashboard,
   LogOut,
+  Settings,
+  ShoppingBag,
   Sparkles,
 } from "lucide-react";
-import { useListUserPurchasesQuery } from "@/lib/query_hooks";
-import { computeSubscriptionStatus } from "@/lib/subscription";
-import { Menu } from "@/components/ui/Menu";
+
+import { useAuth } from "@/components/providers/AuthProvider";
 import { Chip } from "@/components/ui/Chip";
+import { Menu } from "@/components/ui/Menu";
+import { IdentityService } from "@/gen/identity/v1/identity_pb";
+import { getAvatarDataUri } from "@/lib/avatar";
+import { getRpcClient } from "@/lib/connect_client";
+import { useListUserPurchasesQuery, useMyOrganizationsQuery } from "@/lib/query_hooks";
+import { computeSubscriptionStatus } from "@/lib/subscription";
 
 const itemClasses =
   "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/70 font-medium justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-colors cursor-pointer";
@@ -43,6 +43,17 @@ export function UserDropdown() {
   } = useAuth();
 
   const { data: purchasesData } = useListUserPurchasesQuery({ enabled: !!userId });
+  const { data: myOrgs = [] } = useMyOrganizationsQuery({ enabled: !!userId });
+
+  const ownedOrg = useMemo(
+    () =>
+      myOrgs.find((org) => {
+        if (org.id === "partner_community") return false;
+        const roleUpper = (org.roleInOrg || "").toUpperCase();
+        return roleUpper.includes("OWNER") || roleUpper.includes("ADMIN");
+      }),
+    [myOrgs],
+  );
 
   const { daysRemaining, isPlusActive, formattedExpDate } = useMemo(() => {
     return computeSubscriptionStatus(purchasesData?.activeSubscription, purchasesData?.orders);
@@ -84,11 +95,12 @@ export function UserDropdown() {
 
   const roleLabel = useMemo(() => {
     if (isSuperAdmin) return "Admin";
+    if (ownedOrg) return "QT Tổ chức";
     const r = String(userRole || "").toUpperCase();
     if (r === "2" || r.includes("INSTRUCTOR")) return "Giảng viên";
     if (r === "TA" || r.includes("TA")) return "Trợ giảng";
     return "Học viên";
-  }, [userRole, isSuperAdmin]);
+  }, [userRole, isSuperAdmin, ownedOrg]);
 
   return (
     <Menu>
@@ -111,7 +123,6 @@ export function UserDropdown() {
         align="end"
         className="w-68 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-y-auto p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
       >
-        {/* User Info Header with Avatar and Stacked Role Badge */}
         <div className="flex items-center gap-3.5 px-3.5 py-3 mb-1.5">
           <Image
             src={avatarSrc}
@@ -146,7 +157,6 @@ export function UserDropdown() {
           </div>
         </div>
 
-        {/* Plus Banner Section */}
         {isPlusActive ? (
           <div className="mx-1 my-1.5 p-3 rounded-xl bg-primary-container/20 border border-primary/20 flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -193,7 +203,6 @@ export function UserDropdown() {
           </div>
         )}
 
-        {/* Menu Items */}
         <Menu.Item render={<Link href="/my-learning" />} className={itemClasses}>
           <BookOpen aria-hidden="true" className={iconClasses} />
           <span>{"Việc học của tôi"}</span>
@@ -208,6 +217,16 @@ export function UserDropdown() {
           <Building2 aria-hidden="true" className={iconClasses} />
           <span>{"Tổ chức của tôi"}</span>
         </Menu.Item>
+
+        {ownedOrg && (
+          <Menu.Item
+            render={<Link href={`/organizations/${ownedOrg.slug || ownedOrg.id}/manage`} />}
+            className={itemClasses}
+          >
+            <LayoutDashboard aria-hidden="true" className={iconClasses} />
+            <span>{"Bảng điều khiển Tổ chức"}</span>
+          </Menu.Item>
+        )}
 
         <Menu.Item render={<Link href="/account-settings" />} className={itemClasses}>
           <Settings aria-hidden="true" className={iconClasses} />
@@ -231,7 +250,7 @@ export function UserDropdown() {
           </>
         )}
 
-        {isSuperAdmin && (
+        {(isSuperAdmin || Boolean(ownedOrg)) && (
           <Menu.Item render={<Link href="/partner/settings" />} className={itemClasses}>
             <Settings aria-hidden="true" className={iconClasses} />
             <span>{"Cấu hình Đối tác"}</span>
