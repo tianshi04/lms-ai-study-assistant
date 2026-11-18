@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search, Check, X, Share2, Download } from "lucide-react";
+import { Search, Check, X, Share2, Download, FileDown } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useToast } from "@/components/ui/Toast";
 import { shareContent } from "@/lib/share";
+import { useDownloadCertificatePdf } from "@/lib/hooks/useDownloadCertificatePdf";
 
 interface VerifiedCertPayload {
   isValid: boolean;
@@ -39,6 +40,8 @@ export function VerifyDetailClient({
   const toast = useToast();
 
   const [searchCertId, setSearchCertId] = useState(certId);
+  const { downloadingCertId, downloadPdf } = useDownloadCertificatePdf();
+  const downloadingPdf = downloadingCertId !== null;
 
   const cert = initialData.certificate;
   const isValid = initialData.isValid;
@@ -81,6 +84,11 @@ export function VerifyDetailClient({
     a.download = `openbadge-${certId}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!cert) return;
+    await downloadPdf(cert.certificateId);
   };
 
   return (
@@ -260,9 +268,18 @@ export function VerifyDetailClient({
                   <Share2 aria-hidden="true" className="w-4 h-4 mr-1.5" />
                   <span>{"Chia sẻ Chứng chỉ"}</span>
                 </Button>
-                <Button type="button" size="sm" onClick={handleDownloadBadge}>
+                <Button type="button" variant="outlined" size="sm" onClick={handleDownloadBadge}>
                   <Download aria-hidden="true" className="w-4 h-4 mr-1.5" />
                   <span>{"Tải huy hiệu (JSON)"}</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleDownloadPdf}
+                  disabled={downloadingPdf}
+                >
+                  <FileDown aria-hidden="true" className="w-4 h-4 mr-1.5" />
+                  <span>{downloadingPdf ? "Đang tạo PDF…" : "Tải chứng chỉ (PDF)"}</span>
                 </Button>
               </div>
             </div>

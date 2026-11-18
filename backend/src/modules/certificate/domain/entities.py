@@ -121,3 +121,26 @@ class AdminCertificatesPage:
     total_count: int = 0
     page: int = 1
     page_size: int = 10
+
+
+class InvalidCertificateIdError(ValueError):
+    """Raised when a certificate identifier fails format validation."""
+
+
+class CertificateNotFoundError(LookupError):
+    """Raised when a requested certificate does not exist."""
+
+
+class CertificateRevokedError(PermissionError):
+    """Raised when an operation is forbidden because the certificate was revoked."""
+
+
+@dataclass(frozen=True)
+class CertificatePdfRenderInput:
+    """Immutable payload passed to the certificate PDF renderer."""
+
+    certificate: VerifiedCertificate
+    verification_url: str
+    partner_logo_bytes: bytes | None = None
+    signature_image_bytes: bytes | None = None
+

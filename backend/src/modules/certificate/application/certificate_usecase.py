@@ -1,27 +1,39 @@
+import asyncio
 import hashlib
 import inspect
 import logging
+import re
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
 from uuid6 import uuid7
 
 from src.modules.certificate.domain import (
+    CERTIFICATE_PDF_FILENAME_TEMPLATE,
+    CERTIFICATE_PDF_ID_REGEX,
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
     MIN_FINANCIAL_AID_ESSAY_WORDS,
     AdminCertificatesPage,
     AdminCertificateStats,
     AdminCertificateTrendPoint,
     CertificateIssuedDomainEvent,
+    CertificateNotFoundError,
+    CertificatePdfRenderInput,
+    CertificateRevokedError,
     FinancialAidApplication,
     FinancialAidReviewedDomainEvent,
     FinancialAidStatus,
+    ICertificateAssetLoader,
+    ICertificatePdfRenderer,
     ICertificateRepository,
+    InvalidCertificateIdError,
     VerifiedCertificate,
     count_words,
 )
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.shared.auth import CurrentUser
+from src.shared.config import settings
 from src.shared.domain import (
     ADMIN_PAGE_SIZE_DEFAULT,
     ADMIN_REQUIRED_MESSAGE,
@@ -37,8 +49,17 @@ logger = logging.getLogger(__name__)
 
 
 class CertificateUseCase:
-    def __init__(self, repo: ICertificateRepository | None = None) -> None:
+    def __init__(
+        self,
+        repo: ICertificateRepository | None = None,
+        repo_factory: Callable[[Any], ICertificateRepository] | None = None,
+        pdf_renderer: ICertificatePdfRenderer | None = None,
+        asset_loader: ICertificateAssetLoader | None = None,
+    ) -> None:
         self._repo = repo
+        self._repo_factory = repo_factory
+        self._pdf_renderer = pdf_renderer
+        self._asset_loader = asset_loader
 
     def _verify_admin(self, current_user: CurrentUser | None) -> None:
         if current_user is not None and not current_user.is_admin:
@@ -47,7 +68,11 @@ class CertificateUseCase:
             )
 
     def _get_repo(self, session: Any) -> ICertificateRepository:
-        return self._repo if self._repo is not None else CertificateRepository(session)
+        if self._repo is not None:
+            return self._repo
+        if self._repo_factory is not None:
+            return self._repo_factory(session)
+        return CertificateRepository(session)
 
     async def apply_financial_aid(
         self, user_id: str, course_id: str, essay_150_words: str
@@ -477,6 +502,61 @@ class CertificateUseCase:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.get_certificates_by_user(user_id)
+
+    async def generate_certificate_pdf(self, certificate_id: str) -> tuple[bytes, str]:
+        """Validate and render an official PDF document for a non-revoked certificate."""
+        clean_id = (certificate_id or "").strip()
+        if not re.fullmatch(CERTIFICATE_PDF_ID_REGEX, clean_id):
+            raise InvalidCertificateIdError("Mã chứng chỉ không hợp lệ.")
+
+        if self._pdf_renderer is None:
+            raise RuntimeError(
+                "CertificateUseCase requires pdf_renderer to be configured at the composition root."
+            )
+
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            cert = await repo.get_certificate_by_id(clean_id)
+
+        if not cert:
+            raise CertificateNotFoundError(
+                "Không tìm thấy chứng chỉ hợp lệ trên hệ thống."
+            )
+        if cert.is_revoked:
+            raise CertificateRevokedError(
+                "Chứng chỉ này đã bị thu hồi và không thể xuất bản PDF."
+            )
+
+        logo_bytes: bytes | None = None
+        signature_bytes: bytes | None = None
+        if self._asset_loader is not None:
+            logo_url = cert.partner_logo_url.strip()
+            sig_url = cert.signature_image_url.strip()
+            load_logo = bool(logo_url)
+            load_signature = bool(sig_url and sig_url != logo_url)
+            if load_logo and load_signature:
+                logo_bytes, signature_bytes = await asyncio.gather(
+                    self._asset_loader.load_image_bytes(logo_url),
+                    self._asset_loader.load_image_bytes(sig_url),
+                )
+            elif load_logo:
+                logo_bytes = await self._asset_loader.load_image_bytes(logo_url)
+            elif load_signature:
+                signature_bytes = await self._asset_loader.load_image_bytes(sig_url)
+
+        verification_url = (
+            f"{settings.FRONTEND_URL.rstrip('/')}/verify/{cert.certificate_id}"
+        )
+        payload = CertificatePdfRenderInput(
+            certificate=cert,
+            verification_url=verification_url,
+            partner_logo_bytes=logo_bytes,
+            signature_image_bytes=signature_bytes,
+        )
+        pdf_bytes = await asyncio.to_thread(self._pdf_renderer.render, payload)
+        safe_id = re.sub(r"[^A-Za-z0-9_-]", "", cert.certificate_id) or "certificate"
+        filename = CERTIFICATE_PDF_FILENAME_TEMPLATE.format(certificate_id=safe_id)
+        return pdf_bytes, filename
 
     async def get_admin_certificate_stats(
         self, current_user: CurrentUser

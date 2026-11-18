@@ -183,6 +183,20 @@ def test_application_layer_isolation_and_no_raw_sql():
                     f"[{imp.relative_path}:{imp.line_number}] Application layer cannot import Presentation layer ('{mod}')."
                 )
 
+            # 4. Check cross-module infrastructure imports (Dependency Inversion across Bounded Contexts)
+            if imp.relative_path.startswith("modules/") and mod.startswith(
+                "src.modules."
+            ):
+                cur_module = imp.relative_path.split("/")[1]
+                target_parts = mod.split(".")
+                if len(target_parts) >= 4:
+                    target_module = target_parts[2]
+                    target_layer = target_parts[3]
+                    if target_module != cur_module and target_layer == "infrastructure":
+                        violations.append(
+                            f"[{imp.relative_path}:{imp.line_number}] Application layer in module '{cur_module}' cannot import '{target_module}.infrastructure' ('{mod}'). Inject domain repository interfaces via src/main.py instead."
+                        )
+
     assert not violations, (
         f"Found {len(violations)} Application Layer Isolation violations:\n"
         + "\n".join(violations)

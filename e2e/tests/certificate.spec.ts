@@ -41,6 +41,19 @@ test.describe('Full System Blackbox - Verified Certificate & OpenBadges (POM)', 
     await expect(certPage.downloadBadgeButton).toBeVisible();
   });
 
+  test('should allow downloading verified certificate PDF', async ({ page }) => {
+    const certPage = new CertificatePage(page);
+    await certPage.goto('CERT-DEMO12345');
+    await certPage.verifyPageLoaded();
+
+    await expect(certPage.downloadPdfButton).toBeVisible();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      certPage.downloadPdfButton.click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/^Chung-chi-CERT-DEMO12345\.pdf$/i);
+  });
+
   test('should display revoked certificate alert message when certificate is revoked (BR_CERT_004)', async ({ page }) => {
     const certPage = new CertificatePage(page);
     await certPage.goto('CERT-REVOKED-TEST');
