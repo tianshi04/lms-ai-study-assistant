@@ -8,6 +8,8 @@ from uuid6 import uuid7
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.forum.domain import (
     DEFAULT_FORUM_AUTHOR_ROLE,
+    MAX_FORUM_SEARCH_QUERY_LEN,
+    STAFF_FORUM_ROLES,
     ForumReplyCreatedDomainEvent,
     ForumReplyEntity,
     ForumThreadEntity,
@@ -17,14 +19,6 @@ from src.modules.forum.infrastructure.repository import ForumRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
-
-
-def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
-    from src.modules.catalog.infrastructure.repository import (
-        SQLAlchemyCatalogRepository,
-    )
-
-    return SQLAlchemyCatalogRepository(session)
 
 
 def utc_now_str() -> str:
@@ -41,20 +35,28 @@ class ForumUseCase:
         catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
     ) -> None:
         self.repo_factory = repo_factory or ForumRepository
-        self.catalog_repo_factory = (
-            catalog_repo_factory or _default_catalog_repo_factory
-        )
+        self.catalog_repo_factory = catalog_repo_factory
 
     def _get_repo(self, session) -> IForumRepository:
         return self.repo_factory(session)
 
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = ""
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        search_query: str = "",
+        resolution_filter: str = "",
     ) -> Sequence[ForumThreadEntity]:
+        normalized_query = search_query.strip()[:MAX_FORUM_SEARCH_QUERY_LEN]
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.list_threads(
-                course_id=course_id, item_id=item_id, current_user_id=current_user_id
+                course_id=course_id,
+                item_id=item_id,
+                current_user_id=current_user_id,
+                search_query=normalized_query,
+                resolution_filter=resolution_filter,
             )
 
     async def create_thread(
@@ -128,13 +130,7 @@ class ForumUseCase:
         created_at = utc_now_str()
 
         # Determine if author is Staff/TA
-        is_staff = author_role.upper() in (
-            "INSTRUCTOR",
-            "TEACHER",
-            "TA",
-            "STAFF",
-            "ADMIN",
-        )
+        is_staff = author_role.upper() in STAFF_FORUM_ROLES
 
         reply_entity = ForumReplyEntity(
             id=reply_id,
@@ -316,6 +312,10 @@ class ForumUseCase:
         if user.is_admin:
             return
         if course_id:
+            if self.catalog_repo_factory is None:
+                raise RuntimeError(
+                    "ForumUseCase requires catalog_repo_factory to be configured at the composition root."
+                )
             catalog_repo: ICatalogRepository = self.catalog_repo_factory(session)
             course = await catalog_repo.get_course_detail(course_id)
             if course and not course.can_edit(user, allow_read_only_pending=True):

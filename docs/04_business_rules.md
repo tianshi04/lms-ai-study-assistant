@@ -409,6 +409,15 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Quyền Chỉnh sửa & Xóa:* Tác giả bài viết (`author_user_id == current_user.id`) có quyền Cập nhật (`UpdateThread`, `UpdateReply`) hoặc Xóa (`DeleteThread`, `DeleteReply`) bài viết/bình luận của chính mình.
   * *Chỉ báo đã Chỉnh sửa (Edit State Indicator):* Ngay khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động cập nhật cờ `is_edited = True` và ghi lại mốc thời gian `edited_at` để tất cả người xem phân biệt được nội dung đã qua chỉnh sửa.
   * *Ban kiểm duyệt (Staff Moderation):* Trợ giảng và Giảng viên (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền Xóa (Delete) bài viết hoặc bình luận vi phạm của bất kỳ người dùng nào nhưng không được quyền thay đổi nội dung (Update) bài đăng của người khác.
+* **BR_FORUM_004 (Tự động Đánh dấu "Đã giải quyết" — Solved Badge Lifecycle):**
+  * Một chủ đề (`ForumThread`) được đánh dấu `is_solved = True` (hiển thị huy hiệu **"Đã giải quyết"**) khi và chỉ khi tồn tại ít nhất một phản hồi (`ForumReply`) mang cờ `is_staff_answer = True`.
+  * Cờ `is_solved` tự động bật `True` khi Staff (`INSTRUCTOR`, `TEACHER`, `TA`, `STAFF`, `ADMIN`, `SUPER_ADMIN`, `ORG_ADMIN` hoặc enum proto `USER_ROLE_INSTRUCTOR`, `USER_ROLE_TA`, `USER_ROLE_ADMIN`, `USER_ROLE_SUPER_ADMIN`, `USER_ROLE_ORG_ADMIN`) gửi phản hồi mới qua `PostReply`, hoặc khi Staff ghim một phản hồi bất kỳ qua `PinStaffAnswer`.
+  * Việc Giảng viên/Staff tạo mới chủ đề (`CreateThread`) chỉ tạo nội dung mở đầu (`is_staff_answer = False`) nên chủ đề mới mặc định có `is_solved = False`.
+  * Khi một phản hồi có `is_staff_answer = True` bị xóa (`DeleteReply`), hệ thống kiểm tra lại các phản hồi còn lại của chủ đề; nếu không còn phản hồi `is_staff_answer = True` nào, `is_solved` tự động trở về `False`.
+* **BR_FORUM_005 (Tìm kiếm Đa từ khóa Tiếng Việt Không dấu & Lọc Trạng thái Diễn đàn):**
+  * `ListThreadsRequest` hỗ trợ thêm `search_query` (chuẩn hóa `strip()`, giới hạn tối đa 200 ký tự, loại trùng lặp và tách tối đa 8 từ theo khoảng trắng) và `resolution_filter` (`UNSPECIFIED` / `SOLVED` / `UNSOLVED`), đồng thời chuẩn hóa `course_id = "ALL"` tương đương xem toàn bộ khóa học.
+  * Truy vấn PostgreSQL sử dụng hàm `immutable_unaccent(lower(...))` kết hợp `UNION` giữa `forum_threads` (`title`, `content`, `author_name`) và `forum_replies.content` để tận dụng cả 4 index GIN `pg_trgm` (`gin_trgm_ops` via `BitmapOr`), đồng thời thoát ký tự đặc biệt LIKE (`%`, `_`, `\`) qua `escape_like_pattern`. Mỗi từ khóa bắt buộc khớp ít nhất một trường (`AND` giữa các từ, `OR` giữa các trường).
+  * Giao diện Frontend debounce tìm kiếm 300ms, giữ modal chi tiết không tự đóng khi trạng thái giải quyết thay đổi trong lúc lọc `UNSOLVED`/`SOLVED`, và tự đặt lại bộ lọc tìm kiếm/trạng thái sau khi đăng chủ đề mới.
 
 ---
 
