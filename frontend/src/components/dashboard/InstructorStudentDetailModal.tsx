@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { useSendStudentReminderMutation } from "@/lib/query_hooks";
 import {
   Bell,
   CheckCircle2,
@@ -54,54 +55,90 @@ export function InstructorStudentDetailModal({
   onSendReminder,
 }: InstructorStudentDetailModalProps) {
   const { success, error } = useToast();
+  const sendReminderMutation = useSendStudentReminderMutation();
   const [activeTab, setActiveTab] = useState<"reminder" | "announcement">("reminder");
 
-  // Soạn sẵn mẫu thông báo nhắc nhở đôn đốc cá nhân
-  const defaultSubject = `[Nhắc nhở học tập] Tiến độ môn ${courseTitle}`;
-  const defaultBody = student
-    ? `Chào ${student.userName},\n\nThầy/Cô gửi thông báo này để nhắc nhở em về tiến độ học tập môn "${courseTitle}". Hiện tại em đang dừng ở ${
-        student.currentWeekTitle || `Tuần ${student.currentWeekNumber || 1}`
-      }.\n\nEm hãy sắp xếp thời gian xem hết các video bài giảng và hoàn thành bài kiểm tra trắc nghiệm trước cuối tuần để bám sát lộ trình nhé!\n\nNếu gặp khó khăn trong quá trình học, em có thể đặt câu hỏi trên Diễn đàn môn học.`
-    : "";
+  const isDone = Boolean(student?.isCompleted || (student?.progressPercent ?? 0) >= 100);
+  const isAhead = Boolean(student?.pace === "AHEAD");
 
-  const [reminderSubject, setReminderSubject] = useState(defaultSubject);
-  const [reminderBody, setReminderBody] = useState(defaultBody);
+  const [reminderSubject, setReminderSubject] = useState("");
+  const [reminderBody, setReminderBody] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   // Đồng bộ lại khi đổi student
   React.useEffect(() => {
     if (student) {
-      setReminderSubject(`[Nhắc nhở học tập] Tiến độ môn ${courseTitle}`);
-      setReminderBody(
-        `Chào ${student.userName},\n\nThầy/Cô gửi thông báo này để nhắc nhở em về tiến độ học tập môn "${courseTitle}". Hiện tại em đang dừng ở ${
-          student.currentWeekTitle || `Tuần ${student.currentWeekNumber || 1}`
-        }.\n\nEm hãy sắp xếp thời gian xem hết các video bài giảng và hoàn thành bài kiểm tra trắc nghiệm trước cuối tuần để bám sát lộ trình nhé!\n\nNếu gặp khó khăn trong quá trình học, em có thể đặt câu hỏi trên Diễn đàn môn học.`,
-      );
+      if (student.isCompleted || (student.progressPercent ?? 0) >= 100) {
+        setReminderSubject(`[Chúc mừng hoàn thành] Tốt nghiệp xuất sắc môn ${courseTitle}`);
+        setReminderBody(
+          `Chào ${student.userName},\n\nThầy/Cô gửi lời chúc mừng em đã hoàn thành 100% môn học "${courseTitle}" và xuất sắc tốt nghiệp khóa học!\n\nEm hãy kiểm tra mục Chứng chỉ trong Hồ sơ học tập để xem và tải về Chứng chỉ hoàn thành nhé. Chúc em tiếp tục gặt hái nhiều thành công trên con đường học tập!`,
+        );
+      } else if (student.pace === "AHEAD") {
+        setReminderSubject(`[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${courseTitle}`);
+        setReminderBody(
+          `Chào ${student.userName},\n\nThầy/Cô rất vui mừng nhận thấy em đang học vượt tiến độ đề xuất môn "${courseTitle}" (${student.progressPercent}% đề cương).\n\nChúc em tiếp tục phát huy tinh thần tự học tuyệt vời này để sớm hoàn thành xuất sắc khóa học nhé!`,
+        );
+      } else {
+        setReminderSubject(`[Nhắc nhở học tập] Tiến độ môn ${courseTitle}`);
+        setReminderBody(
+          `Chào ${student.userName},\n\nThầy/Cô gửi thông báo này để nhắc nhở em về tiến độ học tập môn "${courseTitle}". Hiện tại em đang dừng ở ${
+            student.currentWeekTitle || `Tuần ${student.currentWeekNumber || 1}`
+          }.\n\nEm hãy sắp xếp thời gian xem hết các video bài giảng và hoàn thành bài kiểm tra trắc nghiệm trước cuối tuần để bám sát lộ trình nhé!\n\nNếu gặp khó khăn trong quá trình học, em có thể đặt câu hỏi trên Diễn đàn môn học.`,
+        );
+      }
     }
   }, [student, courseTitle]);
 
   if (!student) return null;
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    if (!reminderSubject.trim()) {
+      error("Vui lòng nhập tiêu đề thông điệp.");
+      return;
+    }
     if (!reminderBody.trim()) {
-      error("Vui lòng nhập nội dung thông báo nhắc nhở.");
+      error("Vui lòng nhập nội dung thông điệp.");
+      return;
+    }
+    if (!courseId) {
+      error("Không xác định được mã khóa học.");
       return;
     }
 
     setIsSending(true);
-    setTimeout(() => {
+    try {
+      const res = await sendReminderMutation.mutateAsync({
+        courseId,
+        studentIds: [student.userId],
+        title: reminderSubject.trim(),
+        content: reminderBody.trim(),
+      });
+      if (res.sentCount === 0) {
+        error(
+          "Không thể gửi thông điệp tới học viên (học viên không còn ghi danh trong khóa học).",
+        );
+        return;
+      }
       onSendReminder(student.userId, reminderBody);
-      setIsSending(false);
+      const successMsg = isDone
+        ? `Đã gửi lời chúc mừng tốt nghiệp tới ${student.userName}!`
+        : isAhead
+          ? `Đã gửi lời khen ngợi & khích lệ học tập tới ${student.userName}!`
+          : `Đã gửi thông báo nhắc nhở học tập tới ${student.userName}!`;
+      success(successMsg);
       onOpenChange(false);
-      success(`Đã gửi thông báo nhắc nhở học tập tới ${student.userName}!`);
-    }, 400);
+    } catch (err: unknown) {
+      error(err instanceof Error ? err.message : "Không thể gửi thông điệp.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Dialog.Content size="xl" className="p-6 max-h-[92vh] overflow-hidden flex flex-col">
         {/* Header: Thông tin sinh viên & Môn học */}
-        <Dialog.Header className="pb-3 border-b border-outline-variant/60">
+        <Dialog.Header className="pb-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary font-black text-lg flex items-center justify-center shrink-0 border border-primary/20">
@@ -184,9 +221,13 @@ export function InstructorStudentDetailModal({
                 Điểm Quiz TB
               </span>
               <span className="text-base font-black text-foreground font-mono">
-                {student.quizScore ? `${student.quizScore}/10` : "8.5/10"}
+                {student.quizScore !== undefined ? `${student.quizScore}/10` : "Chưa có"}
               </span>
-              <span className="text-[10px] text-success font-semibold block">Đạt chuẩn</span>
+              {student.quizScore !== undefined ? (
+                <span className="text-[10px] text-success font-semibold block">
+                  {student.quizScore >= 8 ? "Đạt chuẩn" : "Cần nỗ lực"}
+                </span>
+              ) : null}
             </div>
 
             <div>
@@ -194,10 +235,14 @@ export function InstructorStudentDetailModal({
                 Lần học gần nhất
               </span>
               <span className="text-xs font-bold text-foreground mt-0.5 block">
-                {student.lastActiveTime || "Hôm qua lúc 20:30"}
+                {student.lastActiveTime || "Chưa ghi nhận"}
               </span>
               <span className="text-[10px] text-muted-foreground">
-                {student.pace === "BEHIND" ? "Đã nghỉ 4 ngày" : "Truy cập đều đặn"}
+                {student.pace === "BEHIND"
+                  ? "Cần đôn đốc"
+                  : student.pace === "AHEAD"
+                    ? "Vượt tiến độ"
+                    : "Truy cập đều đặn"}
               </span>
             </div>
           </div>
@@ -269,24 +314,29 @@ export function InstructorStudentDetailModal({
                 </div>
 
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="reminder-body-textarea"
-                      className="text-xs font-bold text-foreground"
-                    >
-                      Nội dung thông báo nhắc nhở:
-                    </label>
-                    <span className="text-[10px] text-muted-foreground">
-                      Học viên sẽ nhận chuông thông báo & email
-                    </span>
-                  </div>
+                  <label
+                    htmlFor="reminder-body-textarea"
+                    className="block text-xs font-bold text-foreground"
+                  >
+                    {isDone
+                      ? "Nội dung thư chúc mừng tốt nghiệp:"
+                      : isAhead
+                        ? "Nội dung thư khích lệ học tập:"
+                        : "Nội dung thông báo nhắc nhở:"}
+                  </label>
                   <Textarea
                     id="reminder-body-textarea"
                     rows={6}
                     value={reminderBody}
                     onChange={(e) => setReminderBody(e.target.value)}
                     className="w-full text-xs leading-relaxed font-sans"
-                    placeholder="Nhập nội dung nhắc nhở..."
+                    placeholder={
+                      isDone
+                        ? "Nhập nội dung chúc mừng..."
+                        : isAhead
+                          ? "Nhập nội dung khích lệ..."
+                          : "Nhập nội dung nhắc nhở..."
+                    }
                   />
                 </div>
 
@@ -346,7 +396,7 @@ export function InstructorStudentDetailModal({
         </div>
 
         {/* Footer Dialog */}
-        <Dialog.Footer className="pt-3 border-t border-outline-variant/60 flex items-center justify-between">
+        <Dialog.Footer className="pt-3 flex items-center justify-between">
           <Button
             type="button"
             variant="outlined"
@@ -364,7 +414,15 @@ export function InstructorStudentDetailModal({
               className="text-xs font-bold flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>{isSending ? "Đang gửi..." : "Gửi Thông Báo Nhắc Nhở"}</span>
+              <span>
+                {isSending
+                  ? "Đang gửi..."
+                  : isDone
+                    ? "Gửi Lời Chúc Mừng"
+                    : isAhead
+                      ? "Gửi Lời Khích Lệ"
+                      : "Gửi Thông Báo Nhắc Nhở"}
+              </span>
             </Button>
           )}
         </Dialog.Footer>

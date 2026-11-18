@@ -26,6 +26,7 @@ export class FinancialAidPage {
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/financial-aid/);
     await expect(this.page.locator('body')).toBeVisible();
+    await expect(this.page.getByText('Đang tải danh sách Đơn Hỗ trợ tài chính').first()).toBeHidden({ timeout: 15000 });
   }
 
   async submitApplication(essayText: string) {

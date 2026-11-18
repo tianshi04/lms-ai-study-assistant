@@ -24,6 +24,7 @@ import {
   type ToggleCourseReviewHelpfulResponse,
   type GetCourseGradebookResponse,
   type GetInstructorActionTasksResponse,
+  type SendStudentReminderResponse,
   type GetAdminCatalogStatsResponse,
   type GetAdminCatalogTrendResponse,
   type ListAdminCourseMetricsResponse,
@@ -394,6 +395,28 @@ export function useAllInstructorAnalyticsQueries(
         const client = getRpcClient(CatalogService);
         const res = await client.getInstructorAnalytics({ courseId: c.id });
         return res.analytics ?? null;
+      },
+      enabled: (options?.enabled ?? true) && !!c.id,
+      staleTime: 60 * 1000,
+    })),
+  });
+}
+
+/**
+ * Hook truy vấn danh sách đánh giá của toàn bộ các khóa học của giảng viên (Multi-Course Reviews)
+ */
+export function useAllCourseReviewsQueries(
+  courses: { id: string }[],
+  options?: { enabled?: boolean },
+) {
+  return useQueries({
+    queries: courses.map((c) => ({
+      queryKey: ["courseReviews", c.id],
+      queryFn: async () => {
+        if (!c.id) return [];
+        const client = getRpcClient(CatalogService);
+        const res = await client.listCourseReviews({ courseId: c.id });
+        return res.reviews || [];
       },
       enabled: (options?.enabled ?? true) && !!c.id,
       staleTime: 60 * 1000,
@@ -813,5 +836,43 @@ export function useInstructorActionTasksQuery(
     },
     enabled: !!courseId,
     ...options,
+  });
+}
+
+export interface SendStudentReminderInput {
+  courseId: string;
+  studentIds: string[];
+  title: string;
+  content: string;
+}
+
+/**
+ * Hook gửi thông báo đôn đốc/nhắc nhở học viên qua SendStudentReminder RPC
+ */
+export function useSendStudentReminderMutation(
+  options?: Partial<
+    UseMutationOptions<SendStudentReminderResponse, Error, SendStudentReminderInput>
+  >,
+) {
+  const queryClient = useQueryClient();
+  const { onSuccess, ...restOptions } = options || {};
+
+  return useMutation<SendStudentReminderResponse, Error, SendStudentReminderInput>({
+    ...restOptions,
+    mutationFn: async (input) => {
+      const client = getRpcClient(CatalogService);
+      return await client.sendStudentReminder(input);
+    },
+    onSuccess: (res, variables, context, mutation) => {
+      if (variables.courseId) {
+        queryClient.invalidateQueries({
+          queryKey: ["instructorAnalytics", variables.courseId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["instructorActionTasks", variables.courseId],
+        });
+      }
+      onSuccess?.(res, variables, context, mutation);
+    },
   });
 }

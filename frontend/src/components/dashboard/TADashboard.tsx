@@ -57,17 +57,20 @@ export function TADashboard({ userName }: { userName: string }) {
 
         {/* Operational KPI Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
-            <div className="w-14 h-14 rounded-2xl bg-warning/10 flex items-center justify-center text-warning shrink-0">
+          <Link
+            href="/ta/grading"
+            className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-warning/60 transition-all cursor-pointer group"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-warning/10 flex items-center justify-center text-warning shrink-0 group-hover:scale-105 transition-transform">
               <ClipboardList aria-hidden="true" className="w-7 h-7" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground group-hover:text-warning transition-colors">
                 Bài Chờ Chấm Điểm
               </p>
-              <p className="text-3xl font-black text-warning font-mono">12</p>
+              <p className="text-3xl font-black text-warning font-mono">3</p>
             </div>
-          </div>
+          </Link>
 
           <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-info/10 flex items-center justify-center text-info shrink-0">
@@ -135,11 +138,11 @@ export function TADashboard({ userName }: { userName: string }) {
             </div>
             <div className="space-y-1">
               <h3 className="font-bold text-foreground group-hover:text-warning transition-colors">
-                Hàng Chờ Chấm Bài Tự Luận
+                Hàng Chờ Chấm Bài Tự Luận & Khiếu Nại
               </h3>
               <p className="text-xs text-muted-foreground">
-                Xem danh sách bài tập Essay, bài kiểm tra của học viên cần trợ giảng chấm và cho
-                nhận xét.
+                Tiếp nhận bài tập chấm chéo, giải quyết khiếu nại phúc khảo và công bố điểm cho sinh
+                viên.
               </p>
             </div>
           </Link>

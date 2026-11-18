@@ -15,7 +15,7 @@ export class NewCoursePage {
 
   constructor(page: Page) {
     this.page = page;
-    this.partnerSelect = page.locator('#orgSelect, [aria-label*="Partner"], button[role="combobox"], button:has-text("Coursera")').first();
+    this.partnerSelect = page.locator('#orgSelect, button:has-text("Coursera"), button[aria-label*="Partner"]').first();
     this.titleInput = page.locator('#courseTitle').or(page.getByLabel(/Tên Khóa Học/i)).or(page.locator('input[name="title"]')).or(page.getByPlaceholder(/Lập trình|Ví dụ/i)).first();
     this.slugInput = page.locator('#courseSlug, input[placeholder*="lap-trinh-python"]').first();
     this.descriptionTextarea = page.locator('textarea').first();
@@ -103,7 +103,8 @@ export class NewCoursePage {
 
     await expect(this.submitButton).toBeVisible({ timeout: 10000 });
     await expect(this.submitButton).toBeEnabled({ timeout: 5000 });
-    await this.submitButton.click({ force: true });
-    await expect(this.page).toHaveURL(/\/instructor\/courses\/.+/, { timeout: 25000 });
+
+    await this.submitButton.click();
+    await expect(this.page).toHaveURL(/\/instructor\/courses\/(?!new($|\?))[^/]+/, { timeout: 25000 });
   }
 }

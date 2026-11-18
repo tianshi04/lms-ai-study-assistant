@@ -24,7 +24,7 @@ test.describe('Full System Blackbox - B2B Multi-Tenant Organization Flows (POM)'
 
       // Check key metric cards are visible
       await expect(managePage.totalMembersCard).toBeVisible({ timeout: 10000 });
-      await expect(page.locator('text=Tổng Khóa học Tổ chức').or(page.locator('text=Khóa học Đã Xuất Bản'))).toBeVisible();
+      await expect(page.locator('text=Tổng Khóa học Tổ chức').or(page.locator('text=Khóa học Đã Xuất Bản')).first()).toBeVisible({ timeout: 10000 });
     });
 
     test('should load organization members directory and allow opening invite modal', async ({ page }) => {

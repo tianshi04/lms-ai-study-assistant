@@ -8,7 +8,7 @@ export class MyOrganizationsPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageHeading = page.locator('h1', { hasText: 'Tổ chức của tôi' });
+    this.pageHeading = page.locator('h1', { hasText: 'Tổ chức của tôi' }).first();
     this.orgCards = page.locator('a[href^="/organizations/"]');
     this.pendingInvitationsDrawerButton = page.getByRole('button', { name: /Lời mời đang chờ/i });
   }
