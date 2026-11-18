@@ -15,8 +15,10 @@ from src.modules.learning.domain import (
     DailyStudyRecord,
     EnrolledCourseSummary,
     ILearningRepository,
+    LearningItemProgress,
     LearningProgress,
     PersonalNote,
+    normalize_video_position,
 )
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.auth import CurrentUser
@@ -75,6 +77,17 @@ class LearningUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.get_progress(user_id, course_id, current_item_id)
+
+    async def get_progress_with_video_positions(
+        self, user_id: str, course_id: str, current_item_id: str | None = None
+    ) -> tuple[LearningProgress, list[LearningItemProgress]]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            progress = await repo.get_progress(user_id, course_id, current_item_id)
+            video_positions = await repo.list_course_video_positions(
+                user_id, progress.course_id
+            )
+            return progress, video_positions
 
     async def reset_deadlines(
         self, user_id: str, course_id: str
@@ -318,3 +331,46 @@ class LearningUseCase:
             valid_course_ids = await catalog_repo.list_scoped_course_ids()
             repo = self.repo_factory(session)
             return await repo.get_admin_enrollment_trend(valid_course_ids, window)
+
+    async def save_video_position(
+        self,
+        user_id: str,
+        course_id: str,
+        item_id: str,
+        position_seconds: int,
+        duration_seconds: int = 0,
+    ) -> tuple[int, str]:
+        normalized_pos, safe_duration = normalize_video_position(
+            position_seconds=position_seconds,
+            duration_seconds=duration_seconds,
+        )
+
+        async with async_session_scope() as session:
+            catalog_repo = self.catalog_repo_factory(session)
+            resolved = await catalog_repo.resolve_course_video_item(course_id, item_id)
+
+        if not resolved:
+            raise ValueError(
+                f"Bài học {item_id} không thuộc khóa học {course_id} hoặc khóa học không tồn tại."
+            )
+
+        resolved_course_id, is_video_item = resolved
+        if not is_video_item:
+            raise ValueError(f"Bài học {item_id} không phải học liệu video.")
+
+        now_iso = datetime.now(UTC).isoformat()
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            enrolled = await repo.is_enrolled(user_id, resolved_course_id)
+            if not enrolled:
+                raise PermissionError(
+                    f"Người dùng {user_id} chưa ghi danh khóa học {resolved_course_id}."
+                )
+            return await repo.save_video_position(
+                user_id=user_id,
+                course_id=resolved_course_id,
+                item_id=item_id,
+                position_seconds=normalized_pos,
+                duration_seconds=safe_duration,
+                now_iso=now_iso,
+            )
