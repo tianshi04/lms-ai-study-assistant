@@ -7,7 +7,9 @@ from src.gen.assessment.v1.assessment_connect import AssessmentService
 from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
+    DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    QUIZ_COOLDOWN_HOURS,
     AdminAssessmentAlertKind,
     RubricCriteria,
 )
@@ -46,8 +48,9 @@ class AssessmentHandler(AssessmentService):
                 item_id=request.item_id,
                 question_answers=qa_list,
                 session_seed=request.session_seed or None,
-                start_time_iso=request.start_time_iso or None,
                 preview=request.preview,
+                session_id=request.session_id or None,
+                current_user=current_user,
             )
         except ValueError as e:
             raise ConnectError(Code.FAILED_PRECONDITION, str(e))
@@ -61,7 +64,7 @@ class AssessmentHandler(AssessmentService):
             cooldown_seconds_left=res["cooldown_seconds_left"],
             answer_explanations=res["answer_explanations"],
             max_attempts=res.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
-            cooldown_hours=res.get("cooldown_hours", 8),
+            cooldown_hours=res.get("cooldown_hours", QUIZ_COOLDOWN_HOURS),
         )
         return pb.SubmitGradedQuizResponse(result=quiz_result)
 
@@ -671,6 +674,7 @@ class AssessmentHandler(AssessmentService):
                 item_id=request.item_id,
                 preview=request.preview,
                 force_new=request.force_new,
+                current_user=current_user,
             )
         except ValueError as e:
             raise ConnectError(Code.FAILED_PRECONDITION, str(e))
@@ -696,6 +700,11 @@ class AssessmentHandler(AssessmentService):
                 )
             )
 
+        pb_draft_answers = [
+            pb.QuizQuestionAnswer(selected_option_indexes=list(ans))
+            for ans in res.get("draft_answers", [])
+        ]
+
         pb_prev_result = None
         if res.get("has_previous_result") and res.get("previous_result"):
             pr = res["previous_result"]
@@ -706,7 +715,7 @@ class AssessmentHandler(AssessmentService):
                 cooldown_seconds_left=pr["cooldown_seconds_left"],
                 answer_explanations=pr["answer_explanations"],
                 max_attempts=pr.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
-                cooldown_hours=pr.get("cooldown_hours", 8),
+                cooldown_hours=pr.get("cooldown_hours", QUIZ_COOLDOWN_HOURS),
             )
 
         return pb.StartGradedQuizSessionResponse(
@@ -721,9 +730,104 @@ class AssessmentHandler(AssessmentService):
             cooldown_seconds_left=res.get("cooldown_seconds_left", 0),
             attempts_left=res.get("attempts_left", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
             max_attempts=res.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
-            cooldown_hours=res.get("cooldown_hours", 8),
+            cooldown_hours=res.get("cooldown_hours", QUIZ_COOLDOWN_HOURS),
             has_previous_result=res.get("has_previous_result", False),
             previous_result=pb_prev_result,
+            expires_at_iso=res.get("expires_at_iso", ""),
+            draft_answers=pb_draft_answers,
+            draft_updated_at=res.get("draft_updated_at", ""),
+            draft_version=res.get("draft_version", 0),
+            is_resumed=res.get("is_resumed", False),
+        )
+
+    async def get_quiz_overview(
+        self,
+        request: pb.GetQuizOverviewRequest,
+        ctx: RequestContext[pb.GetQuizOverviewRequest, pb.GetQuizOverviewResponse],
+    ) -> pb.GetQuizOverviewResponse:
+        current_user = require_current_user()
+        try:
+            res = await self.use_case.get_quiz_overview(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                preview=request.preview,
+                current_user=current_user,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.FAILED_PRECONDITION, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+        pb_prev_result = None
+        if res.get("has_previous_result") and res.get("previous_result"):
+            pr = res["previous_result"]
+            pb_prev_result = pb.QuizResult(
+                score_percent=pr["score_percent"],
+                passed=pr["passed"],
+                attempts_left=pr["attempts_left"],
+                cooldown_seconds_left=pr["cooldown_seconds_left"],
+                answer_explanations=pr["answer_explanations"],
+                max_attempts=pr.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+                cooldown_hours=pr.get("cooldown_hours", QUIZ_COOLDOWN_HOURS),
+            )
+
+        pb_active_draft = None
+        if res.get("has_active_draft") and res.get("active_draft"):
+            ad = res["active_draft"]
+            pb_active_draft = pb.ActiveQuizDraftSummary(
+                session_id=ad["session_id"],
+                started_at_iso=ad["started_at_iso"],
+                expires_at_iso=ad["expires_at_iso"],
+                answered_count=ad["answered_count"],
+                total_questions=ad["total_questions"],
+                draft_updated_at=ad["draft_updated_at"],
+                draft_version=ad["draft_version"],
+            )
+
+        return pb.GetQuizOverviewResponse(
+            question_count=res.get("question_count", 0),
+            time_limit_minutes=res.get(
+                "time_limit_minutes", DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+            ),
+            passing_threshold_percent=res.get(
+                "passing_threshold_percent", DEFAULT_PASSING_THRESHOLD_PERCENT
+            ),
+            attempts_left=res.get("attempts_left", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+            max_attempts=res.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+            cooldown_hours=res.get("cooldown_hours", QUIZ_COOLDOWN_HOURS),
+            cooldown_seconds_left=res.get("cooldown_seconds_left", 0),
+            has_previous_result=res.get("has_previous_result", False),
+            previous_result=pb_prev_result,
+            has_active_draft=res.get("has_active_draft", False),
+            active_draft=pb_active_draft,
+            auto_submitted_expired_draft=res.get("auto_submitted_expired_draft", False),
+        )
+
+    async def save_quiz_draft(
+        self,
+        request: pb.SaveQuizDraftRequest,
+        ctx: RequestContext[pb.SaveQuizDraftRequest, pb.SaveQuizDraftResponse],
+    ) -> pb.SaveQuizDraftResponse:
+        current_user = require_current_user()
+        qa_list = [list(qa.selected_option_indexes) for qa in request.question_answers]
+        try:
+            res = await self.use_case.save_quiz_draft(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                session_id=request.session_id,
+                question_answers=qa_list,
+                draft_version=request.draft_version,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.FAILED_PRECONDITION, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+        return pb.SaveQuizDraftResponse(
+            saved=res.get("saved", False),
+            draft_updated_at=res.get("draft_updated_at", ""),
+            draft_version=res.get("draft_version", 0),
+            session_expired=res.get("session_expired", False),
         )
 
     async def get_quiz_attempt_history(

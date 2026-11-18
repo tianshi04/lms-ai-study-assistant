@@ -143,3 +143,23 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   * *Tại bước 5:* Hệ thống điều hướng trực tiếp sang trang xác thực chứng chỉ (`/verify/CERT-xxx`).
   * *Tại bước 6:* Đánh giá của học viên vừa gửi hiển thị công khai tại mục "Reviews & Ratings" trên trang thông tin khóa học.
 
+---
+
+## KỊCH BẢN UAT-10: KIỂM THỬ LƯU NHÁP BÀI QUIZ CHỐNG MẤT BÀI & KHÔI PHỤC PHIÊN LÀM BÀI (QUIZ DRAFT AUTO-SAVE & RECOVERY FLOW)
+
+* **Mục tiêu:** Xác minh hệ thống tự động lưu nháp các đáp án đã chọn khi làm bài Quiz, bảo toàn đề thi và thời gian đếm ngược khi tải lại trang (F5) hoặc tạm thoát, hỗ trợ xác nhận khi làm lại từ đầu và xóa sạch bản nháp sau khi nộp bài.
+* **Tác nhân thực hiện:** Học viên (Learner - Paid Mode).
+* **Điều kiện bắt đầu:** Học viên mở một bài Graded Quiz hoặc Practice Quiz có 5 câu hỏi trắc nghiệm.
+* **Các bước thực hiện:**
+  1. Học viên mở bài Quiz ở màn hình Tổng quan, quan sát trạng thái ban đầu rồi bấm **"Bắt đầu làm bài"**.
+  2. Học viên chọn đáp án cho 3/5 câu hỏi và quan sát huy hiệu trạng thái lưu nháp trên thanh công cụ.
+  3. Học viên bấm tải lại trình duyệt (**F5**) hoặc bấm nút **"Lưu nháp & Tạm thoát"**.
+  4. Tại màn hình Tổng quan, học viên bấm nút **"Tiếp tục làm bài"**.
+  5. Học viên chọn nốt 2 câu còn lại, bấm **"Nộp bài thi"**, tích xác nhận Cam kết Trung thực và nộp bài.
+* **Kết quả mong đợi (Expected Results):**
+  * *Tại bước 1:* Màn hình Tổng quan không tự động chạy đồng hồ trước khi bấm bắt đầu; sau khi bấm **"Bắt đầu làm bài"**, phiên thi mới được khởi tạo.
+  * *Tại bước 2:* Đáp án được lưu tức thì vào `localStorage` và đồng bộ lên Server sau 1 giây; huy hiệu hiển thị trạng thái **"Đã lưu nháp"**.
+  * *Tại bước 3:* Màn hình Tổng quan hiển thị thẻ thông báo **"Phiên làm bài đang được bảo toàn (Đã chọn 3/5 câu)"** kèm thời gian đếm ngược còn lại cùng 2 nút **"Tiếp tục làm bài"** và **"Làm bài mới từ đầu"**.
+  * *Tại bước 4:* Hệ thống mở lại đúng bộ câu hỏi và thứ tự phương án cũ, giữ nguyên 3 đáp án đã chọn trước đó và đồng hồ đếm ngược tiếp tục chạy từ mốc Server (không bị reset lại từ đầu).
+  * *Tại bước 5:* Bài thi được chấm điểm chính xác và bản nháp trong cả `quiz_active_sessions` lẫn `localStorage` được dọn sạch hoàn toàn.
+

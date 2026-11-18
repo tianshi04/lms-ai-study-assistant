@@ -144,9 +144,12 @@ async def test_live_quiz_submission_trigger():
         session.add(fa_model)
 
     assessment_uc = AssessmentUseCase()
-    # Agree honor code
+    # Agree honor code and start graded quiz session
     await assessment_uc.submit_honor_code(
         user_id=learner_id, item_id=item_id, is_agreed=True
+    )
+    sess = await assessment_uc.start_graded_quiz_session(
+        user_id=learner_id, item_id=item_id, force_new=True
     )
 
     # Submit graded quiz
@@ -154,6 +157,7 @@ async def test_live_quiz_submission_trigger():
         user_id=learner_id,
         item_id=item_id,
         question_answers=[[0], [0], [0], [0], [0]],
+        session_id=sess["session_id"],
     )
 
     # Verify Learner receives ASSESSMENT notification

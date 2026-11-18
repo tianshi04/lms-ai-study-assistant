@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import and_, func, or_, select, text, update
+from sqlalchemy import and_, delete, func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -288,10 +288,14 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         return QuizActiveSession(
             user_id=model.user_id,
             item_id=model.item_id,
+            session_id=model.session_id or "",
             session_seed=model.session_seed,
-            questions_json=model.questions_json,
+            questions_json=model.questions_json or [],
             started_at=model.started_at,
             expires_at=model.expires_at,
+            draft_answers=model.draft_answers_json or [],
+            draft_updated_at=model.draft_updated_at or "",
+            draft_version=model.draft_version or 0,
         )
 
     async def save_quiz_active_session(self, session: QuizActiveSession) -> None:
@@ -299,20 +303,78 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             id=session.id,
             user_id=session.user_id,
             item_id=session.item_id,
+            session_id=session.session_id,
             session_seed=session.session_seed,
             questions_json=session.questions_json,
+            draft_answers_json=session.draft_answers,
+            draft_updated_at=session.draft_updated_at,
+            draft_version=session.draft_version,
             started_at=session.started_at,
             expires_at=session.expires_at,
         )
         stmt = stmt.on_conflict_do_update(
             index_elements=[QuizActiveSessionModel.id],
             set_={
+                "session_id": session.session_id,
                 "session_seed": session.session_seed,
                 "questions_json": session.questions_json,
+                "draft_answers_json": session.draft_answers,
+                "draft_updated_at": session.draft_updated_at,
+                "draft_version": session.draft_version,
                 "started_at": session.started_at,
                 "expires_at": session.expires_at,
             },
         )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def update_quiz_draft_answers(
+        self,
+        user_id: str,
+        item_id: str,
+        session_id: str,
+        draft_answers: list[list[int]],
+        updated_at: str,
+        draft_version: int,
+    ) -> tuple[bool, int, str]:
+        stmt = (
+            update(QuizActiveSessionModel)
+            .where(
+                QuizActiveSessionModel.user_id == user_id,
+                QuizActiveSessionModel.item_id == item_id,
+                QuizActiveSessionModel.session_id == session_id,
+                QuizActiveSessionModel.draft_version <= draft_version,
+            )
+            .values(
+                draft_answers_json=draft_answers,
+                draft_updated_at=updated_at,
+                draft_version=draft_version,
+            )
+            .returning(
+                QuizActiveSessionModel.draft_version,
+                QuizActiveSessionModel.draft_updated_at,
+            )
+        )
+        res = await self.session.execute(stmt)
+        row = res.one_or_none()
+        if row is not None:
+            await self.session.commit()
+            return True, int(row.draft_version), str(row.draft_updated_at)
+
+        existing = await self.get_quiz_active_session(user_id, item_id)
+        if existing and existing.session_id == session_id:
+            return False, existing.draft_version, existing.draft_updated_at
+        return False, 0, ""
+
+    async def delete_quiz_active_session(
+        self, user_id: str, item_id: str, session_id: str | None = None
+    ) -> None:
+        stmt = delete(QuizActiveSessionModel).where(
+            QuizActiveSessionModel.user_id == user_id,
+            QuizActiveSessionModel.item_id == item_id,
+        )
+        if session_id:
+            stmt = stmt.where(QuizActiveSessionModel.session_id == session_id)
         await self.session.execute(stmt)
         await self.session.commit()
 
@@ -1126,6 +1188,35 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         )
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
+
+    async def is_course_staff_for_item(self, item_id: str, user_id: str) -> bool:
+        from src.modules.catalog.infrastructure.models import (
+            CourseCollaboratorModel,
+            CourseModel,
+            LearningItemModel,
+            LessonModel,
+            WeekModuleModel,
+        )
+
+        stmt = (
+            select(CourseModel.id, CourseModel.owner_id)
+            .join(WeekModuleModel, WeekModuleModel.course_id == CourseModel.id)
+            .join(LessonModel, LessonModel.week_module_id == WeekModuleModel.id)
+            .join(LearningItemModel, LearningItemModel.lesson_id == LessonModel.id)
+            .where(LearningItemModel.id == item_id)
+        )
+        row = (await self.session.execute(stmt)).one_or_none()
+        if row is None:
+            return False
+        if (row.owner_id or "") == user_id:
+            return True
+
+        collab_stmt = select(CourseCollaboratorModel.id).where(
+            CourseCollaboratorModel.course_id == row.id,
+            CourseCollaboratorModel.user_id == user_id,
+        )
+        collab = (await self.session.execute(collab_stmt)).scalar_one_or_none()
+        return collab is not None
 
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         from src.modules.catalog.infrastructure.models import LearningItemModel
