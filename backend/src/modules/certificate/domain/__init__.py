@@ -14,6 +14,7 @@ from .entities import (
     AdminCertificateTrendPoint,
     FinancialAidApplication,
     FinancialAidStatus,
+    OrganizationCertificateStats,
     VerifiedCertificate,
     count_words,
 )
@@ -37,6 +38,8 @@ __all__ = [
     "FinancialAidReviewedDomainEvent",
     "FinancialAidStatus",
     "ICertificateRepository",
+    "OrganizationCertificateStats",
     "VerifiedCertificate",
     "count_words",
 ]
+

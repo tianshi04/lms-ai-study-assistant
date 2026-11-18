@@ -5,12 +5,13 @@ import pytest
 from src.modules.catalog.application import CatalogUseCase
 from src.modules.catalog.domain import Course, CourseStatus
 from src.modules.identity.domain import User, UserRole
+from src.modules.identity.infrastructure.repository import IdentityRepository
 from src.shared.auth import CurrentUserContext
 
 
 @pytest.mark.asyncio
 async def test_add_course_collaborator_success():
-    use_case = CatalogUseCase()
+    use_case = CatalogUseCase(identity_repo_factory=IdentityRepository)
     owner_user = CurrentUserContext(id="owner_1", role="INSTRUCTOR")
     mock_course = Course(
         id="course_101",
@@ -82,7 +83,7 @@ async def test_add_course_collaborator_success():
 
 @pytest.mark.asyncio
 async def test_add_course_collaborator_permission_denied():
-    use_case = CatalogUseCase()
+    use_case = CatalogUseCase(identity_repo_factory=IdentityRepository)
     other_user = CurrentUserContext(id="other_999", role="INSTRUCTOR")
     mock_course = Course(
         id="course_101",

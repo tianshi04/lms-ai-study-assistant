@@ -16,6 +16,7 @@ from src.modules.catalog.domain.constants import (
     MAX_FOUNDATIONAL_COURSES_COUNT,
 )
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
+from src.modules.identity.domain import INTERNAL_SYSTEM_ORG_ID
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.permissions import (
@@ -23,6 +24,7 @@ from src.shared.permissions import (
     OrgPermission,
     enforce_course_ownership,
     enforce_organization_permission,
+    enforce_strict_organization_permission,
 )
 
 logger = logging.getLogger(__name__)
@@ -97,9 +99,9 @@ class CourseUseCase:
         rejection_reason: str = "",
         current_user: CurrentUser | None = None,
     ) -> Course:
-        if not current_user or not current_user.is_admin:
+        if not current_user or not current_user.id:
             raise PermissionError(
-                "Chỉ Quản trị viên hệ thống mới có quyền phê duyệt/từ chối khóa học."
+                "Chỉ Quản trị viên hệ thống hoặc Chủ sở hữu Tổ chức mới có quyền phê duyệt/từ chối khóa học."
             )
 
         async with async_session_scope() as session:
@@ -107,6 +109,25 @@ class CourseUseCase:
             course = await repo.get_course_detail(course_id)
             if not course:
                 raise ValueError("Không tìm thấy khóa học.")
+
+            if not current_user.is_admin:
+                target_org_id = (getattr(course, "issuer_partner_id", "") or "").strip()
+                if (
+                    not target_org_id
+                    and course.organization_id
+                    and course.organization_id != INTERNAL_SYSTEM_ORG_ID
+                ):
+                    target_org_id = course.organization_id.strip()
+                if not target_org_id:
+                    raise PermissionError(
+                        "Chỉ Quản trị viên hệ thống mới có quyền phê duyệt/từ chối khóa học thuộc cộng đồng chung."
+                    )
+                await enforce_strict_organization_permission(
+                    session,
+                    current_user,
+                    target_org_id,
+                    required_permission=OrgPermission.MANAGE_COURSES,
+                )
 
             action_str = str(action).upper()
             if action_str in ("APPROVE", "COURSE_REVIEW_ACTION_APPROVE", "1"):

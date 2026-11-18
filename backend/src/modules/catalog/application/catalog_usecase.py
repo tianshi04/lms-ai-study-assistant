@@ -4,20 +4,15 @@ from typing import Any
 
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
+from src.modules.identity.domain import IOrganizationRepository
 from src.modules.learning.domain import ILearningRepository
 from src.modules.payment.domain import IPaymentRepository
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
 
 from .admin_catalog_usecase import AdminCatalogUseCase
-from .collaborator_usecase import (
-    CourseCollaboratorUseCase,
-    _default_identity_repo_factory,
-)
-from .course_review_usecase import (
-    CourseReviewUseCase,
-    _default_learning_repo_factory,
-)
+from .collaborator_usecase import CourseCollaboratorUseCase
+from .course_review_usecase import CourseReviewUseCase
 from .course_usecase import CourseUseCase
 from .curriculum_usecase import CurriculumUseCase
 from .scorm_usecase import ScormUseCase
@@ -33,8 +28,6 @@ __all__ = [
     "CurriculumUseCase",
     "SQLAlchemyCatalogRepository",
     "ScormUseCase",
-    "_default_identity_repo_factory",
-    "_default_learning_repo_factory",
     "async_session_scope",
     "get_s3_storage_service",
 ]
@@ -56,17 +49,15 @@ class CatalogUseCase(
         learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
         identity_repo_factory: Callable[[Any], Any] | None = None,
         payment_repo_factory: Callable[[Any], IPaymentRepository] | None = None,
+        org_repo_factory: Callable[[Any], IOrganizationRepository] | None = None,
     ) -> None:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyCatalogRepository(session)
         )
-        self.learning_repo_factory = (
-            learning_repo_factory or _default_learning_repo_factory
-        )
-        self.identity_repo_factory = (
-            identity_repo_factory or _default_identity_repo_factory
-        )
+        self.learning_repo_factory = learning_repo_factory
+        self.identity_repo_factory = identity_repo_factory
         self.payment_repo_factory = payment_repo_factory
+        self.org_repo_factory = org_repo_factory
 
         # Composition sub-usecases for modular access
         self.course_uc = CourseUseCase(repo_factory=self.repo_factory)
@@ -84,4 +75,5 @@ class CatalogUseCase(
             repo_factory=self.repo_factory,
             learning_repo_factory=self.learning_repo_factory,
             payment_repo_factory=self.payment_repo_factory,
+            org_repo_factory=self.org_repo_factory,
         )

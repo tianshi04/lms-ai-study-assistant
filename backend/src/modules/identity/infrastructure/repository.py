@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import MagicMock
 
-from sqlalchemy import func, or_, select, true
+from sqlalchemy import case, func, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid6 import uuid7
 
@@ -21,8 +21,10 @@ from src.modules.identity.domain import (
     InvitationType,
     IOrganizationRepository,
     Organization,
+    OrganizationIdentityStats,
     OrganizationMember,
     ScopeType,
+    SeatHolderUserRow,
     User,
     UserRole,
 )
@@ -35,6 +37,7 @@ from src.modules.identity.infrastructure.models import (
     OrganizationModel,
     UserModel,
 )
+from src.shared.domain.constants import escape_like_pattern
 
 
 class IdentityRepository(IIdentityRepository):
@@ -206,16 +209,49 @@ class EnterpriseLicenseRepository(IEnterpriseLicenseRepository):
         stmt = select(EnterpriseLicenseModel).where(EnterpriseLicenseModel.key == key)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return self._to_entity(model) if model else None
+        if inspect.iscoroutine(model):
+            model = await model
+        if not model or not hasattr(model, "key") or isinstance(model, MagicMock):
+            return None
+        return self._to_entity(model)
 
-    async def list_licenses(self, partner_name: str = "") -> list[EnterpriseLicense]:
+    async def list_licenses(
+        self, partner_name: str = "", organization_id: str = ""
+    ) -> list[EnterpriseLicense]:
         stmt = select(EnterpriseLicenseModel)
+        if organization_id:
+            stmt = stmt.where(EnterpriseLicenseModel.organization_id == organization_id)
         if partner_name:
+            pattern = escape_like_pattern(partner_name)
             stmt = stmt.where(
-                EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%")
+                EnterpriseLicenseModel.partner_name.ilike(pattern, escape="\\")
             )
+        stmt = stmt.order_by(EnterpriseLicenseModel.key.asc())
         res = await self._session.execute(stmt)
         return [self._to_entity(m) for m in res.scalars().all()]
+
+    async def get_active_available_license_for_org(
+        self, organization_id: str
+    ) -> EnterpriseLicense | None:
+        if not organization_id:
+            return None
+        stmt = (
+            select(EnterpriseLicenseModel)
+            .where(
+                EnterpriseLicenseModel.organization_id == organization_id,
+                EnterpriseLicenseModel.is_active.is_(True),
+                EnterpriseLicenseModel.used_seats < EnterpriseLicenseModel.total_seats,
+            )
+            .order_by(EnterpriseLicenseModel.key.asc())
+            .limit(1)
+        )
+        res = await self._session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if inspect.iscoroutine(model):
+            model = await model
+        if not model or not hasattr(model, "key") or isinstance(model, MagicMock):
+            return None
+        return self._to_entity(model)
 
     async def create_license(
         self, license_entity: EnterpriseLicense
@@ -228,6 +264,7 @@ class EnterpriseLicenseRepository(IEnterpriseLicenseRepository):
         model = EnterpriseLicenseModel(
             key=license_entity.key,
             partner_name=license_entity.partner_name,
+            organization_id=license_entity.organization_id,
             total_seats=license_entity.total_seats,
             used_seats=license_entity.used_seats,
             is_active=license_entity.is_active,
@@ -285,6 +322,7 @@ class EnterpriseLicenseRepository(IEnterpriseLicenseRepository):
             is_active=model.is_active,
             scope_type=scope,
             allowed_course_ids=set(model.allowed_course_ids or []),
+            organization_id=model.organization_id,
         )
 
 
@@ -594,6 +632,156 @@ class OrganizationRepository(IOrganizationRepository):
             }
             for entry in logs
         ]
+
+    async def get_organization_identity_stats(
+        self, org_id: str
+    ) -> OrganizationIdentityStats:
+        member_sq = (
+            select(
+                func.count(OrganizationMemberModel.id).label("member_count"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (
+                                or_(
+                                    func.upper(OrganizationMemberModel.role_id).like(
+                                        "%OWNER%"
+                                    ),
+                                    func.upper(OrganizationMemberModel.role_id).like(
+                                        "%INSTRUCTOR%"
+                                    ),
+                                ),
+                                1,
+                            ),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ).label("instructor_count"),
+            )
+            .where(
+                OrganizationMemberModel.organization_id == org_id,
+                OrganizationMemberModel.status == "ACTIVE",
+            )
+            .subquery()
+        )
+        inv_sq = (
+            select(func.count(InvitationModel.id).label("pending_invitation_count"))
+            .where(
+                InvitationModel.target_id == org_id,
+                InvitationModel.status == InvitationStatus.PENDING.value,
+            )
+            .subquery()
+        )
+        lic_sq = (
+            select(
+                func.count(EnterpriseLicenseModel.key).label("active_license_count"),
+                func.coalesce(func.sum(EnterpriseLicenseModel.total_seats), 0).label(
+                    "total_seats"
+                ),
+                func.coalesce(func.sum(EnterpriseLicenseModel.used_seats), 0).label(
+                    "used_seats"
+                ),
+            )
+            .where(
+                EnterpriseLicenseModel.organization_id == org_id,
+                EnterpriseLicenseModel.is_active.is_(True),
+            )
+            .subquery()
+        )
+        row = (
+            await self._session.execute(
+                select(
+                    member_sq.c.member_count,
+                    member_sq.c.instructor_count,
+                    inv_sq.c.pending_invitation_count,
+                    lic_sq.c.active_license_count,
+                    lic_sq.c.total_seats,
+                    lic_sq.c.used_seats,
+                )
+                .select_from(member_sq)
+                .join(inv_sq, true())
+                .join(lic_sq, true())
+            )
+        ).one()
+        return OrganizationIdentityStats(
+            member_count=int(row.member_count or 0),
+            instructor_count=int(row.instructor_count or 0),
+            pending_invitation_count=int(row.pending_invitation_count or 0),
+            active_license_count=int(row.active_license_count or 0),
+            total_seats=int(row.total_seats or 0),
+            used_seats=int(row.used_seats or 0),
+        )
+
+    async def list_organization_seat_holder_users(
+        self,
+        org_id: str,
+        page: int | None = None,
+        page_size: int | None = None,
+        search_query: str = "",
+    ) -> tuple[list[SeatHolderUserRow], int]:
+        filters = [EnterpriseLicenseModel.organization_id == org_id]
+        if search_query:
+            pattern = escape_like_pattern(search_query)
+            filters.append(
+                or_(
+                    UserModel.full_name.ilike(pattern, escape="\\"),
+                    UserModel.email.ilike(pattern, escape="\\"),
+                    UserModel.enterprise_seat_key.ilike(pattern, escape="\\"),
+                )
+            )
+
+        stmt = (
+            select(
+                UserModel.id,
+                UserModel.full_name,
+                UserModel.email,
+                UserModel.avatar_url,
+                UserModel.enterprise_seat_key,
+                UserModel.seat_assigned_at,
+                func.count().over().label("total_count"),
+            )
+            .join(
+                EnterpriseLicenseModel,
+                UserModel.enterprise_seat_key == EnterpriseLicenseModel.key,
+            )
+            .where(*filters)
+            .order_by(
+                func.coalesce(UserModel.seat_assigned_at, "").desc(),
+                UserModel.id.asc(),
+            )
+        )
+        if page is not None and page_size is not None:
+            stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+
+        rows = (await self._session.execute(stmt)).all()
+        if not rows:
+            if page is not None and page > 1:
+                count_stmt = (
+                    select(func.count(UserModel.id))
+                    .join(
+                        EnterpriseLicenseModel,
+                        UserModel.enterprise_seat_key == EnterpriseLicenseModel.key,
+                    )
+                    .where(*filters)
+                )
+                total = int((await self._session.execute(count_stmt)).scalar() or 0)
+                return [], total
+            return [], 0
+
+        total_count = int(rows[0].total_count or 0)
+        holders = [
+            SeatHolderUserRow(
+                user_id=str(r.id),
+                full_name=str(r.full_name or ""),
+                email=str(r.email or ""),
+                avatar_url=str(r.avatar_url or ""),
+                seat_key=str(r.enterprise_seat_key or ""),
+                seat_assigned_at=str(r.seat_assigned_at or ""),
+            )
+            for r in rows
+        ]
+        return holders, total_count
 
 
 class InstructorApplicationRepository(IInstructorApplicationRepository):

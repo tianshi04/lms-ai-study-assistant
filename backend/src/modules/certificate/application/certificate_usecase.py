@@ -1,11 +1,13 @@
 import hashlib
 import inspect
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
 from uuid6 import uuid7
 
+from src.modules.catalog.domain import ICatalogRepository
 from src.modules.certificate.domain import (
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
     MIN_FINANCIAL_AID_ESSAY_WORDS,
@@ -17,10 +19,12 @@ from src.modules.certificate.domain import (
     FinancialAidReviewedDomainEvent,
     FinancialAidStatus,
     ICertificateRepository,
+    OrganizationCertificateStats,
     VerifiedCertificate,
     count_words,
 )
 from src.modules.certificate.infrastructure.repository import CertificateRepository
+from src.modules.identity.domain import IOrganizationRepository
 from src.shared.auth import CurrentUser
 from src.shared.domain import (
     ADMIN_PAGE_SIZE_DEFAULT,
@@ -32,13 +36,26 @@ from src.shared.domain import (
 )
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
+from src.shared.permissions import (
+    OrgPermission,
+    enforce_strict_organization_permission,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class CertificateUseCase:
-    def __init__(self, repo: ICertificateRepository | None = None) -> None:
+    def __init__(
+        self,
+        repo: ICertificateRepository | None = None,
+        repo_factory: Callable[[Any], ICertificateRepository] | None = None,
+        catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
+        org_repo_factory: Callable[[Any], IOrganizationRepository] | None = None,
+    ) -> None:
         self._repo = repo
+        self._repo_factory = repo_factory
+        self._catalog_repo_factory = catalog_repo_factory
+        self._org_repo_factory = org_repo_factory
 
     def _verify_admin(self, current_user: CurrentUser | None) -> None:
         if current_user is not None and not current_user.is_admin:
@@ -47,7 +64,11 @@ class CertificateUseCase:
             )
 
     def _get_repo(self, session: Any) -> ICertificateRepository:
-        return self._repo if self._repo is not None else CertificateRepository(session)
+        if self._repo is not None:
+            return self._repo
+        if self._repo_factory is not None:
+            return self._repo_factory(session)
+        return CertificateRepository(session)
 
     async def apply_financial_aid(
         self, user_id: str, course_id: str, essay_150_words: str
@@ -517,3 +538,77 @@ class CertificateUseCase:
                 normalized_search,
                 is_revoked,
             )
+
+    async def _resolve_and_authorize_organization(
+        self,
+        session: Any,
+        current_user: CurrentUser | None,
+        organization_id: str,
+    ) -> str:
+        clean_org_id = (organization_id or "").strip()
+        org = None
+        if clean_org_id and self._org_repo_factory is not None:
+            org = await self._org_repo_factory(session).get_organization_by_id(
+                clean_org_id
+            )
+        target_org_id = org.id if org else clean_org_id
+        await enforce_strict_organization_permission(
+            session,
+            current_user,
+            target_org_id,
+            required_permission=OrgPermission.VIEW_ANALYTICS,
+        )
+        if self._org_repo_factory is not None and not org:
+            raise KeyError(f"Không tìm thấy tổ chức '{clean_org_id}'")
+        return target_org_id
+
+    async def get_organization_certificate_stats(
+        self,
+        current_user: CurrentUser | None,
+        organization_id: str,
+    ) -> OrganizationCertificateStats:
+        if self._catalog_repo_factory is None:
+            raise RuntimeError(
+                "CertificateUseCase requires catalog_repo_factory to be configured at the composition root."
+            )
+        async with async_session_scope() as session:
+            target_org_id = await self._resolve_and_authorize_organization(
+                session, current_user, organization_id
+            )
+            course_ids = await self._catalog_repo_factory(
+                session
+            ).list_organization_course_ids(target_org_id)
+            repo = self._get_repo(session)
+            return await repo.get_organization_certificate_stats(course_ids)
+
+    async def list_organization_certificates(
+        self,
+        current_user: CurrentUser | None,
+        organization_id: str,
+        page: int = 1,
+        page_size: int = ADMIN_PAGE_SIZE_DEFAULT,
+        search_query: str = "",
+        is_revoked: bool | None = None,
+    ) -> AdminCertificatesPage:
+        if self._catalog_repo_factory is None:
+            raise RuntimeError(
+                "CertificateUseCase requires catalog_repo_factory to be configured at the composition root."
+            )
+        effective_page, effective_page_size = normalize_admin_paging(page, page_size)
+        normalized_search = normalize_admin_search(search_query)
+        async with async_session_scope() as session:
+            target_org_id = await self._resolve_and_authorize_organization(
+                session, current_user, organization_id
+            )
+            course_ids = await self._catalog_repo_factory(
+                session
+            ).list_organization_course_ids(target_org_id)
+            repo = self._get_repo(session)
+            return await repo.list_organization_certificates(
+                course_ids=course_ids,
+                page=effective_page,
+                page_size=effective_page_size,
+                search_query=normalized_search,
+                is_revoked=is_revoked,
+            )
+

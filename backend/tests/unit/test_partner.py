@@ -95,6 +95,7 @@ async def test_usecase_create_partner_duplicate_slug():
 async def test_usecase_update_partner_not_found():
     mock_repo = AsyncMock()
     mock_repo.get_by_id.return_value = None
+    mock_repo.get_by_slug.return_value = None
 
     usecase = PartnerUseCase(repo=mock_repo)
     admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")

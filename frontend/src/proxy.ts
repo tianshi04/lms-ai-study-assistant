@@ -34,6 +34,8 @@ const PROTECTED_ROUTES = [
   "/financial-aid",
   "/account-settings",
   "/partner",
+  "/organizations",
+  "/my-organizations",
 ];
 const INSTRUCTOR_ROUTES = ["/instructor"];
 const ADMIN_ROUTES = ["/admin"];

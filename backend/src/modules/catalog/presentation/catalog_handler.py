@@ -177,6 +177,7 @@ def _to_pb_course(course: Course) -> pb.Course:
         co_instructor_ids=getattr(course, "co_instructor_ids", []) or [],
         price=float(getattr(course, "price", 0.0) or 0.0),
         foundational_course_ids=getattr(course, "foundational_course_ids", []) or [],
+        issuer_partner_id=getattr(course, "issuer_partner_id", "") or "",
     )
 
 
@@ -224,6 +225,7 @@ def _to_pb_specialization(
         owner_id=getattr(spec, "owner_id", "") or "",
         organization_id=getattr(spec, "organization_id", "partner_community")
         or "partner_community",
+        issuer_partner_id=getattr(spec, "issuer_partner_id", "") or "",
     )
 
 
@@ -1675,4 +1677,93 @@ class CatalogHandler(CatalogService):
         return pb.AcknowledgeLowReviewResponse(
             success=True,
             message="Đã ghi nhận xác nhận đánh giá.",
+        )
+
+    async def get_organization_catalog_stats(
+        self,
+        request: pb.GetOrganizationCatalogStatsRequest,
+        ctx: RequestContext[
+            pb.GetOrganizationCatalogStatsRequest,
+            pb.GetOrganizationCatalogStatsResponse,
+        ],
+    ) -> pb.GetOrganizationCatalogStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self.use_case.get_organization_catalog_stats(
+                current_user=current_user,
+                organization_id=request.organization_id,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except KeyError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.GetOrganizationCatalogStatsResponse(
+            total_courses=stats.total_courses,
+            published_courses=stats.published_courses,
+            pending_review_courses=stats.pending_review_courses,
+            draft_courses=stats.draft_courses,
+            rejected_courses=stats.rejected_courses,
+            total_reviews=stats.total_reviews,
+            average_rating=stats.average_rating,
+        )
+
+    async def list_organization_course_metrics(
+        self,
+        request: pb.ListOrganizationCourseMetricsRequest,
+        ctx: RequestContext[
+            pb.ListOrganizationCourseMetricsRequest,
+            pb.ListOrganizationCourseMetricsResponse,
+        ],
+    ) -> pb.ListOrganizationCourseMetricsResponse:
+        current_user = require_current_user()
+        status_map: dict[pb.CourseStatus, CourseStatus | None] = {
+            pb.CourseStatus.UNSPECIFIED: None,
+            pb.CourseStatus.DRAFT: CourseStatus.DRAFT,
+            pb.CourseStatus.PENDING_REVIEW: CourseStatus.PENDING_REVIEW,
+            pb.CourseStatus.PUBLISHED: CourseStatus.PUBLISHED,
+            pb.CourseStatus.REJECTED: CourseStatus.REJECTED,
+        }
+        if request.status not in status_map:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT,
+                "Bộ lọc trạng thái khóa học không hợp lệ.",
+            )
+
+        try:
+            result = await self.use_case.list_organization_course_metrics(
+                current_user=current_user,
+                organization_id=request.organization_id,
+                page=request.page,
+                page_size=request.page_size,
+                search_query=request.search_query,
+                status=status_map[request.status],
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except KeyError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.ListOrganizationCourseMetricsResponse(
+            courses=[
+                pb.AdminCourseQualityMetric(
+                    course_id=m.course_id,
+                    title=m.title,
+                    partner_name=m.partner_name,
+                    status=_to_pb_course_status(m.status),
+                    enrolled_count=m.enrolled_count,
+                    completed_count=m.completed_count,
+                    average_rating=m.average_rating,
+                    review_count=m.review_count,
+                    revenue=m.revenue,
+                )
+                for m in result.courses
+            ],
+            total_count=result.total_count,
+            page=result.page,
+            page_size=result.page_size,
         )

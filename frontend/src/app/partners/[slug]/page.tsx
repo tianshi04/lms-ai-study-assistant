@@ -4,33 +4,34 @@ import { Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
+import { AlertTriangle, BookOpen, ExternalLink, Globe, GraduationCap, PenTool } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Surface } from "@/components/ui/Surface";
-import { Progress } from "@/components/ui/Progress";
 import { Chip } from "@/components/ui/Chip";
-import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
+import { Surface } from "@/components/ui/Surface";
+import { useCoursesQuery, usePartnerDetailQuery } from "@/lib/query_hooks";
 
 function PartnerPublicContent() {
   const params = useParams();
   const router = useRouter();
   const slug = (params?.slug as string) || "";
 
-  const { data: partners = [], isLoading: partnersLoading } = usePartnersQuery();
+  const { data: partner, isLoading: partnerLoading } = usePartnerDetailQuery(slug);
   const { data: courses = [], isLoading: coursesLoading } = useCoursesQuery();
-
-  const partner = partners.find((p) => p.slug === slug || p.id === slug);
 
   const partnerCourses = partner
     ? courses.filter(
         (c) =>
+          c.issuerPartnerId === partner.id ||
+          c.organizationId === partner.id ||
           c.partnerName.toLowerCase() === partner.name.toLowerCase() ||
           (c.partnerLogoUrl && partner.logoUrl && c.partnerLogoUrl === partner.logoUrl),
       )
     : [];
 
-  if (partnersLoading || coursesLoading) {
+  if (partnerLoading || coursesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">
@@ -220,7 +221,7 @@ function PartnerPublicContent() {
                       </div>
 
                       <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                        <div className="flex items-center space-x-1 text-xs font-semibold text-amber-400">
+                        <div className="flex items-center space-x-1 text-xs font-semibold text-warning">
                           <span>
                             ★ {course.averageRating ? course.averageRating.toFixed(1) : "5.0"}
                           </span>
@@ -241,7 +242,6 @@ function PartnerPublicContent() {
 
           {/* Right Sidebar Column: Verification & Signer Info */}
           <div className="space-y-6">
-            {/* Signer Info Box */}
             {(partner.signerName || partner.signerTitle) && (
               <Surface variant="low" shape="2xl" className="p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-4">
@@ -281,7 +281,6 @@ function PartnerPublicContent() {
               </Surface>
             )}
 
-            {/* Allowed Domains Box */}
             {partner.allowedDomains && partner.allowedDomains.length > 0 && (
               <Surface variant="low" shape="2xl" className="p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-3">
@@ -307,7 +306,6 @@ function PartnerPublicContent() {
               </Surface>
             )}
 
-            {/* OpenBadges Compliance Badge */}
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20">
               <div className="flex items-center space-x-3 mb-2">
                 <GraduationCap aria-hidden="true" className="w-6 h-6 text-primary shrink-0" />

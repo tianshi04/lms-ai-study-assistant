@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.payment.application import PaymentUseCase
 from src.modules.payment.domain import (
     CoursePurchase,
@@ -196,7 +197,9 @@ async def test_purchase_course_success(mock_scope):
     mock_session.execute.return_value = mock_res
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     success, _msg, purchase = await use_case.purchase_course(
         user_id="user_123",
@@ -225,7 +228,9 @@ async def test_create_vnpay_payment_url_success(mock_scope):
     mock_session.execute.return_value = mock_res
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     from src.modules.payment.domain import PaymentTargetType
 
@@ -262,7 +267,9 @@ async def test_verify_vnpay_payment_success(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     from src.modules.payment.domain import PaymentTargetType
     from src.modules.payment.infrastructure.vnpay_service import VNPayService
@@ -341,7 +348,9 @@ async def test_process_vnpay_ipn_success(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     from src.modules.payment.domain import PaymentTargetType
     from src.modules.payment.infrastructure.vnpay_service import VNPayService
@@ -415,7 +424,9 @@ async def test_pending_order_reuse(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     # First call: creates new order
     (
@@ -463,7 +474,9 @@ async def test_amount_tampering_detected(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     _, _, _, _, txn_ref = await use_case.create_vnpay_payment_url(
         user_id="user_tamper",
@@ -514,7 +527,9 @@ async def test_list_user_purchases_returns_active_sub(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     future_exp = (datetime.now(UTC) + timedelta(days=20)).isoformat()
     sub = UserSubscription(
@@ -545,7 +560,9 @@ async def test_list_user_purchases_auto_reconciles_missing_subscription(mock_sco
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     now_iso = datetime.now(UTC).isoformat()
     for i in range(4):
@@ -619,7 +636,9 @@ async def test_subscribe_coursera_plus_creates_completed_order(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     success, _msg, sub = await use_case.subscribe_coursera_plus(
         user_id="user_direct_sub",
@@ -647,7 +666,9 @@ async def test_cancel_vnpay_order_success(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     (
         _success,
@@ -684,7 +705,9 @@ async def test_cancel_vnpay_order_wrong_user(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     (
         _success,
@@ -719,7 +742,9 @@ async def test_verify_vnpay_payment_wrong_user_ownership(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     _, _, _, _, txn_ref = await use_case.create_vnpay_payment_url(
         user_id="user_victim",
@@ -785,7 +810,9 @@ async def test_verify_vnpay_payment_code_24_cancelled(mock_scope):
     mock_scope.return_value = mock_ctx
 
     repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
+    use_case = PaymentUseCase(
+        repo=repo, catalog_repo_factory=SQLAlchemyCatalogRepository
+    )
 
     _, _, _, _, txn_ref = await use_case.create_vnpay_payment_url(
         user_id="user_cancel_portal",

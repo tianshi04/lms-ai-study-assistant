@@ -121,3 +121,12 @@ class AdminCertificatesPage:
     total_count: int = 0
     page: int = 1
     page_size: int = 10
+
+
+@dataclass(frozen=True)
+class OrganizationCertificateStats:
+    """Organization/Partner-scoped issued & revoked certificate counters."""
+
+    certificates_issued: int = 0
+    certificates_revoked: int = 0
+

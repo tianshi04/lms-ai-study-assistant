@@ -14,6 +14,8 @@ import {
   type GetAdminCertificateStatsResponse,
   type GetAdminCertificateTrendResponse,
   type ListAdminCertificatesResponse,
+  type GetOrganizationCertificateStatsResponse,
+  type ListOrganizationCertificatesResponse,
   type VerifiedCertificate,
 } from "@/gen/certificate/v1/certificate_pb";
 
@@ -88,6 +90,57 @@ export function useAdminCertificatesQuery({
   });
 }
 
+export function useOrganizationCertificateStatsQuery(
+  organizationId: string,
+  options?: Partial<UseQueryOptions<GetOrganizationCertificateStatsResponse, Error>>,
+) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<GetOrganizationCertificateStatsResponse, Error>({
+    queryKey: ["organizationCertificateStats", organizationId],
+    queryFn: async () => {
+      const client = getRpcClient(CertificateService);
+      return client.getOrganizationCertificateStats({ organizationId });
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && !!organizationId && (options?.enabled ?? true),
+  });
+}
+
+export interface OrganizationCertificatesParams {
+  organizationId: string;
+  page: number;
+  pageSize: number;
+  searchQuery: string;
+  status: AdminCertificateStatusFilter;
+}
+
+export function useOrganizationCertificatesQuery({
+  organizationId,
+  page,
+  pageSize,
+  searchQuery,
+  status,
+}: OrganizationCertificatesParams) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<ListOrganizationCertificatesResponse, Error>({
+    queryKey: ["organizationCertificates", organizationId, page, pageSize, searchQuery, status],
+    queryFn: async () => {
+      const client = getRpcClient(CertificateService);
+      return client.listOrganizationCertificates({
+        organizationId,
+        page,
+        pageSize,
+        searchQuery,
+        status,
+      });
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    enabled: isAuthenticated && !!organizationId,
+  });
+}
+
 export function useCertificateVerificationQuery(
   certificateId: string,
   options?: Partial<
@@ -153,6 +206,8 @@ export function useRevokeCertificateMutation(
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["adminCertificateStats"] });
       queryClient.invalidateQueries({ queryKey: ["adminCertificates"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationCertificateStats"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationCertificates"] });
       queryClient.invalidateQueries({ queryKey: ["certificate", variables.certificateId] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },

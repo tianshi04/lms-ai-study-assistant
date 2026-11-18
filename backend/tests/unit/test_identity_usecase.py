@@ -456,7 +456,7 @@ async def test_list_enterprise_seats(mock_session_scope):
     usecase = IdentityUseCase()
     res = await usecase.list_enterprise_seats("Google")
     assert len(res) == 1
-    assert res[0]["partner_name"] == "Google"
+    assert res[0].partner_name == "Google"
 
 
 @pytest.mark.asyncio
@@ -467,8 +467,8 @@ async def test_create_enterprise_seat(mock_session_scope):
 
     usecase = IdentityUseCase()
     res = await usecase.create_enterprise_seat("Meta", "META_KEY_1")
-    assert res["seat_key"] == "META_KEY_1"
-    assert res["partner_name"] == "Meta"
+    assert res.seat_key == "META_KEY_1"
+    assert res.partner_name == "Meta"
     mock_session.add.assert_called_once()
 
 
@@ -618,7 +618,7 @@ async def test_revoke_enterprise_seat_progress_guard(
     )
 
     mock_learning_repo = AsyncMock()
-    mock_learning_repo.find_progress = AsyncMock(return_value=progress)
+    mock_learning_repo.get_progress = AsyncMock(return_value=progress)
 
     usecase = IdentityUseCase(learning_repo_factory=lambda s: mock_learning_repo)
     ok, msg = await usecase.revoke_enterprise_seat("u1", course_id="c1")

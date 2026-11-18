@@ -5,6 +5,7 @@ from src.modules.certificate.domain.entities import (
     AdminCertificateStats,
     AdminCertificateTrendPoint,
     FinancialAidApplication,
+    OrganizationCertificateStats,
     VerifiedCertificate,
 )
 
@@ -119,3 +120,21 @@ class ICertificateRepository(ABC):
         is_revoked: bool | None = None,
     ) -> AdminCertificatesPage:
         """Return a 1-based page of certificates ordered valid-first then by ID."""
+
+    @abstractmethod
+    async def get_organization_certificate_stats(
+        self, course_ids: list[str]
+    ) -> OrganizationCertificateStats:
+        """Aggregate issued and revoked certificate counts for an Organization's courses."""
+
+    @abstractmethod
+    async def list_organization_certificates(
+        self,
+        course_ids: list[str],
+        page: int,
+        page_size: int,
+        search_query: str = "",
+        is_revoked: bool | None = None,
+    ) -> AdminCertificatesPage:
+        """Return a 1-based page of certificates issued for an Organization's courses."""
+

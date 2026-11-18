@@ -6,7 +6,9 @@ from src.modules.identity.domain.entities import (
     InstructorApplication,
     Invitation,
     Organization,
+    OrganizationIdentityStats,
     OrganizationMember,
+    SeatHolderUserRow,
     User,
 )
 
@@ -27,8 +29,11 @@ class IIdentityRepository(Protocol):
 class IEnterpriseLicenseRepository(Protocol):
     async def get_by_key(self, key: str) -> EnterpriseLicense | None: ...
     async def list_licenses(
-        self, partner_name: str = ""
+        self, partner_name: str = "", organization_id: str = ""
     ) -> list[EnterpriseLicense]: ...
+    async def get_active_available_license_for_org(
+        self, organization_id: str
+    ) -> EnterpriseLicense | None: ...
     async def create_license(
         self, license_entity: EnterpriseLicense
     ) -> EnterpriseLicense: ...
@@ -64,6 +69,16 @@ class IOrganizationRepository(Protocol):
         details: str = "",
     ) -> dict[str, Any]: ...
     async def list_audit_logs(self, org_id: str) -> list[dict[str, Any]]: ...
+    async def get_organization_identity_stats(
+        self, org_id: str
+    ) -> OrganizationIdentityStats: ...
+    async def list_organization_seat_holder_users(
+        self,
+        org_id: str,
+        page: int | None = None,
+        page_size: int | None = None,
+        search_query: str = "",
+    ) -> tuple[list[SeatHolderUserRow], int]: ...
 
 
 class IInstructorApplicationRepository(Protocol):
