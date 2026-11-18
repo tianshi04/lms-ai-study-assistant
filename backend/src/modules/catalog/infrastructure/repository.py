@@ -3129,4 +3129,3 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             )
             for r in rows
         ]
-

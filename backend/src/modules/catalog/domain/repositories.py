@@ -475,4 +475,3 @@ class ICatalogRepository(ABC):
         status: CourseStatus | None = None,
     ) -> list[AdminCourseSummaryRow]:
         """List summary rows for courses belonging to or issued by an Organization/Partner."""
-
