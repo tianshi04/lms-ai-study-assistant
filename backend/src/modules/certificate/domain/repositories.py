@@ -136,4 +136,3 @@ class ICertificatePdfRenderer(ABC):
     @abstractmethod
     def render(self, payload: CertificatePdfRenderInput) -> bytes:
         """Render the certificate PDF synchronously in memory."""
-

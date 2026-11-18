@@ -143,4 +143,3 @@ class CertificatePdfRenderInput:
     verification_url: str
     partner_logo_bytes: bytes | None = None
     signature_image_bytes: bytes | None = None
-
