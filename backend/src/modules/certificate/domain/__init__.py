@@ -42,4 +42,3 @@ __all__ = [
     "VerifiedCertificate",
     "count_words",
 ]
-

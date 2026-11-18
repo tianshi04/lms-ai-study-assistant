@@ -110,7 +110,6 @@ async def seed_commerce_and_community(session: AsyncSession) -> None:
             created_at="2026-07-22T10:15:00Z",
             upvote_count=5,
             is_staff_pinned=True,
-            is_solved=True,
         ),
         ForumThreadORM(
             id="thread-web-01",
@@ -123,7 +122,6 @@ async def seed_commerce_and_community(session: AsyncSession) -> None:
             created_at="2026-07-22T12:00:00Z",
             upvote_count=8,
             is_staff_pinned=False,
-            is_solved=True,
         ),
         ForumThreadORM(
             id="thread-dl-01",

@@ -137,4 +137,3 @@ class ICertificateRepository(ABC):
         is_revoked: bool | None = None,
     ) -> AdminCertificatesPage:
         """Return a 1-based page of certificates issued for an Organization's courses."""
-

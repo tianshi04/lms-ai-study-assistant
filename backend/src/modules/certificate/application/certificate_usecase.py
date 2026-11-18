@@ -611,4 +611,3 @@ class CertificateUseCase:
                 search_query=normalized_search,
                 is_revoked=is_revoked,
             )
-

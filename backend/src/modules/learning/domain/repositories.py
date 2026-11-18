@@ -120,3 +120,9 @@ class ILearningRepository(ABC):
         self, course_ids: list[str]
     ) -> dict[str, tuple[int, int]]:
         """Return ``{course_id: (enrolled_count, completed_count)}`` for ``course_ids``."""
+
+    @abstractmethod
+    async def get_user_progress_summaries(
+        self, user_ids: list[str]
+    ) -> dict[str, tuple[int, float]]:
+        """Return ``{user_id: (enrolled_courses_count, max_progress_percent)}`` for ``user_ids``."""

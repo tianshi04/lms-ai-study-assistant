@@ -129,4 +129,3 @@ class OrganizationCertificateStats:
 
     certificates_issued: int = 0
     certificates_revoked: int = 0
-
