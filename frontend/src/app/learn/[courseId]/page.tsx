@@ -30,6 +30,16 @@ import { playbackTimeStore } from "@/lib/playback_time_store";
 import { CourseSyllabusDrawer } from "@/components/player/sidebar/CourseSyllabusDrawer";
 import { StreakBadge } from "@/components/player/StreakBadge";
 import { useStudyTracker } from "@/lib/hooks/useStudyTracker";
+import { useVideoPositionTracker } from "@/lib/hooks/useVideoPositionTracker";
+import { formatTime } from "@/components/player/ai/utils";
+import {
+  getCachedVideoPosition,
+  getResumableSnapshotForItem,
+  resolveMergedVideoPosition,
+  VIDEO_RESUME_MIN_SECONDS,
+  type VideoPositionEntry,
+  type VideoResumeSnapshot,
+} from "@/lib/video_position_cache";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Menu, Sparkles, X, CheckCircle2, ChevronRight } from "lucide-react";
@@ -39,9 +49,9 @@ function CoursePlayerContent() {
   const courseId = params?.courseId as string;
   const toast = useToast();
 
-  const { isInstructorOrAdmin } = useAuth();
+  const { isInstructorOrAdmin, userId: authUserId } = useAuth();
   const searchParams = useSearchParams();
-  const previewItemId = searchParams?.get("itemId") || null;
+  const previewItemId = searchParams?.get("itemId") || searchParams?.get("item") || null;
   const isPreviewMode = isInstructorOrAdmin && searchParams?.get("preview") === "true";
   const urlTab = searchParams?.get("tab");
   const urlThreadId = searchParams?.get("threadId");
@@ -51,6 +61,12 @@ function CoursePlayerContent() {
   const [course, setCourse] = useState<Course | null>(null);
   const [activeItem, setActiveItem] = useState<LearningItem | null>(null);
   const [progress, setProgress] = useState<LearningProgress | null>(null);
+  const [videoPositionsMap, setVideoPositionsMap] = useState<Record<string, VideoPositionEntry>>(
+    {},
+  );
+  const [activeResumeSnapshot, setActiveResumeSnapshot] = useState<VideoResumeSnapshot | null>(
+    null,
+  );
   const [notes, setNotes] = useState<PersonalNote[]>([]);
   const [activeTab, setActiveTab] = useState<
     "transcript" | "forum" | "notes" | "deadlines" | "ai_assistant"
@@ -254,6 +270,118 @@ function CoursePlayerContent() {
   const [externalAiPrompt, setExternalAiPrompt] = useState<string | null>(null);
   const isVideoItem = activeItem?.type === 1 || Boolean(activeItem?.videoUrl);
   const isLectureItem = isVideoItem || activeItem?.type === 2;
+  const effectiveUserId = userId || authUserId || progress?.userId || "";
+
+  const activeWeekIndex = useMemo(() => {
+    if (!course || !activeItem) return -1;
+    return course.weekModules.findIndex((wm) =>
+      wm.lessons.some((l) => l.items.some((i) => i.id === activeItem.id)),
+    );
+  }, [course, activeItem]);
+
+  const isActiveItemLocked =
+    !isPreviewMode &&
+    !loadingPaymentAccess &&
+    Boolean(activeItem && activeWeekIndex !== -1 && isItemLocked(activeItem, activeWeekIndex));
+
+  const initialVideoTime =
+    activeItem && activeResumeSnapshot && activeResumeSnapshot.itemId === activeItem.id
+      ? activeResumeSnapshot.positionSeconds
+      : 0;
+  const initialVideoDuration =
+    activeItem && activeResumeSnapshot && activeResumeSnapshot.itemId === activeItem.id
+      ? activeResumeSnapshot.durationSeconds
+      : 0;
+
+  const handlePositionPersisted = useCallback(
+    (itemId: string, positionSeconds: number, durationSeconds: number, updatedAt: string) => {
+      setVideoPositionsMap((prev) => ({
+        ...prev,
+        [itemId]: { positionSeconds, durationSeconds, updatedAt },
+      }));
+    },
+    [],
+  );
+
+  const videoTracker = useVideoPositionTracker({
+    userId: effectiveUserId,
+    courseId: resolvedCourseId,
+    itemId: activeItem?.id || null,
+    isVideoItem,
+    isVideoPlaying,
+    isPreviewMode,
+    isItemLocked: isActiveItemLocked,
+    initialPositionSeconds: initialVideoTime,
+    initialDurationSeconds: initialVideoDuration,
+    onPositionPersisted: handlePositionPersisted,
+  });
+
+  const readPlayerMetrics = useCallback(() => {
+    const player = videoRef.current as UniversalVideoRef | null;
+    const pos = player?.getCurrentTime?.() ?? player?.currentTime ?? playbackTimeStore.get();
+    const dur = player?.getDuration?.() ?? player?.duration ?? 0;
+    return {
+      positionSeconds: Number.isFinite(pos) ? pos : 0,
+      durationSeconds: Number.isFinite(dur) ? dur : 0,
+    };
+  }, []);
+
+  const handleRestartVideoFromBeginning = useCallback(() => {
+    if (!activeItem) return;
+    maxTimeRef.current = 0;
+    pendingSeekRef.current = { target: 0, expiresAt: Date.now() + 2000 };
+    playbackTimeStore.set(0);
+    setAnsweredQuizTimestamps(new Set());
+    setActiveQuiz(null);
+    setSelectedOption(null);
+    setQuizSubmitted(false);
+
+    const { durationSeconds } = readPlayerMetrics();
+    setActiveResumeSnapshot((prev) =>
+      prev && prev.itemId === activeItem.id ? { ...prev, positionSeconds: 0 } : prev,
+    );
+    videoTracker.resetToZero(durationSeconds);
+
+    const player = videoRef.current as UniversalVideoRef | null;
+    if (player) {
+      if (typeof player.seekTo === "function") {
+        player.seekTo(0);
+      } else {
+        player.currentTime = 0;
+      }
+    }
+  }, [activeItem, readPlayerMetrics, videoTracker]);
+
+  const selectLearningItem = useCallback(
+    (
+      item: LearningItem | null,
+      positionsOverride?: Record<string, VideoPositionEntry>,
+      options?: { isLocked?: boolean },
+    ) => {
+      setIsVideoPlaying(false);
+      if (!item || isPreviewMode || options?.isLocked) {
+        setActiveResumeSnapshot(null);
+        setActiveItem(item);
+        return;
+      }
+      const itemIsVideo = item.type === 1 || Boolean(item.videoUrl);
+      if (!itemIsVideo) {
+        setActiveResumeSnapshot(null);
+        setActiveItem(item);
+        return;
+      }
+      const sourceMap = positionsOverride ?? videoPositionsMap;
+      const snapshot = getResumableSnapshotForItem(
+        item.id,
+        sourceMap[item.id] ?? null,
+        getCachedVideoPosition(effectiveUserId, item.id),
+        effectiveUserId,
+      );
+      setActiveResumeSnapshot(snapshot);
+      setActiveItem(item);
+    },
+    [effectiveUserId, isPreviewMode, videoPositionsMap],
+  );
 
   // Auto-adjust activeTab when activeItem changes if the activeTab is not supported
   useEffect(() => {
@@ -391,6 +519,8 @@ function CoursePlayerContent() {
           if (!finalItem) {
             finalItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0] || null;
           }
+          setVideoPositionsMap({});
+          setActiveResumeSnapshot(null);
           setActiveItem(finalItem);
           setProgress({
             userId: storedUserId || "preview-user",
@@ -410,6 +540,37 @@ function CoursePlayerContent() {
             });
             const loadedProgress = progressRes.progress ?? null;
             setProgress(loadedProgress);
+
+            const resolvedUserId = storedUserId || authUserId || loadedProgress?.userId || "";
+            const dbByItemId: Record<string, VideoPositionEntry> = {};
+            for (const vp of progressRes.videoPositions || []) {
+              dbByItemId[vp.itemId] = {
+                positionSeconds: vp.positionSeconds,
+                durationSeconds: vp.durationSeconds,
+                updatedAt: vp.updatedAt,
+              };
+            }
+
+            const mergedPositionsMap: Record<string, VideoPositionEntry> = { ...dbByItemId };
+            if (courseRes.course?.weekModules) {
+              for (const wm of courseRes.course.weekModules) {
+                for (const l of wm.lessons) {
+                  for (const it of l.items) {
+                    if (it.type === 1 || it.videoUrl) {
+                      const merged = resolveMergedVideoPosition(
+                        dbByItemId[it.id] ?? null,
+                        getCachedVideoPosition(resolvedUserId, it.id),
+                        { userId: resolvedUserId, itemId: it.id },
+                      );
+                      if (merged) {
+                        mergedPositionsMap[it.id] = merged;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            setVideoPositionsMap(mergedPositionsMap);
 
             if (previewItemId && courseRes.course?.weekModules) {
               for (const wm of courseRes.course.weekModules) {
@@ -439,6 +600,18 @@ function CoursePlayerContent() {
             if (!finalItem) {
               finalItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0] || null;
             }
+            if (finalItem && (finalItem.type === 1 || finalItem.videoUrl)) {
+              setActiveResumeSnapshot(
+                getResumableSnapshotForItem(
+                  finalItem.id,
+                  mergedPositionsMap[finalItem.id] ?? null,
+                  getCachedVideoPosition(resolvedUserId, finalItem.id),
+                  resolvedUserId,
+                ),
+              );
+            } else {
+              setActiveResumeSnapshot(null);
+            }
             setActiveItem(finalItem);
 
             if (loadedProgress && loadedProgress.overallProgressPercent >= 100) {
@@ -467,6 +640,7 @@ function CoursePlayerContent() {
             if (!finalItem) {
               finalItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0] || null;
             }
+            setActiveResumeSnapshot(null);
             setActiveItem(finalItem);
           }
         }
@@ -515,7 +689,7 @@ function CoursePlayerContent() {
         if (foundUnlocked) break;
       }
       if (foundUnlocked && foundUnlocked.id !== activeItem.id) {
-        setActiveItem(foundUnlocked);
+        selectLearningItem(foundUnlocked, undefined, { isLocked: false });
       }
     }
   }, [
@@ -527,25 +701,87 @@ function CoursePlayerContent() {
     activeItem,
     isGradedItem,
     isItemLocked,
+    selectLearningItem,
   ]);
 
-  // Reset in-video quiz state when switching learning items
+  // Reset / restore playback & in-video quiz state when switching learning items
   const activeItemId = activeItem?.id;
+  const restartHandlerRef = useRef(handleRestartVideoFromBeginning);
+  const toastRef = useRef(toast);
   useEffect(() => {
+    restartHandlerRef.current = handleRestartVideoFromBeginning;
+    toastRef.current = toast;
+  });
+
+  const lastInitializedItemIdRef = useRef<string | null>(null);
+  const prevToastItemIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!activeItemId) return;
+    if (lastInitializedItemIdRef.current === activeItemId) return;
+    lastInitializedItemIdRef.current = activeItemId;
+
+    if (prevToastItemIdRef.current && prevToastItemIdRef.current !== activeItemId) {
+      toastRef.current.dismiss(`video-resume-${prevToastItemIdRef.current}`);
+    }
+
+    const resumeSec =
+      activeResumeSnapshot && activeResumeSnapshot.itemId === activeItemId
+        ? activeResumeSnapshot.positionSeconds
+        : 0;
+
     /* eslint-disable react-hooks/set-state-in-effect */
-    playbackTimeStore.set(0);
-    maxTimeRef.current = 0;
+    playbackTimeStore.set(resumeSec);
+    maxTimeRef.current = resumeSec;
     pendingSeekRef.current = null;
     setActiveQuiz(null);
     setSelectedOption(null);
     setQuizSubmitted(false);
-    setAnsweredQuizTimestamps(new Set());
+
+    const skippedTimestamps = new Set<number>();
+    if (resumeSec >= VIDEO_RESUME_MIN_SECONDS && activeItem?.inVideoQuizzes?.length) {
+      for (const quiz of activeItem.inVideoQuizzes) {
+        if (quiz.timestampSeconds < resumeSec - 1) {
+          skippedTimestamps.add(quiz.timestampSeconds);
+        }
+      }
+    }
+    setAnsweredQuizTimestamps(skippedTimestamps);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [activeItemId]);
+
+    if (resumeSec >= VIDEO_RESUME_MIN_SECONDS) {
+      const toastId = `video-resume-${activeItemId}`;
+      prevToastItemIdRef.current = activeItemId;
+      toastRef.current.info(`Đã tiếp tục từ ${formatTime(resumeSec)}`, {
+        id: toastId,
+        timeout: 6000,
+        action: {
+          label: "Xem lại từ đầu",
+          onClick: () => {
+            toastRef.current.dismiss(toastId);
+            restartHandlerRef.current();
+          },
+        },
+      });
+    } else {
+      prevToastItemIdRef.current = null;
+    }
+  }, [activeItemId, activeItem, activeResumeSnapshot]);
+
+  // Dismiss any active video resume toast if user navigates away from the player
+  useEffect(() => {
+    return () => {
+      if (prevToastItemIdRef.current) {
+        toastRef.current.dismiss(`video-resume-${prevToastItemIdRef.current}`);
+      }
+    };
+  }, []);
 
   // Track last accessed learning item in database (only after initial load completes)
   useEffect(() => {
-    if (!isInitialLoadCompletedRef.current || !activeItemId || isPreviewMode) return;
+    if (!isInitialLoadCompletedRef.current || !activeItemId || !resolvedCourseId || isPreviewMode) {
+      return;
+    }
     const client = getRpcClient(LearningService);
     client.getProgress({ courseId: resolvedCourseId, currentItemId: activeItemId }).catch(() => {
       // Ignore background tracking failure
@@ -593,12 +829,15 @@ function CoursePlayerContent() {
 
     const integerTime = Math.floor(currentSeconds);
 
-    // Auto mark as completed if watched >= 80% of video duration
     const videoDuration =
-      (videoRef.current as any)?.duration || (videoRef.current as any)?.getDuration?.() || 0;
+      (videoRef.current as any)?.getDuration?.() || (videoRef.current as any)?.duration || 0;
+    const safeDuration = Number.isFinite(videoDuration) ? videoDuration : 0;
+    videoTracker.reportTimeUpdate(currentSeconds, safeDuration);
+
+    // Auto mark as completed if watched >= 80% of video duration
     if (
-      videoDuration > 0 &&
-      currentSeconds >= videoDuration * 0.8 &&
+      safeDuration > 0 &&
+      currentSeconds >= safeDuration * 0.8 &&
       !progress?.completedItemIds.includes(activeItem.id) &&
       !markedItemIdsRef.current.has(activeItem.id)
     ) {
@@ -631,10 +870,26 @@ function CoursePlayerContent() {
     if (!videoRef.current || !activeItem) return;
   };
 
+  const handleVideoSeeked = useCallback(
+    (seekedTime: number) => {
+      if (seekedTime === 0) {
+        maxTimeRef.current = 0;
+      }
+      const rounded = Math.round(seekedTime * 100) / 100;
+      playbackTimeStore.set(rounded);
+      const { durationSeconds } = readPlayerMetrics();
+      videoTracker.reportSeeked(seekedTime, durationSeconds);
+    },
+    [readPlayerMetrics, videoTracker],
+  );
+
   // Jump to video timestamp from transcript
   const handleSeekVideo = (timestampSeconds: number) => {
     // Optimistic update: highlight the target cue immediately instead of waiting for the player to report back
     pendingSeekRef.current = { target: timestampSeconds, expiresAt: Date.now() + 2000 };
+    if (timestampSeconds === 0) {
+      maxTimeRef.current = 0;
+    }
     playbackTimeStore.set(timestampSeconds);
     if (videoRef.current) {
       videoRef.current.currentTime = timestampSeconds;
@@ -742,9 +997,17 @@ function CoursePlayerContent() {
       return;
     }
     setLockNotice("");
-    setActiveItem(nextItem);
+    selectLearningItem(nextItem);
     setActiveQuiz(null);
-  }, [nextItem, course, isItemLocked, isPreviewMode, isPaidAccess, isGradedItem]);
+  }, [
+    nextItem,
+    course,
+    isItemLocked,
+    isPreviewMode,
+    isPaidAccess,
+    isGradedItem,
+    selectLearningItem,
+  ]);
 
   if (!course) {
     return (
@@ -894,11 +1157,12 @@ function CoursePlayerContent() {
                 isSidebarOpen={isSidebarOpen}
                 activeItem={activeItem}
                 progress={progress}
+                videoPositions={videoPositionsMap}
                 collapsedWeeks={collapsedWeeks}
                 onClose={() => setIsSidebarOpen(false)}
                 onToggleWeek={toggleWeek}
                 onSelectItem={(item) => {
-                  setActiveItem(item);
+                  selectLearningItem(item);
                   setActiveQuiz(null);
                 }}
                 onSetLockNotice={setLockNotice}
@@ -956,15 +1220,26 @@ function CoursePlayerContent() {
               <VideoPlayer
                 videoRef={videoRef}
                 activeItem={activeItem}
-                userId={userId}
+                userId={effectiveUserId}
+                initialTime={initialVideoTime}
                 activeQuiz={activeQuiz}
                 selectedOption={selectedOption}
                 quizSubmitted={quizSubmitted}
                 completedItemIds={progress?.completedItemIds || []}
                 onTimeUpdate={handleTimeUpdate}
                 onSeeking={handleSeeking}
+                onSeeked={handleVideoSeeked}
                 onPlay={() => setIsVideoPlaying(true)}
-                onPause={() => setIsVideoPlaying(false)}
+                onPause={() => {
+                  setIsVideoPlaying(false);
+                  const { positionSeconds, durationSeconds } = readPlayerMetrics();
+                  videoTracker.reportPause(positionSeconds, durationSeconds);
+                }}
+                onEnded={() => {
+                  setIsVideoPlaying(false);
+                  const { durationSeconds } = readPlayerMetrics();
+                  videoTracker.reportEnded(durationSeconds);
+                }}
                 onSelectOption={setSelectedOption}
                 onSubmitQuiz={handleQuizSubmit}
                 onContinueVideo={handleContinueVideo}

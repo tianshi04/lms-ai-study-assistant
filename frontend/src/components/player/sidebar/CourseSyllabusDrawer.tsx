@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/Button";
 import { X, ChevronDown, ChevronUp, CheckCircle2, Lock } from "lucide-react";
 import type { Course, LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import type { LearningProgress } from "@/gen/learning/v1/learning_pb";
+import { formatTime } from "@/components/player/ai/utils";
+import {
+  normalizeVideoPositionClient,
+  VIDEO_RESUME_MIN_SECONDS,
+  type VideoPositionEntry,
+} from "@/lib/video_position_cache";
 
 function getItemTypeName(type: number): string {
   switch (type) {
@@ -30,6 +36,7 @@ interface CourseSyllabusDrawerProps {
   isSidebarOpen: boolean;
   activeItem: LearningItem | null;
   progress: LearningProgress | null;
+  videoPositions?: Record<string, VideoPositionEntry>;
   collapsedWeeks: Record<string, boolean>;
   onClose: () => void;
   onToggleWeek: (weekId: string) => void;
@@ -47,6 +54,7 @@ export function CourseSyllabusDrawer({
   isSidebarOpen,
   activeItem,
   progress,
+  videoPositions,
   collapsedWeeks,
   onClose,
   onToggleWeek,
@@ -170,6 +178,16 @@ export function CourseSyllabusDrawer({
                             const itemLocked = isItemLocked(item, weekIndex);
                             const isAuditLocked =
                               !isPreviewMode && !isPaidAccess && isGradedItem(item.type);
+                            const isVideo = item.type === 1 || Boolean(item.videoUrl);
+                            const savedEntry = videoPositions?.[item.id];
+                            const resumableSeconds =
+                              !isPreviewMode && !itemLocked && !isDone && isVideo && savedEntry
+                                ? normalizeVideoPositionClient(
+                                    savedEntry.positionSeconds,
+                                    savedEntry.durationSeconds,
+                                  ).positionSeconds
+                                : 0;
+                            const showResumeHint = resumableSeconds >= VIDEO_RESUME_MIN_SECONDS;
 
                             return (
                               <Button
@@ -250,7 +268,11 @@ export function CourseSyllabusDrawer({
                                       ? isAuditLocked
                                         ? "Bị khóa (Audit Mode) • Yêu cầu Paid Mode"
                                         : `Bị khóa • Hoàn thành Tuần ${weekIndex}`
-                                      : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} phút`}
+                                      : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} phút${
+                                          showResumeHint
+                                            ? ` • Đã xem ${formatTime(resumableSeconds)}`
+                                            : ""
+                                        }`}
                                   </div>
                                 </div>
                               </Button>

@@ -355,6 +355,16 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * Nếu ngày hoạt động gần nhất `last_active_date == today`: Giữ nguyên `current_streak`.
     * Nếu học viên bỏ lỡ quá 1 ngày (`last_active_date < yesterday` hoặc chưa từng học): Chuỗi bị đứt quãng, reset về `current_streak = 1` khi đạt mốc ngày mới.
     * Khi truy vấn qua `GetLearningStreak`, hệ thống tính toán `effective_current_streak = current_streak` nếu `last_active_date` là hôm nay hoặc hôm qua; ngược lại trả về 0 để loại bỏ hoàn toàn hiện tượng hiển thị chuỗi ma (Phantom Streak).
+* **BR_LEARNING_004 (Ghi nhớ & Tự động Khôi phục Vị trí Phát Video - Video Playback Position Persistence & Auto-Resume):**
+  * *Ngưỡng khôi phục & Đặt lại khi gần kết thúc:*
+    * Vị trí `< 5` giây (`VIDEO_RESUME_MIN_SECONDS = 5`) không tự động tua lại và không hiển thị Toast thông báo.
+    * Khi video kết thúc (`onEnded`) hoặc vị trí nằm trong **5 giây cuối** đối với video dài hơn 15 giây (`VIDEO_END_RESET_THRESHOLD_SECONDS = 5`, `VIDEO_END_RESET_MIN_DURATION_SECONDS = 15`), cả Client và Server tự động chuẩn hóa `last_position_seconds = 0` (`MAX_VIDEO_POSITION_SECONDS = 86400`), nhưng vẫn giữ nguyên trạng thái hoàn thành bài học trong `user_item_completions`.
+  * *Cơ chế Lưu vị trí đa tầng & Giảm tải Request:*
+    * Lưu qua RPC `SaveVideoPosition(course_id, item_id, position_seconds, duration_seconds)`: định kỳ mỗi **10 giây** khi đang phát (nếu lệch `>= 3` giây), lưu ngay khi **Pause**, debounce **500ms** khi **Seek**, đặt về `0` khi **Ended**, và gửi qua `fetch(..., { keepalive: true, credentials: "include" })` khi chuyển bài, ẩn tab (`visibilitychange === "hidden"`) hoặc rời trang (`pagehide`).
+    * `SaveVideoPosition` mang tính chất *idempotent overwrite*, tách biệt hoàn toàn với `RecordLearningTime` (không chịu cooldown 5 giây của Heartbeat) nhưng vẫn bắt buộc Enrollment Guard (`is_enrolled`) và kiểm tra bài học thuộc khóa học là Video (`resolve_course_video_item`). Khi upsert, chỉ ghi đè `video_duration_seconds` khi `duration_seconds > 0` để tránh mất tổng thời lượng lúc YouTube Player chưa sẵn sàng.
+  * *Nguồn chân lý đa thiết bị, Quiz & Miễn trừ:*
+    * `PostgreSQL` (`learning_item_progresses`) là nguồn chân lý đồng bộ xuyên thiết bị (trả về qua `GetProgressResponse.video_positions`); `localStorage` (`lms_video_pos:${userId}:${itemId}`, TTL 7 ngày) chỉ đóng vai trò buffer tức thì và chỉ ghi đè khi mới hơn `position_updated_at` từ DB.
+    * Khi tự động tua tới `resumed_position` (>= 5s), các In-Video Quiz có `timestamp_seconds < resumed_position - 1` được đánh dấu đã bỏ qua để không bật lại quiz cũ; nút **"Xem lại từ đầu"** trên Toast sẽ đặt lại vị trí về `0`, xóa bộ đánh dấu quiz và lưu `0` lên Server. Không đọc/ghi vị trí ở Chế độ Xem trước (`isPreviewMode`) hoặc bài học bị khóa.
 
 ---
 

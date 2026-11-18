@@ -2,7 +2,12 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from enum import Enum
 
-from src.modules.learning.domain.constants import DEADLINE_RESET_COOLDOWN_DAYS
+from src.modules.learning.domain.constants import (
+    DEADLINE_RESET_COOLDOWN_DAYS,
+    MAX_VIDEO_POSITION_SECONDS,
+    VIDEO_END_RESET_MIN_DURATION_SECONDS,
+    VIDEO_END_RESET_THRESHOLD_SECONDS,
+)
 from src.shared.domain.base import Entity, ValueObject
 
 
@@ -132,6 +137,34 @@ class LearningItemProgress:
     course_id: str
     time_spent_seconds: int = 0
     last_studied_at: str = ""
+    last_position_seconds: int = 0
+    video_duration_seconds: int = 0
+    position_updated_at: str = ""
+
+
+def normalize_video_position(
+    position_seconds: int, duration_seconds: int = 0
+) -> tuple[int, int]:
+    """Validate and normalize video playback position and duration in seconds.
+
+    Resets near-end positions to 0 so finished videos restart from the beginning.
+    """
+    if position_seconds < 0:
+        raise ValueError("Vị trí video không được nhỏ hơn 0.")
+    if duration_seconds < 0:
+        raise ValueError("Thời lượng video không được nhỏ hơn 0.")
+
+    safe_duration = min(duration_seconds, MAX_VIDEO_POSITION_SECONDS)
+    if safe_duration > 0:
+        clamped_pos = min(position_seconds, safe_duration)
+        if (
+            safe_duration > VIDEO_END_RESET_MIN_DURATION_SECONDS
+            and clamped_pos >= safe_duration - VIDEO_END_RESET_THRESHOLD_SECONDS
+        ):
+            return 0, safe_duration
+        return clamped_pos, safe_duration
+
+    return min(position_seconds, MAX_VIDEO_POSITION_SECONDS), 0
 
 
 @dataclass(frozen=True)

@@ -93,10 +93,12 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   2. Học viên bấm nút **"View Verified Certificate"**.
   3. Học viên bấm nút **"Share to LinkedIn"**.
   4. Giả lập một Nhà tuyển dụng mở trình duyệt độc lập, truy cập đường dẫn URL xác thực (`/verify/CERT-8F9A2B3C`) in trên chứng chỉ hoặc quét mã QR code.
+  5. Học viên hoặc Nhà tuyển dụng bấm nút **"Tải chứng chỉ (PDF)"** trên `/verify/[certId]` (hoặc nút **"Tải PDF"** trong tab Chứng chỉ tại `/my-learning`).
 * **Kết quả mong đợi (Expected Results):**
   * *Tại bước 1 & 2:* Hệ thống hiển thị pháo hoa chúc mừng hoàn thành khóa học. Giao diện chứng chỉ hiển thị đẹp mắt với Tên học viên (Immutable Data Snapshot), Tên khóa học, Logo đối tác phát hành (Partner Logo), Chữ ký xác nhận, Mã chứng chỉ độc nhất (`CERT-8F9A2B3C`) và mã QR code sinh tự động in-memory SVG.
   * *Tại bước 3:* Hệ thống mở cửa sổ kết nối LinkedIn cho phép tự động điền các trường metadata OpenBadges (Name, Issuer, Certificate ID, Issue Date) vào hồ sơ cá nhân của học viên.
   * *Tại bước 4:* Trang xác thực công khai hiển thị trạng thái xanh **"Valid Verified Certificate"** kèm đầy đủ thông tin xác nhận chính chủ từ hệ thống, chứng minh chứng chỉ là thật và không bị giả mạo.
+  * *Tại bước 5:* Hệ thống tải xuống tệp `Chung-chi-CERT-8F9A2B3C.pdf` khổ A4 ngang hiển thị đầy đủ Tiếng Việt, chữ ký bảo chứng và mã QR thật trỏ về URL xác thực; nếu chứng chỉ đã bị thu hồi (`is_revoked = True`), API trả về HTTP `403` và chặn xuất bản PDF.
 
 ---
 
@@ -142,4 +144,23 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   * *Tại bước 4:* Đánh giá được lưu thành công vào cơ sở dữ liệu, điểm số CSAT trung bình của khóa học được cập nhật ngay lập tức.
   * *Tại bước 5:* Hệ thống điều hướng trực tiếp sang trang xác thực chứng chỉ (`/verify/CERT-xxx`).
   * *Tại bước 6:* Đánh giá của học viên vừa gửi hiển thị công khai tại mục "Reviews & Ratings" trên trang thông tin khóa học.
+
+---
+
+## KỊCH BẢN UAT-09: KIỂM THỬ GHI NHỚ & TỰ ĐỘNG KHÔI PHỤC VỊ TRÍ PHÁT VIDEO (VIDEO AUTO-RESUME FLOW)
+
+* **Mục tiêu:** Xác minh hệ thống lưu vết vị trí xem dở của bài học video theo thời gian thực, tự động khôi phục vị trí khi tải lại trang hoặc quay lại từ `/my-learning`, hỗ trợ "Xem lại từ đầu", và đặt lại về `00:00` khi video chạy hết.
+* **Tác nhân thực hiện:** Học viên (Learner).
+* **Điều kiện bắt đầu:** Học viên đã ghi danh khóa học có các bài học Video (gắn phụ đề Transcript và có 1 In-Video Quiz ở mốc 00:45).
+* **Các bước thực hiện:**
+  1. Học viên mở Video bài giảng 1, xem hoặc tua đến mốc **01:30**, tạm dừng (Pause) hoặc chuyển sang Video bài giảng 2.
+  2. Học viên tải lại trang (`/learn/[courseId]`) hoặc quay lại `/my-learning` rồi bấm **"Tiếp tục học"**.
+  3. Trên thông báo Toast khôi phục vị trí, học viên bấm nút **"Xem lại từ đầu"**.
+  4. Học viên xem Video bài giảng 1 đến hết (`onEnded`) hoặc trong 5 giây cuối của video.
+  5. Học viên tải lại trang và mở lại Video bài giảng 1.
+* **Kết quả mong đợi (Expected Results):**
+  * *Tại bước 1:* Vị trí `90s` được lưu qua `SaveVideoPosition` (ngay khi Pause / keepalive khi đổi bài); sidebar lộ trình hiển thị `• Đã xem 01:30` cho bài giảng chưa hoàn thành.
+  * *Tại bước 2:* Hệ thống mở đúng Video bài giảng 1, trình phát tự động tua tới **01:30**, bảng Transcript cuộn/sáng đúng đoạn 01:30, In-Video Quiz ở 00:45 được tự động bỏ qua, và Toast hiển thị `"Đã tiếp tục từ 01:30"` kèm nút **"Xem lại từ đầu"**.
+  * *Tại bước 3:* Trình phát lập tức tua về **00:00**, Toast tự đóng, bộ đánh dấu In-Video Quiz được đặt lại và server lưu vị trí mới là `0`.
+  * *Tại bước 4 & 5:* Video được đánh dấu hoàn thành, đồng thời vị trí phát được tự động chuẩn hóa đặt lại về **00:00** để lần mở xem lại sau phát từ đầu mà vẫn giữ dấu tích hoàn thành.
 

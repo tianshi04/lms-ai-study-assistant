@@ -25,6 +25,8 @@ export class LearningPage {
 
   // Player action
   readonly markCompleteButton: Locator;
+  readonly resumeToast: Locator;
+  readonly restartFromBeginningButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -45,10 +47,13 @@ export class LearningPage {
     this.deadlinesHeading = page.locator('text=/Lịch Nộp Bài Hàng Tuần|Upcoming Course Deadlines|Các mốc Deadline|Thời hạn & Tiến độ/i').first();
     this.resetDeadlinesButton = page.getByRole('button', { name: /Reset My Deadlines/i });
     this.markCompleteButton = page.getByRole('button', { name: /Đánh dấu Hoàn thành|Mark Complete/i });
+    this.resumeToast = page.locator('text=/Đã tiếp tục từ (\\d+:)?\\d{2}:\\d{2}/i').first();
+    this.restartFromBeginningButton = page.getByRole('button', { name: /Xem lại từ đầu/i });
   }
 
-  async goto(courseId: string) {
-    await this.page.goto(`/learn/${courseId}`);
+  async goto(courseId: string, itemId?: string) {
+    const query = itemId ? `?itemId=${encodeURIComponent(itemId)}` : '';
+    await this.page.goto(`/learn/${courseId}${query}`);
   }
 
   async verifyPageLoaded() {
