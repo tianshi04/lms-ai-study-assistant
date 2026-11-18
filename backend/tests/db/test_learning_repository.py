@@ -4,6 +4,7 @@ import pytest
 
 from src.modules.learning.domain import DeadlineStatus
 from src.modules.learning.infrastructure.models import (
+    LearningItemProgressModel,
     LearningProgressModel,
     PersonalNoteModel,
     WeeklyDeadlineModel,
