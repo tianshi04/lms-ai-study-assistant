@@ -50,8 +50,8 @@ export class PartnerAdminPage {
     this.bannerUrlInput = page.locator('#partnerBanner');
     this.websiteUrlInput = page.locator('input[placeholder="https://hcmut.edu.vn"]');
     this.allowedDomainsInput = page.locator('input[placeholder="hcmut.edu.vn, vnuhcm.edu.vn"]');
-    this.signerNameInput = page.locator('input[placeholder="GS.TS. Nguyễn Văn A"]');
-    this.signerTitleInput = page.locator('input[placeholder="Hiệu trưởng"]');
+    this.signerNameInput = page.locator('#signerName, input[placeholder*="Nguyễn Văn A"]');
+    this.signerTitleInput = page.locator('#signerTitle, input[placeholder*="Hiệu trưởng"]');
     this.signatureImageUrlInput = page.locator('#signatureImg');
     this.publicKeyPemInput = page.locator('textarea[placeholder*="BEGIN PUBLIC KEY"]');
     this.submitButton = page.locator('button[type="submit"]', { hasText: /Thêm đối tác|Cập nhật đối tác/i });
