@@ -13,6 +13,7 @@ from src.modules.certificate.domain import (
     FinancialAidApplication,
     FinancialAidStatus,
     ICertificateRepository,
+    OrganizationCertificateStats,
     VerifiedCertificate,
 )
 from src.modules.certificate.infrastructure.models import (
@@ -270,7 +271,7 @@ class CertificateRepository(ICertificateRepository):
             fromlist=["SQLAlchemyLearningRepository"],
         ).SQLAlchemyLearningRepository
         learning_repo = learning_repo_factory(self._session)
-        progress = await learning_repo.find_progress(user_id, course_id)
+        progress = await learning_repo.get_progress(user_id, course_id)
         return progress.overall_progress_percent if progress else 0.0
 
     async def check_graded_items_and_appeals_eligibility(
@@ -417,6 +418,26 @@ class CertificateRepository(ICertificateRepository):
         catalog_repo = SQLAlchemyCatalogRepository(self._session)
         course = await catalog_repo.get_course_detail(course_id_or_slug)
 
+        issuer_partner_id = getattr(course, "issuer_partner_id", "") if course else ""
+        if issuer_partner_id:
+            from src.modules.partner.infrastructure.models import PartnerModel
+
+            partner_row = await self._session.get(PartnerModel, issuer_partner_id)
+            if partner_row and (
+                partner_row.signer_name or partner_row.signature_image_url
+            ):
+                return (
+                    partner_row.signer_name
+                    or partner_row.name
+                    or (course.partner_name if course else ""),
+                    partner_row.signer_title
+                    or partner_row.name
+                    or (course.partner_name if course else ""),
+                    partner_row.signature_image_url
+                    or partner_row.logo_url
+                    or (course.partner_logo_url if course else ""),
+                )
+
         if not course or not course.owner_id:
             partner = course.partner_name if course else ""
             logo = course.partner_logo_url if course else ""
@@ -548,6 +569,98 @@ class CertificateRepository(ICertificateRepository):
         is_revoked: bool | None = None,
     ) -> AdminCertificatesPage:
         filters = []
+        if search_query:
+            pattern = escape_like_pattern(search_query)
+            filters.append(
+                or_(
+                    CertificateModel.certificate_id.ilike(pattern, escape="\\"),
+                    CertificateModel.learner_name.ilike(pattern, escape="\\"),
+                    CertificateModel.course_title.ilike(pattern, escape="\\"),
+                )
+            )
+        if is_revoked is not None:
+            filters.append(CertificateModel.is_revoked.is_(is_revoked))
+
+        stmt = (
+            select(
+                CertificateModel,
+                func.count().over().label("total_count"),
+            )
+            .where(*filters)
+            .order_by(
+                CertificateModel.is_revoked.asc(),
+                CertificateModel.certificate_id.asc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        rows = (await self._session.execute(stmt)).all()
+        if rows:
+            total_count = int(rows[0].total_count)
+        elif page > 1:
+            count_stmt = select(func.count(CertificateModel.certificate_id)).where(
+                *filters
+            )
+            total_count = int((await self._session.execute(count_stmt)).scalar_one())
+        else:
+            total_count = 0
+
+        certificates = tuple(
+            AdminCertificateSummary(
+                certificate_id=r[0].certificate_id,
+                learner_name=r[0].learner_name or "",
+                course_title=r[0].course_title or "",
+                partner_name=r[0].partner_name or "",
+                issue_date=r[0].issue_date or "",
+                is_revoked=bool(r[0].is_revoked),
+                revoked_reason=r[0].revoked_reason or "",
+            )
+            for r in rows
+        )
+        return AdminCertificatesPage(
+            certificates=certificates,
+            total_count=total_count,
+            page=page,
+            page_size=page_size,
+        )
+
+    async def get_organization_certificate_stats(
+        self, course_ids: list[str]
+    ) -> OrganizationCertificateStats:
+        if not course_ids:
+            return OrganizationCertificateStats()
+
+        stmt = select(
+            func.count(CertificateModel.certificate_id).label("certificates_issued"),
+            func.coalesce(
+                func.sum(case((CertificateModel.is_revoked.is_(True), 1), else_=0)),
+                0,
+            ).label("certificates_revoked"),
+        ).where(CertificateModel.course_id.in_(course_ids))
+
+        row = (await self._session.execute(stmt)).one()
+        return OrganizationCertificateStats(
+            certificates_issued=int(row.certificates_issued),
+            certificates_revoked=int(row.certificates_revoked),
+        )
+
+    async def list_organization_certificates(
+        self,
+        course_ids: list[str],
+        page: int,
+        page_size: int,
+        search_query: str = "",
+        is_revoked: bool | None = None,
+    ) -> AdminCertificatesPage:
+        if not course_ids:
+            return AdminCertificatesPage(
+                certificates=(),
+                total_count=0,
+                page=page,
+                page_size=page_size,
+            )
+
+        filters = [CertificateModel.course_id.in_(course_ids)]
         if search_query:
             pattern = escape_like_pattern(search_query)
             filters.append(

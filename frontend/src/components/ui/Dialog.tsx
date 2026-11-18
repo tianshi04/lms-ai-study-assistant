@@ -23,7 +23,7 @@ function DialogBackdrop({
 }
 
 export const dialogSizeVariants = cva(
-  "bg-surface-container-high text-on-surface rounded-[28px] shadow-2xl w-full min-w-[280px] max-w-[560px] p-6 border border-outline-variant/50 animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out relative outline-none flex flex-col max-h-[calc(100vh-7rem)]",
+  "bg-surface-container-high text-on-surface rounded-[28px] shadow-2xl w-full min-w-[280px] max-w-[560px] p-6 border border-outline-variant/50 animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out relative outline-none flex flex-col max-h-[calc(100vh-3rem)] overflow-y-auto",
   {
     variants: {
       size: {
@@ -64,7 +64,7 @@ function DialogContent({
       <div
         className={cn(
           "fixed inset-0 z-modal flex items-center justify-center overflow-y-auto",
-          isFullScreen ? "p-0" : "p-4 sm:p-8 md:p-14",
+          isFullScreen ? "p-0" : "p-4 sm:p-6",
         )}
       >
         <BaseDialog.Popup

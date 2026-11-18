@@ -95,6 +95,7 @@ message Course {
   double price = 19;
   repeated string foundational_course_ids = 20;
   repeated string ta_ids = 21;
+  string issuer_partner_id = 22;
 }
 
 // Specialization messages
@@ -111,6 +112,7 @@ message Specialization {
   int32 discount_percent = 10;
   string owner_id = 11;
   string organization_id = 12;
+  string issuer_partner_id = 13;
 }
 
 message GetSpecializationRequest {
@@ -807,6 +809,12 @@ service CatalogService {
   rpc AcknowledgeLowReview(AcknowledgeLowReviewRequest) returns (AcknowledgeLowReviewResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetOrganizationCatalogStats(GetOrganizationCatalogStatsRequest) returns (GetOrganizationCatalogStatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListOrganizationCourseMetrics(ListOrganizationCourseMetricsRequest) returns (ListOrganizationCourseMetricsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message ParseScormPackageRequest {
@@ -1118,4 +1126,33 @@ message AcknowledgeLowReviewRequest {
 message AcknowledgeLowReviewResponse {
   bool success = 1;
   string message = 2;
+}
+
+message GetOrganizationCatalogStatsRequest {
+  string organization_id = 1;
+}
+
+message GetOrganizationCatalogStatsResponse {
+  int32 total_courses = 1;
+  int32 published_courses = 2;
+  int32 pending_review_courses = 3;
+  int32 draft_courses = 4;
+  int32 rejected_courses = 5;
+  int32 total_reviews = 6;
+  double average_rating = 7;
+}
+
+message ListOrganizationCourseMetricsRequest {
+  string organization_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string search_query = 4;
+  CourseStatus status = 5;
+}
+
+message ListOrganizationCourseMetricsResponse {
+  repeated AdminCourseQualityMetric courses = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
 }

@@ -1,22 +1,17 @@
 "use client";
 
-import { use, useState, useEffect, Suspense } from "react";
+import { use, Suspense } from "react";
 import Link from "next/link";
+import { Building2, ExternalLink, Settings, ShieldAlert } from "lucide-react";
+
+import { PartnerSelfServiceForm } from "@/components/partner/PartnerSelfServiceForm";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  usePartnersQuery,
-  useUpdatePartnerMutation,
-  useMyOrganizationsQuery,
-} from "@/lib/query_hooks";
-import { mapConnectError } from "@/lib/connect_error_mapper";
-import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
-import { Chip } from "@/components/ui/Chip";
-import { Surface } from "@/components/ui/Surface";
-import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
 import { Progress } from "@/components/ui/Progress";
-import { Settings, Building2, Save, Globe, Shield, ImageIcon, ShieldAlert } from "lucide-react";
+import { Surface } from "@/components/ui/Surface";
+import { useMyOrganizationsQuery, usePartnerDetailQuery } from "@/lib/query_hooks";
+
+import { OrgHeaderNav } from "../components/OrgHeaderNav";
 
 function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -32,53 +27,17 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
     roleUpper.includes("ADMIN") ||
     roleUpper.includes("OWNER");
 
-  const { data: partners = [], isLoading, refetch } = usePartnersQuery();
-  const partner = partners.find((p) => p.slug === slug || p.id === slug);
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [bannerUrl, setBannerUrl] = useState("");
-  const [websiteUrl, setWebsiteUrl] = useState("");
-  const [allowedDomainsStr, setAllowedDomainsStr] = useState("");
-
-  const [feedback, setFeedback] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const isCommunityOrg = slug === "partner_community";
+  const {
+    data: partner,
+    isLoading,
+    refetch,
+  } = usePartnerDetailQuery(slug, {
+    enabled: Boolean(slug) && !isCommunityOrg,
+  });
 
   const orgName =
-    partner?.name || (slug === "partner_community" ? "Coursera Project Network" : slug);
-
-  useEffect(() => {
-    if (partner) {
-      setName(partner.name || "");
-      setDescription(partner.description || "");
-      setLogoUrl(partner.logoUrl || "");
-      setBannerUrl(partner.bannerUrl || "");
-      setWebsiteUrl(partner.websiteUrl || "");
-      setAllowedDomainsStr((partner.allowedDomains || []).join(", "));
-    } else if (slug === "partner_community") {
-      setName("Coursera Project Network");
-      setDescription("Tổ chức Đối tác bảo chứng mặc định toàn sàn.");
-    }
-  }, [partner, slug]);
-
-  const updateMutation = useUpdatePartnerMutation({
-    onSuccess: () => {
-      setFeedback({
-        type: "success",
-        text: "Đã cập nhật thông tin Tổ chức thành công!",
-      });
-      refetch();
-    },
-    onError: (err) => {
-      setFeedback({
-        type: "error",
-        text: mapConnectError(err, "Không thể cập nhật thông tin Tổ chức."),
-      });
-    },
-  });
+    partner?.name || currentOrg?.name || (isCommunityOrg ? "Coursera Project Network" : slug);
 
   if (!isOwnerOrAdmin) {
     return (
@@ -87,7 +46,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
           <OrgHeaderNav
             slug={slug}
             orgName={orgName}
-            avatarUrl={partner?.logoUrl}
+            avatarUrl={partner?.logoUrl || currentOrg?.avatarUrl}
             activeTab="settings"
             isOwnerOrAdmin={false}
           />
@@ -104,48 +63,14 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               Bạn đang ở vai trò <strong>{currentOrg?.roleInOrg || "Giảng viên"}</strong>. Bạn không
               có quyền thay đổi thông tin cài đặt của Tổ chức này.
             </p>
-            <Link
-              href={`/organizations/${slug}/manage`}
-              className="inline-flex items-center px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs"
-            >
+            <Button render={<Link href={`/organizations/${slug}/manage`} />} size="sm">
               Quay lại Tổng quan
-            </Link>
+            </Button>
           </Surface>
         </main>
       </div>
     );
   }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!partner?.id) {
-      setFeedback({
-        type: "error",
-        text: "Không tìm thấy ID Tổ chức để cập nhật.",
-      });
-      return;
-    }
-    setFeedback(null);
-    const allowedDomains = allowedDomainsStr
-      .split(",")
-      .map((d) => d.trim())
-      .filter(Boolean);
-
-    updateMutation.mutate({
-      id: partner.id,
-      name: name.trim(),
-      slug,
-      description: description.trim(),
-      logoUrl: logoUrl.trim(),
-      bannerUrl: bannerUrl.trim(),
-      websiteUrl: websiteUrl.trim(),
-      allowedDomains,
-      signatureImageUrl: partner.signatureImageUrl || "",
-      signerName: partner.signerName || "",
-      signerTitle: partner.signerTitle || "",
-      publicKeyPem: partner.publicKeyPem || "",
-    });
-  };
 
   return (
     <div className="w-full flex-1 bg-background min-h-screen">
@@ -153,21 +78,35 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
         <OrgHeaderNav
           slug={slug}
           orgName={orgName}
-          avatarUrl={partner?.logoUrl}
+          avatarUrl={partner?.logoUrl || currentOrg?.avatarUrl}
           activeTab="settings"
           isOwnerOrAdmin={isOwnerOrAdmin}
         />
 
-        {/* Settings Form Container */}
-        <Surface variant="container" shape="2xl" className="p-6 sm:p-8 max-w-3xl">
-          <div className="flex items-center space-x-3 pb-6 border-b border-border">
-            <Settings className="w-6 h-6 text-primary" aria-hidden="true" />
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Cài đặt & Thương hiệu Tổ chức</h2>
-              <p className="text-xs text-muted-foreground">
-                Cập nhật nhận diện thương hiệu, Logo, Website và tên miền email được phép.
-              </p>
+        <Surface variant="container" shape="2xl" className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border">
+            <div className="flex items-center space-x-3">
+              <Settings className="w-6 h-6 text-primary shrink-0" aria-hidden="true" />
+              <div>
+                <h2 className="text-xl font-bold text-foreground">
+                  Cài đặt Thương hiệu, Ký số & OpenBadges
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Quản lý nhận diện thương hiệu, tên miền email tự động cấp Seat, đại diện ký chứng
+                  chỉ và khóa ECDSA P-256 của Tổ chức.
+                </p>
+              </div>
             </div>
+            {partner?.slug && (
+              <Button
+                variant="outlined"
+                size="sm"
+                render={<Link href={`/partners/${partner.slug}`} />}
+              >
+                <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                Xem trang công khai
+              </Button>
+            )}
           </div>
 
           {isLoading ? (
@@ -175,151 +114,33 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               <Progress.Circular size="md" />
               <p className="text-sm">Đang tải thông tin cài đặt…</p>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6 pt-6">
-              {feedback && (
-                <div
-                  className={`p-4 rounded-2xl text-xs font-bold ${
-                    feedback.type === "success"
-                      ? "bg-success/10 text-success border border-success/20"
-                      : "bg-destructive/10 text-destructive border border-destructive/20"
-                  }`}
-                >
-                  {feedback.text}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="sm:col-span-2">
-                  <Input
-                    id="orgNameInput"
-                    label="Tên Tổ chức / Partner"
-                    type="text"
-                    autoComplete="organization"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="ví dụ: Đại học Bách Khoa TP.HCM"
-                    startAdornment={
-                      <Building2 className="w-4 h-4 text-primary" aria-hidden="true" />
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Input
-                    id="orgSlugInput"
-                    label="Slug định danh (URL)"
-                    type="text"
-                    disabled
-                    value={slug}
-                    className="font-mono cursor-not-allowed opacity-70"
-                  />
-                </div>
-
-                <div>
-                  <Input
-                    id="orgWebsiteInput"
-                    label="Website chính thức"
-                    type="url"
-                    inputMode="url"
-                    autoComplete="url"
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    placeholder="https://example.edu.vn"
-                    startAdornment={<Globe className="w-4 h-4 text-primary" aria-hidden="true" />}
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <Input
-                    id="orgLogoInput"
-                    label="URL Logo Tổ chức"
-                    type="url"
-                    inputMode="url"
-                    value={logoUrl}
-                    onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                    startAdornment={
-                      <ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" />
-                    }
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <Input
-                    id="orgBannerInput"
-                    label="URL Ảnh Banner Tổ chức"
-                    type="url"
-                    inputMode="url"
-                    value={bannerUrl}
-                    onChange={(e) => setBannerUrl(e.target.value)}
-                    placeholder="https://example.com/banner.png"
-                    startAdornment={
-                      <ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" />
-                    }
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <Input
-                    id="orgDomainsInput"
-                    label="Domain Email Bảo chứng (allowed_domains)"
-                    type="text"
-                    value={allowedDomainsStr}
-                    onChange={(e) => setAllowedDomainsStr(e.target.value)}
-                    placeholder="ví dụ: hcmut.edu.vn, bku.edu.vn (cách nhau bởi dấu phẩy)"
-                    startAdornment={<Shield className="w-4 h-4 text-primary" aria-hidden="true" />}
-                  />
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {allowedDomainsStr
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean)
-                      .map((domain) => (
-                        <Chip
-                          key={domain}
-                          variant="input"
-                          onRemove={() => {
-                            const updated = allowedDomainsStr
-                              .split(",")
-                              .map((s) => s.trim())
-                              .filter((s) => s && s !== domain)
-                              .join(", ");
-                            setAllowedDomainsStr(updated);
-                          }}
-                        >
-                          {domain}
-                        </Chip>
-                      ))}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Các tài khoản có email thuộc domain này sẽ được tự động kích hoạt quyền thành
-                    viên của Tổ chức.
-                  </p>
-                </div>
-
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label htmlFor="orgDescInput" className="text-xs font-bold text-foreground">
-                    Mô tả về Tổ chức
-                  </label>
-                  <Textarea
-                    id="orgDescInput"
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Giới thiệu về trường đại học hoặc tổ chức đối tác…"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-border flex justify-end">
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  <Save className="w-4.5 h-4.5" aria-hidden="true" />
-                  Lưu Thay Đổi
+          ) : !partner ? (
+            <div className="py-12 text-center space-y-4 max-w-lg mx-auto">
+              <Building2
+                className="w-14 h-14 mx-auto text-muted-foreground/60"
+                aria-hidden="true"
+              />
+              <h3 className="text-base font-bold text-foreground">
+                Tổ chức nội bộ chưa có hồ sơ Đối tác Phát hành độc lập
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Tổ chức hệ thống này dùng cấu hình mặc định toàn sàn. Để thiết lập thương hiệu phát
+                hành OpenBadges riêng biệt, Quản trị viên hệ thống có thể khởi tạo hồ sơ tại trang
+                Quản trị Đối tác.
+              </p>
+              {isSuperAdmin && (
+                <Button variant="tonal" size="sm" render={<Link href="/admin/partners" />}>
+                  Mở Quản trị Đối tác
                 </Button>
-              </div>
-            </form>
+              )}
+            </div>
+          ) : (
+            <PartnerSelfServiceForm
+              key={partner.id}
+              activePartner={partner}
+              refetchPartners={refetch}
+              slugReadOnly
+            />
           )}
         </Surface>
       </main>

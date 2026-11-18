@@ -1,34 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Building2, Eye, Pencil, Trash2, PenTool, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { type Partner } from "@/gen/partner/v1/partner_pb";
 import {
-  usePartnersQuery,
-  useCreatePartnerMutation,
-  useUpdatePartnerMutation,
-  useDeletePartnerMutation,
-} from "@/lib/query_hooks";
-import { Dialog } from "@/components/ui/Dialog";
-import { Progress } from "@/components/ui/Progress";
-import { useToast } from "@/components/ui/Toast";
+  Building2,
+  Eye,
+  LayoutDashboard,
+  Pencil,
+  PenTool,
+  Plus,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+
+import { useAuth } from "@/components/providers/AuthProvider";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Surface } from "@/components/ui/Surface";
+import { Dialog } from "@/components/ui/Dialog";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
+import { Progress } from "@/components/ui/Progress";
+import { Surface } from "@/components/ui/Surface";
 import { Table } from "@/components/ui/Table";
-import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { Textarea } from "@/components/ui/Textarea";
+import { useToast } from "@/components/ui/Toast";
+import { type Partner } from "@/gen/partner/v1/partner_pb";
+import { mapConnectError } from "@/lib/connect_error_mapper";
+import {
+  useAddOrganizationMemberMutation,
+  useCreatePartnerMutation,
+  useDeletePartnerMutation,
+  useOrganizationMembersQuery,
+  usePartnersQuery,
+  useRemoveOrganizationMemberMutation,
+  useUpdatePartnerMutation,
+} from "@/lib/query_hooks";
 
-interface PartnerAdminUser {
+interface StagedPartnerAdmin {
   id: string;
   name: string;
   email: string;
-  createdAt: string;
 }
+
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 
 function PartnerLogo({ logoUrl, name }: { logoUrl?: string; name: string }) {
   const [hasError, setHasError] = useState(false);
@@ -51,10 +68,6 @@ function PartnerLogo({ logoUrl, name }: { logoUrl?: string; name: string }) {
     <span className="font-bold text-primary text-sm">{name.substring(0, 2).toUpperCase()}</span>
   );
 }
-
-import { useAuth } from "@/components/providers/AuthProvider";
-import { useIsMobile } from "@/lib/hooks/useIsMobile";
-
 export default function AdminPartnersPage() {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -70,10 +83,16 @@ export default function AdminPartnersPage() {
   const createMutation = useCreatePartnerMutation();
   const updateMutation = useUpdatePartnerMutation();
   const deleteMutation = useDeletePartnerMutation();
+  const addMemberMutation = useAddOrganizationMemberMutation();
+  const removeMemberMutation = useRemoveOrganizationMemberMutation();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
   const [deletingPartnerId, setDeletingPartnerId] = useState<string | null>(null);
+
+  const { data: orgMembers = [] } = useOrganizationMembersQuery(editingPartner?.id || "", {
+    enabled: isModalOpen && Boolean(editingPartner?.id),
+  });
 
   // Form State
   const [name, setName] = useState("");
@@ -89,16 +108,8 @@ export default function AdminPartnersPage() {
   const [publicKeyPem, setPublicKeyPem] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Organization Admins State (keyed by partnerId or slug)
-  const [partnerAdminsMap, setPartnerAdminsMap] = useState<Record<string, PartnerAdminUser[]>>({
-    "partner-stanford": [
-      { id: "pa-1", name: "Stanford Admin", email: "admin@stanford.edu", createdAt: "2026-01-15" },
-    ],
-    "partner-hcmut": [
-      { id: "pa-2", name: "HCMUT Admin", email: "admin@hcmut.edu.vn", createdAt: "2026-02-10" },
-    ],
-  });
-
+  // Staged Organization Admins while creating a brand-new Partner
+  const [stagedAdmins, setStagedAdmins] = useState<StagedPartnerAdmin[]>([]);
   const [newAdminName, setNewAdminName] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [adminErrorMsg, setAdminErrorMsg] = useState("");
@@ -123,7 +134,7 @@ export default function AdminPartnersPage() {
       >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
         <p className="text-muted-foreground text-sm">
-          Bạn cần quyền Super Admin để truy cập trang quản trị đối tác.
+          Bạn cần quyền Quản trị viên hệ thống để truy cập trang quản trị đối tác.
         </p>
         <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
@@ -145,6 +156,7 @@ export default function AdminPartnersPage() {
     setSignerTitle("");
     setPublicKeyPem("");
     setErrorMsg("");
+    setStagedAdmins([]);
     setNewAdminName("");
     setNewAdminEmail("");
     setAdminErrorMsg("");
@@ -170,56 +182,85 @@ export default function AdminPartnersPage() {
     setSignerTitle(partner.signerTitle || "");
     setPublicKeyPem(partner.publicKeyPem || "");
     setErrorMsg("");
+    setStagedAdmins([]);
     setNewAdminName("");
     setNewAdminEmail("");
     setAdminErrorMsg("");
     setIsModalOpen(true);
   };
 
-  const activeKey = editingPartner?.id || editingPartner?.slug || "temp-new-partner";
-  const currentPartnerAdmins = partnerAdminsMap[activeKey] || [];
+  const persistedOrgAdmins = orgMembers
+    .filter((m) => {
+      const roleVal = `${m.roleId} ${m.roleName}`.toUpperCase();
+      return roleVal.includes("OWNER") || roleVal.includes("ADMIN");
+    })
+    .map((m) => ({
+      id: m.userId,
+      name: m.fullName || m.email,
+      email: m.email,
+    }));
 
-  const handleAddPartnerAdmin = () => {
+  const currentPartnerAdmins = editingPartner ? persistedOrgAdmins : stagedAdmins;
+
+  const handleAddPartnerAdmin = async () => {
     setAdminErrorMsg("");
-    if (!newAdminEmail.trim() || !newAdminEmail.includes("@")) {
+    const cleanEmail = newAdminEmail.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes("@")) {
       setAdminErrorMsg("Vui lòng nhập địa chỉ email hợp lệ.");
       return;
     }
 
-    const emailDomain = newAdminEmail.split("@")[1]?.toLowerCase();
-    const allowedDomains = allowedDomainsStr
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (allowedDomains.length > 0 && !allowedDomains.includes(emailDomain)) {
-      setAdminErrorMsg(
-        `Email domain (${emailDomain}) không thuộc danh sách Tên miền được phép: ${allowedDomains.join(", ")}`,
-      );
+    if (editingPartner) {
+      try {
+        await addMemberMutation.mutateAsync({
+          email: cleanEmail,
+          roleId: "OWNER",
+          organizationId: editingPartner.id,
+        });
+        toast.success(`Đã gán quyền Quản trị viên Tổ chức cho ${cleanEmail}.`);
+        setNewAdminName("");
+        setNewAdminEmail("");
+      } catch (err) {
+        setAdminErrorMsg(
+          mapConnectError(
+            err,
+            "Không thể gán Quản trị viên Tổ chức (tài khoản email cần tồn tại trên hệ thống).",
+          ),
+        );
+      }
       return;
     }
 
-    const newAdminObj: PartnerAdminUser = {
-      id: `pa-${Date.now()}`,
-      name: newAdminName.trim() || newAdminEmail.split("@")[0],
-      email: newAdminEmail.trim(),
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-
-    setPartnerAdminsMap((prev) => ({
-      ...prev,
-      [activeKey]: [...(prev[activeKey] || []), newAdminObj],
-    }));
-
+    setStagedAdmins((prev) => {
+      if (prev.some((a) => a.email === cleanEmail)) return prev;
+      return [
+        ...prev,
+        {
+          id: `staged-${Date.now()}`,
+          name: newAdminName.trim() || cleanEmail.split("@")[0],
+          email: cleanEmail,
+        },
+      ];
+    });
     setNewAdminName("");
     setNewAdminEmail("");
   };
 
-  const handleRemovePartnerAdmin = (adminId: string) => {
-    setPartnerAdminsMap((prev) => ({
-      ...prev,
-      [activeKey]: (prev[activeKey] || []).filter((a) => a.id !== adminId),
-    }));
+  const handleRemovePartnerAdmin = async (adminId: string) => {
+    setAdminErrorMsg("");
+    if (editingPartner) {
+      try {
+        await removeMemberMutation.mutateAsync({
+          userId: adminId,
+          organizationId: editingPartner.id,
+        });
+        toast.success("Đã gỡ quyền Quản trị viên Tổ chức.");
+      } catch (err) {
+        setAdminErrorMsg(mapConnectError(err, "Không thể gỡ Quản trị viên Tổ chức."));
+      }
+      return;
+    }
+    setStagedAdmins((prev) => prev.filter((a) => a.id !== adminId));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -260,13 +301,20 @@ export default function AdminPartnersPage() {
           signerTitle,
           publicKeyPem,
         });
-        if (res?.id && partnerAdminsMap["temp-new-partner"]) {
-          setPartnerAdminsMap((prev) => {
-            const temp = [...(prev["temp-new-partner"] || [])];
-            const updated = { ...prev, [res.id]: temp };
-            delete updated["temp-new-partner"];
-            return updated;
-          });
+        if (res?.id && stagedAdmins.length > 0) {
+          for (const admin of stagedAdmins) {
+            try {
+              await addMemberMutation.mutateAsync({
+                email: admin.email,
+                roleId: "OWNER",
+                organizationId: res.id,
+              });
+            } catch {
+              toast.error(
+                `Đã tạo đối tác nhưng chưa thể gán ${admin.email} (email chưa đăng ký tài khoản).`,
+              );
+            }
+          }
         }
       }
       await refetchPartners();
@@ -389,6 +437,17 @@ export default function AdminPartnersPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Button
+                    variant="tonal"
+                    size="sm"
+                    onClick={() =>
+                      router.push(`/organizations/${partner.slug || partner.id}/manage`)
+                    }
+                    title="Mở Bảng điều khiển Tổ chức"
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+                    Bảng điều khiển
+                  </Button>
+                  <Button
                     variant="outlined"
                     size="sm"
                     onClick={() => router.push(`/partners/${partner.slug}`)}
@@ -474,6 +533,17 @@ export default function AdminPartnersPage() {
                     <Table.Cell className="text-right">
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         <Button
+                          variant="tonal"
+                          size="sm"
+                          onClick={() =>
+                            router.push(`/organizations/${partner.slug || partner.id}/manage`)
+                          }
+                          title="Mở Bảng điều khiển Tổ chức"
+                        >
+                          <LayoutDashboard className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+                          Bảng điều khiển
+                        </Button>
+                        <Button
                           variant="outlined"
                           size="sm"
                           onClick={() => router.push(`/partners/${partner.slug}`)}
@@ -511,73 +581,84 @@ export default function AdminPartnersPage() {
 
       {/* Modal Thêm/Sửa Đối tác */}
       <Dialog open={isModalOpen} onOpenChange={(open) => setIsModalOpen(open)}>
-        <Dialog.Content size="lg">
-          <Dialog.Header>
-            <Dialog.Title>
+        <Dialog.Content size="2xl" className="max-w-3xl p-0 overflow-hidden">
+          <Dialog.Header className="px-6 pt-6 pb-4 pr-14 border-b border-border/70 shrink-0">
+            <Dialog.Title className="text-xl font-bold">
               {editingPartner ? "Chỉnh sửa Đối tác Phát hành" : "Thêm Đối tác Phát hành Mới"}
             </Dialog.Title>
-            <Dialog.Description>
-              {"Điền thông tin tổ chức, người ký mặc định và gán quản trị viên đối tác."}
+            <Dialog.Description className="mt-1 text-xs">
+              {"Cấu hình hồ sơ thương hiệu, người ký chứng chỉ mặc định và quản trị viên tổ chức."}
             </Dialog.Description>
           </Dialog.Header>
-          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-            {errorMsg && (
-              <div className="p-3 bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-xl">
-                {errorMsg}
-              </div>
-            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Input
-                  id="partnerName"
-                  label="Tên đối tác / Trường học *"
-                  type="text"
-                  autoComplete="organization"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="VD: Đại học Bách Khoa TP.HCM"
-                  required
-                />
-              </div>
-              <div>
-                <Input
-                  id="partnerSlug"
-                  label="Slug URL định danh *"
-                  type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="VD: hcmut"
-                  className="font-mono"
-                  required
-                />
-              </div>
-            </div>
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-6">
+              {errorMsg && (
+                <div className="p-3 bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-xl">
+                  {errorMsg}
+                </div>
+              )}
 
-            <div>
-              <Textarea
-                id="partnerDesc"
-                label="Mô tả giới thiệu"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Giới thiệu sơ lược về tổ chức đối tác…"
-                rows={2}
-              />
-            </div>
+              {/* Nhóm 1: Thông tin định danh & Thương hiệu */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <Input
+                      id="partnerName"
+                      label="Tên đối tác / Trường học *"
+                      type="text"
+                      autoComplete="organization"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="VD: Đại học Bách Khoa TP.HCM"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      id="partnerSlug"
+                      label="Slug định danh *"
+                      type="text"
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      placeholder="VD: hcmut"
+                      className="font-mono"
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Input
-                  id="partnerLogo"
-                  label="URL Logo đối tác"
-                  type="url"
-                  inputMode="url"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://example.com/logo.png"
+                <Textarea
+                  id="partnerDesc"
+                  label="Mô tả giới thiệu"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Giới thiệu sơ lược về tổ chức đối tác…"
+                  rows={2}
                 />
-              </div>
-              <div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    id="partnerWebsite"
+                    label="Website chính thức"
+                    type="url"
+                    inputMode="url"
+                    autoComplete="url"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="https://hcmut.edu.vn"
+                  />
+                  <Input
+                    id="partnerLogo"
+                    label="URL Logo đối tác"
+                    type="url"
+                    inputMode="url"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                  />
+                </div>
+
                 <Input
                   id="partnerBanner"
                   label="URL Banner bìa"
@@ -587,208 +668,195 @@ export default function AdminPartnersPage() {
                   onChange={(e) => setBannerUrl(e.target.value)}
                   placeholder="https://example.com/banner.jpg"
                 />
-              </div>
-              <div>
-                <Input
-                  id="partnerWebsite"
-                  label="Website chính thức"
-                  type="url"
-                  inputMode="url"
-                  autoComplete="url"
-                  value={websiteUrl}
-                  onChange={(e) => setWebsiteUrl(e.target.value)}
-                  placeholder="https://hcmut.edu.vn"
-                />
-              </div>
-            </div>
 
-            <div>
-              <Input
-                id="partnerDomains"
-                label="Tên miền được phép cấp chứng chỉ (Phân cách bởi dấu phẩy)"
-                type="text"
-                value={allowedDomainsStr}
-                onChange={(e) => setAllowedDomainsStr(e.target.value)}
-                placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
-              />
-              <div className="flex flex-wrap gap-2 pt-2">
-                {allowedDomainsStr
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((domain) => (
-                    <Chip
-                      key={domain}
-                      variant="input"
-                      onRemove={() => {
-                        const updated = allowedDomainsStr
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter((s) => s && s !== domain)
-                          .join(", ");
-                        setAllowedDomainsStr(updated);
-                      }}
-                    >
-                      {domain}
-                    </Chip>
-                  ))}
-              </div>
-            </div>
-
-            {/* Section: Thông tin Người ký mặc định */}
-            <div className="border-t border-border pt-4">
-              <h3 className="text-xs font-bold uppercase text-foreground mb-3 flex items-center gap-1.5">
-                <PenTool className="w-4 h-4 text-primary" aria-hidden="true" />
-                Thông tin Người ký đại diện Mặc định
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label
-                    htmlFor="signerName"
-                    className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-                  >
-                    Họ tên người ký
-                  </label>
+                  <Input
+                    id="partnerDomains"
+                    label="Tên miền được phép cấp chứng chỉ"
+                    helperText="Nhập nhiều tên miền phân cách bởi dấu phẩy."
+                    type="text"
+                    value={allowedDomainsStr}
+                    onChange={(e) => setAllowedDomainsStr(e.target.value)}
+                    placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
+                  />
+                  {allowedDomainsStr.trim() && (
+                    <div className="flex flex-wrap gap-2 pt-2.5">
+                      {allowedDomainsStr
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                        .map((domain) => (
+                          <Chip
+                            key={domain}
+                            variant="input"
+                            onRemove={() => {
+                              const updated = allowedDomainsStr
+                                .split(",")
+                                .map((s) => s.trim())
+                                .filter((s) => s && s !== domain)
+                                .join(", ");
+                              setAllowedDomainsStr(updated);
+                            }}
+                          >
+                            {domain}
+                          </Chip>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Nhóm 2: Thông tin Người ký mặc định */}
+              <div className="rounded-2xl bg-background/60 border border-border/80 p-4 space-y-4">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-foreground flex items-center gap-2">
+                    <PenTool className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
+                    Thông tin người ký đại diện mặc định
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Hiển thị mặc định trên các chứng chỉ số do tổ chức phát hành.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     id="signerName"
+                    label="Họ tên người ký"
                     type="text"
                     value={signerName}
                     onChange={(e) => setSignerName(e.target.value)}
-                    placeholder="GS.TS. Nguyễn Văn A"
+                    placeholder="VD: GS.TS. Nguyễn Văn A"
                   />
-                </div>
-                <div>
-                  <label
-                    htmlFor="signerTitle"
-                    className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-                  >
-                    Chức danh
-                  </label>
                   <Input
                     id="signerTitle"
+                    label="Chức danh"
                     type="text"
                     value={signerTitle}
                     onChange={(e) => setSignerTitle(e.target.value)}
-                    placeholder="Hiệu trưởng"
+                    placeholder="VD: Hiệu trưởng"
                   />
                 </div>
-                <div>
-                  <label
-                    htmlFor="signatureImg"
-                    className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-                  >
-                    URL Ảnh chữ ký
-                  </label>
-                  <Input
-                    id="signatureImg"
-                    type="text"
-                    value={signatureImageUrl}
-                    onChange={(e) => setSignatureImageUrl(e.target.value)}
-                    placeholder="https://example.com/signature.png"
-                  />
-                </div>
+
+                <Input
+                  id="signatureImg"
+                  label="URL ảnh chữ ký"
+                  type="url"
+                  inputMode="url"
+                  value={signatureImageUrl}
+                  onChange={(e) => setSignatureImageUrl(e.target.value)}
+                  placeholder="https://example.com/signature.png"
+                />
               </div>
-            </div>
 
-            {/* Section: Quản lý Quản trị viên Tổ chức (Organization Admin) */}
-            <div className="border-t border-border pt-4 space-y-3">
-              <h3 className="text-xs font-bold uppercase text-foreground flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-primary" aria-hidden="true" />
-                Quản trị viên Tổ chức (Organization Admin)
-              </h3>
-
-              {adminErrorMsg && (
-                <div className="p-2.5 bg-destructive/10 border border-destructive/30 text-destructive text-xs rounded-lg">
-                  {adminErrorMsg}
+              {/* Nhóm 3: Quản lý Quản trị viên Tổ chức (Organization Admin) */}
+              <div className="rounded-2xl bg-background/60 border border-border/80 p-4 space-y-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-foreground flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
+                    Quản trị viên tổ chức (Chủ sở hữu)
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+                    {currentPartnerAdmins.length} tài khoản
+                  </span>
                 </div>
-              )}
 
-              {/* List of existing organization admins */}
-              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                {currentPartnerAdmins.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">
-                    Chưa gán Quản trị viên tổ chức nào.
-                  </p>
-                ) : (
-                  currentPartnerAdmins.map((admin) => (
-                    <div
-                      key={admin.id}
-                      className="flex items-center justify-between p-2.5 bg-muted rounded-xl border border-border text-xs"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px]">
-                          {admin.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-foreground">{admin.name}</span>
-                          <span className="text-muted-foreground ml-2 font-mono">
-                            ({admin.email})
-                          </span>
-                        </div>
-                      </div>
-                      <IconButton
-                        variant="standard"
-                        size="xs"
-                        type="button"
-                        onClick={() => handleRemovePartnerAdmin(admin.id)}
-                        className="text-destructive hover:bg-destructive/10"
-                        aria-label="Gỡ Quản trị viên"
-                      >
-                        <X className="w-4 h-4" aria-hidden="true" />
-                      </IconButton>
-                    </div>
-                  ))
+                {adminErrorMsg && (
+                  <div className="p-2.5 bg-destructive/10 border border-destructive/30 text-destructive text-xs rounded-xl">
+                    {adminErrorMsg}
+                  </div>
                 )}
+
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {currentPartnerAdmins.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic py-1">
+                      Chưa gán Quản trị viên tổ chức nào.
+                    </p>
+                  ) : (
+                    currentPartnerAdmins.map((admin) => (
+                      <div
+                        key={admin.id}
+                        className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-surface-container-low rounded-xl border border-border text-xs"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-7 h-7 rounded-full bg-primary/15 text-primary font-bold flex items-center justify-center text-xs shrink-0">
+                            {admin.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground truncate">{admin.name}</p>
+                            <p className="text-muted-foreground font-mono text-[11px] truncate">
+                              {admin.email}
+                            </p>
+                          </div>
+                        </div>
+                        <IconButton
+                          variant="standard"
+                          size="xs"
+                          type="button"
+                          disabled={removeMemberMutation.isPending}
+                          onClick={() => handleRemovePartnerAdmin(admin.id)}
+                          className="text-destructive hover:bg-destructive/10 shrink-0"
+                          aria-label="Gỡ Quản trị viên"
+                        >
+                          <X className="w-4 h-4" aria-hidden="true" />
+                        </IconButton>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_1.25fr_auto] items-end gap-3 pt-1">
+                  <Input
+                    id="newAdminName"
+                    label="Tên hiển thị (tuỳ chọn)"
+                    type="text"
+                    value={newAdminName}
+                    onChange={(e) => {
+                      setNewAdminName(e.target.value);
+                      if (adminErrorMsg) setAdminErrorMsg("");
+                    }}
+                    placeholder="VD: Ban Đào tạo"
+                  />
+                  <Input
+                    id="newAdminEmail"
+                    label="Email tài khoản"
+                    type="email"
+                    value={newAdminEmail}
+                    onChange={(e) => {
+                      setNewAdminEmail(e.target.value);
+                      if (adminErrorMsg) setAdminErrorMsg("");
+                    }}
+                    placeholder="partner@domain.edu.vn"
+                    className="font-mono"
+                  />
+                  <Button
+                    type="button"
+                    variant="tonal"
+                    size="sm"
+                    disabled={addMemberMutation.isPending}
+                    onClick={handleAddPartnerAdmin}
+                    className="h-[42px] px-4 rounded-xl text-xs font-semibold shrink-0"
+                  >
+                    <Plus className="w-4 h-4" aria-hidden="true" />
+                    Gán quyền
+                  </Button>
+                </div>
               </div>
 
-              {/* Add new organization admin inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1">
-                <Input
-                  type="text"
-                  value={newAdminName}
-                  onChange={(e) => setNewAdminName(e.target.value)}
-                  placeholder="Tên quản trị viên"
-                  className="sm:col-span-2 text-xs"
-                />
-                <Input
-                  type="email"
-                  value={newAdminEmail}
-                  onChange={(e) => setNewAdminEmail(e.target.value)}
-                  placeholder="email@domain.edu.vn"
-                  className="sm:col-span-2 text-xs font-mono"
-                />
-                <Button
-                  type="button"
-                  variant="outlined"
-                  size="sm"
-                  onClick={handleAddPartnerAdmin}
-                  className="sm:col-span-1 text-xs font-semibold"
-                >
-                  <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                  Gán
-                </Button>
-              </div>
-            </div>
-
-            <div className="border-t border-border pt-4">
-              <label
-                htmlFor="publicKeyPem"
-                className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
-              >
-                Public Key PEM (Khóa công khai ký số)
-              </label>
+              {/* Nhóm 4: Public Key PEM */}
               <Textarea
                 id="publicKeyPem"
+                label="Khóa công khai ký số (Public Key PEM)"
+                helperText="Dùng để xác thực chữ ký số chuẩn OpenBadges v2.0 trên chứng chỉ."
                 value={publicKeyPem}
                 onChange={(e) => setPublicKeyPem(e.target.value)}
                 placeholder="-----BEGIN PUBLIC KEY-----…"
                 spellCheck={false}
                 rows={3}
-                className="font-mono text-xs"
+                className="font-mono text-xs leading-relaxed"
               />
             </div>
 
-            <Dialog.Footer className="pt-4 border-t border-border">
+            <Dialog.Footer className="px-6 py-4 mt-0 border-t border-border/70 bg-surface-container/50 shrink-0">
               <Button type="button" variant="text" onClick={() => setIsModalOpen(false)}>
                 {"Hủy"}
               </Button>

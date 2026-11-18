@@ -16,6 +16,7 @@ from src.modules.catalog.domain.entities import (
     InstructorAnalytics,
     ItemType,
     Lesson,
+    OrganizationCatalogStats,
     Specialization,
 )
 
@@ -84,6 +85,7 @@ class ICatalogRepository(ABC):
         owner_id: str,
         organization_id: str = "partner_community",
         slug: str = "",
+        issuer_partner_id: str = "",
     ) -> Specialization:
         pass
 
@@ -142,6 +144,7 @@ class ICatalogRepository(ABC):
         financial_aid_enabled: bool = True,
         organization_id: str = "partner_community",
         foundational_course_ids: list[str] | None = None,
+        issuer_partner_id: str = "",
     ) -> Course:
         pass
 
@@ -453,3 +456,23 @@ class ICatalogRepository(ABC):
     @abstractmethod
     async def acknowledge_low_review(self, review_id: str, admin_id: str) -> bool:
         pass
+
+    @abstractmethod
+    async def list_organization_course_ids(self, organization_id: str) -> list[str]:
+        """Return course IDs where organization_id or issuer_partner_id matches."""
+
+    @abstractmethod
+    async def get_organization_catalog_stats(
+        self, organization_id: str
+    ) -> OrganizationCatalogStats:
+        """Aggregate course status and review counters for an Organization/Partner."""
+
+    @abstractmethod
+    async def list_organization_course_summaries(
+        self,
+        organization_id: str,
+        search_query: str = "",
+        status: CourseStatus | None = None,
+    ) -> list[AdminCourseSummaryRow]:
+        """List summary rows for courses belonging to or issued by an Organization/Partner."""
+

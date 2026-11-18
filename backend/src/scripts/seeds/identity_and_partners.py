@@ -1,5 +1,6 @@
 """Seed data for Identity, Organizations, Partners, and Enterprise Licenses."""
 
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.identity.application import hash_password
@@ -82,18 +83,82 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
     for partner in (partner_stanford, partner_dl, partner_gcp, partner_neu):
         await session.merge(partner)
 
-    # Enterprise Licenses
+    # Clean up legacy underscore org IDs before merging 1-to-1 Partner <-> Organization rows
+    legacy_org_ids = ("partner_stanford", "partner_neu")
+    await session.execute(
+        delete(OrganizationMemberModel).where(
+            OrganizationMemberModel.organization_id.in_(legacy_org_ids)
+        )
+    )
+    await session.execute(
+        delete(OrganizationModel).where(OrganizationModel.id.in_(legacy_org_ids))
+    )
+    await session.flush()
+
+    organizations = [
+        OrganizationModel(
+            id="org_system_internal",
+            name="System Internal Organization",
+            slug="system-internal",
+            avatar_url="",
+        ),
+        OrganizationModel(
+            id="partner_community",
+            name="Coursera Project Network",
+            slug="coursera-project-network",
+            avatar_url="",
+        ),
+        OrganizationModel(
+            id="partner-stanford",
+            name="Stanford Online",
+            slug="stanford-online",
+            avatar_url="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg",
+        ),
+        OrganizationModel(
+            id="partner-deeplearning-ai",
+            name="DeepLearning.AI",
+            slug="deeplearning-ai",
+            avatar_url="https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+        ),
+        OrganizationModel(
+            id="partner-google-cloud",
+            name="Google Cloud",
+            slug="google-cloud",
+            avatar_url="https://upload.wikimedia.org/wikipedia/commons/5/51/Google_Cloud_logo.svg",
+        ),
+        OrganizationModel(
+            id="partner-neu",
+            name="NEU Business School",
+            slug="neu-business-school",
+            avatar_url="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Truong_Dai_hoc_Kinh_te_Quoc_dan.svg",
+        ),
+    ]
+    for org in organizations:
+        await session.merge(org)
+    await session.flush()
+
+    # Enterprise Licenses (merged after organizations exist so FK organization_id succeeds)
     licenses = [
         EnterpriseLicenseModel(
             key="ENT-DEMO-2026-X99",
             partner_name="DeepLearning.AI Partner Program",
+            organization_id="partner-deeplearning-ai",
             total_seats=500,
             used_seats=1,
             is_active=True,
         ),
         EnterpriseLicenseModel(
+            key="ENT-STANFORD-2026",
+            partner_name="Stanford Online Enterprise",
+            organization_id="partner-stanford",
+            total_seats=300,
+            used_seats=0,
+            is_active=True,
+        ),
+        EnterpriseLicenseModel(
             key="ENT-UNI-HCMUT-2026",
             partner_name="Trường Đại học Bách Khoa TP.HCM",
+            organization_id=None,
             total_seats=1000,
             used_seats=1,
             is_active=True,
@@ -101,6 +166,7 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
         EnterpriseLicenseModel(
             key="ENT-TECH-FPT-2026",
             partner_name="FPT Software Enterprise Academy",
+            organization_id=None,
             total_seats=250,
             used_seats=0,
             is_active=True,
@@ -195,35 +261,7 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
     ]
     for user in users:
         await session.merge(user)
-
-    organizations = [
-        OrganizationModel(
-            id="org_system_internal",
-            name="System Internal Organization",
-            slug="system-internal",
-            avatar_url="",
-        ),
-        OrganizationModel(
-            id="partner_stanford",
-            name="Stanford Online",
-            slug="stanford-online",
-            avatar_url="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg",
-        ),
-        OrganizationModel(
-            id="partner_community",
-            name="Coursera Project Network",
-            slug="coursera-project-network",
-            avatar_url="",
-        ),
-        OrganizationModel(
-            id="partner_neu",
-            name="NEU Business School",
-            slug="neu-business-school",
-            avatar_url="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Truong_Dai_hoc_Kinh_te_Quoc_dan.svg",
-        ),
-    ]
-    for org in organizations:
-        await session.merge(org)
+    await session.flush()
 
     org_members = [
         OrganizationMemberModel(
@@ -236,29 +274,36 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
         OrganizationMemberModel(
             id="member_partner_01",
             user_id="user_partner_01",
-            organization_id="partner_stanford",
+            organization_id="partner-stanford",
             role_id="OWNER",
             status="ACTIVE",
         ),
         OrganizationMemberModel(
             id="member_instructor_01",
             user_id="user_instructor_01",
-            organization_id="partner_stanford",
+            organization_id="partner-stanford",
             role_id="INSTRUCTOR",
+            status="ACTIVE",
+        ),
+        OrganizationMemberModel(
+            id="member_instructor_dl_01",
+            user_id="user_instructor_01",
+            organization_id="partner-deeplearning-ai",
+            role_id="OWNER",
             status="ACTIVE",
         ),
         OrganizationMemberModel(
             id="member_ta_01",
             user_id="user_ta_01",
-            organization_id="partner_stanford",
+            organization_id="partner-stanford",
             role_id="TA",
             status="ACTIVE",
         ),
         OrganizationMemberModel(
             id="member_instructor_econ",
             user_id="user_instructor_econ",
-            organization_id="partner_neu",
-            role_id="INSTRUCTOR",
+            organization_id="partner-neu",
+            role_id="OWNER",
             status="ACTIVE",
         ),
     ]

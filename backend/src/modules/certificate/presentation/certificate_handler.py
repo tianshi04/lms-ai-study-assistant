@@ -325,3 +325,81 @@ class CertificateHandler(CertificateService):
             page=result.page,
             page_size=result.page_size,
         )
+
+    async def get_organization_certificate_stats(
+        self,
+        request: pb.GetOrganizationCertificateStatsRequest,
+        ctx: RequestContext[
+            pb.GetOrganizationCertificateStatsRequest,
+            pb.GetOrganizationCertificateStatsResponse,
+        ],
+    ) -> pb.GetOrganizationCertificateStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self._use_case.get_organization_certificate_stats(
+                current_user=current_user,
+                organization_id=request.organization_id,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except KeyError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+        return pb.GetOrganizationCertificateStatsResponse(
+            certificates_issued=stats.certificates_issued,
+            certificates_revoked=stats.certificates_revoked,
+        )
+
+    async def list_organization_certificates(
+        self,
+        request: pb.ListOrganizationCertificatesRequest,
+        ctx: RequestContext[
+            pb.ListOrganizationCertificatesRequest,
+            pb.ListOrganizationCertificatesResponse,
+        ],
+    ) -> pb.ListOrganizationCertificatesResponse:
+        current_user = require_current_user()
+        status_map: dict[pb.AdminCertificateStatusFilter, bool | None] = {
+            pb.AdminCertificateStatusFilter.UNSPECIFIED: None,
+            pb.AdminCertificateStatusFilter.VALID: False,
+            pb.AdminCertificateStatusFilter.REVOKED: True,
+        }
+        if request.status not in status_map:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT,
+                "Bộ lọc trạng thái chứng chỉ không hợp lệ.",
+            )
+        try:
+            result = await self._use_case.list_organization_certificates(
+                current_user=current_user,
+                organization_id=request.organization_id,
+                page=request.page,
+                page_size=request.page_size,
+                search_query=request.search_query,
+                is_revoked=status_map[request.status],
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except KeyError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.ListOrganizationCertificatesResponse(
+            certificates=[
+                pb.AdminCertificateSummary(
+                    certificate_id=c.certificate_id,
+                    learner_name=c.learner_name,
+                    course_title=c.course_title,
+                    partner_name=c.partner_name,
+                    issue_date=c.issue_date,
+                    is_revoked=c.is_revoked,
+                    revoked_reason=c.revoked_reason,
+                )
+                for c in result.certificates
+            ],
+            total_count=result.total_count,
+            page=result.page,
+            page_size=result.page_size,
+        )

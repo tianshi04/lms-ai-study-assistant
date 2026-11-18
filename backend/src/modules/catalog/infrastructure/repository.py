@@ -35,6 +35,7 @@ from src.modules.catalog.domain import (
     ItemType,
     LearningItem,
     Lesson,
+    OrganizationCatalogStats,
     Specialization,
     WeekModule,
 )
@@ -185,6 +186,7 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         foundational_course_ids=list(
             getattr(model, "foundational_course_ids", []) or []
         ),
+        issuer_partner_id=getattr(model, "issuer_partner_id", None) or "",
     )
 
 
@@ -217,6 +219,7 @@ def _model_to_domain_specialization(
         owner_id=getattr(model, "owner_id", "") or "",
         organization_id=getattr(model, "organization_id", "partner_community")
         or "partner_community",
+        issuer_partner_id=getattr(model, "issuer_partner_id", None) or "",
     )
 
 
@@ -334,7 +337,12 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
 
         if organization_id:
-            stmt = stmt.where(CourseModel.organization_id == organization_id)
+            stmt = stmt.where(
+                or_(
+                    CourseModel.organization_id == organization_id,
+                    CourseModel.issuer_partner_id == organization_id,
+                )
+            )
         else:
             stmt = apply_organization_scope(stmt, CourseModel, get_current_user())
 
@@ -591,6 +599,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         owner_id: str,
         organization_id: str = "partner_community",
         slug: str = "",
+        issuer_partner_id: str = "",
     ) -> Specialization:
         if slug and slug.strip():
             candidate_id = f"spec-{slug.strip()}"
@@ -602,6 +611,52 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             )
         else:
             spec_id = f"spec-{uuid7()}"
+
+        clean_org_id = (
+            organization_id.strip()
+            if organization_id and organization_id.strip()
+            else "partner_community"
+        )
+        resolved_issuer_id: str | None = None
+        candidate_partner_key = issuer_partner_id.strip() or (
+            clean_org_id if clean_org_id != "partner_community" else ""
+        )
+        if clean_org_id != "partner_community":
+            from src.modules.identity.infrastructure.models import OrganizationModel
+
+            org_row = (
+                await self.session.execute(
+                    select(OrganizationModel).where(
+                        or_(
+                            OrganizationModel.id == clean_org_id,
+                            OrganizationModel.slug == clean_org_id,
+                        )
+                    )
+                )
+            ).scalar_one_or_none()
+            if org_row:
+                clean_org_id = org_row.id
+                if (
+                    not candidate_partner_key
+                    or candidate_partner_key == organization_id.strip()
+                ):
+                    candidate_partner_key = org_row.id
+        if candidate_partner_key:
+            from src.modules.partner.infrastructure.models import PartnerModel
+
+            partner_row = (
+                await self.session.execute(
+                    select(PartnerModel).where(
+                        or_(
+                            PartnerModel.id == candidate_partner_key,
+                            PartnerModel.slug == candidate_partner_key,
+                        )
+                    )
+                )
+            ).scalar_one_or_none()
+            if partner_row:
+                resolved_issuer_id = partner_row.id
+
         model = SpecializationModel(
             id=spec_id,
             title=title,
@@ -610,7 +665,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             partner_logo_url=partner_logo_url,
             course_ids=course_ids,
             owner_id=owner_id,
-            organization_id=organization_id,
+            organization_id=clean_org_id,
+            issuer_partner_id=resolved_issuer_id,
         )
         self.session.add(model)
         await self.session.flush()
@@ -914,6 +970,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         financial_aid_enabled: bool = True,
         organization_id: str = "partner_community",
         foundational_course_ids: list[str] | None = None,
+        issuer_partner_id: str = "",
     ) -> Course:
         import re
 
@@ -937,19 +994,50 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         final_partner_name = partner_name.strip() if partner_name else ""
         final_partner_logo = partner_logo_url.strip() if partner_logo_url else ""
+        resolved_issuer_id: str | None = None
+        candidate_partner_key = issuer_partner_id.strip() or (
+            clean_org_id if clean_org_id != "partner_community" else ""
+        )
 
-        if not final_partner_name:
+        if clean_org_id != "partner_community" or not final_partner_name:
             from src.modules.identity.infrastructure.models import OrganizationModel
 
-            stmt = select(OrganizationModel).where(OrganizationModel.id == clean_org_id)
+            stmt = select(OrganizationModel).where(
+                or_(
+                    OrganizationModel.id == clean_org_id,
+                    OrganizationModel.slug == clean_org_id,
+                )
+            )
             res = await self.session.execute(stmt)
             org_row = res.scalar_one_or_none()
             if org_row:
-                final_partner_name = org_row.name
+                clean_org_id = org_row.id
+                if not final_partner_name:
+                    final_partner_name = org_row.name
                 if not final_partner_logo:
                     final_partner_logo = org_row.avatar_url
-            else:
-                final_partner_name = ""
+                if not issuer_partner_id.strip():
+                    candidate_partner_key = org_row.id
+
+        if candidate_partner_key:
+            from src.modules.partner.infrastructure.models import PartnerModel
+
+            partner_row = (
+                await self.session.execute(
+                    select(PartnerModel).where(
+                        or_(
+                            PartnerModel.id == candidate_partner_key,
+                            PartnerModel.slug == candidate_partner_key,
+                        )
+                    )
+                )
+            ).scalar_one_or_none()
+            if partner_row:
+                resolved_issuer_id = partner_row.id
+                if not final_partner_name:
+                    final_partner_name = partner_row.name
+                if not final_partner_logo:
+                    final_partner_logo = partner_row.logo_url
 
         model = CourseModel(
             id=course_id,
@@ -963,6 +1051,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             owner_id=owner_id,
             financial_aid_enabled=financial_aid_enabled,
             organization_id=clean_org_id,
+            issuer_partner_id=resolved_issuer_id,
             status=CourseStatus.DRAFT,
             rejection_reason="",
             foundational_course_ids=clean_foundational_ids,
@@ -2901,3 +2990,143 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         await self.session.execute(upsert_stmt)
         await self.session.flush()
         return True
+
+    async def list_organization_course_ids(self, organization_id: str) -> list[str]:
+        clean_org_id = organization_id.strip()
+        if not clean_org_id:
+            return []
+        stmt = select(CourseModel.id).where(
+            or_(
+                CourseModel.organization_id == clean_org_id,
+                CourseModel.issuer_partner_id == clean_org_id,
+            )
+        )
+        return list((await self.session.execute(stmt)).scalars().all())
+
+    async def get_organization_catalog_stats(
+        self, organization_id: str
+    ) -> OrganizationCatalogStats:
+        clean_org_id = organization_id.strip()
+        if not clean_org_id:
+            return OrganizationCatalogStats()
+
+        org_courses_sq = (
+            select(CourseModel.id, CourseModel.status)
+            .where(
+                or_(
+                    CourseModel.organization_id == clean_org_id,
+                    CourseModel.issuer_partner_id == clean_org_id,
+                )
+            )
+            .subquery()
+        )
+
+        course_sq = (
+            select(
+                func.count().label("total_courses"),
+                func.count()
+                .filter(org_courses_sq.c.status == CourseStatus.PUBLISHED)
+                .label("published_courses"),
+                func.count()
+                .filter(org_courses_sq.c.status == CourseStatus.PENDING_REVIEW)
+                .label("pending_review_courses"),
+                func.count()
+                .filter(org_courses_sq.c.status == CourseStatus.DRAFT)
+                .label("draft_courses"),
+                func.count()
+                .filter(org_courses_sq.c.status == CourseStatus.REJECTED)
+                .label("rejected_courses"),
+            )
+            .select_from(org_courses_sq)
+            .subquery()
+        )
+
+        review_sq = (
+            select(
+                func.count(CourseReviewModel.id).label("total_reviews"),
+                func.coalesce(
+                    func.round(
+                        func.cast(func.avg(CourseReviewModel.rating_stars), Numeric),
+                        RATING_ROUND_DECIMALS,
+                    ),
+                    0.0,
+                ).label("average_rating"),
+            )
+            .select_from(CourseReviewModel)
+            .join(org_courses_sq, org_courses_sq.c.id == CourseReviewModel.course_id)
+            .subquery()
+        )
+
+        agg_stmt = (
+            select(
+                course_sq.c.total_courses,
+                course_sq.c.published_courses,
+                course_sq.c.pending_review_courses,
+                course_sq.c.draft_courses,
+                course_sq.c.rejected_courses,
+                review_sq.c.total_reviews,
+                review_sq.c.average_rating,
+            )
+            .select_from(course_sq)
+            .join(review_sq, true())
+        )
+        row = (await self.session.execute(agg_stmt)).one()
+        return OrganizationCatalogStats(
+            total_courses=int(row.total_courses),
+            published_courses=int(row.published_courses),
+            pending_review_courses=int(row.pending_review_courses),
+            draft_courses=int(row.draft_courses),
+            rejected_courses=int(row.rejected_courses),
+            total_reviews=int(row.total_reviews),
+            average_rating=float(row.average_rating),
+        )
+
+    async def list_organization_course_summaries(
+        self,
+        organization_id: str,
+        search_query: str = "",
+        status: CourseStatus | None = None,
+    ) -> list[AdminCourseSummaryRow]:
+        clean_org_id = organization_id.strip()
+        if not clean_org_id:
+            return []
+
+        stmt = select(
+            CourseModel.id,
+            CourseModel.title,
+            CourseModel.partner_name,
+            CourseModel.status,
+            CourseModel.average_rating,
+            CourseModel.review_count,
+        ).where(
+            or_(
+                CourseModel.organization_id == clean_org_id,
+                CourseModel.issuer_partner_id == clean_org_id,
+            )
+        )
+        if search_query:
+            pattern = escape_like_pattern(search_query)
+            stmt = stmt.where(
+                or_(
+                    CourseModel.title.ilike(pattern, escape="\\"),
+                    CourseModel.partner_name.ilike(pattern, escape="\\"),
+                )
+            )
+        if status is not None:
+            stmt = stmt.where(CourseModel.status == status)
+
+        rows = (await self.session.execute(stmt)).all()
+        return [
+            AdminCourseSummaryRow(
+                course_id=str(r.id),
+                title=r.title or "",
+                partner_name=r.partner_name or "",
+                status=r.status
+                if isinstance(r.status, CourseStatus)
+                else CourseStatus(str(r.status)),
+                average_rating=float(r.average_rating or 0.0),
+                review_count=int(r.review_count or 0),
+            )
+            for r in rows
+        ]
+

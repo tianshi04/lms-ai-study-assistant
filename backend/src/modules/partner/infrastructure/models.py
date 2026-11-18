@@ -32,5 +32,5 @@ class PartnerModel(Base):
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
     updated_at: Mapped[str] = mapped_column(String(64), nullable=False)
     historical_public_keys: Mapped[list[str]] = mapped_column(
-        ARRAY(String(255)), nullable=False, default=list
+        ARRAY(Text()), nullable=False, default=list, server_default="{}"
     )

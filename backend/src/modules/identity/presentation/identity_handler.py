@@ -309,28 +309,18 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ListEnterpriseSeatsResponse:
         current_user = require_current_user()
-        if not current_user.is_admin:
-            raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Quản trị viên mới có quyền xem danh sách Enterprise Seats.",
+        try:
+            items = await self._use_case.list_enterprise_seats(
+                partner_name=request.partner_name,
+                organization_id=request.organization_id,
+                current_user=current_user,
             )
-        items = await self._use_case.list_enterprise_seats(
-            request.partner_name, current_user=current_user
-        )
-        pb_seats = [
-            pb.EnterpriseSeat(
-                id=item["id"],
-                partner_name=item["partner_name"],
-                seat_key=item["seat_key"],
-                assigned_user_id=item["assigned_user_id"],
-                assigned_user_email=item["assigned_user_email"],
-                status=item["status"],
-                created_at=item["created_at"],
-                scope_type=item.get("scope_type", "ALL_COURSES"),
-                allowed_course_ids=item.get("allowed_course_ids", []),
-            )
-            for item in items
-        ]
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        pb_seats = [_to_pb_enterprise_seat(item) for item in items]
         return pb.ListEnterpriseSeatsResponse(seats=pb_seats)
 
     async def create_enterprise_seat(
@@ -345,25 +335,22 @@ class IdentityHandler(IdentityService):
             raise ConnectError(
                 Code.PERMISSION_DENIED, "Yêu cầu quyền quản lý Suất học Enterprise"
             )
-        item = await self._use_case.create_enterprise_seat(
-            partner_name=request.partner_name,
-            seat_key=request.seat_key,
-            scope_type=request.scope_type or "ALL_COURSES",
-            allowed_course_ids=list(request.allowed_course_ids),
-            current_user=current_user,
-        )
-        pb_seat = pb.EnterpriseSeat(
-            id=item["id"],
-            partner_name=item["partner_name"],
-            seat_key=item["seat_key"],
-            assigned_user_id=item["assigned_user_id"],
-            assigned_user_email=item["assigned_user_email"],
-            status=item["status"],
-            created_at=item["created_at"],
-            scope_type=item.get("scope_type", "ALL_COURSES"),
-            allowed_course_ids=item.get("allowed_course_ids", []),
-        )
-        return pb.CreateEnterpriseSeatResponse(seat=pb_seat)
+        try:
+            item = await self._use_case.create_enterprise_seat(
+                partner_name=request.partner_name,
+                seat_key=request.seat_key,
+                scope_type=request.scope_type or "ALL_COURSES",
+                allowed_course_ids=list(request.allowed_course_ids),
+                organization_id=request.organization_id,
+                total_seats=request.total_seats,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.CreateEnterpriseSeatResponse(seat=_to_pb_enterprise_seat(item))
 
     async def revoke_enterprise_seat(
         self,
@@ -373,13 +360,14 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.RevokeEnterpriseSeatResponse:
         current_user = require_current_user()
-        if not current_user.is_admin:
-            raise ConnectError(
-                Code.PERMISSION_DENIED, "Yêu cầu quyền quản lý Suất học Enterprise"
+        try:
+            success, msg = await self._use_case.revoke_enterprise_seat(
+                request.user_id, request.course_id, current_user=current_user
             )
-        success, msg = await self._use_case.revoke_enterprise_seat(
-            request.user_id, request.course_id, current_user=current_user
-        )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.RevokeEnterpriseSeatResponse(success=success, message=msg)
 
     async def update_instructor_profile(
@@ -674,6 +662,82 @@ class IdentityHandler(IdentityService):
         ]
         return pb.ListMyOrganizationsResponse(organizations=pb_orgs)
 
+    async def get_organization_identity_stats(
+        self,
+        request: pb.GetOrganizationIdentityStatsRequest,
+        ctx: RequestContext[
+            pb.GetOrganizationIdentityStatsRequest,
+            pb.GetOrganizationIdentityStatsResponse,
+        ],
+    ) -> pb.GetOrganizationIdentityStatsResponse:
+        current_user = require_current_user()
+        try:
+            stats = await self._use_case.get_organization_identity_stats(
+                organization_id=request.organization_id,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except KeyError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.GetOrganizationIdentityStatsResponse(
+            member_count=stats.member_count,
+            instructor_count=stats.instructor_count,
+            pending_invitation_count=stats.pending_invitation_count,
+            active_license_count=stats.active_license_count,
+            total_seats=stats.total_seats,
+            used_seats=stats.used_seats,
+        )
+
+    async def list_organization_seat_holders(
+        self,
+        request: pb.ListOrganizationSeatHoldersRequest,
+        ctx: RequestContext[
+            pb.ListOrganizationSeatHoldersRequest,
+            pb.ListOrganizationSeatHoldersResponse,
+        ],
+    ) -> pb.ListOrganizationSeatHoldersResponse:
+        current_user = require_current_user()
+        try:
+            page_result = await self._use_case.list_organization_seat_holders(
+                organization_id=request.organization_id,
+                current_user=current_user,
+                page=request.page,
+                page_size=request.page_size,
+                search_query=request.search_query,
+                revocable_only=request.revocable_only,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except KeyError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.ListOrganizationSeatHoldersResponse(
+            holders=[
+                pb.OrganizationSeatHolder(
+                    user_id=h.user_id,
+                    full_name=h.full_name,
+                    email=h.email,
+                    avatar_url=h.avatar_url,
+                    seat_key=h.seat_key,
+                    seat_assigned_at=h.seat_assigned_at,
+                    enrolled_courses_count=h.enrolled_courses_count,
+                    max_progress_percent=h.max_progress_percent,
+                    can_revoke=h.can_revoke,
+                    revoke_reason_hint=h.revoke_reason_hint,
+                )
+                for h in page_result.holders
+            ],
+            total_count=page_result.total_count,
+            page=page_result.page,
+            page_size=page_result.page_size,
+        )
+
     async def create_invitation(
         self,
         request: pb.CreateInvitationRequest,
@@ -828,6 +892,20 @@ def _pb_status_to_str(status_enum: pb.InvitationStatus) -> str:
         pb.InvitationStatus.EXPIRED: "INVITATION_STATUS_EXPIRED",
     }
     return mapping.get(status_enum, "")
+
+
+def _to_pb_enterprise_seat(item: Any) -> pb.EnterpriseSeat:
+    return pb.EnterpriseSeat(
+        id=item.id,
+        partner_name=item.partner_name,
+        seat_key=item.seat_key,
+        total_seats=item.total_seats,
+        used_seats=item.used_seats,
+        is_active=item.is_active,
+        scope_type=item.scope_type,
+        allowed_course_ids=list(item.allowed_course_ids),
+        organization_id=item.organization_id,
+    )
 
 
 def _dict_to_pb_invitation(d: dict) -> pb.Invitation:

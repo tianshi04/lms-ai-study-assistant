@@ -40,7 +40,10 @@ from src.modules.certificate.presentation.pdf_handler import (
 from src.modules.forum.application import ForumUseCase
 from src.modules.forum.presentation.forum_handler import ForumHandler
 from src.modules.identity.application import IdentityUseCase
-from src.modules.identity.infrastructure.repository import IdentityRepository
+from src.modules.identity.infrastructure.repository import (
+    IdentityRepository,
+    OrganizationRepository,
+)
 from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application import LearningUseCase
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
@@ -52,6 +55,7 @@ from src.modules.notification.presentation.notification_handler import (
     NotificationHandler,
 )
 from src.modules.partner.application import PartnerUseCase
+from src.modules.partner.infrastructure.repository import SQLAlchemyPartnerRepository
 from src.modules.partner.presentation.partner_handler import PartnerHandler
 from src.modules.payment.application import PaymentUseCase
 from src.modules.payment.infrastructure.repository import PaymentRepository
@@ -137,6 +141,7 @@ catalog_usecase = CatalogUseCase(
     learning_repo_factory=SQLAlchemyLearningRepository,
     identity_repo_factory=IdentityRepository,
     payment_repo_factory=PaymentRepository,
+    org_repo_factory=OrganizationRepository,
 )
 catalog_handler = CatalogHandler(use_case=catalog_usecase)
 catalog_app = CatalogServiceASGIApplication(catalog_handler, interceptors=interceptors)
@@ -152,6 +157,7 @@ learning_app = LearningServiceASGIApplication(
 identity_usecase = IdentityUseCase(
     learning_repo_factory=SQLAlchemyLearningRepository,
     catalog_repo_factory=SQLAlchemyCatalogRepository,
+    partner_repo_factory=SQLAlchemyPartnerRepository,
 )
 identity_handler = IdentityHandler(use_case=identity_usecase)
 identity_app = IdentityServiceASGIApplication(
@@ -162,6 +168,7 @@ certificate_usecase = CertificateUseCase(
     pdf_renderer=ReportLabCertificatePdfRenderer(),
     asset_loader=CertificateAssetLoader(),
     catalog_repo_factory=SQLAlchemyCatalogRepository,
+    org_repo_factory=OrganizationRepository,
 )
 certificate_handler = CertificateHandler(use_case=certificate_usecase)
 certificate_pdf_endpoint = make_certificate_pdf_endpoint(certificate_usecase)
@@ -183,11 +190,15 @@ forum_usecase = ForumUseCase()
 forum_handler = ForumHandler(use_case=forum_usecase)
 forum_app = ForumServiceASGIApplication(forum_handler, interceptors=interceptors)
 
-partner_usecase = PartnerUseCase()
+partner_usecase = PartnerUseCase(
+    org_repo_factory=OrganizationRepository,
+)
 partner_handler = PartnerHandler(use_case=partner_usecase)
 partner_app = PartnerServiceASGIApplication(partner_handler, interceptors=interceptors)
 
-payment_usecase = PaymentUseCase()
+payment_usecase = PaymentUseCase(
+    catalog_repo_factory=SQLAlchemyCatalogRepository,
+)
 payment_handler = PaymentHandler(use_case=payment_usecase)
 payment_app = PaymentServiceASGIApplication(payment_handler, interceptors=interceptors)
 
