@@ -78,6 +78,7 @@ class ForumHandler(ForumService):
             course_id=request.course_id,
             item_id=request.item_id,
             current_user_id=current_user.id,
+            user=current_user,
         )
         return pb.ListThreadsResponse(threads=[_to_pb_thread(t) for t in threads])
 
@@ -86,6 +87,8 @@ class ForumHandler(ForumService):
         request: pb.CreateThreadRequest,
         ctx: RequestContext[pb.CreateThreadRequest, pb.CreateThreadResponse],
     ) -> pb.CreateThreadResponse:
+        if not request.course_id.strip():
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
         if not request.title.strip():
             raise ConnectError(
                 Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được để trống"
@@ -96,15 +99,21 @@ class ForumHandler(ForumService):
             current_user.email.split("@")[0] if current_user.email else current_user.id
         )
 
-        thread = await self.use_case.create_thread(
-            course_id=request.course_id,
-            item_id=request.item_id,
-            title=request.title,
-            content=request.content,
-            author_user_id=current_user.id,
-            author_name=author_name,
-            author_role=_format_author_role(current_user),
-        )
+        try:
+            thread = await self.use_case.create_thread(
+                course_id=request.course_id,
+                item_id=request.item_id,
+                title=request.title,
+                content=request.content,
+                author_user_id=current_user.id,
+                author_name=author_name,
+                user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
         return pb.CreateThreadResponse(thread=_to_pb_thread(thread))
 
     async def post_reply(
@@ -122,13 +131,19 @@ class ForumHandler(ForumService):
             current_user.email.split("@")[0] if current_user.email else current_user.id
         )
 
-        reply = await self.use_case.post_reply(
-            thread_id=request.thread_id,
-            content=request.content,
-            author_user_id=current_user.id,
-            author_name=author_name,
-            author_role=_format_author_role(current_user),
-        )
+        try:
+            reply = await self.use_case.post_reply(
+                thread_id=request.thread_id,
+                content=request.content,
+                author_user_id=current_user.id,
+                author_name=author_name,
+                user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
         return pb.PostReplyResponse(reply=_to_pb_reply(reply))
 
     async def vote_post(
@@ -138,11 +153,18 @@ class ForumHandler(ForumService):
     ) -> pb.VotePostResponse:
         current_user = require_current_user()
 
-        new_count = await self.use_case.vote_post(
-            post_id=request.post_id,
-            user_id=current_user.id,
-            is_upvote=request.is_upvote,
-        )
+        try:
+            new_count = await self.use_case.vote_post(
+                post_id=request.post_id,
+                user_id=current_user.id,
+                is_upvote=request.is_upvote,
+                user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
         return pb.VotePostResponse(updated_upvote_count=new_count)
 
     async def pin_staff_answer(
@@ -152,16 +174,37 @@ class ForumHandler(ForumService):
     ) -> pb.PinStaffAnswerResponse:
         current_user = require_current_user()
 
-        if not current_user.is_staff:
-            raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Trợ giảng hoặc Giảng viên mới có quyền ghim câu trả lời chính thức.",
+        try:
+            success = await self.use_case.pin_staff_answer(
+                reply_id=request.reply_id,
+                ta_user_id=current_user.id,
+                user=current_user,
             )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
 
-        success = await self.use_case.pin_staff_answer(
-            reply_id=request.reply_id, ta_user_id=current_user.id, user=current_user
-        )
         return pb.PinStaffAnswerResponse(success=success)
+
+    async def pin_thread(
+        self,
+        request: pb.PinThreadRequest,
+        ctx: RequestContext[pb.PinThreadRequest, pb.PinThreadResponse],
+    ) -> pb.PinThreadResponse:
+        current_user = require_current_user()
+        try:
+            thread = await self.use_case.pin_thread(
+                thread_id=request.thread_id,
+                is_pinned=request.is_pinned,
+                user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+        return pb.PinThreadResponse(thread=_to_pb_thread(thread))
 
     async def update_thread(
         self,
@@ -178,6 +221,9 @@ class ForumHandler(ForumService):
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
         if not thread:
             raise ConnectError(
                 Code.NOT_FOUND, f"Bài viết {request.thread_id} không tồn tại."
@@ -190,16 +236,16 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.DeleteThreadRequest, pb.DeleteThreadResponse],
     ) -> pb.DeleteThreadResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff
         try:
             success = await self.use_case.delete_thread(
                 thread_id=request.thread_id,
                 current_user_id=current_user.id,
-                is_staff=is_staff,
                 user=current_user,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
         return pb.DeleteThreadResponse(success=success)
 
     async def update_reply(
@@ -216,6 +262,9 @@ class ForumHandler(ForumService):
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
         if not reply:
             raise ConnectError(
                 Code.NOT_FOUND, f"Bình luận {request.reply_id} không tồn tại."
@@ -228,14 +277,14 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.DeleteReplyRequest, pb.DeleteReplyResponse],
     ) -> pb.DeleteReplyResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff
         try:
             success = await self.use_case.delete_reply(
                 reply_id=request.reply_id,
                 current_user_id=current_user.id,
-                is_staff=is_staff,
                 user=current_user,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
         return pb.DeleteReplyResponse(success=success)

@@ -94,6 +94,7 @@ message Course {
   repeated string co_instructor_ids = 18;
   double price = 19;
   repeated string foundational_course_ids = 20;
+  repeated string ta_ids = 21;
 }
 
 // Specialization messages

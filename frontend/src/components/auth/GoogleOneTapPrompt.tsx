@@ -15,10 +15,21 @@ export function GoogleOneTapPrompt() {
 
   useEffect(() => {
     // If user is already logged in, skip displaying Google One Tap
+    if (userName) {
+      return;
+    }
+
     // Suppress Next.js dev overlay for Google SDK GSI_LOGGER internal warnings
     const originalConsoleError = console.error;
     console.error = (...args: unknown[]) => {
-      if (typeof args[0] === "string" && args[0].includes("[GSI_LOGGER]")) {
+      const isGsiLog = args.some(
+        (arg) =>
+          typeof arg === "string" &&
+          (arg.includes("[GSI_LOGGER]") ||
+            arg.includes("FedCM") ||
+            arg.includes("Error retrieving a token")),
+      );
+      if (isGsiLog) {
         console.warn(...args);
         return;
       }
@@ -106,6 +117,10 @@ export function GoogleOneTapPrompt() {
       console.error = originalConsoleError;
     };
   }, [userName, setAuth, router, toast]);
+
+  if (userName) {
+    return null;
+  }
 
   return null;
 }

@@ -67,7 +67,7 @@ export function Navbar() {
           : "bg-surface border-b border-transparent shadow-none",
       )}
     >
-      <GoogleOneTapPrompt />
+      {!userName && <GoogleOneTapPrompt />}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Left Section: Brand Logo & Navigation Links */}
         <div className="flex items-center gap-6">
@@ -82,11 +82,18 @@ export function Navbar() {
                 </Link>
               </NavigationMenu.Item>
               {userName && (
-                <NavigationMenu.Item>
-                  <Link href="/my-learning" className={getLinkClasses("/my-learning")}>
-                    {"Việc học của tôi"}
-                  </Link>
-                </NavigationMenu.Item>
+                <>
+                  <NavigationMenu.Item>
+                    <Link href="/my-learning" className={getLinkClasses("/my-learning")}>
+                      {"Việc học của tôi"}
+                    </Link>
+                  </NavigationMenu.Item>
+                  <NavigationMenu.Item>
+                    <Link href="/forum" className={getLinkClasses("/forum")}>
+                      {"Thảo luận"}
+                    </Link>
+                  </NavigationMenu.Item>
+                </>
               )}
 
               {/* Render Instructor Portal for authorized roles */}
@@ -178,13 +185,22 @@ export function Navbar() {
             {"Khóa học"}
           </Link>
           {userName && (
-            <Link
-              href="/my-learning"
-              onClick={() => setMobileMenuOpen(false)}
-              className={getMobileLinkClasses("/my-learning")}
-            >
-              {"Việc học của tôi"}
-            </Link>
+            <>
+              <Link
+                href="/my-learning"
+                onClick={() => setMobileMenuOpen(false)}
+                className={getMobileLinkClasses("/my-learning")}
+              >
+                {"Việc học của tôi"}
+              </Link>
+              <Link
+                href="/forum"
+                onClick={() => setMobileMenuOpen(false)}
+                className={getMobileLinkClasses("/forum")}
+              >
+                {"Thảo luận"}
+              </Link>
+            </>
           )}
           {isInstructorOrAdmin && (
             <Link

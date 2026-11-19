@@ -14,6 +14,7 @@ import {
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useCourseDetailQuery } from "@/lib/queries/useCatalogQueries";
 import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -29,9 +30,12 @@ interface ForumTabProps {
 function formatRoleName(role: string): string {
   if (!role) return "Học viên";
   const r = role.toUpperCase();
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
+  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN") || r === "3")
+    return "Quản trị viên";
+  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "COURSE_TA")
+    return "Trợ giảng (TA)";
   if (r.includes("INSTRUCTOR") || r === "2") return "Giảng viên";
-  if (r.includes("ADMIN") || r === "3") return "Quản trị viên";
+  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
   return role;
 }
 
@@ -42,8 +46,18 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   const [newContent, setNewContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { userId: authUserId, isStaff: isStaffOrAdmin } = useAuth();
+  const { userId: authUserId, isSuperAdmin } = useAuth();
   const currentUserId = authUserId || "";
+  const { data: courseRes } = useCourseDetailQuery(courseId);
+  const course = courseRes?.course;
+
+  const isCourseStaffOrAdmin = Boolean(
+    isSuperAdmin ||
+    (course &&
+      (course.ownerId === currentUserId ||
+        course.coInstructorIds?.includes(currentUserId) ||
+        course.taIds?.includes(currentUserId))),
+  );
 
   // Thread Edit State
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
@@ -226,6 +240,26 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     }
   };
 
+  const handlePinStaffAnswer = async (replyId: string) => {
+    try {
+      const client = getRpcClient(ForumService);
+      await client.pinStaffAnswer({ replyId });
+      fetchThreads();
+    } catch (err) {
+      console.error("Failed to pin staff answer:", err);
+    }
+  };
+
+  const handleTogglePinThread = async (threadId: string, isPinned: boolean) => {
+    try {
+      const client = getRpcClient(ForumService);
+      await client.pinThread({ threadId, isPinned });
+      fetchThreads();
+    } catch (err) {
+      console.error("Failed to pin thread:", err);
+    }
+  };
+
   const handleVote = async (postId: string, isUpvote: boolean) => {
     if (votingPostIds.has(postId)) return;
     setVotingPostIds((prev) => new Set(prev).add(postId));
@@ -347,7 +381,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         <div className="w-full space-y-3">
           {threads.map((thread) => {
             const isThreadAuthor = Boolean(currentUserId && thread.authorUserId === currentUserId);
-            const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
+            const canDeleteThread = isThreadAuthor || isCourseStaffOrAdmin;
             const isEditingThisThread = editingThreadId === thread.id;
             const isTarget = targetThreadId === thread.id;
 
@@ -480,23 +514,30 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                 {/* Replies */}
                 {thread.replies.length > 0 && (
                   <div className="pl-3 border-l-2 border-outline-variant space-y-2 pt-1">
-                    {thread.replies.map((reply) => (
-                      <ForumReplyItem
-                        key={reply.id}
-                        reply={reply}
-                        currentUserId={currentUserId}
-                        isStaffOrAdmin={isStaffOrAdmin}
-                        isEditing={editingReplyId === reply.id}
-                        editReplyContent={editReplyContent}
-                        submittingEditReply={submittingEditReply}
-                        onStartEdit={startEditReply}
-                        onCancelEdit={() => setEditingReplyId(null)}
-                        onSaveEdit={handleUpdateReply}
-                        onDelete={handleDeleteReply}
-                        onVote={handleVote}
-                        onContentChange={setEditReplyContent}
-                      />
-                    ))}
+                    {[...thread.replies]
+                      .sort((a, b) => {
+                        if (Boolean(a.isStaffAnswer) !== Boolean(b.isStaffAnswer)) {
+                          return a.isStaffAnswer ? -1 : 1;
+                        }
+                        return 0;
+                      })
+                      .map((reply) => (
+                        <ForumReplyItem
+                          key={reply.id}
+                          reply={reply}
+                          currentUserId={currentUserId}
+                          isStaffOrAdmin={isCourseStaffOrAdmin}
+                          isEditing={editingReplyId === reply.id}
+                          editReplyContent={editReplyContent}
+                          submittingEditReply={submittingEditReply}
+                          onStartEdit={startEditReply}
+                          onCancelEdit={() => setEditingReplyId(null)}
+                          onSaveEdit={handleUpdateReply}
+                          onDelete={handleDeleteReply}
+                          onVote={handleVote}
+                          onContentChange={setEditReplyContent}
+                        />
+                      ))}
                   </div>
                 )}
 
@@ -533,15 +574,22 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         onClose={() => setSelectedModalThreadId(null)}
         thread={threads.find((t) => t.id === selectedModalThreadId) || null}
         currentUserId={currentUserId}
-        isStaffOrAdmin={isStaffOrAdmin}
+        isStaffOrAdmin={isCourseStaffOrAdmin}
         onVote={handleVote}
         onPostReply={async (threadId, content) => {
           const client = getRpcClient(ForumService);
           await client.postReply({ threadId, content });
           fetchThreads();
         }}
+        onEditReply={async (replyId, content) => {
+          const client = getRpcClient(ForumService);
+          await client.updateReply({ replyId, content });
+          fetchThreads();
+        }}
         onDeleteThread={handleDeleteThread}
         onDeleteReply={handleDeleteReply}
+        onPinStaffAnswer={handlePinStaffAnswer}
+        onTogglePinThread={handleTogglePinThread}
         isNotificationTarget={targetThreadId === selectedModalThreadId}
       />
 

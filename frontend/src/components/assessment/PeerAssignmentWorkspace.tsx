@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Slider } from "@/components/ui/Slider";
 import { mapConnectError } from "@/lib/connect_error_mapper";
+import { getSafeExternalUrl } from "@/lib/utils";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -232,7 +233,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-foreground" title={title}>
-            {title || "Thiết kế Mô hình Học máy có Giám sát"}
+            {title || "Peer-Graded Assignment: Supervised Machine Learning Model Design"}
           </h2>
         </div>
 
@@ -383,8 +384,8 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         >
           <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-xs text-warning leading-relaxed">
             <p className="font-semibold">
-              Đánh giá bài nộp của bạn học một cách khách quan dựa theo các tiêu chí bên dưới. Cảnh
-              báo bất thường sẽ tự động kích hoạt nếu độ lệch điểm vượt quá 30%.
+              Đánh giá bài nộp của bạn học một cách khách quan dựa theo các tiêu chí Rubric bên
+              dưới. Cảnh báo bất thường sẽ tự động kích hoạt nếu độ lệch điểm vượt quá 30%.
             </p>
           </div>
 
@@ -399,15 +400,21 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                     <span className="w-2 h-2 rounded-full bg-primary" />
                     Bài nộp của Bạn học #{pIdx + 1} ({peer.reviewId})
                   </h4>
-                  <a
-                    href={peer.submissionUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-                  >
-                    <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
-                    <span>Xem Repository</span>
-                  </a>
+                  {getSafeExternalUrl(peer.submissionUrl) ? (
+                    <a
+                      href={getSafeExternalUrl(peer.submissionUrl)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                    >
+                      <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
+                      <span>Xem Repository</span>
+                    </a>
+                  ) : (
+                    <span className="text-xs font-mono text-destructive">
+                      Liên kết không an toàn
+                    </span>
+                  )}
                 </div>
 
                 <p className="text-xs text-muted-foreground bg-surface-container-lowest p-3 rounded-xl border border-border font-mono leading-relaxed">
@@ -417,7 +424,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                 {/* Rubric Criteria Controls */}
                 <div className="space-y-3 pt-1">
                   <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Chấm điểm theo tiêu chí:
+                    Chấm điểm theo Tiêu chí Rubric:
                   </h5>
                   {peer.rubricCriteria.map((crit, cIdx) => (
                     <div

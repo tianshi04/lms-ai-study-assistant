@@ -14,6 +14,7 @@ import {
   Users,
   ClipboardCheck,
   GraduationCap,
+  MessageSquare,
 } from "lucide-react";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Button } from "@/components/ui/Button";
@@ -207,6 +208,14 @@ export function CourseHeaderBanner({
             render={<Link href={`/instructor/courses/${courseId}/gradebook`} />}
           >
             Sổ điểm
+          </Chip>
+
+          <Chip
+            variant="assist"
+            leadingIcon={<MessageSquare className="w-4 h-4 text-primary" aria-hidden="true" />}
+            render={<Link href={`/forum?courseId=${courseId}`} />}
+          >
+            Hỏi đáp & Thảo luận
           </Chip>
 
           {onOpenCollaboratorsModal && (

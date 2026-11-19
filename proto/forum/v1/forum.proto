@@ -83,6 +83,15 @@ message PinStaffAnswerResponse {
   bool success = 1;
 }
 
+message PinThreadRequest {
+  string thread_id = 1;
+  bool is_pinned = 2;
+}
+
+message PinThreadResponse {
+  ForumThread thread = 1;
+}
+
 message UpdateThreadRequest {
   string thread_id = 1;
   string title = 2;
@@ -132,6 +141,9 @@ service ForumService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc PinStaffAnswer(PinStaffAnswerRequest) returns (PinStaffAnswerResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc PinThread(PinThreadRequest) returns (PinThreadResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse) {
