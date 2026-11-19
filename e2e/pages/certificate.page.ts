@@ -7,6 +7,7 @@ export class CertificatePage {
   readonly validBanner: Locator;
   readonly copyLinkButton: Locator;
   readonly downloadBadgeButton: Locator;
+  readonly downloadPdfButton: Locator;
   readonly qrCodeImage: Locator;
 
   constructor(page: Page) {
@@ -16,6 +17,7 @@ export class CertificatePage {
     this.validBanner = page.locator('text=/Chứng chỉ Hợp lệ|Chứng chỉ Xác minh Chính thức|Valid Verified Certificate|Official Verified Certificate/i').first();
     this.copyLinkButton = page.getByRole('button', { name: /Chia sẻ Chứng chỉ|Copy Verification Link|Sao chép|Share/i }).first();
     this.downloadBadgeButton = page.getByRole('button', { name: /Tải huy hiệu|Tải Hồ Sơ|Download/i }).first();
+    this.downloadPdfButton = page.getByRole('button', { name: /Tải chứng chỉ \(PDF\)/i }).first();
     this.qrCodeImage = page.locator('img[alt="Certificate Verification QR Code"]');
   }
 

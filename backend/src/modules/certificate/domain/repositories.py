@@ -4,6 +4,7 @@ from src.modules.certificate.domain.entities import (
     AdminCertificatesPage,
     AdminCertificateStats,
     AdminCertificateTrendPoint,
+    CertificatePdfRenderInput,
     FinancialAidApplication,
     VerifiedCertificate,
 )
@@ -119,3 +120,19 @@ class ICertificateRepository(ABC):
         is_revoked: bool | None = None,
     ) -> AdminCertificatesPage:
         """Return a 1-based page of certificates ordered valid-first then by ID."""
+
+
+class ICertificateAssetLoader(ABC):
+    """Abstract loader for optional raster image assets embedded in certificate PDFs."""
+
+    @abstractmethod
+    async def load_image_bytes(self, asset_url: str) -> bytes | None:
+        """Fetch and normalize a raster image (PNG/JPEG) or return None on fallback."""
+
+
+class ICertificatePdfRenderer(ABC):
+    """Abstract renderer producing binary PDF bytes for a verified certificate."""
+
+    @abstractmethod
+    def render(self, payload: CertificatePdfRenderInput) -> bytes:
+        """Render the certificate PDF synchronously in memory."""

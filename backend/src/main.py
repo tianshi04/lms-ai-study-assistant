@@ -29,7 +29,14 @@ from src.modules.catalog.application import CatalogUseCase
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.catalog.presentation.catalog_handler import CatalogHandler
 from src.modules.certificate.application import CertificateUseCase
+from src.modules.certificate.infrastructure.asset_loader import CertificateAssetLoader
+from src.modules.certificate.infrastructure.pdf_renderer import (
+    ReportLabCertificatePdfRenderer,
+)
 from src.modules.certificate.presentation.certificate_handler import CertificateHandler
+from src.modules.certificate.presentation.pdf_handler import (
+    make_certificate_pdf_endpoint,
+)
 from src.modules.forum.application import ForumUseCase
 from src.modules.forum.presentation.forum_handler import ForumHandler
 from src.modules.identity.application import IdentityUseCase
@@ -151,8 +158,12 @@ identity_app = IdentityServiceASGIApplication(
     identity_handler, interceptors=interceptors
 )
 
-certificate_usecase = CertificateUseCase()
+certificate_usecase = CertificateUseCase(
+    pdf_renderer=ReportLabCertificatePdfRenderer(),
+    asset_loader=CertificateAssetLoader(),
+)
 certificate_handler = CertificateHandler(use_case=certificate_usecase)
+certificate_pdf_endpoint = make_certificate_pdf_endpoint(certificate_usecase)
 certificate_app = CertificateServiceASGIApplication(
     certificate_handler, interceptors=interceptors
 )
@@ -295,6 +306,11 @@ routes = [
     Route("/health", endpoint=health_check, methods=["GET"]),
     Route("/healthz", endpoint=health_check, methods=["GET"]),
     Route("/api/v1/vnpay/ipn", endpoint=vnpay_ipn_endpoint, methods=["GET"]),
+    Route(
+        "/api/v1/certificates/{certificate_id}/pdf",
+        endpoint=certificate_pdf_endpoint,
+        methods=["GET"],
+    ),
     Mount("/catalog.v1.CatalogService", app=cast(Any, catalog_app)),
     Mount("/learning.v1.LearningService", app=cast(Any, learning_app)),
     Mount("/identity.v1.IdentityService", app=cast(Any, identity_app)),
@@ -334,6 +350,7 @@ middleware = [
         expose_headers=[
             "connect-error-info",
             "connect-protocol-version",
+            "content-disposition",
             "set-cookie",
             "x-request-id",
         ],
