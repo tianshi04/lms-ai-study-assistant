@@ -180,12 +180,15 @@ async def test_calculate_topic_mastery_diagnostics():
 async def test_submit_quiz_saves_snapshot_answers(mock_quiz_repo):
     uc = QuizUseCase(repository=mock_quiz_repo)
     await uc.submit_honor_code(user_id="user_1", item_id="item_quiz_1", is_agreed=True)
+    sess = await uc.start_graded_quiz_session(
+        user_id="user_1", item_id="item_quiz_1", force_new=True
+    )
 
     res = await uc.submit_graded_quiz(
         user_id="user_1",
         item_id="item_quiz_1",
         question_answers=[[0], [0], [1]],
-        session_seed=123,
+        session_id=sess["session_id"],
     )
     assert res["score_percent"] > 0
 
@@ -206,12 +209,15 @@ async def test_submit_quiz_saves_snapshot_answers(mock_quiz_repo):
 async def test_get_quiz_attempt_history(mock_quiz_repo):
     uc = QuizUseCase(repository=mock_quiz_repo)
     await uc.submit_honor_code(user_id="user_2", item_id="item_quiz_1", is_agreed=True)
+    sess = await uc.start_graded_quiz_session(
+        user_id="user_2", item_id="item_quiz_1", force_new=True
+    )
 
     await uc.submit_graded_quiz(
         user_id="user_2",
         item_id="item_quiz_1",
         question_answers=[[0], [1], [1]],
-        session_seed=123,
+        session_id=sess["session_id"],
     )
 
     history = await uc.get_quiz_attempt_history(user_id="user_2", item_id="item_quiz_1")
@@ -228,12 +234,15 @@ async def test_get_quiz_attempt_history(mock_quiz_repo):
 async def test_adaptive_answer_masking_graded_quiz(mock_quiz_repo):
     uc = QuizUseCase(repository=mock_quiz_repo)
     await uc.submit_honor_code(user_id="user_3", item_id="item_quiz_1", is_agreed=True)
+    sess = await uc.start_graded_quiz_session(
+        user_id="user_3", item_id="item_quiz_1", force_new=True
+    )
 
     await uc.submit_graded_quiz(
         user_id="user_3",
         item_id="item_quiz_1",
         question_answers=[[0], [1], [1]],
-        session_seed=123,
+        session_id=sess["session_id"],
     )
     subs = await mock_quiz_repo.get_quiz_submissions("user_3", "item_quiz_1")
     sub_id = subs[0].id

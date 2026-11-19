@@ -360,9 +360,24 @@ class QuizActiveSessionModel(Base):
     id: Mapped[str] = mapped_column(String(128), primary_key=True)  # user_id:item_id
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    session_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="", server_default=""
+    )
     session_seed: Mapped[int] = mapped_column(Integer, nullable=False)
     questions_json: Mapped[list[dict[str, Any]]] = mapped_column(
         JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
+    draft_answers_json: Mapped[list[list[int]]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=False,
+        default=list,
+        server_default="[]",
+    )
+    draft_updated_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="", server_default=""
+    )
+    draft_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
     )
     started_at: Mapped[str] = mapped_column(String(64), nullable=False)
     expires_at: Mapped[str] = mapped_column(String(64), nullable=False)

@@ -9,6 +9,7 @@ from uuid6 import uuid7
 from src.modules.assessment.domain import (
     DEFAULT_FALLBACK_QUESTION_LIMIT,
     DEFAULT_PASSING_THRESHOLD_PERCENT,
+    DEFAULT_PREVIEW_SESSION_SEED,
     DEFAULT_QUIZ_EASY_COUNT,
     DEFAULT_QUIZ_HARD_COUNT,
     DEFAULT_QUIZ_MEDIUM_COUNT,
@@ -18,6 +19,7 @@ from src.modules.assessment.domain import (
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
     MEDIUM_DIFFICULTY_ALIASES,
     QUIZ_COOLDOWN_HOURS,
+    QUIZ_DRAFT_KEEPALIVE_GRACE_SECONDS,
     UNLIMITED_ATTEMPTS_SENTINEL,
     AssessmentRepositoryInterface,
     HonorCodeAgreement,
@@ -194,83 +196,309 @@ class QuizUseCase(BaseAssessmentUseCase):
 
         return result
 
-    async def start_graded_quiz_session(
+    async def _verify_preview_permission(
         self,
+        repo: AssessmentRepositoryInterface,
+        item_id: str,
+        preview: bool,
+        current_user: CurrentUser | None,
+    ) -> None:
+        if not preview or current_user is None:
+            return
+        if not current_user.is_staff:
+            raise PermissionError(
+                "Chỉ tài khoản Giảng viên, Trợ giảng hoặc Quản trị viên mới có quyền sử dụng Chế độ Xem trước (Preview)."
+            )
+        if not current_user.is_admin:
+            is_course_staff = await repo.is_course_staff_for_item(
+                item_id, current_user.id
+            )
+            if not is_course_staff:
+                raise PermissionError(
+                    "Bạn không có quyền xem trước bài kiểm tra của khóa học không thuộc quyền phụ trách."
+                )
+
+    async def _verify_paid_quiz_access(
+        self,
+        session: Any,
+        repo: AssessmentRepositoryInterface,
         user_id: str,
         item_id: str,
-        duration_minutes: int = 0,
-        preview: bool = False,
-        force_new: bool = False,
-    ) -> dict[str, Any]:
-        async with async_session_scope() as session:
-            repo = await self._get_repo(session)
-            matrix = await self._get_quiz_matrix(repo, item_id)
+        is_graded: bool,
+        preview: bool,
+    ) -> None:
+        if (
+            is_graded
+            and not preview
+            and (repo is None or "SQLAlchemy" in repo.__class__.__name__)
+        ):
+            target_course_id = await repo.get_course_id_by_item_id(item_id) or ""
+            is_paid, err = await AccessPolicyService.verify_paid_access(
+                session, user_id, target_course_id
+            )
+            if not is_paid:
+                raise PermissionError(err)
 
-            duration_minutes = (
-                duration_minutes
-                if duration_minutes > 0
-                else (
-                    matrix.time_limit_minutes
-                    if (matrix and matrix.time_limit_minutes > 0)
-                    else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+    @staticmethod
+    def _resolve_matrix_params(
+        matrix: QuizMatrix | None, duration_override: int = 0
+    ) -> tuple[int, float, int, int]:
+        duration_minutes = (
+            duration_override
+            if duration_override > 0
+            else (
+                matrix.time_limit_minutes
+                if (matrix and matrix.time_limit_minutes > 0)
+                else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+            )
+        )
+        passing_threshold = (
+            matrix.passing_threshold_percent
+            if (matrix and matrix.passing_threshold_percent > 0)
+            else DEFAULT_PASSING_THRESHOLD_PERCENT
+        )
+        max_attempts = (
+            matrix.max_attempts
+            if (matrix and matrix.max_attempts > 0)
+            else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+        )
+        cooldown_hours = (
+            matrix.cooldown_hours
+            if (matrix and matrix.cooldown_hours > 0)
+            else QUIZ_COOLDOWN_HOURS
+        )
+        return duration_minutes, passing_threshold, max_attempts, cooldown_hours
+
+    @staticmethod
+    async def _compute_cooldown_and_attempts(
+        repo: AssessmentRepositoryInterface,
+        user_id: str,
+        item_id: str,
+        is_graded: bool,
+        has_passed: bool,
+        max_attempts: int,
+        now: datetime,
+    ) -> tuple[QuizCooldown | None, int, int]:
+        if not is_graded:
+            return None, UNLIMITED_ATTEMPTS_SENTINEL, 0
+
+        cooldown = await repo.get_quiz_cooldown(user_id, item_id)
+        failed_count = cooldown.failed_attempts_count if cooldown else 0
+        attempts_left = (
+            max(0, max_attempts - failed_count) if not has_passed else max_attempts
+        )
+        cooldown_sec = 0
+        if cooldown and cooldown.is_in_cooldown(now) and cooldown.cooldown_until:
+            try:
+                until_dt = datetime.fromisoformat(cooldown.cooldown_until)
+                if until_dt.tzinfo is None:
+                    until_dt = until_dt.replace(tzinfo=UTC)
+                cooldown_sec = max(0, int((until_dt - now).total_seconds()))
+            except (ValueError, TypeError):
+                cooldown_sec = 0
+        return cooldown, attempts_left, cooldown_sec
+
+    async def _build_previous_result(
+        self,
+        repo: AssessmentRepositoryInterface,
+        prev_submissions: list[QuizSubmission],
+        is_graded: bool,
+        attempts_left: int,
+        cooldown_sec: int,
+        max_attempts: int,
+        cooldown_hours: int,
+    ) -> dict[str, Any] | None:
+        if not prev_submissions:
+            return None
+
+        has_passed = any(s.passed for s in prev_submissions)
+        target_sub = (
+            max(prev_submissions, key=lambda s: s.score_percent)
+            if has_passed
+            else max(prev_submissions, key=lambda s: s.created_at)
+        )
+        sub_answers = await repo.get_quiz_submission_answers(target_sub.id)
+        explanations: list[str] = []
+        for idx, ans in enumerate(sub_answers):
+            if is_graded and not has_passed:
+                clean_exp = ""
+            else:
+                clean_exp = _clean_explanation(ans.explanation)
+            exp_suffix = f" — {clean_exp}" if clean_exp else ""
+            if ans.is_correct:
+                explanations.append(f"Câu {idx + 1}: Đúng{exp_suffix}")
+            else:
+                explanations.append(f"Câu {idx + 1}: Sai{exp_suffix}")
+
+        return {
+            "score_percent": target_sub.score_percent,
+            "passed": has_passed,
+            "attempts_left": attempts_left,
+            "cooldown_seconds_left": cooldown_sec,
+            "answer_explanations": explanations,
+            "max_attempts": max_attempts if is_graded else UNLIMITED_ATTEMPTS_SENTINEL,
+            "cooldown_hours": cooldown_hours if is_graded else 0,
+        }
+
+    async def _grade_and_persist_submission(
+        self,
+        repo: AssessmentRepositoryInterface,
+        user_id: str,
+        item_id: str,
+        generated_qs: list[dict[str, Any]],
+        answers: list[list[int]],
+        passing_threshold: float,
+        duration_minutes: int,
+        max_attempts: int,
+        cooldown_hours: int,
+        is_graded: bool,
+        preview: bool,
+        is_timeout: bool,
+        now: datetime,
+        active_session_id: str | None = None,
+    ) -> dict[str, Any]:
+        total_questions = len(generated_qs)
+        correct_count = 0
+
+        for idx, q in enumerate(generated_qs):
+            corr_indices = set(q.get("shuffled_correct_indices", []))
+            user_ans_set = set(answers[idx]) if idx < len(answers) else set()
+            if user_ans_set and user_ans_set == corr_indices:
+                correct_count += 1
+
+        if total_questions == 0:
+            score_percent = 0.0
+        else:
+            score_percent = round((correct_count / total_questions) * 100.0, 2)
+
+        prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+        all_scores = [sub.score_percent for sub in prev_submissions] + [score_percent]
+        highest_score = max(all_scores)
+        passed = highest_score >= passing_threshold
+
+        explanations: list[str] = []
+        if total_questions == 0:
+            explanations.append(
+                "Kho câu hỏi rỗng hoặc chưa được cấu hình câu hỏi cho bài thi này."
+            )
+        else:
+            for idx, q in enumerate(generated_qs):
+                corr_indices = set(q.get("shuffled_correct_indices", []))
+                user_ans_set = set(answers[idx]) if idx < len(answers) else set()
+                is_corr = bool(user_ans_set and user_ans_set == corr_indices)
+                if is_graded and not passed and not preview:
+                    clean_exp = ""
+                else:
+                    clean_exp = _clean_explanation(q.get("explanation"))
+                exp_suffix = f" — {clean_exp}" if clean_exp else ""
+                if is_corr:
+                    explanations.append(f"Câu {idx + 1}: Đúng{exp_suffix}")
+                else:
+                    explanations.append(f"Câu {idx + 1}: Sai{exp_suffix}")
+
+        if is_timeout:
+            explanations.insert(
+                0,
+                f"Hết thời gian làm bài ({duration_minutes} phút). Hệ thống tự động nộp bài và chấm điểm.",
+            )
+
+        cooldown_sec = 0
+        attempts_left = UNLIMITED_ATTEMPTS_SENTINEL
+
+        if not preview:
+            submission_id = f"sub-{uuid7().hex}"
+            attempt_number = len(prev_submissions) + 1
+
+            first_selected = [ans[0] if ans else -1 for ans in answers]
+            submission = QuizSubmission(
+                id=submission_id,
+                user_id=user_id,
+                item_id=item_id,
+                selected_option_indexes=first_selected,
+                score_percent=score_percent,
+                passed=score_percent >= passing_threshold,
+                attempt_number=attempt_number,
+                created_at=now.isoformat(),
+            )
+            await repo.save_quiz_submission(submission)
+
+            submission_answers: list[QuizSubmissionAnswer] = []
+            for idx, q in enumerate(generated_qs):
+                corr_indices = list(q.get("shuffled_correct_indices", []))
+                corr_indices_set = set(corr_indices)
+                user_ans_list = answers[idx] if idx < len(answers) else []
+                user_ans_set = set(user_ans_list)
+                is_corr = bool(user_ans_set and user_ans_set == corr_indices_set)
+
+                raw_options = q.get("options", [])
+                opts_payload = [
+                    {
+                        "index": opt_i,
+                        "text": opt_t,
+                        "is_correct": opt_i in corr_indices_set,
+                    }
+                    for opt_i, opt_t in enumerate(raw_options)
+                ]
+
+                clean_exp = _clean_explanation(q.get("explanation"))
+                submission_answers.append(
+                    QuizSubmissionAnswer(
+                        id=f"qsa-{uuid7().hex}",
+                        submission_id=submission_id,
+                        question_id=q.get("question_id", f"q-{idx}"),
+                        question_text=q.get("text", ""),
+                        question_type=q.get("question_type", "SINGLE_CHOICE"),
+                        options_json=opts_payload,
+                        selected_option_indices=user_ans_list,
+                        is_correct=is_corr,
+                        topic=q.get("topic", "Tổng quan") or "Tổng quan",
+                        explanation=clean_exp,
+                        order_index=idx,
+                    )
+                )
+            await repo.save_quiz_submission_answers(submission_answers)
+            await repo.delete_quiz_active_session(user_id, item_id, active_session_id)
+
+            target_course_id = ""
+            try:
+                found_cid = await repo.get_course_id_by_item_id(item_id)
+                if found_cid:
+                    target_course_id = found_cid
+            except Exception:  # noqa: BLE001, S110
+                pass
+
+            await EventBus.publish(
+                QuizSubmittedDomainEvent(
+                    user_id=user_id,
+                    course_id=target_course_id,
+                    item_id=item_id,
+                    score_percent=score_percent,
+                    passed=score_percent >= passing_threshold,
+                    attempt_number=attempt_number,
                 )
             )
-            passing_threshold = (
-                matrix.passing_threshold_percent
-                if (matrix and matrix.passing_threshold_percent > 0)
-                else DEFAULT_PASSING_THRESHOLD_PERCENT
-            )
-            max_attempts = (
-                matrix.max_attempts
-                if (matrix and matrix.max_attempts > 0)
-                else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
-            )
-            cooldown_hours = (
-                matrix.cooldown_hours
-                if (matrix and matrix.cooldown_hours > 0)
-                else QUIZ_COOLDOWN_HOURS
-            )
 
-            now = datetime.now(UTC)
-            expires_at = now + timedelta(minutes=duration_minutes)
-
-            # Check item type (Graded Quiz vs Practice Quiz)
-            item_type_str = await repo.get_item_type(item_id)
-            is_graded = is_graded_quiz_item(item_type_str)
-
-            # Check previous submissions for state persistence
-            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
-            has_passed = (
-                any(s.passed for s in prev_submissions) if prev_submissions else False
-            )
-
-            # BR_QUIZ_001: Enforce Cooldown for Graded Quiz ONLY when starting a new attempt (force_new=True)
-            if is_graded and force_new and not preview and not has_passed:
-                cooldown = await repo.get_quiz_cooldown(user_id, item_id)
-                if (
-                    cooldown
-                    and cooldown.is_in_cooldown(now)
-                    and cooldown.cooldown_until
-                ):
-                    can_att, reason, _ = cooldown.can_attempt(now)
-                    if not can_att:
-                        raise ValueError(reason)
-
-            cooldown_sec = 0
-            attempts_left = UNLIMITED_ATTEMPTS_SENTINEL
             if is_graded:
                 cooldown = await repo.get_quiz_cooldown(user_id, item_id)
-                failed_count = cooldown.failed_attempts_count if cooldown else 0
+                if not cooldown:
+                    cooldown = QuizCooldown(user_id=user_id, item_id=item_id)
+
+                if passed:
+                    cooldown.record_success()
+                else:
+                    cooldown.record_failure(
+                        now,
+                        cooldown_hours=cooldown_hours,
+                        max_attempts=max_attempts,
+                    )
+
+                await repo.save_quiz_cooldown(cooldown)
+
+                failed_count = cooldown.failed_attempts_count
                 attempts_left = (
-                    max(0, max_attempts - failed_count)
-                    if not has_passed
-                    else max_attempts
+                    max(0, max_attempts - failed_count) if not passed else max_attempts
                 )
-                if (
-                    cooldown
-                    and cooldown.is_in_cooldown(now)
-                    and cooldown.cooldown_until
-                ):
+                if cooldown.is_in_cooldown(now) and cooldown.cooldown_until:
                     try:
                         until_dt = datetime.fromisoformat(cooldown.cooldown_until)
                         if until_dt.tzinfo is None:
@@ -278,59 +506,299 @@ class QuizUseCase(BaseAssessmentUseCase):
                         cooldown_sec = max(0, int((until_dt - now).total_seconds()))
                     except (ValueError, TypeError):
                         cooldown_sec = 0
+        elif is_graded:
+            cooldown = await repo.get_quiz_cooldown(user_id, item_id)
+            failed_count = cooldown.failed_attempts_count if cooldown else 0
+            attempts_left = (
+                max(0, max_attempts - failed_count) if not passed else max_attempts
+            )
+
+        logger.info(
+            "User %s submitted quiz %s with score %s (Passed: %s) [Preview: %s]",
+            user_id,
+            item_id,
+            score_percent,
+            passed,
+            preview,
+        )
+        return {
+            "score_percent": score_percent,
+            "passed": passed,
+            "attempts_left": attempts_left,
+            "cooldown_seconds_left": cooldown_sec,
+            "answer_explanations": explanations,
+            "max_attempts": max_attempts if is_graded else UNLIMITED_ATTEMPTS_SENTINEL,
+            "cooldown_hours": cooldown_hours if is_graded else 0,
+        }
+
+    async def _finalize_expired_active_session(
+        self,
+        repo: AssessmentRepositoryInterface,
+        active_session: QuizActiveSession,
+        passing_threshold: float,
+        duration_minutes: int,
+        max_attempts: int,
+        cooldown_hours: int,
+        is_graded: bool,
+        now: datetime,
+    ) -> bool:
+        if active_session.answered_count() == 0:
+            await repo.delete_quiz_active_session(
+                active_session.user_id,
+                active_session.item_id,
+                active_session.session_id,
+            )
+            return False
+
+        await self._grade_and_persist_submission(
+            repo=repo,
+            user_id=active_session.user_id,
+            item_id=active_session.item_id,
+            generated_qs=active_session.questions_json,
+            answers=active_session.draft_answers,
+            passing_threshold=passing_threshold,
+            duration_minutes=duration_minutes,
+            max_attempts=max_attempts,
+            cooldown_hours=cooldown_hours,
+            is_graded=is_graded,
+            preview=False,
+            is_timeout=True,
+            now=now,
+            active_session_id=active_session.session_id,
+        )
+        return True
+
+    async def get_quiz_overview(
+        self,
+        user_id: str,
+        item_id: str,
+        preview: bool = False,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, Any]:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            await self._verify_preview_permission(repo, item_id, preview, current_user)
+            item_type_str = await repo.get_item_type(item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
+
+            await self._verify_paid_quiz_access(
+                session, repo, user_id, item_id, is_graded, preview
+            )
+
+            matrix = await self._get_quiz_matrix(repo, item_id)
+            (
+                duration_minutes,
+                passing_threshold,
+                max_attempts,
+                cooldown_hours,
+            ) = self._resolve_matrix_params(matrix)
+
+            now = datetime.now(UTC)
+            auto_submitted_expired = False
+            active_session = None
+
+            if not preview:
+                active_session = await repo.get_quiz_active_session(user_id, item_id)
+                if active_session and active_session.is_expired(now):
+                    auto_submitted_expired = (
+                        await self._finalize_expired_active_session(
+                            repo=repo,
+                            active_session=active_session,
+                            passing_threshold=passing_threshold,
+                            duration_minutes=duration_minutes,
+                            max_attempts=max_attempts,
+                            cooldown_hours=cooldown_hours,
+                            is_graded=is_graded,
+                            now=now,
+                        )
+                    )
+                    active_session = None
+
+            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+            has_passed = (
+                any(s.passed for s in prev_submissions) if prev_submissions else False
+            )
+
+            _, attempts_left, cooldown_sec = await self._compute_cooldown_and_attempts(
+                repo, user_id, item_id, is_graded, has_passed, max_attempts, now
+            )
 
             prev_result = None
-            if prev_submissions and not preview:
-                target_sub = (
-                    max(prev_submissions, key=lambda s: s.score_percent)
-                    if has_passed
-                    else max(prev_submissions, key=lambda s: s.created_at)
+            if not preview:
+                prev_result = await self._build_previous_result(
+                    repo=repo,
+                    prev_submissions=prev_submissions,
+                    is_graded=is_graded,
+                    attempts_left=attempts_left,
+                    cooldown_sec=cooldown_sec,
+                    max_attempts=max_attempts,
+                    cooldown_hours=cooldown_hours,
                 )
-                summary_questions = await self.generate_quiz_session_questions(
-                    repo, item_id, seed=42
-                )
-                explanations = []
-                total_qs = len(summary_questions)
-                num_correct = (
-                    round(total_qs * (target_sub.score_percent / 100.0))
-                    if total_qs > 0
-                    else 0
-                )
-                for idx, q in enumerate(summary_questions):
-                    is_corr = idx < num_correct
-                    clean_exp = _clean_explanation(q.get("explanation"))
-                    exp_suffix = f" — {clean_exp}" if clean_exp else ""
-                    if is_corr:
-                        explanations.append(f"Câu {idx + 1}: Đúng{exp_suffix}")
-                    else:
-                        explanations.append(f"Câu {idx + 1}: Sai{exp_suffix}")
 
-                prev_result = {
-                    "score_percent": target_sub.score_percent,
-                    "passed": has_passed,
-                    "attempts_left": attempts_left,
-                    "cooldown_seconds_left": cooldown_sec,
-                    "answer_explanations": explanations,
-                    "max_attempts": max_attempts if is_graded else 999,
-                    "cooldown_hours": cooldown_hours if is_graded else 0,
+            if active_session and active_session.questions_json:
+                question_count = len(active_session.questions_json)
+            else:
+                sample_qs = await self.generate_quiz_session_questions(
+                    repo, item_id, seed=DEFAULT_PREVIEW_SESSION_SEED
+                )
+                question_count = len(sample_qs)
+
+            active_draft = None
+            if active_session and active_session.session_id:
+                active_draft = {
+                    "session_id": active_session.session_id,
+                    "started_at_iso": active_session.started_at,
+                    "expires_at_iso": active_session.expires_at,
+                    "answered_count": active_session.answered_count(),
+                    "total_questions": len(active_session.questions_json),
+                    "draft_updated_at": active_session.draft_updated_at,
+                    "draft_version": active_session.draft_version,
                 }
 
-            if prev_submissions and not force_new and not preview:
+            return {
+                "question_count": question_count,
+                "time_limit_minutes": duration_minutes,
+                "passing_threshold_percent": passing_threshold,
+                "attempts_left": attempts_left,
+                "max_attempts": (
+                    max_attempts if is_graded else UNLIMITED_ATTEMPTS_SENTINEL
+                ),
+                "cooldown_hours": cooldown_hours if is_graded else 0,
+                "cooldown_seconds_left": cooldown_sec,
+                "has_previous_result": prev_result is not None,
+                "previous_result": prev_result,
+                "has_active_draft": active_draft is not None,
+                "active_draft": active_draft,
+                "auto_submitted_expired_draft": auto_submitted_expired,
+            }
+
+    async def start_graded_quiz_session(
+        self,
+        user_id: str,
+        item_id: str,
+        duration_minutes: int = 0,
+        preview: bool = False,
+        force_new: bool = False,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, Any]:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            await self._verify_preview_permission(repo, item_id, preview, current_user)
+            item_type_str = await repo.get_item_type(item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
+
+            await self._verify_paid_quiz_access(
+                session, repo, user_id, item_id, is_graded, preview
+            )
+
+            matrix = await self._get_quiz_matrix(repo, item_id)
+            (
+                duration_minutes,
+                passing_threshold,
+                max_attempts,
+                cooldown_hours,
+            ) = self._resolve_matrix_params(matrix, duration_override=duration_minutes)
+
+            now = datetime.now(UTC)
+            expires_at = now + timedelta(minutes=duration_minutes)
+
+            if preview:
+                seed_val = (
+                    abs(hash(f"{user_id}:{item_id}:{now.isoformat()}:{uuid7().hex}"))
+                    % (2**31 - 1)
+                    + 1
+                )
+                questions = await self.generate_quiz_session_questions(
+                    repo, item_id, seed=seed_val
+                )
                 return {
-                    "session_id": f"qsess-prev-{uuid7().hex}",
+                    "session_id": f"qsess-preview-{uuid7().hex}",
                     "start_time_iso": now.isoformat(),
                     "expires_at_iso": expires_at.isoformat(),
                     "duration_minutes": duration_minutes,
                     "passing_threshold_percent": passing_threshold,
-                    "session_seed": 42,
-                    "questions": summary_questions,
+                    "session_seed": seed_val,
+                    "questions": questions,
+                    "draft_answers": [[] for _ in questions],
+                    "draft_updated_at": "",
+                    "draft_version": 0,
+                    "is_resumed": False,
+                    "cooldown_seconds_left": 0,
+                    "attempts_left": (
+                        max_attempts if is_graded else UNLIMITED_ATTEMPTS_SENTINEL
+                    ),
+                    "max_attempts": (
+                        max_attempts if is_graded else UNLIMITED_ATTEMPTS_SENTINEL
+                    ),
+                    "cooldown_hours": cooldown_hours if is_graded else 0,
+                    "has_previous_result": False,
+                    "previous_result": None,
+                }
+
+            existing = await repo.get_quiz_active_session(user_id, item_id)
+            if existing and existing.is_expired(now):
+                await self._finalize_expired_active_session(
+                    repo=repo,
+                    active_session=existing,
+                    passing_threshold=passing_threshold,
+                    duration_minutes=duration_minutes,
+                    max_attempts=max_attempts,
+                    cooldown_hours=cooldown_hours,
+                    is_graded=is_graded,
+                    now=now,
+                )
+                existing = None
+
+            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+            has_passed = (
+                any(s.passed for s in prev_submissions) if prev_submissions else False
+            )
+
+            (
+                cooldown,
+                attempts_left,
+                cooldown_sec,
+            ) = await self._compute_cooldown_and_attempts(
+                repo, user_id, item_id, is_graded, has_passed, max_attempts, now
+            )
+            prev_result = await self._build_previous_result(
+                repo=repo,
+                prev_submissions=prev_submissions,
+                is_graded=is_graded,
+                attempts_left=attempts_left,
+                cooldown_sec=cooldown_sec,
+                max_attempts=max_attempts,
+                cooldown_hours=cooldown_hours,
+            )
+
+            if existing and not force_new and existing.session_id:
+                return {
+                    "session_id": existing.session_id,
+                    "start_time_iso": existing.started_at,
+                    "expires_at_iso": existing.expires_at,
+                    "duration_minutes": duration_minutes,
+                    "passing_threshold_percent": passing_threshold,
+                    "session_seed": existing.session_seed,
+                    "questions": existing.questions_json,
+                    "draft_answers": existing.draft_answers,
+                    "draft_updated_at": existing.draft_updated_at,
+                    "draft_version": existing.draft_version,
+                    "is_resumed": True,
                     "cooldown_seconds_left": cooldown_sec,
                     "attempts_left": attempts_left,
-                    "max_attempts": max_attempts if is_graded else 999,
+                    "max_attempts": (
+                        max_attempts if is_graded else UNLIMITED_ATTEMPTS_SENTINEL
+                    ),
                     "cooldown_hours": cooldown_hours if is_graded else 0,
-                    "has_previous_result": True,
+                    "has_previous_result": prev_result is not None,
                     "previous_result": prev_result,
                 }
+
+            # BR_QUIZ_001: Enforce Cooldown for Graded Quiz when starting a new session
+            if is_graded and not has_passed and cooldown:
+                can_att, reason, _ = cooldown.can_attempt(now)
+                if not can_att:
+                    raise ValueError(reason)
 
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
             seed_val = (
@@ -341,89 +809,140 @@ class QuizUseCase(BaseAssessmentUseCase):
             questions = await self.generate_quiz_session_questions(
                 repo, item_id, seed=seed_val
             )
+            session_id = f"qsess-{uuid7().hex}"
+            empty_draft = [[] for _ in questions]
 
             active_session = QuizActiveSession(
                 user_id=user_id,
                 item_id=item_id,
+                session_id=session_id,
                 session_seed=seed_val,
                 questions_json=questions,
                 started_at=now.isoformat(),
                 expires_at=expires_at.isoformat(),
+                draft_answers=empty_draft,
+                draft_updated_at="",
+                draft_version=0,
             )
             await repo.save_quiz_active_session(active_session)
 
             return {
-                "session_id": f"qsess-{uuid7().hex}",
+                "session_id": session_id,
                 "start_time_iso": now.isoformat(),
                 "expires_at_iso": expires_at.isoformat(),
                 "duration_minutes": duration_minutes,
                 "passing_threshold_percent": passing_threshold,
                 "session_seed": seed_val,
                 "questions": questions,
+                "draft_answers": empty_draft,
+                "draft_updated_at": "",
+                "draft_version": 0,
+                "is_resumed": False,
                 "cooldown_seconds_left": cooldown_sec,
                 "attempts_left": attempts_left,
-                "max_attempts": max_attempts if is_graded else 999,
+                "max_attempts": (
+                    max_attempts if is_graded else UNLIMITED_ATTEMPTS_SENTINEL
+                ),
                 "cooldown_hours": cooldown_hours if is_graded else 0,
                 "has_previous_result": prev_result is not None,
                 "previous_result": prev_result,
+            }
+
+    async def save_quiz_draft(
+        self,
+        user_id: str,
+        item_id: str,
+        session_id: str,
+        question_answers: list[list[int]] | None = None,
+        draft_version: int = 0,
+    ) -> dict[str, Any]:
+        if not item_id or not session_id:
+            raise ValueError("Thiếu thông tin phiên làm bài để lưu nháp.")
+
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            item_type_str = await repo.get_item_type(item_id)
+            is_graded = is_graded_quiz_item(item_type_str)
+
+            await self._verify_paid_quiz_access(
+                session, repo, user_id, item_id, is_graded, preview=False
+            )
+
+            active_session = await repo.get_quiz_active_session(user_id, item_id)
+            if not active_session or active_session.session_id != session_id:
+                raise ValueError("Phiên làm bài không tồn tại hoặc đã kết thúc.")
+
+            now = datetime.now(UTC)
+            if active_session.is_expired(
+                now, grace_seconds=QUIZ_DRAFT_KEEPALIVE_GRACE_SECONDS
+            ):
+                return {
+                    "saved": False,
+                    "draft_updated_at": active_session.draft_updated_at,
+                    "draft_version": active_session.draft_version,
+                    "session_expired": True,
+                }
+
+            updated_ok = active_session.apply_draft_update(
+                raw_answers=question_answers or [],
+                version=draft_version,
+                now=now,
+                grace_seconds=QUIZ_DRAFT_KEEPALIVE_GRACE_SECONDS,
+            )
+            if not updated_ok:
+                return {
+                    "saved": False,
+                    "draft_updated_at": active_session.draft_updated_at,
+                    "draft_version": active_session.draft_version,
+                    "session_expired": False,
+                }
+
+            saved, curr_ver, curr_updated_at = await repo.update_quiz_draft_answers(
+                user_id=user_id,
+                item_id=item_id,
+                session_id=session_id,
+                draft_answers=active_session.draft_answers,
+                updated_at=active_session.draft_updated_at,
+                draft_version=active_session.draft_version,
+            )
+            return {
+                "saved": saved,
+                "draft_updated_at": curr_updated_at,
+                "draft_version": curr_ver,
+                "session_expired": False,
             }
 
     async def submit_graded_quiz(
         self,
         user_id: str,
         item_id: str,
-        start_time_iso: str | None = None,
         duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
         session_seed: int | None = None,
         preview: bool = False,
         question_answers: list[list[int]] | None = None,
+        session_id: str | None = None,
+        current_user: CurrentUser | None = None,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            await self._verify_preview_permission(repo, item_id, preview, current_user)
 
             # BR_ACCESS_001: Practice Quizzes are open in Audit Mode.
             # Only Graded Quizzes require Paid Mode authorization.
             item_type_str = await repo.get_item_type(item_id)
             is_graded = is_graded_quiz_item(item_type_str)
 
-            if (
-                is_graded
-                and not preview
-                and (repo is None or "SQLAlchemy" in repo.__class__.__name__)
-            ):
-                target_course_id = await repo.get_course_id_by_item_id(item_id) or ""
-                is_paid, err = await AccessPolicyService.verify_paid_access(
-                    session, user_id, target_course_id
-                )
-                if not is_paid:
-                    raise PermissionError(err)
+            await self._verify_paid_quiz_access(
+                session, repo, user_id, item_id, is_graded, preview
+            )
 
             matrix = await self._get_quiz_matrix(repo, item_id)
-
-            max_attempts = (
-                matrix.max_attempts
-                if (matrix and matrix.max_attempts > 0)
-                else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
-            )
-            cooldown_hours = (
-                matrix.cooldown_hours
-                if (matrix and matrix.cooldown_hours > 0)
-                else QUIZ_COOLDOWN_HOURS
-            )
-            duration_minutes = (
-                duration_minutes
-                if duration_minutes > 0
-                else (
-                    matrix.time_limit_minutes
-                    if (matrix and matrix.time_limit_minutes > 0)
-                    else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
-                )
-            )
-            passing_threshold = (
-                matrix.passing_threshold_percent
-                if (matrix and matrix.passing_threshold_percent > 0)
-                else DEFAULT_PASSING_THRESHOLD_PERCENT
-            )
+            (
+                duration_minutes,
+                passing_threshold,
+                max_attempts,
+                cooldown_hours,
+            ) = self._resolve_matrix_params(matrix, duration_override=duration_minutes)
 
             # 1. Verify Honor Code
             honor = await repo.get_honor_code(user_id, item_id)
@@ -445,209 +964,80 @@ class QuizUseCase(BaseAssessmentUseCase):
                     "cooldown_hours": cooldown_hours,
                 }
 
-            # 2. Timestamp definition
             now = datetime.now(UTC)
 
-            # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
-            if session_seed is None:
-                session_seed = 42
-
-            generated_qs = await self.generate_quiz_session_questions(
-                repo, item_id, seed=session_seed
-            )
-
-            total_questions = len(generated_qs)
-            correct_count = 0
-
-            answers = question_answers or []
-            for idx, q in enumerate(generated_qs):
-                corr_indices = set(q.get("shuffled_correct_indices", []))
-                user_ans_set = set(answers[idx]) if idx < len(answers) else set()
-
-                if user_ans_set and user_ans_set == corr_indices:
-                    correct_count += 1
-
-            if total_questions == 0:
-                score_percent = 0.0
-            else:
-                score_percent = round((correct_count / total_questions) * 100.0, 2)
-
-            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
-            all_scores = [sub.score_percent for sub in prev_submissions] + [
-                score_percent
-            ]
-            highest_score = max(all_scores)
-            passed = highest_score >= passing_threshold
-
-            explanations: list[str] = []
-            if total_questions == 0:
-                explanations.append(
-                    "Kho câu hỏi rỗng hoặc chưa được cấu hình câu hỏi cho bài thi này."
+            if preview:
+                effective_seed = (
+                    session_seed
+                    if session_seed is not None
+                    else DEFAULT_PREVIEW_SESSION_SEED
                 )
-            else:
-                answers = question_answers or []
-                for idx, q in enumerate(generated_qs):
-                    corr_indices = set(q.get("shuffled_correct_indices", []))
-                    user_ans_set = set(answers[idx]) if idx < len(answers) else set()
-
-                    is_corr = bool(user_ans_set and user_ans_set == corr_indices)
-                    # Adaptive Answer Masking (Academic Integrity):
-                    # Hide detailed explanations if student hasn't passed and is not previewing
-                    if not passed and not preview:
-                        clean_exp = ""
-                    else:
-                        clean_exp = _clean_explanation(q.get("explanation"))
-                    exp_suffix = f" — {clean_exp}" if clean_exp else ""
-
-                    if is_corr:
-                        explanations.append(f"Câu {idx + 1}: Đúng{exp_suffix}")
-                    else:
-                        explanations.append(f"Câu {idx + 1}: Sai{exp_suffix}")
-
-            if start_time_iso:
-                try:
-                    start_dt = datetime.fromisoformat(start_time_iso)
-                    if (now - start_dt).total_seconds() > duration_minutes * 60:
-                        explanations.insert(
-                            0,
-                            f"Hết thời gian làm bài ({duration_minutes} phút). Hệ thống tự động nộp bài và chấm điểm.",
-                        )
-                except ValueError:
-                    pass
-
-            # 4. Check Cooldown state
-            cooldown_sec = 0
-            attempts_left = UNLIMITED_ATTEMPTS_SENTINEL
-
-            # 5. Save submission & update Cooldown (only if not preview)
-            if not preview:
-                submission_id = f"sub-{uuid7().hex}"
-                attempt_number = len(prev_submissions) + 1
-
-                first_selected = [ans[0] if ans else -1 for ans in answers]
-                submission = QuizSubmission(
-                    id=submission_id,
+                generated_qs = await self.generate_quiz_session_questions(
+                    repo, item_id, seed=effective_seed
+                )
+                effective_answers = QuizActiveSession.normalize_draft_answers(
+                    question_answers or [], generated_qs
+                )
+                return await self._grade_and_persist_submission(
+                    repo=repo,
                     user_id=user_id,
                     item_id=item_id,
-                    selected_option_indexes=first_selected,
-                    score_percent=score_percent,
-                    passed=score_percent >= passing_threshold,
-                    attempt_number=attempt_number,
-                    created_at=now.isoformat(),
-                )
-                await repo.save_quiz_submission(submission)
-
-                # Save detailed snapshot answers for history & gap analysis
-                submission_answers: list[QuizSubmissionAnswer] = []
-                for idx, q in enumerate(generated_qs):
-                    corr_indices = list(q.get("shuffled_correct_indices", []))
-                    corr_indices_set = set(corr_indices)
-                    user_ans_list = answers[idx] if idx < len(answers) else []
-                    user_ans_set = set(user_ans_list)
-                    is_corr = bool(user_ans_set and user_ans_set == corr_indices_set)
-
-                    raw_options = q.get("options", [])
-                    opts_payload = [
-                        {
-                            "index": opt_i,
-                            "text": opt_t,
-                            "is_correct": opt_i in corr_indices_set,
-                        }
-                        for opt_i, opt_t in enumerate(raw_options)
-                    ]
-
-                    clean_exp = _clean_explanation(q.get("explanation"))
-                    submission_answers.append(
-                        QuizSubmissionAnswer(
-                            id=f"qsa-{uuid7().hex}",
-                            submission_id=submission_id,
-                            question_id=q.get("question_id", f"q-{idx}"),
-                            question_text=q.get("text", ""),
-                            question_type=q.get("question_type", "SINGLE_CHOICE"),
-                            options_json=opts_payload,
-                            selected_option_indices=user_ans_list,
-                            is_correct=is_corr,
-                            topic=q.get("topic", "Tổng quan") or "Tổng quan",
-                            explanation=clean_exp,
-                            order_index=idx,
-                        )
-                    )
-                await repo.save_quiz_submission_answers(submission_answers)
-
-                # Trigger domain event
-                target_course_id = ""
-                try:
-                    found_cid = await repo.get_course_id_by_item_id(item_id)
-                    if found_cid:
-                        target_course_id = found_cid
-                except Exception:  # noqa: BLE001, S110
-                    pass
-
-                await EventBus.publish(
-                    QuizSubmittedDomainEvent(
-                        user_id=user_id,
-                        course_id=target_course_id,
-                        item_id=item_id,
-                        score_percent=score_percent,
-                        passed=score_percent >= passing_threshold,
-                        attempt_number=attempt_number,
-                    )
+                    generated_qs=generated_qs,
+                    answers=effective_answers,
+                    passing_threshold=passing_threshold,
+                    duration_minutes=duration_minutes,
+                    max_attempts=max_attempts,
+                    cooldown_hours=cooldown_hours,
+                    is_graded=is_graded,
+                    preview=True,
+                    is_timeout=False,
+                    now=now,
                 )
 
-                if is_graded:
-                    cooldown = await repo.get_quiz_cooldown(user_id, item_id)
-                    if not cooldown:
-                        cooldown = QuizCooldown(user_id=user_id, item_id=item_id)
-
-                    if passed:
-                        cooldown.record_success()
-                    else:
-                        cooldown.record_failure(
-                            now,
-                            cooldown_hours=cooldown_hours,
-                            max_attempts=max_attempts,
-                        )
-
-                    await repo.save_quiz_cooldown(cooldown)
-
-                    failed_count = cooldown.failed_attempts_count
-                    attempts_left = (
-                        max(0, max_attempts - failed_count)
-                        if not passed
-                        else max_attempts
-                    )
-                    if cooldown.is_in_cooldown(now) and cooldown.cooldown_until:
-                        try:
-                            until_dt = datetime.fromisoformat(cooldown.cooldown_until)
-                            if until_dt.tzinfo is None:
-                                until_dt = until_dt.replace(tzinfo=UTC)
-                            cooldown_sec = max(0, int((until_dt - now).total_seconds()))
-                        except (ValueError, TypeError):
-                            cooldown_sec = 0
-            elif is_graded:
-                cooldown = await repo.get_quiz_cooldown(user_id, item_id)
-                failed_count = cooldown.failed_attempts_count if cooldown else 0
-                attempts_left = (
-                    max(0, max_attempts - failed_count) if not passed else max_attempts
+            active_session = await repo.get_quiz_active_session(user_id, item_id)
+            if not active_session:
+                raise ValueError(
+                    "Không tìm thấy phiên làm bài đang diễn ra. Vui lòng bắt đầu phiên làm bài mới."
+                )
+            if (
+                session_id
+                and active_session.session_id
+                and session_id != active_session.session_id
+            ):
+                raise ValueError(
+                    "Phiên làm bài này đã được thay thế hoặc đã nộp ở cửa sổ khác."
                 )
 
-            logger.info(
-                "User %s submitted quiz %s with score %s (Passed: %s) [Preview: %s]",
-                user_id,
-                item_id,
-                score_percent,
-                passed,
-                preview,
+            generated_qs = active_session.questions_json
+            is_timeout = active_session.is_expired(now)
+
+            if active_session.is_expired(
+                now, grace_seconds=QUIZ_DRAFT_KEEPALIVE_GRACE_SECONDS
+            ):
+                effective_answers = active_session.draft_answers
+            elif question_answers is not None:
+                effective_answers = QuizActiveSession.normalize_draft_answers(
+                    question_answers, generated_qs
+                )
+            else:
+                effective_answers = active_session.draft_answers
+
+            return await self._grade_and_persist_submission(
+                repo=repo,
+                user_id=user_id,
+                item_id=item_id,
+                generated_qs=generated_qs,
+                answers=effective_answers,
+                passing_threshold=passing_threshold,
+                duration_minutes=duration_minutes,
+                max_attempts=max_attempts,
+                cooldown_hours=cooldown_hours,
+                is_graded=is_graded,
+                preview=False,
+                is_timeout=is_timeout,
+                now=now,
+                active_session_id=active_session.session_id,
             )
-            return {
-                "score_percent": score_percent,
-                "passed": passed,
-                "attempts_left": attempts_left,
-                "cooldown_seconds_left": cooldown_sec,
-                "answer_explanations": explanations,
-                "max_attempts": max_attempts if is_graded else 999,
-                "cooldown_hours": cooldown_hours if is_graded else 0,
-            }
 
     async def create_question_bank(
         self,
@@ -862,7 +1252,9 @@ class QuizUseCase(BaseAssessmentUseCase):
                 "highest_score_percent": highest_score,
                 "has_passed": has_passed,
                 "attempts_left": attempts_left,
-                "max_attempts": max_attempts if is_graded else 999,
+                "max_attempts": (
+                    max_attempts if is_graded else UNLIMITED_ATTEMPTS_SENTINEL
+                ),
                 "cooldown_seconds_left": cooldown_sec,
                 "passing_threshold_percent": passing_threshold,
                 "time_limit_minutes": time_limit,

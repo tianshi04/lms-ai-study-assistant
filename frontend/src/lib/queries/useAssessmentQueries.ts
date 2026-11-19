@@ -15,6 +15,8 @@ import {
   type QuestionBank,
   type Question,
   type QuestionOption,
+  type GetQuizOverviewResponse,
+  type SaveQuizDraftResponse,
   type GetQuizAttemptHistoryResponse,
   type GetQuizAttemptDetailResponse,
   GradingQueueStatus,
@@ -48,23 +50,94 @@ export function useAdminAssessmentAlertsQuery(
   });
 }
 
+export function useQuizOverviewQuery(
+  itemId: string,
+  preview: boolean = false,
+  options?: Partial<UseQueryOptions<GetQuizOverviewResponse, Error>>,
+) {
+  return useQuery<GetQuizOverviewResponse, Error>({
+    queryKey: ["quizOverview", itemId, preview],
+    queryFn: async () => {
+      const client = getRpcClient(AssessmentService);
+      return await client.getQuizOverview({ itemId, preview });
+    },
+    enabled: !!itemId,
+    ...options,
+  });
+}
+
+export function useSaveQuizDraftMutation(
+  options?: Partial<
+    UseMutationOptions<
+      SaveQuizDraftResponse,
+      Error,
+      {
+        itemId: string;
+        sessionId: string;
+        questionAnswers: { selectedOptionIndexes: number[] }[];
+        draftVersion: number;
+      }
+    >
+  >,
+) {
+  return useMutation<
+    SaveQuizDraftResponse,
+    Error,
+    {
+      itemId: string;
+      sessionId: string;
+      questionAnswers: { selectedOptionIndexes: number[] }[];
+      draftVersion: number;
+    }
+  >({
+    mutationFn: async ({ itemId, sessionId, questionAnswers, draftVersion }) => {
+      const client = getRpcClient(AssessmentService);
+      return await client.saveQuizDraft({
+        itemId,
+        sessionId,
+        questionAnswers,
+        draftVersion,
+      });
+    },
+    ...options,
+  });
+}
+
 export function useSubmitQuizMutation(
   options?: Partial<
     UseMutationOptions<
       QuizResult | undefined,
       Error,
-      { itemId: string; questionAnswers?: { selectedOptionIndexes: number[] }[] }
+      {
+        itemId: string;
+        sessionId?: string;
+        sessionSeed?: number;
+        preview?: boolean;
+        questionAnswers?: { selectedOptionIndexes: number[] }[];
+      }
     >
   >,
 ) {
   return useMutation<
     QuizResult | undefined,
     Error,
-    { itemId: string; questionAnswers?: { selectedOptionIndexes: number[] }[] }
+    {
+      itemId: string;
+      sessionId?: string;
+      sessionSeed?: number;
+      preview?: boolean;
+      questionAnswers?: { selectedOptionIndexes: number[] }[];
+    }
   >({
-    mutationFn: async ({ itemId, questionAnswers }) => {
+    mutationFn: async ({ itemId, sessionId, sessionSeed, preview, questionAnswers }) => {
       const client = getRpcClient(AssessmentService);
-      const res = await client.submitGradedQuiz({ itemId, questionAnswers });
+      const res = await client.submitGradedQuiz({
+        itemId,
+        sessionId,
+        sessionSeed,
+        preview,
+        questionAnswers,
+      });
       return res.result;
     },
     ...options,

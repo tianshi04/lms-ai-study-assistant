@@ -88,6 +88,24 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def update_quiz_draft_answers(
+        self,
+        user_id: str,
+        item_id: str,
+        session_id: str,
+        draft_answers: list[list[int]],
+        updated_at: str,
+        draft_version: int,
+    ) -> tuple[bool, int, str]:
+        pass
+
+    @abstractmethod
+    async def delete_quiz_active_session(
+        self, user_id: str, item_id: str, session_id: str | None = None
+    ) -> None:
+        pass
+
+    @abstractmethod
     async def save_lab_submission(self, submission: LabSubmission) -> None:
         pass
 
@@ -252,6 +270,10 @@ class AssessmentRepositoryInterface(ABC):
     @abstractmethod
     async def get_course_id_by_question_id(self, question_id: str) -> str | None:
         pass
+
+    @abstractmethod
+    async def is_course_staff_for_item(self, item_id: str, user_id: str) -> bool:
+        """Verify whether ``user_id`` is owner or collaborator of the course owning ``item_id``."""
 
     @abstractmethod
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:

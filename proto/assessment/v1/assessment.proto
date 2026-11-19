@@ -19,11 +19,13 @@ message QuizQuestionAnswer {
 }
 
 message SubmitGradedQuizRequest {
+  reserved 4;
+  reserved "start_time_iso";
   string item_id = 1;
   int32 session_seed = 3;
-  string start_time_iso = 4;
   bool preview = 5;
   repeated QuizQuestionAnswer question_answers = 6;
+  string session_id = 7;
 }
 
 message QuizResult {
@@ -308,6 +310,12 @@ service AssessmentService {
   rpc StartGradedQuizSession(StartGradedQuizSessionRequest) returns (StartGradedQuizSessionResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc GetQuizOverview(GetQuizOverviewRequest) returns (GetQuizOverviewResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SaveQuizDraft(SaveQuizDraftRequest) returns (SaveQuizDraftResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
   rpc GetQuizAttemptHistory(GetQuizAttemptHistoryRequest) returns (GetQuizAttemptHistoryResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
@@ -369,6 +377,55 @@ message StartGradedQuizSessionResponse {
   int32 cooldown_hours = 10;
   bool has_previous_result = 11;
   QuizResult previous_result = 12;
+  string expires_at_iso = 13;
+  repeated QuizQuestionAnswer draft_answers = 14;
+  string draft_updated_at = 15;
+  int32 draft_version = 16;
+  bool is_resumed = 17;
+}
+
+message ActiveQuizDraftSummary {
+  string session_id = 1;
+  string started_at_iso = 2;
+  string expires_at_iso = 3;
+  int32 answered_count = 4;
+  int32 total_questions = 5;
+  string draft_updated_at = 6;
+  int32 draft_version = 7;
+}
+
+message GetQuizOverviewRequest {
+  string item_id = 1;
+  bool preview = 2;
+}
+
+message GetQuizOverviewResponse {
+  int32 question_count = 1;
+  int32 time_limit_minutes = 2;
+  float passing_threshold_percent = 3;
+  int32 attempts_left = 4;
+  int32 max_attempts = 5;
+  int32 cooldown_hours = 6;
+  int32 cooldown_seconds_left = 7;
+  bool has_previous_result = 8;
+  QuizResult previous_result = 9;
+  bool has_active_draft = 10;
+  ActiveQuizDraftSummary active_draft = 11;
+  bool auto_submitted_expired_draft = 12;
+}
+
+message SaveQuizDraftRequest {
+  string item_id = 1;
+  string session_id = 2;
+  repeated QuizQuestionAnswer question_answers = 3;
+  int32 draft_version = 4;
+}
+
+message SaveQuizDraftResponse {
+  bool saved = 1;
+  string draft_updated_at = 2;
+  int32 draft_version = 3;
+  bool session_expired = 4;
 }
 
 enum TopicMasteryLevel {

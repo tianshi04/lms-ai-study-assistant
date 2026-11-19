@@ -59,6 +59,39 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
       await expect(page.locator('text=/Đã gửi báo cáo|TA Queue|bất thường/i').first()).toBeVisible({ timeout: 5000 });
     }
   });
+
+  test('should auto-save quiz draft answers and restore session after pause or reload (BR_QUIZ_005)', async ({ page }) => {
+    const assessmentPage = new AssessmentPage(page);
+    await assessmentPage.goto();
+    await assessmentPage.verifyPageLoaded();
+
+    const itemIdInput = page.locator('#itemId');
+    await expect(itemIdInput).toBeVisible();
+    await itemIdInput.fill('item-ml-practice-1');
+
+    const startOrResumeBtn = page.getByRole('button', { name: /Bắt đầu làm bài|Làm lại bài thi|Tiếp tục làm bài/i }).first();
+    await expect(startOrResumeBtn).toBeVisible({ timeout: 15000 });
+    await startOrResumeBtn.click();
+
+    const firstRadio = page.locator('[role="radio"]').first();
+    await expect(firstRadio).toBeVisible({ timeout: 15000 });
+    await firstRadio.click();
+
+    const draftBadge = page.getByTestId('quiz-draft-status').first();
+    await expect(draftBadge).toBeVisible({ timeout: 10000 });
+    await expect(draftBadge).toContainText(/Đã lưu nháp/i, { timeout: 10000 });
+
+    const pauseBtn = page.getByRole('button', { name: /Lưu nháp & Tạm thoát/i });
+    await expect(pauseBtn).toBeVisible();
+    await pauseBtn.click();
+
+    await expect(page.getByTestId('active-quiz-draft-banner')).toBeVisible({ timeout: 10000 });
+    const resumeBtn = page.getByRole('button', { name: /Tiếp tục làm bài/i });
+    await expect(resumeBtn).toBeVisible({ timeout: 10000 });
+    await resumeBtn.click();
+
+    await expect(page.locator('[role="radio"][aria-checked="true"]').first()).toBeVisible({ timeout: 10000 });
+  });
 });
 
 
