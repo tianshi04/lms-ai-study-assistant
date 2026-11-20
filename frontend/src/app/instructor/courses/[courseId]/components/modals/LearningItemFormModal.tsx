@@ -235,6 +235,12 @@ export function LearningItemFormModal({
   const [coldStartHours, setColdStartHours] = useState<number>(
     () => initialData?.coldStartHours || 48,
   );
+  const [essayResubmissions, setEssayResubmissions] = useState<string | number>(() => {
+    if (initialData?.essayMaxAttempts != null) {
+      return Math.max(0, Number(initialData.essayMaxAttempts) - 1);
+    }
+    return "2";
+  });
   const [rubricItems, setRubricItems] = useState<RubricCriterionItem[]>(() =>
     parseRubricJsonWithFallback(initialData?.rubricCriteriaJson),
   );
@@ -343,6 +349,11 @@ export function LearningItemFormModal({
       );
       setRequiredPeerReviews(initialData.requiredPeerReviews || 3);
       setColdStartHours(initialData.coldStartHours || 48);
+      setEssayResubmissions(
+        initialData.essayMaxAttempts != null
+          ? Math.max(0, Number(initialData.essayMaxAttempts) - 1)
+          : 2,
+      );
       const parsedRubrics = parseRubricJsonWithFallback(initialData.rubricCriteriaJson);
       setRubricItems(parsedRubrics);
       setPeerRubricJson(
@@ -402,6 +413,23 @@ export function LearningItemFormModal({
 
     // ── Bài tập tự luận validation ──
     if (itemType === ItemType.PEER_REVIEW) {
+      const resubStr = String(essayResubmissions).trim();
+      if (resubStr === "") {
+        setPeerError("Số lượt nộp lại không được để trống (nhập 0 nếu không cho nộp lại).");
+        return;
+      }
+      const resubNum = Number(resubStr);
+      if (!Number.isInteger(resubNum) || resubNum < 0) {
+        setPeerError(
+          "Số lượt nộp lại phải là số nguyên từ 0 trở lên (nhập 0 nếu không cho nộp lại).",
+        );
+        return;
+      }
+      if (resubNum > 50) {
+        setPeerError("Số lượt nộp lại không được vượt quá 50 lần.");
+        return;
+      }
+
       const parsed = safeParseRubricJson(peerRubricJson);
       if (!parsed || parsed.length === 0) {
         setPeerError("Bài tập tự luận bắt buộc phải có ít nhất 1 tiêu chí Rubric hợp lệ.");
@@ -444,6 +472,10 @@ export function LearningItemFormModal({
         itemType === ItemType.PEER_REVIEW ? essayGradingMode : EssayGradingMode.UNSPECIFIED,
       requiredPeerReviews: itemType === ItemType.PEER_REVIEW ? requiredPeerReviews : 3,
       coldStartHours: itemType === ItemType.PEER_REVIEW ? coldStartHours : 48,
+      essayMaxAttempts:
+        itemType === ItemType.PEER_REVIEW
+          ? Math.max(1, Math.floor(Number(essayResubmissions)) + 1)
+          : 3,
       quizBankId,
       quizTimeLimit,
       quizPassingThreshold,
@@ -951,8 +983,8 @@ export function LearningItemFormModal({
                     >
                       <RadioItem
                         value={String(EssayGradingMode.PEER_REVIEW)}
-                        label="Chấm chéo bạn học & Giảng viên giải cứu"
-                        description="Học viên chấm chéo ẩn danh cho nhau theo Rubric; tự động giải cứu nếu quá thời gian chờ."
+                        label="Chấm chéo bạn học (Đánh giá đồng cấp)"
+                        description="Học viên chấm chéo ẩn danh cho nhau theo Rubric; tự động chuyển Giảng viên chấm nếu quá thời gian chờ."
                       />
                     </div>
                     <div
@@ -970,48 +1002,86 @@ export function LearningItemFormModal({
                     </div>
                   </RadioGroup>
 
-                  {essayGradingMode === EssayGradingMode.PEER_REVIEW && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border/60">
-                      <div>
-                        <label className="block text-[11px] font-bold text-foreground mb-1">
-                          Số bài bạn học cần chấm (Quota)
-                        </label>
-                        <Select
-                          value={String(requiredPeerReviews)}
-                          onValueChange={(val) => setRequiredPeerReviews(Number(val) || 3)}
-                        >
-                          <Select.Trigger className="w-full text-xs font-semibold">
-                            <Select.Value />
-                          </Select.Trigger>
-                          <Select.Content>
-                            {[1, 2, 3, 4, 5].map((cnt) => (
-                              <Select.Item key={cnt} value={String(cnt)}>
-                                {cnt} bài bạn học {cnt === 3 ? "(Mặc định)" : ""}
-                              </Select.Item>
-                            ))}
-                          </Select.Content>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-foreground mb-1">
-                          Thời gian chờ Giảng viên giải cứu
-                        </label>
-                        <Select
-                          value={String(coldStartHours)}
-                          onValueChange={(val) => setColdStartHours(Number(val) || 48)}
-                        >
-                          <Select.Trigger className="w-full text-xs font-semibold">
-                            <Select.Value />
-                          </Select.Trigger>
-                          <Select.Content>
-                            <Select.Item value="24">24 giờ (1 ngày)</Select.Item>
-                            <Select.Item value="48">48 giờ (2 ngày - Mặc định)</Select.Item>
-                            <Select.Item value="72">72 giờ (3 ngày)</Select.Item>
-                          </Select.Content>
-                        </Select>
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2 border-t border-border/60">
+                    <div>
+                      <label
+                        htmlFor="essayResubmissions"
+                        className="block text-[11px] font-bold text-foreground mb-1"
+                      >
+                        Số lượt nộp lại
+                      </label>
+                      <Input
+                        id="essayResubmissions"
+                        type="number"
+                        min={0}
+                        max={50}
+                        required
+                        value={essayResubmissions}
+                        onChange={(e) => {
+                          setEssayResubmissions(e.target.value);
+                          if (peerError) setPeerError("");
+                        }}
+                        placeholder="2"
+                        className="w-full text-xs font-semibold"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {String(essayResubmissions).trim() === "0"
+                          ? "0 lượt: Không cho nộp lại (học viên chỉ nộp 1 lần duy nhất)."
+                          : String(essayResubmissions).trim() === ""
+                            ? "Không được để trống (nhập 0 nếu không cho nộp lại)."
+                            : `Cho phép nộp lại ${essayResubmissions} lần (tổng tối đa ${Number(essayResubmissions) + 1} lần nộp bài).`}
+                      </p>
                     </div>
-                  )}
+
+                    {essayGradingMode === EssayGradingMode.PEER_REVIEW && (
+                      <>
+                        <div>
+                          <label className="block text-[11px] font-bold text-foreground mb-1">
+                            Số bài bạn học cần chấm
+                          </label>
+                          <Select
+                            value={String(requiredPeerReviews)}
+                            onValueChange={(val) => setRequiredPeerReviews(Number(val) || 3)}
+                          >
+                            <Select.Trigger className="w-full text-xs font-semibold">
+                              <Select.Value />
+                            </Select.Trigger>
+                            <Select.Content>
+                              {[1, 2, 3, 4, 5].map((cnt) => (
+                                <Select.Item key={cnt} value={String(cnt)}>
+                                  {cnt} bài bạn học {cnt === 3 ? "(Mặc định)" : ""}
+                                </Select.Item>
+                              ))}
+                            </Select.Content>
+                          </Select>
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Học viên phải chấm đủ số bài này để hoàn thành học phần.
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-foreground mb-1">
+                            Thời gian chờ chuyển Giảng viên chấm
+                          </label>
+                          <Select
+                            value={String(coldStartHours)}
+                            onValueChange={(val) => setColdStartHours(Number(val) || 48)}
+                          >
+                            <Select.Trigger className="w-full text-xs font-semibold">
+                              <Select.Value />
+                            </Select.Trigger>
+                            <Select.Content>
+                              <Select.Item value="24">24 giờ (1 ngày)</Select.Item>
+                              <Select.Item value="48">48 giờ (2 ngày - Mặc định)</Select.Item>
+                              <Select.Item value="72">72 giờ (3 ngày)</Select.Item>
+                            </Select.Content>
+                          </Select>
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Sau số giờ này nếu lớp ít bài, tự động giảm chỉ tiêu chấm.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* ─── 1. Đề bài bài tập & Hướng dẫn nộp bài (Markdown Preview) ─── */}
