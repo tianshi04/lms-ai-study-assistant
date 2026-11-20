@@ -32,7 +32,6 @@ import {
   Pencil,
   Plus,
   Trash2,
-  Sparkles,
 } from "lucide-react";
 
 /** Decode double-encoded JSON strings (e.g. '"[...]"' → '[...]') */
@@ -304,12 +303,6 @@ export function LearningItemFormModal({
   const handleRemoveRubricCriterion = (idx: number) => {
     if (rubricItems.length <= 1) return;
     updateRubricItems(rubricItems.filter((_, i) => i !== idx));
-  };
-
-  const handleApplyPreset = (presetIndex: number) => {
-    const preset = RUBRIC_PRESETS[presetIndex];
-    if (!preset) return;
-    updateRubricItems(preset.items);
   };
 
   const totalRubricScore = rubricItems.reduce((acc, curr) => acc + (Number(curr.maxScore) || 0), 0);
@@ -1153,26 +1146,6 @@ export function LearningItemFormModal({
                         <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Thêm tiêu chí</span>
                       </Button>
-                    </div>
-                  </div>
-
-                  {/* Preset Templates */}
-                  <div className="flex items-center gap-2 flex-wrap p-2.5 rounded-xl bg-surface-container-low border border-border/60">
-                    <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1 shrink-0">
-                      <Sparkles className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                      Gợi ý mẫu nhanh:
-                    </span>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {RUBRIC_PRESETS.map((preset, pIdx) => (
-                        <button
-                          key={preset.name}
-                          type="button"
-                          onClick={() => handleApplyPreset(pIdx)}
-                          className="px-2 py-1 rounded-lg text-[11px] font-medium bg-background border border-border hover:border-primary hover:text-primary transition-colors cursor-pointer"
-                        >
-                          {preset.name}
-                        </button>
-                      ))}
                     </div>
                   </div>
 
