@@ -577,6 +577,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 "max_score": c.max_score,
                 "score_given": c.score_given,
                 "feedback": c.feedback,
+                "description": getattr(c, "description", "") or "",
             }
             for c in review.rubric_criteria
         ]
@@ -641,6 +642,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                     max_score=float(c.get("max_score", 10.0) or 10.0),
                     score_given=float(c.get("score_given", 0.0) or 0.0),
                     feedback=str(c.get("feedback", "") or ""),
+                    description=str(c.get("description", "") or ""),
                 )
                 for c in items
                 if isinstance(c, dict)
@@ -690,6 +692,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                     max_score=float(c.get("max_score", 10.0) or 10.0),
                     score_given=float(c.get("score_given", 0.0) or 0.0),
                     feedback=str(c.get("feedback", "") or ""),
+                    description=str(c.get("description", "") or ""),
                 )
                 for c in items
                 if isinstance(c, dict)

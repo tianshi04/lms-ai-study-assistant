@@ -218,9 +218,33 @@ export function PeerAssignmentWorkspace({
   };
 
   const handleScoreChange = (itemIdx: number, critIdx: number, newScore: number) => {
-    const updated = [...peerItems];
-    updated[itemIdx].rubricCriteria[critIdx].scoreGiven = newScore;
-    setPeerItems(updated);
+    setPeerItems((prev) =>
+      prev.map((peer, pIdx) =>
+        pIdx !== itemIdx
+          ? peer
+          : {
+              ...peer,
+              rubricCriteria: peer.rubricCriteria.map((c, cIdx) =>
+                cIdx !== critIdx ? c : { ...c, scoreGiven: newScore },
+              ),
+            },
+      ),
+    );
+  };
+
+  const handleFeedbackChange = (itemIdx: number, critIdx: number, feedback: string) => {
+    setPeerItems((prev) =>
+      prev.map((peer, pIdx) =>
+        pIdx !== itemIdx
+          ? peer
+          : {
+              ...peer,
+              rubricCriteria: peer.rubricCriteria.map((c, cIdx) =>
+                cIdx !== critIdx ? c : { ...c, feedback },
+              ),
+            },
+      ),
+    );
   };
 
   const handleSubmitPeerGrade = async (itemIdx: number) => {
@@ -599,11 +623,7 @@ export function PeerAssignmentWorkspace({
                         <Input
                           placeholder="Nhận xét / Lời góp ý cho tiêu chí này (tùy chọn)..."
                           value={crit.feedback || ""}
-                          onChange={(e) => {
-                            const updated = [...peerItems];
-                            updated[pIdx].rubricCriteria[cIdx].feedback = e.target.value;
-                            setPeerItems(updated);
-                          }}
+                          onChange={(e) => handleFeedbackChange(pIdx, cIdx, e.target.value)}
                           className="text-xs"
                           aria-label={`Nhận xét tiêu chí ${crit.title}`}
                         />
