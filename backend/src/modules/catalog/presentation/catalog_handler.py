@@ -136,6 +136,7 @@ def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
         ),
         required_peer_reviews=int(getattr(item, "required_peer_reviews", 3) or 3),
         cold_start_hours=int(getattr(item, "cold_start_hours", 48) or 48),
+        essay_max_attempts=int(getattr(item, "essay_max_attempts", 3) or 3),
     )
 
 
@@ -678,6 +679,7 @@ class CatalogHandler(CatalogService):
                 ),
                 required_peer_reviews=request.required_peer_reviews or 3,
                 cold_start_hours=request.cold_start_hours or 48,
+                essay_max_attempts=request.essay_max_attempts or 3,
                 current_user=user,
             )
             return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
@@ -918,6 +920,7 @@ class CatalogHandler(CatalogService):
             essay_grading_mode=_parse_pb_essay_grading_mode(request.essay_grading_mode),
             required_peer_reviews=request.required_peer_reviews or 3,
             cold_start_hours=request.cold_start_hours or 48,
+            essay_max_attempts=request.essay_max_attempts or 3,
             current_user=user,
         )
         if not item:

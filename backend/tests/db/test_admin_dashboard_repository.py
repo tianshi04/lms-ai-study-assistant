@@ -15,6 +15,7 @@ from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     PeerAssignmentSubmissionModel,
     PeerReviewModel,
+    PeerReviewReportModel,
 )
 from src.modules.assessment.infrastructure.repository import (
     SQLAlchemyAssessmentRepository,
@@ -463,6 +464,11 @@ async def test_dashboard_stats_reflect_seeded_rows_across_bounded_contexts():
                     bio="bio",
                     status="PENDING_REVIEW",
                 ),
+            ]
+        )
+        outlier_pr_id = _uid("dash-outlier")
+        session.add_all(
+            [
                 PeerAssignmentSubmissionModel(
                     id=submission_id,
                     user_id=learner_id,
@@ -470,12 +476,14 @@ async def test_dashboard_stats_reflect_seeded_rows_across_bounded_contexts():
                     created_at=FUTURE_TS,
                     graded_by_staff=False,
                 ),
-                GradeAppealModel(
-                    id=_uid("dash-report"),
-                    user_id=learner_id,
+                PeerReviewModel(
+                    id=outlier_pr_id,
                     submission_id=submission_id,
-                    appeal_reason="[REPORT_REVIEW:rev-dash] spam",
-                    status="PENDING_STAFF_REVIEW",
+                    reviewer_user_id=reviewer_id,
+                    item_id="item-dash",
+                    rubric_criteria_json={},
+                    total_score=10.0,
+                    is_outlier=True,
                     created_at=FUTURE_TS,
                 ),
                 GradeAppealModel(
@@ -486,17 +494,19 @@ async def test_dashboard_stats_reflect_seeded_rows_across_bounded_contexts():
                     status="RESOLVED",
                     created_at=FUTURE_TS,
                 ),
-                PeerReviewModel(
-                    id=_uid("dash-outlier"),
-                    submission_id=submission_id,
-                    reviewer_user_id=reviewer_id,
-                    item_id="item-dash",
-                    rubric_criteria_json={},
-                    total_score=10.0,
-                    is_outlier=True,
-                    created_at=FUTURE_TS,
-                ),
             ]
+        )
+        await session.flush()
+        session.add(
+            PeerReviewReportModel(
+                id=_uid("dash-report"),
+                peer_review_id=outlier_pr_id,
+                submission_id=submission_id,
+                reporter_user_id=learner_id,
+                reason="spam",
+                status="PENDING_STAFF_REVIEW",
+                created_at=FUTURE_TS,
+            )
         )
         await session.flush()
 

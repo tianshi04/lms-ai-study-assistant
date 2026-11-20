@@ -6,6 +6,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from uuid6 import uuid7
 
+from src.modules.assessment.domain import (
+    DEFAULT_PASSING_THRESHOLD_PERCENT,
+    PENDING_APPEAL_STATUSES,
+    check_peer_submission_pass_eligibility,
+)
+from src.modules.assessment.infrastructure.models import (
+    GradeAppealModel,
+    LabSubmissionModel,
+    PeerAssignmentSubmissionModel,
+    PeerReviewReportModel,
+    QuizMatrixModel,
+    QuizSubmissionModel,
+)
+from src.modules.catalog.domain import ItemType
 from src.modules.catalog.infrastructure.models import WeekModuleModel
 from src.modules.learning.domain import (
     COURSE_COMPLETION_PERCENT,
@@ -373,6 +387,111 @@ class SQLAlchemyLearningRepository(ILearningRepository):
 
         await self.session.commit()
         return True, _model_to_domain_progress(model)
+
+    async def check_graded_item_completion_eligibility(
+        self,
+        user_id: str,
+        item_id: str,
+        item_type: str,
+        item_title: str = "",
+    ) -> tuple[bool, str]:
+        label = item_title or item_id
+        if item_type == ItemType.GRADED_QUIZ.value:
+            qm_stmt = select(QuizMatrixModel.passing_threshold_percent).where(
+                QuizMatrixModel.item_id == item_id
+            )
+            qm_res = await self.session.execute(qm_stmt)
+            threshold = qm_res.scalar_one_or_none()
+            effective_threshold = (
+                float(threshold)
+                if threshold is not None and threshold > 0
+                else DEFAULT_PASSING_THRESHOLD_PERCENT
+            )
+
+            quiz_stmt = select(
+                QuizSubmissionModel.score_percent, QuizSubmissionModel.passed
+            ).where(
+                QuizSubmissionModel.user_id == user_id,
+                QuizSubmissionModel.item_id == item_id,
+            )
+            quiz_rows = (await self.session.execute(quiz_stmt)).all()
+            if not quiz_rows:
+                return (
+                    False,
+                    f"Bạn cần hoàn thành bài kiểm tra '{label}' trước khi đánh dấu hoàn thành.",
+                )
+            has_passed = any(
+                bool(row.passed)
+                or float(row.score_percent or 0.0) >= effective_threshold
+                for row in quiz_rows
+            )
+            if not has_passed:
+                return (
+                    False,
+                    f"Bài kiểm tra '{label}' chưa đạt điểm tối thiểu >= {int(effective_threshold)}%.",
+                )
+            return True, ""
+
+        if item_type == ItemType.AUTO_GRADED_LAB.value:
+            lab_stmt = select(
+                LabSubmissionModel.score_percent, LabSubmissionModel.passed
+            ).where(
+                LabSubmissionModel.user_id == user_id,
+                LabSubmissionModel.item_id == item_id,
+            )
+            lab_rows = (await self.session.execute(lab_stmt)).all()
+            if not lab_rows:
+                return (
+                    False,
+                    f"Bạn cần nộp và vượt qua bài thực hành '{label}' trước khi đánh dấu hoàn thành.",
+                )
+            has_passed = any(
+                bool(row.passed)
+                or float(row.score_percent or 0.0) >= DEFAULT_PASSING_THRESHOLD_PERCENT
+                for row in lab_rows
+            )
+            if not has_passed:
+                return (
+                    False,
+                    f"Bài thực hành '{label}' chưa đạt ngưỡng điểm tối thiểu >= {int(DEFAULT_PASSING_THRESHOLD_PERCENT)}%.",
+                )
+            return True, ""
+
+        if item_type == ItemType.PEER_REVIEW.value:
+            peer_stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.user_id == user_id,
+                PeerAssignmentSubmissionModel.item_id == item_id,
+            )
+            sub = (await self.session.execute(peer_stmt)).scalars().first()
+            if not sub:
+                return (
+                    False,
+                    f"Bạn chưa nộp bài tập tự luận bắt buộc '{label}'.",
+                )
+            appeal_stmt = select(GradeAppealModel.id).where(
+                GradeAppealModel.user_id == user_id,
+                GradeAppealModel.submission_id == sub.id,
+                GradeAppealModel.status.in_(PENDING_APPEAL_STATUSES),
+            )
+            report_stmt = select(PeerReviewReportModel.id).where(
+                PeerReviewReportModel.reporter_user_id == user_id,
+                PeerReviewReportModel.submission_id == sub.id,
+                PeerReviewReportModel.status.in_(PENDING_APPEAL_STATUSES),
+            )
+            has_pending_appeal = (
+                await self.session.execute(appeal_stmt.union(report_stmt))
+            ).scalars().first() is not None
+            return check_peer_submission_pass_eligibility(
+                item_title=label,
+                status=sub.status,
+                final_score=sub.final_score,
+                review_duty_status=sub.review_duty_status,
+                has_pending_appeal=has_pending_appeal,
+                passing_threshold=DEFAULT_PASSING_THRESHOLD_PERCENT,
+                previous_best_score=getattr(sub, "previous_best_score", None),
+            )
+
+        return True, ""
 
     async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
         stmt = (

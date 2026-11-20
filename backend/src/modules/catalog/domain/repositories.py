@@ -288,6 +288,7 @@ class ICatalogRepository(ABC):
         essay_grading_mode: str = "PEER_REVIEW",
         required_peer_reviews: int = 3,
         cold_start_hours: int = 48,
+        essay_max_attempts: int = 3,
     ):
         pass
 
@@ -313,6 +314,7 @@ class ICatalogRepository(ABC):
         essay_grading_mode: str | None = None,
         required_peer_reviews: int | None = None,
         cold_start_hours: int | None = None,
+        essay_max_attempts: int | None = None,
     ):
         pass
 

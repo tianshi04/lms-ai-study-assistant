@@ -189,6 +189,13 @@ class PeerAssignmentSubmissionModel(Base):
         index=True,
     )
     review_duty_waived_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    previous_best_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    previous_best_grade_source: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )
+    previous_best_published_at: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
 
 
 class PeerReviewModel(Base):
@@ -197,7 +204,8 @@ class PeerReviewModel(Base):
         UniqueConstraint(
             "submission_id",
             "reviewer_user_id",
-            name="uq_peer_review_submission_reviewer",
+            "submission_attempt_number",
+            name="uq_peer_review_sub_reviewer_attempt",
         ),
     )
 
@@ -207,12 +215,48 @@ class PeerReviewModel(Base):
         String(64), nullable=False, index=True
     )
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    submission_attempt_number: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
     rubric_criteria_json: Mapped[dict[str, Any]] = mapped_column(
         JSON().with_variant(JSONB, "postgresql"), nullable=False
     )
     total_score: Mapped[float] = mapped_column(Float, nullable=False)
     is_outlier: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class PeerReviewAssignmentModel(Base):
+    __tablename__ = "peer_review_assignments"
+    __table_args__ = (
+        UniqueConstraint(
+            "submission_id",
+            "reviewer_user_id",
+            "submission_attempt_number",
+            name="uq_peer_review_assignment_sub_reviewer_attempt",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    submission_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    reviewer_user_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, index=True
+    )
+    item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    submission_attempt_number: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="ASSIGNED",
+        server_default="ASSIGNED",
+        index=True,
+    )
+    assigned_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
 
 
 class GradeAppealModel(Base):
@@ -229,6 +273,48 @@ class GradeAppealModel(Base):
     appeal_reason: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewer_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    final_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class PeerReviewReportModel(Base):
+    __tablename__ = "peer_review_reports"
+    __table_args__ = (
+        UniqueConstraint(
+            "reporter_user_id",
+            "peer_review_id",
+            name="uq_peer_review_report_user_review",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    peer_review_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("peer_reviews.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    submission_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("peer_assignment_submissions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    reporter_user_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, index=True
+    )
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="PENDING_STAFF_REVIEW",
+        server_default="PENDING_STAFF_REVIEW",
+        index=True,
+    )
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    reviewer_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    resolution_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class QuestionBankModel(Base):

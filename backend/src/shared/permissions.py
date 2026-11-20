@@ -161,6 +161,32 @@ COURSE_ROLE_PERMISSIONS: dict[CourseRole, set[CoursePermission]] = {
 }
 
 
+COURSE_STAFF_PREVIEW_ONLY_MESSAGE = (
+    "Giảng viên và nhân sự phụ trách khóa học không thể tự ghi danh hoặc nộp bài "
+    "tính điểm trong khóa học của chính mình. Vui lòng sử dụng chế độ Xem trước (Preview)."
+)
+
+
+def is_course_staff(
+    course: Any,
+    user_id: str,
+    user: Any = None,
+) -> bool:
+    """Returns True if user is an owner, co-instructor, TA, or Admin for the course."""
+    if user is not None and getattr(user, "is_admin", False):
+        return True
+    if course is None or not user_id:
+        return False
+    owner_id = getattr(course, "owner_id", "")
+    co_instructors = getattr(course, "co_instructor_ids", []) or []
+    ta_ids = getattr(course, "ta_ids", []) or []
+    return bool(
+        (owner_id and user_id == owner_id)
+        or user_id in co_instructors
+        or user_id in ta_ids
+    )
+
+
 def enforce_course_ownership(
     course: Any,
     user: CurrentUserContext | None,

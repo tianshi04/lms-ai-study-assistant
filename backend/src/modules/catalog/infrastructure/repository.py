@@ -115,6 +115,7 @@ def _model_to_domain_lesson(l_model: LessonModel) -> Lesson:
                 or "PEER_REVIEW",
                 required_peer_reviews=getattr(i_model, "required_peer_reviews", 3) or 3,
                 cold_start_hours=getattr(i_model, "cold_start_hours", 48) or 48,
+                essay_max_attempts=getattr(i_model, "essay_max_attempts", 3) or 3,
             )
         )
     return Lesson(
@@ -1093,6 +1094,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         essay_grading_mode: str = "PEER_REVIEW",
         required_peer_reviews: int = 3,
         cold_start_hours: int = 48,
+        essay_max_attempts: int = 3,
     ) -> LearningItem:
         _ = course_id
         item_id = f"item-{uuid7().hex}"
@@ -1158,6 +1160,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             essay_grading_mode=essay_grading_mode or "PEER_REVIEW",
             required_peer_reviews=required_peer_reviews or 3,
             cold_start_hours=cold_start_hours or 48,
+            essay_max_attempts=essay_max_attempts or 3,
         )
         self.session.add(item_model)
 
@@ -1224,6 +1227,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             essay_grading_mode=essay_grading_mode or "PEER_REVIEW",
             required_peer_reviews=required_peer_reviews or 3,
             cold_start_hours=cold_start_hours or 48,
+            essay_max_attempts=essay_max_attempts or 3,
         )
 
     async def submit_course_review(
@@ -1574,6 +1578,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         essay_grading_mode: str | None = None,
         required_peer_reviews: int | None = None,
         cold_start_hours: int | None = None,
+        essay_max_attempts: int | None = None,
     ) -> LearningItem | None:
         _ = course_id
         stmt = (
@@ -1618,6 +1623,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             item.required_peer_reviews = required_peer_reviews
         if cold_start_hours is not None:
             item.cold_start_hours = cold_start_hours
+        if essay_max_attempts is not None:
+            item.essay_max_attempts = essay_max_attempts
 
         if lesson_id:
             item.lesson_id = lesson_id

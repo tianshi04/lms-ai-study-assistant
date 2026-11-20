@@ -75,7 +75,11 @@ class QuizUseCase(BaseAssessmentUseCase):
     """Application Use Case for Quiz sessions, grading, question banks, and matrix configurations."""
 
     async def submit_honor_code(
-        self, user_id: str, item_id: str, is_agreed: bool
+        self,
+        user_id: str,
+        item_id: str,
+        is_agreed: bool,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         now_iso = datetime.now(UTC).isoformat()
         agreement = HonorCodeAgreement(
@@ -83,6 +87,9 @@ class QuizUseCase(BaseAssessmentUseCase):
         )
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            await self._ensure_not_course_staff_for_item(
+                session, repo, user_id, item_id, current_user, preview=False
+            )
             await repo.save_honor_code(agreement)
         msg = (
             "Academic Honor Code agreed successfully."
@@ -578,6 +585,9 @@ class QuizUseCase(BaseAssessmentUseCase):
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             await self._verify_preview_permission(repo, item_id, preview, current_user)
+            await self._ensure_not_course_staff_for_item(
+                session, repo, user_id, item_id, current_user, preview=preview
+            )
             item_type_str = await repo.get_item_type(item_id)
             is_graded = is_graded_quiz_item(item_type_str)
 
@@ -684,6 +694,9 @@ class QuizUseCase(BaseAssessmentUseCase):
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             await self._verify_preview_permission(repo, item_id, preview, current_user)
+            await self._ensure_not_course_staff_for_item(
+                session, repo, user_id, item_id, current_user, preview=preview
+            )
             item_type_str = await repo.get_item_type(item_id)
             is_graded = is_graded_quiz_item(item_type_str)
 
@@ -926,6 +939,9 @@ class QuizUseCase(BaseAssessmentUseCase):
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             await self._verify_preview_permission(repo, item_id, preview, current_user)
+            await self._ensure_not_course_staff_for_item(
+                session, repo, user_id, item_id, current_user, preview=preview
+            )
 
             # BR_ACCESS_001: Practice Quizzes are open in Audit Mode.
             # Only Graded Quizzes require Paid Mode authorization.

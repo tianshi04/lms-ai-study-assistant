@@ -88,11 +88,15 @@ class LearningHandler(LearningService):
     ) -> pb.GetProgressResponse:
         current_user = require_current_user()
         current_item_id = request.current_item_id or None
-        progress = await self.use_case.get_progress(
-            user_id=current_user.id,
-            course_id=request.course_id,
-            current_item_id=current_item_id,
-        )
+        try:
+            progress = await self.use_case.get_progress(
+                user_id=current_user.id,
+                course_id=request.course_id,
+                current_item_id=current_item_id,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         return pb.GetProgressResponse(progress=_to_pb_progress(progress))
 
     async def reset_deadlines(
@@ -103,8 +107,12 @@ class LearningHandler(LearningService):
         current_user = require_current_user()
         try:
             success, progress = await self.use_case.reset_deadlines(
-                user_id=current_user.id, course_id=request.course_id
+                user_id=current_user.id,
+                course_id=request.course_id,
+                current_user=current_user,
             )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.ResetDeadlinesResponse(
@@ -117,14 +125,18 @@ class LearningHandler(LearningService):
         ctx: RequestContext[pb.SavePersonalNoteRequest, pb.SavePersonalNoteResponse],
     ) -> pb.SavePersonalNoteResponse:
         current_user = require_current_user()
-        note = await self.use_case.save_personal_note(
-            user_id=current_user.id,
-            course_id=request.course_id,
-            item_id=request.item_id,
-            highlighted_text=request.highlighted_text,
-            note_comment=request.note_comment,
-            timestamp_seconds=request.timestamp_seconds,
-        )
+        try:
+            note = await self.use_case.save_personal_note(
+                user_id=current_user.id,
+                course_id=request.course_id,
+                item_id=request.item_id,
+                highlighted_text=request.highlighted_text,
+                note_comment=request.note_comment,
+                timestamp_seconds=request.timestamp_seconds,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         return pb.SavePersonalNoteResponse(note=_to_pb_note(note))
 
     async def list_personal_notes(
@@ -162,7 +174,11 @@ class LearningHandler(LearningService):
                 user_id=current_user.id,
                 course_id=request.course_id,
                 item_id=request.item_id,
+                from_learner_rpc=True,
+                current_user=current_user,
             )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
         return pb.MarkItemCompleteResponse(
@@ -177,7 +193,9 @@ class LearningHandler(LearningService):
         ],
     ) -> pb.ListMyEnrolledCoursesResponse:
         current_user = require_current_user()
-        summaries = await self.use_case.list_enrolled_courses(user_id=current_user.id)
+        summaries = await self.use_case.list_enrolled_courses(
+            user_id=current_user.id, current_user=current_user
+        )
         return pb.ListMyEnrolledCoursesResponse(
             courses=[_to_pb_enrolled_course_summary(s) for s in summaries]
         )
@@ -202,6 +220,7 @@ class LearningHandler(LearningService):
                 item_id=request.item_id,
                 delta_seconds=request.delta_seconds,
                 client_timezone=request.client_timezone,
+                current_user=current_user,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e

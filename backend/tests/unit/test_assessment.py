@@ -1,10 +1,15 @@
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
+from uuid6 import uuid7
 
 from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.domain import (
+    PEER_ASSIGNMENT_STATUS_ASSIGNED,
+    PEER_SUBMISSION_STATUS_PUBLISHED,
+    PENDING_APPEAL_STATUSES,
+    REPORT_STATUS_RESOLVED,
     UNLIMITED_ATTEMPTS_SENTINEL,
     AssessmentRepositoryInterface,
     GradeAppeal,
@@ -13,6 +18,8 @@ from src.modules.assessment.domain import (
     PeerAssignmentGradedDomainEvent,
     PeerAssignmentSubmission,
     PeerReview,
+    PeerReviewAssignment,
+    PeerReviewReport,
     QuizCooldown,
     QuizSubmission,
     RubricCriteria,
@@ -32,7 +39,9 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.lab_submissions: list[LabSubmission] = []
         self.peer_submissions: list[PeerAssignmentSubmission] = []
         self.peer_reviews: list[PeerReview] = []
+        self.peer_review_assignments: dict[str, PeerReviewAssignment] = {}
         self.grade_appeals: dict[str, GradeAppeal] = {}
+        self.peer_review_reports: dict[str, PeerReviewReport] = {}
         self.matrices: dict[str, Any] = {}
         self.item_types: dict[str, str] = {}
         self.rubric_criteria_json_map: dict[str, str] = {}
@@ -180,6 +189,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             "essay_grading_mode": "PEER_REVIEW",
             "required_peer_reviews": 3,
             "cold_start_hours": 48,
+            "essay_max_attempts": 3,
         }
 
     async def count_user_completed_reviews(
@@ -194,8 +204,8 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def count_available_pool_submissions(
         self, item_id: str, reviewer_user_id: str
     ) -> int:
-        reviewed_sub_ids = {
-            r.submission_id
+        reviewed_sub_attempts = {
+            (r.submission_id, r.submission_attempt_number)
             for r in self.peer_reviews
             if r.reviewer_user_id == reviewer_user_id and r.item_id == item_id
         }
@@ -204,14 +214,15 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             for s in self.peer_submissions
             if s.item_id == item_id
             and s.user_id != reviewer_user_id
-            and s.id not in reviewed_sub_ids
+            and (s.id, s.attempt_number) not in reviewed_sub_attempts
         )
 
     async def get_eligible_peer_submissions_to_review(
         self, item_id: str, reviewer_user_id: str, limit: int = 3
     ) -> list[PeerAssignmentSubmission]:
-        reviewed_sub_ids = {
-            r.submission_id
+        now = datetime.now(UTC)
+        reviewed_sub_attempts = {
+            (r.submission_id, r.submission_attempt_number)
             for r in self.peer_reviews
             if r.reviewer_user_id == reviewer_user_id and r.item_id == item_id
         }
@@ -220,17 +231,106 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             for s in self.peer_submissions
             if s.item_id == item_id
             and s.user_id != reviewer_user_id
-            and s.id not in reviewed_sub_ids
+            and (s.id, s.attempt_number) not in reviewed_sub_attempts
+            and s.can_claim_lock(reviewer_user_id, now)
         ]
 
         def _rev_count(sub):
-            return sum(1 for r in self.peer_reviews if r.submission_id == sub.id)
+            return sum(
+                1
+                for r in self.peer_reviews
+                if r.submission_id == sub.id
+                and r.submission_attempt_number == sub.attempt_number
+            )
 
-        eligible.sort(key=lambda s: (_rev_count(s), s.created_at))
+        eligible.sort(
+            key=lambda s: (
+                0 if s.locked_by_user_id == reviewer_user_id else 1,
+                0
+                if (
+                    not s.graded_by_staff
+                    and s.status != PEER_SUBMISSION_STATUS_PUBLISHED
+                )
+                else (1 if not s.graded_by_staff else 2),
+                _rev_count(s),
+                s.created_at,
+            )
+        )
         return eligible[:limit]
 
     async def save_peer_review(self, review: PeerReview) -> None:
+        for idx, existing in enumerate(self.peer_reviews):
+            if (
+                existing.submission_id == review.submission_id
+                and existing.reviewer_user_id == review.reviewer_user_id
+                and existing.submission_attempt_number
+                == review.submission_attempt_number
+            ):
+                self.peer_reviews[idx] = review
+                return
         self.peer_reviews.append(review)
+
+    async def get_peer_submission_for_update(
+        self, submission_id: str
+    ) -> PeerAssignmentSubmission | None:
+        return await self.get_peer_submission(submission_id)
+
+    async def create_or_get_peer_review_assignment(
+        self,
+        submission_id: str,
+        reviewer_user_id: str,
+        item_id: str,
+        assigned_at: str,
+        expires_at: str,
+        submission_attempt_number: int = 1,
+    ) -> PeerReviewAssignment:
+        now = datetime.now(UTC)
+        for existing in self.peer_review_assignments.values():
+            if (
+                existing.submission_id == submission_id
+                and existing.reviewer_user_id == reviewer_user_id
+                and existing.submission_attempt_number == submission_attempt_number
+            ):
+                if (
+                    existing.status == PEER_ASSIGNMENT_STATUS_ASSIGNED
+                    and not existing.is_active(now)
+                ):
+                    del self.peer_review_assignments[existing.id]
+                    existing.id = f"rev-{uuid7().hex}"
+                    existing.assigned_at = assigned_at
+                    existing.expires_at = expires_at
+                    self.peer_review_assignments[existing.id] = existing
+                elif existing.status != PEER_ASSIGNMENT_STATUS_ASSIGNED:
+                    existing.status = PEER_ASSIGNMENT_STATUS_ASSIGNED
+                    existing.assigned_at = assigned_at
+                    existing.expires_at = expires_at
+                return existing
+
+        assignment = PeerReviewAssignment(
+            id=f"rev-{uuid7().hex}",
+            submission_id=submission_id,
+            reviewer_user_id=reviewer_user_id,
+            item_id=item_id,
+            assigned_at=assigned_at,
+            expires_at=expires_at,
+            status=PEER_ASSIGNMENT_STATUS_ASSIGNED,
+            submission_attempt_number=submission_attempt_number,
+        )
+        self.peer_review_assignments[assignment.id] = assignment
+        return assignment
+
+    async def get_peer_review_assignment(
+        self, assignment_id: str, reviewer_user_id: str
+    ) -> PeerReviewAssignment | None:
+        assignment = self.peer_review_assignments.get(assignment_id)
+        if not assignment or assignment.reviewer_user_id != reviewer_user_id:
+            return None
+        return assignment
+
+    async def save_peer_review_assignment(
+        self, assignment: PeerReviewAssignment
+    ) -> None:
+        self.peer_review_assignments[assignment.id] = assignment
 
     async def get_peer_reviews_by_reviewer(
         self, reviewer_user_id: str, item_id: str
@@ -242,9 +342,58 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         ]
 
     async def get_peer_reviews_for_submission(
-        self, submission_id: str
+        self, submission_id: str, attempt_number: int | None = None
     ) -> list[PeerReview]:
-        return [r for r in self.peer_reviews if r.submission_id == submission_id]
+        return [
+            r
+            for r in self.peer_reviews
+            if r.submission_id == submission_id
+            and (
+                attempt_number is None or r.submission_attempt_number == attempt_number
+            )
+        ]
+
+    async def get_peer_review_by_id(self, review_id: str) -> PeerReview | None:
+        return next((r for r in self.peer_reviews if r.id == review_id), None)
+
+    async def save_peer_review_report(self, report: PeerReviewReport) -> None:
+        self.peer_review_reports[report.id] = report
+
+    async def get_peer_review_report_by_user_and_review(
+        self, reporter_user_id: str, peer_review_id: str
+    ) -> PeerReviewReport | None:
+        return next(
+            (
+                rep
+                for rep in self.peer_review_reports.values()
+                if rep.reporter_user_id == reporter_user_id
+                and rep.peer_review_id == peer_review_id
+            ),
+            None,
+        )
+
+    async def get_pending_peer_review_reports_for_submission(
+        self, submission_id: str
+    ) -> list[PeerReviewReport]:
+        return [
+            rep
+            for rep in self.peer_review_reports.values()
+            if rep.submission_id == submission_id
+            and rep.status in PENDING_APPEAL_STATUSES
+        ]
+
+    async def resolve_pending_peer_review_reports_for_submission(
+        self, submission_id: str, reviewer_id: str, resolution_notes: str = ""
+    ) -> None:
+        for rep in self.peer_review_reports.values():
+            if (
+                rep.submission_id == submission_id
+                and rep.status in PENDING_APPEAL_STATUSES
+            ):
+                rep.status = REPORT_STATUS_RESOLVED
+                rep.reviewer_id = reviewer_id
+                if resolution_notes:
+                    rep.resolution_notes = resolution_notes
 
     async def save_grade_appeal(self, appeal: GradeAppeal) -> None:
         self.grade_appeals[appeal.submission_id] = appeal
@@ -435,13 +584,23 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         return getattr(self, "item_reading_markdowns", {}).get(item_id, "")
 
     async def claim_submission_lock(
-        self, submission_id: str, user_id: str, timeout_minutes: int = 30
+        self,
+        submission_id: str,
+        user_id: str,
+        timeout_minutes: int = 30,
+        allow_extend_own: bool = True,
     ) -> bool:
         from datetime import UTC, datetime
 
         now = datetime.now(UTC)
         sub = await self.get_peer_submission(submission_id)
         if not sub:
+            return False
+        if (
+            not allow_extend_own
+            and sub.locked_by_user_id == user_id
+            and sub.is_lock_active(now, timeout_minutes=timeout_minutes)
+        ):
             return False
         if not sub.can_claim_lock(user_id, now, timeout_minutes=timeout_minutes):
             return False
@@ -472,6 +631,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             return False
         sub.locked_by_user_id = None
         sub.locked_at = None
+        sub.lock_expires_at = None
         return True
 
     async def list_grading_queue_items(
@@ -486,14 +646,21 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             is_appeal = s.id in self.grade_appeals
             appeal = self.grade_appeals.get(s.id)
             appeal_reason = appeal.appeal_reason if appeal else ""
-            revs = [r for r in self.peer_reviews if r.submission_id == s.id]
+            revs = [
+                r
+                for r in self.peer_reviews
+                if r.submission_id == s.id
+                and r.submission_attempt_number == s.attempt_number
+            ]
             is_outlier = any(r.is_outlier for r in revs)
             status_str = "PENDING"
             if s.locked_by_user_id:
                 status_str = "CLAIMED"
             elif is_appeal:
                 status_str = "APPEALED"
-            elif s.final_score is not None:
+            elif s.status == "PUBLISHED" or (
+                s.final_score is not None and s.status != "SUBMITTED"
+            ):
                 status_str = "GRADED"
 
             results.append(
@@ -707,7 +874,7 @@ async def test_peer_review_and_outlier_detection():
     repo = InMemoryAssessmentRepository()
     usecase = AssessmentUseCase(repository=repo)
 
-    # 1. Submit Peer Assignment
+    # 1. Submit Peer Assignment (author + 2 peer reviewers)
     sub_id, _msg = await usecase.submit_peer_assignment(
         "author-1",
         "item-peer-1",
@@ -716,27 +883,80 @@ async def test_peer_review_and_outlier_detection():
     )
     assert sub_id.startswith("peer-")
 
-    # 2. Reviewer 1 grades 100% (30/30)
+    await usecase.submit_peer_assignment(
+        "rev-1",
+        "item-peer-1",
+        "https://github.com/test/rev1",
+        "Reviewer 1 submission",
+    )
+    await usecase.submit_peer_assignment(
+        "rev-2",
+        "item-peer-1",
+        "https://github.com/test/rev2",
+        "Reviewer 2 submission",
+    )
+
+    # 2. Reviewer 1 claims assigned review and grades 100% (30/30)
+    queue_1 = await usecase.get_peer_reviews_to_grade("rev-1", "item-peer-1")
+    assert len(queue_1) >= 1
+    rev1_assignment_id = queue_1[0]["review_id"]
+    # Ensure author-1's submission is the one assigned (or pick the one whose url matches)
+    if queue_1[0]["submission_url"] != "https://github.com/test/repo":
+        # rev-1 got assigned rev-2 or vice versa; release rev-2? Actually author-1 was submitted first so least-reviewed + oldest!
+        pass
+    assert queue_1[0]["submission_url"] == "https://github.com/test/repo"
     c1 = [
-        RubricCriteria("c1", "Quality", 10.0, 10.0),
-        RubricCriteria("c2", "Docs", 10.0, 10.0),
-        RubricCriteria("c3", "Tests", 10.0, 10.0),
+        RubricCriteria("c1", "Quality", 10.0, 10.0, "Giải pháp chính xác và đầy đủ."),
+        RubricCriteria("c2", "Docs", 10.0, 10.0, "Trình bày rõ ràng, dễ hiểu."),
+        RubricCriteria("c3", "Tests", 10.0, 10.0, "Kiểm thử bao quát tốt."),
     ]
-    ok1, msg1 = await usecase.submit_peer_review_grade(sub_id, "rev-1", c1)
+    ok1, msg1 = await usecase.submit_peer_review_grade(rev1_assignment_id, "rev-1", c1)
     assert ok1 is True
     assert "Outlier" not in msg1
 
-    # 3. Reviewer 2 grades 30% (9/30) -> High delta >30% triggers Outlier Flag!
+    # 3. Reviewer 2 claims assigned review and grades 30% (9/30) -> High delta >30% triggers Outlier Flag!
+    queue_2 = await usecase.get_peer_reviews_to_grade("rev-2", "item-peer-1")
+    author_item = next(
+        item
+        for item in queue_2
+        if item["submission_url"] == "https://github.com/test/repo"
+    )
     c2 = [
-        RubricCriteria("c1", "Quality", 10.0, 3.0),
-        RubricCriteria("c2", "Docs", 10.0, 3.0),
-        RubricCriteria("c3", "Tests", 10.0, 3.0),
+        RubricCriteria("c1", "Quality", 10.0, 3.0, "Nội dung còn sơ sài."),
+        RubricCriteria("c2", "Docs", 10.0, 3.0, "Thiếu minh chứng cụ thể."),
+        RubricCriteria("c3", "Tests", 10.0, 3.0, "Chưa thấy đóng góp nổi bật."),
     ]
-    ok2, msg2 = await usecase.submit_peer_review_grade(sub_id, "rev-2", c2)
+    ok2, msg2 = await usecase.submit_peer_review_grade(
+        author_item["review_id"], "rev-2", c2
+    )
     assert ok2 is True
     assert "Outlier Flagged" in msg2
 
-    # 4. Grade Appeal
+    # 4. Grade Appeal before PUBLISHED must be rejected; allowed once PUBLISHED
+    with pytest.raises(ValueError, match="công bố điểm chính thức"):
+        await usecase.submit_grade_appeal("author-1", sub_id, "Scores are inconsistent")
+
+    await usecase.submit_peer_assignment(
+        "rev-3",
+        "item-peer-1",
+        "https://github.com/test/rev3",
+        "Reviewer 3 submission",
+    )
+    queue_3 = await usecase.get_peer_reviews_to_grade("rev-3", "item-peer-1")
+    author_item_3 = next(
+        item
+        for item in queue_3
+        if item["submission_url"] == "https://github.com/test/repo"
+    )
+    c3 = [
+        RubricCriteria("c1", "Quality", 10.0, 5.0, "Nội dung đạt mức trung bình."),
+        RubricCriteria(
+            "c2", "Docs", 10.0, 5.0, "Bố cục tạm ổn nhưng cần chi tiết hơn."
+        ),
+        RubricCriteria("c3", "Tests", 10.0, 5.0, "Cần bổ sung thêm ví dụ."),
+    ]
+    await usecase.submit_peer_review_grade(author_item_3["review_id"], "rev-3", c3)
+
     ok_appeal, status = await usecase.submit_grade_appeal(
         "author-1", sub_id, "Scores are inconsistent"
     )
@@ -1452,6 +1672,8 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
     sub1 = await repo.get_peer_submission(sub_id1)
     assert sub1 is not None
     assert sub1.attempt_number == 1
+    sub1.review_duty_status = "COMPLETED"
+    await repo.save_peer_submission(sub1)
 
     # Staff grades attempt 1 with 85.0
     criteria = [RubricCriteria("c1", "Quality", 10.0, 8.5)]
@@ -1460,6 +1682,7 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
         staff_user_id="instructor-1",
         graded_criteria=criteria,
         total_score=85.0,
+        provenance="INSTRUCTOR",
         current_user=staff,
     )
     sub1_graded = await repo.get_peer_submission(sub_id1)
@@ -1474,6 +1697,19 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
     sub2 = await repo.get_peer_submission(sub_id2)
     assert sub2 is not None
     assert sub2.attempt_number == 2
+    assert sub2.status == "SUBMITTED"
+    assert sub2.final_score is None
+    assert sub2.graded_by_staff is False
+    assert sub2.previous_best_score == 85.0
+
+    # While attempt 2 is pending grading, status reports is_graded=False but preserves best_published_score=85.0
+    status_pending = await usecase.get_my_peer_submission_status(
+        "student-resub", "item-resub"
+    )
+    assert status_pending["is_graded"] is False
+    assert status_pending["final_score"] == 0.0
+    assert status_pending["best_published_score"] == 85.0
+    assert status_pending["best_grade_source"] == "INSTRUCTOR"
 
     # Staff grades attempt 2 with lower score (70.0) -> Highest Score Wins maintains 85.0!
     criteria_low = [RubricCriteria("c1", "Quality", 10.0, 7.0)]
@@ -1484,10 +1720,21 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
         total_score=70.0,
         current_user=staff,
     )
-    assert final_s == 70.0  # Recorded authoritative instructor score!
+    assert final_s == 70.0  # Recorded authoritative instructor score for attempt 2!
     sub2_graded = await repo.get_peer_submission(sub_id2)
     assert sub2_graded is not None
     assert sub2_graded.final_score == 70.0
+    assert sub2_graded.previous_best_score == 85.0
+    eff_score, eff_src, _ = sub2_graded.get_effective_published_grade()
+    assert eff_score == 85.0
+    assert eff_src == "INSTRUCTOR"
+
+    status_after_low = await usecase.get_my_peer_submission_status(
+        "student-resub", "item-resub"
+    )
+    assert status_after_low["is_graded"] is True
+    assert status_after_low["final_score"] == 85.0
+    assert status_after_low["best_published_score"] == 85.0
 
     # 3. Resubmission (attempt 3)
     await usecase.submit_peer_assignment(
@@ -1501,6 +1748,59 @@ async def test_peer_resubmission_policy_and_highest_score_wins():
     with pytest.raises(ValueError, match="giới hạn tối đa 3 lần nộp bài"):
         await usecase.submit_peer_assignment(
             "student-resub", "item-resub", "http://v4.com", "Content 4"
+        )
+
+
+@pytest.mark.asyncio
+async def test_essay_custom_max_attempts_enforcement():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+
+    # Configure learning item with custom essay_max_attempts = 2
+    repo.learning_items_details["item-custom-attempts"] = {
+        "id": "item-custom-attempts",
+        "title": "Tự luận giới hạn 2 lần",
+        "reading_markdown": "Đề bài tự luận",
+        "rubric_criteria_json": "",
+        "essay_grading_mode": "INSTRUCTOR_ONLY",
+        "required_peer_reviews": 0,
+        "cold_start_hours": 24,
+        "essay_max_attempts": 2,
+    }
+
+    # Initial status check before any submission
+    initial_status = await usecase.get_my_peer_submission_status(
+        "student-limit", "item-custom-attempts"
+    )
+    assert initial_status["max_attempts"] == 2
+    assert initial_status["has_submission"] is False
+
+    # Attempt 1 -> Success
+    sub_id, _ = await usecase.submit_peer_assignment(
+        "student-limit", "item-custom-attempts", "http://v1.com", "Bài nộp lần 1"
+    )
+    sub1 = await repo.get_peer_submission(sub_id)
+    assert sub1 is not None
+    assert sub1.attempt_number == 1
+
+    status1 = await usecase.get_my_peer_submission_status(
+        "student-limit", "item-custom-attempts"
+    )
+    assert status1["max_attempts"] == 2
+    assert status1["attempt_number"] == 1
+
+    # Attempt 2 -> Resubmission success
+    await usecase.submit_peer_assignment(
+        "student-limit", "item-custom-attempts", "http://v2.com", "Bài nộp lần 2"
+    )
+    sub2 = await repo.get_peer_submission(sub_id)
+    assert sub2 is not None
+    assert sub2.attempt_number == 2
+
+    # Attempt 3 -> Should be rejected since max_attempts = 2
+    with pytest.raises(ValueError, match="giới hạn tối đa 2 lần nộp bài"):
+        await usecase.submit_peer_assignment(
+            "student-limit", "item-custom-attempts", "http://v3.com", "Bài nộp lần 3"
         )
 
 
@@ -1704,10 +2004,28 @@ async def test_self_grading_fraud_prevented(monkeypatch: pytest.MonkeyPatch) -> 
         )
     ]
 
-    # Attempting to self-grade must raise PermissionError
-    with pytest.raises(PermissionError, match="không được phép tự chấm điểm"):
+    # Attempting to self-grade via forged predictable id OR even with an assignment must raise PermissionError
+    with pytest.raises(PermissionError):
         await usecase.submit_peer_review_grade(
             review_id="rev-sub-fraud-1",
+            reviewer_user_id="student-fraudster",
+            graded_criteria=valid_rubric,
+        )
+
+    # Even if an assignment record somehow pointed to their own submission, self-grading is blocked
+    from datetime import timedelta
+
+    now = datetime.now(UTC)
+    self_assign = await repo.create_or_get_peer_review_assignment(
+        submission_id="sub-fraud-1",
+        reviewer_user_id="student-fraudster",
+        item_id="item-test",
+        assigned_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=30)).isoformat(),
+    )
+    with pytest.raises(PermissionError, match="không được phép tự chấm điểm"):
+        await usecase.submit_peer_review_grade(
+            review_id=self_assign.id,
             reviewer_user_id="student-fraudster",
             graded_criteria=valid_rubric,
         )
@@ -1743,6 +2061,21 @@ async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) 
         created_at="2026-11-10T00:00:00Z",
     )
     await repo.save_peer_submission(sub)
+    await repo.save_peer_submission(
+        PeerAssignmentSubmission(
+            id="sub-reviewer-peer",
+            user_id="reviewer-peer",
+            item_id="item-test",
+            submission_url="https://example.com/reviewer",
+            text_content="Reviewer work",
+            created_at="2026-11-10T01:00:00Z",
+        )
+    )
+    queue = await usecase.get_peer_reviews_to_grade(
+        user_id="reviewer-peer", item_id="item-test"
+    )
+    assert len(queue) == 1
+    assigned_review_id = queue[0]["review_id"]
 
     # 1. Negative score rejected
     neg_rubric = [
@@ -1755,7 +2088,7 @@ async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) 
     ]
     with pytest.raises(ValueError, match="không hợp lệ"):
         await usecase.submit_peer_review_grade(
-            review_id="rev-sub-valid-1",
+            review_id=assigned_review_id,
             reviewer_user_id="reviewer-peer",
             graded_criteria=neg_rubric,
         )
@@ -1771,7 +2104,7 @@ async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) 
     ]
     with pytest.raises(ValueError, match="không hợp lệ"):
         await usecase.submit_peer_review_grade(
-            review_id="rev-sub-valid-1",
+            review_id=assigned_review_id,
             reviewer_user_id="reviewer-peer",
             graded_criteria=over_rubric,
         )
@@ -1787,7 +2120,7 @@ async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) 
     ]
     with pytest.raises(ValueError, match="hữu hạn hợp lệ"):
         await usecase.submit_peer_review_grade(
-            review_id="rev-sub-valid-1",
+            review_id=assigned_review_id,
             reviewer_user_id="reviewer-peer",
             graded_criteria=nan_rubric,
         )
@@ -1803,7 +2136,7 @@ async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) 
     ]
     with pytest.raises(ValueError, match="hữu hạn hợp lệ"):
         await usecase.submit_peer_review_grade(
-            review_id="rev-sub-valid-1",
+            review_id=assigned_review_id,
             reviewer_user_id="reviewer-peer",
             graded_criteria=inf_rubric,
         )
@@ -1819,7 +2152,7 @@ async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) 
     ]
     with pytest.raises(ValueError, match="phải lớn hơn 0"):
         await usecase.submit_peer_review_grade(
-            review_id="rev-sub-valid-1",
+            review_id=assigned_review_id,
             reviewer_user_id="reviewer-peer",
             graded_criteria=zero_max_rubric,
         )
@@ -1831,20 +2164,21 @@ async def test_unbounded_rubric_score_rejected(monkeypatch: pytest.MonkeyPatch) 
             title="Criteria 1",
             max_score=10.0,
             score_given=8.0,
+            feedback="Bài làm tốt, trình bày rõ ràng.",
         )
     ]
     # First review succeeds
     ok, _ = await usecase.submit_peer_review_grade(
-        review_id="rev-sub-valid-1",
+        review_id=assigned_review_id,
         reviewer_user_id="reviewer-peer",
         graded_criteria=valid_rubric,
     )
     assert ok is True
 
-    # Second review by same reviewer must raise PermissionError
-    with pytest.raises(PermissionError, match="đã thực hiện đánh giá"):
+    # Second review with the same completed assignment_id must raise PermissionError
+    with pytest.raises(PermissionError):
         await usecase.submit_peer_review_grade(
-            review_id="rev-sub-valid-1",
+            review_id=assigned_review_id,
             reviewer_user_id="reviewer-peer",
             graded_criteria=valid_rubric,
         )
@@ -1900,18 +2234,29 @@ async def test_uuid7_peer_review_id_not_truncated(
         user_id="reviewer-other", item_id="item-test"
     )
     assert len(reviews_to_grade) == 1
-    assert reviews_to_grade[0]["review_id"] == f"rev-{uuid7_sub_id}"
+    assigned_id = reviews_to_grade[0]["review_id"]
+    assert assigned_id.startswith("rev-")
+    # Opaque assignment ID must NOT leak or equal predictable rev-{submission_id}
+    assert assigned_id != f"rev-{uuid7_sub_id}"
 
-    # Grade submission using the full review_id
+    # Grade submission using the opaque assignment review_id and verify full UUID7 submission_id is resolved
     rubric = [
-        RubricCriteria(criteria_id="c1", title="Code", max_score=10.0, score_given=9.0)
+        RubricCriteria(
+            criteria_id="c1",
+            title="Code",
+            max_score=10.0,
+            score_given=9.0,
+            feedback="Mã nguồn sạch sẽ và có cấu trúc tốt.",
+        )
     ]
     ok, _ = await usecase.submit_peer_review_grade(
-        review_id=f"rev-{uuid7_sub_id}",
+        review_id=assigned_id,
         reviewer_user_id="reviewer-other",
         graded_criteria=rubric,
     )
     assert ok is True
+    reviews_for_uuid7_sub = await repo.get_peer_reviews_for_submission(uuid7_sub_id)
+    assert len(reviews_for_uuid7_sub) == 1
 
 
 @pytest.mark.asyncio
@@ -2521,34 +2866,77 @@ async def test_essay_dynamic_quota_two_student_class():
 
     reviews_for_a = await usecase.get_peer_reviews_to_grade("stu-a", item_id)
     assert len(reviews_for_a) == 1
-    assert reviews_for_a[0]["review_id"] == f"rev-{sub_b}"
+    assigned_for_a = reviews_for_a[0]["review_id"]
+    assert assigned_for_a != f"rev-{sub_b}"
 
-    # Before grading B, A's target_reviews_required is min(3, 0+1) = 1
+    # Before 48h cold-start window elapses, target_reviews_required stays full (3) to block midnight quota farming
     status_before = await usecase.get_my_peer_submission_status("stu-a", item_id)
-    assert status_before["target_reviews_required"] == 1
+    assert status_before["target_reviews_required"] == 3
     assert status_before["reviews_completed_by_user"] == 0
     assert status_before["review_duty_status"] == "PENDING"
 
-    # A grades B -> completes A's dynamic quota!
+    # A grades B -> before 48h, pool is now empty so A moves to WAITING_POOL (NOT COMPLETED)
     criteria = [
-        RubricCriteria("c1", "Chất lượng nội dung & Giải pháp", 10.0, 9.0, "Tốt"),
-        RubricCriteria("c2", "Bố cục, Trình bày & Minh chứng", 10.0, 8.0, "Rõ"),
-        RubricCriteria("c3", "Tính ứng dụng & Đóng góp", 10.0, 9.0, "Hay"),
+        RubricCriteria(
+            "c1", "Chất lượng nội dung & Giải pháp", 10.0, 9.0, "Nội dung tốt"
+        ),
+        RubricCriteria(
+            "c2", "Bố cục, Trình bày & Minh chứng", 10.0, 8.0, "Trình bày rõ"
+        ),
+        RubricCriteria("c3", "Tính ứng dụng & Đóng góp", 10.0, 9.0, "Ứng dụng hay"),
     ]
     ok, _ = await usecase.submit_peer_review_grade(
-        review_id=f"rev-{sub_b}",
+        review_id=assigned_for_a,
         reviewer_user_id="stu-a",
         graded_criteria=criteria,
         item_id=item_id,
     )
     assert ok is True
 
+    status_mid = await usecase.get_my_peer_submission_status("stu-a", item_id)
+    assert status_mid["reviews_completed_by_user"] == 1
+    assert status_mid["review_duty_status"] == "WAITING_POOL"
+
+    # After 48h cold-start window elapses with no new submitters, dynamic quota shrinks to min(3, 1) = 1 -> COMPLETED
+    from datetime import timedelta
+
+    sub_a_entity = await repo.get_user_peer_submission("stu-a", item_id)
+    assert sub_a_entity is not None
+    sub_a_entity.created_at = (datetime.now(UTC) - timedelta(hours=49)).isoformat()
+    await repo.save_peer_submission(sub_a_entity)
+
     status_after = await usecase.get_my_peer_submission_status("stu-a", item_id)
     assert status_after["reviews_completed_by_user"] == 1
+    assert status_after["target_reviews_required"] == 1
     assert status_after["review_duty_status"] == "COMPLETED"
 
-    # Student B sees anonymous peer feedback
+    # Student B has not graded any peer yet -> peer_feedbacks remain hidden until duty completes
+    status_b_locked = await usecase.get_my_peer_submission_status("stu-b", item_id)
+    assert status_b_locked["review_duty_status"] == "PENDING"
+    assert status_b_locked["peer_feedbacks"] == []
+
+    # After 49h cold-start window elapses for Student B's dynamic quota -> Student B completes 0/0 after grading or waiver?
+    # Better: have Student B grade Student A -> duty COMPLETED and anonymous peer feedback unlocks
+    reviews_for_b = await usecase.get_peer_reviews_to_grade("stu-b", item_id)
+    assert len(reviews_for_b) == 1
+    await usecase.submit_peer_review_grade(
+        review_id=reviews_for_b[0]["review_id"],
+        reviewer_user_id="stu-b",
+        graded_criteria=criteria,
+        item_id=item_id,
+    )
+    status_b_mid = await usecase.get_my_peer_submission_status("stu-b", item_id)
+    assert status_b_mid["review_duty_status"] == "WAITING_POOL"
+    assert status_b_mid["peer_feedbacks"] == []
+
+    # After 49h cold-start window elapses for Student B -> dynamic quota shrinks to 1 -> COMPLETED and feedback unlocks
+    sub_b_entity = await repo.get_user_peer_submission("stu-b", item_id)
+    assert sub_b_entity is not None
+    sub_b_entity.created_at = (datetime.now(UTC) - timedelta(hours=49)).isoformat()
+    await repo.save_peer_submission(sub_b_entity)
+
     status_b = await usecase.get_my_peer_submission_status("stu-b", item_id)
+    assert status_b["review_duty_status"] == "COMPLETED"
     assert len(status_b["peer_feedbacks"]) == 1
     assert status_b["peer_feedbacks"][0]["feedback_label"] == "Bạn học #1"
 
@@ -2570,7 +2958,10 @@ async def test_essay_empty_pool_waiver_and_anti_laziness():
 
     EventBus.subscribe(PeerAssignmentGradedDomainEvent, _tracker)
 
-    # Scenario A: Alone in pool -> WAIVED_EMPTY_POOL when staff grades
+    # Scenario A: Alone in pool -> early staff grading (< 48h) publishes score but holds WAITING_POOL;
+    # after 48h cold-start window elapses -> WAIVED_EMPTY_POOL + completion event
+    from datetime import timedelta
+
     item_solo = "item-solo"
     sub_solo, _ = await usecase.submit_peer_assignment(
         "solo-stu", item_solo, "https://example.com/solo", "Solo essay"
@@ -2586,22 +2977,50 @@ async def test_essay_empty_pool_waiver_and_anti_laziness():
             RubricCriteria("c1", "Chất lượng nội dung & Giải pháp", 10.0, 9.0)
         ],
         total_score=90.0,
-        feedback="Giải cứu 48h",
+        feedback="Chấm sớm",
         current_user=staff,
     )
     assert ok is True
+    status_early = await usecase.get_my_peer_submission_status("solo-stu", item_solo)
+    assert status_early["is_graded"] is True
+    assert status_early["final_score"] == 0.0
+    assert status_early["grade_source"] == ""
+    assert status_early["staff_feedback"] == ""
+    assert status_early["can_appeal"] is False
+    assert status_early["review_duty_status"] == "WAITING_POOL"
+    assert not any(e.user_id == "solo-stu" for e in received_events)
+
+    # Simulate 49 hours elapsed -> cold-start waiver triggers, reveals score, and publishes completion event
+    solo_entity = await repo.get_peer_submission(sub_solo)
+    assert solo_entity is not None
+    solo_entity.created_at = (datetime.now(UTC) - timedelta(hours=49)).isoformat()
+    await repo.save_peer_submission(solo_entity)
+
     status_waived = await usecase.get_my_peer_submission_status("solo-stu", item_solo)
     assert status_waived["review_duty_status"] == "WAIVED_EMPTY_POOL"
     assert status_waived["is_graded"] is True
+    assert status_waived["final_score"] == 90.0
+    assert status_waived["grade_source"] == "TA"
+    assert status_waived["staff_feedback"] == "Chấm sớm"
+    assert status_waived["can_appeal"] is True
     assert any(e.user_id == "solo-stu" for e in received_events)
 
     # Scenario B: Anti-laziness — lazy student has classmate in pool but refuses to review
     received_events.clear()
     item_lazy = "item-lazy"
+    repo.learning_items_details[item_lazy] = {
+        "id": item_lazy,
+        "title": "Lazy Item",
+        "reading_markdown": "",
+        "rubric_criteria_json": "",
+        "essay_grading_mode": "PEER_REVIEW",
+        "required_peer_reviews": 1,
+        "cold_start_hours": 48,
+    }
     sub_lazy, _ = await usecase.submit_peer_assignment(
         "lazy-stu", item_lazy, "https://example.com/lazy", "Lazy essay"
     )
-    sub_peer, _ = await usecase.submit_peer_assignment(
+    _sub_peer, _ = await usecase.submit_peer_assignment(
         "diligent-stu", item_lazy, "https://example.com/diligent", "Diligent essay"
     )
 
@@ -2621,18 +3040,29 @@ async def test_essay_empty_pool_waiver_and_anti_laziness():
 
     status_lazy = await usecase.get_my_peer_submission_status("lazy-stu", item_lazy)
     assert status_lazy["is_graded"] is True
-    assert status_lazy["final_score"] == 85.0
+    assert status_lazy["final_score"] == 0.0
+    assert status_lazy["grade_source"] == ""
+    assert status_lazy["staff_feedback"] == ""
+    assert status_lazy["can_appeal"] is False
     assert status_lazy["review_duty_status"] == "PENDING"
     assert status_lazy["available_pool_count"] == 1
 
-    # Now lazy-stu reviews sub_peer -> Dual-Release completes and fires completion event!
+    # Now lazy-stu fetches assigned peer review and grades sub_peer -> score unlocks, Dual-Release completes and fires completion event!
+    lazy_queue = await usecase.get_peer_reviews_to_grade("lazy-stu", item_lazy)
+    assert len(lazy_queue) == 1
     await usecase.submit_peer_review_grade(
-        review_id=f"rev-{sub_peer}",
+        review_id=lazy_queue[0]["review_id"],
         reviewer_user_id="lazy-stu",
         graded_criteria=[
-            RubricCriteria("c1", "Chất lượng nội dung & Giải pháp", 10.0, 8.0, "Ok"),
-            RubricCriteria("c2", "Bố cục, Trình bày & Minh chứng", 10.0, 8.0, "Ok"),
-            RubricCriteria("c3", "Tính ứng dụng & Đóng góp", 10.0, 8.0, "Ok"),
+            RubricCriteria(
+                "c1", "Chất lượng nội dung & Giải pháp", 10.0, 8.0, "Nội dung đạt chuẩn"
+            ),
+            RubricCriteria(
+                "c2", "Bố cục, Trình bày & Minh chứng", 10.0, 8.0, "Trình bày rõ ràng"
+            ),
+            RubricCriteria(
+                "c3", "Tính ứng dụng & Đóng góp", 10.0, 8.0, "Có tính thực tiễn"
+            ),
         ],
         item_id=item_lazy,
     )
@@ -2640,4 +3070,168 @@ async def test_essay_empty_pool_waiver_and_anti_laziness():
         "lazy-stu", item_lazy
     )
     assert status_lazy_done["review_duty_status"] == "COMPLETED"
+    assert status_lazy_done["is_graded"] is True
+    assert status_lazy_done["final_score"] == 85.0
+    assert status_lazy_done["grade_source"] == "TA"
+    assert status_lazy_done["staff_feedback"] == "GV đã chấm, hãy chấm nốt bài bạn học"
+    assert status_lazy_done["can_appeal"] is True
     assert any(e.user_id == "lazy-stu" for e in received_events)
+
+
+@pytest.mark.asyncio
+async def test_peer_resubmission_guards_and_duty_preservation():
+    """Resubmission must not break active locks, must block on pending appeals, preserve completed/waived duty, and isolate peer reviews per attempt."""
+    from src.modules.assessment.domain import (
+        REVIEW_DUTY_COMPLETED,
+        REVIEW_DUTY_WAIVED_EMPTY_POOL,
+    )
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    item_id = "item-resub-guards"
+    repo.learning_items_details[item_id] = {
+        "id": item_id,
+        "title": "Guarded Essay",
+        "reading_markdown": "",
+        "rubric_criteria_json": "",
+        "essay_grading_mode": "PEER_REVIEW",
+        "required_peer_reviews": 1,
+        "cold_start_hours": 48,
+    }
+    usecase = AssessmentUseCase(repository=repo)
+    staff = CurrentUser(id="inst-guard", email="inst@example.com", role="INSTRUCTOR")
+
+    # Empty submission rejected
+    with pytest.raises(ValueError, match="Vui lòng cung cấp"):
+        await usecase.submit_peer_assignment("stu-guard", item_id, "   ", "  ")
+
+    sub_id, _ = await usecase.submit_peer_assignment(
+        "stu-guard", item_id, "https://example.com/v1", "Attempt 1"
+    )
+    await usecase.submit_peer_assignment(
+        "stu-peer-guard", item_id, "https://example.com/p1", "Peer essay"
+    )
+
+    # 1. Active lock blocks resubmission and preserves locked_by_user_id
+    ok_claim, _, _ = await usecase.claim_grading_task(
+        submission_id=sub_id, staff_user_id="inst-guard", current_user=staff
+    )
+    assert ok_claim is True
+    with pytest.raises(ValueError, match="đang được"):
+        await usecase.submit_peer_assignment(
+            "stu-guard", item_id, "https://example.com/v2", "Attempt 2"
+        )
+    sub_locked = await repo.get_peer_submission(sub_id)
+    assert sub_locked is not None
+    assert sub_locked.locked_by_user_id == "inst-guard"
+    assert sub_locked.attempt_number == 1
+
+    # Release lock & peer grades Attempt 1 with 90.0
+    await usecase.release_grading_task(sub_id, "inst-guard", current_user=staff)
+    queue_peer = await usecase.get_peer_reviews_to_grade("stu-peer-guard", item_id)
+    assert len(queue_peer) == 1
+    await usecase.submit_peer_review_grade(
+        review_id=queue_peer[0]["review_id"],
+        reviewer_user_id="stu-peer-guard",
+        graded_criteria=[
+            RubricCriteria("c1", "Content", 10.0, 9.0, "Nội dung rõ ràng"),
+            RubricCriteria("c2", "Structure", 10.0, 9.0, "Bố cục hợp lý"),
+            RubricCriteria("c3", "Impact", 10.0, 9.0, "Có giá trị thực tiễn"),
+        ],
+        item_id=item_id,
+    )
+
+    # stu-guard completes review duty -> COMPLETED
+    queue_stu = await usecase.get_peer_reviews_to_grade("stu-guard", item_id)
+    assert len(queue_stu) == 1
+    await usecase.submit_peer_review_grade(
+        review_id=queue_stu[0]["review_id"],
+        reviewer_user_id="stu-guard",
+        graded_criteria=[
+            RubricCriteria("c1", "Content", 10.0, 8.0, "Lập luận khá tốt"),
+            RubricCriteria("c2", "Structure", 10.0, 8.0, "Trình bày mạch lạc"),
+            RubricCriteria("c3", "Impact", 10.0, 8.0, "Khả năng áp dụng ổn"),
+        ],
+        item_id=item_id,
+    )
+    sub_completed = await repo.get_peer_submission(sub_id)
+    assert sub_completed is not None
+    assert sub_completed.review_duty_status == REVIEW_DUTY_COMPLETED
+    assert sub_completed.status == "PUBLISHED"
+    assert sub_completed.final_score == 90.0
+
+    # 2. Pending appeal blocks resubmission
+    await usecase.submit_grade_appeal("stu-guard", sub_id, "Cần phúc khảo")
+    with pytest.raises(ValueError, match="khiếu nại"):
+        await usecase.submit_peer_assignment(
+            "stu-guard", item_id, "https://example.com/v2", "Attempt 2"
+        )
+
+    # Resolve appeal with 90.0 -> now resubmission is allowed
+    await usecase.submit_staff_grading(
+        submission_id=sub_id,
+        staff_user_id="inst-guard",
+        graded_criteria=[RubricCriteria("c1", "Content", 10.0, 9.0)],
+        total_score=90.0,
+        resolve_appeal=True,
+        current_user=staff,
+    )
+
+    # 3. Resubmit Attempt 2 -> preserves REVIEW_DUTY_COMPLETED, resets current grading fields, snapshots 90.0
+    await usecase.submit_peer_assignment(
+        "stu-guard", item_id, "https://example.com/v2", "Attempt 2"
+    )
+    sub_v2 = await repo.get_peer_submission(sub_id)
+    assert sub_v2 is not None
+    assert sub_v2.attempt_number == 2
+    assert sub_v2.status == "SUBMITTED"
+    assert sub_v2.final_score is None
+    assert sub_v2.graded_by_staff is False
+    assert sub_v2.previous_best_score == 90.0
+    assert sub_v2.review_duty_status == REVIEW_DUTY_COMPLETED
+
+    # 4. Attempt 2 peer review is isolated from Attempt 1's 90.0 review!
+    repo.learning_items_details[item_id]["required_peer_reviews"] = 2
+    queue_peer_v2 = await usecase.get_peer_reviews_to_grade("stu-peer-guard", item_id)
+    assert len(queue_peer_v2) == 1
+    repo.learning_items_details[item_id]["required_peer_reviews"] = 1
+    await usecase.submit_peer_review_grade(
+        review_id=queue_peer_v2[0]["review_id"],
+        reviewer_user_id="stu-peer-guard",
+        graded_criteria=[
+            RubricCriteria("c1", "Content", 10.0, 6.0, "Cần bổ sung dẫn chứng"),
+            RubricCriteria("c2", "Structure", 10.0, 6.0, "Bố cục tương đối ổn"),
+            RubricCriteria("c3", "Impact", 10.0, 6.0, "Ý tưởng ở mức khá"),
+        ],
+        item_id=item_id,
+    )
+    sub_v2_graded = await repo.get_peer_submission(sub_id)
+    assert sub_v2_graded is not None
+    assert sub_v2_graded.status == "PUBLISHED"
+    assert (
+        sub_v2_graded.final_score == 60.0
+    )  # Pure attempt 2 score (not averaged with attempt 1!)
+    assert (
+        sub_v2_graded.get_effective_published_grade()[0] == 90.0
+    )  # Highest Score Wins!
+
+    # 5. Also verify WAIVED_EMPTY_POOL is preserved on resubmission
+    sub_waived = PeerAssignmentSubmission(
+        id="sub-waived-1",
+        user_id="stu-waived",
+        item_id=item_id,
+        submission_url="https://example.com/w1",
+        text_content="Waived v1",
+        created_at="2026-11-10T00:00:00Z",
+        status="PUBLISHED",
+        final_score=82.0,
+        review_duty_status=REVIEW_DUTY_WAIVED_EMPTY_POOL,
+    )
+    await repo.save_peer_submission(sub_waived)
+    await usecase.submit_peer_assignment(
+        "stu-waived", item_id, "https://example.com/w2", "Waived v2"
+    )
+    sub_waived_v2 = await repo.get_peer_submission("sub-waived-1")
+    assert sub_waived_v2 is not None
+    assert sub_waived_v2.review_duty_status == REVIEW_DUTY_WAIVED_EMPTY_POOL
+    assert sub_waived_v2.previous_best_score == 82.0

@@ -12,6 +12,8 @@ from src.modules.assessment.domain.entities import (
     LabSubmission,
     PeerAssignmentSubmission,
     PeerReview,
+    PeerReviewAssignment,
+    PeerReviewReport,
     Question,
     QuestionBank,
     QuizActiveSession,
@@ -165,8 +167,9 @@ class AssessmentRepositoryInterface(ABC):
         submission_id: str,
         user_id: str,
         timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+        allow_extend_own: bool = True,
     ) -> bool:
-        """Atomically claims a soft lock on a submission if unlocked, already held by user, or expired."""
+        """Atomically claims a soft lock on a submission if unlocked, expired, or (when allowed) already held by user."""
 
     @abstractmethod
     async def renew_submission_lock(
@@ -190,6 +193,36 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_peer_submission_for_update(
+        self, submission_id: str
+    ) -> PeerAssignmentSubmission | None:
+        pass
+
+    @abstractmethod
+    async def create_or_get_peer_review_assignment(
+        self,
+        submission_id: str,
+        reviewer_user_id: str,
+        item_id: str,
+        assigned_at: str,
+        expires_at: str,
+        submission_attempt_number: int = 1,
+    ) -> PeerReviewAssignment:
+        pass
+
+    @abstractmethod
+    async def get_peer_review_assignment(
+        self, assignment_id: str, reviewer_user_id: str
+    ) -> PeerReviewAssignment | None:
+        pass
+
+    @abstractmethod
+    async def save_peer_review_assignment(
+        self, assignment: PeerReviewAssignment
+    ) -> None:
+        pass
+
+    @abstractmethod
     async def get_peer_reviews_by_reviewer(
         self, reviewer_user_id: str, item_id: str
     ) -> list[PeerReview]:
@@ -197,8 +230,34 @@ class AssessmentRepositoryInterface(ABC):
 
     @abstractmethod
     async def get_peer_reviews_for_submission(
-        self, submission_id: str
+        self, submission_id: str, attempt_number: int | None = None
     ) -> list[PeerReview]:
+        pass
+
+    @abstractmethod
+    async def get_peer_review_by_id(self, review_id: str) -> PeerReview | None:
+        pass
+
+    @abstractmethod
+    async def save_peer_review_report(self, report: PeerReviewReport) -> None:
+        pass
+
+    @abstractmethod
+    async def get_peer_review_report_by_user_and_review(
+        self, reporter_user_id: str, peer_review_id: str
+    ) -> PeerReviewReport | None:
+        pass
+
+    @abstractmethod
+    async def get_pending_peer_review_reports_for_submission(
+        self, submission_id: str
+    ) -> list[PeerReviewReport]:
+        pass
+
+    @abstractmethod
+    async def resolve_pending_peer_review_reports_for_submission(
+        self, submission_id: str, reviewer_id: str, resolution_notes: str = ""
+    ) -> None:
         pass
 
     @abstractmethod
