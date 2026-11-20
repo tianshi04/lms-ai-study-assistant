@@ -1225,3 +1225,102 @@ async def test_item_type_existence_report_access_and_regrade_lock_guards() -> No
     assert sub_after is not None
     assert sub_after.locked_by_user_id is None
     assert sub_after.final_score == 92.0
+
+
+@pytest.mark.asyncio
+async def test_grade_appeal_releases_learner_locks_and_staff_preemption(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify bugfix: When learner submits appeal, existing locks & assignments are cleared, and staff has preemption over learner lock."""
+    from src.modules.assessment.application.grade_appeal_usecase import (
+        GradeAppealUseCase,
+    )
+    from src.modules.assessment.domain import (
+        PEER_ASSIGNMENT_STATUS_CANCELLED,
+        PEER_SUBMISSION_STATUS_PUBLISHED,
+    )
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    sub_id = "sub-appealed-1"
+    item_id = "item-essay-appeal"
+    now = datetime.now(UTC)
+
+    # Submission already published with score
+    sub = PeerAssignmentSubmission(
+        id=sub_id,
+        user_id="learner-author",
+        item_id=item_id,
+        submission_url="https://github.com/solution",
+        text_content="My report",
+        status=PEER_SUBMISSION_STATUS_PUBLISHED,
+        final_score=0.0,
+        published_at=now.isoformat(),
+        created_at=now.isoformat(),
+        locked_by_user_id="learner-peer-reviewer",
+        locked_at=now.isoformat(),
+        lock_expires_at=(now + timedelta(minutes=30)).isoformat(),
+    )
+    await repo.save_peer_submission(sub)
+
+    # In-flight peer review assignment held by another student
+    assign = await repo.create_or_get_peer_review_assignment(
+        submission_id=sub_id,
+        reviewer_user_id="learner-peer-reviewer",
+        item_id=item_id,
+        assigned_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=30)).isoformat(),
+    )
+
+    # 1. Learner submits grade appeal
+    @asynccontextmanager
+    async def _fake_scope():
+        yield AsyncMock()
+
+    monkeypatch.setattr(
+        "src.modules.assessment.application.grade_appeal_usecase.async_session_scope",
+        _fake_scope,
+    )
+    monkeypatch.setattr(
+        "src.modules.assessment.application.peer_review_usecase.async_session_scope",
+        _fake_scope,
+    )
+
+    appeal_uc = GradeAppealUseCase(repo=repo)
+    appeal_uc._get_repo = AsyncMock(return_value=repo)
+    monkeypatch.setattr(
+        appeal_uc,
+        "_verify_learner_item_access",
+        AsyncMock(return_value=None),
+    )
+    await appeal_uc.submit_grade_appeal(
+        user_id="learner-author",
+        submission_id=sub_id,
+        appeal_reason="Điểm chấm không công bằng, cần phúc khảo.",
+    )
+
+    # Verify lock was released and assignment was cancelled
+    sub_after_appeal = await repo.get_peer_submission(sub_id)
+    assert sub_after_appeal is not None
+    assert sub_after_appeal.locked_by_user_id is None
+    assert (
+        repo.peer_review_assignments[assign.id].status
+        == PEER_ASSIGNMENT_STATUS_CANCELLED
+    )
+
+    # 2. Staff preemption: if learner somehow locked a submission, instructor can preempt immediately
+    sub_after_appeal.claim_lock("another-learner", now)
+    peer_uc = PeerReviewUseCase(repo=repo)
+    peer_uc._get_repo = AsyncMock(return_value=repo)
+    instructor = CurrentUser(
+        id="user_instructor_lead", role="INSTRUCTOR", full_name="Giảng viên chính"
+    )
+
+    # Instructor claims task
+    ok, _msg, info = await peer_uc.claim_grading_task(
+        submission_id=sub_id,
+        staff_user_id="user_instructor_lead",
+        current_user=instructor,
+    )
+    assert ok is True
+    assert info["locked_by_user_id"] == "user_instructor_lead"

@@ -7,6 +7,7 @@ from uuid6 import uuid7
 from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.domain import (
     PEER_ASSIGNMENT_STATUS_ASSIGNED,
+    PEER_ASSIGNMENT_STATUS_CANCELLED,
     PEER_SUBMISSION_STATUS_PUBLISHED,
     PENDING_APPEAL_STATUSES,
     REPORT_STATUS_RESOLVED,
@@ -602,6 +603,50 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         sub.locked_at = None
         sub.lock_expires_at = None
         return True
+
+    async def claim_staff_grading_lock(
+        self,
+        submission_id: str,
+        staff_user_id: str,
+        timeout_minutes: int = 30,
+    ) -> bool:
+        from datetime import UTC, datetime, timedelta
+
+        now = datetime.now(UTC)
+        sub = await self.get_peer_submission(submission_id)
+        if not sub or sub.user_id == staff_user_id:
+            return False
+        if (
+            sub.locked_by_user_id
+            and sub.locked_by_user_id != staff_user_id
+            and sub.is_lock_active(now, timeout_minutes=timeout_minutes)
+        ):
+            is_staff_locker = (
+                sub.locked_by_user_id.startswith(
+                    ("user_instructor", "user_admin", "user_ta", "ta_")
+                )
+                or "ta" in sub.locked_by_user_id.lower()
+                or "instructor" in sub.locked_by_user_id.lower()
+            )
+            if is_staff_locker:
+                return False
+        sub.locked_by_user_id = staff_user_id
+        sub.locked_at = now.isoformat()
+        sub.lock_expires_at = (now + timedelta(minutes=timeout_minutes)).isoformat()
+        return True
+
+    async def cancel_pending_peer_review_assignments_for_submission(
+        self, submission_id: str
+    ) -> int:
+        count = 0
+        for a in self.peer_review_assignments.values():
+            if (
+                a.submission_id == submission_id
+                and a.status == PEER_ASSIGNMENT_STATUS_ASSIGNED
+            ):
+                a.status = PEER_ASSIGNMENT_STATUS_CANCELLED
+                count += 1
+        return count
 
     async def list_grading_queue_items(
         self,

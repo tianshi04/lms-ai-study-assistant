@@ -154,6 +154,21 @@ class AssessmentRepositoryInterface(ABC):
         """Atomically claims a soft lock on a submission if unlocked, expired, or (when allowed) already held by user."""
 
     @abstractmethod
+    async def claim_staff_grading_lock(
+        self,
+        submission_id: str,
+        staff_user_id: str,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        """Staff claims exclusive lock on a submission with preemption over learner locks."""
+
+    @abstractmethod
+    async def cancel_pending_peer_review_assignments_for_submission(
+        self, submission_id: str
+    ) -> int:
+        """Cancels in-flight peer review assignments for a submission."""
+
+    @abstractmethod
     async def renew_submission_lock(
         self,
         submission_id: str,
