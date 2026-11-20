@@ -418,7 +418,7 @@ export function LearningItemFormModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <Dialog.Content className="max-w-2xl max-h-[90vh] flex flex-col p-6 rounded-2xl bg-card border border-border">
-        <Dialog.Header className="pb-3 border-b border-border">
+        <Dialog.Header className="pb-2">
           <Dialog.Title className="text-lg font-bold flex items-center gap-2">
             <Pencil className="w-5 h-5 text-primary" />
             {isEdit ? "Chỉnh sửa Học liệu" : "Tạo Học liệu mới"}
@@ -521,10 +521,10 @@ export function LearningItemFormModal({
 
             {/* Video specific fields */}
             {itemType === ItemType.VIDEO && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start pt-2 border-t border-border">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start pt-1">
                 {/* Left Column: Video & Subtitle Uploads */}
                 <div className="lg:col-span-5 space-y-4 bg-card p-4 rounded-2xl border border-border shadow-2xs">
-                  <div className="flex items-center gap-2 border-b border-border pb-2">
+                  <div className="flex items-center gap-2 pb-1">
                     <VideoIcon className="w-4 h-4 text-primary" aria-hidden="true" />
                     <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
                       Tệp Video & Phụ đề VTT
@@ -577,7 +577,7 @@ export function LearningItemFormModal({
 
             {/* Reading specific fields */}
             {itemType === ItemType.READING && (
-              <div className="space-y-4 pt-2 border-t border-border">
+              <div className="space-y-4 pt-1">
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="readingMarkdown"
@@ -622,7 +622,7 @@ export function LearningItemFormModal({
 
             {/* Lab specific fields */}
             {itemType === ItemType.AUTO_GRADED_LAB && (
-              <div className="space-y-4 pt-2 border-t border-border">
+              <div className="space-y-4 pt-1">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider flex items-center gap-1.5">
@@ -703,7 +703,7 @@ export function LearningItemFormModal({
 
             {/* Quiz Matrix Configuration */}
             {(itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) && (
-              <div className="space-y-4 pt-2 border-t border-border">
+              <div className="space-y-4 pt-1">
                 <div className="p-3.5 rounded-xl bg-surface-container-low border border-border/60">
                   <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1">
                     <HelpCircle className="w-4 h-4 text-primary" /> Ma trận đề thi ngẫu nhiên
@@ -835,7 +835,7 @@ export function LearningItemFormModal({
                 </div>
 
                 {itemType === ItemType.GRADED_QUIZ && (
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
+                  <div className="grid grid-cols-2 gap-4 pt-1">
                     <div>
                       <label
                         htmlFor="quizMaxAttempts"
@@ -875,7 +875,7 @@ export function LearningItemFormModal({
 
             {/* Essay / Peer review specific fields */}
             {itemType === ItemType.PEER_REVIEW && (
-              <div className="space-y-4 pt-2 border-t border-border">
+              <div className="space-y-4 pt-1">
                 {peerError && (
                   <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -885,7 +885,7 @@ export function LearningItemFormModal({
 
                 {/* ─── 0. Chế độ chấm điểm Bài tập tự luận ─── */}
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between border-b border-border pb-2.5">
+                  <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-primary" aria-hidden="true" /> Hình thức Chấm
                       điểm Bài tập tự luận
@@ -925,7 +925,7 @@ export function LearningItemFormModal({
                     </div>
                   </RadioGroup>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2 border-t border-border/60 items-start">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1 items-start">
                     <div className="flex flex-col justify-start">
                       <label
                         htmlFor="essayResubmissions"
@@ -1009,7 +1009,7 @@ export function LearningItemFormModal({
 
                 {/* ─── 1. Đề bài bài tập & Hướng dẫn nộp bài (Markdown Preview) ─── */}
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between border-b border-border pb-2.5">
+                  <div className="flex items-center justify-between">
                     <label
                       htmlFor="peerReadingMarkdown"
                       className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5"
@@ -1056,7 +1056,7 @@ export function LearningItemFormModal({
 
                 {/* ─── 2. Tiêu chí chấm điểm Peer Review (Visual Rubric Builder) ─── */}
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Users className="w-4 h-4 text-primary" aria-hidden="true" />
                       <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
@@ -1178,7 +1178,7 @@ export function LearningItemFormModal({
           </div>
 
           {/* Fixed Footer Buttons */}
-          <Dialog.Footer className="pt-3 border-t border-border mt-3 shrink-0">
+          <Dialog.Footer className="pt-3 mt-3 shrink-0">
             <Button
               type="button"
               variant="text"
