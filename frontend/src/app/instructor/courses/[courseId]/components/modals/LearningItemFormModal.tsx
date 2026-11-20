@@ -32,7 +32,6 @@ import {
   Pencil,
   Plus,
   Trash2,
-  Code2,
   Sparkles,
 } from "lucide-react";
 
@@ -244,7 +243,6 @@ export function LearningItemFormModal({
   const [rubricItems, setRubricItems] = useState<RubricCriterionItem[]>(() =>
     parseRubricJsonWithFallback(initialData?.rubricCriteriaJson),
   );
-  const [showRawRubricJson, setShowRawRubricJson] = useState(false);
   const [rubricJsonError, setRubricJsonError] = useState("");
   const [peerError, setPeerError] = useState("");
   const [peerRubricJson, setPeerRubricJson] = useState(
@@ -1155,17 +1153,6 @@ export function LearningItemFormModal({
                         <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Thêm tiêu chí</span>
                       </Button>
-
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        size="xs"
-                        onClick={() => setShowRawRubricJson(!showRawRubricJson)}
-                        className="gap-1.5 text-xs"
-                      >
-                        <Code2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{showRawRubricJson ? "Chế độ Trực quan" : "Chế độ JSON"}</span>
-                      </Button>
                     </div>
                   </div>
 
@@ -1195,117 +1182,83 @@ export function LearningItemFormModal({
                     </div>
                   )}
 
-                  {/* Mode: Raw JSON Editor */}
-                  {showRawRubricJson ? (
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="peerRubricJson"
-                        className="block text-[11px] font-mono text-muted-foreground"
+                  {/* Visual Rubric Builder */}
+                  <div className="space-y-3">
+                    {rubricItems.map((criterion, idx) => (
+                      <div
+                        key={criterion.criteriaId || idx}
+                        className="p-3.5 rounded-xl bg-surface-container-lowest border border-border space-y-2.5 transition-all"
                       >
-                        Cấu hình JSON Rubric (mảng các đối tượng tiêu chí):
-                      </label>
-                      <Textarea
-                        id="peerRubricJson"
-                        rows={8}
-                        value={peerRubricJson}
-                        onChange={(e) => {
-                          const newVal = e.target.value;
-                          setPeerRubricJson(newVal);
-                          const parsed = safeParseRubricJson(newVal);
-                          if (parsed && parsed.length > 0) {
-                            setRubricItems(parsed);
-                            setRubricJsonError("");
-                            setPeerError("");
-                          } else if (newVal.trim().length > 0) {
-                            setRubricJsonError(
-                              "Cú pháp JSON chưa đúng hoặc không phải mảng tiêu chí hợp lệ.",
-                            );
-                          } else {
-                            setRubricJsonError("");
-                          }
-                        }}
-                        className="w-full font-mono text-xs shadow-2xs"
-                      />
-                    </div>
-                  ) : (
-                    /* Mode: Visual Rubric Builder */
-                    <div className="space-y-3">
-                      {rubricItems.map((criterion, idx) => (
-                        <div
-                          key={criterion.criteriaId || idx}
-                          className="p-3.5 rounded-xl bg-surface-container-lowest border border-border space-y-2.5 transition-all"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 justify-between">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
-                                #{idx + 1}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <Input
-                                  value={criterion.title}
-                                  onChange={(e) =>
-                                    handleUpdateRubricCriterion(idx, "title", e.target.value)
-                                  }
-                                  placeholder="Tên tiêu chí (ví dụ: Chất lượng giải pháp, Tính thẩm mỹ...)"
-                                  className="w-full text-xs font-semibold"
-                                  aria-label={`Tên tiêu chí #${idx + 1}`}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                              <div className="flex items-center gap-1">
-                                <span className="text-[11px] text-muted-foreground font-medium">
-                                  Tối đa:
-                                </span>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  max={100}
-                                  value={criterion.maxScore}
-                                  onChange={(e) =>
-                                    handleUpdateRubricCriterion(
-                                      idx,
-                                      "maxScore",
-                                      Number(e.target.value) || 0,
-                                    )
-                                  }
-                                  className="w-20 text-xs font-bold text-center"
-                                  aria-label={`Điểm tối đa tiêu chí #${idx + 1}`}
-                                />
-                                <span className="text-xs text-muted-foreground font-semibold">
-                                  điểm
-                                </span>
-                              </div>
-
-                              <Button
-                                type="button"
-                                variant="text"
-                                size="xs"
-                                disabled={rubricItems.length <= 1}
-                                onClick={() => handleRemoveRubricCriterion(idx)}
-                                className="text-destructive hover:bg-destructive/10 p-1.5 h-auto rounded-lg"
-                                aria-label={`Xóa tiêu chí #${idx + 1}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 justify-between">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                              #{idx + 1}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <Input
+                                value={criterion.title}
+                                onChange={(e) =>
+                                  handleUpdateRubricCriterion(idx, "title", e.target.value)
+                                }
+                                placeholder="Tên tiêu chí (ví dụ: Chất lượng giải pháp, Tính thẩm mỹ...)"
+                                className="w-full text-xs font-semibold"
+                                aria-label={`Tên tiêu chí #${idx + 1}`}
+                              />
                             </div>
                           </div>
 
-                          <Textarea
-                            value={criterion.description}
-                            onChange={(e) =>
-                              handleUpdateRubricCriterion(idx, "description", e.target.value)
-                            }
-                            rows={2}
-                            placeholder="Mô tả chỉ dẫn cách chấm: Tiêu chuẩn để đạt điểm tối đa ở tiêu chí này..."
-                            className="w-full text-xs"
-                            aria-label={`Mô tả tiêu chí #${idx + 1}`}
-                          />
+                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                            <div className="flex items-center gap-1">
+                              <span className="text-[11px] text-muted-foreground font-medium">
+                                Tối đa:
+                              </span>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={criterion.maxScore}
+                                onChange={(e) =>
+                                  handleUpdateRubricCriterion(
+                                    idx,
+                                    "maxScore",
+                                    Number(e.target.value) || 0,
+                                  )
+                                }
+                                className="w-20 text-xs font-bold text-center"
+                                aria-label={`Điểm tối đa tiêu chí #${idx + 1}`}
+                              />
+                              <span className="text-xs text-muted-foreground font-semibold">
+                                điểm
+                              </span>
+                            </div>
+
+                            <Button
+                              type="button"
+                              variant="text"
+                              size="xs"
+                              disabled={rubricItems.length <= 1}
+                              onClick={() => handleRemoveRubricCriterion(idx)}
+                              className="text-destructive hover:bg-destructive/10 p-1.5 h-auto rounded-lg"
+                              aria-label={`Xóa tiêu chí #${idx + 1}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+
+                        <Textarea
+                          value={criterion.description}
+                          onChange={(e) =>
+                            handleUpdateRubricCriterion(idx, "description", e.target.value)
+                          }
+                          rows={2}
+                          placeholder="Mô tả chỉ dẫn cách chấm: Tiêu chuẩn để đạt điểm tối đa ở tiêu chí này..."
+                          className="w-full text-xs"
+                          aria-label={`Mô tả tiêu chí #${idx + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
