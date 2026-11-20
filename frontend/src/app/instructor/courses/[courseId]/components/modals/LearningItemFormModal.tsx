@@ -983,7 +983,7 @@ export function LearningItemFormModal({
                     >
                       <RadioItem
                         value={String(EssayGradingMode.PEER_REVIEW)}
-                        label="Chấm chéo bạn học (Đánh giá đồng cấp)"
+                        label="Chấm chéo bạn học"
                         description="Học viên chấm chéo ẩn danh cho nhau theo Rubric; tự động chuyển Giảng viên chấm nếu quá thời gian chờ."
                       />
                     </div>
@@ -1002,11 +1002,11 @@ export function LearningItemFormModal({
                     </div>
                   </RadioGroup>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2 border-t border-border/60">
-                    <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2 border-t border-border/60 items-start">
+                    <div className="flex flex-col justify-start">
                       <label
                         htmlFor="essayResubmissions"
-                        className="block text-[11px] font-bold text-foreground mb-1"
+                        className="text-[11px] font-bold text-foreground mb-1 min-h-[2.25rem] flex items-end"
                       >
                         Số lượt nộp lại
                       </label>
@@ -1022,9 +1022,9 @@ export function LearningItemFormModal({
                           if (peerError) setPeerError("");
                         }}
                         placeholder="2"
-                        className="w-full text-xs font-semibold"
+                        className="w-full text-xs font-semibold h-10"
                       />
-                      <p className="text-[10px] text-muted-foreground mt-1">
+                      <p className="text-[10px] text-muted-foreground mt-1.5 min-h-[2.5rem] leading-relaxed">
                         {String(essayResubmissions).trim() === "0"
                           ? "0 lượt: Không cho nộp lại (học viên chỉ nộp 1 lần duy nhất)."
                           : String(essayResubmissions).trim() === ""
@@ -1035,15 +1035,15 @@ export function LearningItemFormModal({
 
                     {essayGradingMode === EssayGradingMode.PEER_REVIEW && (
                       <>
-                        <div>
-                          <label className="block text-[11px] font-bold text-foreground mb-1">
+                        <div className="flex flex-col justify-start">
+                          <label className="text-[11px] font-bold text-foreground mb-1 min-h-[2.25rem] flex items-end">
                             Số bài bạn học cần chấm
                           </label>
                           <Select
                             value={String(requiredPeerReviews)}
                             onValueChange={(val) => setRequiredPeerReviews(Number(val) || 3)}
                           >
-                            <Select.Trigger className="w-full text-xs font-semibold">
+                            <Select.Trigger className="w-full text-xs font-semibold h-10">
                               <Select.Value />
                             </Select.Trigger>
                             <Select.Content>
@@ -1054,19 +1054,19 @@ export function LearningItemFormModal({
                               ))}
                             </Select.Content>
                           </Select>
-                          <p className="text-[10px] text-muted-foreground mt-1">
+                          <p className="text-[10px] text-muted-foreground mt-1.5 min-h-[2.5rem] leading-relaxed">
                             Học viên phải chấm đủ số bài này để hoàn thành học phần.
                           </p>
                         </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-foreground mb-1">
+                        <div className="flex flex-col justify-start">
+                          <label className="text-[11px] font-bold text-foreground mb-1 min-h-[2.25rem] flex items-end">
                             Thời gian chờ chuyển Giảng viên chấm
                           </label>
                           <Select
                             value={String(coldStartHours)}
                             onValueChange={(val) => setColdStartHours(Number(val) || 48)}
                           >
-                            <Select.Trigger className="w-full text-xs font-semibold">
+                            <Select.Trigger className="w-full text-xs font-semibold h-10">
                               <Select.Value />
                             </Select.Trigger>
                             <Select.Content>
@@ -1075,7 +1075,7 @@ export function LearningItemFormModal({
                               <Select.Item value="72">72 giờ (3 ngày)</Select.Item>
                             </Select.Content>
                           </Select>
-                          <p className="text-[10px] text-muted-foreground mt-1">
+                          <p className="text-[10px] text-muted-foreground mt-1.5 min-h-[2.5rem] leading-relaxed">
                             Sau số giờ này nếu lớp ít bài, tự động giảm chỉ tiêu chấm.
                           </p>
                         </div>
