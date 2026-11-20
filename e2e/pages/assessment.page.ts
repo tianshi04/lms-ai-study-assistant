@@ -42,7 +42,7 @@ export class AssessmentPage {
     this.gradePeersTab = page.getByRole('tab', { name: /2. Chấm bài bạn học|2. Grade Peers/i }).or(page.getByRole('button', { name: /2. Chấm bài bạn học|2. Grade Peers/i })).first();
     this.gradeAppealTab = page.getByRole('tab', { name: /3. Khiếu nại điểm|3. Grade Appeal/i }).or(page.getByRole('button', { name: /3. Khiếu nại điểm|3. Grade Appeal/i })).first();
     this.submitPeerAssignmentButton = page.getByRole('button', { name: /Nộp bài tập|Submit Peer Assignment/i }).first();
-    this.lockWarningNotice = page.locator('text=/BR_PEER_001/i');
+    this.lockWarningNotice = page.locator('text=/nộp bài ở Bước 1|BR_PEER_001/i');
   }
 
   async goto() {
@@ -126,8 +126,8 @@ export class AssessmentPage {
       await this.submitPeerAssignment();
     }
 
-    // Wait for BR_PEER_001 lock notice to detach if assignment was just submitted
-    await this.page.locator('text=/BR_PEER_001/i').first().waitFor({ state: 'detached', timeout: 5000 }).catch(() => null);
+    // Wait for lock notice to detach if assignment was just submitted
+    await this.lockWarningNotice.first().waitFor({ state: 'detached', timeout: 5000 }).catch(() => null);
 
     if (await this.gradeAppealTab.isVisible()) {
       await this.gradeAppealTab.scrollIntoViewIfNeeded();

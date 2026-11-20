@@ -16,11 +16,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import {
   Check,
   Lock,
-  AlertTriangle,
-  Info,
   Send,
   ExternalLink,
-  Scale,
   Users,
   BookOpen,
   FileText,
@@ -34,6 +31,38 @@ import { mapConnectError } from "@/lib/connect_error_mapper";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import { getSafeExternalUrl } from "@/lib/utils";
 
+const MAX_PEER_SUBMISSION_ATTEMPTS = 3;
+const DEFAULT_REQUIRED_PEER_REVIEWS = 3;
+const MIN_PEER_SUBMISSION_TEXT_LENGTH = 10;
+const MIN_PEER_REVIEW_FEEDBACK_LENGTH = 10;
+const MAX_APPEAL_WINDOW_DAYS = 7;
+
+interface AppealStatusInfo {
+  label: string;
+  variant: "warning" | "success";
+  description: string;
+  isResolved: boolean;
+}
+
+function getAppealStatusInfo(status?: string): AppealStatusInfo {
+  const normalized = (status || "").toUpperCase();
+  if (normalized === "RESOLVED") {
+    return {
+      label: "Đã giải quyết",
+      variant: "success",
+      description: "Đơn phúc khảo đã được giải quyết xong. Điểm số chính thức đã được cập nhật.",
+      isResolved: true,
+    };
+  }
+  return {
+    label: "Đang chờ xem xét",
+    variant: "warning",
+    description:
+      "Đơn phúc khảo của bạn đã được gửi thành công. Vui lòng chờ Giảng viên / Trợ giảng thẩm định lại bài làm và phản hồi kết quả.",
+    isResolved: false,
+  };
+}
+
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
   title?: string;
@@ -42,6 +71,7 @@ interface PeerAssignmentWorkspaceProps {
   rubricCriteriaJson?: string;
   essayGradingMode?: EssayGradingMode;
   requiredPeerReviews?: number;
+  essayMaxAttempts?: number;
 }
 
 interface PeerItem {
@@ -73,6 +103,7 @@ export function PeerAssignmentWorkspace({
   rubricCriteriaJson,
   essayGradingMode: propGradingMode,
   requiredPeerReviews: propRequiredReviews,
+  essayMaxAttempts: propMaxAttempts,
 }: PeerAssignmentWorkspaceProps) {
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -94,10 +125,20 @@ export function PeerAssignmentWorkspace({
       ? 0
       : propRequiredReviews && propRequiredReviews > 0
         ? propRequiredReviews
-        : 3);
-  const availablePoolCount = statusData?.availablePoolCount ?? 0;
+        : DEFAULT_REQUIRED_PEER_REVIEWS);
   const attemptNumber = statusData?.attemptNumber ?? 0;
-  const maxAttemptsReached = attemptNumber >= 3;
+  const maxAttempts =
+    statusData?.maxAttempts && statusData.maxAttempts > 0
+      ? statusData.maxAttempts
+      : propMaxAttempts && propMaxAttempts > 0
+        ? propMaxAttempts
+        : MAX_PEER_SUBMISSION_ATTEMPTS;
+  const maxAttemptsReached = attemptNumber >= maxAttempts;
+  const scoreLockedByDuty =
+    !isInstructorOnly &&
+    dutyStatus !== "COMPLETED" &&
+    dutyStatus !== "WAIVED_EMPTY_POOL" &&
+    dutyStatus !== "NOT_APPLICABLE";
 
   const [activeTab, setActiveTab] = useState<"submit" | "grade" | "appeal">("submit");
   const [draftSubmissionUrl, setDraftSubmissionUrl] = useState<string | null>(null);
@@ -112,7 +153,6 @@ export function PeerAssignmentWorkspace({
   const [hasFetchedReviews, setHasFetchedReviews] = useState(false);
 
   const [appealReason, setAppealReason] = useState("");
-  const [lockNotice, setLockNotice] = useState("");
   const [isSubmittingGrade, setIsSubmittingGrade] = useState<Record<number, boolean>>({});
   const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
 
@@ -174,7 +214,7 @@ export function PeerAssignmentWorkspace({
       }
     } catch (err) {
       setPeerItems([]);
-      const msg = mapConnectError(err, "Không thể tải hàng chờ chấm bài bạn học.");
+      const msg = mapConnectError(err, "Không thể tải danh sách bài bạn học để chấm.");
       toast.error(msg);
     } finally {
       setIsLoadingReviews(false);
@@ -187,8 +227,20 @@ export function PeerAssignmentWorkspace({
   }, [itemId, queryClient]);
 
   const handleSubmitAssignment = async () => {
-    if (!displayedSubmissionUrl.trim() && !displayedTextContent.trim()) {
+    const trimmedUrl = displayedSubmissionUrl.trim();
+    const trimmedText = displayedTextContent.trim();
+    if (!trimmedUrl && !trimmedText) {
       toast.error("Vui lòng cung cấp liên kết bài làm hoặc nội dung bài tự luận.");
+      return;
+    }
+    if (trimmedUrl && !getSafeExternalUrl(trimmedUrl)) {
+      toast.error("Liên kết nộp bài phải là URL đầy đủ bắt đầu bằng http:// hoặc https://.");
+      return;
+    }
+    if (!trimmedUrl && trimmedText.length < MIN_PEER_SUBMISSION_TEXT_LENGTH) {
+      toast.error(
+        `Nội dung bài tự luận phải có ít nhất ${MIN_PEER_SUBMISSION_TEXT_LENGTH} ký tự khi không đính kèm liên kết.`,
+      );
       return;
     }
     setIsSubmitting(true);
@@ -196,13 +248,12 @@ export function PeerAssignmentWorkspace({
       const client = getRpcClient(AssessmentService);
       const res = await client.submitPeerAssignment({
         itemId,
-        submissionUrl: displayedSubmissionUrl.trim(),
-        textContent: displayedTextContent.trim(),
+        submissionUrl: trimmedUrl,
+        textContent: trimmedText,
       });
 
       setDraftSubmissionUrl(null);
       setDraftTextContent(null);
-      setLockNotice("");
       await refreshStatus();
 
       toast.success(res.statusMessage || "Nộp bài tự luận thành công!");
@@ -213,7 +264,6 @@ export function PeerAssignmentWorkspace({
     } catch (err) {
       const msg = mapConnectError(err, "Nộp bài tự luận thất bại. Vui lòng thử lại.");
       toast.error(msg);
-      setLockNotice(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -222,14 +272,13 @@ export function PeerAssignmentWorkspace({
   const handleTabClick = (tab: "submit" | "grade" | "appeal") => {
     if (tab === "grade" && isInstructorOnly) return;
     if ((tab === "grade" || tab === "appeal") && !hasSubmitted) {
-      setLockNotice(
+      toast.error(
         isInstructorOnly
-          ? "Vui lòng nộp bài ở Bước 1 trước khi xem hoặc gửi phúc khảo điểm."
-          : "Theo quy tắc BR_PEER_001: Bạn bắt buộc phải nộp bài cá nhân ở Bước 1 trước khi mở khóa chấm chéo bài của bạn học.",
+          ? "Vui lòng nộp bài ở Bước 1 trước khi xem hoặc gửi yêu cầu phúc khảo điểm."
+          : "Bạn cần nộp bài ở Bước 1 trước khi mở khóa phần chấm bài của bạn học.",
       );
       return;
     }
-    setLockNotice("");
     setActiveTab(tab);
     if (tab === "grade" && hasSubmitted && !isInstructorOnly && !hasFetchedReviews) {
       void fetchReviews();
@@ -269,6 +318,16 @@ export function PeerAssignmentWorkspace({
   const handleSubmitPeerGrade = async (itemIdx: number) => {
     const item = peerItems[itemIdx];
     if (!item) return;
+    const combinedFeedback = item.rubricCriteria
+      .map((c) => (c.feedback || "").trim())
+      .filter(Boolean)
+      .join(" ");
+    if (combinedFeedback.length < MIN_PEER_REVIEW_FEEDBACK_LENGTH) {
+      toast.error(
+        `Vui lòng nhập nhận xét chi tiết cho bạn học (tối thiểu ${MIN_PEER_REVIEW_FEEDBACK_LENGTH} ký tự).`,
+      );
+      return;
+    }
     setIsSubmittingGrade((prev) => ({ ...prev, [itemIdx]: true }));
     try {
       const client = getRpcClient(AssessmentService);
@@ -279,7 +338,7 @@ export function PeerAssignmentWorkspace({
           title: c.title,
           maxScore: c.maxScore,
           scoreGiven: c.scoreGiven,
-          feedback: c.feedback,
+          feedback: (c.feedback || "").trim(),
           description: c.description || "",
         })),
       });
@@ -310,9 +369,8 @@ export function PeerAssignmentWorkspace({
         submissionId,
         appealReason: appealReason.trim(),
       });
-      toast.success(
-        `Đã gửi yêu cầu phúc khảo thành công (${res.appealStatus || "Đang chờ xử lý"}).`,
-      );
+      const appealInfo = getAppealStatusInfo(res.appealStatus);
+      toast.success(`Đã gửi yêu cầu phúc khảo thành công (${appealInfo.label}).`);
       setAppealReason("");
       await refreshStatus();
     } catch (err) {
@@ -328,7 +386,7 @@ export function PeerAssignmentWorkspace({
 
   const renderGradeSourceLabel = (source: string) => {
     if (source === "INSTRUCTOR") return "Giảng viên chấm";
-    if (source === "TA") return "Trợ giảng (TA) chấm";
+    if (source === "TA") return "Trợ giảng chấm";
     if (source === "PEER") return "Bạn học chấm chéo";
     return "Chờ chấm điểm";
   };
@@ -345,7 +403,7 @@ export function PeerAssignmentWorkspace({
   return (
     <div className="w-full flex-1 flex flex-col min-h-0 font-sans space-y-5 max-w-5xl mx-auto">
       {/* ═══ Header & Step Navigation ═══ */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="primary" size="pill" className="gap-1.5">
@@ -354,19 +412,8 @@ export function PeerAssignmentWorkspace({
               ) : (
                 <Users className="w-3.5 h-3.5" aria-hidden="true" />
               )}
-              <span>
-                {isInstructorOnly
-                  ? "BÀI TẬP TỰ LUẬN (GIẢNG VIÊN CHẤM)"
-                  : "BÀI TẬP TỰ LUẬN (CHẤM CHÉO)"}
-              </span>
+              <span>BÀI TẬP TỰ LUẬN</span>
             </Badge>
-            <span className="text-xs text-muted-foreground font-mono">
-              {isInstructorOnly
-                ? "Hình thức: Giảng viên / Trợ giảng chấm trực tiếp"
-                : targetReviews > 0
-                  ? `Nghĩa vụ chấm bạn học: ${completedReviews} / ${targetReviews} bài`
-                  : "Kho bài chưa có bài nộp khác"}
-            </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-foreground" title={resolvedTitle}>
             {resolvedTitle}
@@ -436,14 +483,6 @@ export function PeerAssignmentWorkspace({
         </div>
       </div>
 
-      {/* Lock Warning Notice Banner */}
-      {lockNotice && (
-        <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-warning text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
-          <AlertTriangle aria-hidden="true" className="w-4 h-4 text-warning shrink-0" />
-          <span>{lockNotice}</span>
-        </div>
-      )}
-
       {/* ═══ Tab 1: Submit Assignment & View Results ═══ */}
       {activeTab === "submit" && (
         <div
@@ -455,7 +494,7 @@ export function PeerAssignmentWorkspace({
           {/* Grading Result / Status Panel */}
           {hasSubmitted && statusData && (
             <div className="p-5 rounded-2xl border border-border bg-card shadow-2xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <CheckCircle2 className="w-4 h-4 text-success shrink-0" aria-hidden="true" />
                   <span className="text-sm font-bold text-foreground">
@@ -466,7 +505,7 @@ export function PeerAssignmentWorkspace({
                   </Badge>
                 </div>
 
-                {statusData.isGraded && (
+                {statusData.isGraded && !scoreLockedByDuty ? (
                   <div className="flex items-center gap-2">
                     <Badge variant="outlined" size="sm">
                       {renderGradeSourceLabel(statusData.gradeSource)}
@@ -475,14 +514,21 @@ export function PeerAssignmentWorkspace({
                       {statusData.finalScore.toFixed(1)} / 100
                     </span>
                   </div>
-                )}
+                ) : !scoreLockedByDuty && statusData.bestPublishedScore > 0 ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Điểm cao nhất đã ghi nhận:</span>
+                    <span className="font-mono font-bold text-primary">
+                      {statusData.bestPublishedScore.toFixed(1)} / 100
+                    </span>
+                  </div>
+                ) : null}
               </div>
 
-              {/* Staff Feedback */}
-              {statusData.staffFeedback && (
-                <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 space-y-1">
-                  <div className="text-xs font-bold text-primary flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
+              {/* Staff Feedback (hidden until peer review duty completes) */}
+              {!scoreLockedByDuty && statusData.staffFeedback && (
+                <div className="p-3.5 rounded-xl bg-surface-container-low border border-border space-y-1">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     <span>Nhận xét từ Giảng viên / Trợ giảng:</span>
                   </div>
                   <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
@@ -491,8 +537,9 @@ export function PeerAssignmentWorkspace({
                 </div>
               )}
 
-              {/* Anonymous Peer Feedbacks */}
-              {!isInstructorOnly &&
+              {/* Anonymous Peer Feedbacks (hidden until peer review duty completes) */}
+              {!scoreLockedByDuty &&
+                !isInstructorOnly &&
                 statusData.peerFeedbacks &&
                 statusData.peerFeedbacks.length > 0 && (
                   <div className="space-y-2.5">
@@ -503,26 +550,42 @@ export function PeerAssignmentWorkspace({
                       {statusData.peerFeedbacks.map((fb, idx) => (
                         <div
                           key={`${fb.feedbackLabel}-${idx}`}
-                          className="p-3.5 rounded-xl bg-surface-container-low border border-border/80 space-y-2 text-xs"
+                          className="p-3.5 rounded-xl bg-surface-container-low border border-border/80 space-y-2.5 text-xs"
                         >
                           <div className="flex items-center justify-between font-bold">
-                            <span className="text-foreground">{fb.feedbackLabel}</span>
-                            <span className="font-mono text-primary">
-                              {fb.totalScore.toFixed(1)} / 100
+                            <div>
+                              <span className="text-foreground">{fb.feedbackLabel}</span>
+                              {fb.submittedAt && (
+                                <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">
+                                  {new Date(fb.submittedAt).toLocaleDateString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                  })}
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-mono font-bold text-primary px-2.5 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-xs shrink-0">
+                              {fb.totalScore.toFixed(1)} / 100 điểm
                             </span>
                           </div>
                           {fb.gradedCriteria && fb.gradedCriteria.length > 0 && (
-                            <div className="space-y-1 pt-1 border-t border-border/50">
+                            <div className="space-y-1.5 pt-1.5 border-t border-border/60">
                               {fb.gradedCriteria.map((c) => (
-                                <div key={c.criteriaId} className="space-y-0.5">
+                                <div
+                                  key={c.criteriaId}
+                                  className="space-y-1 p-2 rounded-lg bg-surface-container-lowest/60 border border-border/50"
+                                >
                                   <div className="flex items-center justify-between text-[11px]">
-                                    <span className="text-muted-foreground">{c.title}</span>
-                                    <span className="font-mono font-semibold text-foreground">
-                                      {c.scoreGiven}/{c.maxScore}
+                                    <span className="text-foreground font-medium">{c.title}</span>
+                                    <span className="font-mono font-bold text-primary px-1.5 py-0.2 rounded bg-primary/10 border border-primary/20 text-[10px] shrink-0">
+                                      {c.scoreGiven} / {c.maxScore}
                                     </span>
                                   </div>
                                   {c.feedback && (
-                                    <p className="text-[11px] italic text-muted-foreground">
+                                    <p className="text-[11px] italic text-muted-foreground leading-relaxed pl-2 border-l-2 border-primary/40 mt-0.5">
                                       &ldquo;{c.feedback}&rdquo;
                                     </p>
                                   )}
@@ -541,43 +604,29 @@ export function PeerAssignmentWorkspace({
                 <p className="text-xs text-muted-foreground flex items-center gap-2">
                   <Clock className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
                   <span>
-                    Bài làm của bạn đã được chuyển thẳng vào hàng chờ Giảng viên / Trợ giảng. Điểm
-                    số và nhận xét Rubric sẽ hiển thị tại đây ngay sau khi chấm.
+                    Bài làm của bạn đã được gửi tới Giảng viên / Trợ giảng. Điểm số và nhận xét sẽ
+                    hiển thị tại đây ngay sau khi chấm xong.
                   </span>
                 </p>
               )}
 
-              {!isInstructorOnly && dutyStatus === "WAIVED_EMPTY_POOL" && (
-                <div className="p-3.5 rounded-xl bg-success/10 border border-success/30 text-xs text-success flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+              {!isInstructorOnly && dutyStatus === "WAITING_POOL" && statusData.isGraded && (
+                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
                   <span>
-                    {statusData.reviewDutyWaivedReason ||
-                      "Không còn bài làm nào khác trong kho bài. Hệ thống đã tự động giải thoát nghĩa vụ chấm chéo cho bạn."}
+                    Bài của bạn đã có điểm. Điểm chi tiết sẽ hiển thị sau khi hoàn tất chấm bài bạn
+                    học hoặc hết thời gian chờ.
                   </span>
-                </div>
-              )}
-
-              {!isInstructorOnly && dutyStatus === "WAITING_POOL" && (
-                <div className="p-3.5 rounded-xl bg-info/10 border border-info/20 text-xs text-foreground flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-info shrink-0 mt-0.5" aria-hidden="true" />
-                  <span>
-                    Kho bài hiện chưa có bài nộp nào của bạn học khác để phân bổ chấm chéo. Khi có
-                    bạn học mới nộp bài hoặc sau thời gian chờ giải cứu, Giảng viên và hệ thống sẽ
-                    hỗ trợ xử lý hoàn tất cho bạn.
-                  </span>
-                </div>
+                </p>
               )}
 
               {!isInstructorOnly && dutyStatus === "PENDING" && (
-                <div className="p-3.5 rounded-xl bg-warning/10 border border-warning/30 text-xs text-warning flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-                    <span>
-                      {statusData.isGraded
-                        ? `Bạn đã có điểm (${statusData.finalScore.toFixed(1)}/100), nhưng hiện vẫn còn ${availablePoolCount} bài làm trong hàng chờ. Vui lòng hoàn thành chấm ${Math.max(1, targetReviews - completedReviews)} bài bạn học để chính thức hoàn tất học phần.`
-                        : `Vui lòng hoàn thành chấm ${Math.max(1, targetReviews - completedReviews)} bài làm của bạn học ở Tab 2 để hoàn tất nghĩa vụ chấm chéo.`}
-                    </span>
-                  </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs text-muted-foreground">
+                  <span>
+                    {statusData.isGraded
+                      ? `Bài của bạn đã có điểm. Hãy hoàn thành chấm thêm ${Math.max(1, targetReviews - completedReviews)} bài của bạn học ở mục 2. Chấm bài bạn học để xem điểm.`
+                      : `Vui lòng chấm ${Math.max(1, targetReviews - completedReviews)} bài làm của bạn học ở mục 2. Chấm bài bạn học để hoàn tất phần đánh giá.`}
+                  </span>
                   <Button
                     type="button"
                     size="xs"
@@ -610,7 +659,7 @@ export function PeerAssignmentWorkspace({
             <div className="p-4 rounded-2xl bg-surface-container-lowest border border-border space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <HelpCircle className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                <span>Tiêu chí Đánh giá Tham khảo (Rubric)</span>
+                <span>Tiêu chí đánh giá tham khảo</span>
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {referenceRubrics.map((r, rIdx) => (
@@ -632,18 +681,6 @@ export function PeerAssignmentWorkspace({
               </div>
             </div>
           )}
-
-          <div className="p-4 rounded-xl bg-info/10 border border-info/20 text-xs text-info space-y-1.5">
-            <h4 className="font-bold flex items-center gap-1.5 text-foreground">
-              <Info aria-hidden="true" className="w-4 h-4 text-info shrink-0" />
-              <span>Hướng dẫn Nộp bài Tự luận:</span>
-            </h4>
-            <p className="text-muted-foreground leading-relaxed">
-              {isInstructorOnly
-                ? "Bạn có thể nộp đường dẫn sản phẩm (Figma, Canva, Google Drive, Slide, Github...) kết hợp bài luận tóm tắt văn bản. Giảng viên hoặc Trợ giảng sẽ chấm điểm trực tiếp theo Rubric."
-                : "Bạn có thể nộp đường dẫn sản phẩm (Figma, Canva, Google Drive, Slide, Github...) kết hợp bài luận tóm tắt văn bản. Sau khi nộp bài cá nhân, hệ thống sẽ mở khóa chức năng chấm chéo bài bạn học (quy tắc BR_PEER_001)."}
-            </p>
-          </div>
 
           <div className="space-y-4">
             <Input
@@ -684,15 +721,25 @@ export function PeerAssignmentWorkspace({
                     <Send aria-hidden="true" className="w-3.5 h-3.5" />
                     <span>
                       {hasSubmitted
-                        ? `Nộp lại Bài tập Tự luận (Lần ${attemptNumber}/3)`
+                        ? `Nộp lại Bài tập Tự luận (Lần ${attemptNumber + 1}/${maxAttempts})`
                         : "Nộp Bài tập Tự luận"}
                     </span>
                   </>
                 )}
               </Button>
-              {maxAttemptsReached && (
+              {maxAttemptsReached ? (
                 <span className="text-xs text-muted-foreground font-medium">
-                  Bạn đã sử dụng tối đa 3/3 lượt nộp bài cho học phần này.
+                  {maxAttempts <= 1
+                    ? "Bạn đã hoàn thành lượt nộp duy nhất cho bài học này (bài tập không cho phép nộp lại)."
+                    : `Bạn đã sử dụng tối đa ${attemptNumber}/${maxAttempts} lượt nộp bài (${maxAttempts - 1} lượt nộp lại) cho học phần này.`}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  {maxAttempts <= 1
+                    ? "Bài tập không cho phép nộp lại (chỉ nộp 1 lần)."
+                    : hasSubmitted
+                      ? `Còn lại ${maxAttempts - attemptNumber} lượt nộp lại.`
+                      : `Cho phép nộp lại tối đa ${maxAttempts - 1} lần.`}
                 </span>
               )}
             </div>
@@ -708,44 +755,38 @@ export function PeerAssignmentWorkspace({
           aria-labelledby="peer-tab-grade"
           className="space-y-5"
         >
-          <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-xs text-warning leading-relaxed flex items-start gap-2.5">
-            <Clock className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="font-semibold">
-              Mỗi bài làm bạn nhận chấm sẽ được khóa mềm độc quyền trong 30 phút để tránh trùng lặp.
-              Hãy đánh giá khách quan theo Rubric bên dưới — cảnh báo bất thường tự động kích hoạt
-              nếu chênh lệch điểm vượt quá 30%.
-            </p>
-          </div>
-
-          {dutyStatus === "COMPLETED" && peerItems.length === 0 && (
-            <div className="p-5 rounded-2xl bg-success/10 border border-success/30 text-success flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-2.5 text-xs font-bold">
-                <CheckCircle2 className="w-5 h-5 shrink-0" aria-hidden="true" />
-                <span>
-                  Tuyệt vời! Bạn đã hoàn thành đủ nghĩa vụ chấm ({completedReviews}/{targetReviews}{" "}
-                  bài bạn học).
-                </span>
-              </div>
-            </div>
-          )}
-
           <div className="space-y-4">
             {isLoadingReviews ? (
               <div className="p-8 rounded-2xl border border-border bg-card text-center space-y-3">
                 <span className="w-6 h-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin inline-block" />
                 <p className="text-xs text-muted-foreground font-semibold">
-                  Đang tìm bài nộp phù hợp nhất (ít lượt chấm nhất) từ kho bài…
+                  Đang tải bài làm của bạn học để bạn chấm…
+                </p>
+              </div>
+            ) : peerItems.length === 0 && dutyStatus === "COMPLETED" ? (
+              <div className="p-8 rounded-2xl border border-border bg-card text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-success mx-auto" aria-hidden="true" />
+                <h4 className="font-bold text-sm text-foreground">
+                  Đã hoàn tất chấm bài bạn học ({completedReviews}/{targetReviews} bài)
+                </h4>
+              </div>
+            ) : peerItems.length === 0 && dutyStatus === "WAIVED_EMPTY_POOL" ? (
+              <div className="p-8 rounded-2xl border border-border bg-card text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-success mx-auto" aria-hidden="true" />
+                <p className="text-xs font-medium text-muted-foreground max-w-md mx-auto">
+                  {statusData?.reviewDutyWaivedReason ||
+                    "Hiện không còn bài làm nào khác để chấm. Bạn được miễn phần chấm bài bạn học."}
                 </p>
               </div>
             ) : peerItems.length === 0 ? (
               <div className="p-8 rounded-2xl border border-dashed border-border bg-card text-center space-y-3">
                 <Users className="w-8 h-8 text-muted-foreground mx-auto" aria-hidden="true" />
                 <h4 className="font-bold text-sm text-foreground">
-                  Hiện chưa có bài nộp nào khả dụng trong hàng chờ
+                  Hiện chưa có bài làm mới để chấm
                 </h4>
                 <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                  Kho bài hiện chưa có bài nộp mới nào bạn chưa chấm. Khi có thêm bạn học nộp bài,
-                  hệ thống sẽ phân bổ công bằng tại đây.
+                  Chưa có thêm bài nộp mới nào của bạn học khác. Khi có bài mới, hệ thống sẽ hiển
+                  thị tại đây để bạn chấm.
                 </p>
                 <Button
                   type="button"
@@ -754,7 +795,7 @@ export function PeerAssignmentWorkspace({
                   onClick={() => void fetchReviews()}
                   className="mt-2"
                 >
-                  Làm mới hàng chờ
+                  Tải lại danh sách
                 </Button>
               </div>
             ) : (
@@ -763,7 +804,7 @@ export function PeerAssignmentWorkspace({
                   key={peer.reviewId}
                   className="p-5 rounded-2xl border border-border/80 bg-surface-container-low/30 space-y-4"
                 >
-                  <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex items-center justify-between">
                     <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-primary" />
                       Bài nộp của Bạn học #{pIdx + 1} (Ẩn danh)
@@ -800,7 +841,7 @@ export function PeerAssignmentWorkspace({
                   {/* Rubric Criteria Controls */}
                   <div className="space-y-3 pt-1">
                     <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Chấm điểm theo Tiêu chí Rubric:
+                      Chấm điểm theo từng tiêu chí:
                     </h5>
                     {peer.rubricCriteria.map((crit, cIdx) => (
                       <div
@@ -833,7 +874,7 @@ export function PeerAssignmentWorkspace({
                         />
 
                         <Input
-                          placeholder="Nhận xét / Lời góp ý cho tiêu chí này (tùy chọn)..."
+                          placeholder="Góp ý cụ thể về tiêu chí này..."
                           value={crit.feedback || ""}
                           onChange={(e) => handleFeedbackChange(pIdx, cIdx, e.target.value)}
                           className="text-xs"
@@ -870,28 +911,52 @@ export function PeerAssignmentWorkspace({
           aria-labelledby="peer-tab-appeal"
           className="space-y-5"
         >
-          <div className="p-4 rounded-xl bg-accent text-accent-foreground border border-border text-xs leading-relaxed">
-            <h4 className="font-bold mb-1 flex items-center gap-1.5">
-              <Scale aria-hidden="true" className="w-4 h-4 text-primary" />
-              <span>Yêu cầu Phúc khảo &amp; Khiếu nại Điểm số</span>
-            </h4>
-            <p className="text-muted-foreground">
-              Nếu bạn cho rằng kết quả chấm chưa phản ánh đúng nội dung bài làm, bạn có thể gửi đơn
-              phúc khảo trong vòng 7 ngày kể từ khi điểm được công bố. Giảng viên / Trợ giảng (TA)
-              sẽ trực tiếp rà soát và chấm lại bài làm của bạn.
-            </p>
-          </div>
-
           {statusData?.appealStatus ? (
-            <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-xs font-bold text-warning">
-              Trạng thái đơn phúc khảo hiện tại: {statusData.appealStatus}. Vui lòng chờ Giảng
-              viên/Trợ giảng phản hồi.
-            </div>
-          ) : !statusData?.isGraded ? (
-            <div className="p-4 rounded-xl bg-muted/40 border border-border text-xs text-muted-foreground">
-              Bạn chỉ có thể gửi đơn phúc khảo sau khi bài nộp đã có điểm công bố chính thức.
-            </div>
-          ) : (
+            (() => {
+              const appealInfo = getAppealStatusInfo(statusData.appealStatus);
+              return (
+                <div className="p-4 sm:p-5 rounded-2xl bg-surface-container-low border border-border space-y-3">
+                  <div className="flex items-center gap-2">
+                    {appealInfo.isResolved ? (
+                      <CheckCircle2 className="w-4 h-4 text-success shrink-0" aria-hidden="true" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-warning shrink-0" aria-hidden="true" />
+                    )}
+                    <span className="text-xs font-semibold text-foreground">
+                      Trạng thái đơn phúc khảo:
+                    </span>
+                    <Badge variant={appealInfo.variant} size="sm">
+                      {appealInfo.label}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {appealInfo.description}
+                  </p>
+                  {appealInfo.isResolved && statusData.staffFeedback && (
+                    <div className="p-3.5 rounded-xl bg-card border border-border/80 space-y-1">
+                      <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                        <span>Nhận xét từ Giảng viên / Trợ giảng:</span>
+                      </div>
+                      <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+                        {statusData.staffFeedback}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()
+          ) : scoreLockedByDuty ? (
+            <p className="text-xs text-muted-foreground">
+              Vui lòng hoàn thành chấm bài bạn học ở mục 2 để xem điểm trước khi gửi yêu cầu phúc
+              khảo.
+            </p>
+          ) : statusData?.isGraded && !statusData.canAppeal ? (
+            <p className="text-xs text-muted-foreground">
+              Đã quá thời hạn {MAX_APPEAL_WINDOW_DAYS} ngày gửi đơn phúc khảo kể từ khi điểm được
+              công bố.
+            </p>
+          ) : statusData?.isGraded ? (
             <div className="space-y-4">
               <Textarea
                 label="Lý do & Căn cứ Phúc khảo / Khiếu nại"
@@ -910,6 +975,10 @@ export function PeerAssignmentWorkspace({
                 {isSubmittingAppeal ? "Đang gửi phúc khảo…" : "Gửi Yêu cầu Phúc khảo"}
               </Button>
             </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Bạn chỉ có thể gửi đơn phúc khảo sau khi bài nộp đã có điểm chính thức.
+            </p>
           )}
         </div>
       )}

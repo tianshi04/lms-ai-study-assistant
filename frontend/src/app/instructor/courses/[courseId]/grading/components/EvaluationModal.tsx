@@ -1026,21 +1026,28 @@ export function EvaluationModal({
                                 <span className="text-[11px] font-semibold text-muted-foreground block mb-1.5">
                                   Điểm theo tiêu chí:
                                 </span>
-                                <div className="flex flex-col gap-1.5 pt-0.5">
+                                <div className="flex flex-col gap-2 pt-0.5">
                                   {peer.gradedCriteria.map((c) => (
                                     <div
                                       key={c.criteriaId}
-                                      className="px-3 py-2 rounded-xl bg-card border border-border/70 text-xs flex items-center justify-between gap-3 shadow-2xs hover:border-border transition-colors"
+                                      className="p-3 rounded-xl bg-card border border-border/70 text-xs space-y-1.5 shadow-2xs hover:border-border transition-colors"
                                     >
-                                      <span className="font-medium text-foreground text-xs leading-snug break-words">
-                                        {c.title}
-                                      </span>
-                                      <span className="font-bold text-primary font-mono text-xs shrink-0 px-2.5 py-0.5 rounded-md bg-primary/10 border border-primary/20">
-                                        {c.scoreGiven}{" "}
-                                        <span className="text-muted-foreground font-normal">
-                                          / {c.maxScore}
+                                      <div className="flex items-center justify-between gap-3">
+                                        <span className="font-medium text-foreground text-xs leading-snug break-words">
+                                          {c.title}
                                         </span>
-                                      </span>
+                                        <span className="font-bold text-primary font-mono text-xs shrink-0 px-2.5 py-0.5 rounded-md bg-primary/10 border border-primary/20">
+                                          {c.scoreGiven}{" "}
+                                          <span className="text-muted-foreground font-normal">
+                                            / {c.maxScore}
+                                          </span>
+                                        </span>
+                                      </div>
+                                      {c.feedback && (
+                                        <p className="text-[11px] italic text-muted-foreground leading-relaxed pl-2.5 border-l-2 border-primary/40 mt-1">
+                                          &ldquo;{c.feedback}&rdquo;
+                                        </p>
+                                      )}
                                     </div>
                                   ))}
                                 </div>

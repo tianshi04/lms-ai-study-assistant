@@ -32,6 +32,7 @@ export interface LearningItemPayload {
   essayGradingMode?: EssayGradingMode;
   requiredPeerReviews?: number;
   coldStartHours?: number;
+  essayMaxAttempts?: number | string;
   quizBankId?: string;
   quizMatrixId?: string;
   quizTimeLimit?: number | string;
@@ -294,6 +295,12 @@ export function useCourseBuilder(courseId: string) {
         requiredPeerReviews:
           payload.type === ItemType.PEER_REVIEW ? (payload.requiredPeerReviews ?? 3) : 3,
         coldStartHours: payload.type === ItemType.PEER_REVIEW ? (payload.coldStartHours ?? 48) : 48,
+        essayMaxAttempts:
+          payload.type === ItemType.PEER_REVIEW
+            ? payload.essayMaxAttempts != null
+              ? Math.max(1, Number(payload.essayMaxAttempts))
+              : 3
+            : 3,
         quizMatrixId:
           payload.type === ItemType.PRACTICE_QUIZ || payload.type === ItemType.GRADED_QUIZ
             ? payload.quizBankId
@@ -377,6 +384,12 @@ export function useCourseBuilder(courseId: string) {
           payload.type === ItemType.PEER_REVIEW ? (payload.requiredPeerReviews ?? 3) : undefined,
         coldStartHours:
           payload.type === ItemType.PEER_REVIEW ? (payload.coldStartHours ?? 48) : undefined,
+        essayMaxAttempts:
+          payload.type === ItemType.PEER_REVIEW
+            ? payload.essayMaxAttempts != null
+              ? Math.max(1, Number(payload.essayMaxAttempts))
+              : 3
+            : undefined,
         quizMatrixId:
           payload.type === ItemType.PRACTICE_QUIZ || payload.type === ItemType.GRADED_QUIZ
             ? payload.quizMatrixId || payload.quizBankId

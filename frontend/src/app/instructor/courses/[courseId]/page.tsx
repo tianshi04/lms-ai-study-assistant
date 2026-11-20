@@ -101,6 +101,7 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
       essayGradingMode: item.essayGradingMode,
       requiredPeerReviews: item.requiredPeerReviews || 3,
       coldStartHours: item.coldStartHours || 48,
+      essayMaxAttempts: item.essayMaxAttempts ?? 3,
       quizBankId: item.quizMatrixId || "",
       quizMatrixId: item.quizMatrixId || "",
       quizTimeLimit: qMatrix?.timeLimitMinutes ?? 45,

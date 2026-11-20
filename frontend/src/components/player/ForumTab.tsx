@@ -46,13 +46,13 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   const [newContent, setNewContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { userId: authUserId, isStaff: isGlobalStaff } = useAuth();
+  const { userId: authUserId, isSuperAdmin } = useAuth();
   const currentUserId = authUserId || "";
   const { data: courseRes } = useCourseDetailQuery(courseId);
   const course = courseRes?.course;
 
   const isCourseStaffOrAdmin = Boolean(
-    isGlobalStaff ||
+    isSuperAdmin ||
     (course &&
       (course.ownerId === currentUserId ||
         course.coInstructorIds?.includes(currentUserId) ||
@@ -579,6 +579,11 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         onPostReply={async (threadId, content) => {
           const client = getRpcClient(ForumService);
           await client.postReply({ threadId, content });
+          fetchThreads();
+        }}
+        onEditReply={async (replyId, content) => {
+          const client = getRpcClient(ForumService);
+          await client.updateReply({ replyId, content });
           fetchThreads();
         }}
         onDeleteThread={handleDeleteThread}
