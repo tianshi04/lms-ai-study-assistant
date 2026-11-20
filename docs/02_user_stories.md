@@ -65,10 +65,10 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 #### US_05: Bộ tiêu chí chấm điểm và Bài tập thực hành / Tự luận
 * **Mô tả Story (Problem Space):**
   * **Là một** Giảng viên,
-  * **Tôi muốn** xây dựng bộ tiêu chí (Rubric) cho Bài tập tự luận (chọn chế độ Chấm chéo bạn học hoặc Chỉ Giảng viên chấm, kèm cấu hình số bài yêu cầu chấm & thời gian chờ giải cứu) và bộ test tự động cho bài tập lập trình,
+  * **Tôi muốn** xây dựng bộ tiêu chí (Rubric) cho Bài tập tự luận (chọn chế độ Chấm chéo bạn học hoặc Chỉ Giảng viên chấm, kèm cấu hình số bài yêu cầu chấm & thời gian chờ chuyển Giảng viên chấm) và bộ test tự động cho bài tập lập trình,
   * **Để** hệ thống tự động hóa việc chấm bài và đánh giá năng lực học viên bám sát giáo trình.
 * **Tiêu chí nghiệm thu:**
-  * *AC 1:* Giảng viên thiết lập được chế độ chấm (`PEER_REVIEW` / `INSTRUCTOR_ONLY`), tham số quota & giải cứu, cùng bộ tiêu chí Rubric rõ ràng cho Bài tập tự luận.
+  * *AC 1:* Giảng viên thiết lập được chế độ chấm (`PEER_REVIEW` / `INSTRUCTOR_ONLY`), tham số số lượt nộp/làm lại & thời gian chờ, cùng bộ tiêu chí Rubric rõ ràng cho Bài tập tự luận.
   * *AC 2:* Giảng viên thiết lập được các bài lab thực hành lập trình tự động chấm.
 
 #### US_06: Diễn đàn thảo luận và Ghim câu trả lời chuẩn
@@ -109,7 +109,7 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
   * **Để** tôi đánh giá chính xác năng lực thực hành của bản thân và rèn luyện kỹ năng phản biện.
 * **Tiêu chí nghiệm thu:**
   * *AC 1:* Học viên tích chọn cam kết Honor Code trước khi nộp bài thi Graded Quiz / Auto-Graded Lab.
-  * *AC 2:* Học viên nộp Bài tập tự luận; nếu ở chế độ chấm chéo thì chấm đủ bài bạn học theo ngưỡng động $\min(\text{required}, \text{Pool\_Size})$ để hoàn tất học phần, hoặc nếu ở chế độ Giảng viên chấm thì nhận kết quả và nhận xét trực tiếp từ Giảng viên/TA.
+  * *AC 2:* Học viên nộp Bài tập tự luận; nếu ở chế độ chấm chéo thì chấm đủ bài bạn học theo yêu cầu để mở xem điểm, nhận xét và hoàn tất học phần, hoặc nếu ở chế độ Giảng viên chấm thì nhận kết quả và nhận xét trực tiếp từ Giảng viên/TA.
 
 #### US_11: Chứng chỉ xác minh và Huy hiệu năng lực
 * **Mô tả Story (Problem Space):**
