@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import and_, func, or_, select, text, update
+from sqlalchemy import and_, case, func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,9 +11,12 @@ from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
     ADMIN_ASSESSMENT_ALERT_LIMIT,
+    DEFAULT_PASSING_THRESHOLD_PERCENT,
     GRADING_LOCK_TIMEOUT_MINUTES,
+    PEER_ASSIGNMENT_STATUS_ASSIGNED,
+    PEER_SUBMISSION_STATUS_PUBLISHED,
     PENDING_APPEAL_STATUSES,
-    REPORTED_REVIEW_PREFIX,
+    REPORT_STATUS_RESOLVED,
     REQUIRED_PEER_REVIEWS_COUNT,
     AdminAssessmentAlert,
     AdminAssessmentAlertKind,
@@ -23,6 +26,8 @@ from src.modules.assessment.domain import (
     LabSubmission,
     PeerAssignmentSubmission,
     PeerReview,
+    PeerReviewAssignment,
+    PeerReviewReport,
     Question,
     QuestionBank,
     QuestionOption,
@@ -32,13 +37,17 @@ from src.modules.assessment.domain import (
     QuizSubmission,
     QuizSubmissionAnswer,
     RubricCriteria,
+    normalize_grade_provenance,
+    resolve_peer_effective_grade,
 )
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     HonorCodeModel,
     LabSubmissionModel,
     PeerAssignmentSubmissionModel,
+    PeerReviewAssignmentModel,
     PeerReviewModel,
+    PeerReviewReportModel,
     QuestionBankModel,
     QuestionModel,
     QuestionOptionModel,
@@ -396,6 +405,13 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             review_duty_status=getattr(model, "review_duty_status", "PENDING")
             or "PENDING",
             review_duty_waived_reason=getattr(model, "review_duty_waived_reason", None),
+            previous_best_score=getattr(model, "previous_best_score", None),
+            previous_best_grade_source=getattr(
+                model, "previous_best_grade_source", None
+            ),
+            previous_best_published_at=getattr(
+                model, "previous_best_published_at", None
+            ),
         )
 
     async def save_peer_submission(self, submission: PeerAssignmentSubmission) -> None:
@@ -438,6 +454,13 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             model.review_duty_waived_reason = getattr(
                 submission, "review_duty_waived_reason", None
             )
+            model.previous_best_score = getattr(submission, "previous_best_score", None)
+            model.previous_best_grade_source = getattr(
+                submission, "previous_best_grade_source", None
+            )
+            model.previous_best_published_at = getattr(
+                submission, "previous_best_published_at", None
+            )
             model.staff_evaluations_json = list(submission.staff_evaluations_json or [])
             flag_modified(model, "staff_evaluations_json")
             flag_modified(model, "rubric_scores_json")
@@ -467,15 +490,36 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 review_duty_waived_reason=getattr(
                     submission, "review_duty_waived_reason", None
                 ),
+                previous_best_score=getattr(submission, "previous_best_score", None),
+                previous_best_grade_source=getattr(
+                    submission, "previous_best_grade_source", None
+                ),
+                previous_best_published_at=getattr(
+                    submission, "previous_best_published_at", None
+                ),
                 staff_evaluations_json=list(submission.staff_evaluations_json or []),
             )
             self.session.add(model)
-        await self.session.commit()
+        await self.session.flush()
 
     async def get_peer_submission(
         self, submission_id: str
     ) -> PeerAssignmentSubmission | None:
         model = await self.session.get(PeerAssignmentSubmissionModel, submission_id)
+        if not model:
+            return None
+        return self._to_peer_submission_entity(model)
+
+    async def get_peer_submission_for_update(
+        self, submission_id: str
+    ) -> PeerAssignmentSubmission | None:
+        stmt = (
+            select(PeerAssignmentSubmissionModel)
+            .where(PeerAssignmentSubmissionModel.id == submission_id)
+            .with_for_update()
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
         if not model:
             return None
         return self._to_peer_submission_entity(model)
@@ -516,6 +560,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         return {
             "id": item.id,
             "title": item.title,
+            "item_type": getattr(item.type, "value", str(item.type)),
             "reading_markdown": item.reading_markdown or "",
             "rubric_criteria_json": item.rubric_criteria_json or "",
             "essay_grading_mode": getattr(item, "essay_grading_mode", "PEER_REVIEW")
@@ -524,6 +569,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 getattr(item, "required_peer_reviews", 3) or 3
             ),
             "cold_start_hours": int(getattr(item, "cold_start_hours", 48) or 48),
+            "essay_max_attempts": int(getattr(item, "essay_max_attempts", 3) or 3),
         }
 
     async def count_user_completed_reviews(
@@ -539,14 +585,21 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
     async def count_available_pool_submissions(
         self, item_id: str, reviewer_user_id: str
     ) -> int:
-        already_reviewed_sub = select(PeerReviewModel.submission_id).where(
-            PeerReviewModel.reviewer_user_id == reviewer_user_id,
-            PeerReviewModel.item_id == item_id,
+        already_reviewed_current_attempt = (
+            select(PeerReviewModel.id)
+            .where(
+                PeerReviewModel.submission_id == PeerAssignmentSubmissionModel.id,
+                PeerReviewModel.reviewer_user_id == reviewer_user_id,
+                PeerReviewModel.item_id == item_id,
+                PeerReviewModel.submission_attempt_number
+                == PeerAssignmentSubmissionModel.attempt_number,
+            )
+            .exists()
         )
         stmt = select(func.count(PeerAssignmentSubmissionModel.id)).where(
             PeerAssignmentSubmissionModel.item_id == item_id,
             PeerAssignmentSubmissionModel.user_id != reviewer_user_id,
-            PeerAssignmentSubmissionModel.id.not_in(already_reviewed_sub),
+            ~already_reviewed_current_attempt,
         )
         res = await self.session.execute(stmt)
         return int(res.scalar() or 0)
@@ -555,21 +608,51 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         self, item_id: str, reviewer_user_id: str, limit: int = 3
     ) -> list[PeerAssignmentSubmission]:
         now = datetime.now(UTC)
-        already_reviewed_sub = select(PeerReviewModel.submission_id).where(
-            PeerReviewModel.reviewer_user_id == reviewer_user_id,
-            PeerReviewModel.item_id == item_id,
+        already_reviewed_current_attempt = (
+            select(PeerReviewModel.id)
+            .where(
+                PeerReviewModel.submission_id == PeerAssignmentSubmissionModel.id,
+                PeerReviewModel.reviewer_user_id == reviewer_user_id,
+                PeerReviewModel.item_id == item_id,
+                PeerReviewModel.submission_attempt_number
+                == PeerAssignmentSubmissionModel.attempt_number,
+            )
+            .exists()
         )
         reviews_count_sub = (
             select(func.count(PeerReviewModel.id))
-            .where(PeerReviewModel.submission_id == PeerAssignmentSubmissionModel.id)
+            .where(
+                PeerReviewModel.submission_id == PeerAssignmentSubmissionModel.id,
+                PeerReviewModel.submission_attempt_number
+                == PeerAssignmentSubmissionModel.attempt_number,
+            )
             .scalar_subquery()
+        )
+        held_by_reviewer_priority = case(
+            (PeerAssignmentSubmissionModel.locked_by_user_id == reviewer_user_id, 0),
+            else_=1,
+        )
+        grade_tier_priority = case(
+            (
+                and_(
+                    PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
+                    PeerAssignmentSubmissionModel.status
+                    != PEER_SUBMISSION_STATUS_PUBLISHED,
+                ),
+                0,
+            ),
+            (
+                PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
+                1,
+            ),
+            else_=2,
         )
         stmt = (
             select(PeerAssignmentSubmissionModel)
             .where(
                 PeerAssignmentSubmissionModel.item_id == item_id,
                 PeerAssignmentSubmissionModel.user_id != reviewer_user_id,
-                PeerAssignmentSubmissionModel.id.not_in(already_reviewed_sub),
+                ~already_reviewed_current_attempt,
                 or_(
                     PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
                     PeerAssignmentSubmissionModel.locked_by_user_id == reviewer_user_id,
@@ -584,9 +667,13 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 ),
             )
             .order_by(
-                reviews_count_sub.asc(), PeerAssignmentSubmissionModel.created_at.asc()
+                held_by_reviewer_priority.asc(),
+                grade_tier_priority.asc(),
+                reviews_count_sub.asc(),
+                PeerAssignmentSubmissionModel.created_at.asc(),
             )
             .limit(limit)
+            .with_for_update(skip_locked=True)
         )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
@@ -597,24 +684,29 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         submission_id: str,
         user_id: str,
         timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+        allow_extend_own: bool = True,
     ) -> bool:
         now = datetime.now(UTC)
         lock_expires = now + timedelta(minutes=timeout_minutes)
+        lock_conditions: list[Any] = [
+            PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
+            PeerAssignmentSubmissionModel.lock_expires_at < now,
+            and_(
+                PeerAssignmentSubmissionModel.lock_expires_at.is_(None),
+                PeerAssignmentSubmissionModel.locked_at
+                < (now - timedelta(minutes=timeout_minutes)).isoformat(),
+            ),
+        ]
+        if allow_extend_own:
+            lock_conditions.append(
+                PeerAssignmentSubmissionModel.locked_by_user_id == user_id
+            )
         stmt = (
             update(PeerAssignmentSubmissionModel)
             .where(
                 PeerAssignmentSubmissionModel.id == submission_id,
                 PeerAssignmentSubmissionModel.user_id != user_id,
-                or_(
-                    PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
-                    PeerAssignmentSubmissionModel.locked_by_user_id == user_id,
-                    PeerAssignmentSubmissionModel.lock_expires_at < now,
-                    and_(
-                        PeerAssignmentSubmissionModel.lock_expires_at.is_(None),
-                        PeerAssignmentSubmissionModel.locked_at
-                        < (now - timedelta(minutes=timeout_minutes)).isoformat(),
-                    ),
-                ),
+                or_(*lock_conditions),
             )
             .values(
                 locked_by_user_id=user_id,
@@ -623,7 +715,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
         )
         res = await self.session.execute(stmt)
-        await self.session.commit()
+        await self.session.flush()
         return int(getattr(res, "rowcount", 0) or 0) > 0
 
     async def renew_submission_lock(
@@ -641,7 +733,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
         sub.locked_at = now.isoformat()
         sub.lock_expires_at = new_expires
-        await self.session.commit()
+        await self.session.flush()
         return True
 
     async def release_submission_lock(
@@ -667,7 +759,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
         )
         res = await self.session.execute(stmt)
-        await self.session.commit()
+        await self.session.flush()
         return int(getattr(res, "rowcount", 0) or 0) > 0
 
     async def save_peer_review(self, review: PeerReview) -> None:
@@ -684,6 +776,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         stmt = select(PeerReviewModel).where(
             PeerReviewModel.submission_id == review.submission_id,
             PeerReviewModel.reviewer_user_id == review.reviewer_user_id,
+            PeerReviewModel.submission_attempt_number
+            == review.submission_attempt_number,
         )
         res = await self.session.execute(stmt)
         model = res.scalar_one_or_none()
@@ -702,13 +796,167 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 submission_id=review.submission_id,
                 reviewer_user_id=review.reviewer_user_id,
                 item_id=review.item_id,
+                submission_attempt_number=review.submission_attempt_number,
                 rubric_criteria_json={"items": rubric_data},
                 total_score=review.total_score,
                 is_outlier=review.is_outlier,
                 created_at=review.created_at or "",
             )
             self.session.add(model)
-        await self.session.commit()
+        await self.session.flush()
+
+    @staticmethod
+    def _to_peer_review_assignment_entity(
+        model: PeerReviewAssignmentModel,
+    ) -> PeerReviewAssignment:
+        exp_iso = (
+            model.expires_at.isoformat()
+            if isinstance(model.expires_at, datetime)
+            else str(model.expires_at)
+        )
+        return PeerReviewAssignment(
+            id=model.id,
+            submission_id=model.submission_id,
+            reviewer_user_id=model.reviewer_user_id,
+            item_id=model.item_id,
+            assigned_at=model.assigned_at,
+            expires_at=exp_iso,
+            status=model.status,
+            submission_attempt_number=getattr(model, "submission_attempt_number", 1)
+            or 1,
+        )
+
+    async def create_or_get_peer_review_assignment(
+        self,
+        submission_id: str,
+        reviewer_user_id: str,
+        item_id: str,
+        assigned_at: str,
+        expires_at: str,
+        submission_attempt_number: int = 1,
+    ) -> PeerReviewAssignment:
+        stmt = select(PeerReviewAssignmentModel).where(
+            PeerReviewAssignmentModel.submission_id == submission_id,
+            PeerReviewAssignmentModel.reviewer_user_id == reviewer_user_id,
+            PeerReviewAssignmentModel.submission_attempt_number
+            == submission_attempt_number,
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+
+        now = datetime.now(UTC)
+        exp_dt = datetime.fromisoformat(expires_at)
+        if exp_dt.tzinfo is None:
+            exp_dt = exp_dt.replace(tzinfo=UTC)
+
+        if model:
+            existing_exp = model.expires_at
+            if existing_exp.tzinfo is None:
+                existing_exp = existing_exp.replace(tzinfo=UTC)
+            if model.status == PEER_ASSIGNMENT_STATUS_ASSIGNED and existing_exp <= now:
+                # Rotate expired assignment token so stale review_ids cannot be replayed.
+                model.id = f"rev-{uuid7().hex}"
+                model.assigned_at = assigned_at
+                model.expires_at = exp_dt
+            elif model.status != PEER_ASSIGNMENT_STATUS_ASSIGNED:
+                model.status = PEER_ASSIGNMENT_STATUS_ASSIGNED
+                model.assigned_at = assigned_at
+                model.expires_at = exp_dt
+            # When status is already ASSIGNED and existing_exp > now, preserve original assigned_at & expires_at
+            # to prevent infinite soft-lock renewal via repeated GetPeerReviewsToGrade polling.
+        else:
+            model = PeerReviewAssignmentModel(
+                id=f"rev-{uuid7().hex}",
+                submission_id=submission_id,
+                reviewer_user_id=reviewer_user_id,
+                item_id=item_id,
+                submission_attempt_number=submission_attempt_number,
+                status=PEER_ASSIGNMENT_STATUS_ASSIGNED,
+                assigned_at=assigned_at,
+                expires_at=exp_dt,
+            )
+            self.session.add(model)
+
+        await self.session.flush()
+        return self._to_peer_review_assignment_entity(model)
+
+    async def get_peer_review_assignment(
+        self, assignment_id: str, reviewer_user_id: str
+    ) -> PeerReviewAssignment | None:
+        stmt = select(PeerReviewAssignmentModel).where(
+            PeerReviewAssignmentModel.id == assignment_id,
+            PeerReviewAssignmentModel.reviewer_user_id == reviewer_user_id,
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+        return self._to_peer_review_assignment_entity(model)
+
+    async def save_peer_review_assignment(
+        self, assignment: PeerReviewAssignment
+    ) -> None:
+        model = await self.session.get(PeerReviewAssignmentModel, assignment.id)
+        exp_dt = datetime.fromisoformat(assignment.expires_at)
+        if exp_dt.tzinfo is None:
+            exp_dt = exp_dt.replace(tzinfo=UTC)
+        if model:
+            model.status = assignment.status
+            model.assigned_at = assignment.assigned_at
+            model.expires_at = exp_dt
+        else:
+            model = PeerReviewAssignmentModel(
+                id=assignment.id,
+                submission_id=assignment.submission_id,
+                reviewer_user_id=assignment.reviewer_user_id,
+                item_id=assignment.item_id,
+                submission_attempt_number=assignment.submission_attempt_number,
+                status=assignment.status,
+                assigned_at=assignment.assigned_at,
+                expires_at=exp_dt,
+            )
+            self.session.add(model)
+        await self.session.flush()
+
+    @staticmethod
+    def _to_peer_review_entity(model: PeerReviewModel) -> PeerReview:
+        raw_rc = model.rubric_criteria_json or {}
+        items: list[Any] = []
+        if isinstance(raw_rc, dict):
+            if "items" in raw_rc and isinstance(raw_rc["items"], list):
+                items = raw_rc["items"]
+            else:
+                items = [
+                    {"criteria_id": k, "score_given": float(v)}
+                    for k, v in raw_rc.items()
+                    if isinstance(v, (int, float))
+                ]
+        elif isinstance(raw_rc, list):
+            items = raw_rc
+
+        criteria = [
+            RubricCriteria(
+                criteria_id=str(c.get("criteria_id", "") or ""),
+                title=str(c.get("title", "") or ""),
+                max_score=float(c.get("max_score", 10.0) or 10.0),
+                score_given=float(c.get("score_given", 0.0) or 0.0),
+                feedback=str(c.get("feedback", "") or ""),
+            )
+            for c in items
+            if isinstance(c, dict)
+        ]
+        return PeerReview(
+            id=model.id,
+            submission_id=model.submission_id,
+            reviewer_user_id=model.reviewer_user_id,
+            item_id=model.item_id,
+            rubric_criteria=criteria,
+            total_score=model.total_score,
+            is_outlier=model.is_outlier,
+            created_at=model.created_at,
+            submission_attempt_number=getattr(model, "submission_attempt_number", 1)
+            or 1,
+        )
 
     async def get_peer_reviews_by_reviewer(
         self, reviewer_user_id: str, item_id: str
@@ -718,102 +966,112 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             PeerReviewModel.item_id == item_id,
         )
         res = await self.session.execute(stmt)
-        models = res.scalars().all()
-        reviews: list[PeerReview] = []
-        for m in models:
-            raw_rc = m.rubric_criteria_json or {}
-            items = []
-            if isinstance(raw_rc, dict):
-                if "items" in raw_rc and isinstance(raw_rc["items"], list):
-                    items = raw_rc["items"]
-                else:
-                    items = [
-                        {"criteria_id": k, "score_given": float(v)}
-                        for k, v in raw_rc.items()
-                        if isinstance(v, (int, float))
-                    ]
-            elif isinstance(raw_rc, list):
-                items = raw_rc
-
-            criteria = [
-                RubricCriteria(
-                    criteria_id=str(c.get("criteria_id", "") or ""),
-                    title=str(c.get("title", "") or ""),
-                    max_score=float(c.get("max_score", 10.0) or 10.0),
-                    score_given=float(c.get("score_given", 0.0) or 0.0),
-                    feedback=str(c.get("feedback", "") or ""),
-                )
-                for c in items
-                if isinstance(c, dict)
-            ]
-            reviews.append(
-                PeerReview(
-                    id=m.id,
-                    submission_id=m.submission_id,
-                    reviewer_user_id=m.reviewer_user_id,
-                    item_id=m.item_id,
-                    rubric_criteria=criteria,
-                    total_score=m.total_score,
-                    is_outlier=m.is_outlier,
-                    created_at=m.created_at,
-                )
-            )
-        return reviews
+        return [self._to_peer_review_entity(m) for m in res.scalars().all()]
 
     async def get_peer_reviews_for_submission(
-        self, submission_id: str
+        self, submission_id: str, attempt_number: int | None = None
     ) -> list[PeerReview]:
         stmt = select(PeerReviewModel).where(
             PeerReviewModel.submission_id == submission_id
         )
-        res = await self.session.execute(stmt)
-        models = res.scalars().all()
-        reviews: list[PeerReview] = []
-        for m in models:
-            raw_rc = m.rubric_criteria_json or {}
-            items = []
-            if isinstance(raw_rc, dict):
-                if "items" in raw_rc and isinstance(raw_rc["items"], list):
-                    items = raw_rc["items"]
-                else:
-                    items = [
-                        {"criteria_id": k, "score_given": float(v)}
-                        for k, v in raw_rc.items()
-                        if isinstance(v, (int, float))
-                    ]
-            elif isinstance(raw_rc, list):
-                items = raw_rc
-
-            criteria = [
-                RubricCriteria(
-                    criteria_id=str(c.get("criteria_id", "") or ""),
-                    title=str(c.get("title", "") or ""),
-                    max_score=float(c.get("max_score", 10.0) or 10.0),
-                    score_given=float(c.get("score_given", 0.0) or 0.0),
-                    feedback=str(c.get("feedback", "") or ""),
-                )
-                for c in items
-                if isinstance(c, dict)
-            ]
-            reviews.append(
-                PeerReview(
-                    id=m.id,
-                    submission_id=m.submission_id,
-                    reviewer_user_id=m.reviewer_user_id,
-                    item_id=m.item_id,
-                    rubric_criteria=criteria,
-                    total_score=m.total_score,
-                    is_outlier=m.is_outlier,
-                    created_at=m.created_at,
-                )
+        if attempt_number is not None:
+            stmt = stmt.where(
+                PeerReviewModel.submission_attempt_number == attempt_number
             )
-        return reviews
+        res = await self.session.execute(stmt)
+        return [self._to_peer_review_entity(m) for m in res.scalars().all()]
+
+    async def get_peer_review_by_id(self, review_id: str) -> PeerReview | None:
+        model = await self.session.get(PeerReviewModel, review_id)
+        if not model:
+            return None
+        return self._to_peer_review_entity(model)
+
+    @staticmethod
+    def _to_peer_review_report_entity(model: PeerReviewReportModel) -> PeerReviewReport:
+        return PeerReviewReport(
+            id=model.id,
+            peer_review_id=model.peer_review_id,
+            submission_id=model.submission_id,
+            reporter_user_id=model.reporter_user_id,
+            reason=model.reason,
+            status=model.status,
+            created_at=model.created_at,
+            reviewer_id=model.reviewer_id,
+            resolution_notes=model.resolution_notes,
+        )
+
+    async def save_peer_review_report(self, report: PeerReviewReport) -> None:
+        model = await self.session.get(PeerReviewReportModel, report.id)
+        if model:
+            model.status = report.status
+            model.reason = report.reason
+            model.reviewer_id = report.reviewer_id
+            model.resolution_notes = report.resolution_notes
+        else:
+            model = PeerReviewReportModel(
+                id=report.id,
+                peer_review_id=report.peer_review_id,
+                submission_id=report.submission_id,
+                reporter_user_id=report.reporter_user_id,
+                reason=report.reason,
+                status=report.status,
+                created_at=report.created_at or "",
+                reviewer_id=report.reviewer_id,
+                resolution_notes=report.resolution_notes,
+            )
+            self.session.add(model)
+        await self.session.flush()
+
+    async def get_peer_review_report_by_user_and_review(
+        self, reporter_user_id: str, peer_review_id: str
+    ) -> PeerReviewReport | None:
+        stmt = select(PeerReviewReportModel).where(
+            PeerReviewReportModel.reporter_user_id == reporter_user_id,
+            PeerReviewReportModel.peer_review_id == peer_review_id,
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+        return self._to_peer_review_report_entity(model)
+
+    async def get_pending_peer_review_reports_for_submission(
+        self, submission_id: str
+    ) -> list[PeerReviewReport]:
+        stmt = select(PeerReviewReportModel).where(
+            PeerReviewReportModel.submission_id == submission_id,
+            PeerReviewReportModel.status.in_(PENDING_APPEAL_STATUSES),
+        )
+        res = await self.session.execute(stmt)
+        return [self._to_peer_review_report_entity(m) for m in res.scalars().all()]
+
+    async def resolve_pending_peer_review_reports_for_submission(
+        self, submission_id: str, reviewer_id: str, resolution_notes: str = ""
+    ) -> None:
+        stmt = (
+            update(PeerReviewReportModel)
+            .where(
+                PeerReviewReportModel.submission_id == submission_id,
+                PeerReviewReportModel.status.in_(PENDING_APPEAL_STATUSES),
+            )
+            .values(
+                status=REPORT_STATUS_RESOLVED,
+                reviewer_id=reviewer_id,
+                resolution_notes=resolution_notes or None,
+            )
+        )
+        await self.session.execute(stmt)
+        await self.session.flush()
 
     async def save_grade_appeal(self, appeal: GradeAppeal) -> None:
         model = await self.session.get(GradeAppealModel, appeal.id)
         if model:
             model.status = appeal.status
             model.appeal_reason = appeal.appeal_reason
+            model.reviewer_id = appeal.reviewer_id
+            model.final_score = appeal.final_score
+            model.rejection_reason = appeal.rejection_reason
         else:
             model = GradeAppealModel(
                 id=appeal.id,
@@ -822,9 +1080,12 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 appeal_reason=appeal.appeal_reason,
                 status=appeal.status,
                 created_at=appeal.created_at or "",
+                reviewer_id=appeal.reviewer_id,
+                final_score=appeal.final_score,
+                rejection_reason=appeal.rejection_reason,
             )
             self.session.add(model)
-        await self.session.commit()
+        await self.session.flush()
 
     async def get_grade_appeal(self, submission_id: str) -> GradeAppeal | None:
         stmt = select(GradeAppealModel).where(
@@ -841,6 +1102,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             appeal_reason=model.appeal_reason,
             status=model.status,
             created_at=model.created_at,
+            reviewer_id=model.reviewer_id,
+            final_score=model.final_score,
+            rejection_reason=model.rejection_reason,
         )
 
     async def create_question_bank(
@@ -1333,7 +1597,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             u_res = await self.session.execute(user_stmt)
             user_names = {uid: name for uid, name in u_res.all() if name}
 
-        # Batch 2: Query appeals for submissions
+        # Batch 2: Query appeals and pending peer review reports for submissions
         appeal_stmt = select(GradeAppealModel).where(
             GradeAppealModel.submission_id.in_(sub_ids)
         )
@@ -1341,6 +1605,15 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         appeals_map: dict[str, GradeAppealModel] = {
             app.submission_id: app for app in app_res.scalars().all()
         }
+
+        report_stmt = select(PeerReviewReportModel).where(
+            PeerReviewReportModel.submission_id.in_(sub_ids),
+            PeerReviewReportModel.status.in_(PENDING_APPEAL_STATUSES),
+        )
+        rep_res = await self.session.execute(report_stmt)
+        reports_map: dict[str, list[PeerReviewReportModel]] = defaultdict(list)
+        for rep in rep_res.scalars().all():
+            reports_map[rep.submission_id].append(rep)
 
         # Batch 3: Query peer reviews for submissions
         rev_stmt = select(PeerReviewModel).where(
@@ -1389,13 +1662,25 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                             or sub.locked_by_user_id
                         )
 
-            # Check appeals
+            # Check appeals & pending peer review reports
             appeal = appeals_map.get(sub.id)
-            is_appeal = bool(appeal and appeal.status != "RESOLVED")
-            appeal_reason = appeal.appeal_reason if appeal else ""
+            pending_reports = reports_map.get(sub.id, [])
+            has_unresolved_appeal = bool(appeal and appeal.status != "RESOLVED")
+            is_appeal = has_unresolved_appeal or bool(pending_reports)
+            if has_unresolved_appeal and appeal:
+                appeal_reason = appeal.appeal_reason
+            elif pending_reports:
+                appeal_reason = f"[REPORT_REVIEW:{pending_reports[0].peer_review_id}] {pending_reports[0].reason}"
+            else:
+                appeal_reason = ""
 
-            # Check reviews
-            reviews = reviews_map.get(sub.id, [])
+            # Check reviews for the submission's current attempt
+            current_attempt = getattr(sub, "attempt_number", 1) or 1
+            reviews = [
+                r
+                for r in reviews_map.get(sub.id, [])
+                if (getattr(r, "submission_attempt_number", 1) or 1) == current_attempt
+            ]
             reviews_count = len(reviews)
             is_outlier = (
                 essay_grading_mode == "PEER_REVIEW"
@@ -1626,9 +1911,21 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         # 4. Batch query submissions
         quiz_scores: dict[tuple[str, str], float] = {}
         quiz_timestamps: dict[tuple[str, str], str] = {}
+        quiz_thresholds: dict[str, float] = {}
         lab_scores: dict[tuple[str, str], float] = {}
         lab_timestamps: dict[tuple[str, str], str] = {}
         peer_submissions_map: dict[tuple[str, str], Any] = {}
+
+        if graded_item_ids:
+            matrix_stmt = select(
+                QuizMatrixModel.item_id, QuizMatrixModel.passing_threshold_percent
+            ).where(QuizMatrixModel.item_id.in_(graded_item_ids))
+            matrix_rows = (await self.session.execute(matrix_stmt)).all()
+            quiz_thresholds = {
+                str(mid): float(thresh)
+                for mid, thresh in matrix_rows
+                if thresh is not None
+            }
 
         if user_ids and graded_item_ids:
             quiz_stmt = select(QuizSubmissionModel).where(
@@ -1684,24 +1981,40 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 if key in peer_submissions_map:
                     p_sub = peer_submissions_map[key]
                     submission_id = p_sub.id
-                    score = float(p_sub.final_score or 0.0)
-                    is_passed = score >= 80.0
-                    graded_at = p_sub.published_at or p_sub.created_at or ""
-                    source = p_sub.grade_source or "PEER_REVIEW"
-                    if "INSTRUCTOR" in source.upper():
-                        provenance = "INSTRUCTOR"
-                    elif "TA" in source.upper():
-                        provenance = "TA"
+                    eff_score, eff_source, eff_pub_at = resolve_peer_effective_grade(
+                        status=p_sub.status,
+                        final_score=p_sub.final_score,
+                        grade_source=p_sub.grade_source,
+                        published_at=p_sub.published_at,
+                        previous_best_score=getattr(p_sub, "previous_best_score", None),
+                        previous_best_grade_source=getattr(
+                            p_sub, "previous_best_grade_source", None
+                        ),
+                        previous_best_published_at=getattr(
+                            p_sub, "previous_best_published_at", None
+                        ),
+                    )
+                    if eff_score is not None:
+                        score = float(eff_score)
+                        is_passed = score >= DEFAULT_PASSING_THRESHOLD_PERCENT
+                        graded_at = eff_pub_at or p_sub.created_at or ""
+                        provenance = normalize_grade_provenance(eff_source) or "PEER"
                     else:
+                        score = 0.0
+                        is_passed = False
+                        graded_at = ""
                         provenance = "PEER"
                 elif key in quiz_scores:
                     score = quiz_scores[key]
-                    is_passed = score >= 80.0
+                    item_threshold = quiz_thresholds.get(
+                        item_id_val, DEFAULT_PASSING_THRESHOLD_PERCENT
+                    )
+                    is_passed = score >= item_threshold
                     provenance = "AUTO"
                     graded_at = quiz_timestamps.get(key, "")
                 elif key in lab_scores:
                     score = lab_scores[key]
-                    is_passed = score >= 80.0
+                    is_passed = score >= DEFAULT_PASSING_THRESHOLD_PERCENT
                     provenance = "AUTO"
                     graded_at = lab_timestamps.get(key, "")
 
@@ -1721,7 +2034,10 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             final_grade = round(total_weighted_grade, 2)
             is_completed = bool(
                 lp.completed_at is not None
-                or (lp.overall_progress_percent >= 100.0 and final_grade >= 80.0)
+                or (
+                    lp.overall_progress_percent >= 100.0
+                    and final_grade >= DEFAULT_PASSING_THRESHOLD_PERCENT
+                )
             )
             enrollment_status = (
                 "COMPLETED"
@@ -1773,6 +2089,18 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         appeal_rows = (await self.session.execute(appeal_stmt)).all()
         appeal_total = int(appeal_rows[0].total_count) if appeal_rows else 0
 
+        report_stmt = (
+            select(
+                PeerReviewReportModel,
+                func.count().over().label("total_count"),
+            )
+            .where(PeerReviewReportModel.status.in_(PENDING_APPEAL_STATUSES))
+            .order_by(PeerReviewReportModel.created_at.desc())
+            .limit(limit)
+        )
+        report_rows = (await self.session.execute(report_stmt)).all()
+        report_total = int(report_rows[0].total_count) if report_rows else 0
+
         outlier_stmt = (
             select(
                 PeerReviewModel,
@@ -1794,21 +2122,28 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
         alerts: list[AdminAssessmentAlert] = []
         for appeal_model, _ in appeal_rows:
-            reason = appeal_model.appeal_reason or ""
-            kind = (
-                AdminAssessmentAlertKind.REPORTED_PEER_REVIEW
-                if reason.startswith(REPORTED_REVIEW_PREFIX)
-                else AdminAssessmentAlertKind.GRADE_APPEAL
-            )
             alerts.append(
                 AdminAssessmentAlert(
                     alert_id=appeal_model.id,
-                    kind=kind,
+                    kind=AdminAssessmentAlertKind.GRADE_APPEAL,
                     submission_id=appeal_model.submission_id,
                     user_id=appeal_model.user_id,
-                    reason=reason,
+                    reason=appeal_model.appeal_reason or "",
                     total_score=0.0,
                     created_at=appeal_model.created_at or "",
+                )
+            )
+
+        for report_model, _ in report_rows:
+            alerts.append(
+                AdminAssessmentAlert(
+                    alert_id=report_model.id,
+                    kind=AdminAssessmentAlertKind.REPORTED_PEER_REVIEW,
+                    submission_id=report_model.submission_id,
+                    user_id=report_model.reporter_user_id,
+                    reason=report_model.reason or "",
+                    total_score=0.0,
+                    created_at=report_model.created_at or "",
                 )
             )
 
@@ -1826,4 +2161,4 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
 
         alerts.sort(key=lambda a: a.created_at, reverse=True)
-        return alerts[:limit], appeal_total + outlier_total
+        return alerts[:limit], appeal_total + report_total + outlier_total

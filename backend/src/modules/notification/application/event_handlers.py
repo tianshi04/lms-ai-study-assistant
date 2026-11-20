@@ -89,13 +89,18 @@ async def handle_peer_review_submitted(
 ) -> None:
     if not event.author_id:
         return
+    action_url = (
+        f"/learn/{event.course_id}?itemId={event.item_id}"
+        if event.course_id and event.item_id
+        else ""
+    )
     notif_uc = NotificationUseCase()
     await notif_uc.send_notification(
         recipient_id=event.author_id,
         category=NotificationCategory.ACADEMIC,
         title="Bạn nhận được đánh giá đồng cấp mới",
-        content=f"Một bạn học đã hoàn tất chấm bài nộp của bạn với điểm số {event.score}.",
-        action_url="",
+        content="Một bạn học đã hoàn tất đánh giá bài nộp của bạn.",
+        action_url=action_url,
     )
 
 

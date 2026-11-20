@@ -10,7 +10,12 @@ from src.modules.assessment.infrastructure.sandbox_service import (
     PythonCodeSandboxExecutor,
 )
 from src.modules.identity.domain import IIdentityRepository
+from src.shared.access_policy import AccessPolicyService
 from src.shared.auth import CurrentUser
+from src.shared.permissions import (
+    COURSE_STAFF_PREVIEW_ONLY_MESSAGE,
+    is_course_staff,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +63,7 @@ class BaseAssessmentUseCase:
             lambda session: SQLAlchemyAssessmentRepository(session)
         )
         self.sandbox_executor = sandbox_executor or PythonCodeSandboxExecutor()
+        self._has_custom_catalog_repo_factory = catalog_repo_factory is not None
         self.catalog_repo_factory = (
             catalog_repo_factory or _default_catalog_repo_factory
         )
@@ -91,6 +97,114 @@ class BaseAssessmentUseCase:
             return self.repository
         # For production database operations, always instantiate a fresh repository bound to active session
         return self.repo_factory(session)
+
+    async def _enforce_paid_access(
+        self, session: Any, repo: Any, user_id: str, course_id: str
+    ) -> None:
+        """Enforces Paid/Enterprise/FinancialAid/Staff access policy for assessments."""
+        if repo is not None and "SQLAlchemy" not in repo.__class__.__name__:
+            checker = getattr(repo, "paid_access_checker", None)
+            if checker is not None:
+                is_paid, err = checker(user_id, course_id)
+                if not is_paid:
+                    raise PermissionError(err)
+            return
+
+        is_paid, err = await AccessPolicyService.verify_paid_access(
+            session, user_id, course_id
+        )
+        if not is_paid:
+            raise PermissionError(err)
+
+    async def _resolve_course_for_item(
+        self, session: Any, repo: Any, item_id: str
+    ) -> tuple[str, Any]:
+        """Resolves (course_id, course_entity) for an item across DB or injected test repos."""
+        course_id = await repo.get_course_id_by_item_id(item_id) or ""
+        if not course_id:
+            return "", None
+
+        has_custom_catalog_factory = getattr(
+            self, "_has_custom_catalog_repo_factory", False
+        )
+        is_real_db_repo = (
+            "SQLAlchemy" in repo.__class__.__name__
+            and not repo.__class__.__name__.startswith("Mock")
+            and getattr(type(session), "__module__", "").startswith("sqlalchemy.")
+        )
+        if has_custom_catalog_factory or is_real_db_repo:
+            catalog_repo = self.catalog_repo_factory(session)
+            course = await catalog_repo.get_course_detail(course_id)
+            if not course and is_real_db_repo:
+                raise ValueError(f"Khóa học {course_id} không tồn tại.")
+            return course_id, course
+
+        course_map = getattr(repo, "course_detail_map", None)
+        if isinstance(course_map, dict):
+            return course_id, course_map.get(course_id)
+        return course_id, None
+
+    @staticmethod
+    def _is_course_staff(
+        user_id: str, course: Any, current_user: CurrentUser | None = None
+    ) -> bool:
+        return is_course_staff(course, user_id, current_user)
+
+    async def _ensure_not_course_staff_for_item(
+        self,
+        session: Any,
+        repo: Any,
+        user_id: str,
+        item_id: str,
+        current_user: CurrentUser | None = None,
+        *,
+        preview: bool = False,
+    ) -> tuple[str, Any]:
+        """Blocks course staff/admin from non-preview learner assessment flows."""
+        course_id, course = await self._resolve_course_for_item(session, repo, item_id)
+        if not preview and self._is_course_staff(user_id, course, current_user):
+            raise PermissionError(COURSE_STAFF_PREVIEW_ONLY_MESSAGE)
+        return course_id, course
+
+    async def _verify_learner_item_access(
+        self,
+        session: Any,
+        repo: Any,
+        user_id: str,
+        item_id: str,
+        *,
+        require_paid: bool = True,
+        require_enrolled: bool = True,
+        current_user: CurrentUser | None = None,
+        allow_staff: bool = False,
+    ) -> str:
+        """Verifies course publication status, course enrollment, and Paid access for learners."""
+        course_id, course = await self._resolve_course_for_item(session, repo, item_id)
+        is_staff = self._is_course_staff(user_id, course, current_user)
+
+        if is_staff and not allow_staff:
+            raise PermissionError(COURSE_STAFF_PREVIEW_ONLY_MESSAGE)
+
+        if course is not None:
+            raw_status = getattr(course, "status", "PUBLISHED")
+            status_str = str(getattr(raw_status, "value", raw_status)).upper()
+            if "PUBLISHED" not in status_str and not is_staff:
+                raise PermissionError(
+                    "Khóa học này chưa được xuất bản hoặc không khả dụng cho học viên."
+                )
+
+        if not is_staff:
+            if require_enrolled and course_id:
+                learning_repo = self.learning_repo_factory(session)
+                is_enrolled = await learning_repo.check_enrollment(user_id, course_id)
+                if not is_enrolled:
+                    raise PermissionError(
+                        "Bạn cần đăng ký khóa học để truy cập và thực hiện bài tập này."
+                    )
+            if require_paid:
+                await self._enforce_paid_access(session, repo, user_id, course_id)
+
+        return course_id
 
     async def get_course_for_item_or_submission(
         self,

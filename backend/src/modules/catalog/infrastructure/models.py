@@ -229,6 +229,9 @@ class LearningItemModel(Base):
     cold_start_hours: Mapped[int] = mapped_column(
         Integer, nullable=False, default=48, server_default="48"
     )
+    essay_max_attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=3, server_default="3"
+    )
 
     lesson: Mapped["LessonModel"] = relationship("LessonModel", back_populates="items")
     interactive_transcripts: Mapped[list["InteractiveTranscriptModel"]] = relationship(

@@ -772,3 +772,112 @@ async def test_get_learning_streak_stats_repository(repository, mock_session):
     assert recent_days[-1].date == today.isoformat()
     assert recent_days[-1].total_seconds == 400
     assert recent_days[-1].is_streak_qualified is True
+
+
+@pytest.mark.asyncio
+async def test_check_graded_item_completion_eligibility_repository(
+    repository, mock_session
+):
+    from types import SimpleNamespace
+
+    from src.modules.assessment.infrastructure.models import (
+        PeerAssignmentSubmissionModel,
+    )
+    from src.modules.catalog.domain import ItemType
+
+    # 1. GRADED_QUIZ: failing attempt -> rejected
+    qm_none = MagicMock()
+    qm_none.scalar_one_or_none.return_value = None
+    quiz_fail_res = MagicMock()
+    quiz_fail_res.all.return_value = [SimpleNamespace(score_percent=65.0, passed=False)]
+    mock_session.execute.side_effect = [qm_none, quiz_fail_res]
+
+    ok, err = await repository.check_graded_item_completion_eligibility(
+        "u1", "quiz-1", ItemType.GRADED_QUIZ.value, "Quiz 1"
+    )
+    assert ok is False
+    assert "80%" in err
+
+    # 2. GRADED_QUIZ: passing attempt -> allowed
+    qm_custom = MagicMock()
+    qm_custom.scalar_one_or_none.return_value = 70.0
+    quiz_pass_res = MagicMock()
+    quiz_pass_res.all.return_value = [SimpleNamespace(score_percent=72.0, passed=True)]
+    mock_session.execute.side_effect = [qm_custom, quiz_pass_res]
+
+    ok, err = await repository.check_graded_item_completion_eligibility(
+        "u1", "quiz-1", ItemType.GRADED_QUIZ.value, "Quiz 1"
+    )
+    assert ok is True
+    assert err == ""
+
+    # 3. AUTO_GRADED_LAB: no submission -> rejected
+    lab_empty = MagicMock()
+    lab_empty.all.return_value = []
+    mock_session.execute.side_effect = [lab_empty]
+    ok, err = await repository.check_graded_item_completion_eligibility(
+        "u1", "lab-1", ItemType.AUTO_GRADED_LAB.value, "Lab 1"
+    )
+    assert ok is False
+    assert "Lab 1" in err
+
+    # 4. PEER_REVIEW: PUBLISHED + 90.0 but review_duty_status == PENDING -> rejected
+    sub_pending_duty = PeerAssignmentSubmissionModel(
+        id="sub-1",
+        user_id="u1",
+        item_id="peer-1",
+        submission_url="https://example.com",
+        text_content="essay",
+        created_at="2026-11-01T00:00:00Z",
+        final_score=90.0,
+        status="PUBLISHED",
+        review_duty_status="PENDING",
+    )
+    peer_res = MagicMock()
+    peer_res.scalars.return_value.first.return_value = sub_pending_duty
+    appeal_none = MagicMock()
+    appeal_none.scalars.return_value.first.return_value = None
+    mock_session.execute.side_effect = [peer_res, appeal_none]
+
+    ok, err = await repository.check_graded_item_completion_eligibility(
+        "u1", "peer-1", ItemType.PEER_REVIEW.value, "Peer 1"
+    )
+    assert ok is False
+    assert "PENDING" in err
+
+    # 5. PEER_REVIEW: PUBLISHED + 90.0 + COMPLETED + pending report appeal -> rejected
+    sub_completed_duty = PeerAssignmentSubmissionModel(
+        id="sub-2",
+        user_id="u1",
+        item_id="peer-1",
+        submission_url="https://example.com",
+        text_content="essay",
+        created_at="2026-11-01T00:00:00Z",
+        final_score=90.0,
+        status="PUBLISHED",
+        review_duty_status="COMPLETED",
+    )
+    peer_res2 = MagicMock()
+    peer_res2.scalars.return_value.first.return_value = sub_completed_duty
+    appeal_found = MagicMock()
+    appeal_found.scalars.return_value.first.return_value = "appeal-1"
+    mock_session.execute.side_effect = [peer_res2, appeal_found]
+
+    ok, err = await repository.check_graded_item_completion_eligibility(
+        "u1", "peer-1", ItemType.PEER_REVIEW.value, "Peer 1"
+    )
+    assert ok is False
+    assert "khiếu nại" in err
+
+    # 6. PEER_REVIEW: PUBLISHED + 90.0 + COMPLETED + no appeal -> allowed
+    peer_res3 = MagicMock()
+    peer_res3.scalars.return_value.first.return_value = sub_completed_duty
+    appeal_none2 = MagicMock()
+    appeal_none2.scalars.return_value.first.return_value = None
+    mock_session.execute.side_effect = [peer_res3, appeal_none2]
+
+    ok, err = await repository.check_graded_item_completion_eligibility(
+        "u1", "peer-1", ItemType.PEER_REVIEW.value, "Peer 1"
+    )
+    assert ok is True
+    assert err == ""

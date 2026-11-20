@@ -552,3 +552,183 @@ def test_forum_thread_and_reply_lifecycle():
 
     with pytest.raises(ValueError, match="Nội dung"):
         reply.edit(new_content="", edited_at=edited_at)
+
+
+def test_check_peer_submission_pass_eligibility():
+    from src.modules.assessment.domain import (
+        REVIEW_DUTY_COMPLETED,
+        REVIEW_DUTY_NOT_APPLICABLE,
+        REVIEW_DUTY_PENDING,
+        REVIEW_DUTY_WAITING_POOL,
+        REVIEW_DUTY_WAIVED_EMPTY_POOL,
+        check_peer_submission_pass_eligibility,
+    )
+
+    # Unpublished submission must fail even with high score and completed duty
+    ok, err = check_peer_submission_pass_eligibility(
+        item_title="Essay 1",
+        status="SUBMITTED",
+        final_score=92.0,
+        review_duty_status=REVIEW_DUTY_COMPLETED,
+        has_pending_appeal=False,
+    )
+    assert ok is False
+    assert "PUBLISHED" in err
+
+    # Score below threshold must fail
+    ok, err = check_peer_submission_pass_eligibility(
+        item_title="Essay 1",
+        status="PUBLISHED",
+        final_score=75.0,
+        review_duty_status=REVIEW_DUTY_COMPLETED,
+        has_pending_appeal=False,
+    )
+    assert ok is False
+    assert "80%" in err
+
+    # Pending or waiting pool review duty must fail
+    for duty in (REVIEW_DUTY_PENDING, REVIEW_DUTY_WAITING_POOL):
+        ok, err = check_peer_submission_pass_eligibility(
+            item_title="Essay 1",
+            status="PUBLISHED",
+            final_score=95.0,
+            review_duty_status=duty,
+            has_pending_appeal=False,
+        )
+        assert ok is False
+        assert duty in err
+
+    # Pending appeal must fail
+    ok, err = check_peer_submission_pass_eligibility(
+        item_title="Essay 1",
+        status="PUBLISHED",
+        final_score=95.0,
+        review_duty_status=REVIEW_DUTY_COMPLETED,
+        has_pending_appeal=True,
+    )
+    assert ok is False
+    assert "khiếu nại" in err
+
+    # Eligible duty statuses with PUBLISHED + >= 80 + no appeal must pass
+    for duty in (
+        REVIEW_DUTY_COMPLETED,
+        REVIEW_DUTY_WAIVED_EMPTY_POOL,
+        REVIEW_DUTY_NOT_APPLICABLE,
+    ):
+        ok, err = check_peer_submission_pass_eligibility(
+            item_title="Essay 1",
+            status="PUBLISHED",
+            final_score=85.0,
+            review_duty_status=duty,
+            has_pending_appeal=False,
+        )
+        assert ok is True
+        assert err == ""
+
+    # Prior published attempt (previous_best_score >= 80) preserves pass eligibility while attempt 2 is SUBMITTED
+    ok, err = check_peer_submission_pass_eligibility(
+        item_title="Essay 1",
+        status="SUBMITTED",
+        final_score=None,
+        review_duty_status=REVIEW_DUTY_COMPLETED,
+        has_pending_appeal=False,
+        previous_best_score=90.0,
+    )
+    assert ok is True
+    assert err == ""
+
+    # Prior published attempt below 80 still fails while attempt 2 is SUBMITTED
+    ok, err = check_peer_submission_pass_eligibility(
+        item_title="Essay 1",
+        status="SUBMITTED",
+        final_score=None,
+        review_duty_status=REVIEW_DUTY_COMPLETED,
+        has_pending_appeal=False,
+        previous_best_score=65.0,
+    )
+    assert ok is False
+    assert "80%" in err
+
+
+def test_peer_submission_prepare_resubmission_and_effective_grade():
+    from src.modules.assessment.domain import (
+        ESSAY_GRADING_MODE_PEER_REVIEW,
+        REVIEW_DUTY_COMPLETED,
+        REVIEW_DUTY_PENDING,
+        resolve_peer_effective_grade,
+    )
+
+    now = datetime(2026, 11, 17, 10, 0, 0, tzinfo=UTC)
+    sub = PeerAssignmentSubmission(
+        id="sub-ent-1",
+        user_id="u1",
+        item_id="item-1",
+        submission_url="https://example.com/1",
+        text_content="V1",
+        created_at=now.isoformat(),
+        final_score=88.0,
+        graded_by_staff=True,
+        graded_by_user_id="inst-1",
+        grader_role="INSTRUCTOR",
+        grade_source="INSTRUCTOR",
+        published_at=now.isoformat(),
+        status="PUBLISHED",
+        review_duty_status=REVIEW_DUTY_COMPLETED,
+    )
+
+    # Active lock rejects prepare_resubmission
+    sub.claim_lock("inst-2", now)
+    with pytest.raises(ValueError, match="đang được"):
+        sub.prepare_resubmission(
+            submission_url="https://example.com/2",
+            text_content="V2",
+            now=now + timedelta(minutes=5),
+            essay_mode=ESSAY_GRADING_MODE_PEER_REVIEW,
+        )
+
+    # Once lock expires, prepare_resubmission succeeds, snapshots 88.0, resets grading, preserves COMPLETED
+    sub.prepare_resubmission(
+        submission_url="https://example.com/2",
+        text_content="V2",
+        now=now + timedelta(minutes=35),
+        essay_mode=ESSAY_GRADING_MODE_PEER_REVIEW,
+    )
+    assert sub.attempt_number == 2
+    assert sub.status == "SUBMITTED"
+    assert sub.final_score is None
+    assert sub.graded_by_staff is False
+    assert sub.locked_by_user_id is None
+    assert sub.previous_best_score == 88.0
+    assert sub.previous_best_grade_source == "INSTRUCTOR"
+    assert sub.review_duty_status == REVIEW_DUTY_COMPLETED
+
+    # Highest Score Wins across published attempts
+    eff, src, _ = resolve_peer_effective_grade(
+        status="PUBLISHED",
+        final_score=72.0,
+        grade_source="PEER_REVIEW",
+        published_at=now.isoformat(),
+        previous_best_score=sub.previous_best_score,
+        previous_best_grade_source=sub.previous_best_grade_source,
+        previous_best_published_at=sub.previous_best_published_at,
+    )
+    assert eff == 88.0
+    assert src == "INSTRUCTOR"
+
+    # PENDING duty stays PENDING on resubmit
+    sub_pending = PeerAssignmentSubmission(
+        id="sub-ent-2",
+        user_id="u2",
+        item_id="item-1",
+        submission_url="https://example.com/1",
+        text_content="V1",
+        created_at=now.isoformat(),
+        review_duty_status=REVIEW_DUTY_PENDING,
+    )
+    sub_pending.prepare_resubmission(
+        submission_url="https://example.com/2",
+        text_content="V2",
+        now=now,
+        essay_mode=ESSAY_GRADING_MODE_PEER_REVIEW,
+    )
+    assert sub_pending.review_duty_status == REVIEW_DUTY_PENDING

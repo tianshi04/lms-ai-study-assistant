@@ -9,9 +9,20 @@ from src.modules.assessment.domain.constants import (
     DEFAULT_QUIZ_HARD_COUNT,
     DEFAULT_QUIZ_MEDIUM_COUNT,
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+    ELIGIBLE_REVIEW_DUTY_STATUSES,
+    ESSAY_GRADING_MODE_INSTRUCTOR_ONLY,
     GRADING_LOCK_TIMEOUT_MINUTES,
+    MAX_PEER_SUBMISSION_ATTEMPTS,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    PEER_ASSIGNMENT_STATUS_ASSIGNED,
+    PEER_ASSIGNMENT_STATUS_COMPLETED,
+    PEER_SUBMISSION_STATUS_PUBLISHED,
+    PEER_SUBMISSION_STATUS_SUBMITTED,
     QUIZ_COOLDOWN_HOURS,
+    REVIEW_DUTY_COMPLETED,
+    REVIEW_DUTY_NOT_APPLICABLE,
+    REVIEW_DUTY_PENDING,
+    REVIEW_DUTY_WAIVED_EMPTY_POOL,
     TOPIC_MASTERY_THRESHOLD_MASTERED,
     TOPIC_MASTERY_THRESHOLD_NEEDS_PRACTICE,
 )
@@ -247,6 +258,9 @@ class PeerAssignmentSubmission(Entity):
         staff_evaluations_json: list[dict[str, Any]] | None = None,
         review_duty_status: str = "PENDING",
         review_duty_waived_reason: str | None = None,
+        previous_best_score: float | None = None,
+        previous_best_grade_source: str | None = None,
+        previous_best_published_at: str | None = None,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -270,6 +284,76 @@ class PeerAssignmentSubmission(Entity):
         self.staff_evaluations_json = staff_evaluations_json or []
         self.review_duty_status = review_duty_status
         self.review_duty_waived_reason = review_duty_waived_reason
+        self.previous_best_score = previous_best_score
+        self.previous_best_grade_source = previous_best_grade_source
+        self.previous_best_published_at = previous_best_published_at
+
+    def get_effective_published_grade(self) -> tuple[float | None, str, str]:
+        """Returns (score, grade_source, published_at) using Highest Score Wins across published attempts."""
+        return resolve_peer_effective_grade(
+            status=self.status,
+            final_score=self.final_score,
+            grade_source=self.grade_source,
+            published_at=self.published_at,
+            previous_best_score=self.previous_best_score,
+            previous_best_grade_source=self.previous_best_grade_source,
+            previous_best_published_at=self.previous_best_published_at,
+        )
+
+    def prepare_resubmission(
+        self,
+        *,
+        submission_url: str,
+        text_content: str,
+        now: datetime,
+        essay_mode: str,
+        max_attempts: int = MAX_PEER_SUBMISSION_ATTEMPTS,
+    ) -> None:
+        """Validates resubmission guards, snapshots prior published best score, resets current grading state, and preserves completed review duty."""
+        if self.attempt_number >= max_attempts:
+            raise ValueError(f"Bạn đã đạt giới hạn tối đa {max_attempts} lần nộp bài.")
+        if self.is_lock_active(now):
+            raise ValueError(
+                "Bài nộp của bạn đang được Giảng viên/Trợ giảng hoặc bạn học khóa để chấm điểm. "
+                "Vui lòng đợi phiên chấm hoàn tất trước khi nộp lại."
+            )
+
+        if (
+            self.status == PEER_SUBMISSION_STATUS_PUBLISHED
+            and self.final_score is not None
+            and (
+                self.previous_best_score is None
+                or self.final_score >= self.previous_best_score
+            )
+        ):
+            self.previous_best_score = self.final_score
+            self.previous_best_grade_source = self.grade_source
+            self.previous_best_published_at = self.published_at
+
+        self.attempt_number += 1
+        self.submission_url = submission_url
+        self.text_content = text_content
+        self.created_at = now.isoformat()
+        self.status = PEER_SUBMISSION_STATUS_SUBMITTED
+        self.final_score = None
+        self.graded_by_staff = False
+        self.graded_by_user_id = None
+        self.grader_role = None
+        self.grade_source = "PEER_REVIEW"
+        self.published_at = None
+        self.staff_feedback = None
+        self.rubric_scores_json = {}
+        self.locked_by_user_id = None
+        self.locked_at = None
+        self.lock_expires_at = None
+
+        if essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY:
+            self.review_duty_status = REVIEW_DUTY_NOT_APPLICABLE
+        elif self.review_duty_status not in (
+            REVIEW_DUTY_COMPLETED,
+            REVIEW_DUTY_WAIVED_EMPTY_POOL,
+        ):
+            self.review_duty_status = REVIEW_DUTY_PENDING
 
     def assign_grade(
         self,
@@ -396,6 +480,7 @@ class PeerReview(Entity):
         total_score: float,
         is_outlier: bool = False,
         created_at: str | None = None,
+        submission_attempt_number: int = 1,
     ) -> None:
         super().__init__(id=id)
         self.submission_id = submission_id
@@ -405,6 +490,47 @@ class PeerReview(Entity):
         self.total_score = total_score
         self.is_outlier = is_outlier
         self.created_at = created_at
+        self.submission_attempt_number = submission_attempt_number
+
+
+class PeerReviewAssignment(Entity):
+    """Server-side opaque grading assignment token binding a reviewer to an assigned submission."""
+
+    def __init__(
+        self,
+        id: str,
+        submission_id: str,
+        reviewer_user_id: str,
+        item_id: str,
+        assigned_at: str,
+        expires_at: str,
+        status: str = PEER_ASSIGNMENT_STATUS_ASSIGNED,
+        submission_attempt_number: int = 1,
+    ) -> None:
+        super().__init__(id=id)
+        self.submission_id = submission_id
+        self.reviewer_user_id = reviewer_user_id
+        self.item_id = item_id
+        self.assigned_at = assigned_at
+        self.expires_at = expires_at
+        self.status = status
+        self.submission_attempt_number = submission_attempt_number
+
+    def is_active(self, now: datetime) -> bool:
+        if self.status != PEER_ASSIGNMENT_STATUS_ASSIGNED:
+            return False
+        try:
+            exp_dt = datetime.fromisoformat(self.expires_at)
+            if exp_dt.tzinfo is None and now.tzinfo is not None:
+                exp_dt = exp_dt.replace(tzinfo=UTC)
+            elif exp_dt.tzinfo is not None and now.tzinfo is None:
+                exp_dt = exp_dt.replace(tzinfo=None)
+            return now < exp_dt
+        except (ValueError, TypeError):
+            return False
+
+    def mark_completed(self) -> None:
+        self.status = PEER_ASSIGNMENT_STATUS_COMPLETED
 
 
 class GradeAppeal(Entity):
@@ -441,6 +567,38 @@ class GradeAppeal(Entity):
         self.status = "REJECTED"
         self.reviewer_id = reviewer_id
         self.rejection_reason = reason.strip()
+
+
+class PeerReviewReport(Entity):
+    """Learner report against an unfair, abusive, or spam peer review."""
+
+    def __init__(
+        self,
+        id: str,
+        peer_review_id: str,
+        submission_id: str,
+        reporter_user_id: str,
+        reason: str,
+        status: str = "PENDING_STAFF_REVIEW",
+        created_at: str | None = None,
+        reviewer_id: str | None = None,
+        resolution_notes: str | None = None,
+    ) -> None:
+        super().__init__(id=id)
+        self.peer_review_id = peer_review_id
+        self.submission_id = submission_id
+        self.reporter_user_id = reporter_user_id
+        self.reason = reason
+        self.status = status
+        self.created_at = created_at
+        self.reviewer_id = reviewer_id
+        self.resolution_notes = resolution_notes
+
+    def resolve(self, reviewer_id: str, notes: str = "") -> None:
+        self.status = "RESOLVED"
+        self.reviewer_id = reviewer_id
+        if notes:
+            self.resolution_notes = notes.strip()
 
 
 @dataclass(frozen=True)
@@ -585,3 +743,86 @@ class AdminAssessmentAlertsPage(ValueObject):
 
     alerts: tuple[AdminAssessmentAlert, ...] = ()
     total_count: int = 0
+
+
+def resolve_peer_effective_grade(
+    *,
+    status: str | None,
+    final_score: float | None,
+    grade_source: str | None = None,
+    published_at: str | None = None,
+    previous_best_score: float | None = None,
+    previous_best_grade_source: str | None = None,
+    previous_best_published_at: str | None = None,
+) -> tuple[float | None, str, str]:
+    """Resolves the official published grade under Highest Score Wins across attempts."""
+    if status == PEER_SUBMISSION_STATUS_PUBLISHED and final_score is not None:
+        if previous_best_score is not None and previous_best_score > final_score:
+            return (
+                float(previous_best_score),
+                previous_best_grade_source or "PEER_REVIEW",
+                previous_best_published_at or "",
+            )
+        return (
+            float(final_score),
+            grade_source or "PEER_REVIEW",
+            published_at or "",
+        )
+    if previous_best_score is not None:
+        return (
+            float(previous_best_score),
+            previous_best_grade_source or "PEER_REVIEW",
+            previous_best_published_at or "",
+        )
+    return None, "", ""
+
+
+def normalize_grade_provenance(raw_source: str | None) -> str:
+    """Normalizes internal grade_source string into UI provenance (INSTRUCTOR, TA, PEER)."""
+    if not raw_source:
+        return ""
+    upper = raw_source.upper()
+    if "INSTRUCTOR" in upper:
+        return "INSTRUCTOR"
+    if upper == "TA" or upper.endswith("_TA"):
+        return "TA"
+    return "PEER"
+
+
+def check_peer_submission_pass_eligibility(
+    *,
+    item_title: str,
+    status: str | None,
+    final_score: float | None,
+    review_duty_status: str | None,
+    has_pending_appeal: bool,
+    passing_threshold: float = DEFAULT_PASSING_THRESHOLD_PERCENT,
+    previous_best_score: float | None = None,
+) -> tuple[bool, str]:
+    """Verify whether a peer-review submission satisfies publish, score, duty, and appeal rules."""
+    effective_score, _, _ = resolve_peer_effective_grade(
+        status=status,
+        final_score=final_score,
+        previous_best_score=previous_best_score,
+    )
+    if effective_score is None:
+        return (
+            False,
+            f"Bài tập tự luận '{item_title}' chưa được công bố điểm chính thức (PUBLISHED).",
+        )
+    if effective_score < passing_threshold:
+        return (
+            False,
+            f"Bài tập '{item_title}' chưa đạt điểm tối thiểu >= {int(passing_threshold)}% (Hiện tại {effective_score}%).",
+        )
+    if review_duty_status not in ELIGIBLE_REVIEW_DUTY_STATUSES:
+        return (
+            False,
+            f"Bạn chưa hoàn thành nghĩa vụ chấm bài bạn học cho bài tập '{item_title}' (Trạng thái: {review_duty_status}).",
+        )
+    if has_pending_appeal:
+        return (
+            False,
+            "Bạn đang có đơn khiếu nại/báo cáo bài chấm chéo chờ Trợ giảng thẩm định (Report Lock Rule).",
+        )
+    return True, ""

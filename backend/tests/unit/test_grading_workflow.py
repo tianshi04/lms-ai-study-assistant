@@ -215,8 +215,12 @@ async def test_rebac_guard_blocks_unauthorized_ta(test_setup):
 
 @pytest.mark.asyncio
 async def test_staff_grading_immediate_publish_and_eventbus(test_setup):
-    """Test TA submitting grade publishes immediately and triggers EventBus event chain."""
+    """Test TA submitting grade publishes immediately and triggers EventBus event chain once cold-start window elapsed."""
+    from datetime import timedelta
+
     handler = test_setup["handler"]
+    sub_1 = test_setup["sub_1"]
+    sub_1.created_at = (datetime.now(UTC) - timedelta(hours=49)).isoformat()
     ta_1 = CurrentUser(id="ta_assigned_1", role="TA", full_name="Trợ giảng 1")
 
     dispatched_events: list[Any] = []
@@ -691,52 +695,95 @@ async def test_peer_review_enrollment_and_report_authorization(test_setup):
     )
     learner_owner = CurrentUser(id="student_1", role="LEARNER", full_name="Chủ bài nộp")
 
-    # 1. Non-owner cannot report someone else's submission
+    # Seed a real PeerReview record on sub_test_001
+    await repo.save_peer_review(
+        PeerReview(
+            id="rev_test_001",
+            submission_id="sub_test_001",
+            reviewer_user_id="peer_reviewer_1",
+            item_id="item_peer_1",
+            rubric_criteria=[
+                RubricCriteria(
+                    criteria_id="c1",
+                    title="Code",
+                    max_score=10.0,
+                    score_given=2.0,
+                )
+            ],
+            total_score=20.0,
+            created_at=datetime.now(UTC).isoformat(),
+            submission_attempt_number=1,
+        )
+    )
+
+    # 1. Non-owner cannot report someone else's review
     with patch(
         "src.modules.assessment.presentation.assessment_handler.require_current_user",
         return_value=learner_stranger,
     ):
         report_req = pb.ReportPeerReviewRequest(
-            review_id="sub_test_001",
+            review_id="rev_test_001",
             report_reason="Spam",
         )
         with pytest.raises(ConnectError) as exc:
             await handler.report_peer_review(report_req, ctx)
         assert exc.value.code == Code.PERMISSION_DENIED
 
-    # 2. Empty report reason rejected
+    # 2. Empty report reason or unknown review_id rejected
     with patch(
         "src.modules.assessment.presentation.assessment_handler.require_current_user",
         return_value=learner_owner,
     ):
         empty_req = pb.ReportPeerReviewRequest(
-            review_id="sub_test_001",
+            review_id="rev_test_001",
             report_reason="   ",
         )
         with pytest.raises(ConnectError) as exc:
             await handler.report_peer_review(empty_req, ctx)
         assert exc.value.code == Code.INVALID_ARGUMENT
 
-    # 3. Owner can report successfully
+        missing_req = pb.ReportPeerReviewRequest(
+            review_id="rev_nonexistent",
+            report_reason="Spam",
+        )
+        with pytest.raises(ConnectError) as exc:
+            await handler.report_peer_review(missing_req, ctx)
+        assert exc.value.code == Code.INVALID_ARGUMENT
+
+    # 3. Owner can report real peer review successfully
     with patch(
         "src.modules.assessment.presentation.assessment_handler.require_current_user",
         return_value=learner_owner,
     ):
         valid_req = pb.ReportPeerReviewRequest(
-            review_id="sub_test_001",
+            review_id="rev_test_001",
             report_reason="Lượt chấm không công bằng",
         )
         resp = await handler.report_peer_review(valid_req, ctx)
         assert resp.success is True
 
     # 4. Non-enrolled user blocked from peer grading
+    await repo.save_peer_submission(
+        PeerAssignmentSubmission(
+            id="sub_stranger_own",
+            user_id="stranger_user",
+            item_id="item_peer_1",
+            submission_url="https://github.com/stranger/repo",
+            text_content="Stranger own submission",
+            created_at=datetime.now(UTC).isoformat(),
+        )
+    )
+    stranger_queue = await use_case.get_peer_reviews_to_grade(
+        "stranger_user", "item_peer_1"
+    )
+    assert len(stranger_queue) == 1
     repo.is_enrolled = lambda user, course: False
     rubrics = [
         RubricCriteria(criteria_id="c1", title="Code", max_score=10.0, score_given=8.0)
     ]
     with pytest.raises(PermissionError) as exc:
         await use_case.submit_peer_review_grade(
-            review_id="sub_test_001",
+            review_id=stranger_queue[0]["review_id"],
             reviewer_user_id="stranger_user",
             graded_criteria=rubrics,
         )
@@ -775,30 +822,53 @@ async def test_peer_review_custom_non_100_rubric_and_tamper_proofing(test_setup)
         item_id="item_custom_50",
         submission_url="https://github.com/student/repo",
         text_content="Báo cáo đồ án",
-        created_at=datetime.now(UTC).isoformat(),
+        created_at="2026-01-01T00:00:00+00:00",
         attempt_number=1,
         status="SUBMITTED",
     )
     await repo.save_peer_submission(custom_sub)
+    for idx, rev_uid in enumerate(
+        ("peer_reviewer_1", "peer_reviewer_2", "peer_reviewer_3"), start=1
+    ):
+        await repo.save_peer_submission(
+            PeerAssignmentSubmission(
+                id=f"sub_custom_50_rev_{idx}",
+                user_id=rev_uid,
+                item_id="item_custom_50",
+                submission_url=f"https://github.com/{rev_uid}/repo",
+                text_content="Reviewer submission",
+                created_at=f"2026-01-02T0{idx}:00:00+00:00",
+                attempt_number=1,
+                status="SUBMITTED",
+            )
+        )
     repo.is_enrolled = lambda user, course: True
 
     # 2. Honest peer grading: 16/20 and 24/30 = 40/50 -> normalized to 80.0%
+    q1 = await use_case.get_peer_reviews_to_grade("peer_reviewer_1", "item_custom_50")
+    rev1_id = next(
+        i["review_id"]
+        for i in q1
+        if i["submission_url"] == "https://github.com/student/repo"
+    )
     honest_rubrics = [
         RubricCriteria(
             criteria_id="crit_arch",
             title="Architecture & Clean Code",
             max_score=20.0,
             score_given=16.0,
+            feedback="Kiến trúc sạch và tách lớp rõ ràng.",
         ),
         RubricCriteria(
             criteria_id="crit_impl",
             title="Feature Completeness",
             max_score=30.0,
             score_given=24.0,
+            feedback="Hoàn thiện đầy đủ các tính năng yêu cầu.",
         ),
     ]
     ok, _ = await use_case.submit_peer_review_grade(
-        review_id="sub_custom_50",
+        review_id=rev1_id,
         reviewer_user_id="peer_reviewer_1",
         graded_criteria=honest_rubrics,
     )
@@ -808,22 +878,30 @@ async def test_peer_review_custom_non_100_rubric_and_tamper_proofing(test_setup)
     assert reviews[0].total_score == 80.0
 
     # 3. Malicious client tampering: attempts to spoof max_score=1.0 to hack percentage
+    q2 = await use_case.get_peer_reviews_to_grade("peer_reviewer_2", "item_custom_50")
+    rev2_id = next(
+        i["review_id"]
+        for i in q2
+        if i["submission_url"] == "https://github.com/student/repo"
+    )
     spoofed_rubrics = [
         RubricCriteria(
             criteria_id="crit_arch",
             title="Architecture",
             max_score=1.0,
             score_given=18.0,
+            feedback="Kiến trúc ổn nhưng cần chú ý tách module.",
         ),
         RubricCriteria(
             criteria_id="crit_impl",
             title="Completeness",
             max_score=1.0,
             score_given=27.0,
+            feedback="Các luồng nghiệp vụ chạy đúng yêu cầu.",
         ),
     ]
     ok, _ = await use_case.submit_peer_review_grade(
-        review_id="sub_custom_50",
+        review_id=rev2_id,
         reviewer_user_id="peer_reviewer_2",
         graded_criteria=spoofed_rubrics,
     )
@@ -841,6 +919,12 @@ async def test_peer_review_custom_non_100_rubric_and_tamper_proofing(test_setup)
             assert crit.title == "Feature Completeness"
 
     # 4. Score exceeding DB max_score rejected even if client passes high max_score
+    q3 = await use_case.get_peer_reviews_to_grade("peer_reviewer_3", "item_custom_50")
+    rev3_id = next(
+        i["review_id"]
+        for i in q3
+        if i["submission_url"] == "https://github.com/student/repo"
+    )
     over_score_rubric = [
         RubricCriteria(
             criteria_id="crit_arch",
@@ -857,7 +941,7 @@ async def test_peer_review_custom_non_100_rubric_and_tamper_proofing(test_setup)
     ]
     with pytest.raises(ValueError, match="không hợp lệ"):
         await use_case.submit_peer_review_grade(
-            review_id="sub_custom_50",
+            review_id=rev3_id,
             reviewer_user_id="peer_reviewer_3",
             graded_criteria=over_score_rubric,
         )
@@ -870,7 +954,7 @@ async def test_peer_review_custom_non_100_rubric_and_tamper_proofing(test_setup)
     ]
     with pytest.raises(ValueError, match="không tồn tại trong cấu hình bài tập"):
         await use_case.submit_peer_review_grade(
-            review_id="sub_custom_50",
+            review_id=rev3_id,
             reviewer_user_id="peer_reviewer_3",
             graded_criteria=fake_criteria_rubric,
         )

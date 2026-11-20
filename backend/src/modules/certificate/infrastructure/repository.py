@@ -1,6 +1,12 @@
+from typing import Any
+
 from sqlalchemy import case, func, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.modules.assessment.domain import (
+    PENDING_APPEAL_STATUSES,
+    check_peer_submission_pass_eligibility,
+)
 from src.modules.catalog.domain import ItemType
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.certificate.domain import (
@@ -282,6 +288,7 @@ class CertificateRepository(ICertificateRepository):
                 "GradeAppealModel",
                 "LabSubmissionModel",
                 "PeerAssignmentSubmissionModel",
+                "PeerReviewReportModel",
                 "QuizSubmissionModel",
                 "QuizMatrixModel",
             ],
@@ -313,19 +320,28 @@ class CertificateRepository(ICertificateRepository):
         )
         req_res = await self._session.execute(req_stmt)
         required_items = req_res.scalars().all()
+        if not required_items:
+            return True, ""
+
+        required_item_ids = [item.id for item in required_items]
 
         quiz_stmt = select(assessment_models.QuizSubmissionModel).where(
-            assessment_models.QuizSubmissionModel.user_id == user_id
+            assessment_models.QuizSubmissionModel.user_id == user_id,
+            assessment_models.QuizSubmissionModel.item_id.in_(required_item_ids),
         )
         quiz_res = await self._session.execute(quiz_stmt)
 
         lab_stmt = select(assessment_models.LabSubmissionModel).where(
-            assessment_models.LabSubmissionModel.user_id == user_id
+            assessment_models.LabSubmissionModel.user_id == user_id,
+            assessment_models.LabSubmissionModel.item_id.in_(required_item_ids),
         )
         lab_res = await self._session.execute(lab_stmt)
 
         peer_stmt = select(assessment_models.PeerAssignmentSubmissionModel).where(
-            assessment_models.PeerAssignmentSubmissionModel.user_id == user_id
+            assessment_models.PeerAssignmentSubmissionModel.user_id == user_id,
+            assessment_models.PeerAssignmentSubmissionModel.item_id.in_(
+                required_item_ids
+            ),
         )
         peer_res = await self._session.execute(peer_stmt)
 
@@ -340,11 +356,41 @@ class CertificateRepository(ICertificateRepository):
                 item_max_scores.get(s.item_id, 0.0),
                 getattr(s, "score_percent", 0.0),
             )
+
+        peer_subs_by_item: dict[str, Any] = {}
         for s in peer_res.scalars().all():
-            item_max_scores[s.item_id] = max(
-                item_max_scores.get(s.item_id, 0.0),
-                getattr(s, "final_score", 0.0) or 0.0,
+            peer_subs_by_item[s.item_id] = s
+
+        course_peer_sub_ids = [
+            peer_subs_by_item[item.id].id
+            for item in required_items
+            if item.type == ItemType.PEER_REVIEW and item.id in peer_subs_by_item
+        ]
+        pending_appeal_sub_ids: set[str] = set()
+        if course_peer_sub_ids:
+            appeal_stmt = select(
+                assessment_models.GradeAppealModel.submission_id
+            ).where(
+                assessment_models.GradeAppealModel.user_id == user_id,
+                assessment_models.GradeAppealModel.submission_id.in_(
+                    course_peer_sub_ids
+                ),
+                assessment_models.GradeAppealModel.status.in_(PENDING_APPEAL_STATUSES),
             )
+            report_stmt = select(
+                assessment_models.PeerReviewReportModel.submission_id
+            ).where(
+                assessment_models.PeerReviewReportModel.reporter_user_id == user_id,
+                assessment_models.PeerReviewReportModel.submission_id.in_(
+                    course_peer_sub_ids
+                ),
+                assessment_models.PeerReviewReportModel.status.in_(
+                    PENDING_APPEAL_STATUSES
+                ),
+            )
+            combined_stmt = appeal_stmt.union(report_stmt)
+            appeal_res = await self._session.execute(combined_stmt)
+            pending_appeal_sub_ids = set(appeal_res.scalars().all())
 
         # Fetch configured quiz matrices to obtain dynamically configured passing thresholds
         quiz_ids = [
@@ -360,6 +406,29 @@ class CertificateRepository(ICertificateRepository):
                 quiz_thresholds[qm.item_id] = qm.passing_threshold_percent
 
         for req_item in required_items:
+            if req_item.type == ItemType.PEER_REVIEW:
+                peer_sub = peer_subs_by_item.get(req_item.id)
+                if peer_sub is None:
+                    return (
+                        False,
+                        f"Chưa đủ điều kiện nhận chứng chỉ: Bạn chưa hoàn thành bài tập bắt buộc '{req_item.title}'.",
+                    )
+                is_peer_eligible, peer_err = check_peer_submission_pass_eligibility(
+                    item_title=req_item.title,
+                    status=peer_sub.status,
+                    final_score=peer_sub.final_score,
+                    review_duty_status=peer_sub.review_duty_status,
+                    has_pending_appeal=peer_sub.id in pending_appeal_sub_ids,
+                    passing_threshold=DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT,
+                    previous_best_score=getattr(peer_sub, "previous_best_score", None),
+                )
+                if not is_peer_eligible:
+                    return (
+                        False,
+                        f"Chưa đủ điều kiện nhận chứng chỉ: {peer_err}",
+                    )
+                continue
+
             max_score = item_max_scores.get(req_item.id)
             if max_score is None:
                 return (
@@ -379,17 +448,6 @@ class CertificateRepository(ICertificateRepository):
                     False,
                     f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= {int(threshold)}% (Hiện tại {max_score}%).",
                 )
-
-        appeal_stmt = select(assessment_models.GradeAppealModel).where(
-            assessment_models.GradeAppealModel.user_id == user_id,
-            assessment_models.GradeAppealModel.status == "PENDING",
-        )
-        appeal_res = await self._session.execute(appeal_stmt)
-        if appeal_res.scalar_one_or_none():
-            return (
-                False,
-                "Chưa đủ điều kiện nhận chứng chỉ: Bạn đang có đơn khiếu nại/báo cáo bài chấm chéo chờ Trợ giảng thẩm định (Report Lock Rule).",
-            )
 
         return True, ""
 

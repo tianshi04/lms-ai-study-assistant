@@ -73,7 +73,11 @@ class QuizUseCase(BaseAssessmentUseCase):
     """Application Use Case for Quiz sessions, grading, question banks, and matrix configurations."""
 
     async def submit_honor_code(
-        self, user_id: str, item_id: str, is_agreed: bool
+        self,
+        user_id: str,
+        item_id: str,
+        is_agreed: bool,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         now_iso = datetime.now(UTC).isoformat()
         agreement = HonorCodeAgreement(
@@ -81,6 +85,9 @@ class QuizUseCase(BaseAssessmentUseCase):
         )
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            await self._ensure_not_course_staff_for_item(
+                session, repo, user_id, item_id, current_user, preview=False
+            )
             await repo.save_honor_code(agreement)
         msg = (
             "Academic Honor Code agreed successfully."
@@ -201,9 +208,13 @@ class QuizUseCase(BaseAssessmentUseCase):
         duration_minutes: int = 0,
         preview: bool = False,
         force_new: bool = False,
+        current_user: CurrentUser | None = None,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            await self._ensure_not_course_staff_for_item(
+                session, repo, user_id, item_id, current_user, preview=preview
+            )
             matrix = await self._get_quiz_matrix(repo, item_id)
 
             duration_minutes = (
@@ -342,15 +353,16 @@ class QuizUseCase(BaseAssessmentUseCase):
                 repo, item_id, seed=seed_val
             )
 
-            active_session = QuizActiveSession(
-                user_id=user_id,
-                item_id=item_id,
-                session_seed=seed_val,
-                questions_json=questions,
-                started_at=now.isoformat(),
-                expires_at=expires_at.isoformat(),
-            )
-            await repo.save_quiz_active_session(active_session)
+            if not preview:
+                active_session = QuizActiveSession(
+                    user_id=user_id,
+                    item_id=item_id,
+                    session_seed=seed_val,
+                    questions_json=questions,
+                    started_at=now.isoformat(),
+                    expires_at=expires_at.isoformat(),
+                )
+                await repo.save_quiz_active_session(active_session)
 
             return {
                 "session_id": f"qsess-{uuid7().hex}",
@@ -377,9 +389,16 @@ class QuizUseCase(BaseAssessmentUseCase):
         session_seed: int | None = None,
         preview: bool = False,
         question_answers: list[list[int]] | None = None,
+        current_user: CurrentUser | None = None,
     ) -> dict[str, Any]:
+        pending_quiz_event: QuizSubmittedDomainEvent | None = None
+        result_payload: dict[str, Any] = {}
+
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            await self._ensure_not_course_staff_for_item(
+                session, repo, user_id, item_id, current_user, preview=preview
+            )
 
             # BR_ACCESS_001: Practice Quizzes are open in Audit Mode.
             # Only Graded Quizzes require Paid Mode authorization.
@@ -583,15 +602,13 @@ class QuizUseCase(BaseAssessmentUseCase):
                 except Exception:  # noqa: BLE001, S110
                     pass
 
-                await EventBus.publish(
-                    QuizSubmittedDomainEvent(
-                        user_id=user_id,
-                        course_id=target_course_id,
-                        item_id=item_id,
-                        score_percent=score_percent,
-                        passed=score_percent >= passing_threshold,
-                        attempt_number=attempt_number,
-                    )
+                pending_quiz_event = QuizSubmittedDomainEvent(
+                    user_id=user_id,
+                    course_id=target_course_id,
+                    item_id=item_id,
+                    score_percent=score_percent,
+                    passed=score_percent >= passing_threshold,
+                    attempt_number=attempt_number,
                 )
 
                 if is_graded:
@@ -639,7 +656,7 @@ class QuizUseCase(BaseAssessmentUseCase):
                 passed,
                 preview,
             )
-            return {
+            result_payload = {
                 "score_percent": score_percent,
                 "passed": passed,
                 "attempts_left": attempts_left,
@@ -648,6 +665,11 @@ class QuizUseCase(BaseAssessmentUseCase):
                 "max_attempts": max_attempts if is_graded else 999,
                 "cooldown_hours": cooldown_hours if is_graded else 0,
             }
+
+        if pending_quiz_event is not None:
+            await EventBus.publish(pending_quiz_event)
+
+        return result_payload
 
     async def create_question_bank(
         self,

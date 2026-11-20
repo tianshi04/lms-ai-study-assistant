@@ -235,3 +235,128 @@ async def test_list_enrolled_courses_preserves_timestamps(
     assert s.last_accessed_item_id == "i1"
     assert s.enrolled_at == "2026-11-01T10:00:00Z"
     assert s.completed_at == "2026-11-03T19:00:00Z"
+
+
+@pytest.mark.asyncio
+async def test_mark_item_complete_rpc_blocks_peer_review_bypass(
+    mock_repo, mock_session_scope
+):
+    from unittest.mock import patch
+
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+
+    from src.gen.learning.v1 import learning_pb as pb
+    from src.modules.learning.presentation.learning_handler import LearningHandler
+
+    mock_catalog_repo = AsyncMock()
+    peer_item = LearningItem(
+        id="item-peer-1", title="Final Essay", type=ItemType.PEER_REVIEW
+    )
+    lesson = Lesson(id="l1", title="lesson 1", items=[peer_item])
+    week = WeekModule(id="w1", week_number=1, title="week 1", lessons=[lesson])
+    mock_catalog_repo.get_course_detail = AsyncMock(
+        return_value=Course(
+            id="c1", title="course 1", slug="course-1", week_modules=[week]
+        )
+    )
+
+    use_case = LearningUseCase(
+        repo_factory=lambda session: mock_repo,
+        catalog_repo_factory=lambda session: mock_catalog_repo,
+    )
+    handler = LearningHandler(use_case=use_case)
+
+    class MockUser:
+        id = "lazy-student"
+
+    with (
+        patch(
+            "src.modules.learning.presentation.learning_handler.require_current_user",
+            return_value=MockUser(),
+        ),
+        pytest.raises(ConnectError) as exc_info,
+    ):
+        await handler.mark_item_complete(
+            pb.MarkItemCompleteRequest(course_id="c1", item_id="item-peer-1"),
+            AsyncMock(),
+        )
+
+    assert exc_info.value.code == Code.PERMISSION_DENIED
+    mock_repo.mark_item_complete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_mark_item_complete_verifies_graded_item_eligibility(
+    mock_repo, mock_session_scope
+):
+    mock_catalog_repo = AsyncMock()
+    quiz_item = LearningItem(
+        id="item-quiz-1", title="Graded Quiz 1", type=ItemType.GRADED_QUIZ
+    )
+    lab_item = LearningItem(
+        id="item-lab-1", title="Coding Lab 1", type=ItemType.AUTO_GRADED_LAB
+    )
+    peer_item = LearningItem(
+        id="item-peer-1", title="Peer Essay 1", type=ItemType.PEER_REVIEW
+    )
+    lesson = Lesson(id="l1", title="lesson 1", items=[quiz_item, lab_item, peer_item])
+    week = WeekModule(id="w1", week_number=1, title="week 1", lessons=[lesson])
+    mock_catalog_repo.get_course_detail = AsyncMock(
+        return_value=Course(
+            id="c1", title="course 1", slug="course-1", week_modules=[week]
+        )
+    )
+
+    use_case = LearningUseCase(
+        repo_factory=lambda session: mock_repo,
+        catalog_repo_factory=lambda session: mock_catalog_repo,
+    )
+
+    # 1. Ineligible quiz -> PermissionError
+    mock_repo.check_graded_item_completion_eligibility = AsyncMock(
+        return_value=(False, "Chưa đạt điểm quiz")
+    )
+    with pytest.raises(PermissionError, match="Chưa đạt điểm quiz"):
+        await use_case.mark_item_complete(
+            "u1", "c1", "item-quiz-1", from_learner_rpc=True
+        )
+    mock_repo.mark_item_complete.assert_not_awaited()
+
+    # 2. Ineligible lab -> PermissionError
+    mock_repo.check_graded_item_completion_eligibility = AsyncMock(
+        return_value=(False, "Chưa vượt qua bài lab")
+    )
+    with pytest.raises(PermissionError, match="Chưa vượt qua bài lab"):
+        await use_case.mark_item_complete(
+            "u1", "c1", "item-lab-1", from_learner_rpc=True
+        )
+    mock_repo.mark_item_complete.assert_not_awaited()
+
+    # 3. Internal call for PEER_REVIEW still checks eligibility -> PermissionError when PENDING
+    mock_repo.check_graded_item_completion_eligibility = AsyncMock(
+        return_value=(False, "Chưa hoàn thành nghĩa vụ chấm bài")
+    )
+    with pytest.raises(PermissionError, match="nghĩa vụ chấm bài"):
+        await use_case.mark_item_complete("u1", "c1", "item-peer-1")
+    mock_repo.mark_item_complete.assert_not_awaited()
+
+    # 4. Eligible quiz/lab/internal peer review -> succeeds
+    expected = LearningProgress(
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=100.0,
+        completed_item_ids=["item-quiz-1"],
+    )
+    mock_repo.check_graded_item_completion_eligibility = AsyncMock(
+        return_value=(True, "")
+    )
+    mock_repo.mark_item_complete = AsyncMock(return_value=(True, expected))
+
+    ok, prog = await use_case.mark_item_complete(
+        "u1", "c1", "item-quiz-1", from_learner_rpc=True
+    )
+    assert ok is True
+    assert prog == expected
+    ok_peer, _ = await use_case.mark_item_complete("u1", "c1", "item-peer-1")
+    assert ok_peer is True

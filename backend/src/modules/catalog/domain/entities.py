@@ -5,6 +5,8 @@ from typing import Any
 from src.shared.domain import ADMIN_PAGE_SIZE_DEFAULT
 from src.shared.domain.base import Entity, ValueObject
 
+from .constants import DEFAULT_ESSAY_MAX_ATTEMPTS
+
 
 class ItemType(str, Enum):
     UNSPECIFIED = "UNSPECIFIED"
@@ -106,6 +108,7 @@ class LearningItem(Entity):
         essay_grading_mode: str = "PEER_REVIEW",
         required_peer_reviews: int = 3,
         cold_start_hours: int = 48,
+        essay_max_attempts: int = DEFAULT_ESSAY_MAX_ATTEMPTS,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -126,6 +129,7 @@ class LearningItem(Entity):
         self.essay_grading_mode = essay_grading_mode
         self.required_peer_reviews = required_peer_reviews
         self.cold_start_hours = cold_start_hours
+        self.essay_max_attempts = essay_max_attempts
 
 
 class Lesson(Entity):

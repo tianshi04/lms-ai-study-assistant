@@ -44,6 +44,7 @@ message SubmitAutoGradedLabRequest {
   string item_id = 1;
   string source_code = 2;
   string language = 3;
+  bool preview = 4;
 }
 
 message AutoGradedLabResult {
@@ -74,6 +75,7 @@ message AnonymousPeerFeedback {
   float total_score = 2;
   repeated RubricCriteria graded_criteria = 3;
   string submitted_at = 4;
+  string review_id = 5;
 }
 
 message GetMyPeerSubmissionStatusRequest {
@@ -104,6 +106,9 @@ message GetMyPeerSubmissionStatusResponse {
   string appeal_status = 21;
   string assignment_title = 22;
   string assignment_instructions = 23;
+  float best_published_score = 24;
+  string best_grade_source = 25;
+  int32 max_attempts = 26;
 }
 
 message GetPeerReviewsToGradeRequest {

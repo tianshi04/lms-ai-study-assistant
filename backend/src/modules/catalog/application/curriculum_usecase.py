@@ -228,6 +228,7 @@ class CurriculumUseCase:
         essay_grading_mode: str = "PEER_REVIEW",
         required_peer_reviews: int = 3,
         cold_start_hours: int = 48,
+        essay_max_attempts: int = 3,
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
@@ -252,6 +253,7 @@ class CurriculumUseCase:
                 essay_grading_mode=essay_grading_mode,
                 required_peer_reviews=required_peer_reviews,
                 cold_start_hours=cold_start_hours,
+                essay_max_attempts=essay_max_attempts,
             )
             logger.info(
                 "Created learning item %s in course %s",
@@ -281,6 +283,7 @@ class CurriculumUseCase:
         essay_grading_mode: str | None = None,
         required_peer_reviews: int | None = None,
         cold_start_hours: int | None = None,
+        essay_max_attempts: int | None = None,
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
@@ -308,6 +311,7 @@ class CurriculumUseCase:
                 essay_grading_mode=essay_grading_mode,
                 required_peer_reviews=required_peer_reviews,
                 cold_start_hours=cold_start_hours,
+                essay_max_attempts=essay_max_attempts,
             )
 
     async def delete_learning_item(

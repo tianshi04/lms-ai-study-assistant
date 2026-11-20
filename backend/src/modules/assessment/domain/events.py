@@ -29,6 +29,8 @@ class PeerReviewSubmittedDomainEvent(DomainEvent):
     submission_id: str = ""
     author_id: str = ""
     score: float = 0.0
+    course_id: str = ""
+    item_id: str = ""
 
 
 @dataclass

@@ -209,11 +209,31 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
             reviewer_user_id="user_learner_02",
             item_id="item-ml-peer-1",
             rubric_criteria_json={
-                "problem_formulation": 5,
-                "feature_selection": 5,
-                "model_evaluation": 4,
+                "items": [
+                    {
+                        "criteria_id": "problem_formulation",
+                        "title": "Chất lượng nội dung & Lập luận",
+                        "max_score": 10.0,
+                        "score_given": 9.0,
+                        "feedback": "Phần phân tích mô hình hồi quy và phân loại rất sâu sắc, dẫn chứng rõ ràng bằng biểu đồ trực quan.",
+                    },
+                    {
+                        "criteria_id": "feature_selection",
+                        "title": "Bố cục & Kỹ năng trình bày",
+                        "max_score": 10.0,
+                        "score_given": 8.5,
+                        "feedback": "Bố cục mạch lạc, phân chia đề mục rõ ràng. Đoạn mã nguồn có định dạng chuẩn và kèm chú thích dễ đọc.",
+                    },
+                    {
+                        "criteria_id": "model_evaluation",
+                        "title": "Tính ứng dụng & Đóng góp",
+                        "max_score": 10.0,
+                        "score_given": 8.0,
+                        "feedback": "Ý tưởng áp dụng mô hình vào thực tế rất khả thi. Bạn có thể mở rộng thử nghiệm thêm mô hình XGBoost để tối ưu hiệu năng.",
+                    },
+                ]
             },
-            total_score=93.3,
+            total_score=85.0,
             is_outlier=False,
             created_at="2026-07-22T11:00:00Z",
         ),
@@ -223,11 +243,31 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
             reviewer_user_id="user_ta_01",
             item_id="item-ml-peer-1",
             rubric_criteria_json={
-                "problem_formulation": 5,
-                "feature_selection": 5,
-                "model_evaluation": 5,
+                "items": [
+                    {
+                        "criteria_id": "problem_formulation",
+                        "title": "Chất lượng nội dung & Lập luận",
+                        "max_score": 10.0,
+                        "score_given": 9.5,
+                        "feedback": "Các công thức toán học và hàm mất mát được giải thích đầy đủ, logic lập luận chặt chẽ.",
+                    },
+                    {
+                        "criteria_id": "feature_selection",
+                        "title": "Bố cục & Kỹ năng trình bày",
+                        "max_score": 10.0,
+                        "score_given": 9.0,
+                        "feedback": "Bài làm trình bày rất chuyên nghiệp, các bảng biểu và đồ thị trực quan có đầy đủ nhãn trục tọa độ.",
+                    },
+                    {
+                        "criteria_id": "model_evaluation",
+                        "title": "Tính ứng dụng & Đóng góp",
+                        "max_score": 10.0,
+                        "score_given": 8.5,
+                        "feedback": "Giải pháp có tính ứng dụng thực tiễn cao, đánh giá độ lỗi chi tiết trên tập kiểm thử.",
+                    },
+                ]
             },
-            total_score=100.0,
+            total_score=90.0,
             is_outlier=False,
             created_at="2026-07-22T11:20:00Z",
         ),

@@ -61,6 +61,7 @@ message LearningItem {
   EssayGradingMode essay_grading_mode = 17;
   int32 required_peer_reviews = 18;
   int32 cold_start_hours = 19;
+  int32 essay_max_attempts = 20;
 }
 
 message Lesson {
@@ -354,6 +355,7 @@ message CreateLearningItemRequest {
   EssayGradingMode essay_grading_mode = 16;
   int32 required_peer_reviews = 17;
   int32 cold_start_hours = 18;
+  int32 essay_max_attempts = 19;
 }
 
 message CreateLearningItemResponse {
@@ -381,6 +383,7 @@ message UpdateLearningItemRequest {
   EssayGradingMode essay_grading_mode = 17;
   int32 required_peer_reviews = 18;
   int32 cold_start_hours = 19;
+  int32 essay_max_attempts = 20;
 }
 
 message UpdateLearningItemResponse {
