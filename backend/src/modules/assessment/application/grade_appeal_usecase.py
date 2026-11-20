@@ -98,4 +98,11 @@ class GradeAppealUseCase(BaseAssessmentUseCase):
             )
             await repo.save_grade_appeal(appeal)
 
+            # BR_PEER_007: Release any existing locks and cancel in-flight peer review assignments
+            # to transition the submission cleanly into the instructor appeal resolution queue.
+            await repo.release_submission_lock(submission_id)
+            await repo.cancel_pending_peer_review_assignments_for_submission(
+                submission_id
+            )
+
         return True, "PENDING"

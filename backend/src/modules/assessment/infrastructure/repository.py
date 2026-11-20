@@ -14,7 +14,8 @@ from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     GRADING_LOCK_TIMEOUT_MINUTES,
     PEER_ASSIGNMENT_STATUS_ASSIGNED,
-    PEER_SUBMISSION_STATUS_PUBLISHED,
+    PEER_ASSIGNMENT_STATUS_CANCELLED,
+    PEER_SUBMISSION_STATUS_SUBMITTED,
     PENDING_APPEAL_STATUSES,
     REPORT_STATUS_RESOLVED,
     REQUIRED_PEER_REVIEWS_COUNT,
@@ -658,9 +659,20 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
             .exists()
         )
+        has_pending_appeal_subquery = (
+            select(GradeAppealModel.id)
+            .where(
+                GradeAppealModel.submission_id == PeerAssignmentSubmissionModel.id,
+                GradeAppealModel.status.in_(PENDING_APPEAL_STATUSES),
+            )
+            .exists()
+        )
         stmt = select(func.count(PeerAssignmentSubmissionModel.id)).where(
             PeerAssignmentSubmissionModel.item_id == item_id,
             PeerAssignmentSubmissionModel.user_id != reviewer_user_id,
+            PeerAssignmentSubmissionModel.status == PEER_SUBMISSION_STATUS_SUBMITTED,
+            PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
+            ~has_pending_appeal_subquery,
             ~already_reviewed_current_attempt,
         )
         res = await self.session.execute(stmt)
@@ -681,6 +693,14 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
             .exists()
         )
+        has_pending_appeal_subquery = (
+            select(GradeAppealModel.id)
+            .where(
+                GradeAppealModel.submission_id == PeerAssignmentSubmissionModel.id,
+                GradeAppealModel.status.in_(PENDING_APPEAL_STATUSES),
+            )
+            .exists()
+        )
         reviews_count_sub = (
             select(func.count(PeerReviewModel.id))
             .where(
@@ -694,26 +714,15 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             (PeerAssignmentSubmissionModel.locked_by_user_id == reviewer_user_id, 0),
             else_=1,
         )
-        grade_tier_priority = case(
-            (
-                and_(
-                    PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
-                    PeerAssignmentSubmissionModel.status
-                    != PEER_SUBMISSION_STATUS_PUBLISHED,
-                ),
-                0,
-            ),
-            (
-                PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
-                1,
-            ),
-            else_=2,
-        )
         stmt = (
             select(PeerAssignmentSubmissionModel)
             .where(
                 PeerAssignmentSubmissionModel.item_id == item_id,
                 PeerAssignmentSubmissionModel.user_id != reviewer_user_id,
+                PeerAssignmentSubmissionModel.status
+                == PEER_SUBMISSION_STATUS_SUBMITTED,
+                PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
+                ~has_pending_appeal_subquery,
                 ~already_reviewed_current_attempt,
                 or_(
                     PeerAssignmentSubmissionModel.locked_by_user_id.is_(None),
@@ -730,7 +739,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
             .order_by(
                 held_by_reviewer_priority.asc(),
-                grade_tier_priority.asc(),
                 reviews_count_sub.asc(),
                 PeerAssignmentSubmissionModel.created_at.asc(),
             )
@@ -823,6 +831,70 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         res = await self.session.execute(stmt)
         await self.session.flush()
         return int(getattr(res, "rowcount", 0) or 0) > 0
+
+    async def claim_staff_grading_lock(
+        self,
+        submission_id: str,
+        staff_user_id: str,
+        timeout_minutes: int = GRADING_LOCK_TIMEOUT_MINUTES,
+    ) -> bool:
+        """Staff claims exclusive lock on a submission.
+
+        Staff has preemption authority:
+        - If unlocked, expired, or already held by this staff -> Acquire lock.
+        - If held by a learner (peer reviewer) -> Preempt and acquire lock immediately.
+        - Only blocked if locked_by_user_id is another active staff member.
+        """
+        from src.modules.identity.infrastructure.models import UserModel
+
+        now = datetime.now(UTC)
+        sub = await self.session.get(PeerAssignmentSubmissionModel, submission_id)
+        if not sub or sub.user_id == staff_user_id:
+            return False
+
+        if sub.locked_by_user_id and sub.locked_by_user_id != staff_user_id:
+            exp_dt = sub.lock_expires_at
+            if not exp_dt and sub.locked_at:
+                try:
+                    lock_dt = datetime.fromisoformat(sub.locked_at)
+                    if lock_dt.tzinfo is None:
+                        lock_dt = lock_dt.replace(tzinfo=UTC)
+                    exp_dt = lock_dt + timedelta(minutes=timeout_minutes)
+                except (ValueError, TypeError):
+                    exp_dt = None
+            if exp_dt:
+                if exp_dt.tzinfo is None:
+                    exp_dt = exp_dt.replace(tzinfo=UTC)
+                if now < exp_dt:
+                    locker = await self.session.get(UserModel, sub.locked_by_user_id)
+                    if locker and locker.role in (
+                        "USER_ROLE_INSTRUCTOR",
+                        "USER_ROLE_ADMIN",
+                    ):
+                        return False
+
+        lock_expires = now + timedelta(minutes=timeout_minutes)
+        sub.locked_by_user_id = staff_user_id
+        sub.locked_at = now.isoformat()
+        sub.lock_expires_at = lock_expires
+        await self.session.flush()
+        return True
+
+    async def cancel_pending_peer_review_assignments_for_submission(
+        self, submission_id: str
+    ) -> int:
+        """Cancel any in-flight peer review assignments when a submission enters dispute/appeal or staff override."""
+        stmt = (
+            update(PeerReviewAssignmentModel)
+            .where(
+                PeerReviewAssignmentModel.submission_id == submission_id,
+                PeerReviewAssignmentModel.status == PEER_ASSIGNMENT_STATUS_ASSIGNED,
+            )
+            .values(status=PEER_ASSIGNMENT_STATUS_CANCELLED)
+        )
+        res = await self.session.execute(stmt)
+        await self.session.flush()
+        return int(getattr(res, "rowcount", 0) or 0)
 
     async def save_peer_review(self, review: PeerReview) -> None:
         rubric_data = [
@@ -1679,14 +1751,19 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             row[0].locked_by_user_id for row in rows if row[0].locked_by_user_id
         }
 
-        # Batch 1: Query user names for locked submissions
+        # Batch 1: Query user names & roles for locked submissions
         user_names: dict[str, str] = {}
+        staff_user_ids: set[str] = set()
         if locked_user_ids:
-            user_stmt = select(UserModel.id, UserModel.full_name).where(
+            user_stmt = select(UserModel.id, UserModel.full_name, UserModel.role).where(
                 UserModel.id.in_(locked_user_ids)
             )
             u_res = await self.session.execute(user_stmt)
-            user_names = {uid: name for uid, name in u_res.all() if name}
+            for uid, name, role in u_res.all():
+                if name:
+                    user_names[uid] = name
+                if role in ("USER_ROLE_INSTRUCTOR", "USER_ROLE_ADMIN"):
+                    staff_user_ids.add(uid)
 
         # Batch 2: Query appeals and pending peer review reports for submissions
         appeal_stmt = select(GradeAppealModel).where(
@@ -1730,7 +1807,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             locked_by_name = ""
             lock_expires_at = ""
             is_currently_locked = False
-            if sub.locked_by_user_id:
+            # Only consider locked if the locker is an active staff member (instructor/admin/TA).
+            # Learners holding peer locks do NOT lock out staff grading cockpit!
+            if sub.locked_by_user_id and sub.locked_by_user_id in staff_user_ids:
                 exp_dt = sub.lock_expires_at
                 if not exp_dt and sub.locked_at:
                     try:

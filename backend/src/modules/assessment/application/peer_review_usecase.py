@@ -1051,7 +1051,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 raise PermissionError(
                     "Bạn không được phép tự khóa bài làm của chính mình để chấm điểm."
                 )
-            success = await repo.claim_submission_lock(submission_id, staff_user_id)
+            success = await repo.claim_staff_grading_lock(submission_id, staff_user_id)
             if not success:
                 return (
                     False,
