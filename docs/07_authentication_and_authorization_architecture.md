@@ -75,10 +75,10 @@ Thông tin định danh của User khi đăng nhập thành công được lưu 
 ```python
 @dataclass
 class CurrentUserContext:
-    id: str                 # User ID (sub)
-    email: str = ""         # User Email
-    full_name: str = ""     # User Full Name
-    role: str = ""          # System Role (e.g. USER_ROLE_ADMIN, USER_ROLE_INSTRUCTOR, USER_ROLE_LEARNER)
+    id: str  # User ID (sub)
+    email: str = ""  # User Email
+    full_name: str = ""  # User Full Name
+    role: str = ""  # System Role (e.g. USER_ROLE_ADMIN, USER_ROLE_INSTRUCTOR, USER_ROLE_LEARNER)
 ```
 
 ---

@@ -44,26 +44,22 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
 
 ---
 
-## KỊCH BẢN UAT-03: KIỂM THỬ PHÂN HỆ ĐÁNH GIÁ NĂNG LỰC (HONOR CODE, AUTO-GRADER & PEER REVIEW)
+## KỊCH BẢN UAT-03: KIỂM THỬ PHÂN HỆ ĐÁNH GIÁ NĂNG LỰC (HONOR CODE, AUTO-GRADER & BÀI TẬP TỰ LUẬN)
 
-* **Mục tiêu:** Xác minh cam kết Honor Code, bài nộp lập trình tự động chấm điểm (Auto-Graded Lab) và luồng chấm chéo bài tập dự án (Peer Review Workflow).
-* **Tác nhân thực hiện:** Học viên A, B, C, D (Learners).
-* **Điều kiện bắt đầu:** Khóa học có 1 bài tập Auto-Graded Lab và 1 bài tập Peer Review Assignment có bộ Rubric 2 tiêu chí (mỗi tiêu chí max 5 điểm).
+* **Mục tiêu:** Xác minh cam kết Honor Code, bài nộp lập trình tự động chấm điểm (Auto-Graded Lab) và luồng nộp/chấm chéo Bài tập Tự luận (`PEER_REVIEW`).
+* **Tác nhân thực hiện:** Học viên A, B, C, D (Learners) & Giảng viên/TA.
+* **Điều kiện bắt đầu:** Khóa học có 1 bài tập Auto-Graded Lab và 1 Bài tập Tự luận (`PEER_REVIEW`, `required_peer_reviews = 3`, `cold_start_hours = 48`) với bộ Rubric chuẩn.
 * **Các bước thực hiện:**
   1. **Học viên A** mở bài tập Auto-Graded Lab. Tích chọn cam kết **Academic Honor Code**, tải file `solution.py` lên và bấm "Submit".
-  2. **Học viên A, B, C, D** cùng nộp bài dự án cá nhân cho bài tập Peer Review trước deadline.
-  3. **Học viên A** chuyển sang mục "Review Peers", lần lượt mở đọc bài làm của Học viên B, C, D và chấm điểm theo bộ Rubric (cho nhận xét và chấm điểm từng tiêu chí).
-  4. Giả lập Học viên B nhận được điểm số từ 3 bạn học chấm (lần lượt là 8, 9, 8 điểm).
-  5. Giả lập Học viên C nhận được điểm số lệch lớn từ 3 bạn học (lần lượt là 10, 9, 2 điểm).
-  6. **Học viên C** bấm nút "Grade Appeal" (Khiếu nại điểm).
-  7. **Học viên D** bấm nút "Report Review" cho 1 lượt chấm bị cố tình cho điểm thấp bất thường.
+  2. **Học viên A, B, C, D** cùng nộp bài cho Bài tập Tự luận.
+  3. Giả lập bài của **Học viên A** đã được Giảng viên hoặc 3 bạn học chấm xong, nhưng **Học viên A** chưa chấm đủ 3 bài bạn học; kiểm tra màn hình kết quả của A trước và sau khi A vào mục `"2. Chấm bài bạn học"` chấm đủ 3 bài.
+  4. Giả lập **Học viên C** nhận 3 lượt chấm có độ lệch > 30% so với trung vị (ví dụ: 90, 85, 20).
+  5. **Học viên C** sau khi hoàn thành nghĩa vụ chấm bài bạn học mở tab `"3. Khiếu nại điểm"` gửi đơn phúc khảo điểm.
 * **Kết quả mong đợi (Expected Results):**
   * *Tại bước 1:* Nếu chưa tích Honor Code, nút Submit bị vô hiệu hóa. Khi nộp file code, Sandbox Auto-Grader chạy test cases và trả về bảng điểm chi tiết (ví dụ: Pass 4/5 test cases -> Điểm 80/100).
-  * *Tại bước 3:* Hệ thống ghi nhận Học viên A đã hoàn thành chấm đủ lượt bài peer theo phân bổ và mở hiển thị trang kết quả điểm số cho A.
-  * *Tại bước 4:* Điểm chính thức của Học viên B được tính bằng trung bình cộng: `(8 + 9 + 8) / 3 = 8.33 điểm` (Đạt Pass).
-  * *Tại bước 5:* Hệ thống phát hiện chênh lệch điểm > 30%, tự động gắn cờ **"Outlier Flag"** gửi về bảng quản trị của Trợ giảng (TA).
-  * *Tại bước 6:* Đơn khiếu nại của C gửi đến TA. TA chấm lại 9 điểm -> Hệ thống cập nhật điểm chính thức mới cho C là `9.0 điểm`.
-  * *Tại bước 7:* Hệ thống ghi nhận đơn báo cáo của D, chuyển bài nộp sang trạng thái `PENDING_STAFF_REVIEW` và tạm ngưng cấp chứng chỉ cho đến khi TA duyệt xong để chống lạm dụng.
+  * *Tại bước 3:* Khi chưa chấm đủ bài bạn học, A chỉ thấy trạng thái **"Đã có điểm"** (ẩn hoàn toàn điểm số, nhận xét và nút phúc khảo). Ngay khi A chấm đủ số bài yêu cầu, hệ thống mới mở hiển thị điểm số, nhận xét và ghi nhận hoàn thành học phần cho A.
+  * *Tại bước 4:* Hệ thống phát hiện chênh lệch điểm > 30% so với trung vị, tự động gắn cờ **"Outlier Alert"** gửi về hàng chờ chấm bài của Giảng viên/TA.
+  * *Tại bước 5:* Đơn phúc khảo của C gửi đến Giảng viên/TA; sau khi nhân sự chấm lại, điểm chính thức cập nhật theo điểm nhân sự và hoàn tất quy trình.
 
 ---
 
