@@ -53,75 +53,12 @@ export interface RubricCriterionItem {
   description: string;
 }
 
-const RUBRIC_PRESETS: { name: string; items: RubricCriterionItem[] }[] = [
+const DEFAULT_EMPTY_RUBRIC: RubricCriterionItem[] = [
   {
-    name: "Báo cáo nghiên cứu / Tự luận",
-    items: [
-      {
-        criteriaId: "c1",
-        title: "Chất lượng nội dung & Lập luận",
-        maxScore: 10,
-        description: "Mức độ hoàn thiện, tính logic và chiều sâu phân tích của giải pháp.",
-      },
-      {
-        criteriaId: "c2",
-        title: "Bố cục & Kỹ năng trình bày",
-        maxScore: 10,
-        description: "Tổ chức đề mục khoa học, diễn đạt mạch lạc, kèm dẫn chứng rõ ràng.",
-      },
-      {
-        criteriaId: "c3",
-        title: "Tính ứng dụng & Đóng góp",
-        maxScore: 10,
-        description: "Khả năng áp dụng vào thực tế hoặc mức độ đóng góp mới của đề tài.",
-      },
-    ],
-  },
-  {
-    name: "Thiết kế Sản phẩm / UI-UX",
-    items: [
-      {
-        criteriaId: "c1",
-        title: "Trải nghiệm người dùng (UX)",
-        maxScore: 10,
-        description: "Luồng tương tác mượt mà, giải quyết tốt bài toán người dùng mục tiêu.",
-      },
-      {
-        criteriaId: "c2",
-        title: "Thiết kế giao diện (UI)",
-        maxScore: 10,
-        description: "Phân cấp thị giác rõ ràng, bảng màu và typography nhất quán, thẩm mỹ cao.",
-      },
-      {
-        criteriaId: "c3",
-        title: "Tính sáng tạo & Đột phá",
-        maxScore: 10,
-        description: "Ý tưởng mới lạ, giải quyết đúng nhu cầu thực tế của người dùng.",
-      },
-    ],
-  },
-  {
-    name: "Đồ án Kỹ thuật / Lập trình",
-    items: [
-      {
-        criteriaId: "c1",
-        title: "Kiến trúc hệ thống & Clean Code",
-        maxScore: 10,
-        description: "Phân chia module rõ ràng, tuân thủ nguyên tắc thiết kế và dễ bảo trì.",
-      },
-      {
-        criteriaId: "c2",
-        title: "Hoàn thiện tính năng & Độ ổn định",
-        maxScore: 10,
-        description: "Các chức năng hoạt động đúng yêu cầu, xử lý ngoại lệ tốt.",
-      },
-      {
-        criteriaId: "c3",
-        title: "Tài liệu hướng dẫn (README)",
-        maxScore: 10,
-        description: "Hướng dẫn cài đặt, cấu hình và chạy thử rõ ràng, dễ làm theo.",
-      },
-    ],
+    criteriaId: "c1",
+    title: "",
+    maxScore: 10,
+    description: "",
   },
 ];
 
@@ -139,7 +76,7 @@ function safeParseRubricJson(jsonStr: string | undefined): RubricCriterionItem[]
             ? item.max_score
             : typeof item.maxScore === "number" && !Number.isNaN(item.maxScore)
               ? item.maxScore
-              : Number(item.max_score || item.maxScore) || 0,
+              : Number(item.max_score || item.maxScore) || 10,
         description: String(item.description || ""),
       }));
     }
@@ -151,7 +88,7 @@ function safeParseRubricJson(jsonStr: string | undefined): RubricCriterionItem[]
 
 function parseRubricJsonWithFallback(jsonStr: string | undefined): RubricCriterionItem[] {
   const result = safeParseRubricJson(jsonStr);
-  return result && result.length > 0 ? result : RUBRIC_PRESETS[0].items;
+  return result && result.length > 0 ? result : DEFAULT_EMPTY_RUBRIC;
 }
 
 interface LearningItemFormModalProps {
@@ -242,7 +179,6 @@ export function LearningItemFormModal({
   const [rubricItems, setRubricItems] = useState<RubricCriterionItem[]>(() =>
     parseRubricJsonWithFallback(initialData?.rubricCriteriaJson),
   );
-  const [rubricJsonError, setRubricJsonError] = useState("");
   const [peerError, setPeerError] = useState("");
   const [peerRubricJson, setPeerRubricJson] = useState(
     () =>
@@ -272,7 +208,6 @@ export function LearningItemFormModal({
       2,
     );
     setPeerRubricJson(jsonOutput);
-    setRubricJsonError("");
     setPeerError("");
   };
 
@@ -421,24 +356,21 @@ export function LearningItemFormModal({
         return;
       }
 
-      const parsed = safeParseRubricJson(peerRubricJson);
-      if (!parsed || parsed.length === 0) {
-        setPeerError("Bài tập tự luận bắt buộc phải có ít nhất 1 tiêu chí Rubric hợp lệ.");
+      // Kiểm tra tối thiểu 1 tiêu chí Rubric và không được để trống
+      if (!rubricItems || rubricItems.length === 0) {
+        setPeerError("Bài tập tự luận bắt buộc phải có ít nhất 1 tiêu chí Rubric đánh giá.");
         return;
       }
-      for (let i = 0; i < parsed.length; i++) {
-        const item = parsed[i];
-        if (!item.title.trim()) {
-          setPeerError(`Tiêu chí #${i + 1} chưa có tiêu đề đánh giá.`);
+      for (let i = 0; i < rubricItems.length; i++) {
+        const item = rubricItems[i];
+        if (!item.title || !item.title.trim()) {
+          setPeerError(`Tiêu chí #${i + 1} chưa có tên tiêu đề. Tên tiêu chí không được để trống.`);
           return;
         }
-        if (
-          typeof item.maxScore !== "number" ||
-          item.maxScore <= 0 ||
-          !Number.isFinite(item.maxScore)
-        ) {
+        const scoreNum = Number(item.maxScore);
+        if (!Number.isFinite(scoreNum) || scoreNum <= 0) {
           setPeerError(
-            `Điểm tối đa của tiêu chí '${item.title || `#${i + 1}`}' phải là số lớn hơn 0.`,
+            `Điểm tối đa của tiêu chí #${i + 1} ('${item.title.trim()}') phải là số lớn hơn 0.`,
           );
           return;
         }
@@ -1149,9 +1081,10 @@ export function LearningItemFormModal({
                     </div>
                   </div>
 
-                  {rubricJsonError && (
-                    <div className="p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
-                      {rubricJsonError}
+                  {peerError && (
+                    <div className="p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>{peerError}</span>
                     </div>
                   )}
 
@@ -1169,11 +1102,13 @@ export function LearningItemFormModal({
                             </span>
                             <div className="flex-1 min-w-0">
                               <Input
+                                required
                                 value={criterion.title}
-                                onChange={(e) =>
-                                  handleUpdateRubricCriterion(idx, "title", e.target.value)
-                                }
-                                placeholder="Tên tiêu chí (ví dụ: Chất lượng giải pháp, Tính thẩm mỹ...)"
+                                onChange={(e) => {
+                                  handleUpdateRubricCriterion(idx, "title", e.target.value);
+                                  if (peerError) setPeerError("");
+                                }}
+                                placeholder="Tên tiêu chí (bắt buộc, ví dụ: Tính chính xác, Trình bày...)"
                                 className="w-full text-xs font-semibold"
                                 aria-label={`Tên tiêu chí #${idx + 1}`}
                               />
@@ -1211,8 +1146,13 @@ export function LearningItemFormModal({
                               size="xs"
                               disabled={rubricItems.length <= 1}
                               onClick={() => handleRemoveRubricCriterion(idx)}
-                              className="text-destructive hover:bg-destructive/10 p-1.5 h-auto rounded-lg"
+                              className="text-destructive hover:bg-destructive/10 p-1.5 h-auto rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
                               aria-label={`Xóa tiêu chí #${idx + 1}`}
+                              title={
+                                rubricItems.length <= 1
+                                  ? "Bắt buộc phải có ít nhất 1 tiêu chí đánh giá"
+                                  : "Xóa tiêu chí này"
+                              }
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
