@@ -148,11 +148,13 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * **Bảo mật Test Case Ẩn (Hidden Test Privacy & Log Masking):** Học viên xem được dữ liệu Input/Expected của các Test Cases công khai (`Visible`). Đối với các Test Cases ẩn (`Hidden`), thông tin Input, Expected Output và câu lệnh `assertion` bị **mask bảo mật hoàn toàn** trong Execution Logs (chỉ hiển thị trạng thái `[PASS]` hoặc `[FAIL] Test Case #X: [Hidden]`).
   * **Tính điểm:** Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%.
 * **BR_PEER_001 (Điều kiện Nộp & Chấm chéo Peer Review):**
-  * Học viên bắt buộc phải nộp bài dự án cá nhân trước mới được phân bổ quyền chấm chéo bài của bạn học (hệ thống tự động loại trừ bài nộp của chính mình `exclude_user_id`).
+  * Học viên nộp bài làm theo các hình thức linh hoạt do Giảng viên yêu cầu trong Đề bài: Đường dẫn liên kết sản phẩm (Figma, Canva, Google Drive, Slide, Github, Website...) kết hợp bài luận hoặc bản tóm tắt giải pháp văn bản.
+  * Học viên bắt buộc phải nộp bài cá nhân trước mới được phân bổ quyền chấm chéo bài của bạn học (hệ thống tự động loại trừ bài nộp của chính mình `exclude_user_id`).
   * Học viên bắt buộc phải **chấm đủ lượt bài làm theo phân bổ** $\min(3, N)$ (với $N$ là số bài nộp khả thi trong hàng chờ) thì hệ thống mới mở hiển thị điểm bài nộp của chính mình.
-* **BR_PEER_002 (Bộ Tiêu chí Rubric & Nguyên tắc TA Regrade Override):**
-  * Bộ Rubric mặc định gồm 3 tiêu chí: (1) Code Quality & Structure (max 10đ), (2) Documentation & Comments (max 10đ), (3) Test Coverage (max 10đ).
-  * Điểm số bài nộp mặc định = $\frac{\sum \text{Score Given}}{\sum \text{Max Score}} \times 100\%$.
+* **BR_PEER_002 (Bộ Tiêu chí Rubric Động & Nguyên tắc TA Regrade Override):**
+  * Thang điểm đánh giá chéo tuân thủ Bộ Tiêu chí Rubric do Giảng viên thiết lập linh hoạt cho từng bài học trong Course Builder (hỗ trợ đa ngành: Bài luận, Báo cáo, Đồ án Thiết kế Figma/UI-UX, Đề án Kinh doanh hoặc Đồ án Lập trình). Mỗi tiêu chí gồm: `title` (Tên tiêu chí), `max_score` (Thang điểm tối đa), và `description` (Chỉ dẫn hướng dẫn chấm cụ thể).
+  * Trường hợp học liệu chưa cấu hình Rubric tùy biến, hệ thống áp dụng Bộ Tiêu chí tiêu chuẩn gồm 3 khía cạnh: (1) Chất lượng nội dung & Giải pháp (max 10đ), (2) Bố cục, Trình bày & Minh chứng (max 10đ), (3) Tính ứng dụng & Đóng góp (max 10đ).
+  * Điểm số bài nộp = $\frac{\sum \text{Score Given}}{\sum \text{Max Score}} \times 100\%$.
   * *Cảnh báo chấm điểm bất thường (Outlier Detection):* Khi có bài chấm chéo mới, hệ thống tự động tính khoảng chênh lệch tuyệt đối giữa điểm cao nhất và thấp nhất của tất cả reviewers: $Max(Scores) - Min(Scores) > 30.0\%$. Nếu thỏa mãn, hệ thống gắn cờ `is_outlier = True` trên bản ghi `PeerReview` và gửi cảnh báo về bảng tin Trợ giảng (TA).
 * **BR_PEER_003 (Khiếu nại điểm & Thẩm quyền TA Regrade Override):**
   * Học viên có quyền nộp đơn Khiếu nại điểm (Grade Appeal) với lý do chi tiết. Hệ thống khởi tạo đơn ở trạng thái `"PENDING"`.

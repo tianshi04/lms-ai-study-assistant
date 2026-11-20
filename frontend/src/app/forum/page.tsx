@@ -94,7 +94,7 @@ function ForumPageContent() {
 
       if (hasStaffAnswer) {
         answered++;
-      } else if (!isStaffThread && !isAnnouncement && !thread.isStaffPinned) {
+      } else if (!isStaffThread && !isAnnouncement) {
         unanswered++;
       }
     }
@@ -129,7 +129,7 @@ function ForumPageContent() {
           titleLower.startsWith("[thong bao]") ||
           titleLower.startsWith("[announcement]");
         const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
-        return !isStaffThread && !isAnnouncement && !thread.isStaffPinned && !hasStaffAnswer;
+        return !isStaffThread && !isAnnouncement && !hasStaffAnswer;
       });
     }
     if (statusFilter === "ANSWERED") {
