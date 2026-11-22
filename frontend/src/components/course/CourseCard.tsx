@@ -12,9 +12,7 @@ export interface CourseCardProps {
 }
 
 export function CourseCard({ course, progress }: CourseCardProps) {
-  const fallbackInstructor = course.partnerName
-    ? `Đội ngũ ${course.partnerName}`
-    : "Giảng viên LMS";
+  const instructorsText = (course.instructorNames ?? []).join(", ");
 
   return (
     <Card
@@ -51,14 +49,14 @@ export function CourseCard({ course, progress }: CourseCardProps) {
       <div>
         {/* Instructors & Modules Count */}
         <div className="pt-4 border-t border-outline-variant mb-5 flex items-center justify-between text-xs text-on-surface-variant font-medium">
-          <span className="flex items-center gap-1.5 min-w-0 max-w-[160px]">
-            <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
-            <span className="truncate">
-              {(course.instructorNames ?? []).length > 0
-                ? (course.instructorNames ?? []).join(", ")
-                : fallbackInstructor}
+          {instructorsText ? (
+            <span className="flex items-center gap-1.5 min-w-0 max-w-[160px]">
+              <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
+              <span className="truncate">{instructorsText}</span>
             </span>
-          </span>
+          ) : (
+            <span />
+          )}
           <span className="flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-on-surface-variant" aria-hidden="true" />
             {(course.weekModules ?? []).length} {"Tuần học"}

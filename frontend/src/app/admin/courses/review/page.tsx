@@ -230,14 +230,14 @@ export default function CourseReviewerPortalPage() {
                   <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 leading-relaxed">
                     {course.description}
                   </p>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {"Giảng viên phụ trách:"}{" "}
-                    <strong className="text-foreground">
-                      {course.instructorNames.length > 0
-                        ? course.instructorNames.join(", ")
-                        : "Chưa cập nhật"}
-                    </strong>
-                  </p>
+                  {course.instructorNames.length > 0 && (
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {"Giảng viên phụ trách:"}{" "}
+                      <strong className="text-foreground">
+                        {course.instructorNames.join(", ")}
+                      </strong>
+                    </p>
+                  )}
                   {course.rejectionReason && (
                     <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-xs text-destructive">
                       <strong>{"Ghi chú từ chối trước đó:"}</strong> {course.rejectionReason}
