@@ -600,7 +600,7 @@ function ForumPageContent() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
               <MessageSquare aria-hidden="true" className="w-3.5 h-3.5" />
-              Coursera Learning Forum
+              Diễn đàn Học tập LMS AI
             </div>
             <h1 className="text-3xl font-extrabold text-foreground text-balance">
               {"Diễn đàn Thảo luận Cộng đồng"}

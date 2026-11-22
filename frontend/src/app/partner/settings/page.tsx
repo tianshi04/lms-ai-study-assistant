@@ -9,6 +9,7 @@ import {
   usePartnersQuery,
   useUpdatePartnerMutation,
   useRotatePartnerKeyPairMutation,
+  useMyOrganizationsQuery,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
@@ -647,19 +648,33 @@ function PartnerSettingsForm({
 export default function PartnerSettingsPage() {
   const router = useRouter();
 
-  const { isSuperAdmin } = useAuth();
-  const isPartnerAdmin = isSuperAdmin;
+  const { isSuperAdmin, userRole } = useAuth();
+  const { data: myOrgs = [], isLoading: myOrgsLoading } = useMyOrganizationsQuery();
+
+  const adminOrgs = myOrgs.filter((o) => {
+    const r = (o.roleInOrg || "").toUpperCase();
+    return r.includes("ADMIN") || r.includes("OWNER");
+  });
+  const isOrgAdmin =
+    adminOrgs.length > 0 || userRole === "3" || (userRole || "").toUpperCase().includes("ADMIN");
+  const isPartnerAdmin = isSuperAdmin || isOrgAdmin;
 
   const {
-    data: partners = [],
+    data: allPartners = [],
     isLoading: partnersLoading,
     refetch: refetchPartners,
   } = usePartnersQuery();
 
+  const partners = isSuperAdmin
+    ? allPartners
+    : adminOrgs.length > 0
+      ? allPartners.filter((p) => adminOrgs.some((o) => o.id === p.id || o.slug === p.slug))
+      : allPartners;
+
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
   const activePartner = partners.find((p) => p.id === selectedPartnerId) || partners[0];
 
-  if (partnersLoading) {
+  if (partnersLoading || myOrgsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">

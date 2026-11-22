@@ -70,9 +70,11 @@ export async function proxy(request: NextRequest) {
     requestHeaders.set("authorization", `Bearer ${token}`);
   }
 
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
-  const isInstructorRoute = INSTRUCTOR_ROUTES.some((route) => pathname.startsWith(route));
-  const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
+  const matchesRoutePrefix = (route: string) =>
+    pathname === route || pathname.startsWith(`${route}/`);
+  const isProtectedRoute = PROTECTED_ROUTES.some(matchesRoutePrefix);
+  const isInstructorRoute = INSTRUCTOR_ROUTES.some(matchesRoutePrefix);
+  const isAdminRoute = ADMIN_ROUTES.some(matchesRoutePrefix);
 
   // Helper to build redirect response to login while clearing invalid tokens
   const redirectToLogin = () => {

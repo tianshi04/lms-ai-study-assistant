@@ -30,6 +30,28 @@ interface PartnerAdminUser {
   createdAt: string;
 }
 
+function PartnerLogo({ logoUrl, name }: { logoUrl?: string; name: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (logoUrl && !hasError) {
+    return (
+      <Image
+        src={logoUrl}
+        alt={name}
+        width={36}
+        height={36}
+        className="object-contain max-h-full"
+        unoptimized
+        onError={() => setHasError(true)}
+      />
+    );
+  }
+
+  return (
+    <span className="font-bold text-primary text-sm">{name.substring(0, 2).toUpperCase()}</span>
+  );
+}
+
 import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function AdminPartnersPage() {
@@ -334,20 +356,7 @@ export default function AdminPartnersPage() {
                   <Table.Cell>
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-xl bg-muted p-1 border border-border flex items-center justify-center overflow-hidden shrink-0">
-                        {partner.logoUrl ? (
-                          <Image
-                            src={partner.logoUrl}
-                            alt={partner.name}
-                            width={36}
-                            height={36}
-                            className="object-contain max-h-full"
-                            unoptimized
-                          />
-                        ) : (
-                          <span className="font-bold text-primary text-sm">
-                            {partner.name.substring(0, 2).toUpperCase()}
-                          </span>
-                        )}
+                        <PartnerLogo logoUrl={partner.logoUrl} name={partner.name} />
                       </div>
                       <div>
                         <p className="font-semibold text-foreground">{partner.name}</p>
@@ -387,29 +396,31 @@ export default function AdminPartnersPage() {
                     <p className="font-medium text-foreground">{partner.signerName || "—"}</p>
                     <p className="text-xs text-muted-foreground">{partner.signerTitle}</p>
                   </Table.Cell>
-                  <Table.Cell className="text-right space-x-2">
-                    <Button
-                      variant="outlined"
-                      size="sm"
-                      onClick={() => router.push(`/partners/${partner.slug}`)}
-                      title="Xem trang công khai"
-                    >
-                      <Eye className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
-                      Xem
-                    </Button>
-                    <Button variant="outlined" size="sm" onClick={() => handleOpenEdit(partner)}>
-                      <Pencil className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
-                      Sửa
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
-                      size="sm"
-                      onClick={() => setDeletingPartnerId(partner.id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
-                      Xoá
-                    </Button>
+                  <Table.Cell className="text-right">
+                    <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                      <Button
+                        variant="outlined"
+                        size="sm"
+                        onClick={() => router.push(`/partners/${partner.slug}`)}
+                        title="Xem trang công khai"
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+                        Xem
+                      </Button>
+                      <Button variant="outlined" size="sm" onClick={() => handleOpenEdit(partner)}>
+                        <Pencil className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+                        Sửa
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
+                        size="sm"
+                        onClick={() => setDeletingPartnerId(partner.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+                        Xoá
+                      </Button>
+                    </div>
                   </Table.Cell>
                 </Table.Row>
               ))}

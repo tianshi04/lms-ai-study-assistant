@@ -1124,7 +1124,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <span className="text-3xl font-black text-warning">
                     {course.averageRating.toFixed(1)}
                   </span>
-                  <div>
+                  <div className="flex flex-col gap-0.5">
                     <RatingStars rating={course.averageRating} size="md" />
                     <span className="text-xs text-muted-foreground font-medium">
                       {course.reviewCount} {"nhận xét"}

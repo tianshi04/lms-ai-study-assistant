@@ -492,7 +492,7 @@ function CoursePlayerContent() {
         );
       } else if (!isPaidAccess && activeWeekIndex > 0) {
         setLockNotice(
-          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký LMS AI Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
         );
       } else {
         setLockNotice(
@@ -732,7 +732,7 @@ function CoursePlayerContent() {
         );
       } else if (!isPaidAccess && nextWeekIndex > 0) {
         setLockNotice(
-          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký LMS AI Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
         );
       } else {
         setLockNotice(
@@ -868,25 +868,21 @@ function CoursePlayerContent() {
               aria-label="Lộ trình khóa học"
             >
               {/* Collapsed Icon Strip Trigger (Desktop only) */}
-              <div
-                className={`hidden lg:block absolute top-2 left-2 transition-all duration-300 ease-m3-emphasized z-10 ${
-                  isSidebarOpen
-                    ? "opacity-0 pointer-events-none scale-90 invisible"
-                    : "opacity-100 scale-100 visible"
-                }`}
-              >
-                <Button
-                  type="button"
-                  variant="text"
-                  iconOnly
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                  title="Mở Lộ trình Bài học"
-                  aria-label="Mở Lộ trình Bài học"
-                >
-                  <Menu className="w-5 h-5" aria-hidden="true" />
-                </Button>
-              </div>
+              {!isSidebarOpen && (
+                <div className="hidden lg:block absolute top-2 left-2 z-10">
+                  <Button
+                    type="button"
+                    variant="text"
+                    iconOnly
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                    title="Mở Lộ trình Bài học"
+                    aria-label="Mở Lộ trình Bài học"
+                  >
+                    <Menu className="w-5 h-5" aria-hidden="true" />
+                  </Button>
+                </div>
+              )}
 
               {/* Expanded Full Drawer Content - Isolated Subcomponent to prevent parent re-renders */}
               <CourseSyllabusDrawer

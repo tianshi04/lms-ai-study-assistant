@@ -28,6 +28,30 @@ import { Dialog } from "@/components/ui/Dialog";
 
 const ITEMS_PER_PAGE = 6;
 
+function PartnerLogoBox({ logoUrl, name }: { logoUrl?: string; name: string }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (logoUrl && !imgError) {
+    return (
+      <Image
+        src={logoUrl}
+        alt={name}
+        width={64}
+        height={64}
+        onError={() => setImgError(true)}
+        className="object-contain max-h-full"
+        unoptimized
+      />
+    );
+  }
+
+  return (
+    <span className="font-extrabold text-2xl text-primary">
+      {name.substring(0, 2).toUpperCase()}
+    </span>
+  );
+}
+
 export function PartnersCatalogClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -251,20 +275,7 @@ export function PartnersCatalogClient() {
                       <div className="px-6 pt-0 pb-4 relative">
                         {/* Logo Box */}
                         <div className="w-20 h-20 -mt-12 rounded-2xl bg-card border-2 border-border shadow-md p-2 flex items-center justify-center overflow-hidden mb-4 shrink-0 group-hover:scale-105 transition-transform duration-300">
-                          {partner.logoUrl ? (
-                            <Image
-                              src={partner.logoUrl}
-                              alt={partner.name}
-                              width={64}
-                              height={64}
-                              className="object-contain max-h-full"
-                              unoptimized
-                            />
-                          ) : (
-                            <span className="font-extrabold text-2xl text-primary">
-                              {partner.name.substring(0, 2).toUpperCase()}
-                            </span>
-                          )}
+                          <PartnerLogoBox logoUrl={partner.logoUrl} name={partner.name} />
                         </div>
 
                         <div className="flex items-center justify-between gap-2">

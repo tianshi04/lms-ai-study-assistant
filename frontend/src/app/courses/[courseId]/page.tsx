@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { cacheLife } from "next/cache";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseDetailClient } from "./CourseDetailClient";
@@ -8,6 +9,8 @@ import { CourseDetailClient } from "./CourseDetailClient";
  * Metadata retrieval for Course Detail page.
  */
 async function getCourseMetadata(courseId: string): Promise<Metadata> {
+  "use cache";
+  cacheLife("hours");
   try {
     const client = getPublicRpcServerClient(CatalogService);
     const res = await client.getCourseDetail({ idOrSlug: courseId });
@@ -18,7 +21,7 @@ async function getCourseMetadata(courseId: string): Promise<Metadata> {
       };
     }
     return {
-      title: `${res.course.title} - LMS AI Study Assistant`,
+      title: res.course.title,
       description: res.course.description
         ? res.course.description.slice(0, 160)
         : "Khóa học chất lượng cao trên LMS AI Study Assistant",

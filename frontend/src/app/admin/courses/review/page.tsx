@@ -140,7 +140,7 @@ export default function CourseReviewerPortalPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground border border-border text-xs font-semibold uppercase tracking-wider mb-2">
-              {"Course Reviewer Portal"}
+              {"Cổng Kiểm duyệt Khóa học"}
             </div>
             <h1 className="text-3xl font-extrabold text-foreground text-balance">
               {"Kiểm duyệt & Phê duyệt Phát hành Khóa học"}
@@ -181,12 +181,10 @@ export default function CourseReviewerPortalPage() {
           className="mb-6"
         >
           <Tabs.List className="overflow-x-auto pb-1">
-            <Tabs.Tab value={CourseStatus.PENDING_REVIEW}>
-              {"Chờ kiểm duyệt (PENDING_REVIEW)"}
-            </Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.PUBLISHED}>{"Đã xuất bản (PUBLISHED)"}</Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.DRAFT}>{"Bản nháp (DRAFT)"}</Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.REJECTED}>{"Từ chối (REJECTED)"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.PENDING_REVIEW}>{"Chờ kiểm duyệt"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.PUBLISHED}>{"Đã xuất bản"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.DRAFT}>{"Bản nháp"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.REJECTED}>{"Từ chối"}</Tabs.Tab>
           </Tabs.List>
         </Tabs.Root>
 

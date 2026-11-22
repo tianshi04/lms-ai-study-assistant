@@ -49,7 +49,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { certId } = await params;
   return {
-    title: `Xác minh Chứng chỉ #${certId} | LMS AI Platform`,
+    title: `Xác minh Chứng chỉ #${certId}`,
     description: `Tra cứu tính hợp lệ và chữ ký số bảo chứng cho chứng chỉ #${certId}.`,
   };
 }

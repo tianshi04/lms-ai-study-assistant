@@ -34,6 +34,7 @@ export default function InstructorProfilePage() {
 
   const [titleInput, setTitleInput] = useState<string | null>(null);
   const [signatureInput, setSignatureInput] = useState<string | null>(null);
+  const [signatureImgError, setSignatureImgError] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -185,7 +186,7 @@ export default function InstructorProfilePage() {
               placeholder="VD: PGS.TS, GS.TS, Giảng viên chính, Thạc sĩ Khoa học Máy tính"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Chức danh này sẽ xuất hiện bên dưới họ tên của bạn trên tất me Giấy chứng nhận hoàn
+              Chức danh này sẽ xuất hiện bên dưới họ tên của bạn trên tất cả Giấy chứng nhận hoàn
               thành khóa học.
             </p>
           </div>
@@ -201,7 +202,10 @@ export default function InstructorProfilePage() {
               id="signatureImageUrl"
               type="text"
               value={signatureImageUrl}
-              onChange={(e) => setSignatureInput(e.target.value)}
+              onChange={(e) => {
+                setSignatureInput(e.target.value);
+                setSignatureImgError(false);
+              }}
               placeholder="https://example.com/signature.png"
             />
             <p className="text-xs text-muted-foreground mt-1">
@@ -217,20 +221,28 @@ export default function InstructorProfilePage() {
                 Xem trước Chữ ký hiển thị trên Giấy chứng nhận:
               </p>
               <div className="flex items-center space-x-6">
-                <div className="p-3 bg-card rounded-xl border border-border inline-block">
-                  <Image
-                    src={signatureImageUrl}
-                    alt="Mẫu chữ ký"
-                    width={140}
-                    height={56}
-                    className="h-14 object-contain"
-                    unoptimized
-                  />
+                <div className="p-3 bg-card rounded-xl border border-border inline-flex items-center justify-center min-w-[140px] min-h-[56px]">
+                  {signatureImgError ? (
+                    <span className="text-xs text-muted-foreground px-2 text-center">
+                      Không thể tải ảnh chữ ký
+                    </span>
+                  ) : (
+                    <Image
+                      src={signatureImageUrl}
+                      alt="Mẫu chữ ký"
+                      width={140}
+                      height={56}
+                      className="h-14 object-contain"
+                      onError={() => setSignatureImgError(true)}
+                      unoptimized
+                    />
+                  )}
                 </div>
-                <div>
+                <div className="space-y-0.5">
                   <p className="font-bold text-foreground text-base font-serif italic">
-                    {title ? `${title} ${userProfile?.fullName}` : userProfile?.fullName}
+                    {userProfile?.fullName}
                   </p>
+                  {title && <p className="text-xs text-muted-foreground font-medium">{title}</p>}
                   <p className="text-xs text-muted-foreground">Giảng viên Xác nhận</p>
                 </div>
               </div>

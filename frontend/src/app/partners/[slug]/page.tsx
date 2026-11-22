@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,6 +16,7 @@ function PartnerPublicContent() {
   const params = useParams();
   const router = useRouter();
   const slug = (params?.slug as string) || "";
+  const [logoError, setLogoError] = useState(false);
 
   const { data: partners = [], isLoading: partnersLoading } = usePartnersQuery();
   const { data: courses = [], isLoading: coursesLoading } = useCoursesQuery();
@@ -93,12 +94,13 @@ function PartnerPublicContent() {
             <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6">
               {/* Partner Logo */}
               <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-card p-3 shadow-xl border-4 border-border flex items-center justify-center overflow-hidden shrink-0">
-                {partner.logoUrl ? (
+                {partner.logoUrl && !logoError ? (
                   <Image
                     src={partner.logoUrl}
                     alt={partner.name}
                     width={120}
                     height={120}
+                    onError={() => setLogoError(true)}
                     className="object-contain max-h-full"
                     unoptimized
                   />

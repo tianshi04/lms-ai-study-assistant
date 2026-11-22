@@ -50,6 +50,36 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
   const orgName =
     partner?.name || (slug === "partner_community" ? "Coursera Project Network" : slug);
 
+  useEffect(() => {
+    if (partner) {
+      setName(partner.name || "");
+      setDescription(partner.description || "");
+      setLogoUrl(partner.logoUrl || "");
+      setBannerUrl(partner.bannerUrl || "");
+      setWebsiteUrl(partner.websiteUrl || "");
+      setAllowedDomainsStr((partner.allowedDomains || []).join(", "));
+    } else if (slug === "partner_community") {
+      setName("Coursera Project Network");
+      setDescription("Tổ chức Đối tác bảo chứng mặc định toàn sàn.");
+    }
+  }, [partner, slug]);
+
+  const updateMutation = useUpdatePartnerMutation({
+    onSuccess: () => {
+      setFeedback({
+        type: "success",
+        text: "Đã cập nhật thông tin Tổ chức thành công!",
+      });
+      refetch();
+    },
+    onError: (err) => {
+      setFeedback({
+        type: "error",
+        text: mapConnectError(err, "Không thể cập nhật thông tin Tổ chức."),
+      });
+    },
+  });
+
   if (!isOwnerOrAdmin) {
     return (
       <div className="w-full flex-1 bg-background min-h-screen">
@@ -85,36 +115,6 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (partner) {
-      setName(partner.name || "");
-      setDescription(partner.description || "");
-      setLogoUrl(partner.logoUrl || "");
-      setBannerUrl(partner.bannerUrl || "");
-      setWebsiteUrl(partner.websiteUrl || "");
-      setAllowedDomainsStr((partner.allowedDomains || []).join(", "));
-    } else if (slug === "partner_community") {
-      setName("Coursera Project Network");
-      setDescription("Tổ chức Đối tác bảo chứng mặc định toàn sàn.");
-    }
-  }, [partner, slug]);
-
-  const updateMutation = useUpdatePartnerMutation({
-    onSuccess: () => {
-      setFeedback({
-        type: "success",
-        text: "Đã cập nhật thông tin Tổ chức thành công!",
-      });
-      refetch();
-    },
-    onError: (err) => {
-      setFeedback({
-        type: "error",
-        text: mapConnectError(err, "Không thể cập nhật thông tin Tổ chức."),
-      });
-    },
-  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,8 +165,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             <div>
               <h2 className="text-xl font-bold text-foreground">Cài đặt & Thương hiệu Tổ chức</h2>
               <p className="text-xs text-muted-foreground">
-                Cập nhật nhận diện thương hiệu, Logo, Website và Tên miền email bảo chứng
-                (`allowed_domains`).
+                Cập nhật nhận diện thương hiệu, Logo, Website và tên miền email được phép.
               </p>
             </div>
           </div>

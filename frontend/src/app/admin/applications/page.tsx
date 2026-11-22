@@ -87,7 +87,7 @@ export default function AdminInstructorApplicationsPage() {
               <Link href="/admin/dashboard" className="hover:underline">
                 Admin Portal
               </Link>
-              <span>/</span>
+              <span className="mx-1.5">/</span>
               <span className="font-semibold text-foreground">Đơn Giảng viên</span>
             </PageHeader.Breadcrumbs>
             <PageHeader.Title>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeader.Title>
