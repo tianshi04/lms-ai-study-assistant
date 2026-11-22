@@ -77,8 +77,8 @@ export function Navbar() {
           <BrandLogo size="md" />
 
           {/* Navigation Links (Desktop) */}
-          <NavigationMenu.Root className="hidden md:flex items-center">
-            <NavigationMenu.List className="gap-2">
+          <NavigationMenu.Root className="hidden lg:flex items-center">
+            <NavigationMenu.List className="gap-1.5 xl:gap-2 whitespace-nowrap">
               <NavigationMenu.Item>
                 <Link href="/courses" className={getLinkClasses("/courses")}>
                   {"Khóa học"}
@@ -177,7 +177,7 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden rounded-xl text-muted-foreground hover:bg-muted"
+            className="lg:hidden rounded-xl text-muted-foreground hover:bg-muted"
             aria-label={mobileMenuOpen ? "Đóng menu điều hướng" : "Mở menu điều hướng"}
           >
             {mobileMenuOpen ? (
@@ -193,7 +193,7 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div
           id="mobile-navigation-menu"
-          className="md:hidden border-t border-border bg-card/95 backdrop-blur-lg px-4 py-4 space-y-1.5 animate-fade-in"
+          className="lg:hidden border-t border-border bg-card/95 backdrop-blur-lg px-4 py-4 space-y-1.5 animate-fade-in"
         >
           <Link
             href="/courses"

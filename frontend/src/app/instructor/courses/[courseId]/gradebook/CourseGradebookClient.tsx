@@ -304,7 +304,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
             </p>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <Button
               type="button"
               variant="outlined"

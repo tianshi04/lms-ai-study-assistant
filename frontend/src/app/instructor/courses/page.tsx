@@ -369,15 +369,18 @@ export default function InstructorCoursesPage() {
 
       {/* Navigation Tabs (Courses vs Specializations) */}
       <Tabs defaultValue="courses" className="space-y-6">
-        <Tabs.List className="border-b border-border">
-          <Tabs.Trigger value="courses" className="gap-2 cursor-pointer">
+        <Tabs.List className="border-b border-border overflow-x-auto max-w-full flex-nowrap">
+          <Tabs.Trigger value="courses" className="gap-2 cursor-pointer whitespace-nowrap shrink-0">
             <BookOpen className="w-4 h-4" aria-hidden="true" />
             <span>{"Khóa học đơn lẻ"}</span>
             <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-muted text-muted-foreground">
               {courses.length}
             </span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="specializations" className="gap-2 cursor-pointer">
+          <Tabs.Trigger
+            value="specializations"
+            className="gap-2 cursor-pointer whitespace-nowrap shrink-0"
+          >
             <Layers className="w-4 h-4" aria-hidden="true" />
             <span>{"Chuyên ngành (Specializations)"}</span>
             <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">

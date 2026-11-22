@@ -288,7 +288,7 @@ export default function AdminPartnersPage() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-w-0 overflow-x-hidden">
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-border gap-4">
         <div>

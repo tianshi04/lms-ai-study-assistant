@@ -35,12 +35,12 @@ export const brandLogoIconVariants = cva("", {
   },
 });
 
-export const brandLogoTextVariants = cva("tracking-tight text-foreground", {
+export const brandLogoTextVariants = cva("tracking-tight text-foreground whitespace-nowrap", {
   variants: {
     size: {
-      sm: "text-base font-bold",
-      md: "text-lg font-extrabold",
-      lg: "text-2xl font-black",
+      sm: "text-sm sm:text-base font-bold",
+      md: "text-base sm:text-lg font-extrabold",
+      lg: "text-xl sm:text-2xl font-black",
     },
   },
   defaultVariants: {

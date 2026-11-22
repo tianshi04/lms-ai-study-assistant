@@ -91,7 +91,7 @@ function PartnerPublicContent() {
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative -mt-20 sm:-mt-24 pb-8">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6">
               {/* Partner Logo */}
               <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-card p-3 shadow-xl border-4 border-border flex items-center justify-center overflow-hidden shrink-0">
@@ -136,7 +136,7 @@ function PartnerPublicContent() {
             </div>
 
             {/* Quick Stat Pill */}
-            <div className="bg-card border border-border rounded-2xl p-4 flex items-center space-x-6 text-foreground shrink-0 shadow-xs">
+            <div className="bg-card border border-border rounded-2xl p-4 flex flex-wrap items-center gap-4 sm:gap-6 text-foreground shrink-0 max-w-full shadow-xs">
               <div>
                 <p className="text-2xl font-black">{partnerCourses.length}</p>
                 <p className="text-xs text-muted-foreground">Khóa học phát hành</p>

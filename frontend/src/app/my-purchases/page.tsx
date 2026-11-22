@@ -383,7 +383,7 @@ function MyPurchasesContent() {
       </div>
 
       {/* Filter Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border mb-6">
+      <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border mb-6">
         {[
           { label: `Tất cả đơn hàng (${totalOrders})`, value: "ALL" },
           { label: `Đã mở khóa (${completedCount})`, value: "COMPLETED" },

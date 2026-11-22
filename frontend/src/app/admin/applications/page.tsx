@@ -120,7 +120,7 @@ export default function AdminInstructorApplicationsPage() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border">
+        <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border">
           {[
             { label: "Tất cả đơn", value: "" },
             { label: "Chờ thẩm định", value: "PENDING_REVIEW" },

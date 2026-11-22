@@ -893,9 +893,9 @@ function ForumPageContent() {
                   }`}
                 >
                   {/* Thread Header */}
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-2 min-w-0">
                         {isTargetThread && (
                           <Badge variant="primary" className="animate-pulse">
                             📌 Bài thảo luận mục tiêu
@@ -918,7 +918,7 @@ function ForumPageContent() {
                           return (
                             <Badge
                               variant="secondary"
-                              className="text-[11px] font-semibold cursor-pointer hover:opacity-85 transition-opacity"
+                              className="text-[11px] font-semibold cursor-pointer hover:opacity-85 transition-opacity max-w-full truncate"
                               onClick={() => setSelectedCourseId(thread.courseId)}
                               title={`Lọc chỉ xem khóa học: ${courseTitle}`}
                             >

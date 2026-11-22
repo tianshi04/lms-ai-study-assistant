@@ -41,13 +41,13 @@ export function LearningItemRow({
     <div
       data-item-id={item.id}
       style={{ touchAction: "none" }}
-      className={`flex items-center justify-between p-2.5 rounded-xl bg-card border ${
+      className={`flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-card border ${
         activeDraggingItemId === item.id
           ? "border-primary shadow-lg opacity-100 scale-[1.005]"
           : "border-border hover:border-input"
       } text-xs shadow-2xs transition-shadow`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         {isInstructorOrAdmin && (
           <div
             onPointerDown={(e) => onPointerDown(e, lessonId, item.id, index)}

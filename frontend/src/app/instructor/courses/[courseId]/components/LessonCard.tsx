@@ -66,8 +66,8 @@ export function LessonCard({
           : "border-border hover:border-input"
       } space-y-3 transition-shadow`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
           {isInstructorOrAdmin && (
             <div
               onPointerDown={(e) => onLessonPointerDown(e, weekId, lesson.id, index)}
@@ -90,7 +90,7 @@ export function LessonCard({
         </div>
 
         {isInstructorOrAdmin && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <Button
               type="button"
               variant="outlined"
