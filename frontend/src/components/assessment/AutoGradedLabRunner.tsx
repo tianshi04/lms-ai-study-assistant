@@ -21,6 +21,7 @@ import {
   BarChart3,
   ClipboardCheck,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import { Button } from "@/components/ui/Button";
@@ -262,7 +263,7 @@ export function AutoGradedLabRunner({
             >
               {isRunning ? (
                 <>
-                  <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                   <span>Đang chấm…</span>
                 </>
               ) : (

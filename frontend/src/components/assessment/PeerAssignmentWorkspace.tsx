@@ -5,7 +5,17 @@ import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Check, Lock, AlertTriangle, Info, Send, ExternalLink, Scale, Users } from "lucide-react";
+import {
+  Check,
+  Lock,
+  AlertTriangle,
+  Info,
+  Send,
+  ExternalLink,
+  Scale,
+  Users,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -360,7 +370,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             >
               {isSubmitting ? (
                 <>
-                  <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                   <span>Đang nộp…</span>
                 </>
               ) : (
