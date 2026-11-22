@@ -71,9 +71,9 @@ export function Navbar() {
       )}
     >
       {!userName && <GoogleOneTapPrompt />}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
         {/* Left Section: Brand Logo & Navigation Links */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 lg:gap-6 min-w-0">
           <BrandLogo size="md" />
 
           {/* Navigation Links (Desktop) */}
@@ -148,22 +148,22 @@ export function Navbar() {
         </div>
 
         {/* User Auth & Actions Section */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <ThemeToggle />
 
           {userName ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <StreakBadge className="hidden sm:inline-flex" />
               <NotificationBell />
               <UserDropdown />
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 variant="filled"
                 size="sm"
                 render={<Link href="/auth/login" />}
-                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20 px-4 py-2 whitespace-nowrap shrink-0"
+                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20 px-2.5 sm:px-4 py-2 whitespace-nowrap shrink-0"
               >
                 {"Đăng nhập"}
               </Button>
@@ -177,7 +177,7 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden rounded-xl text-muted-foreground hover:bg-muted"
+            className="lg:hidden rounded-xl text-muted-foreground hover:bg-muted shrink-0"
             aria-label={mobileMenuOpen ? "Đóng menu điều hướng" : "Mở menu điều hướng"}
           >
             {mobileMenuOpen ? (

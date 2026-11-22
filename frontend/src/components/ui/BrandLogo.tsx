@@ -39,7 +39,7 @@ export const brandLogoTextVariants = cva("tracking-tight text-foreground whitesp
   variants: {
     size: {
       sm: "text-sm sm:text-base font-bold",
-      md: "text-base sm:text-lg font-extrabold",
+      md: "text-sm sm:text-lg font-extrabold",
       lg: "text-xl sm:text-2xl font-black",
     },
   },

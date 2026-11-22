@@ -1,7 +1,6 @@
 "use client";
 
 import { use, useState, Suspense } from "react";
-import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useOrganizationMembersQuery,
@@ -23,6 +22,7 @@ import { Select } from "@/components/ui/Select";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Progress } from "@/components/ui/Progress";
+import { Avatar } from "@/components/ui/Avatar";
 import { Users, UserPlus, Trash2, Shield, CheckCircle2, Search, Copy, Check } from "lucide-react";
 
 function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
@@ -198,19 +198,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                     <Table.Row key={m.memberId || m.userId}>
                       <Table.Cell className="px-6 py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 text-xs">
-                            {m.avatarUrl ? (
-                              <Image
-                                src={m.avatarUrl}
-                                alt={m.fullName || "Avatar"}
-                                width={36}
-                                height={36}
-                                className="w-full h-full object-cover rounded-full"
-                              />
-                            ) : (
-                              m.fullName?.charAt(0).toUpperCase() || "U"
-                            )}
-                          </div>
+                          <Avatar name={m.fullName || "Thành viên"} src={m.avatarUrl} size="md" />
                           <span className="font-bold text-foreground">
                             {m.fullName || "Thành viên"}
                           </span>
