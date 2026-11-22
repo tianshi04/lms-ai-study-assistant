@@ -493,7 +493,7 @@ function PartnerSettingsForm({
               <Plus aria-hidden="true" className="w-4 h-4 text-success" />
               Thêm Người ký Đại diện mới
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
               <Input
                 type="text"
                 value={newSigName}

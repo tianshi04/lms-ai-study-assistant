@@ -204,7 +204,7 @@ export default function InstructorFinancialAidPage() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border mb-6">
+        <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border mb-6">
           {[
             { label: "Tất cả đơn", value: "ALL" },
             { label: "Chờ xét duyệt (Pending)", value: "PENDING" },

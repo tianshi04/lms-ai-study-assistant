@@ -151,7 +151,7 @@ export function InstructorOverviewView({
         <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
           <div className="space-y-3 pb-1">
             {/* Tabs biểu đồ toàn sàn */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
+            <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-muted/60 w-full sm:w-fit max-w-full">
               <button
                 type="button"
                 onClick={() => setAllChartTab("trend")}

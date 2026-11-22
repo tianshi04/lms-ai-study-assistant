@@ -369,7 +369,7 @@ export default function InstructorCoursesPage() {
 
       {/* Navigation Tabs (Courses vs Specializations) */}
       <Tabs defaultValue="courses" className="space-y-6">
-        <Tabs.List className="border-b border-border overflow-x-auto max-w-full flex-nowrap">
+        <Tabs.List className="border-b border-border flex-wrap max-w-full">
           <Tabs.Trigger value="courses" className="gap-2 cursor-pointer whitespace-nowrap shrink-0">
             <BookOpen className="w-4 h-4" aria-hidden="true" />
             <span>{"Khóa học đơn lẻ"}</span>
