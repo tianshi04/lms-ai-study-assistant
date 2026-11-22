@@ -44,6 +44,7 @@ from .repositories import (
     IInstructorApplicationRepository,
     IInvitationRepository,
     IOrganizationRepository,
+    IUserDirectory,
 )
 
 __all__ = [
@@ -69,6 +70,7 @@ __all__ = [
     "IInstructorApplicationRepository",
     "IInvitationRepository",
     "IOrganizationRepository",
+    "IUserDirectory",
     "InstructorApplication",
     "InstructorApplicationReviewedDomainEvent",
     "Invitation",
