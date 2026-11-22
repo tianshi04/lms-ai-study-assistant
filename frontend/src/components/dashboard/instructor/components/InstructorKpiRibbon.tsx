@@ -42,7 +42,7 @@ export function InstructorKpiRibbon({
               {loading ? "…" : `${totalStudents} SV`}
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+          <span className="text-[10px] text-muted-foreground block leading-snug mt-0.5">
             {viewMode === "all" ? "Tất cả các khóa phụ trách" : "Sinh viên trong lớp này"}
           </span>
         </div>
@@ -62,7 +62,7 @@ export function InstructorKpiRibbon({
               {loading ? "…" : `${Math.round(avgCompletionRate)}%`}
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+          <span className="text-[10px] text-muted-foreground block leading-snug mt-0.5">
             {avgCompletionRate >= 60 ? "Vượt ngưỡng cam kết sàn" : "Cần tăng cường hỗ trợ"}
           </span>
         </div>
@@ -77,13 +77,13 @@ export function InstructorKpiRibbon({
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate">
             Đánh giá trung bình
           </p>
-          <div className="flex items-baseline gap-2 mt-0.5">
-            <span className="text-xl sm:text-2xl font-black text-foreground font-mono leading-none">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-0.5">
+            <span className="text-xl sm:text-2xl font-black text-foreground font-mono leading-none whitespace-nowrap">
               {loading
                 ? "…"
                 : `${typeof avgRating === "number" ? avgRating.toFixed(1) : avgRating} ★`}
             </span>
-            <span className="text-[10px] font-bold text-muted-foreground">
+            <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
               {reviewCount} đánh giá
             </span>
           </div>
@@ -104,7 +104,7 @@ export function InstructorKpiRibbon({
               {loading ? "…" : `${totalCertificates} CC`}
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+          <span className="text-[10px] text-muted-foreground block leading-snug mt-0.5">
             {viewMode === "all" ? "Chứng chỉ số xác thực" : "Học viên đã tốt nghiệp"}
           </span>
         </div>

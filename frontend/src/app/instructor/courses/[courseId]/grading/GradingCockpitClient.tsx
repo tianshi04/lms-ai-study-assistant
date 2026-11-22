@@ -25,6 +25,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Table } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import { cn } from "@/lib/utils";
 import {
   useGradingQueueQuery,
@@ -45,6 +46,7 @@ interface GradingCockpitClientProps {
 type CockpitTab = GradingQueueStatus | "OUTLIER";
 
 export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
+  const isMobile = useIsMobile();
   const { toast } = useToast();
   const { userId: currentUserId } = useAuth();
   const searchParams = useSearchParams();
@@ -750,205 +752,204 @@ export function GradingCockpitClient({ courseId }: GradingCockpitClientProps) {
                 công bố kết quả.
               </p>
             </div>
+          ) : isMobile ? (
+            <div className="divide-y divide-border/60">
+              {queueItems.map((item) => {
+                const isItemOverdue = isSubmissionOverdue(item);
+                return (
+                  <div
+                    key={item.submissionId}
+                    className={cn("p-4 space-y-3", getRowBorderClass(item, isItemOverdue))}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Avatar className="w-9 h-9 border border-border shrink-0">
+                          <Avatar.Image src={item.studentAvatarUrl} alt={item.studentName} />
+                          <Avatar.Fallback className="bg-primary/10 text-primary text-xs font-bold">
+                            {item.studentName.slice(0, 2).toUpperCase()}
+                          </Avatar.Fallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <span className="font-bold text-foreground text-sm block truncate">
+                            {item.studentName}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3 shrink-0" aria-hidden="true" />
+                            {item.submittedAt
+                              ? new Date(item.submittedAt).toLocaleDateString("vi-VN", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                })
+                              : "N/A"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="shrink-0">
+                        {renderProvenanceBadge(
+                          item.gradeSource,
+                          resolveItemScore(item),
+                          item.status,
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="font-bold text-foreground text-sm leading-snug break-words">
+                      {item.itemTitle}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {renderStatusBadge(item, isItemOverdue)}
+                      <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                        <Users
+                          className="w-3 h-3 text-muted-foreground shrink-0"
+                          aria-hidden="true"
+                        />
+                        Tiến độ: {item.peerReviewsCount}/3 bạn học
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        onClick={() => handleViewSubmission(item)}
+                        className="h-8 text-xs font-semibold gap-1 px-2.5 border-border hover:bg-muted text-foreground"
+                      >
+                        <Eye
+                          className="w-3.5 h-3.5 text-muted-foreground shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span>Xem bài</span>
+                      </Button>
+                      {renderGradeActionButton(item, isItemOverdue)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <>
-              <div className="md:hidden divide-y divide-border/60">
-                {queueItems.map((item) => {
-                  const isItemOverdue = isSubmissionOverdue(item);
-                  return (
-                    <div
-                      key={item.submissionId}
-                      className={cn("p-4 space-y-3", getRowBorderClass(item, isItemOverdue))}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Avatar className="w-9 h-9 border border-border shrink-0">
-                            <Avatar.Image src={item.studentAvatarUrl} alt={item.studentName} />
-                            <Avatar.Fallback className="bg-primary/10 text-primary text-xs font-bold">
-                              {item.studentName.slice(0, 2).toUpperCase()}
-                            </Avatar.Fallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <span className="font-bold text-foreground text-sm block truncate">
-                              {item.studentName}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                              <Clock className="w-3 h-3 shrink-0" aria-hidden="true" />
-                              {item.submittedAt
-                                ? new Date(item.submittedAt).toLocaleDateString("vi-VN", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    day: "2-digit",
-                                    month: "2-digit",
-                                  })
-                                : "N/A"}
+            <div className="overflow-x-auto">
+              <Table>
+                <Table.Header className="bg-muted/30">
+                  <Table.Row>
+                    <Table.Head className="text-xs font-bold text-muted-foreground w-[220px] min-w-[200px] whitespace-nowrap">
+                      Sinh viên & Thời gian
+                    </Table.Head>
+                    <Table.Head className="text-xs font-bold text-muted-foreground min-w-[280px]">
+                      Bài tập
+                    </Table.Head>
+                    <Table.Head className="text-xs font-bold text-muted-foreground w-[210px] min-w-[200px] whitespace-nowrap">
+                      Trạng thái & Cảnh báo
+                    </Table.Head>
+                    <Table.Head className="text-xs font-bold text-muted-foreground w-[150px] min-w-[140px] whitespace-nowrap">
+                      Điểm hiện tại
+                    </Table.Head>
+                    <Table.Head className="text-xs font-bold text-muted-foreground text-right w-[260px] min-w-[260px] whitespace-nowrap">
+                      Thao tác
+                    </Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {queueItems.map((item) => {
+                    const isItemOverdue = isSubmissionOverdue(item);
+
+                    return (
+                      <Table.Row
+                        key={item.submissionId}
+                        className={cn(
+                          "hover:bg-muted/20 transition-all border-b border-border/60",
+                          getRowBorderClass(item, isItemOverdue),
+                        )}
+                      >
+                        {/* Student info */}
+                        <Table.Cell className="py-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-9 h-9 border border-border shrink-0">
+                              <Avatar.Image src={item.studentAvatarUrl} alt={item.studentName} />
+                              <Avatar.Fallback className="bg-primary/10 text-primary text-xs font-bold">
+                                {item.studentName.slice(0, 2).toUpperCase()}
+                              </Avatar.Fallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <span className="font-bold text-foreground text-sm block">
+                                {item.studentName}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                <Clock className="w-3 h-3 shrink-0" aria-hidden="true" />
+                                {item.submittedAt
+                                  ? new Date(item.submittedAt).toLocaleDateString("vi-VN", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                    })
+                                  : "N/A"}
+                              </span>
+                            </div>
+                          </div>
+                        </Table.Cell>
+
+                        {/* Item Title */}
+                        <Table.Cell className="py-3.5 min-w-[280px] whitespace-normal">
+                          <span
+                            className="font-bold text-foreground text-sm leading-snug block break-words"
+                            title={item.itemTitle}
+                          >
+                            {item.itemTitle}
+                          </span>
+                        </Table.Cell>
+
+                        {/* Badges / Warnings (Structured Uniform 2-Tier) */}
+                        <Table.Cell className="py-3.5 whitespace-nowrap">
+                          <div className="flex flex-col items-start gap-1">
+                            <div>{renderStatusBadge(item, isItemOverdue)}</div>
+                            <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                              <Users
+                                className="w-3 h-3 text-muted-foreground shrink-0"
+                                aria-hidden="true"
+                              />
+                              Tiến độ: {item.peerReviewsCount}/3 bạn học
                             </span>
                           </div>
-                        </div>
-                        <div className="shrink-0">
+                        </Table.Cell>
+
+                        {/* Current Score / Provenance */}
+                        <Table.Cell className="py-3.5 whitespace-nowrap">
                           {renderProvenanceBadge(
                             item.gradeSource,
                             resolveItemScore(item),
                             item.status,
                           )}
-                        </div>
-                      </div>
+                        </Table.Cell>
 
-                      <div className="font-bold text-foreground text-sm leading-snug break-words">
-                        {item.itemTitle}
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        {renderStatusBadge(item, isItemOverdue)}
-                        <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
-                          <Users
-                            className="w-3 h-3 text-muted-foreground shrink-0"
-                            aria-hidden="true"
-                          />
-                          Tiến độ: {item.peerReviewsCount}/3 bạn học
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-                        <Button
-                          type="button"
-                          variant="outlined"
-                          onClick={() => handleViewSubmission(item)}
-                          className="h-8 text-xs font-semibold gap-1 px-2.5 border-border hover:bg-muted text-foreground"
-                        >
-                          <Eye
-                            className="w-3.5 h-3.5 text-muted-foreground shrink-0"
-                            aria-hidden="true"
-                          />
-                          <span>Xem bài</span>
-                        </Button>
-                        {renderGradeActionButton(item, isItemOverdue)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="hidden md:block overflow-x-auto">
-                <Table>
-                  <Table.Header className="bg-muted/30">
-                    <Table.Row>
-                      <Table.Head className="text-xs font-bold text-muted-foreground w-[220px] min-w-[200px] whitespace-nowrap">
-                        Sinh viên & Thời gian
-                      </Table.Head>
-                      <Table.Head className="text-xs font-bold text-muted-foreground min-w-[280px]">
-                        Bài tập
-                      </Table.Head>
-                      <Table.Head className="text-xs font-bold text-muted-foreground w-[210px] min-w-[200px] whitespace-nowrap">
-                        Trạng thái & Cảnh báo
-                      </Table.Head>
-                      <Table.Head className="text-xs font-bold text-muted-foreground w-[150px] min-w-[140px] whitespace-nowrap">
-                        Điểm hiện tại
-                      </Table.Head>
-                      <Table.Head className="text-xs font-bold text-muted-foreground text-right w-[260px] min-w-[260px] whitespace-nowrap">
-                        Thao tác
-                      </Table.Head>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {queueItems.map((item) => {
-                      const isItemOverdue = isSubmissionOverdue(item);
-
-                      return (
-                        <Table.Row
-                          key={item.submissionId}
-                          className={cn(
-                            "hover:bg-muted/20 transition-all border-b border-border/60",
-                            getRowBorderClass(item, isItemOverdue),
-                          )}
-                        >
-                          {/* Student info */}
-                          <Table.Cell className="py-3.5 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="w-9 h-9 border border-border shrink-0">
-                                <Avatar.Image src={item.studentAvatarUrl} alt={item.studentName} />
-                                <Avatar.Fallback className="bg-primary/10 text-primary text-xs font-bold">
-                                  {item.studentName.slice(0, 2).toUpperCase()}
-                                </Avatar.Fallback>
-                              </Avatar>
-                              <div className="min-w-0">
-                                <span className="font-bold text-foreground text-sm block">
-                                  {item.studentName}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                                  <Clock className="w-3 h-3 shrink-0" aria-hidden="true" />
-                                  {item.submittedAt
-                                    ? new Date(item.submittedAt).toLocaleDateString("vi-VN", {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                        day: "2-digit",
-                                        month: "2-digit",
-                                      })
-                                    : "N/A"}
-                                </span>
-                              </div>
-                            </div>
-                          </Table.Cell>
-
-                          {/* Item Title */}
-                          <Table.Cell className="py-3.5 min-w-[280px] whitespace-normal">
-                            <span
-                              className="font-bold text-foreground text-sm leading-snug block break-words"
-                              title={item.itemTitle}
+                        {/* Two-Button Action Column: View (Safe) + Grade (Claim) - Fixed Width & Straight Alignment */}
+                        <Table.Cell className="py-3.5 text-right w-[260px] min-w-[260px] whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                            <Button
+                              type="button"
+                              variant="outlined"
+                              onClick={() => handleViewSubmission(item)}
+                              className="w-[90px] h-8 text-xs font-semibold gap-1 px-2 border-border hover:bg-muted text-foreground shrink-0 whitespace-nowrap justify-center"
+                              title="Xem chi tiết bài nộp và tiến độ chấm (không khóa giữ bài)"
                             >
-                              {item.itemTitle}
-                            </span>
-                          </Table.Cell>
+                              <Eye
+                                className="w-3.5 h-3.5 text-muted-foreground shrink-0"
+                                aria-hidden="true"
+                              />
+                              <span>Xem bài</span>
+                            </Button>
 
-                          {/* Badges / Warnings (Structured Uniform 2-Tier) */}
-                          <Table.Cell className="py-3.5 whitespace-nowrap">
-                            <div className="flex flex-col items-start gap-1">
-                              <div>{renderStatusBadge(item, isItemOverdue)}</div>
-                              <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
-                                <Users
-                                  className="w-3 h-3 text-muted-foreground shrink-0"
-                                  aria-hidden="true"
-                                />
-                                Tiến độ: {item.peerReviewsCount}/3 bạn học
-                              </span>
-                            </div>
-                          </Table.Cell>
-
-                          {/* Current Score / Provenance */}
-                          <Table.Cell className="py-3.5 whitespace-nowrap">
-                            {renderProvenanceBadge(
-                              item.gradeSource,
-                              resolveItemScore(item),
-                              item.status,
-                            )}
-                          </Table.Cell>
-
-                          {/* Two-Button Action Column: View (Safe) + Grade (Claim) - Fixed Width & Straight Alignment */}
-                          <Table.Cell className="py-3.5 text-right w-[260px] min-w-[260px] whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                              <Button
-                                type="button"
-                                variant="outlined"
-                                onClick={() => handleViewSubmission(item)}
-                                className="w-[90px] h-8 text-xs font-semibold gap-1 px-2 border-border hover:bg-muted text-foreground shrink-0 whitespace-nowrap justify-center"
-                                title="Xem chi tiết bài nộp và tiến độ chấm (không khóa giữ bài)"
-                              >
-                                <Eye
-                                  className="w-3.5 h-3.5 text-muted-foreground shrink-0"
-                                  aria-hidden="true"
-                                />
-                                <span>Xem bài</span>
-                              </Button>
-
-                              {renderGradeActionButton(item, isItemOverdue)}
-                            </div>
-                          </Table.Cell>
-                        </Table.Row>
-                      );
-                    })}
-                  </Table.Body>
-                </Table>
-              </div>
-            </>
+                            {renderGradeActionButton(item, isItemOverdue)}
+                          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })}
+                </Table.Body>
+              </Table>
+            </div>
           )}
         </div>
       </main>

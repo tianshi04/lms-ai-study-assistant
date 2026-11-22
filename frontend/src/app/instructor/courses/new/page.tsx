@@ -438,7 +438,12 @@ export default function NewCoursePage() {
                   placeholder="Nhập kỹ năng/thẻ (ví dụ: Python, React, Data Science) rồi nhấn Enter…"
                   className="flex-1 font-medium bg-card"
                 />
-                <Button type="button" variant="outlined" onClick={handleAddTag}>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={handleAddTag}
+                  className="whitespace-nowrap shrink-0"
+                >
                   Thêm thẻ
                 </Button>
               </div>

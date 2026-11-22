@@ -166,8 +166,8 @@ function PartnerPublicContent() {
 
             {/* Courses List */}
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <div className="min-w-0">
                   <h2 className="text-2xl font-bold text-foreground">
                     Các khóa học do {partner.name} phát hành
                   </h2>
@@ -176,7 +176,7 @@ function PartnerPublicContent() {
                     {partner.name}.
                   </p>
                 </div>
-                <span className="text-sm font-semibold text-primary">
+                <span className="text-sm font-semibold text-primary shrink-0 whitespace-nowrap">
                   {partnerCourses.length} Khóa học
                 </span>
               </div>

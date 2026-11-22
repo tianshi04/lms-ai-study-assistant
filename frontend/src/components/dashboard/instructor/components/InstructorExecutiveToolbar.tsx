@@ -60,7 +60,7 @@ export function InstructorExecutiveToolbar({
         </div>
 
         {/* Cụm phím tắt nghiệp vụ: Thành viên tổ chức + Tạo khóa học mới */}
-        <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
           <Button
             type="button"
             variant="outlined"
