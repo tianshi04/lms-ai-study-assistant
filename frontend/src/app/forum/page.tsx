@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Sparkles,
   MessageCircle,
+  Search,
 } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
@@ -65,9 +66,10 @@ function ForumPageContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Status Filter State (Interactive Discussion KPI Strip)
+  // Status Filter & Search State (Interactive Discussion KPI Strip)
   type ForumStatusFilter = "ALL" | "UNANSWERED" | "ANSWERED";
   const [statusFilter, setStatusFilter] = useState<ForumStatusFilter>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const forumKpis = useMemo(() => {
     const total = threads.length;
@@ -112,9 +114,9 @@ function ForumPageContent() {
   }, [threads]);
 
   const filteredThreads = useMemo(() => {
-    if (statusFilter === "ALL") return threads;
+    let base = threads;
     if (statusFilter === "UNANSWERED") {
-      return threads.filter((thread) => {
+      base = threads.filter((thread) => {
         const r = (thread.authorRole || "").toUpperCase();
         const isStaffThread =
           r.includes("INSTRUCTOR") ||
@@ -131,12 +133,16 @@ function ForumPageContent() {
         const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
         return !isStaffThread && !isAnnouncement && !thread.isStaffPinned && !hasStaffAnswer;
       });
+    } else if (statusFilter === "ANSWERED") {
+      base = threads.filter((thread) => thread.replies.some((reply) => reply.isStaffAnswer));
     }
-    if (statusFilter === "ANSWERED") {
-      return threads.filter((thread) => thread.replies.some((reply) => reply.isStaffAnswer));
-    }
-    return threads;
-  }, [threads, statusFilter]);
+
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter(
+      (t) => t.title.toLowerCase().includes(q) || t.content.toLowerCase().includes(q),
+    );
+  }, [threads, statusFilter, searchQuery]);
 
   const { userId: authUserId, isStaff: isStaffOrAdmin, isSuperAdmin, isAuthenticated } = useAuth();
   const currentUserId = authUserId || "";
@@ -728,34 +734,50 @@ function ForumPageContent() {
           shape="2xl"
           className="p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4"
         >
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-              {"Khóa học"}:
-            </span>
-            <Select
-              value={selectedCourseId}
-              onValueChange={(val) => {
-                if (val) setSelectedCourseId(val as string);
-              }}
-            >
-              <Select.Trigger className="w-full sm:w-[280px] text-xs font-semibold">
-                <Select.Value placeholder="Tất cả khóa học">
-                  {(() => {
-                    if (!selectedCourseId || selectedCourseId === "ALL") return "Tất cả khóa học";
-                    const c = courses.find((course) => course.id === selectedCourseId);
-                    return c ? c.title : "Tất cả khóa học";
-                  })()}
-                </Select.Value>
-              </Select.Trigger>
-              <Select.Content>
-                <Select.Item value="ALL">{"Tất cả khóa học"}</Select.Item>
-                {courses.map((c) => (
-                  <Select.Item key={c.id} value={c.id}>
-                    {c.title}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto flex-1">
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                aria-hidden="true"
+              />
+              <Input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm kiếm chủ đề thảo luận…"
+                aria-label="Tìm kiếm chủ đề thảo luận"
+                className="pl-9 text-xs h-9"
+              />
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                {"Khóa học"}:
+              </span>
+              <Select
+                value={selectedCourseId}
+                onValueChange={(val) => {
+                  if (val) setSelectedCourseId(val as string);
+                }}
+              >
+                <Select.Trigger className="w-full sm:w-[260px] text-xs font-semibold">
+                  <Select.Value placeholder="Tất cả khóa học">
+                    {(() => {
+                      if (!selectedCourseId || selectedCourseId === "ALL") return "Tất cả khóa học";
+                      const c = courses.find((course) => course.id === selectedCourseId);
+                      return c ? c.title : "Tất cả khóa học";
+                    })()}
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="ALL">{"Tất cả khóa học"}</Select.Item>
+                  {courses.map((c) => (
+                    <Select.Item key={c.id} value={c.id}>
+                      {c.title}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground">

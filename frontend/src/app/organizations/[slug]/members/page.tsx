@@ -222,13 +222,27 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                       <Table.Cell className="px-6 py-4">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                           <Shield className="w-3 h-3" aria-hidden="true" />
-                          {m.roleName || m.roleId || "Giảng viên"}
+                          {(() => {
+                            const raw = (m.roleId || m.roleName || "INSTRUCTOR").toUpperCase();
+                            if (raw === "OWNER") return "Chủ sở hữu";
+                            if (raw === "ADMIN") return "Quản trị viên";
+                            if (raw === "TA") return "Trợ giảng";
+                            if (raw === "LEARNER") return "Học viên";
+                            if (raw === "INSTRUCTOR") return "Giảng viên";
+                            return m.roleName || m.roleId || "Giảng viên";
+                          })()}
                         </span>
                       </Table.Cell>
                       <Table.Cell className="px-6 py-4">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success">
                           <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
-                          {m.status || "ACTIVE"}
+                          {(() => {
+                            const st = (m.status || "ACTIVE").toUpperCase();
+                            if (st === "ACTIVE") return "Hoạt động";
+                            if (st === "PENDING") return "Chờ duyệt";
+                            if (st === "SUSPENDED") return "Tạm khóa";
+                            return m.status || "Hoạt động";
+                          })()}
                         </span>
                       </Table.Cell>
                       {isOwnerOrAdmin && (
