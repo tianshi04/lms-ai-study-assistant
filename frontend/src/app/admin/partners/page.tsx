@@ -567,7 +567,7 @@ export default function AdminPartnersPage() {
                     htmlFor="signerName"
                     className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
                   >
-                    Họ tên người ký (signer_name)
+                    Họ tên người ký
                   </label>
                   <Input
                     id="signerName"
@@ -582,7 +582,7 @@ export default function AdminPartnersPage() {
                     htmlFor="signerTitle"
                     className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
                   >
-                    Chức danh (signer_title)
+                    Chức danh
                   </label>
                   <Input
                     id="signerTitle"
@@ -597,7 +597,7 @@ export default function AdminPartnersPage() {
                     htmlFor="signatureImg"
                     className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
                   >
-                    URL Ảnh chữ ký (signature_image_url)
+                    URL Ảnh chữ ký
                   </label>
                   <Input
                     id="signatureImg"

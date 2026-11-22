@@ -977,14 +977,14 @@ function CoursePlayerContent() {
                 isPanelOpen={isPanelOpen}
               />
 
-              {/* Fixed Bottom-Right Next Lesson Floating Action Button */}
+              {/* Bottom Next Lesson Action Bar (non-overlapping) */}
               {nextItem && !isQuizActive && (
-                <div className="absolute bottom-2.5 sm:bottom-3.5 right-3 sm:right-3.5 z-30 pointer-events-auto">
+                <div className="shrink-0 border-t border-outline-variant/60 bg-surface-container-lowest px-4 py-2 flex items-center justify-end">
                   <Button
                     type="button"
                     variant="tonal"
                     onClick={handleNextLesson}
-                    className="px-4 py-2 rounded-full text-xs font-semibold bg-surface-container-high/90 backdrop-blur-md text-on-surface hover:bg-primary-container hover:text-on-primary-container border border-outline-variant/60 hover:border-primary/40 transition-all shadow-sm hover:shadow-md hover:scale-102 active:scale-98 flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-1.5 rounded-full text-xs font-semibold bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container border border-outline-variant/60 hover:border-primary/40 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                     title={`Chuyển sang: ${nextItem.title}`}
                     aria-label={`Chuyển sang: ${nextItem.title}`}
                   >

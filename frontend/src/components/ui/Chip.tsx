@@ -52,7 +52,7 @@ export function Chip({
   trailingIcon,
   selected = false,
   onRemove,
-  removeAriaLabel = "Remove tag",
+  removeAriaLabel = "Xóa thẻ",
   children,
   render,
   onClick,

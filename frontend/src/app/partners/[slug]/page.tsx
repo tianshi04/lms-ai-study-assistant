@@ -17,6 +17,7 @@ function PartnerPublicContent() {
   const router = useRouter();
   const slug = (params?.slug as string) || "";
   const [logoError, setLogoError] = useState(false);
+  const [signatureError, setSignatureError] = useState(false);
 
   const { data: partners = [], isLoading: partnersLoading } = usePartnersQuery();
   const { data: courses = [], isLoading: coursesLoading } = useCoursesQuery();
@@ -263,7 +264,7 @@ function PartnerPublicContent() {
                   </div>
                 </div>
 
-                {partner.signatureImageUrl && (
+                {partner.signatureImageUrl && !signatureError && (
                   <div className="mt-4 pt-4 border-t border-border text-center">
                     <p className="text-xs text-muted-foreground mb-2">
                       Mẫu chữ ký điện tử đã được xác minh:
@@ -274,6 +275,7 @@ function PartnerPublicContent() {
                         alt="Chữ ký đại diện"
                         width={120}
                         height={48}
+                        onError={() => setSignatureError(true)}
                         className="h-12 object-contain"
                         unoptimized
                       />

@@ -1254,7 +1254,7 @@ function ForumPageContent() {
             </div>
 
             <Input
-              label="Title *"
+              label="Tiêu đề *"
               type="text"
               required
               value={newTitle}
@@ -1264,7 +1264,7 @@ function ForumPageContent() {
             />
 
             <Textarea
-              label="Content"
+              label="Nội dung"
               rows={4}
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
@@ -1307,7 +1307,7 @@ function ForumPageContent() {
           </Dialog.Header>
           <form onSubmit={handleUpdateThread} className="space-y-4 pt-2">
             <Input
-              label="Title *"
+              label="Tiêu đề *"
               type="text"
               required
               value={editThreadTitle}
@@ -1316,7 +1316,7 @@ function ForumPageContent() {
             />
 
             <Textarea
-              label="Content"
+              label="Nội dung"
               rows={4}
               value={editThreadContent}
               onChange={(e) => setEditThreadContent(e.target.value)}

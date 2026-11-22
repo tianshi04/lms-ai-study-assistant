@@ -482,7 +482,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   className="w-full py-3 px-6 rounded-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-semibold text-sm justify-center gap-2"
                 >
                   <CreditCard aria-hidden="true" className="w-4 h-4 text-primary" />
-                  <span>{"Nâng Cấp Paid Mode / Coursera Plus"}</span>
+                  <span>{"Nâng cấp LMS AI Plus"}</span>
                 </Button>
               </div>
             )}

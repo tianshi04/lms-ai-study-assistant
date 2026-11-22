@@ -28,6 +28,27 @@ import { Dialog } from "@/components/ui/Dialog";
 
 const ITEMS_PER_PAGE = 6;
 
+function PartnerBannerBox({ bannerUrl, name }: { bannerUrl?: string; name: string }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (bannerUrl && !imgError) {
+    return (
+      <Image
+        src={bannerUrl}
+        alt={name}
+        fill
+        onError={() => setImgError(true)}
+        className="object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
+        unoptimized
+      />
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(var(--primary-rgb,37,99,235),0.15),transparent)]" />
+  );
+}
+
 function PartnerLogoBox({ logoUrl, name }: { logoUrl?: string; name: string }) {
   const [imgError, setImgError] = useState(false);
 
@@ -257,17 +278,7 @@ export function PartnersCatalogClient() {
                     <div>
                       {/* Partner Banner Header */}
                       <div className="relative h-36 w-full bg-gradient-to-r from-primary/20 via-primary/10 to-muted overflow-hidden">
-                        {partner.bannerUrl ? (
-                          <Image
-                            src={partner.bannerUrl}
-                            alt={partner.name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(var(--primary-rgb,37,99,235),0.15),transparent)]" />
-                        )}
+                        <PartnerBannerBox bannerUrl={partner.bannerUrl} name={partner.name} />
                         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
                       </div>
 

@@ -224,7 +224,11 @@ export default function CourseReviewerPortalPage() {
                   </p>
                   <p className="text-xs font-medium text-muted-foreground">
                     {"Giảng viên phụ trách:"}{" "}
-                    <strong className="text-foreground">{course.instructorNames.join(", ")}</strong>
+                    <strong className="text-foreground">
+                      {course.instructorNames.length > 0
+                        ? course.instructorNames.join(", ")
+                        : "Chưa cập nhật"}
+                    </strong>
                   </p>
                   {course.rejectionReason && (
                     <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-xs text-destructive">
@@ -239,7 +243,7 @@ export default function CourseReviewerPortalPage() {
                     leadingIcon={<Eye className="w-4 h-4" aria-hidden="true" />}
                     render={<Link href={`/courses/${course.id}`} target="_blank" />}
                   >
-                    Xem trước (Student Mode)
+                    Xem trước (Chế độ Học viên)
                   </Chip>
 
                   {activeTab === CourseStatus.PENDING_REVIEW && (

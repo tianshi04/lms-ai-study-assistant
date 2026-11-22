@@ -145,7 +145,7 @@ export function Navbar() {
                 variant="filled"
                 size="sm"
                 render={<Link href="/auth/login" />}
-                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20 px-4 py-2"
+                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20 px-4 py-2 whitespace-nowrap shrink-0"
               >
                 {"Đăng nhập"}
               </Button>
