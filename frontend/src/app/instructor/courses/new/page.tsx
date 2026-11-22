@@ -146,7 +146,6 @@ export default function NewCoursePage() {
         description: description.trim(),
         partnerName: partnerDisplayName,
         partnerLogoUrl: selectedPartner?.logoUrl || "",
-        instructorNames: [userName],
         subject,
         level,
         financialAidEnabled,

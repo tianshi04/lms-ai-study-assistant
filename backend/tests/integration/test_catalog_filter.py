@@ -38,7 +38,6 @@ async def setup_test_courses(catalog_usecase: CatalogUseCase):
         description=f"A beginner course on AI {suffix}",
         partner_name="DeepLearning.AI",
         partner_logo_url="",
-        instructor_names=["Andrew Ng"],
         subject="AI_ML",
         level="BEGINNER",
     )
@@ -49,7 +48,6 @@ async def setup_test_courses(catalog_usecase: CatalogUseCase):
         description=f"Deep learning and beyond {suffix}",
         partner_name="DeepLearning.AI",
         partner_logo_url="",
-        instructor_names=["Andrew Ng"],
         subject="AI_ML",
         level="ADVANCED",
     )
@@ -60,7 +58,6 @@ async def setup_test_courses(catalog_usecase: CatalogUseCase):
         description=f"Learn HTML {suffix} and CSS",
         partner_name="Meta",
         partner_logo_url="",
-        instructor_names=["Jane Doe"],
         subject="WEB_DEVELOPMENT",
         level="BEGINNER",
     )

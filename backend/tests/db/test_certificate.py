@@ -261,7 +261,6 @@ async def test_get_verified_certificate_with_slug():
             description="Test cert slug resolution.",
             partner_name="Coursera",
             partner_logo_url="",
-            instructor_names=["Andrew"],
         )
 
         # Verify user identity & mark 100% progress

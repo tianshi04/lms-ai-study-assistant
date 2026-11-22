@@ -254,7 +254,6 @@ async def test_create_and_update_course_financial_aid_toggle(
         description="Desc",
         partner_name="Partner",
         partner_logo_url="",
-        instructor_names=["Instructor"],
         financial_aid_enabled=False,
     )
     assert created.financial_aid_enabled is False
@@ -265,7 +264,6 @@ async def test_create_and_update_course_financial_aid_toggle(
         description="Desc",
         partner_name="Partner",
         partner_logo_url="",
-        instructor_names=["Instructor"],
         financial_aid_enabled=True,
         current_user=instructor,
     )
@@ -858,7 +856,6 @@ async def test_create_course_with_foundational_course_ids(
         description="Advanced ML",
         partner_name="DeepLearning.AI",
         partner_logo_url="",
-        instructor_names=["Andrew Ng"],
         foundational_course_ids=["c-math-101", "c-stats-101"],
         current_user=user,
     )
@@ -898,7 +895,6 @@ async def test_update_course_with_foundational_course_ids(
         description="Desc",
         partner_name="Partner",
         partner_logo_url="",
-        instructor_names=[],
         foundational_course_ids=["c-python-101"],
         current_user=user,
     )
@@ -954,7 +950,6 @@ async def test_create_course_exceeds_max_foundational_courses(catalog_usecase):
             description="Desc",
             partner_name="Partner",
             partner_logo_url="",
-            instructor_names=[],
             foundational_course_ids=[f"fc-{i}" for i in range(11)],
             current_user=user,
         )
@@ -974,7 +969,6 @@ async def test_update_course_exceeds_max_foundational_courses(catalog_usecase):
             description="Desc",
             partner_name="Partner",
             partner_logo_url="",
-            instructor_names=[],
             foundational_course_ids=[f"fc-{i}" for i in range(11)],
             current_user=user,
         )

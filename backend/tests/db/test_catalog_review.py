@@ -17,7 +17,6 @@ async def test_submit_and_list_course_review():
             description="Learn how to build agentic AI systems.",
             partner_name="DeepLearning.AI",
             partner_logo_url="",
-            instructor_names=["Andrew Ng"],
         )
         assert course is not None
 
@@ -142,7 +141,6 @@ async def test_list_course_reviews_with_slug():
             description="Test slug resolution.",
             partner_name="DeepLearning.AI",
             partner_logo_url="",
-            instructor_names=["Test Instructor"],
         )
 
         await learning_uc.mark_item_complete("learner_slug_01", course.id, "item_1")

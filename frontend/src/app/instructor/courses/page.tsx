@@ -103,7 +103,6 @@ export default function InstructorCoursesPage() {
   const [partnerLogoUrl, setPartnerLogoUrl] = useState(
     "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
   );
-  const [instructorNames, setInstructorNames] = useState("Andrew Ng, Giảng viên AI");
   const [financialAidEnabled, setFinancialAidEnabled] = useState(true);
   const [foundationalCourses, setFoundationalCourses] = useState<Course[]>([]);
   const [showFoundationalPicker, setShowFoundationalPicker] = useState(false);
@@ -156,7 +155,6 @@ export default function InstructorCoursesPage() {
     setPartnerLogoUrl(
       "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
     );
-    setInstructorNames("Andrew Ng, Giảng viên AI");
     setFinancialAidEnabled(true);
     setFoundationalCourses([]);
     setShowModal(true);
@@ -174,7 +172,6 @@ export default function InstructorCoursesPage() {
     setDescription(course.description);
     setPartnerName(course.partnerName);
     setPartnerLogoUrl(course.partnerLogoUrl);
-    setInstructorNames(course.instructorNames.join(", "));
     setFinancialAidEnabled(course.financialAidEnabled);
 
     const fcIds = course.foundationalCourseIds || [];
@@ -228,10 +225,6 @@ export default function InstructorCoursesPage() {
 
     try {
       const client = getRpcClient(CatalogService);
-      const instructors = instructorNames
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
 
       if (editingCourseId) {
         // Edit Mode
@@ -241,7 +234,6 @@ export default function InstructorCoursesPage() {
           description,
           partnerName,
           partnerLogoUrl,
-          instructorNames: instructors,
           financialAidEnabled,
           foundationalCourseIds: foundationalCourses.map((fc) => fc.id),
         });
@@ -260,7 +252,6 @@ export default function InstructorCoursesPage() {
           description,
           partnerName,
           partnerLogoUrl,
-          instructorNames: instructors,
           financialAidEnabled,
           foundationalCourseIds: foundationalCourses.map((fc) => fc.id),
         });
@@ -639,13 +630,6 @@ export default function InstructorCoursesPage() {
                 />
               </div>
             </div>
-
-            <Input
-              label="Giảng Viên (cách nhau bởi dấu phẩy)"
-              type="text"
-              value={instructorNames}
-              onChange={(e) => setInstructorNames(e.target.value)}
-            />
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
