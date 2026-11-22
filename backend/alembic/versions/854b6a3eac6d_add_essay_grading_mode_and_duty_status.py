@@ -1,7 +1,7 @@
 """add_essay_grading_mode_and_duty_status
 
 Revision ID: 854b6a3eac6d
-Revises: 100e57c456ef
+Revises: 968d39b0bbd0
 Create Date: 2026-11-16 23:46:46.136739
 
 """
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "854b6a3eac6d"
-down_revision: str | Sequence[str] | None = "100e57c456ef"
+down_revision: str | Sequence[str] | None = "968d39b0bbd0"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
