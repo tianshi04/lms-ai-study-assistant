@@ -4,9 +4,20 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { BookOpen, CheckCircle2, Award, Check, Eye, Bookmark, Trash2 } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle2,
+  Award,
+  Check,
+  Eye,
+  Bookmark,
+  Trash2,
+  FileDown,
+} from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { IconButton } from "@/components/ui/IconButton";
+import { Button } from "@/components/ui/Button";
+import { useDownloadCertificatePdf } from "@/lib/hooks/useDownloadCertificatePdf";
 
 import { Tabs } from "@/components/ui/Tabs";
 import { Progress } from "@/components/ui/Progress";
@@ -105,6 +116,7 @@ export function MyLearningClient() {
 
   const unbookmarkMutation = useUnbookmarkCourseMutation();
   const toast = useToast();
+  const { downloadingCertId, downloadPdf } = useDownloadCertificatePdf();
 
   const handleRemoveBookmark = async (courseId: string, courseTitle?: string) => {
     try {
@@ -378,6 +390,19 @@ export function MyLearningClient() {
                       <Eye className="w-4 h-4" aria-hidden="true" />
                       <span>{"Xem chứng chỉ"}</span>
                     </Link>
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      size="sm"
+                      onClick={() => downloadPdf(cert.certificateId)}
+                      disabled={downloadingCertId === cert.certificateId}
+                      className="rounded-xl text-xs font-bold shrink-0"
+                    >
+                      <FileDown className="w-4 h-4" aria-hidden="true" />
+                      <span>
+                        {downloadingCertId === cert.certificateId ? "Đang tải…" : "Tải PDF"}
+                      </span>
+                    </Button>
                   </div>
                 </div>
               ))}
