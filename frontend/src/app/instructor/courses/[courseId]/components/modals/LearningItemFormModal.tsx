@@ -31,6 +31,7 @@ import {
   Terminal,
   Award,
   Pencil,
+  X,
 } from "lucide-react";
 
 /** Decode double-encoded JSON strings (e.g. '"[...]"' → '[...]') */
@@ -640,9 +641,10 @@ Output: 0.0
                                 variant="text"
                                 size="xs"
                                 onClick={() => removeTC(i)}
-                                className="text-destructive hover:text-destructive/80 text-xs font-medium px-2"
+                                className="text-destructive hover:text-destructive/80 text-xs font-medium px-2 gap-1"
                               >
-                                ✕ Xóa
+                                <X className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>Xóa</span>
                               </Button>
                             </div>
                           </div>

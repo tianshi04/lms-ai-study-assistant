@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { CourseStatus, type AdminCourseQualityMetric } from "@/gen/catalog/v1/catalog_pb";
+import { Star } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
@@ -126,8 +127,9 @@ const columns: ColumnDef<AdminCourseQualityMetric>[] = [
     header: "Đánh giá",
     cell: ({ row }) =>
       row.original.reviewCount > 0 ? (
-        <span className="font-mono">
-          {row.original.averageRating.toFixed(1)} ★{" "}
+        <span className="inline-flex items-center gap-1 font-mono">
+          <span>{row.original.averageRating.toFixed(1)}</span>
+          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" aria-hidden="true" />
           <span className="text-xs text-muted-foreground">
             ({formatNumber(row.original.reviewCount)})
           </span>
@@ -266,10 +268,18 @@ export function AdminCourseQualityTable() {
                       </div>
                       <div>
                         <span className="text-muted-foreground block">Đánh giá</span>
-                        <span className="font-mono font-bold text-foreground">
-                          {course.reviewCount > 0
-                            ? `${course.averageRating.toFixed(1)} ★`
-                            : "Chưa có"}
+                        <span className="inline-flex items-center gap-1 font-mono font-bold text-foreground">
+                          {course.reviewCount > 0 ? (
+                            <>
+                              <span>{course.averageRating.toFixed(1)}</span>
+                              <Star
+                                className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0"
+                                aria-hidden="true"
+                              />
+                            </>
+                          ) : (
+                            "Chưa có"
+                          )}
                         </span>
                       </div>
                       <div>

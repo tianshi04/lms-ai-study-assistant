@@ -11,7 +11,7 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
-import { Building2, Check, BookOpen, Trash2 } from "lucide-react";
+import { Building2, Check, BookOpen, Trash2, Globe, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Chip } from "@/components/ui/Chip";
@@ -282,23 +282,51 @@ export default function NewCoursePage() {
                     className="w-full"
                   >
                     <Select.Value placeholder="Chọn Partner / Tổ chức">
-                      {selectedOrgId === "partner_community"
-                        ? "🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"
-                        : (() => {
-                            const p = partners.find((p) => p.id === selectedOrgId);
-                            return p ? `🏛️ ${p.name} (${p.slug})` : selectedOrgId;
-                          })()}
+                      {selectedOrgId === "partner_community" ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Globe className="w-3.5 h-3.5 shrink-0 text-primary" aria-hidden="true" />
+                          <span>
+                            Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)
+                          </span>
+                        </span>
+                      ) : (
+                        (() => {
+                          const p = partners.find((p) => p.id === selectedOrgId);
+                          return p ? (
+                            <span className="inline-flex items-center gap-2">
+                              <Building2
+                                className="w-3.5 h-3.5 shrink-0 text-primary"
+                                aria-hidden="true"
+                              />
+                              <span>{`${p.name} (${p.slug})`}</span>
+                            </span>
+                          ) : (
+                            selectedOrgId
+                          );
+                        })()
+                      )}
                     </Select.Value>
                   </Select.Trigger>
                   <Select.Content>
                     <Select.Item value="partner_community">
-                      {"🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"}
+                      <span className="inline-flex items-center gap-2">
+                        <Globe className="w-3.5 h-3.5 shrink-0 text-primary" aria-hidden="true" />
+                        <span>
+                          Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)
+                        </span>
+                      </span>
                     </Select.Item>
                     {partners
                       .filter((p) => p.id !== "partner_community")
                       .map((p) => (
                         <Select.Item key={p.id} value={p.id}>
-                          {`🏛️ ${p.name} (${p.slug})`}
+                          <span className="inline-flex items-center gap-2">
+                            <Building2
+                              className="w-3.5 h-3.5 shrink-0 text-primary"
+                              aria-hidden="true"
+                            />
+                            <span>{`${p.name} (${p.slug})`}</span>
+                          </span>
                         </Select.Item>
                       ))}
                   </Select.Content>
@@ -592,9 +620,10 @@ export default function NewCoursePage() {
               type="submit"
               variant="filled"
               disabled={submitting}
-              className="px-6 py-2.5 rounded-xl text-xs font-bold"
+              className="px-6 py-2.5 rounded-xl text-xs font-bold gap-1.5"
             >
-              <span>🚀 Bắt Đầu Tạo Khóa Học</span>
+              <Rocket className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span>Bắt Đầu Tạo Khóa Học</span>
             </Button>
           </div>
         </Surface>

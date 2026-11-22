@@ -8,6 +8,7 @@ import {
 } from "@/gen/assessment/v1/assessment_pb";
 import type { AdminLowReviewAlert } from "@/gen/catalog/v1/catalog_pb";
 import { Badge } from "@/components/ui/Badge";
+import { Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Table } from "@/components/ui/Table";
 import { Tabs } from "@/components/ui/Tabs";
@@ -112,7 +113,15 @@ function LowReviewsTable({ reviews }: { reviews: AdminLowReviewAlert[] }) {
           <Table.Row key={review.reviewId}>
             <Table.Cell className="font-bold">{review.courseTitle}</Table.Cell>
             <Table.Cell>{review.userName || "Ẩn danh"}</Table.Cell>
-            <Table.Cell className="font-mono text-warning">{review.ratingStars} ★</Table.Cell>
+            <Table.Cell className="font-mono text-warning">
+              <span className="inline-flex items-center gap-1">
+                <span>{review.ratingStars}</span>
+                <Star
+                  className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0"
+                  aria-hidden="true"
+                />
+              </span>
+            </Table.Cell>
             <Table.Cell className="max-w-sm text-xs">{review.commentText || "—"}</Table.Cell>
             <Table.Cell className="text-xs whitespace-nowrap">
               {formatDateTime(review.createdAt)}

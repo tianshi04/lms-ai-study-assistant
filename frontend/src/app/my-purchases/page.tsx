@@ -15,6 +15,7 @@ import {
   Calendar,
   Sparkles,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -265,7 +266,7 @@ function MyPurchasesContent() {
             aria-label="Đóng thông báo"
             className="shrink-0 text-muted-foreground hover:text-foreground"
           >
-            <span className="text-lg leading-none">✕</span>
+            <X className="w-4 h-4" aria-hidden="true" />
           </IconButton>
         </div>
       )}

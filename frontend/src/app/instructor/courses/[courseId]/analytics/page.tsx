@@ -4,7 +4,7 @@ import { useEffect, useState, use, Suspense } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
-import { Users } from "lucide-react";
+import { Users, Star } from "lucide-react";
 import { Surface } from "@/components/ui/Surface";
 import { Table } from "@/components/ui/Table";
 import { Progress } from "@/components/ui/Progress";
@@ -125,9 +125,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Đánh Giá Trung Bình
                 </span>
-                <div className="text-3xl font-black text-warning flex items-center gap-1">
+                <div className="text-3xl font-black text-warning flex items-center gap-1.5">
                   <span>{analytics.averageRating.toFixed(1)}</span>
-                  <span className="text-lg">★</span>
+                  <Star className="w-5 h-5 fill-amber-400 text-amber-400" aria-hidden="true" />
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Dựa trên {analytics.reviewCount} nhận xét

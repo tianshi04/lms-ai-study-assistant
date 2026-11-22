@@ -78,10 +78,18 @@ export function InstructorKpiRibbon({
             Đánh giá trung bình
           </p>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-0.5">
-            <span className="text-xl sm:text-2xl font-black text-foreground font-mono leading-none whitespace-nowrap">
-              {loading
-                ? "…"
-                : `${typeof avgRating === "number" ? avgRating.toFixed(1) : avgRating} ★`}
+            <span className="inline-flex items-center gap-1 text-xl sm:text-2xl font-black text-foreground font-mono leading-none whitespace-nowrap">
+              {loading ? (
+                "…"
+              ) : (
+                <>
+                  <span>{typeof avgRating === "number" ? avgRating.toFixed(1) : avgRating}</span>
+                  <Star
+                    className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0"
+                    aria-hidden="true"
+                  />
+                </>
+              )}
             </span>
             <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
               {reviewCount} đánh giá
