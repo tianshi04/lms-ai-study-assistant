@@ -17,11 +17,11 @@ export default function AssessmentsPage() {
   return (
     <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-6">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-border pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-info/10 text-info border border-info/20">
-              BÀI KIỂM TRẢ &amp; ĐÁNH GIÁ
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-info/10 text-info border border-info/20 whitespace-nowrap shrink-0">
+              BÀI KIỂM TRA &amp; ĐÁNH GIÁ
             </span>
             <span className="text-xs text-muted-foreground">
               Hệ thống Tự động Chấm điểm &amp; Đánh giá Ngang hàng
@@ -33,12 +33,12 @@ export default function AssessmentsPage() {
         </div>
 
         {/* Assessment Selector Tabs */}
-        <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-2xl border border-border shadow-inner">
+        <div className="flex flex-wrap items-center gap-1.5 bg-muted p-1.5 rounded-2xl border border-border shadow-inner shrink-0">
           <Button
             type="button"
             variant="text"
             onClick={() => setActiveAssessment("quiz")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
               activeAssessment === "quiz"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -51,7 +51,7 @@ export default function AssessmentsPage() {
             type="button"
             variant="text"
             onClick={() => setActiveAssessment("lab")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
               activeAssessment === "lab"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -64,7 +64,7 @@ export default function AssessmentsPage() {
             type="button"
             variant="text"
             onClick={() => setActiveAssessment("peer")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
               activeAssessment === "peer"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -81,7 +81,7 @@ export default function AssessmentsPage() {
           htmlFor="itemId"
           className="text-sm font-semibold text-muted-foreground whitespace-nowrap"
         >
-          Current Item ID:
+          Mã bài kiểm tra (Item ID):
         </label>
         <Input
           id="itemId"

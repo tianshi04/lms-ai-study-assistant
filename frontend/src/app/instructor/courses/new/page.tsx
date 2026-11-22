@@ -35,7 +35,7 @@ export default function NewCoursePage() {
 
   // User details
   const [userName, setUserName] = useState("Giảng viên Cá nhân");
-  const [userTitle, setUserTitle] = useState("AI Specialist");
+  const [userTitle, setUserTitle] = useState("");
   const [userAvatar, setUserAvatar] = useState(
     "https://api.dicebear.com/7.x/avataaars/svg?seed=instructor",
   );
@@ -206,9 +206,9 @@ export default function NewCoursePage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-3 py-1 text-xs font-bold uppercase tracking-wider">
-              Live Badge Preview
+              Xem trước thẻ khóa học
             </span>
-            <span className="text-xs text-muted-foreground font-mono">Bản nháp DRAFT</span>
+            <span className="text-xs text-muted-foreground font-mono">Bản nháp</span>
           </div>
 
           <div className="space-y-2">
@@ -216,7 +216,7 @@ export default function NewCoursePage() {
             <div className="flex items-center gap-2 text-xs text-primary font-semibold">
               <Building2 className="w-4 h-4 text-primary" aria-hidden="true" />
               <span>
-                Offered by{" "}
+                Cung cấp bởi{" "}
                 <strong className="text-foreground underline decoration-primary decoration-2">
                   {partnerDisplayName}
                 </strong>
@@ -239,10 +239,12 @@ export default function NewCoursePage() {
               className="w-10 h-10 rounded-full border border-border bg-muted object-cover"
             />
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Taught by</p>
+              <p className="text-xs text-muted-foreground font-medium">Giảng dạy bởi</p>
               <p className="text-sm font-bold text-foreground">
-                {userName}{" "}
-                <span className="text-xs font-normal text-muted-foreground">({userTitle})</span>
+                {userName}
+                {userTitle ? (
+                  <span className="text-xs font-normal text-muted-foreground"> ({userTitle})</span>
+                ) : null}
               </p>
             </div>
           </div>

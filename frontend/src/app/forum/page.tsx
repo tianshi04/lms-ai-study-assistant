@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Sparkles,
   MessageCircle,
+  Search,
 } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
@@ -65,9 +66,10 @@ function ForumPageContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Status Filter State (Interactive Discussion KPI Strip)
+  // Status Filter & Search State (Interactive Discussion KPI Strip)
   type ForumStatusFilter = "ALL" | "UNANSWERED" | "ANSWERED";
   const [statusFilter, setStatusFilter] = useState<ForumStatusFilter>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const forumKpis = useMemo(() => {
     const total = threads.length;
@@ -112,9 +114,9 @@ function ForumPageContent() {
   }, [threads]);
 
   const filteredThreads = useMemo(() => {
-    if (statusFilter === "ALL") return threads;
+    let base = threads;
     if (statusFilter === "UNANSWERED") {
-      return threads.filter((thread) => {
+      base = threads.filter((thread) => {
         const r = (thread.authorRole || "").toUpperCase();
         const isStaffThread =
           r.includes("INSTRUCTOR") ||
@@ -131,12 +133,16 @@ function ForumPageContent() {
         const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
         return !isStaffThread && !isAnnouncement && !hasStaffAnswer;
       });
+    } else if (statusFilter === "ANSWERED") {
+      base = threads.filter((thread) => thread.replies.some((reply) => reply.isStaffAnswer));
     }
-    if (statusFilter === "ANSWERED") {
-      return threads.filter((thread) => thread.replies.some((reply) => reply.isStaffAnswer));
-    }
-    return threads;
-  }, [threads, statusFilter]);
+
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter(
+      (t) => t.title.toLowerCase().includes(q) || t.content.toLowerCase().includes(q),
+    );
+  }, [threads, statusFilter, searchQuery]);
 
   const { userId: authUserId, isStaff: isStaffOrAdmin, isSuperAdmin, isAuthenticated } = useAuth();
   const currentUserId = authUserId || "";
@@ -600,7 +606,7 @@ function ForumPageContent() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
               <MessageSquare aria-hidden="true" className="w-3.5 h-3.5" />
-              Coursera Learning Forum
+              Diễn đàn Học tập LMS AI
             </div>
             <h1 className="text-3xl font-extrabold text-foreground text-balance">
               {"Diễn đàn Thảo luận Cộng đồng"}
@@ -728,34 +734,50 @@ function ForumPageContent() {
           shape="2xl"
           className="p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4"
         >
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-              {"Khóa học"}:
-            </span>
-            <Select
-              value={selectedCourseId}
-              onValueChange={(val) => {
-                if (val) setSelectedCourseId(val as string);
-              }}
-            >
-              <Select.Trigger className="w-full sm:w-[280px] text-xs font-semibold">
-                <Select.Value placeholder="Tất cả khóa học">
-                  {(() => {
-                    if (!selectedCourseId || selectedCourseId === "ALL") return "Tất cả khóa học";
-                    const c = courses.find((course) => course.id === selectedCourseId);
-                    return c ? c.title : "Tất cả khóa học";
-                  })()}
-                </Select.Value>
-              </Select.Trigger>
-              <Select.Content>
-                <Select.Item value="ALL">{"Tất cả khóa học"}</Select.Item>
-                {courses.map((c) => (
-                  <Select.Item key={c.id} value={c.id}>
-                    {c.title}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto flex-1">
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                aria-hidden="true"
+              />
+              <Input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm kiếm chủ đề thảo luận…"
+                aria-label="Tìm kiếm chủ đề thảo luận"
+                className="pl-9 text-xs h-9"
+              />
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                {"Khóa học"}:
+              </span>
+              <Select
+                value={selectedCourseId}
+                onValueChange={(val) => {
+                  if (val) setSelectedCourseId(val as string);
+                }}
+              >
+                <Select.Trigger className="w-full sm:w-[260px] text-xs font-semibold">
+                  <Select.Value placeholder="Tất cả khóa học">
+                    {(() => {
+                      if (!selectedCourseId || selectedCourseId === "ALL") return "Tất cả khóa học";
+                      const c = courses.find((course) => course.id === selectedCourseId);
+                      return c ? c.title : "Tất cả khóa học";
+                    })()}
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="ALL">{"Tất cả khóa học"}</Select.Item>
+                  {courses.map((c) => (
+                    <Select.Item key={c.id} value={c.id}>
+                      {c.title}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -867,13 +889,13 @@ function ForumPageContent() {
                   className={`p-6 transition-all duration-300 ${
                     isTargetThread
                       ? "border-primary ring-4 ring-primary/40 bg-primary/5 shadow-md"
-                      : "hover:border-accent-hover [content-visibility:auto] [contain-intrinsic-size:auto_240px]"
+                      : "hover:border-accent-hover"
                   }`}
                 >
                   {/* Thread Header */}
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-2 min-w-0">
                         {isTargetThread && (
                           <Badge variant="primary" className="animate-pulse">
                             📌 Bài thảo luận mục tiêu
@@ -896,7 +918,7 @@ function ForumPageContent() {
                           return (
                             <Badge
                               variant="secondary"
-                              className="text-[11px] font-semibold cursor-pointer hover:opacity-85 transition-opacity"
+                              className="text-[11px] font-semibold cursor-pointer hover:opacity-85 transition-opacity max-w-full truncate"
                               onClick={() => setSelectedCourseId(thread.courseId)}
                               title={`Lọc chỉ xem khóa học: ${courseTitle}`}
                             >
@@ -1254,7 +1276,7 @@ function ForumPageContent() {
             </div>
 
             <Input
-              label="Title *"
+              label="Tiêu đề *"
               type="text"
               required
               value={newTitle}
@@ -1264,7 +1286,7 @@ function ForumPageContent() {
             />
 
             <Textarea
-              label="Content"
+              label="Nội dung"
               rows={4}
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
@@ -1307,7 +1329,7 @@ function ForumPageContent() {
           </Dialog.Header>
           <form onSubmit={handleUpdateThread} className="space-y-4 pt-2">
             <Input
-              label="Title *"
+              label="Tiêu đề *"
               type="text"
               required
               value={editThreadTitle}
@@ -1316,7 +1338,7 @@ function ForumPageContent() {
             />
 
             <Textarea
-              label="Content"
+              label="Nội dung"
               rows={4}
               value={editThreadContent}
               onChange={(e) => setEditThreadContent(e.target.value)}

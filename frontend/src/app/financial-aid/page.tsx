@@ -150,7 +150,7 @@ function FinancialAidContent() {
       {/* Header Banner */}
       <div className="border-b border-border pb-6">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-2">
-          {"Chương trình Hỗ trợ Tài chính Coursera"}
+          {"Chương trình Hỗ trợ Tài chính"}
         </div>
         <h1 className="text-3xl font-extrabold text-foreground tracking-tight text-balance">
           {"Theo dõi Đơn xin Hỗ trợ Tài chính"}
@@ -196,7 +196,7 @@ function FinancialAidContent() {
             {myApps.map((app) => {
               const matchedCourse = courses.find((c) => c.id === app.courseId);
               const courseTitle = matchedCourse ? matchedCourse.title : app.courseId;
-              const partnerName = matchedCourse ? matchedCourse.partnerName : "Coursera AI Partner";
+              const partnerName = matchedCourse ? matchedCourse.partnerName : "Đối tác LMS AI";
 
               return (
                 <Button

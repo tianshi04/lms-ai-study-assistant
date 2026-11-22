@@ -100,7 +100,7 @@ export function OrgHeaderNav({
         </div>
 
         {/* Tab Navigation Links */}
-        <div className="flex items-center gap-1.5 p-1.5 bg-muted/50 border border-border rounded-2xl overflow-x-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-muted/50 border border-border rounded-2xl">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id || pathname === item.href;
@@ -109,7 +109,7 @@ export function OrgHeaderNav({
                 key={item.id}
                 href={item.href}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap",
+                  "px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap",
                   isActive
                     ? "bg-card text-primary shadow-xs border border-border"
                     : "text-muted-foreground hover:text-foreground hover:bg-card/50",

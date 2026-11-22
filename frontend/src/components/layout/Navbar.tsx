@@ -15,10 +15,13 @@ import { IconButton } from "@/components/ui/IconButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { NavigationMenu } from "@/components/ui/NavigationMenu";
 import { GoogleOneTapPrompt } from "@/components/auth/GoogleOneTapPrompt";
+import { useMyOrganizationsQuery } from "@/lib/query_hooks";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
+  const { data: myOrgs = [] } = useMyOrganizationsQuery();
+  const isOrgTA = myOrgs.some((o) => (o.roleInOrg || "").toUpperCase() === "TA");
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -68,14 +71,14 @@ export function Navbar() {
       )}
     >
       {!userName && <GoogleOneTapPrompt />}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
         {/* Left Section: Brand Logo & Navigation Links */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 lg:gap-6 min-w-0">
           <BrandLogo size="md" />
 
           {/* Navigation Links (Desktop) */}
-          <NavigationMenu.Root className="hidden md:flex items-center">
-            <NavigationMenu.List className="gap-2">
+          <NavigationMenu.Root className="hidden lg:flex items-center">
+            <NavigationMenu.List className="gap-1.5 xl:gap-2 whitespace-nowrap">
               <NavigationMenu.Item>
                 <Link href="/courses" className={getLinkClasses("/courses")}>
                   {"Khóa học"}
@@ -111,6 +114,21 @@ export function Navbar() {
                 </NavigationMenu.Item>
               )}
 
+              {/* Render TA Portal for organization Teaching Assistants */}
+              {isOrgTA && !isInstructorOrAdmin && (
+                <NavigationMenu.Item>
+                  <Link
+                    href="/ta/dashboard"
+                    className={`${getLinkClasses("/ta/dashboard")} flex items-center gap-1.5`}
+                  >
+                    <span>{"Trợ giảng"}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                      TA Portal
+                    </span>
+                  </Link>
+                </NavigationMenu.Item>
+              )}
+
               {/* Render Admin Enterprise Dashboard Link */}
               {isSuperAdmin && (
                 <NavigationMenu.Item>
@@ -130,22 +148,22 @@ export function Navbar() {
         </div>
 
         {/* User Auth & Actions Section */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <ThemeToggle />
 
           {userName ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <StreakBadge className="hidden sm:inline-flex" />
               <NotificationBell />
               <UserDropdown />
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 variant="filled"
                 size="sm"
                 render={<Link href="/auth/login" />}
-                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20 px-4 py-2"
+                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20 px-2.5 sm:px-4 py-2 whitespace-nowrap shrink-0"
               >
                 {"Đăng nhập"}
               </Button>
@@ -159,7 +177,7 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation-menu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden rounded-xl text-muted-foreground hover:bg-muted"
+            className="lg:hidden rounded-xl text-muted-foreground hover:bg-muted shrink-0"
             aria-label={mobileMenuOpen ? "Đóng menu điều hướng" : "Mở menu điều hướng"}
           >
             {mobileMenuOpen ? (
@@ -175,7 +193,7 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div
           id="mobile-navigation-menu"
-          className="md:hidden border-t border-border bg-card/95 backdrop-blur-lg px-4 py-4 space-y-1.5 animate-fade-in"
+          className="lg:hidden border-t border-border bg-card/95 backdrop-blur-lg px-4 py-4 space-y-1.5 animate-fade-in"
         >
           <Link
             href="/courses"
@@ -214,6 +232,21 @@ export function Navbar() {
               <span>{"Giảng Viên"}</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                 Portal
+              </span>
+            </Link>
+          )}
+          {isOrgTA && !isInstructorOrAdmin && (
+            <Link
+              href="/ta/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                getMobileLinkClasses("/ta/dashboard"),
+                "flex items-center justify-between",
+              )}
+            >
+              <span>{"Trợ giảng"}</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                TA Portal
               </span>
             </Link>
           )}

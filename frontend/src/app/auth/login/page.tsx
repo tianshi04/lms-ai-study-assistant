@@ -17,6 +17,8 @@ import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { normalizeUserRole } from "@/lib/jwt";
 import { sanitizeRedirectPath } from "@/lib/safe_redirect";
+import { getRpcClient } from "@/lib/connect_client";
+import { IdentityService } from "@/gen/identity/v1/identity_pb";
 
 function LoginFormContent() {
   const searchParams = useSearchParams();
@@ -30,7 +32,7 @@ function LoginFormContent() {
   const [quickLoggingInEmail, setQuickLoggingInEmail] = useState<string | null>(null);
   const [isSuccessRedirecting, setIsSuccessRedirecting] = useState(false);
 
-  const getDestinationUrl = (role?: string) => {
+  const resolveDestinationUrl = async (role?: string) => {
     const safeRedirect = sanitizeRedirectPath(rawRedirect, "");
     if (safeRedirect) {
       return safeRedirect;
@@ -41,6 +43,18 @@ function LoginFormContent() {
     }
     if (r === "USER_ROLE_INSTRUCTOR") {
       return "/instructor/dashboard";
+    }
+    try {
+      const client = getRpcClient(IdentityService);
+      const orgRes = await client.listMyOrganizations({});
+      const isOrgTA = (orgRes.organizations || []).some(
+        (o) => (o.roleInOrg || "").toUpperCase() === "TA",
+      );
+      if (isOrgTA) {
+        return "/ta/dashboard";
+      }
+    } catch {
+      // Fallback to learner dashboard if org lookup fails
     }
     return "/learner/dashboard";
   };
@@ -65,7 +79,7 @@ function LoginFormContent() {
             userAvatar: res.user.avatarUrl,
           });
 
-          window.location.replace(getDestinationUrl(res.user.role));
+          window.location.replace(await resolveDestinationUrl(res.user.role));
         } else {
           setIsSuccessRedirecting(false);
           setSubmitting(false);
@@ -99,7 +113,7 @@ function LoginFormContent() {
           userAvatar: res.user.avatarUrl,
         });
 
-        window.location.replace(getDestinationUrl(res.user.role));
+        window.location.replace(await resolveDestinationUrl(res.user.role));
       } else {
         setIsSuccessRedirecting(false);
         setQuickLoggingInEmail(null);

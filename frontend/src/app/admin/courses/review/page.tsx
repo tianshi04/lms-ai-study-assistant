@@ -140,7 +140,7 @@ export default function CourseReviewerPortalPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground border border-border text-xs font-semibold uppercase tracking-wider mb-2">
-              {"Course Reviewer Portal"}
+              {"Cổng Kiểm duyệt Khóa học"}
             </div>
             <h1 className="text-3xl font-extrabold text-foreground text-balance">
               {"Kiểm duyệt & Phê duyệt Phát hành Khóa học"}
@@ -181,12 +181,10 @@ export default function CourseReviewerPortalPage() {
           className="mb-6"
         >
           <Tabs.List className="overflow-x-auto pb-1">
-            <Tabs.Tab value={CourseStatus.PENDING_REVIEW}>
-              {"Chờ kiểm duyệt (PENDING_REVIEW)"}
-            </Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.PUBLISHED}>{"Đã xuất bản (PUBLISHED)"}</Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.DRAFT}>{"Bản nháp (DRAFT)"}</Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.REJECTED}>{"Từ chối (REJECTED)"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.PENDING_REVIEW}>{"Chờ kiểm duyệt"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.PUBLISHED}>{"Đã xuất bản"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.DRAFT}>{"Bản nháp"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.REJECTED}>{"Từ chối"}</Tabs.Tab>
           </Tabs.List>
         </Tabs.Root>
 
@@ -226,7 +224,11 @@ export default function CourseReviewerPortalPage() {
                   </p>
                   <p className="text-xs font-medium text-muted-foreground">
                     {"Giảng viên phụ trách:"}{" "}
-                    <strong className="text-foreground">{course.instructorNames.join(", ")}</strong>
+                    <strong className="text-foreground">
+                      {course.instructorNames.length > 0
+                        ? course.instructorNames.join(", ")
+                        : "Chưa cập nhật"}
+                    </strong>
                   </p>
                   {course.rejectionReason && (
                     <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-xs text-destructive">
@@ -241,7 +243,7 @@ export default function CourseReviewerPortalPage() {
                     leadingIcon={<Eye className="w-4 h-4" aria-hidden="true" />}
                     render={<Link href={`/courses/${course.id}`} target="_blank" />}
                   >
-                    Xem trước (Student Mode)
+                    Xem trước (Chế độ Học viên)
                   </Chip>
 
                   {activeTab === CourseStatus.PENDING_REVIEW && (

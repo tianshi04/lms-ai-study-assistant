@@ -123,7 +123,10 @@ export function CourseHeaderBanner({
           <div className="text-xs font-medium text-muted-foreground flex items-center gap-2 pt-1">
             <User className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <span>
-              {"Giảng viên:"} {course.instructorNames.join(", ")}
+              {"Giảng viên:"}{" "}
+              {course.instructorNames.length > 0
+                ? course.instructorNames.join(", ")
+                : "Chưa cập nhật"}
             </span>
           </div>
         </div>

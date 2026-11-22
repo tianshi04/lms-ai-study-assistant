@@ -304,7 +304,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
             </p>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <Button
               type="button"
               variant="outlined"
@@ -385,7 +385,15 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
             <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
             <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || "ALL")}>
               <Select.Trigger className="w-full sm:w-48 text-xs py-2">
-                <Select.Value placeholder="Tất cả trạng thái" />
+                <Select.Value placeholder="Tất cả trạng thái">
+                  {statusFilter === "COMPLETED"
+                    ? "Đã tốt nghiệp"
+                    : statusFilter === "IN_PROGRESS"
+                      ? "Đang học"
+                      : statusFilter === "ACTIVE"
+                        ? "Mới kích hoạt"
+                        : "Tất cả trạng thái"}
+                </Select.Value>
               </Select.Trigger>
               <Select.Content>
                 <Select.Item value="ALL">Tất cả trạng thái</Select.Item>

@@ -9,6 +9,7 @@ import {
   usePartnersQuery,
   useUpdatePartnerMutation,
   useRotatePartnerKeyPairMutation,
+  useMyOrganizationsQuery,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
@@ -90,6 +91,7 @@ function PartnerSettingsForm({
   ]);
 
   const [newSigName, setNewSigName] = useState("");
+  const [failedSigImages, setFailedSigImages] = useState<Record<string, boolean>>({});
   const [newSigTitle, setNewSigTitle] = useState("");
   const [newSigDept, setNewSigDept] = useState("");
   const [newSigImage, setNewSigImage] = useState("");
@@ -452,7 +454,7 @@ function PartnerSettingsForm({
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                  {sig.signatureImageUrl ? (
+                  {sig.signatureImageUrl && !failedSigImages[sig.id] ? (
                     <div className="h-6 flex items-center">
                       <Image
                         src={sig.signatureImageUrl}
@@ -460,12 +462,13 @@ function PartnerSettingsForm({
                         width={60}
                         height={24}
                         className="h-6 object-contain"
+                        onError={() => setFailedSigImages((prev) => ({ ...prev, [sig.id]: true }))}
                         unoptimized
                       />
                     </div>
                   ) : (
                     <span className="text-[11px] text-muted-foreground italic">
-                      Chưa có ảnh chữ ký
+                      {sig.signatureImageUrl ? "Không thể tải ảnh chữ ký" : "Chưa có ảnh chữ ký"}
                     </span>
                   )}
                   {!sig.isDefault ? (
@@ -647,19 +650,38 @@ function PartnerSettingsForm({
 export default function PartnerSettingsPage() {
   const router = useRouter();
 
-  const { isSuperAdmin } = useAuth();
-  const isPartnerAdmin = isSuperAdmin;
+  const { isSuperAdmin, userRole } = useAuth();
+  const { data: myOrgs = [], isLoading: myOrgsLoading } = useMyOrganizationsQuery();
+
+  const adminOrgs = myOrgs.filter((o) => {
+    const r = (o.roleInOrg || "").toUpperCase();
+    return r.includes("ADMIN") || r.includes("OWNER");
+  });
+  const isOrgAdmin =
+    adminOrgs.length > 0 || userRole === "3" || (userRole || "").toUpperCase().includes("ADMIN");
+  const isPartnerAdmin = isSuperAdmin || isOrgAdmin;
 
   const {
-    data: partners = [],
+    data: allPartners = [],
     isLoading: partnersLoading,
     refetch: refetchPartners,
   } = usePartnersQuery();
 
+  const partners = isSuperAdmin
+    ? allPartners
+    : adminOrgs.length > 0
+      ? allPartners.filter((p) =>
+          adminOrgs.some(
+            (o) =>
+              o.id === p.id || o.slug === p.slug || o.name.toLowerCase() === p.name.toLowerCase(),
+          ),
+        )
+      : allPartners;
+
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
   const activePartner = partners.find((p) => p.id === selectedPartnerId) || partners[0];
 
-  if (partnersLoading) {
+  if (partnersLoading || myOrgsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">

@@ -1,7 +1,6 @@
 "use client";
 
 import { use, useState, Suspense } from "react";
-import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useOrganizationMembersQuery,
@@ -23,6 +22,7 @@ import { Select } from "@/components/ui/Select";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Progress } from "@/components/ui/Progress";
+import { Avatar } from "@/components/ui/Avatar";
 import { Users, UserPlus, Trash2, Shield, CheckCircle2, Search, Copy, Check } from "lucide-react";
 
 function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
@@ -198,19 +198,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                     <Table.Row key={m.memberId || m.userId}>
                       <Table.Cell className="px-6 py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 text-xs">
-                            {m.avatarUrl ? (
-                              <Image
-                                src={m.avatarUrl}
-                                alt={m.fullName || "Avatar"}
-                                width={36}
-                                height={36}
-                                className="w-full h-full object-cover rounded-full"
-                              />
-                            ) : (
-                              m.fullName?.charAt(0).toUpperCase() || "U"
-                            )}
-                          </div>
+                          <Avatar name={m.fullName || "Thành viên"} src={m.avatarUrl} size="md" />
                           <span className="font-bold text-foreground">
                             {m.fullName || "Thành viên"}
                           </span>
@@ -222,13 +210,27 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                       <Table.Cell className="px-6 py-4">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                           <Shield className="w-3 h-3" aria-hidden="true" />
-                          {m.roleName || m.roleId || "Giảng viên"}
+                          {(() => {
+                            const raw = (m.roleId || m.roleName || "INSTRUCTOR").toUpperCase();
+                            if (raw === "OWNER") return "Chủ sở hữu";
+                            if (raw === "ADMIN") return "Quản trị viên";
+                            if (raw === "TA") return "Trợ giảng";
+                            if (raw === "LEARNER") return "Học viên";
+                            if (raw === "INSTRUCTOR") return "Giảng viên";
+                            return m.roleName || m.roleId || "Giảng viên";
+                          })()}
                         </span>
                       </Table.Cell>
                       <Table.Cell className="px-6 py-4">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success">
                           <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
-                          {m.status || "ACTIVE"}
+                          {(() => {
+                            const st = (m.status || "ACTIVE").toUpperCase();
+                            if (st === "ACTIVE") return "Hoạt động";
+                            if (st === "PENDING") return "Chờ duyệt";
+                            if (st === "SUSPENDED") return "Tạm khóa";
+                            return m.status || "Hoạt động";
+                          })()}
                         </span>
                       </Table.Cell>
                       {isOwnerOrAdmin && (

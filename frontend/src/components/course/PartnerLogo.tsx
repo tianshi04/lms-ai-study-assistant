@@ -30,10 +30,10 @@ export function PartnerLogo({ logoUrl, partnerName }: PartnerLogoProps) {
   return (
     <Chip
       variant="assist"
-      className="h-7 text-xs font-bold bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container pointer-events-none cursor-default shadow-xs"
-      leadingIcon={<Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />}
+      className="h-7 max-w-full min-w-0 text-xs font-bold bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container pointer-events-none cursor-default shadow-xs"
+      leadingIcon={<Building2 className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />}
     >
-      {partnerName || "Coursera Partner"}
+      <span className="truncate">{partnerName || "Đối tác LMS AI"}</span>
     </Chip>
   );
 }

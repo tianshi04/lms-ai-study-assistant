@@ -87,7 +87,7 @@ export default function AdminInstructorApplicationsPage() {
               <Link href="/admin/dashboard" className="hover:underline">
                 Admin Portal
               </Link>
-              <span>/</span>
+              <span className="mx-1.5">/</span>
               <span className="font-semibold text-foreground">Đơn Giảng viên</span>
             </PageHeader.Breadcrumbs>
             <PageHeader.Title>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeader.Title>
@@ -120,7 +120,7 @@ export default function AdminInstructorApplicationsPage() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border">
+        <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border">
           {[
             { label: "Tất cả đơn", value: "" },
             { label: "Chờ thẩm định", value: "PENDING_REVIEW" },

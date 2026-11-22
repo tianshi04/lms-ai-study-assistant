@@ -55,7 +55,7 @@ export default function VerifyPortalPage() {
         </form>
 
         <div className="pt-4 border-t border-border flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <span>Demo Certificate Code:</span>
+          <span>Mã chứng chỉ mẫu:</span>
           <Button
             type="button"
             variant="text"

@@ -286,7 +286,7 @@ export function AdminEnterpriseDashboard() {
 
           <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Tỷ lệ Kích hoạt Seats
+              Tỷ lệ Kích hoạt Suất học
             </span>
             <div className="text-3xl font-extrabold text-accent-foreground font-mono">
               {activationRate}%
@@ -340,11 +340,11 @@ export function AdminEnterpriseDashboard() {
                       {seat.seatKey}
                     </Table.Cell>
                     <Table.Cell className="font-mono font-semibold">
-                      {seat.assignedUserId}
+                      {(seat.assignedUserId || "").replace(/\s*seats\b/i, " suất")}
                     </Table.Cell>
                     <Table.Cell>
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
-                        {seat.status}
+                        {seat.status === "ACTIVE" ? "Đang hoạt động" : seat.status}
                       </span>
                     </Table.Cell>
                     <Table.Cell className="text-right">

@@ -80,13 +80,14 @@ function CoursePlayerContent() {
     isEnrolled: Boolean(progress?.enrolledAt),
   });
 
-  // Default sidebars closed on mobile (< 1024px) to prevent layout shift, and open on desktop (>= 1024px).
-  // Use matchMedia so virtual keyboard / address bar height resizes on mobile do not unexpectedly close open drawers.
+  // Default sidebars closed on mobile (< 1024px). On desktop (1024px-1439px), keep only the left Syllabus open
+  // so the center player has ample room; auto-open both sidebars only on wide screens (>= 1440px) or deep-linked tabs.
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
+    const wideDesktopMql = window.matchMedia("(min-width: 1440px)");
     if (!mql.matches) {
       setIsSidebarOpen(true);
-      setIsPanelOpen(true);
+      setIsPanelOpen(wideDesktopMql.matches || Boolean(urlThreadId || urlTab));
     } else if (urlThreadId || urlTab) {
       setIsPanelOpen(true);
     }
@@ -492,7 +493,7 @@ function CoursePlayerContent() {
         );
       } else if (!isPaidAccess && activeWeekIndex > 0) {
         setLockNotice(
-          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký LMS AI Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
         );
       } else {
         setLockNotice(
@@ -732,7 +733,7 @@ function CoursePlayerContent() {
         );
       } else if (!isPaidAccess && nextWeekIndex > 0) {
         setLockNotice(
-          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký LMS AI Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
         );
       } else {
         setLockNotice(
@@ -868,25 +869,21 @@ function CoursePlayerContent() {
               aria-label="Lộ trình khóa học"
             >
               {/* Collapsed Icon Strip Trigger (Desktop only) */}
-              <div
-                className={`hidden lg:block absolute top-2 left-2 transition-all duration-300 ease-m3-emphasized z-10 ${
-                  isSidebarOpen
-                    ? "opacity-0 pointer-events-none scale-90 invisible"
-                    : "opacity-100 scale-100 visible"
-                }`}
-              >
-                <Button
-                  type="button"
-                  variant="text"
-                  iconOnly
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                  title="Mở Lộ trình Bài học"
-                  aria-label="Mở Lộ trình Bài học"
-                >
-                  <Menu className="w-5 h-5" aria-hidden="true" />
-                </Button>
-              </div>
+              {!isSidebarOpen && (
+                <div className="hidden lg:block absolute top-2 left-2 z-10">
+                  <Button
+                    type="button"
+                    variant="text"
+                    iconOnly
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                    title="Mở Lộ trình Bài học"
+                    aria-label="Mở Lộ trình Bài học"
+                  >
+                    <Menu className="w-5 h-5" aria-hidden="true" />
+                  </Button>
+                </div>
+              )}
 
               {/* Expanded Full Drawer Content - Isolated Subcomponent to prevent parent re-renders */}
               <CourseSyllabusDrawer
@@ -981,14 +978,14 @@ function CoursePlayerContent() {
                 isPanelOpen={isPanelOpen}
               />
 
-              {/* Fixed Bottom-Right Next Lesson Floating Action Button */}
+              {/* Bottom Next Lesson Action Bar (non-overlapping) */}
               {nextItem && !isQuizActive && (
-                <div className="absolute bottom-2.5 sm:bottom-3.5 right-3 sm:right-3.5 z-30 pointer-events-auto">
+                <div className="shrink-0 border-t border-outline-variant/60 bg-surface-container-lowest px-4 py-2 flex items-center justify-end">
                   <Button
                     type="button"
                     variant="tonal"
                     onClick={handleNextLesson}
-                    className="px-4 py-2 rounded-full text-xs font-semibold bg-surface-container-high/90 backdrop-blur-md text-on-surface hover:bg-primary-container hover:text-on-primary-container border border-outline-variant/60 hover:border-primary/40 transition-all shadow-sm hover:shadow-md hover:scale-102 active:scale-98 flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-1.5 rounded-full text-xs font-semibold bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container border border-outline-variant/60 hover:border-primary/40 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                     title={`Chuyển sang: ${nextItem.title}`}
                     aria-label={`Chuyển sang: ${nextItem.title}`}
                   >

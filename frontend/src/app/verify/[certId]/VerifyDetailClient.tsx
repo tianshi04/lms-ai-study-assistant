@@ -42,6 +42,7 @@ export function VerifyDetailClient({
   const [searchCertId, setSearchCertId] = useState(certId);
   const { downloadingCertId, downloadPdf } = useDownloadCertificatePdf();
   const downloadingPdf = downloadingCertId !== null;
+  const [logoError, setLogoError] = useState(false);
 
   const cert = initialData.certificate;
   const isValid = initialData.isValid;
@@ -161,15 +162,20 @@ export function VerifyDetailClient({
                   {cert.partnerName}
                 </h2>
               </div>
-              {cert.partnerLogoUrl && (
+              {cert.partnerLogoUrl && !logoError ? (
                 <Image
                   src={cert.partnerLogoUrl}
                   alt={cert.partnerName}
                   width={140}
                   height={48}
                   unoptimized
+                  onError={() => setLogoError(true)}
                   className="h-12 w-auto object-contain"
                 />
+              ) : (
+                <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center font-extrabold text-lg text-primary shrink-0">
+                  {cert.partnerName.substring(0, 2).toUpperCase()}
+                </div>
               )}
             </div>
 

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { MyLearningClient } from "./MyLearningClient";
 
 export const metadata: Metadata = {
-  title: "Việc Học Của Tôi | LMS AI Platform",
+  title: "Việc Học Của Tôi",
   description:
     "Theo dõi tiến độ học tập, tiếp tục các khóa đang học và xem lại chứng chỉ đã hoàn thành.",
 };

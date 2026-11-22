@@ -124,7 +124,7 @@ export default function AdminCategoriesPage() {
     <main className="max-w-5xl mx-auto px-6 py-12 flex-1">
       <PageHeader>
         <div>
-          <PageHeader.Title>Danh mục quản trị</PageHeader.Title>
+          <PageHeader.Title>Quản lý Danh mục</PageHeader.Title>
           <PageHeader.Description>Quản lý danh mục khóa học</PageHeader.Description>
         </div>
         <PageHeader.Actions>

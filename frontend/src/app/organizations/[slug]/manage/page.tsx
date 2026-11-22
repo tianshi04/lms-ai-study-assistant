@@ -2,7 +2,7 @@
 
 import { use, Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useOrganizationMembersQuery,
@@ -229,19 +229,7 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 key={m.memberId || m.userId}
                 className="p-4 rounded-2xl bg-muted/30 border border-border flex items-center space-x-3"
               >
-                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
-                  {m.avatarUrl ? (
-                    <Image
-                      src={m.avatarUrl}
-                      alt={m.fullName || "Avatar"}
-                      width={40}
-                      height={40}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    m.fullName?.charAt(0).toUpperCase() || "U"
-                  )}
-                </div>
+                <Avatar name={m.fullName || m.email || "U"} src={m.avatarUrl} size="md" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-foreground truncate">
                     {m.fullName || m.email}

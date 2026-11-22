@@ -24,7 +24,7 @@ export class NewCoursePage {
     this.financialAidCheckbox = page.locator('input[type="checkbox"]').first();
     this.submitButton = page.getByRole('button', { name: /Bắt Đầu Tạo Khóa Học|Tạo Khóa Học/i });
     this.cancelButton = page.getByRole('link', { name: /Hủy bỏ/i });
-    this.liveBadgePreview = page.getByText('Live Badge Preview').first();
+    this.liveBadgePreview = page.getByText('Xem trước thẻ khóa học').first();
   }
 
   async goto() {

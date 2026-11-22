@@ -151,7 +151,7 @@ export function MyLearningClient() {
     <>
       {/* Tabs */}
       <Tabs.Root value={activeTab} onValueChange={(val) => handleTabChange(val as string)}>
-        <Tabs.List className="mb-8">
+        <Tabs.List className="mb-8 overflow-x-auto max-w-full whitespace-nowrap">
           <Tabs.Tab value="IN_PROGRESS">
             <span>{"Đang tiến hành"}</span>
           </Tabs.Tab>

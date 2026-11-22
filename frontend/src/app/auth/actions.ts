@@ -20,6 +20,13 @@ function getCookieOptions(maxAge: number) {
   };
 }
 
+function formatActionError(err: unknown, fallback: string): string {
+  if (err instanceof Error) {
+    return err.message.replace(/^\[[a-z_]+\]\s*/i, "") || fallback;
+  }
+  return fallback;
+}
+
 function getUnauthenticatedBackendClient() {
   const transport = createConnectTransport({
     baseUrl: getInternalApiUrl(),
@@ -53,8 +60,10 @@ export async function loginAction(email: string, password: string) {
       },
     };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Đăng nhập thất bại. Vui lòng thử lại.";
-    return { success: false, error: msg };
+    return {
+      success: false,
+      error: formatActionError(err, "Đăng nhập thất bại. Vui lòng thử lại."),
+    };
   }
 }
 

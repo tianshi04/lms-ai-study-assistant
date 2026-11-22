@@ -270,7 +270,7 @@ function MyPurchasesContent() {
         </div>
       )}
 
-      {/* Coursera Plus Hero Banner Container */}
+      {/* LMS AI Plus Hero Banner Container */}
       <Surface
         variant="container"
         shape="3xl"
@@ -282,7 +282,7 @@ function MyPurchasesContent() {
               <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
                 <Sparkles className="w-6 h-6 animate-pulse" aria-hidden="true" />
               </div>
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">{"Coursera Plus"}</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">{"LMS AI Plus"}</h2>
               {isPlusActive ? (
                 <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-success/10 text-success border border-success/20">
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -308,7 +308,7 @@ function MyPurchasesContent() {
             ) : (
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {
-                  "Đăng ký gói Coursera Plus để truy cập không giới hạn hơn 500+ khóa học chất lượng cao và nhận chứng chỉ hoàn tất."
+                  "Đăng ký gói LMS AI Plus để truy cập không giới hạn hơn 500+ khóa học chất lượng cao và nhận chứng chỉ hoàn tất."
                 }
               </p>
             )}
@@ -383,7 +383,7 @@ function MyPurchasesContent() {
       </div>
 
       {/* Filter Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border mb-6">
+      <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border mb-6">
         {[
           { label: `Tất cả đơn hàng (${totalOrders})`, value: "ALL" },
           { label: `Đã mở khóa (${completedCount})`, value: "COMPLETED" },

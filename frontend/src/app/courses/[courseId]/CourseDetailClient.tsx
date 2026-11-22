@@ -482,7 +482,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   className="w-full py-3 px-6 rounded-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-semibold text-sm justify-center gap-2"
                 >
                   <CreditCard aria-hidden="true" className="w-4 h-4 text-primary" />
-                  <span>{"Nâng Cấp Paid Mode / Coursera Plus"}</span>
+                  <span>{"Nâng cấp LMS AI Plus"}</span>
                 </Button>
               </div>
             )}
@@ -1124,7 +1124,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <span className="text-3xl font-black text-warning">
                     {course.averageRating.toFixed(1)}
                   </span>
-                  <div>
+                  <div className="flex flex-col gap-0.5">
                     <RatingStars rating={course.averageRating} size="md" />
                     <span className="text-xs text-muted-foreground font-medium">
                       {course.reviewCount} {"nhận xét"}

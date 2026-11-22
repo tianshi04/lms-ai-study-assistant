@@ -115,8 +115,8 @@ export default function BecomeAnInstructorPage() {
           </h1>
 
           <p className="mt-3 text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">
-            Trở thành Giảng viên trên nền tảng Coursera AI, chia sẻ tri thức chuyên môn đến hàng
-            ngàn học viên và khẳng định thương hiệu cá nhân của bạn.
+            Trở thành Giảng viên trên nền tảng LMS AI, chia sẻ tri thức chuyên môn đến hàng ngàn học
+            viên và khẳng định thương hiệu cá nhân của bạn.
           </p>
         </Surface>
 

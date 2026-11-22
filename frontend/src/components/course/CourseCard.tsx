@@ -19,7 +19,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
   return (
     <Card
       variant="outlined"
-      className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between [content-visibility:auto] [contain-intrinsic-size:auto_320px]"
+      className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between"
     >
       <div>
         {/* Partner Header */}
@@ -51,11 +51,13 @@ export function CourseCard({ course, progress }: CourseCardProps) {
       <div>
         {/* Instructors & Modules Count */}
         <div className="pt-4 border-t border-outline-variant mb-5 flex items-center justify-between text-xs text-on-surface-variant font-medium">
-          <span className="flex items-center gap-1.5 min-w-0 truncate max-w-[160px]">
+          <span className="flex items-center gap-1.5 min-w-0 max-w-[160px]">
             <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
-            {(course.instructorNames ?? []).length > 0
-              ? (course.instructorNames ?? []).join(", ")
-              : fallbackInstructor}
+            <span className="truncate">
+              {(course.instructorNames ?? []).length > 0
+                ? (course.instructorNames ?? []).join(", ")
+                : fallbackInstructor}
+            </span>
           </span>
           <span className="flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-on-surface-variant" aria-hidden="true" />

@@ -217,7 +217,7 @@ export default function AccountSettingsPage() {
               disabled={savingKey || !enterpriseKey}
               variant="filled"
               size="md"
-              className="rounded-full px-8 font-bold shadow-xs hover:shadow-md transition-colors"
+              className="rounded-full px-8 font-bold shadow-xs hover:shadow-md transition-colors whitespace-nowrap shrink-0"
             >
               {"Kích hoạt mã"}
             </Button>

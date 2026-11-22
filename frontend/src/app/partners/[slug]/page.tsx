@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,6 +16,8 @@ function PartnerPublicContent() {
   const params = useParams();
   const router = useRouter();
   const slug = (params?.slug as string) || "";
+  const [logoError, setLogoError] = useState(false);
+  const [signatureError, setSignatureError] = useState(false);
 
   const { data: partners = [], isLoading: partnersLoading } = usePartnersQuery();
   const { data: courses = [], isLoading: coursesLoading } = useCoursesQuery();
@@ -89,16 +91,17 @@ function PartnerPublicContent() {
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative -mt-20 sm:-mt-24 pb-8">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6">
               {/* Partner Logo */}
               <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-card p-3 shadow-xl border-4 border-border flex items-center justify-center overflow-hidden shrink-0">
-                {partner.logoUrl ? (
+                {partner.logoUrl && !logoError ? (
                   <Image
                     src={partner.logoUrl}
                     alt={partner.name}
                     width={120}
                     height={120}
+                    onError={() => setLogoError(true)}
                     className="object-contain max-h-full"
                     unoptimized
                   />
@@ -133,7 +136,7 @@ function PartnerPublicContent() {
             </div>
 
             {/* Quick Stat Pill */}
-            <div className="bg-card border border-border rounded-2xl p-4 flex items-center space-x-6 text-foreground shrink-0 shadow-xs">
+            <div className="bg-card border border-border rounded-2xl p-4 flex flex-wrap items-center gap-4 sm:gap-6 text-foreground shrink-0 max-w-full shadow-xs">
               <div>
                 <p className="text-2xl font-black">{partnerCourses.length}</p>
                 <p className="text-xs text-muted-foreground">Khóa học phát hành</p>
@@ -261,7 +264,7 @@ function PartnerPublicContent() {
                   </div>
                 </div>
 
-                {partner.signatureImageUrl && (
+                {partner.signatureImageUrl && !signatureError && (
                   <div className="mt-4 pt-4 border-t border-border text-center">
                     <p className="text-xs text-muted-foreground mb-2">
                       Mẫu chữ ký điện tử đã được xác minh:
@@ -272,6 +275,7 @@ function PartnerPublicContent() {
                         alt="Chữ ký đại diện"
                         width={120}
                         height={48}
+                        onError={() => setSignatureError(true)}
                         className="h-12 object-contain"
                         unoptimized
                       />

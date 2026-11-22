@@ -8,7 +8,7 @@ import { CatalogService, type Course, type Category } from "@/gen/catalog/v1/cat
 import { CourseCatalogClient } from "./CourseCatalogClient";
 
 export const metadata: Metadata = {
-  title: "Danh Sách Khóa Học | LMS AI Platform",
+  title: "Danh Sách Khóa Học",
   description: "Khám phá danh sách các khóa học chất lượng cao về AI và Công nghệ thông tin.",
 };
 

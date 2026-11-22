@@ -9,6 +9,7 @@ from typing import Any
 
 from uuid6 import uuid7
 
+from src.modules.catalog.domain import ICatalogRepository
 from src.modules.certificate.domain import (
     CERTIFICATE_PDF_FILENAME_TEMPLATE,
     CERTIFICATE_PDF_ID_REGEX,
@@ -55,11 +56,23 @@ class CertificateUseCase:
         repo_factory: Callable[[Any], ICertificateRepository] | None = None,
         pdf_renderer: ICertificatePdfRenderer | None = None,
         asset_loader: ICertificateAssetLoader | None = None,
+        catalog_repo: ICatalogRepository | None = None,
+        catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
     ) -> None:
         self._repo = repo
         self._repo_factory = repo_factory
         self._pdf_renderer = pdf_renderer
         self._asset_loader = asset_loader
+        self._catalog_repo = catalog_repo
+        self._catalog_repo_factory = catalog_repo_factory
+
+    def _get_catalog_repo(self, session: Any) -> ICatalogRepository:
+        if self._catalog_repo is not None:
+            return self._catalog_repo
+        if self._catalog_repo_factory is not None:
+            return self._catalog_repo_factory(session)
+        msg = "Catalog repository is not configured for CertificateUseCase"
+        raise RuntimeError(msg)
 
     def _verify_admin(self, current_user: CurrentUser | None) -> None:
         if current_user is not None and not current_user.is_admin:
@@ -170,10 +183,29 @@ class CertificateUseCase:
         status: str | None = None,
         current_user: CurrentUser | None = None,
     ) -> list[FinancialAidApplication]:
-        self._verify_admin(current_user)
+        if current_user is not None and not (
+            current_user.is_admin or current_user.is_instructor
+        ):
+            raise PermissionError(
+                "Yêu cầu quyền Giảng viên hoặc Quản trị viên để xem danh sách hỗ trợ tài chính."
+            )
         async with async_session_scope() as session:
             repo = self._get_repo(session)
+            owned_course_ids: set[str] | None = None
+            if current_user is not None and not current_user.is_admin:
+                catalog_repo = self._get_catalog_repo(session)
+                owned_courses, _ = await catalog_repo.list_instructor_courses(
+                    current_user.id, page_size=200
+                )
+                owned_course_ids = {c.id for c in owned_courses}
+                if course_id and course_id not in owned_course_ids:
+                    raise PermissionError(
+                        "Bạn không có quyền xem đơn hỗ trợ tài chính của khóa học này."
+                    )
+
             apps = await repo.list_financial_aids(course_id=course_id, status=status)
+            if owned_course_ids is not None:
+                apps = [a for a in apps if a.course_id in owned_course_ids]
             checked_apps = []
             for a in apps:
                 checked = await self._check_auto_approve(a, repo)
@@ -187,12 +219,29 @@ class CertificateUseCase:
         is_approved: bool,
         current_user: CurrentUser | None = None,
     ) -> tuple[FinancialAidApplication | None, str]:
-        self._verify_admin(current_user)
+        if current_user is not None and not (
+            current_user.is_admin or current_user.is_instructor
+        ):
+            raise PermissionError(
+                "Yêu cầu quyền Giảng viên hoặc Quản trị viên để xét duyệt hỗ trợ tài chính."
+            )
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             app = await repo.get_financial_aid_by_id(application_id)
             if not app:
                 return None, "Không tìm thấy đơn nộp Hỗ trợ tài chính"
+
+            if current_user is not None and not current_user.is_admin:
+                catalog_repo = self._get_catalog_repo(session)
+                course = await catalog_repo.get_course_detail(app.course_id)
+                is_owner = course is not None and (
+                    course.owner_id == current_user.id
+                    or current_user.id in (course.co_instructor_ids or [])
+                )
+                if not is_owner:
+                    raise PermissionError(
+                        "Bạn không có quyền xét duyệt đơn hỗ trợ tài chính cho khóa học này."
+                    )
 
             app.review(is_approved)
             updated_app = await repo.save_financial_aid(app)
