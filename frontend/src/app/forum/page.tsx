@@ -889,7 +889,7 @@ function ForumPageContent() {
                   className={`p-6 transition-all duration-300 ${
                     isTargetThread
                       ? "border-primary ring-4 ring-primary/40 bg-primary/5 shadow-md"
-                      : "hover:border-accent-hover [content-visibility:auto] [contain-intrinsic-size:auto_240px]"
+                      : "hover:border-accent-hover"
                   }`}
                 >
                   {/* Thread Header */}

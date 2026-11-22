@@ -91,6 +91,7 @@ function PartnerSettingsForm({
   ]);
 
   const [newSigName, setNewSigName] = useState("");
+  const [failedSigImages, setFailedSigImages] = useState<Record<string, boolean>>({});
   const [newSigTitle, setNewSigTitle] = useState("");
   const [newSigDept, setNewSigDept] = useState("");
   const [newSigImage, setNewSigImage] = useState("");
@@ -453,7 +454,7 @@ function PartnerSettingsForm({
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                  {sig.signatureImageUrl ? (
+                  {sig.signatureImageUrl && !failedSigImages[sig.id] ? (
                     <div className="h-6 flex items-center">
                       <Image
                         src={sig.signatureImageUrl}
@@ -461,12 +462,13 @@ function PartnerSettingsForm({
                         width={60}
                         height={24}
                         className="h-6 object-contain"
+                        onError={() => setFailedSigImages((prev) => ({ ...prev, [sig.id]: true }))}
                         unoptimized
                       />
                     </div>
                   ) : (
                     <span className="text-[11px] text-muted-foreground italic">
-                      Chưa có ảnh chữ ký
+                      {sig.signatureImageUrl ? "Không thể tải ảnh chữ ký" : "Chưa có ảnh chữ ký"}
                     </span>
                   )}
                   {!sig.isDefault ? (

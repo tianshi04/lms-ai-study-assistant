@@ -80,13 +80,14 @@ function CoursePlayerContent() {
     isEnrolled: Boolean(progress?.enrolledAt),
   });
 
-  // Default sidebars closed on mobile (< 1024px) to prevent layout shift, and open on desktop (>= 1024px).
-  // Use matchMedia so virtual keyboard / address bar height resizes on mobile do not unexpectedly close open drawers.
+  // Default sidebars closed on mobile (< 1024px). On desktop (1024px-1439px), keep only the left Syllabus open
+  // so the center player has ample room; auto-open both sidebars only on wide screens (>= 1440px) or deep-linked tabs.
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
+    const wideDesktopMql = window.matchMedia("(min-width: 1440px)");
     if (!mql.matches) {
       setIsSidebarOpen(true);
-      setIsPanelOpen(true);
+      setIsPanelOpen(wideDesktopMql.matches || Boolean(urlThreadId || urlTab));
     } else if (urlThreadId || urlTab) {
       setIsPanelOpen(true);
     }

@@ -19,7 +19,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
   return (
     <Card
       variant="outlined"
-      className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between [content-visibility:auto] [contain-intrinsic-size:auto_320px]"
+      className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between"
     >
       <div>
         {/* Partner Header */}

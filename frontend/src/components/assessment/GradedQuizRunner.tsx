@@ -815,7 +815,7 @@ export function GradedQuizRunner({
       !isPreviewMode && activeDraftOverview !== null && draftOverviewRemainingSeconds > 0;
 
     return (
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6 animate-in fade-in duration-m3-short-4">
+      <div className="@container max-w-4xl mx-auto p-4 sm:p-6 space-y-6 animate-in fade-in duration-m3-short-4">
         {/* Header Badge & Title */}
         <div className="space-y-3 border-b border-border pb-5">
           <div className="flex items-center gap-2 flex-wrap">
@@ -844,7 +844,7 @@ export function GradedQuizRunner({
         </div>
 
         {/* 4-Card Metadata Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 @[540px]:grid-cols-4 gap-3">
           <div className="p-4 rounded-2xl bg-surface-container-high/60 border border-outline-variant/60 space-y-1">
             <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5 text-primary" aria-hidden="true" /> Số câu hỏi

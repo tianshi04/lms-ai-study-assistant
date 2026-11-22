@@ -41,20 +41,20 @@ export function LearningItemRow({
     <div
       data-item-id={item.id}
       style={{ touchAction: "none" }}
-      className={`flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-card border ${
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-card border ${
         activeDraggingItemId === item.id
           ? "border-primary shadow-lg opacity-100 scale-[1.005]"
           : "border-border hover:border-input"
       } text-xs shadow-2xs transition-shadow`}
     >
-      <div className="flex items-center gap-2 min-w-0 flex-1">
+      <div className="flex items-start sm:items-center gap-2 min-w-0 flex-1">
         {isInstructorOrAdmin && (
           <div
             onPointerDown={(e) => onPointerDown(e, lessonId, item.id, index)}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
-            className="flex items-center border-r border-border pr-2 mr-1 cursor-grab active:cursor-grabbing select-none p-1 hover:bg-muted rounded"
+            className="flex items-center border-r border-border pr-2 mr-1 cursor-grab active:cursor-grabbing select-none p-1 hover:bg-muted rounded shrink-0"
             title={"Kéo lên/xuống để sắp xếp thứ tự"}
           >
             <span className="text-muted-foreground hover:text-foreground text-xs font-bold select-none">
@@ -63,30 +63,30 @@ export function LearningItemRow({
           </div>
         )}
         {item.type === ItemType.VIDEO ? (
-          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px]">
+          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px] shrink-0">
             VIDEO
           </span>
         ) : item.type === ItemType.READING ? (
-          <span className="px-2 py-0.5 rounded bg-success/10 text-success font-bold text-[10px]">
+          <span className="px-2 py-0.5 rounded bg-success/10 text-success font-bold text-[10px] shrink-0">
             READING
           </span>
         ) : item.type === ItemType.AUTO_GRADED_LAB ? (
-          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px]">
+          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px] shrink-0">
             LAB
           </span>
         ) : item.type === ItemType.PEER_REVIEW ? (
-          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px]">
+          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px] shrink-0">
             PEER REVIEW
           </span>
         ) : (
-          <span className="px-2 py-0.5 rounded bg-warning/10 text-warning font-bold text-[10px]">
+          <span className="px-2 py-0.5 rounded bg-warning/10 text-warning font-bold text-[10px] shrink-0">
             QUIZ
           </span>
         )}
-        <span className="font-semibold text-foreground">{item.title}</span>
+        <span className="font-semibold text-foreground min-w-0 break-words">{item.title}</span>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-end gap-2 shrink-0">
         <span className="text-[10px] text-muted-foreground font-mono">
           {item.estimatedMinutes} {"phút"}
         </span>
