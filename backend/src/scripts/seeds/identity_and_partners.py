@@ -158,7 +158,7 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
             id="user_ta_01",
             email="ta@coursera.ai",
             full_name="ThS. Nguyễn Hoàng Nam",
-            role=UserRole.INSTRUCTOR,
+            role=UserRole.LEARNER,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=ta@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
@@ -205,8 +205,8 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
         ),
         OrganizationModel(
             id="partner_stanford",
-            name="Stanford University",
-            slug="stanford",
+            name="Stanford Online",
+            slug="stanford-online",
             avatar_url="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg",
         ),
         OrganizationModel(
@@ -251,7 +251,7 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
             id="member_ta_01",
             user_id="user_ta_01",
             organization_id="partner_stanford",
-            role_id="INSTRUCTOR",
+            role_id="TA",
             status="ACTIVE",
         ),
         OrganizationMemberModel(

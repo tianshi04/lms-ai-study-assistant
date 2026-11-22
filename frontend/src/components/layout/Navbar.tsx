@@ -15,10 +15,13 @@ import { IconButton } from "@/components/ui/IconButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { NavigationMenu } from "@/components/ui/NavigationMenu";
 import { GoogleOneTapPrompt } from "@/components/auth/GoogleOneTapPrompt";
+import { useMyOrganizationsQuery } from "@/lib/query_hooks";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
+  const { data: myOrgs = [] } = useMyOrganizationsQuery();
+  const isOrgTA = myOrgs.some((o) => (o.roleInOrg || "").toUpperCase() === "TA");
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -106,6 +109,21 @@ export function Navbar() {
                     <span>{"Giảng Viên"}</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                       Portal
+                    </span>
+                  </Link>
+                </NavigationMenu.Item>
+              )}
+
+              {/* Render TA Portal for organization Teaching Assistants */}
+              {isOrgTA && !isInstructorOrAdmin && (
+                <NavigationMenu.Item>
+                  <Link
+                    href="/ta/dashboard"
+                    className={`${getLinkClasses("/ta/dashboard")} flex items-center gap-1.5`}
+                  >
+                    <span>{"Trợ giảng"}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                      TA Portal
                     </span>
                   </Link>
                 </NavigationMenu.Item>
@@ -214,6 +232,21 @@ export function Navbar() {
               <span>{"Giảng Viên"}</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                 Portal
+              </span>
+            </Link>
+          )}
+          {isOrgTA && !isInstructorOrAdmin && (
+            <Link
+              href="/ta/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                getMobileLinkClasses("/ta/dashboard"),
+                "flex items-center justify-between",
+              )}
+            >
+              <span>{"Trợ giảng"}</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                TA Portal
               </span>
             </Link>
           )}

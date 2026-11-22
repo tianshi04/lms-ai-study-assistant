@@ -161,6 +161,7 @@ identity_app = IdentityServiceASGIApplication(
 certificate_usecase = CertificateUseCase(
     pdf_renderer=ReportLabCertificatePdfRenderer(),
     asset_loader=CertificateAssetLoader(),
+    catalog_repo_factory=SQLAlchemyCatalogRepository,
 )
 certificate_handler = CertificateHandler(use_case=certificate_usecase)
 certificate_pdf_endpoint = make_certificate_pdf_endpoint(certificate_usecase)

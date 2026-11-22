@@ -668,7 +668,12 @@ export default function PartnerSettingsPage() {
   const partners = isSuperAdmin
     ? allPartners
     : adminOrgs.length > 0
-      ? allPartners.filter((p) => adminOrgs.some((o) => o.id === p.id || o.slug === p.slug))
+      ? allPartners.filter((p) =>
+          adminOrgs.some(
+            (o) =>
+              o.id === p.id || o.slug === p.slug || o.name.toLowerCase() === p.name.toLowerCase(),
+          ),
+        )
       : allPartners;
 
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");

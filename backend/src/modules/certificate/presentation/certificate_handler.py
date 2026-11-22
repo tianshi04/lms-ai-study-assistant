@@ -103,17 +103,20 @@ class CertificateHandler(CertificateService):
         ],
     ) -> pb.ListFinancialAidApplicationsResponse:
         current_user = require_current_user()
-        if not current_user.is_admin:
+        if not (current_user.is_admin or current_user.is_instructor):
             raise ConnectError(
                 Code.PERMISSION_DENIED,
-                "Yêu cầu quyền Quản trị viên để xem danh sách hỗ trợ tài chính.",
+                "Yêu cầu quyền Giảng viên hoặc Quản trị viên để xem danh sách hỗ trợ tài chính.",
             )
 
-        apps = await self._use_case.list_financial_aid_applications(
-            course_id=request.course_id or None,
-            status=request.status or None,
-            current_user=current_user,
-        )
+        try:
+            apps = await self._use_case.list_financial_aid_applications(
+                course_id=request.course_id or None,
+                status=request.status or None,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         return pb.ListFinancialAidApplicationsResponse(
             applications=[_to_pb_financial_aid(a) for a in apps]
         )
@@ -127,16 +130,20 @@ class CertificateHandler(CertificateService):
         ],
     ) -> pb.ReviewFinancialAidApplicationResponse:
         current_user = require_current_user()
-        if not current_user.is_admin:
+        if not (current_user.is_admin or current_user.is_instructor):
             raise ConnectError(
-                Code.PERMISSION_DENIED, "Yêu cầu quyền Quản trị viên hệ thống"
+                Code.PERMISSION_DENIED,
+                "Yêu cầu quyền Giảng viên hoặc Quản trị viên để xét duyệt hỗ trợ tài chính.",
             )
 
-        app, err = await self._use_case.review_financial_aid_application(
-            application_id=request.application_id,
-            is_approved=request.is_approved,
-            current_user=current_user,
-        )
+        try:
+            app, err = await self._use_case.review_financial_aid_application(
+                application_id=request.application_id,
+                is_approved=request.is_approved,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         if err or not app:
             raise ConnectError(Code.INVALID_ARGUMENT, err or "Xét duyệt thất bại")
         return pb.ReviewFinancialAidApplicationResponse(
