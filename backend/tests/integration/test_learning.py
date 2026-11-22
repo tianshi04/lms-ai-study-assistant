@@ -105,13 +105,16 @@ async def test_learning_handler_list_enrolled_courses():
     class MockUser:
         id = "test_user"
 
+    mock_user = MockUser()
     with patch(
         "src.modules.learning.presentation.learning_handler.require_current_user",
-        return_value=MockUser(),
+        return_value=mock_user,
     ):
         req = pb.ListMyEnrolledCoursesRequest()
         ctx = AsyncMock()
         res = await handler.list_my_enrolled_courses(req, ctx)
         assert res is not None
         assert len(res.courses) == 0
-        learning_uc.list_enrolled_courses.assert_called_once_with(user_id="test_user")
+        learning_uc.list_enrolled_courses.assert_called_once_with(
+            user_id="test_user", current_user=mock_user
+        )

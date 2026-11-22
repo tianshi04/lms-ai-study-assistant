@@ -15,7 +15,7 @@ from src.modules.assessment.domain import (
     GRADING_LOCK_TIMEOUT_MINUTES,
     PEER_ASSIGNMENT_STATUS_ASSIGNED,
     PEER_ASSIGNMENT_STATUS_CANCELLED,
-    PEER_SUBMISSION_STATUS_SUBMITTED,
+    PEER_SUBMISSION_STATUS_PUBLISHED,
     PENDING_APPEAL_STATUSES,
     REPORT_STATUS_RESOLVED,
     REQUIRED_PEER_REVIEWS_COUNT,
@@ -670,8 +670,6 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         stmt = select(func.count(PeerAssignmentSubmissionModel.id)).where(
             PeerAssignmentSubmissionModel.item_id == item_id,
             PeerAssignmentSubmissionModel.user_id != reviewer_user_id,
-            PeerAssignmentSubmissionModel.status == PEER_SUBMISSION_STATUS_SUBMITTED,
-            PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
             ~has_pending_appeal_subquery,
             ~already_reviewed_current_attempt,
         )
@@ -714,14 +712,26 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             (PeerAssignmentSubmissionModel.locked_by_user_id == reviewer_user_id, 0),
             else_=1,
         )
+        grade_tier_priority = case(
+            (
+                and_(
+                    PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
+                    PeerAssignmentSubmissionModel.status
+                    != PEER_SUBMISSION_STATUS_PUBLISHED,
+                ),
+                0,
+            ),
+            (
+                PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
+                1,
+            ),
+            else_=2,
+        )
         stmt = (
             select(PeerAssignmentSubmissionModel)
             .where(
                 PeerAssignmentSubmissionModel.item_id == item_id,
                 PeerAssignmentSubmissionModel.user_id != reviewer_user_id,
-                PeerAssignmentSubmissionModel.status
-                == PEER_SUBMISSION_STATUS_SUBMITTED,
-                PeerAssignmentSubmissionModel.graded_by_staff.is_(False),
                 ~has_pending_appeal_subquery,
                 ~already_reviewed_current_attempt,
                 or_(
@@ -739,6 +749,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
             .order_by(
                 held_by_reviewer_priority.asc(),
+                grade_tier_priority.asc(),
                 reviews_count_sub.asc(),
                 PeerAssignmentSubmissionModel.created_at.asc(),
             )

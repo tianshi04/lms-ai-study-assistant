@@ -38,9 +38,9 @@ export class AssessmentPage {
     this.honorCheckbox = page.locator('.fixed.inset-0 label, .fixed.inset-0 [role="checkbox"], .fixed.inset-0 input[type="checkbox"]').first();
     this.agreeAndContinueButton = page.locator('.fixed.inset-0 button').filter({ hasText: /Tôi đồng ý \& Tiếp tục|Đồng ý \& Nộp bài ngay|I Agree \& Continue|Submitting/i }).first();
     this.runLabButton = page.getByRole('button', { name: /Chạy & Nộp bài làm|Chạy & Nộp bài|Run & Submit Code/i }).first();
-    this.mySubmissionTab = page.getByRole('tab', { name: /1. Bài nộp của tôi|1. My Submission/i }).or(page.getByRole('button', { name: /1. Bài nộp của tôi|1. My Submission/i })).first();
-    this.gradePeersTab = page.getByRole('tab', { name: /2. Chấm bài bạn học|2. Grade Peers/i }).or(page.getByRole('button', { name: /2. Chấm bài bạn học|2. Grade Peers/i })).first();
-    this.gradeAppealTab = page.getByRole('tab', { name: /3. Khiếu nại điểm|3. Grade Appeal/i }).or(page.getByRole('button', { name: /3. Khiếu nại điểm|3. Grade Appeal/i })).first();
+    this.mySubmissionTab = page.locator('#peer-tab-submit').or(page.getByRole('tab', { name: /1. Bài nộp|1. My Submission/i })).or(page.getByRole('button', { name: /1. Bài nộp|1. My Submission/i })).first();
+    this.gradePeersTab = page.locator('#peer-tab-grade').or(page.getByRole('tab', { name: /2. Chấm bài bạn học|2. Grade Peers/i })).or(page.getByRole('button', { name: /2. Chấm bài bạn học|2. Grade Peers/i })).first();
+    this.gradeAppealTab = page.locator('#peer-tab-appeal').or(page.getByRole('tab', { name: /3. Khiếu nại điểm|3. Grade Appeal/i })).or(page.getByRole('button', { name: /3. Khiếu nại điểm|3. Grade Appeal/i })).first();
     this.submitPeerAssignmentButton = page.getByRole('button', { name: /Nộp bài tập|Submit Peer Assignment/i }).first();
     this.lockWarningNotice = page.locator('text=/nộp bài ở Bước 1|BR_PEER_001/i');
   }
