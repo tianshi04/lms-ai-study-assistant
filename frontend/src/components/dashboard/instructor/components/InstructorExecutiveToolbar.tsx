@@ -2,8 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { Plus, Users, ChevronDown, Sparkles } from "lucide-react";
+import { Plus, Users, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 
 interface InstructorExecutiveToolbarProps {
@@ -120,42 +121,58 @@ export function InstructorExecutiveToolbar({
 
         {/* Dropdown danh sách khóa học kèm số lượng học viên (Xử lý cả khi có và chưa có khóa học) */}
         {viewMode === "specific" && (
-          <div className="relative animate-in fade-in duration-150 flex-1 min-w-[220px] max-w-md">
+          <div className="animate-in fade-in duration-150 flex-1 min-w-[220px] max-w-md">
             {hasNoCourses ? (
-              <select
-                disabled
-                className="h-9 w-full px-3 pr-8 rounded-xl bg-muted/50 border border-outline-variant/60 text-xs font-medium text-muted-foreground cursor-not-allowed"
-                aria-label="Chưa có khóa học nào"
-              >
-                <option>Chưa có khóa học nào</option>
-              </select>
+              <Select disabled value="empty">
+                <Select.Trigger
+                  aria-label="Chưa có khóa học nào"
+                  className="h-9 w-full text-xs font-medium rounded-xl"
+                >
+                  <Select.Value>Chưa có khóa học nào</Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="empty">Chưa có khóa học nào</Select.Item>
+                </Select.Content>
+              </Select>
             ) : (
-              <select
+              <Select
                 value={selectedCourseId}
-                onChange={(e) => onSelectCourse(e.target.value)}
-                className="h-9 w-full px-3 pr-8 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary outline-hidden appearance-none cursor-pointer truncate shadow-2xs"
-                aria-label="Chọn khóa học để xem phân tích chi tiết"
-                title={courses.find((c) => c.id === selectedCourseId)?.title}
+                onValueChange={(val) => {
+                  if (val) onSelectCourse(val as string);
+                }}
               >
-                {courses.map((course) => {
-                  const studentCount = courseStudentCounts?.[course.id];
-                  const countLabel =
-                    studentCount !== undefined ? ` (${studentCount} học viên)` : "";
-                  return (
-                    <option key={course.id} value={course.id}>
-                      {course.title}
-                      {countLabel}
-                    </option>
-                  );
-                })}
-              </select>
+                <Select.Trigger
+                  aria-label="Chọn khóa học để xem phân tích chi tiết"
+                  className="h-9 w-full text-xs font-semibold rounded-xl"
+                >
+                  <span className="truncate">
+                    <Select.Value>
+                      {(() => {
+                        const active = courses.find((c) => c.id === selectedCourseId);
+                        if (!active) return "Chọn khóa học";
+                        const cnt = courseStudentCounts?.[active.id];
+                        return cnt !== undefined
+                          ? `${active.title} (${cnt} học viên)`
+                          : active.title;
+                      })()}
+                    </Select.Value>
+                  </span>
+                </Select.Trigger>
+                <Select.Content>
+                  {courses.map((course) => {
+                    const studentCount = courseStudentCounts?.[course.id];
+                    const countLabel =
+                      studentCount !== undefined ? ` (${studentCount} học viên)` : "";
+                    return (
+                      <Select.Item key={course.id} value={course.id}>
+                        {course.title}
+                        {countLabel}
+                      </Select.Item>
+                    );
+                  })}
+                </Select.Content>
+              </Select>
             )}
-            <ChevronDown
-              className={`w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${
-                hasNoCourses ? "text-muted-foreground/50" : "text-muted-foreground"
-              }`}
-              aria-hidden="true"
-            />
           </div>
         )}
       </div>

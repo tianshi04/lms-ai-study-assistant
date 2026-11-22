@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Star, ChevronRight, Users, BookOpen } from "lucide-react";
+import { Select } from "@/components/ui/Select";
 import type { EnrichedCourseComparisonItem } from "../types";
 
 const SUBJECT_LABELS: Record<string, string> = {
@@ -76,18 +77,30 @@ export function InstructorCourseComparisonTab({
 
         <div className="flex items-center gap-2 shrink-0">
           {/* Bộ sắp xếp */}
-          <select
+          <Select
             value={compareSortBy}
-            onChange={(e) =>
-              onChangeCompareSortBy(e.target.value as "rate" | "students" | "rating")
-            }
-            className="px-2.5 py-1 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer shrink-0"
-            aria-label="Sắp xếp danh sách khóa học"
+            onValueChange={(val) => {
+              if (val) onChangeCompareSortBy(val as "rate" | "students" | "rating");
+            }}
           >
-            <option value="rate">Hoàn thành cao nhất</option>
-            <option value="students">Đông học viên nhất</option>
-            <option value="rating">Đánh giá cao nhất</option>
-          </select>
+            <Select.Trigger
+              aria-label="Sắp xếp danh sách khóa học"
+              className="h-8 px-2.5 text-[11px] font-semibold rounded-lg min-w-[165px]"
+            >
+              <Select.Value>
+                {compareSortBy === "students"
+                  ? "Đông học viên nhất"
+                  : compareSortBy === "rating"
+                    ? "Đánh giá cao nhất"
+                    : "Hoàn thành cao nhất"}
+              </Select.Value>
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="rate">Hoàn thành cao nhất</Select.Item>
+              <Select.Item value="students">Đông học viên nhất</Select.Item>
+              <Select.Item value="rating">Đánh giá cao nhất</Select.Item>
+            </Select.Content>
+          </Select>
         </div>
       </div>
 

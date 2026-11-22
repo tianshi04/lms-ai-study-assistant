@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import {
   Search,
   Zap,
@@ -308,19 +309,32 @@ export function InstructorPacingModal({
                 />
               </div>
 
-              <div className="relative min-w-[200px] w-auto">
-                <select
+              <div className="min-w-[200px] w-auto">
+                <Select
                   value={selectedCourse}
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary focus:border-primary outline-hidden cursor-pointer"
+                  onValueChange={(val) => {
+                    if (val) setSelectedCourse(val as string);
+                  }}
                 >
-                  <option value="ALL">Tất cả môn học ({coursesList.length})</option>
-                  {coursesList.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
+                  <Select.Trigger
+                    aria-label="Lọc theo khóa học"
+                    className="h-8.5 w-full px-3 text-xs font-semibold rounded-xl"
+                  >
+                    <Select.Value>
+                      {selectedCourse === "ALL"
+                        ? `Tất cả môn học (${coursesList.length})`
+                        : coursesList.find((c) => c.id === selectedCourse)?.title || selectedCourse}
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="ALL">Tất cả môn học ({coursesList.length})</Select.Item>
+                    {coursesList.map((c) => (
+                      <Select.Item key={c.id} value={c.id}>
+                        {c.title}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select>
               </div>
             </div>
 
