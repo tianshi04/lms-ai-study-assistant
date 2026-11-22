@@ -126,7 +126,9 @@ export function CourseHeaderBanner({
               {"Giảng viên:"}{" "}
               {course.instructorNames.length > 0
                 ? course.instructorNames.join(", ")
-                : "Chưa cập nhật"}
+                : course.partnerName
+                  ? `Đội ngũ ${course.partnerName}`
+                  : "Giảng viên phụ trách"}
             </span>
           </div>
         </div>

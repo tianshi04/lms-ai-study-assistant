@@ -231,11 +231,80 @@ export function AdminCourseQualityTable() {
           className={isPlaceholderData ? "opacity-60 transition-opacity" : "transition-opacity"}
           aria-busy={isLoading || isPlaceholderData}
         >
-          <AdminDataTable
-            table={table}
-            columnClassNames={COLUMN_CLASS_NAMES}
-            isLoading={isLoading}
-          />
+          <div className="md:hidden divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
+            {isLoading && courses.length === 0 ? (
+              <div className="p-4 space-y-2">
+                <div className="h-4 w-48 rounded bg-muted/70 animate-pulse" />
+                <div className="h-3 w-32 rounded bg-muted/50 animate-pulse" />
+              </div>
+            ) : (
+              courses.map((course) => (
+                <div key={course.courseId} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-foreground">{course.title}</p>
+                      <p className="text-xs text-muted-foreground">{course.partnerName || "—"}</p>
+                    </div>
+                    <div className="shrink-0">
+                      <CourseStatusBadge status={course.status} />
+                    </div>
+                  </div>
+                  <CompletionProgressCell
+                    title={course.title}
+                    completedCount={course.completedCount}
+                    enrolledCount={course.enrolledCount}
+                  />
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Ghi danh</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {formatNumber(course.enrolledCount)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Đánh giá</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {course.reviewCount > 0
+                          ? `${course.averageRating.toFixed(1)} ★`
+                          : "Chưa có"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Doanh thu</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {formatVnd(course.revenue)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      variant="outlined"
+                      render={<Link href={`/courses/${course.courseId}`} />}
+                    >
+                      Xem
+                    </Button>
+                    {course.status === CourseStatus.PENDING_REVIEW && (
+                      <Button
+                        size="sm"
+                        variant="tonal"
+                        render={<Link href="/admin/courses/review" />}
+                      >
+                        Kiểm duyệt
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="hidden md:block">
+            <AdminDataTable
+              table={table}
+              columnClassNames={COLUMN_CLASS_NAMES}
+              isLoading={isLoading}
+            />
+          </div>
         </div>
       )}
 
