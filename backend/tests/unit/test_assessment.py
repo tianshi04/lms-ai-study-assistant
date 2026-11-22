@@ -36,6 +36,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.matrices: dict[str, Any] = {}
         self.item_types: dict[str, str] = {}
         self.rubric_criteria_json_map: dict[str, str] = {}
+        self.course_staff_allowed: bool = True
 
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         self.honor_codes[agreement.id] = agreement
@@ -91,6 +92,33 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
 
     async def save_quiz_active_session(self, session: Any) -> None:
         self.active_sessions[session.id] = session
+
+    async def update_quiz_draft_answers(
+        self,
+        user_id: str,
+        item_id: str,
+        session_id: str,
+        draft_answers: list[list[int]],
+        updated_at: str,
+        draft_version: int,
+    ) -> tuple[bool, int, str]:
+        sess = self.active_sessions.get(f"{user_id}:{item_id}")
+        if not sess or sess.session_id != session_id:
+            return False, 0, ""
+        if draft_version < sess.draft_version:
+            return False, sess.draft_version, sess.draft_updated_at
+        sess.draft_answers = draft_answers
+        sess.draft_updated_at = updated_at
+        sess.draft_version = draft_version
+        return True, sess.draft_version, sess.draft_updated_at
+
+    async def delete_quiz_active_session(
+        self, user_id: str, item_id: str, session_id: str | None = None
+    ) -> None:
+        key = f"{user_id}:{item_id}"
+        sess = self.active_sessions.get(key)
+        if sess and (session_id is None or sess.session_id == session_id):
+            del self.active_sessions[key]
 
     async def save_lab_submission(self, submission: LabSubmission) -> None:
         self.lab_submissions.append(submission)
@@ -325,6 +353,9 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             question_id, "course_test_1"
         )
 
+    async def is_course_staff_for_item(self, item_id: str, user_id: str) -> bool:
+        return bool(item_id and user_id and self.course_staff_allowed)
+
     async def get_lab_test_cases_json(self, item_id: str) -> str | None:
         return None
 
@@ -491,15 +522,16 @@ async def test_graded_quiz_pass_and_cooldown_logic():
         shuffle_options=True,
     )
 
-    correct_answers = [
-        q["shuffled_correct_indices"]
-        for q in await usecase.generate_quiz_session_questions(repo, item_id, seed=42)
-    ]
+    sess_u1 = await usecase.start_graded_quiz_session(user_id, item_id, force_new=True)
+    correct_answers = [q["shuffled_correct_indices"] for q in sess_u1["questions"]]
     wrong_answers = [[(ans[0] + 1) % 4] if ans else [0] for ans in correct_answers]
 
     # 1. Without Honor Code -> Should fail
     res_no_honor = await usecase.submit_graded_quiz(
-        user_id, item_id, question_answers=correct_answers
+        user_id,
+        item_id,
+        question_answers=correct_answers,
+        session_id=sess_u1["session_id"],
     )
     assert res_no_honor["passed"] is False
     assert "Cam kết Trung thực" in res_no_honor["answer_explanations"][0]
@@ -509,34 +541,44 @@ async def test_graded_quiz_pass_and_cooldown_logic():
 
     # 3. Submit Perfect Score -> 100% Pass
     res_pass = await usecase.submit_graded_quiz(
-        user_id, item_id, question_answers=correct_answers
+        user_id,
+        item_id,
+        question_answers=correct_answers,
+        session_id=sess_u1["session_id"],
     )
     assert res_pass["score_percent"] == 100.0
     assert res_pass["passed"] is True
     assert res_pass["attempts_left"] == 3
     assert res_pass["cooldown_seconds_left"] == 0
+    assert await repo.get_quiz_active_session(user_id, item_id) is None
 
     # 4. Test Graded Quiz failure limit & cooldown
     user_fail = "user-test-cooldown"
     await usecase.submit_honor_code(user_fail, item_id, True)
 
     # Attempt 1 (Fail)
+    s_f1 = await usecase.start_graded_quiz_session(user_fail, item_id, force_new=True)
+    wrong_f1 = [[(q["shuffled_correct_indices"][0] + 1) % 4] for q in s_f1["questions"]]
     r1 = await usecase.submit_graded_quiz(
-        user_fail, item_id, question_answers=wrong_answers
+        user_fail, item_id, question_answers=wrong_f1, session_id=s_f1["session_id"]
     )
     assert r1["passed"] is False
     assert r1["attempts_left"] == 2
 
     # Attempt 2 (Fail)
+    s_f2 = await usecase.start_graded_quiz_session(user_fail, item_id, force_new=True)
+    wrong_f2 = [[(q["shuffled_correct_indices"][0] + 1) % 4] for q in s_f2["questions"]]
     r2 = await usecase.submit_graded_quiz(
-        user_fail, item_id, question_answers=wrong_answers
+        user_fail, item_id, question_answers=wrong_f2, session_id=s_f2["session_id"]
     )
     assert r2["passed"] is False
     assert r2["attempts_left"] == 1
 
     # Attempt 3 (Fail) -> Cooldown activated
+    s_f3 = await usecase.start_graded_quiz_session(user_fail, item_id, force_new=True)
+    wrong_f3 = [[(q["shuffled_correct_indices"][0] + 1) % 4] for q in s_f3["questions"]]
     r3 = await usecase.submit_graded_quiz(
-        user_fail, item_id, question_answers=wrong_answers
+        user_fail, item_id, question_answers=wrong_f3, session_id=s_f3["session_id"]
     )
     assert r3["passed"] is False
     assert r3["attempts_left"] == 0
@@ -550,8 +592,14 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     item_practice = "item-practice-1"
     repo.item_types[item_practice] = "PRACTICE_QUIZ"
     await usecase.submit_honor_code(user_fail, item_practice, True)
+    s_prac = await usecase.start_graded_quiz_session(
+        user_fail, item_practice, force_new=True
+    )
     r_prac = await usecase.submit_graded_quiz(
-        user_fail, item_practice, question_answers=wrong_answers
+        user_fail,
+        item_practice,
+        question_answers=wrong_answers,
+        session_id=s_prac["session_id"],
     )
     assert r_prac["attempts_left"] == 999
     assert r_prac["cooldown_seconds_left"] == 0
@@ -677,15 +725,26 @@ async def test_quiz_session_timer_and_timeout():
     assert sess["duration_minutes"] == 45
 
     await usecase.submit_honor_code(user_id, item_id, True)
+    await usecase.save_quiz_draft(
+        user_id=user_id,
+        item_id=item_id,
+        session_id=sess["session_id"],
+        question_answers=[[0], [1], [2], [0], [1]],
+        draft_version=1,
+    )
 
-    # Expired start_time (60 minutes ago)
-    expired_start = (datetime.now(UTC) - timedelta(minutes=60)).isoformat()
+    # Simulate server session expiration (expired 15 minutes ago)
+    active = await repo.get_quiz_active_session(user_id, item_id)
+    assert active is not None
+    active.started_at = (datetime.now(UTC) - timedelta(minutes=60)).isoformat()
+    active.expires_at = (datetime.now(UTC) - timedelta(minutes=15)).isoformat()
+
     res_timeout = await usecase.submit_graded_quiz(
         user_id,
         item_id,
-        start_time_iso=expired_start,
         duration_minutes=45,
         question_answers=[[0], [1], [2], [0], [1]],
+        session_id=sess["session_id"],
     )
     assert "tự động nộp bài" in res_timeout["answer_explanations"][0]
 
@@ -784,15 +843,25 @@ async def test_audit_mode_practice_vs_graded_quiz():
             )
         ),
     ):
-        # 1. Practice Quiz: Audit mode learner MUST BE ALLOWED to submit and receive explanations
+        # 1. Practice Quiz: Audit mode learner MUST BE ALLOWED to start, submit and receive explanations
+        sess_practice = await usecase.start_graded_quiz_session(
+            user_id, item_practice, force_new=True
+        )
         res_practice = await usecase.submit_graded_quiz(
-            user_id, item_practice, question_answers=[[0]]
+            user_id,
+            item_practice,
+            question_answers=[[0]],
+            session_id=sess_practice["session_id"],
         )
         assert res_practice is not None
         assert "score_percent" in res_practice
         assert res_practice["attempts_left"] == UNLIMITED_ATTEMPTS_SENTINEL
 
         # 2. Graded Quiz: Audit mode learner MUST BE BLOCKED with PermissionError
+        with pytest.raises(PermissionError, match="Audit Mode"):
+            await usecase.start_graded_quiz_session(
+                user_id, item_graded, force_new=True
+            )
         with pytest.raises(PermissionError, match="Audit Mode"):
             await usecase.submit_graded_quiz(
                 user_id, item_graded, question_answers=[[0]]
@@ -887,8 +956,12 @@ async def test_quiz_submission_empty_question_pool(monkeypatch: pytest.MonkeyPat
         mock_empty_questions.__get__(usecase, AssessmentUseCase),
     )
 
+    sess = await usecase.start_graded_quiz_session(user_id, item_id, force_new=True)
     res = await usecase.submit_graded_quiz(
-        user_id, item_id, question_answers=[], session_seed=12345
+        user_id,
+        item_id,
+        question_answers=[],
+        session_id=sess["session_id"],
     )
     assert res["score_percent"] == 0.0
     assert res["passed"] is False
@@ -2121,3 +2194,149 @@ async def test_gradebook_completion_condition_progress_and_final_grade():
 
     # Case 4: 100% progress and exceptional grade (98.0) -> COMPLETED
     assert check_completed(100.0, 98.0) is True
+
+
+@pytest.mark.asyncio
+async def test_get_quiz_overview_and_draft_save_resume_lifecycle():
+    from datetime import UTC, datetime, timedelta
+
+    from src.shared.auth import CurrentUser
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-draft-lifecycle"
+    item_id = "item-quiz-draft"
+
+    # 1. Overview before starting does NOT create an active session
+    overview1 = await usecase.get_quiz_overview(user_id, item_id)
+    assert overview1["has_active_draft"] is False
+    assert overview1["active_draft"] is None
+    assert await repo.get_quiz_active_session(user_id, item_id) is None
+
+    # 2. Start session -> creates active session with empty draft
+    sess1 = await usecase.start_graded_quiz_session(user_id, item_id, force_new=True)
+    assert sess1["is_resumed"] is False
+    assert sess1["draft_answers"] == [[] for _ in sess1["questions"]]
+    orig_session_id = sess1["session_id"]
+    orig_started_at = sess1["start_time_iso"]
+    orig_expires_at = sess1["expires_at_iso"]
+    orig_seed = sess1["session_seed"]
+
+    # 3. Save draft answers (v1)
+    draft_res = await usecase.save_quiz_draft(
+        user_id=user_id,
+        item_id=item_id,
+        session_id=orig_session_id,
+        question_answers=[[1], [], [2], [], []],
+        draft_version=1,
+    )
+    assert draft_res["saved"] is True
+    assert draft_res["draft_version"] == 1
+    assert draft_res["session_expired"] is False
+
+    # Out-of-order stale version (v0) does not overwrite v1
+    stale_res = await usecase.save_quiz_draft(
+        user_id=user_id,
+        item_id=item_id,
+        session_id=orig_session_id,
+        question_answers=[[], [], [], [], []],
+        draft_version=0,
+    )
+    assert stale_res["saved"] is False
+    assert stale_res["draft_version"] == 1
+
+    # Wrong session_id is rejected
+    with pytest.raises(ValueError, match="không tồn tại hoặc đã kết thúc"):
+        await usecase.save_quiz_draft(
+            user_id=user_id,
+            item_id=item_id,
+            session_id="qsess-wrong-id",
+            question_answers=[[0]],
+            draft_version=2,
+        )
+
+    # 4. Overview now reports active draft with 2 answered questions
+    overview2 = await usecase.get_quiz_overview(user_id, item_id)
+    assert overview2["has_active_draft"] is True
+    assert overview2["active_draft"]["session_id"] == orig_session_id
+    assert overview2["active_draft"]["answered_count"] == 2
+
+    # 5. Resume session (force_new=False) -> preserves session_id, timer, questions, and draft
+    resumed = await usecase.start_graded_quiz_session(user_id, item_id, force_new=False)
+    assert resumed["is_resumed"] is True
+    assert resumed["session_id"] == orig_session_id
+    assert resumed["start_time_iso"] == orig_started_at
+    assert resumed["expires_at_iso"] == orig_expires_at
+    assert resumed["session_seed"] == orig_seed
+    assert resumed["draft_answers"][:3] == [[1], [], [2]]
+    assert resumed["draft_version"] == 1
+
+    # 6. Submitting with stale session_id is blocked
+    await usecase.submit_honor_code(user_id, item_id, True)
+    with pytest.raises(ValueError, match="đã được thay thế hoặc đã nộp"):
+        await usecase.submit_graded_quiz(
+            user_id=user_id,
+            item_id=item_id,
+            question_answers=[[0], [0], [0], [0], [0]],
+            session_id="qsess-stale-tab",
+        )
+
+    # 7. Expired session with 0 answered questions is discarded without penalty on overview
+    await usecase.start_graded_quiz_session(user_id, item_id, force_new=True)
+    active_empty = await repo.get_quiz_active_session(user_id, item_id)
+    assert active_empty is not None
+    active_empty.expires_at = (datetime.now(UTC) - timedelta(minutes=5)).isoformat()
+    overview_after_empty_exp = await usecase.get_quiz_overview(user_id, item_id)
+    assert overview_after_empty_exp["auto_submitted_expired_draft"] is False
+    assert overview_after_empty_exp["has_active_draft"] is False
+    assert len(await repo.get_quiz_submissions(user_id, item_id)) == 0
+
+    # 8. Expired session with >=1 answered question is auto-submitted on overview
+    sess_answered = await usecase.start_graded_quiz_session(
+        user_id, item_id, force_new=True
+    )
+    correct_ans = [q["shuffled_correct_indices"] for q in sess_answered["questions"]]
+    await usecase.save_quiz_draft(
+        user_id=user_id,
+        item_id=item_id,
+        session_id=sess_answered["session_id"],
+        question_answers=correct_ans,
+        draft_version=1,
+    )
+    active_answered = await repo.get_quiz_active_session(user_id, item_id)
+    assert active_answered is not None
+    active_answered.expires_at = (datetime.now(UTC) - timedelta(minutes=5)).isoformat()
+    overview_after_ans_exp = await usecase.get_quiz_overview(user_id, item_id)
+    assert overview_after_ans_exp["auto_submitted_expired_draft"] is True
+    assert overview_after_ans_exp["has_previous_result"] is True
+    assert overview_after_ans_exp["previous_result"]["score_percent"] == 100.0
+    assert overview_after_ans_exp["previous_result"]["passed"] is True
+    assert await repo.get_quiz_active_session(user_id, item_id) is None
+
+    # 9. Non-staff learner cannot use preview=True
+    learner_ctx = CurrentUser(id=user_id, email="learner@example.com", role="LEARNER")
+    with pytest.raises(PermissionError, match="Chế độ Xem trước"):
+        await usecase.get_quiz_overview(
+            user_id, item_id, preview=True, current_user=learner_ctx
+        )
+    with pytest.raises(PermissionError, match="Chế độ Xem trước"):
+        await usecase.start_graded_quiz_session(
+            user_id, item_id, preview=True, current_user=learner_ctx
+        )
+    with pytest.raises(PermissionError, match="Chế độ Xem trước"):
+        await usecase.submit_graded_quiz(
+            user_id, item_id, preview=True, current_user=learner_ctx
+        )
+
+    # 10. Staff user who does NOT own/collaborate on the course cannot use preview=True
+    unrelated_instructor_ctx = CurrentUser(
+        id="inst_unrelated", email="inst@example.com", role="INSTRUCTOR"
+    )
+    repo.course_staff_allowed = False
+    with pytest.raises(PermissionError, match="không thuộc quyền phụ trách"):
+        await usecase.start_graded_quiz_session(
+            "inst_unrelated",
+            item_id,
+            preview=True,
+            current_user=unrelated_instructor_ctx,
+        )

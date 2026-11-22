@@ -132,8 +132,20 @@ def test_quiz_active_session_expiration():
     session = QuizActiveSession(
         user_id="u1",
         item_id="item_1",
+        session_id="qsess-1",
         session_seed=12345,
-        questions_json=[],
+        questions_json=[
+            {
+                "question_id": "q1",
+                "question_type": "SINGLE_CHOICE",
+                "options": ["A", "B", "C"],
+            },
+            {
+                "question_id": "q2",
+                "question_type": "MULTIPLE_CHOICE",
+                "options": ["A", "B", "C", "D"],
+            },
+        ],
         started_at=now.isoformat(),
         expires_at=expires_at.isoformat(),
     )
@@ -142,6 +154,41 @@ def test_quiz_active_session_expiration():
     assert not session.is_expired(now + timedelta(minutes=44))
     assert session.is_expired(now + timedelta(minutes=45))
     assert session.is_expired(now + timedelta(minutes=50))
+    assert not session.is_expired(
+        now + timedelta(minutes=45, seconds=3), grace_seconds=5
+    )
+    assert session.is_expired(now + timedelta(minutes=45, seconds=6), grace_seconds=5)
+    assert session.answered_count() == 0
+
+    # Valid draft update normalizes out-of-range/duplicate options and enforces single choice
+    ok1 = session.apply_draft_update(
+        raw_answers=[[2, 0, 99, -1], [3, 1, 1, 9]],
+        version=1,
+        now=now + timedelta(minutes=5),
+    )
+    assert ok1 is True
+    assert session.draft_answers == [[0], [1, 3]]
+    assert session.answered_count() == 2
+    assert session.draft_version == 1
+
+    # Out-of-order lower version is ignored
+    ok_stale = session.apply_draft_update(
+        raw_answers=[[], []],
+        version=0,
+        now=now + timedelta(minutes=6),
+    )
+    assert ok_stale is False
+    assert session.draft_answers == [[0], [1, 3]]
+    assert session.draft_version == 1
+
+    # Update past expiration + grace period is rejected
+    ok_expired = session.apply_draft_update(
+        raw_answers=[[1], [2]],
+        version=2,
+        now=expires_at + timedelta(seconds=10),
+    )
+    assert ok_expired is False
+    assert session.draft_answers == [[0], [1, 3]]
 
 
 def test_peer_assignment_submission_constants_and_locking():

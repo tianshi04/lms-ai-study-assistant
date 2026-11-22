@@ -12,6 +12,8 @@ from src.modules.assessment.domain.constants import (
     GRADING_LOCK_TIMEOUT_MINUTES,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
     QUIZ_COOLDOWN_HOURS,
+    QUIZ_DRAFT_DEFAULT_VERSION,
+    QUIZ_DRAFT_KEEPALIVE_GRACE_SECONDS,
     TOPIC_MASTERY_THRESHOLD_MASTERED,
     TOPIC_MASTERY_THRESHOLD_NEEDS_PRACTICE,
 )
@@ -168,19 +170,92 @@ class QuizActiveSession(Entity):
         user_id: str,
         item_id: str,
         session_seed: int,
-        questions_json: list[dict],
+        questions_json: list[dict[str, Any]],
         started_at: str,
         expires_at: str,
+        session_id: str = "",
+        draft_answers: list[list[int]] | None = None,
+        draft_updated_at: str = "",
+        draft_version: int = QUIZ_DRAFT_DEFAULT_VERSION,
     ) -> None:
         super().__init__(id=f"{user_id}:{item_id}")
         self.user_id = user_id
         self.item_id = item_id
+        self.session_id = session_id
         self.session_seed = session_seed
         self.questions_json = questions_json
         self.started_at = started_at
         self.expires_at = expires_at
+        self.draft_answers = self.normalize_draft_answers(
+            draft_answers or [], questions_json
+        )
+        self.draft_updated_at = draft_updated_at
+        self.draft_version = max(0, int(draft_version))
 
-    def is_expired(self, now: datetime) -> bool:
+    @staticmethod
+    def normalize_draft_answers(
+        raw_answers: list[list[int]] | None,
+        questions: list[dict[str, Any]],
+    ) -> list[list[int]]:
+        if not questions:
+            if not raw_answers:
+                return []
+            sanitized: list[list[int]] = []
+            for entry in raw_answers:
+                if not isinstance(entry, list):
+                    sanitized.append([])
+                    continue
+                valid = sorted(
+                    {
+                        idx
+                        for idx in entry
+                        if isinstance(idx, int)
+                        and not isinstance(idx, bool)
+                        and idx >= 0
+                    }
+                )
+                sanitized.append(valid)
+            return sanitized
+
+        normalized: list[list[int]] = []
+        for q_idx, q in enumerate(questions):
+            raw_entry = (
+                raw_answers[q_idx]
+                if (
+                    raw_answers
+                    and q_idx < len(raw_answers)
+                    and isinstance(raw_answers[q_idx], list)
+                )
+                else []
+            )
+            options = q.get("options") if isinstance(q, dict) else None
+            option_count = len(options) if isinstance(options, list) else 0
+
+            valid_indices = sorted(
+                {
+                    idx
+                    for idx in raw_entry
+                    if isinstance(idx, int)
+                    and not isinstance(idx, bool)
+                    and idx >= 0
+                    and (option_count == 0 or idx < option_count)
+                }
+            )
+            q_type = (
+                str(q.get("question_type", "SINGLE_CHOICE")).upper()
+                if isinstance(q, dict)
+                else "SINGLE_CHOICE"
+            )
+            if q_type != "MULTIPLE_CHOICE" and len(valid_indices) > 1:
+                valid_indices = [valid_indices[0]]
+
+            normalized.append(valid_indices)
+        return normalized
+
+    def answered_count(self) -> int:
+        return sum(1 for ans in self.draft_answers if ans)
+
+    def is_expired(self, now: datetime, grace_seconds: int = 0) -> bool:
         if not self.expires_at:
             return False
         try:
@@ -189,9 +264,30 @@ class QuizActiveSession(Entity):
                 expires_dt = expires_dt.replace(tzinfo=UTC)
             elif expires_dt.tzinfo is not None and now.tzinfo is None:
                 expires_dt = expires_dt.replace(tzinfo=None)
+            if grace_seconds > 0:
+                expires_dt = expires_dt + timedelta(seconds=grace_seconds)
             return now >= expires_dt
         except (ValueError, TypeError):
             return False
+
+    def apply_draft_update(
+        self,
+        raw_answers: list[list[int]],
+        version: int,
+        now: datetime,
+        grace_seconds: int = QUIZ_DRAFT_KEEPALIVE_GRACE_SECONDS,
+    ) -> bool:
+        if self.is_expired(now, grace_seconds=grace_seconds):
+            return False
+        safe_version = max(0, int(version))
+        if safe_version < self.draft_version:
+            return False
+        self.draft_answers = self.normalize_draft_answers(
+            raw_answers, self.questions_json
+        )
+        self.draft_version = safe_version
+        self.draft_updated_at = now.isoformat()
+        return True
 
 
 class LabSubmission(Entity):

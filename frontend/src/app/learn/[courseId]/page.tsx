@@ -982,7 +982,7 @@ function CoursePlayerContent() {
               />
 
               {/* Fixed Bottom-Right Next Lesson Floating Action Button */}
-              {nextItem && (
+              {nextItem && !isQuizActive && (
                 <div className="absolute bottom-2.5 sm:bottom-3.5 right-3 sm:right-3.5 z-30 pointer-events-auto">
                   <Button
                     type="button"
