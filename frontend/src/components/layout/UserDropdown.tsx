@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   CheckCircle2,
   Building2,
+  Megaphone,
   LogOut,
   Sparkles,
 } from "lucide-react";
@@ -251,6 +252,10 @@ export function UserDropdown() {
             <Menu.Item render={<Link href="/admin/partners" />} className={itemClasses}>
               <Building2 aria-hidden="true" className={iconClasses} />
               <span>{"Quản trị Đối tác"}</span>
+            </Menu.Item>
+            <Menu.Item render={<Link href="/admin/announcements" />} className={itemClasses}>
+              <Megaphone aria-hidden="true" className={iconClasses} />
+              <span>{"Thông báo Hệ thống"}</span>
             </Menu.Item>
           </>
         )}

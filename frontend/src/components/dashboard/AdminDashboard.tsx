@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   Clock,
   List,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -17,6 +18,7 @@ import { useAdminCatalogStatsQuery } from "@/lib/queries/useCatalogQueries";
 import { useAdminCertificateStatsQuery } from "@/lib/queries/useCertificateQueries";
 import { useAdminIdentityStatsQuery } from "@/lib/queries/useIdentityQueries";
 import { useAdminLearningStatsQuery } from "@/lib/queries/useLearningQueries";
+import { useActiveAnnouncementsQuery } from "@/lib/queries/useNotificationQueries";
 import { usePartnersQuery } from "@/lib/queries/usePartnerQueries";
 import { useAdminPaymentStatsQuery } from "@/lib/queries/usePaymentQueries";
 import { AdminCourseQualityTable } from "./admin/AdminCourseQualityTable";
@@ -96,6 +98,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
     enabled: isAuthenticated && isSuperAdmin,
     staleTime: 60 * 1000,
   });
+  const activeAnnouncementsQuery = useActiveAnnouncementsQuery();
 
   const summaryQueries = [
     identityQuery,
@@ -120,7 +123,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
 
       <main className="relative max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Quick Admin Operations Navigation Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <QuickAction
             href="/admin/applications"
             icon={CheckCircle2}
@@ -163,6 +166,14 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             title="Quản Trị Đối Tác"
             description="Trường đại học và doanh nghiệp"
             count={partnersQuery.data?.length}
+          />
+          <QuickAction
+            href="/admin/announcements"
+            icon={Megaphone}
+            iconClassName="bg-primary/10 text-primary"
+            title="Thông Báo Hệ Thống"
+            description="Phát thông báo bảo trì tới toàn người dùng"
+            count={activeAnnouncementsQuery.data?.length}
           />
         </div>
 

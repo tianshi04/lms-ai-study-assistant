@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from src.modules.notification.domain.constants import NotificationCategory
+from src.modules.notification.domain.constants import (
+    AnnouncementSeverity,
+    AnnouncementStatus,
+    NotificationCategory,
+)
 from src.shared.domain.base import Entity, ValueObject
 
 
@@ -32,3 +36,27 @@ class NotificationPreferences(ValueObject):
     enable_community_replies: bool = True
     enable_announcements: bool = True
     updated_at: datetime | None = None
+
+
+@dataclass
+class SystemAnnouncement(Entity):
+    id: str
+    title: str
+    content: str
+    action_url: str
+    severity: AnnouncementSeverity
+    status: AnnouncementStatus
+    starts_at: datetime
+    expires_at: datetime
+    also_notify_bell: bool
+    is_critical: bool
+    created_by: str
+    sent_at: datetime | None = None
+    recipient_count: int = 0
+    last_user_id: str = ""
+    created_at: datetime | None = None
+
+    def cancel(self) -> None:
+        if self.status != AnnouncementStatus.SCHEDULED:
+            raise ValueError("Chỉ có thể huỷ thông báo đang ở trạng thái đã lên lịch")
+        self.status = AnnouncementStatus.CANCELLED

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { AnnouncementBanner } from "@/components/notification/AnnouncementBanner";
 
 const AIChatbot = dynamic(() => import("@/components/ai/AIChatbot").then((mod) => mod.AIChatbot), {
   ssr: false,
@@ -16,11 +17,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const isAuthPage = pathname === "/auth/login" || pathname === "/auth/register";
 
   if (isPlayerPage) {
-    return <>{children}</>;
+    return (
+      <>
+        <AnnouncementBanner />
+        {children}
+      </>
+    );
   }
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-background text-foreground selection:bg-primary selection:text-primary-foreground transition-colors duration-m3-short-4 ease-m3-emphasized">
+      {!isAuthPage && <AnnouncementBanner />}
       {!isAuthPage && <Navbar />}
       <main className="flex-1 flex flex-col min-h-screen">{children}</main>
       {!isAuthPage && <Footer />}
