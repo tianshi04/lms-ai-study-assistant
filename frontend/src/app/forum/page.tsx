@@ -831,7 +831,7 @@ function ForumPageContent() {
               }
             </p>
             <div>
-              <Link href="/catalog">
+              <Link href="/courses">
                 <Button variant="filled" size="md">
                   {"Khám phá khóa học"}
                 </Button>

@@ -155,56 +155,98 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   Chưa có dữ liệu học viên tham gia khóa học này.
                 </div>
               ) : (
-                <Table>
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.Head>Tên / Email</Table.Head>
-                      <Table.Head>Mã Học Viên</Table.Head>
-                      <Table.Head className="text-center">Tiến Độ Học Tập</Table.Head>
-                      <Table.Head className="text-right">Trạng Thái</Table.Head>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
+                <>
+                  <div className="md:hidden divide-y divide-border">
                     {analytics.students.map((student) => (
-                      <Table.Row key={student.userId}>
-                        <Table.Cell className="font-semibold">
-                          <div>{student.userName}</div>
-                          <div className="text-xs font-mono font-normal text-muted-foreground">
-                            {student.userEmail || "Learner"}
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell className="font-mono text-xs text-muted-foreground">
-                          {student.userId}
-                        </Table.Cell>
-                        <Table.Cell className="text-center">
-                          <div className="flex items-center justify-center gap-3">
-                            <div className="w-32">
-                              <Progress.Linear value={Math.min(100, student.progressPercent)} />
+                      <div key={student.userId} className="py-4 space-y-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground">{student.userName}</div>
+                            <div className="text-xs font-mono text-muted-foreground truncate">
+                              {student.userEmail || "Learner"}
                             </div>
-                            <span className="text-xs font-bold text-foreground font-mono">
-                              {student.progressPercent.toFixed(1)}%
-                            </span>
+                            <div className="text-[11px] font-mono text-muted-foreground truncate">
+                              {student.userId}
+                            </div>
                           </div>
-                        </Table.Cell>
-                        <Table.Cell className="text-right">
                           {student.progressPercent >= 100 ? (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success shrink-0">
                               HOÀN THÀNH
                             </span>
                           ) : student.progressPercent > 0 ? (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary shrink-0">
                               ĐANG HỌC
                             </span>
                           ) : (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground shrink-0">
                               MỚI GHI DANH
                             </span>
                           )}
-                        </Table.Cell>
-                      </Table.Row>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <Progress.Linear value={Math.min(100, student.progressPercent)} />
+                          </div>
+                          <span className="text-xs font-bold text-foreground font-mono shrink-0">
+                            {student.progressPercent.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
                     ))}
-                  </Table.Body>
-                </Table>
+                  </div>
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
+                      <Table.Header>
+                        <Table.Row>
+                          <Table.Head>Tên / Email</Table.Head>
+                          <Table.Head>Mã Học Viên</Table.Head>
+                          <Table.Head className="text-center">Tiến Độ Học Tập</Table.Head>
+                          <Table.Head className="text-right">Trạng Thái</Table.Head>
+                        </Table.Row>
+                      </Table.Header>
+                      <Table.Body>
+                        {analytics.students.map((student) => (
+                          <Table.Row key={student.userId}>
+                            <Table.Cell className="font-semibold">
+                              <div>{student.userName}</div>
+                              <div className="text-xs font-mono font-normal text-muted-foreground">
+                                {student.userEmail || "Learner"}
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell className="font-mono text-xs text-muted-foreground">
+                              {student.userId}
+                            </Table.Cell>
+                            <Table.Cell className="text-center">
+                              <div className="flex items-center justify-center gap-3">
+                                <div className="w-32">
+                                  <Progress.Linear value={Math.min(100, student.progressPercent)} />
+                                </div>
+                                <span className="text-xs font-bold text-foreground font-mono">
+                                  {student.progressPercent.toFixed(1)}%
+                                </span>
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell className="text-right">
+                              {student.progressPercent >= 100 ? (
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success">
+                                  HOÀN THÀNH
+                                </span>
+                              ) : student.progressPercent > 0 ? (
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary">
+                                  ĐANG HỌC
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground">
+                                  MỚI GHI DANH
+                                </span>
+                              )}
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table>
+                  </div>
+                </>
               )}
             </Surface>
           </div>

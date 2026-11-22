@@ -87,12 +87,12 @@ export function NotificationCenterClient() {
               <Bell className="w-6 h-6" aria-hidden="true" />
             </div>
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <h1 className="text-2xl font-extrabold tracking-tight text-on-surface">
                   Trung tâm Thông báo
                 </h1>
                 {unreadCount > 0 && (
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 animate-pulse">
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 animate-pulse whitespace-nowrap shrink-0">
                     {unreadCount} chưa đọc
                   </span>
                 )}
@@ -136,7 +136,7 @@ export function NotificationCenterClient() {
         {/* Filter Controls Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Category Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex flex-wrap items-center gap-2">
             {categories.map((cat) => {
               const IconComp = cat.icon;
               const isSelected = selectedCategory === cat.id;

@@ -180,11 +180,19 @@ export default function CourseReviewerPortalPage() {
           }}
           className="mb-6"
         >
-          <Tabs.List className="overflow-x-auto pb-1">
-            <Tabs.Tab value={CourseStatus.PENDING_REVIEW}>{"Chờ kiểm duyệt"}</Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.PUBLISHED}>{"Đã xuất bản"}</Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.DRAFT}>{"Bản nháp"}</Tabs.Tab>
-            <Tabs.Tab value={CourseStatus.REJECTED}>{"Từ chối"}</Tabs.Tab>
+          <Tabs.List className="flex-wrap pb-1">
+            <Tabs.Tab value={CourseStatus.PENDING_REVIEW} className="whitespace-nowrap">
+              {"Chờ kiểm duyệt"}
+            </Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.PUBLISHED} className="whitespace-nowrap">
+              {"Đã xuất bản"}
+            </Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.DRAFT} className="whitespace-nowrap">
+              {"Bản nháp"}
+            </Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.REJECTED} className="whitespace-nowrap">
+              {"Từ chối"}
+            </Tabs.Tab>
           </Tabs.List>
         </Tabs.Root>
 
