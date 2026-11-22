@@ -19,7 +19,7 @@ export class TAGradingPage {
     this.pendingTab = page.locator('button:has-text("Chờ trợ giảng chấm")');
     this.appealedTab = page.locator('button:has-text("Có đơn kháng nghị")');
     this.gradedTab = page.locator('button:has-text("Đã hoàn thành")');
-    this.firstGradeButton = page.locator('button:has-text("Chấm điểm ngay"), button:has-text("Xem & Sửa điểm")').first();
+    this.firstGradeButton = page.locator('button:has-text("Chấm điểm ngay"), button:has-text("Xem & Sửa điểm")').filter({ visible: true }).first();
     this.gradeModalTitle = page.getByRole('heading', { name: /Chấm Điểm Bài Tập Tự Luận/i }).or(page.locator('text=Chấm Điểm Bài Tập Tự Luận')).first();
     this.scoreInput = page.locator('input[type="number"]');
     this.submitGradeButton = page.locator('button:has-text("Lưu & Xác Nhận Điểm Trợ Giảng")');
