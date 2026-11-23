@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
-import { ItemType } from "@/gen/catalog/v1/catalog_pb";
+import { EssayGradingMode, ItemType } from "@/gen/catalog/v1/catalog_pb";
 import { type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
+import { RadioGroup, RadioItem } from "@/components/ui/RadioGroup";
 import { Textarea } from "@/components/ui/Textarea";
 import { VideoUploadWidget } from "@/components/course/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/course/InVideoQuizEditor";
@@ -21,21 +22,16 @@ import {
   HelpCircle,
   Video as VideoIcon,
   Users,
-  CheckCircle2,
   Eye,
   Edit3,
-  Info,
   AlertTriangle,
   FileCode,
   BookOpen,
   Terminal,
   Award,
   Pencil,
-  X,
   Plus,
   Trash2,
-  Code2,
-  Sparkles,
 } from "lucide-react";
 
 /** Decode double-encoded JSON strings (e.g. '"[...]"' → '[...]') */
@@ -57,75 +53,12 @@ export interface RubricCriterionItem {
   description: string;
 }
 
-const RUBRIC_PRESETS: { name: string; items: RubricCriterionItem[] }[] = [
+const DEFAULT_EMPTY_RUBRIC: RubricCriterionItem[] = [
   {
-    name: "Báo cáo nghiên cứu / Tự luận",
-    items: [
-      {
-        criteriaId: "c1",
-        title: "Chất lượng nội dung & Lập luận",
-        maxScore: 10,
-        description: "Mức độ hoàn thiện, tính logic và chiều sâu phân tích của giải pháp.",
-      },
-      {
-        criteriaId: "c2",
-        title: "Bố cục & Kỹ năng trình bày",
-        maxScore: 10,
-        description: "Tổ chức đề mục khoa học, diễn đạt mạch lạc, kèm dẫn chứng rõ ràng.",
-      },
-      {
-        criteriaId: "c3",
-        title: "Tính ứng dụng & Đóng góp",
-        maxScore: 10,
-        description: "Khả năng áp dụng vào thực tế hoặc mức độ đóng góp mới của đề tài.",
-      },
-    ],
-  },
-  {
-    name: "Thiết kế Sản phẩm / UI-UX",
-    items: [
-      {
-        criteriaId: "c1",
-        title: "Trải nghiệm người dùng (UX)",
-        maxScore: 10,
-        description: "Luồng tương tác mượt mà, giải quyết tốt bài toán người dùng mục tiêu.",
-      },
-      {
-        criteriaId: "c2",
-        title: "Thiết kế giao diện (UI)",
-        maxScore: 10,
-        description: "Phân cấp thị giác rõ ràng, bảng màu và typography nhất quán, thẩm mỹ cao.",
-      },
-      {
-        criteriaId: "c3",
-        title: "Tính sáng tạo & Đột phá",
-        maxScore: 10,
-        description: "Ý tưởng mới lạ, giải quyết đúng nhu cầu thực tế của người dùng.",
-      },
-    ],
-  },
-  {
-    name: "Đồ án Kỹ thuật / Lập trình",
-    items: [
-      {
-        criteriaId: "c1",
-        title: "Kiến trúc hệ thống & Clean Code",
-        maxScore: 10,
-        description: "Phân chia module rõ ràng, tuân thủ nguyên tắc thiết kế và dễ bảo trì.",
-      },
-      {
-        criteriaId: "c2",
-        title: "Hoàn thiện tính năng & Độ ổn định",
-        maxScore: 10,
-        description: "Các chức năng hoạt động đúng yêu cầu, xử lý ngoại lệ tốt.",
-      },
-      {
-        criteriaId: "c3",
-        title: "Tài liệu hướng dẫn (README)",
-        maxScore: 10,
-        description: "Hướng dẫn cài đặt, cấu hình và chạy thử rõ ràng, dễ làm theo.",
-      },
-    ],
+    criteriaId: "c1",
+    title: "",
+    maxScore: 10,
+    description: "",
   },
 ];
 
@@ -143,7 +76,7 @@ function safeParseRubricJson(jsonStr: string | undefined): RubricCriterionItem[]
             ? item.max_score
             : typeof item.maxScore === "number" && !Number.isNaN(item.maxScore)
               ? item.maxScore
-              : Number(item.max_score || item.maxScore) || 0,
+              : Number(item.max_score || item.maxScore) || 10,
         description: String(item.description || ""),
       }));
     }
@@ -155,7 +88,7 @@ function safeParseRubricJson(jsonStr: string | undefined): RubricCriterionItem[]
 
 function parseRubricJsonWithFallback(jsonStr: string | undefined): RubricCriterionItem[] {
   const result = safeParseRubricJson(jsonStr);
-  return result && result.length > 0 ? result : RUBRIC_PRESETS[0].items;
+  return result && result.length > 0 ? result : DEFAULT_EMPTY_RUBRIC;
 }
 
 interface LearningItemFormModalProps {
@@ -189,7 +122,7 @@ export function LearningItemFormModal({
     initialData?.inVideoQuizzes || [],
   );
 
-  // Reading & Instruction fields (Shared across READING, AUTO_GRADED_LAB, and PEER_REVIEW)
+  // Reading / Instructions fields
   const [readingMarkdown, setReadingMarkdown] = useState(initialData?.readingMarkdown || "");
 
   // Lab fields
@@ -225,12 +158,27 @@ export function LearningItemFormModal({
     initialData?.quizCooldownHours ?? "8",
   );
 
-  // Peer review fields
+  // Peer review / Essay fields
+  const [essayGradingMode, setEssayGradingMode] = useState<EssayGradingMode>(() =>
+    initialData?.essayGradingMode === EssayGradingMode.INSTRUCTOR_ONLY
+      ? EssayGradingMode.INSTRUCTOR_ONLY
+      : EssayGradingMode.PEER_REVIEW,
+  );
+  const [requiredPeerReviews, setRequiredPeerReviews] = useState<number>(
+    () => initialData?.requiredPeerReviews || 3,
+  );
+  const [coldStartHours, setColdStartHours] = useState<number>(
+    () => initialData?.coldStartHours || 48,
+  );
+  const [essayResubmissions, setEssayResubmissions] = useState<string | number>(() => {
+    if (initialData?.essayMaxAttempts != null) {
+      return Math.max(0, Number(initialData.essayMaxAttempts) - 1);
+    }
+    return "2";
+  });
   const [rubricItems, setRubricItems] = useState<RubricCriterionItem[]>(() =>
     parseRubricJsonWithFallback(initialData?.rubricCriteriaJson),
   );
-  const [showRawRubricJson, setShowRawRubricJson] = useState(false);
-  const [rubricJsonError, setRubricJsonError] = useState("");
   const [peerError, setPeerError] = useState("");
   const [peerRubricJson, setPeerRubricJson] = useState(
     () =>
@@ -260,7 +208,6 @@ export function LearningItemFormModal({
       2,
     );
     setPeerRubricJson(jsonOutput);
-    setRubricJsonError("");
     setPeerError("");
   };
 
@@ -293,12 +240,6 @@ export function LearningItemFormModal({
     updateRubricItems(rubricItems.filter((_, i) => i !== idx));
   };
 
-  const handleApplyPreset = (presetIndex: number) => {
-    const preset = RUBRIC_PRESETS[presetIndex];
-    if (!preset) return;
-    updateRubricItems(preset.items);
-  };
-
   const totalRubricScore = rubricItems.reduce((acc, curr) => acc + (Number(curr.maxScore) || 0), 0);
 
   useEffect(() => {
@@ -327,6 +268,18 @@ export function LearningItemFormModal({
       setQuizHardCount(initialData.quizHardCount ?? 2);
       setQuizMaxAttempts(initialData.quizMaxAttempts ?? 3);
       setQuizCooldownHours(initialData.quizCooldownHours ?? 8);
+      setEssayGradingMode(
+        initialData.essayGradingMode === EssayGradingMode.INSTRUCTOR_ONLY
+          ? EssayGradingMode.INSTRUCTOR_ONLY
+          : EssayGradingMode.PEER_REVIEW,
+      );
+      setRequiredPeerReviews(initialData.requiredPeerReviews || 3);
+      setColdStartHours(initialData.coldStartHours || 48);
+      setEssayResubmissions(
+        initialData.essayMaxAttempts != null
+          ? Math.max(0, Number(initialData.essayMaxAttempts) - 1)
+          : 2,
+      );
       const parsedRubrics = parseRubricJsonWithFallback(initialData.rubricCriteriaJson);
       setRubricItems(parsedRubrics);
       setPeerRubricJson(
@@ -342,9 +295,6 @@ export function LearningItemFormModal({
             2,
           ),
       );
-      setShowRawRubricJson(false);
-      setRubricJsonError("");
-      setPeerError("");
     }
   }, [initialData, isOpen]);
 
@@ -387,26 +337,40 @@ export function LearningItemFormModal({
       }
     }
 
-    // ── Peer Review validation ──
+    // ── Bài tập tự luận validation ──
     if (itemType === ItemType.PEER_REVIEW) {
-      const parsed = safeParseRubricJson(peerRubricJson);
-      if (!parsed || parsed.length === 0) {
-        setPeerError("Bài tập chấm chéo bắt buộc phải có ít nhất 1 tiêu chí Rubric hợp lệ.");
+      const resubStr = String(essayResubmissions).trim();
+      if (resubStr === "") {
+        setPeerError("Số lượt nộp lại không được để trống (nhập 0 nếu không cho nộp lại).");
         return;
       }
-      for (let i = 0; i < parsed.length; i++) {
-        const item = parsed[i];
-        if (!item.title.trim()) {
-          setPeerError(`Tiêu chí #${i + 1} chưa có tiêu đề đánh giá.`);
+      const resubNum = Number(resubStr);
+      if (!Number.isInteger(resubNum) || resubNum < 0) {
+        setPeerError(
+          "Số lượt nộp lại phải là số nguyên từ 0 trở lên (nhập 0 nếu không cho nộp lại).",
+        );
+        return;
+      }
+      if (resubNum > 50) {
+        setPeerError("Số lượt nộp lại không được vượt quá 50 lần.");
+        return;
+      }
+
+      // Kiểm tra tối thiểu 1 tiêu chí Rubric và không được để trống
+      if (!rubricItems || rubricItems.length === 0) {
+        setPeerError("Bài tập tự luận bắt buộc phải có ít nhất 1 tiêu chí Rubric đánh giá.");
+        return;
+      }
+      for (let i = 0; i < rubricItems.length; i++) {
+        const item = rubricItems[i];
+        if (!item.title || !item.title.trim()) {
+          setPeerError(`Tiêu chí #${i + 1} chưa có tên tiêu đề. Tên tiêu chí không được để trống.`);
           return;
         }
-        if (
-          typeof item.maxScore !== "number" ||
-          item.maxScore <= 0 ||
-          !Number.isFinite(item.maxScore)
-        ) {
+        const scoreNum = Number(item.maxScore);
+        if (!Number.isFinite(scoreNum) || scoreNum <= 0) {
           setPeerError(
-            `Điểm tối đa của tiêu chí '${item.title || `#${i + 1}`}' phải là số lớn hơn 0.`,
+            `Điểm tối đa của tiêu chí #${i + 1} ('${item.title.trim()}') phải là số lớn hơn 0.`,
           );
           return;
         }
@@ -427,6 +391,14 @@ export function LearningItemFormModal({
       testCasesJson: finalTestCasesJson,
       language: labLanguage,
       rubricCriteriaJson: itemType === ItemType.PEER_REVIEW ? peerRubricJson : "",
+      essayGradingMode:
+        itemType === ItemType.PEER_REVIEW ? essayGradingMode : EssayGradingMode.UNSPECIFIED,
+      requiredPeerReviews: itemType === ItemType.PEER_REVIEW ? requiredPeerReviews : 3,
+      coldStartHours: itemType === ItemType.PEER_REVIEW ? coldStartHours : 48,
+      essayMaxAttempts:
+        itemType === ItemType.PEER_REVIEW
+          ? Math.max(1, Math.floor(Number(essayResubmissions)) + 1)
+          : 3,
       quizBankId,
       quizTimeLimit,
       quizPassingThreshold,
@@ -444,143 +416,115 @@ export function LearningItemFormModal({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <Dialog.Content size="2xl">
-        <Dialog.Header>
-          <Dialog.Title>
-            {isEdit ? "Chỉnh sửa nội dung Học liệu" : "Thêm Học liệu Mới vào Bài học"}
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog.Content className="max-w-2xl max-h-[90vh] flex flex-col p-6 rounded-2xl bg-card border border-border">
+        <Dialog.Header className="pb-2">
+          <Dialog.Title className="text-lg font-bold flex items-center gap-2">
+            <Pencil className="w-5 h-5 text-primary" />
+            {isEdit ? "Chỉnh sửa Học liệu" : "Tạo Học liệu mới"}
           </Dialog.Title>
+          <Dialog.Description className="text-xs text-muted-foreground">
+            Thiết lập chi tiết bài học, thời lượng dự kiến và các thông số kỹ thuật.
+          </Dialog.Description>
         </Dialog.Header>
-        <form onSubmit={handleSubmit} className="flex flex-col pt-2">
-          {/* Pinned Top Basic Info Section (Always Visible) */}
-          <div className="bg-muted/40 p-3.5 rounded-xl border border-border/80 mb-3 space-y-2 shrink-0">
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-              <div className="sm:col-span-5">
-                <Input
-                  label="Tên Học liệu"
-                  type="text"
-                  value={itemTitle}
-                  onChange={(e) => setItemTitle(e.target.value)}
-                  placeholder="Hãy điền tên học liệu"
-                  className="w-full bg-card font-semibold shadow-2xs"
-                  required
-                />
-              </div>
 
-              <div className="sm:col-span-5">
-                <label
-                  htmlFor="itemTypeSelect"
-                  className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1"
-                >
-                  Loại nội dung
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="space-y-4 py-3 overflow-y-auto pr-1 flex-1">
+            {/* Common fields */}
+            <div>
+              <label
+                htmlFor="itemTitle"
+                className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider"
+              >
+                Tiêu đề học liệu *
+              </label>
+              <Input
+                id="itemTitle"
+                required
+                value={itemTitle}
+                onChange={(e) => setItemTitle(e.target.value)}
+                placeholder="VD: Giới thiệu Tổng quan về Hệ thống"
+                className="w-full text-sm font-semibold"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider">
+                  Loại học liệu *
                 </label>
                 <Select
                   value={String(itemType)}
-                  onValueChange={(val) => {
-                    if (val) setItemType(Number(val) as ItemType);
-                  }}
+                  onValueChange={(val) => setItemType(Number(val) as ItemType)}
                 >
-                  <Select.Trigger
-                    id="itemTypeSelect"
-                    aria-label="Loại nội dung"
-                    className="w-full bg-card shadow-2xs"
-                  >
-                    <Select.Value placeholder="Chọn loại nội dung">
-                      <span className="inline-flex items-center gap-1.5 truncate">
-                        {itemType === ItemType.VIDEO ? (
-                          <>
-                            <VideoIcon className="w-3.5 h-3.5 shrink-0" /> Bài giảng Video
-                          </>
-                        ) : itemType === ItemType.READING ? (
-                          <>
-                            <BookOpen className="w-3.5 h-3.5 shrink-0" /> Bài đọc Markdown
-                          </>
-                        ) : itemType === ItemType.AUTO_GRADED_LAB ? (
-                          <>
-                            <Terminal className="w-3.5 h-3.5 shrink-0" /> Thực hành Code
-                          </>
-                        ) : itemType === ItemType.PEER_REVIEW ? (
-                          <>
-                            <Users className="w-3.5 h-3.5 shrink-0" /> Đánh giá chéo
-                          </>
-                        ) : itemType === ItemType.PRACTICE_QUIZ ? (
-                          <>
-                            <Pencil className="w-3.5 h-3.5 shrink-0" /> Quiz Luyện tập
-                          </>
-                        ) : itemType === ItemType.GRADED_QUIZ ? (
-                          <>
-                            <Award className="w-3.5 h-3.5 shrink-0" /> Quiz Tính điểm
-                          </>
-                        ) : (
-                          ""
-                        )}
-                      </span>
-                    </Select.Value>
+                  <Select.Trigger className="w-full text-xs font-semibold">
+                    <Select.Value />
                   </Select.Trigger>
                   <Select.Content>
                     <Select.Item value={String(ItemType.VIDEO)}>
-                      <span className="inline-flex items-center gap-1.5">
-                        <VideoIcon className="w-3.5 h-3.5" /> Bài giảng Video
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <VideoIcon className="w-3.5 h-3.5 text-primary" />
+                        <span>Bài giảng Video</span>
+                      </div>
                     </Select.Item>
                     <Select.Item value={String(ItemType.READING)}>
-                      <span className="inline-flex items-center gap-1.5">
-                        <BookOpen className="w-3.5 h-3.5" /> Bài đọc Markdown
-                      </span>
-                    </Select.Item>
-                    <Select.Item value={String(ItemType.AUTO_GRADED_LAB)}>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Terminal className="w-3.5 h-3.5" /> Thực hành Code
-                      </span>
-                    </Select.Item>
-                    <Select.Item value={String(ItemType.PEER_REVIEW)}>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" /> Đánh giá chéo
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5 text-primary" />
+                        <span>Tài liệu Đọc (Reading)</span>
+                      </div>
                     </Select.Item>
                     <Select.Item value={String(ItemType.PRACTICE_QUIZ)}>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Pencil className="w-3.5 h-3.5" /> Quiz Luyện tập
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <HelpCircle className="w-3.5 h-3.5 text-warning" />
+                        <span>Trắc nghiệm Luyện tập</span>
+                      </div>
                     </Select.Item>
                     <Select.Item value={String(ItemType.GRADED_QUIZ)}>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Award className="w-3.5 h-3.5" /> Quiz Tính điểm
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Award className="w-3.5 h-3.5 text-destructive" />
+                        <span>Trắc nghiệm Tính điểm</span>
+                      </div>
+                    </Select.Item>
+                    <Select.Item value={String(ItemType.AUTO_GRADED_LAB)}>
+                      <div className="flex items-center gap-2">
+                        <Code className="w-3.5 h-3.5 text-success" />
+                        <span>Thực hành Lập trình (Lab)</span>
+                      </div>
+                    </Select.Item>
+                    <Select.Item value={String(ItemType.PEER_REVIEW)}>
+                      <div className="flex items-center gap-2">
+                        <Users className="w-3.5 h-3.5 text-accent" />
+                        <span>Bài tập tự luận</span>
+                      </div>
                     </Select.Item>
                   </Select.Content>
                 </Select>
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
+                <label
+                  htmlFor="itemMinutes"
+                  className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider"
+                >
+                  Thời lượng ước tính (Phút)
+                </label>
                 <Input
-                  label="Thời lượng (phút)"
+                  id="itemMinutes"
                   type="number"
-                  inputMode="numeric"
-                  enterKeyHint="next"
                   min={1}
                   value={itemMinutes}
-                  onChange={(e) => setItemMinutes(parseInt(e.target.value) || 1)}
-                  className="w-full bg-card font-semibold text-center shadow-2xs"
-                  required
+                  onChange={(e) => setItemMinutes(Number(e.target.value) || 0)}
+                  className="w-full text-xs font-semibold"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Scrollable Main Body Content Area */}
-          <div className="max-h-[62vh] overflow-y-auto px-3 space-y-4">
-            {/* Dynamic Form Sections based on Item Type */}
+            {/* Video specific fields */}
             {itemType === ItemType.VIDEO && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start pt-1">
                 {/* Left Column: Video & Subtitle Uploads */}
                 <div className="lg:col-span-5 space-y-4 bg-card p-4 rounded-2xl border border-border shadow-2xs">
-                  <div className="flex items-center gap-2 border-b border-border pb-2">
+                  <div className="flex items-center gap-2 pb-1">
                     <VideoIcon className="w-4 h-4 text-primary" aria-hidden="true" />
                     <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
                       Tệp Video & Phụ đề VTT
@@ -631,320 +575,148 @@ export function LearningItemFormModal({
               </div>
             )}
 
+            {/* Reading specific fields */}
             {itemType === ItemType.READING && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-                {/* Left Column: Markdown Editor */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Edit3 className="w-4 h-4 text-primary" aria-hidden="true" />
-                    <label
-                      htmlFor="readingMarkdown"
-                      className="block text-xs font-bold uppercase tracking-wider text-muted-foreground"
-                    >
-                      Nội dung Soạn thảo (Markdown)
-                    </label>
-                  </div>
-                  <Textarea
-                    id="readingMarkdown"
-                    rows={13}
-                    value={readingMarkdown}
-                    onChange={(e) => setReadingMarkdown(e.target.value)}
-                    placeholder="Nhập nội dung bài đọc định dạng Markdown tại đây…&#10;&#10;# Tiêu đề bài đọc&#10;- Ý chính 1&#10;- Ý chính 2"
-                    className="w-full font-mono shadow-2xs"
-                  />
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="readingMarkdown"
+                    className="block text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-primary" /> Soạn thảo bài đọc (Markdown)
+                  </label>
+                  <span className="text-[11px] text-muted-foreground">Hỗ trợ Markdown đầy đủ</span>
                 </div>
 
-                {/* Right Column: Live Rendered Preview */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-primary" aria-hidden="true" />
-                    <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Xem trước Giao diện (Live Preview)
-                    </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[300px]">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Edit3 className="w-3 h-3" /> Soạn thảo
+                    </div>
+                    <Textarea
+                      id="readingMarkdown"
+                      rows={12}
+                      value={readingMarkdown}
+                      onChange={(e) => setReadingMarkdown(e.target.value)}
+                      placeholder="# Tiêu đề chính&#10;&#10;Nội dung bài viết... Bạn có thể dùng **in đậm**, *in nghiêng*, [liên kết](url)..."
+                      className="w-full flex-1 font-mono text-xs shadow-2xs resize-none"
+                    />
                   </div>
-                  <div className="p-4 rounded-2xl border border-border bg-card text-foreground text-sm prose dark:prose-invert max-w-none min-h-[300px] max-h-[360px] overflow-y-auto shadow-2xs">
-                    {readingMarkdown ? (
-                      renderMarkdown(readingMarkdown)
-                    ) : (
-                      <div className="text-muted-foreground text-xs italic flex flex-col items-center justify-center py-12">
-                        <FileText aria-hidden="true" className="w-8 h-8 mb-2 opacity-40" />
-                        Nội dung Markdown xem trước sẽ hiển thị trực tiếp ở đây.
-                      </div>
-                    )}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Eye className="w-3 h-3" /> Xem trước
+                    </div>
+                    <div className="flex-1 p-3.5 rounded-xl border border-border bg-card text-xs overflow-y-auto max-h-[280px] prose prose-sm dark:prose-invert">
+                      {readingMarkdown ? (
+                        renderMarkdown(readingMarkdown)
+                      ) : (
+                        <span className="text-muted-foreground italic text-xs">
+                          Xem trước bài viết sẽ hiển thị tại đây khi bạn nhập nội dung…
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Lab specific fields */}
             {itemType === ItemType.AUTO_GRADED_LAB && (
-              <div className="space-y-5">
-                {/* ─── 1. Mô tả đề bài ─── */}
-                <div className="space-y-2">
-                  <label
-                    htmlFor="lab-markdown-input"
-                    className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-primary" />
-                    Mô tả đề bài (Markdown)
-                  </label>
-                  <p className="text-[11px] text-muted-foreground">
-                    Viết yêu cầu bài lab, công thức, ràng buộc, ví dụ input/output. Học viên sẽ thấy
-                    nội dung này.
-                  </p>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                        <Edit3 className="w-3 h-3" /> Soạn thảo
-                      </div>
-                      <Textarea
-                        id="lab-markdown-input"
-                        rows={8}
-                        value={readingMarkdown}
-                        onChange={(e) => setReadingMarkdown(e.target.value)}
-                        placeholder={`## Mô tả
-Viết hàm tính Mean Squared Error (MSE).
-
-## Công thức
-MSE = (1/N) × Σ(y_true[i] - y_pred[i])²
-
-## Ví dụ
-Input:  y_true=[1,2,3], y_pred=[1,2,3]
-Output: 0.0
-
-## Ràng buộc
-- 1 ≤ len(y_true) ≤ 1000
-- Giá trị float trong khoảng [-1000, 1000]`}
-                        className="w-full flex-1 font-mono text-xs shadow-2xs"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                        <Eye className="w-3 h-3" /> Xem trước
-                      </div>
-                      <div className="flex-1 p-3 rounded-xl border border-border bg-card text-sm overflow-y-auto prose prose-sm dark:prose-invert">
-                        {readingMarkdown ? (
-                          renderMarkdown(readingMarkdown)
-                        ) : (
-                          <span className="text-muted-foreground italic text-xs">
-                            Nhập mô tả bên trái để xem trước…
-                          </span>
-                        )}
-                      </div>
-                    </div>
+              <div className="space-y-4 pt-1">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider flex items-center gap-1.5">
+                      <Code className="w-3.5 h-3.5 text-primary" /> Ngôn ngữ lập trình
+                    </label>
+                    <Select
+                      value={labLanguage}
+                      onValueChange={(val) => {
+                        setLabLanguage((val as string) || "python");
+                      }}
+                    >
+                      <Select.Trigger className="w-full text-xs font-semibold">
+                        <Select.Value />
+                      </Select.Trigger>
+                      <Select.Content>
+                        <Select.Item value="python">Python 3.12</Select.Item>
+                        <Select.Item value="javascript">JavaScript (Node.js)</Select.Item>
+                        <Select.Item value="typescript">TypeScript</Select.Item>
+                        <Select.Item value="cpp">C++ (GCC)</Select.Item>
+                      </Select.Content>
+                    </Select>
                   </div>
                 </div>
 
-                {/* ─── 2. Ngôn ngữ + Starter Code ─── */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border">
-                    <Code className="w-4 h-4 text-primary" aria-hidden="true" />
+                <div className="space-y-4">
+                  <div>
                     <label
-                      htmlFor="labLanguage"
-                      className="text-xs font-bold uppercase tracking-wider text-foreground shrink-0"
+                      htmlFor="labStarterCode"
+                      className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider flex items-center gap-1.5"
                     >
-                      Ngôn ngữ lập trình:
+                      <FileCode className="w-3.5 h-3.5 text-primary" /> Mã nguồn khởi đầu (Starter
+                      Code)
                     </label>
-                    <div className="w-48">
-                      <Select
-                        value={labLanguage}
-                        onValueChange={(val) => {
-                          if (val) setLabLanguage(val as string);
-                        }}
-                      >
-                        <Select.Trigger
-                          id="labLanguage"
-                          aria-label="Ngôn ngữ lập trình"
-                          className="w-full bg-card"
-                        >
-                          <Select.Value placeholder="Chọn ngôn ngữ">
-                            {labLanguage === "python"
-                              ? "Python 3"
-                              : labLanguage === "javascript"
-                                ? "JavaScript (Node.js)"
-                                : labLanguage === "cpp"
-                                  ? "C++"
-                                  : labLanguage}
-                          </Select.Value>
-                        </Select.Trigger>
-                        <Select.Content>
-                          <Select.Item value="python">Python 3</Select.Item>
-                          <Select.Item value="javascript">JavaScript (Node.js)</Select.Item>
-                          <Select.Item value="cpp">C++</Select.Item>
-                        </Select.Content>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label
-                      htmlFor="lab-starter-code-input"
-                      className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5"
-                    >
-                      <Code className="w-3.5 h-3.5 text-primary" />
-                      Code mẫu ban đầu (Starter Code)
-                    </label>
-                    <p className="text-[11px] text-muted-foreground">
-                      Code mà học viên sẽ thấy khi mở bài lab. Nên chứa tên hàm, docstring, và
-                      placeholder.
-                    </p>
                     <Textarea
-                      id="lab-starter-code-input"
-                      rows={8}
+                      id="labStarterCode"
+                      rows={5}
                       value={labStarterCode}
                       onChange={(e) => setLabStarterCode(e.target.value)}
+                      placeholder="# Khung hàm hoặc cấu trúc ban đầu cấp cho học viên..."
+                      className="w-full font-mono text-xs shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label
+                        htmlFor="labTestCasesJson"
+                        className="block text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5"
+                      >
+                        <Terminal className="w-3.5 h-3.5 text-primary" /> Bộ Test Cases (JSON)
+                      </label>
+                      <span className="text-[11px] font-mono text-muted-foreground">
+                        Tối thiểu 3 test cases
+                      </span>
+                    </div>
+
+                    {labError && (
+                      <div className="mb-2 p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>{labError}</span>
+                      </div>
+                    )}
+
+                    <Textarea
+                      id="labTestCasesJson"
+                      rows={8}
+                      value={labTestCasesJson}
+                      onChange={(e) => {
+                        setLabTestCasesJson(e.target.value);
+                        setLabError("");
+                      }}
                       className="w-full font-mono text-xs shadow-2xs"
                     />
                   </div>
                 </div>
-
-                {/* ─── 3. Test Cases Builder ─── */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                      Bộ Test Cases
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      size="sm"
-                      onClick={() => {
-                        try {
-                          const current = JSON.parse(labTestCasesJson);
-                          const updated = [
-                            ...current,
-                            { input: "", expected_output: "", is_hidden: false },
-                          ];
-                          setLabTestCasesJson(JSON.stringify(updated, null, 2));
-                        } catch {
-                          setLabTestCasesJson(
-                            '[{"input": "", "expected_output": "", "is_hidden": false}]',
-                          );
-                        }
-                      }}
-                    >
-                      + Thêm Test Case
-                    </Button>
-                  </div>
-
-                  <p className="text-[11px] text-muted-foreground">
-                    <strong>Visible</strong>: Học viên thấy input + expected trước khi submit.{" "}
-                    <strong>Hidden</strong>: Chỉ chạy khi chấm, học viên không biết nội dung.
-                  </p>
-
-                  {/* Visual Builder */}
-                  <div className="space-y-2">
-                    {(() => {
-                      let testCases: Array<{
-                        input?: string;
-                        expected_output?: string;
-                        expected?: string;
-                        is_hidden?: boolean;
-                      }> = [];
-                      try {
-                        testCases = JSON.parse(labTestCasesJson);
-                      } catch {
-                        /* empty */
-                      }
-                      if (!Array.isArray(testCases)) testCases = [];
-
-                      const updateTC = (index: number, field: string, value: string | boolean) => {
-                        const updated = [...testCases];
-                        updated[index] = { ...updated[index], [field]: value };
-                        setLabTestCasesJson(JSON.stringify(updated, null, 2));
-                      };
-                      const removeTC = (index: number) => {
-                        const updated = testCases.filter((_, i) => i !== index);
-                        setLabTestCasesJson(JSON.stringify(updated.length ? updated : [], null, 2));
-                      };
-
-                      return testCases.map((tc, i) => (
-                        <div
-                          key={i}
-                          className="p-3 rounded-xl border border-border bg-card space-y-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-foreground">
-                              Test Case #{i + 1}
-                            </span>
-                            <div className="flex items-center gap-3">
-                              <Checkbox
-                                checked={tc.is_hidden || false}
-                                onCheckedChange={(checked) => updateTC(i, "is_hidden", !!checked)}
-                                label={tc.is_hidden ? "Hidden" : "Visible"}
-                              />
-                              <Button
-                                type="button"
-                                variant="text"
-                                size="xs"
-                                onClick={() => removeTC(i)}
-                                className="text-destructive hover:text-destructive/80 text-xs font-medium px-2 gap-1"
-                              >
-                                <X className="w-3.5 h-3.5" aria-hidden="true" />
-                                <span>Xóa</span>
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <Input
-                              label="Input (đối số hàm)"
-                              value={tc.input || ""}
-                              onChange={(e) => updateTC(i, "input", e.target.value)}
-                              placeholder="Ví dụ: [1, 2, 3], [4, 5, 6]"
-                              className="font-mono text-xs"
-                            />
-                            <Input
-                              label="Expected Output"
-                              value={tc.expected_output || tc.expected || ""}
-                              onChange={(e) => updateTC(i, "expected_output", e.target.value)}
-                              placeholder="Ví dụ: 0.0"
-                              className="font-mono text-xs"
-                            />
-                          </div>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-
-                  {/* Raw JSON toggle */}
-                  <details className="text-xs">
-                    <summary className="text-muted-foreground cursor-pointer hover:text-foreground">
-                      <FileCode className="w-3 h-3 inline" /> Xem/sửa JSON thô
-                    </summary>
-                    <Textarea
-                      rows={6}
-                      value={labTestCasesJson}
-                      onChange={(e) => setLabTestCasesJson(e.target.value)}
-                      className="w-full font-mono text-xs shadow-2xs mt-2"
-                    />
-                  </details>
-
-                  {/* Auto-hidden info */}
-                  <p className="text-[11px] text-muted-foreground bg-muted/50 p-2.5 rounded-lg">
-                    <Info className="w-3.5 h-3.5 inline shrink-0" /> <strong>Tự động ẩn:</strong>{" "}
-                    Nếu bạn không đánh dấu test case nào là Hidden, hệ thống sẽ tự động ẩn 1/3 cuối
-                    khi lưu để đảm bảo tính chính xác chấm bài. Tối thiểu{" "}
-                    <strong>3 test cases</strong>.
-                  </p>
-
-                  {/* Validation error */}
-                  {labError && (
-                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs font-medium">
-                      <AlertTriangle className="w-3.5 h-3.5 inline shrink-0" /> {labError}
-                    </div>
-                  )}
-                </div>
               </div>
             )}
 
+            {/* Quiz Matrix Configuration */}
             {(itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) && (
-              <div className="space-y-4">
-                <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-2">
-                  <label
-                    htmlFor="quizBankId"
-                    className="block text-xs font-bold uppercase tracking-wider text-foreground"
-                  >
-                    Ngân hàng Câu hỏi liên kết
+              <div className="space-y-4 pt-1">
+                <div className="p-3.5 rounded-xl bg-surface-container-low border border-border/60">
+                  <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1">
+                    <HelpCircle className="w-4 h-4 text-primary" /> Ma trận đề thi ngẫu nhiên
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Hệ thống sẽ bốc ngẫu nhiên câu hỏi theo từng độ khó từ Ngân hàng câu hỏi được
+                    chỉ định mỗi khi học viên bắt đầu lượt làm bài mới.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider">
+                    Ngân hàng câu hỏi nguồn *
                   </label>
                   <Select
                     value={quizBankId}
@@ -952,150 +724,158 @@ Output: 0.0
                       setQuizBankId((val as string) || "");
                     }}
                   >
-                    <Select.Trigger
-                      id="quizBankId"
-                      aria-label="Ngân hàng Câu hỏi liên kết"
-                      className="w-full bg-card"
-                    >
-                      <Select.Value placeholder="-- Chọn Ngân hàng Câu hỏi --">
+                    <Select.Trigger className="w-full text-xs font-semibold">
+                      <Select.Value placeholder="-- Chọn ngân hàng câu hỏi --">
                         {(() => {
                           const bank = questionBanks.find((b) => b.id === quizBankId);
                           return bank
-                            ? `${bank.title} (${bank.questions?.length || 0} câu hỏi trong ngân hàng)`
-                            : "-- Chọn Ngân hàng Câu hỏi --";
+                            ? `${bank.title} (${bank.questions?.length || 0} câu hỏi)`
+                            : "-- Chọn ngân hàng câu hỏi --";
                         })()}
                       </Select.Value>
                     </Select.Trigger>
                     <Select.Content>
-                      <Select.Item value="">-- Chọn Ngân hàng Câu hỏi --</Select.Item>
+                      <Select.Item value="">-- Chọn ngân hàng câu hỏi --</Select.Item>
                       {questionBanks.map((bank) => (
                         <Select.Item key={bank.id} value={bank.id}>
-                          {`${bank.title} (${bank.questions?.length || 0} câu hỏi)`}
+                          {bank.title} ({bank.questions?.length || 0} câu hỏi)
                         </Select.Item>
                       ))}
                     </Select.Content>
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Card 1: Execution Rules */}
-                  <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
-                    <div className="flex items-center gap-2 border-b border-border pb-2">
-                      <HelpCircle className="w-4 h-4 text-primary" aria-hidden="true" />
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                        Cấu hình Quy chế Bài thi
-                      </h4>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Input
-                          label="Thời gian (phút)"
-                          type="number"
-                          inputMode="numeric"
-                          enterKeyHint="next"
-                          value={quizTimeLimit}
-                          onChange={(e) => setQuizTimeLimit(e.target.value)}
-                          className="w-full text-xs font-semibold"
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          label="Điểm đạt (%)"
-                          type="number"
-                          inputMode="numeric"
-                          enterKeyHint="next"
-                          value={quizPassingThreshold}
-                          onChange={(e) => setQuizPassingThreshold(e.target.value)}
-                          className="w-full text-xs font-semibold"
-                        />
-                      </div>
-                      {itemType === ItemType.GRADED_QUIZ && (
-                        <>
-                          <div>
-                            <Input
-                              label="Số lần làm tối đa"
-                              type="number"
-                              inputMode="numeric"
-                              enterKeyHint="next"
-                              value={quizMaxAttempts}
-                              onChange={(e) => setQuizMaxAttempts(e.target.value)}
-                              className="w-full text-xs font-semibold"
-                            />
-                          </div>
-                          <div>
-                            <Input
-                              label="Thời gian chờ (Giờ)"
-                              type="number"
-                              inputMode="numeric"
-                              enterKeyHint="next"
-                              value={quizCooldownHours}
-                              onChange={(e) => setQuizCooldownHours(e.target.value)}
-                              className="w-full text-xs font-semibold"
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    {itemType === ItemType.PRACTICE_QUIZ && (
-                      <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Lượt làm bài & Cooldown:</span>
-                        <span className="font-bold text-success bg-success/15 border border-success/30 px-2.5 py-0.5 rounded-full text-[11px]">
-                          Không giới hạn
-                        </span>
-                      </div>
-                    )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="quizTimeLimit"
+                      className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider"
+                    >
+                      Thời gian làm bài (Phút)
+                    </label>
+                    <Input
+                      id="quizTimeLimit"
+                      type="number"
+                      min={1}
+                      max={180}
+                      value={quizTimeLimit}
+                      onChange={(e) => setQuizTimeLimit(e.target.value)}
+                      className="w-full text-xs font-semibold"
+                    />
                   </div>
 
-                  {/* Card 2: Question Distribution */}
-                  <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
-                    <div className="flex items-center gap-2 border-b border-border pb-2">
-                      <CheckCircle2 className="w-4 h-4 text-success" aria-hidden="true" />
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                        Phân bổ Số lượng Câu hỏi
-                      </h4>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3 pt-1">
-                      <div>
-                        <Input
-                          label="Số câu Dễ"
-                          type="number"
-                          inputMode="numeric"
-                          enterKeyHint="next"
-                          value={quizEasyCount}
-                          onChange={(e) => setQuizEasyCount(e.target.value)}
-                          className="w-full text-xs font-semibold"
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          label="Số câu Trung bình"
-                          type="number"
-                          inputMode="numeric"
-                          enterKeyHint="next"
-                          value={quizMediumCount}
-                          onChange={(e) => setQuizMediumCount(e.target.value)}
-                          className="w-full text-xs font-semibold"
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          label="Số câu Khó"
-                          type="number"
-                          inputMode="numeric"
-                          enterKeyHint="done"
-                          value={quizHardCount}
-                          onChange={(e) => setQuizHardCount(e.target.value)}
-                          className="w-full text-xs font-semibold"
-                        />
-                      </div>
-                    </div>
+                  <div>
+                    <label
+                      htmlFor="quizPassingThreshold"
+                      className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider"
+                    >
+                      Ngưỡng điểm đạt (%)
+                    </label>
+                    <Input
+                      id="quizPassingThreshold"
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={quizPassingThreshold}
+                      onChange={(e) => setQuizPassingThreshold(e.target.value)}
+                      className="w-full text-xs font-semibold"
+                    />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label
+                      htmlFor="quizEasyCount"
+                      className="block text-xs font-bold text-success mb-1 uppercase tracking-wider"
+                    >
+                      Số câu Dễ
+                    </label>
+                    <Input
+                      id="quizEasyCount"
+                      type="number"
+                      min={0}
+                      value={quizEasyCount}
+                      onChange={(e) => setQuizEasyCount(e.target.value)}
+                      className="w-full text-xs font-semibold border-success/30"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="quizMediumCount"
+                      className="block text-xs font-bold text-warning mb-1 uppercase tracking-wider"
+                    >
+                      Số câu Vừa
+                    </label>
+                    <Input
+                      id="quizMediumCount"
+                      type="number"
+                      min={0}
+                      value={quizMediumCount}
+                      onChange={(e) => setQuizMediumCount(e.target.value)}
+                      className="w-full text-xs font-semibold border-warning/30"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="quizHardCount"
+                      className="block text-xs font-bold text-destructive mb-1 uppercase tracking-wider"
+                    >
+                      Số câu Khó
+                    </label>
+                    <Input
+                      id="quizHardCount"
+                      type="number"
+                      min={0}
+                      value={quizHardCount}
+                      onChange={(e) => setQuizHardCount(e.target.value)}
+                      className="w-full text-xs font-semibold border-destructive/30"
+                    />
+                  </div>
+                </div>
+
+                {itemType === ItemType.GRADED_QUIZ && (
+                  <div className="grid grid-cols-2 gap-4 pt-1">
+                    <div>
+                      <label
+                        htmlFor="quizMaxAttempts"
+                        className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider"
+                      >
+                        Số lần thử tối đa
+                      </label>
+                      <Input
+                        id="quizMaxAttempts"
+                        type="number"
+                        min={1}
+                        value={quizMaxAttempts}
+                        onChange={(e) => setQuizMaxAttempts(e.target.value)}
+                        className="w-full text-xs font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="quizCooldownHours"
+                        className="block text-xs font-bold text-foreground mb-1 uppercase tracking-wider"
+                      >
+                        Thời gian chờ làm lại (Giờ)
+                      </label>
+                      <Input
+                        id="quizCooldownHours"
+                        type="number"
+                        min={0}
+                        value={quizCooldownHours}
+                        onChange={(e) => setQuizCooldownHours(e.target.value)}
+                        className="w-full text-xs font-semibold"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
+            {/* Essay / Peer review specific fields */}
             {itemType === ItemType.PEER_REVIEW && (
-              <div className="space-y-4 pt-2 border-t border-border">
+              <div className="space-y-4 pt-1">
                 {peerError && (
                   <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -1103,9 +883,133 @@ Output: 0.0
                   </div>
                 )}
 
+                {/* ─── 0. Chế độ chấm điểm Bài tập tự luận ─── */}
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-primary" aria-hidden="true" /> Hình thức Chấm
+                      điểm Bài tập tự luận
+                    </span>
+                  </div>
+
+                  <RadioGroup
+                    value={String(essayGradingMode)}
+                    onValueChange={(val) => setEssayGradingMode(Number(val) as EssayGradingMode)}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                  >
+                    <div
+                      className={`p-3 rounded-xl border transition-colors ${
+                        essayGradingMode === EssayGradingMode.PEER_REVIEW
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-surface-container-low/40"
+                      }`}
+                    >
+                      <RadioItem
+                        value={String(EssayGradingMode.PEER_REVIEW)}
+                        label="Chấm chéo bạn học"
+                        description="Học viên chấm chéo ẩn danh cho nhau theo Rubric; tự động chuyển Giảng viên chấm nếu quá thời gian chờ."
+                      />
+                    </div>
+                    <div
+                      className={`p-3 rounded-xl border transition-colors ${
+                        essayGradingMode === EssayGradingMode.INSTRUCTOR_ONLY
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-surface-container-low/40"
+                      }`}
+                    >
+                      <RadioItem
+                        value={String(EssayGradingMode.INSTRUCTOR_ONLY)}
+                        label="Chỉ Giảng viên / Trợ giảng chấm trực tiếp"
+                        description="Không áp dụng chấm chéo; bài nộp chuyển thẳng vào hàng chờ Giảng viên chấm ngay."
+                      />
+                    </div>
+                  </RadioGroup>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1 items-start">
+                    <div className="flex flex-col justify-start">
+                      <label
+                        htmlFor="essayResubmissions"
+                        className="text-[11px] font-bold text-foreground mb-1 min-h-[2.25rem] flex items-end"
+                      >
+                        Số lượt nộp lại
+                      </label>
+                      <Input
+                        id="essayResubmissions"
+                        type="number"
+                        min={0}
+                        max={50}
+                        required
+                        value={essayResubmissions}
+                        onChange={(e) => {
+                          setEssayResubmissions(e.target.value);
+                          if (peerError) setPeerError("");
+                        }}
+                        placeholder="2"
+                        className="w-full text-xs font-semibold h-10"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1.5 min-h-[2.5rem] leading-relaxed">
+                        {String(essayResubmissions).trim() === "0"
+                          ? "0 lượt: Không cho nộp lại (học viên chỉ nộp 1 lần duy nhất)."
+                          : String(essayResubmissions).trim() === ""
+                            ? "Không được để trống (nhập 0 nếu không cho nộp lại)."
+                            : `Cho phép nộp lại ${essayResubmissions} lần (tổng tối đa ${Number(essayResubmissions) + 1} lần nộp bài).`}
+                      </p>
+                    </div>
+
+                    {essayGradingMode === EssayGradingMode.PEER_REVIEW && (
+                      <>
+                        <div className="flex flex-col justify-start">
+                          <label className="text-[11px] font-bold text-foreground mb-1 min-h-[2.25rem] flex items-end">
+                            Số bài bạn học cần chấm
+                          </label>
+                          <Select
+                            value={String(requiredPeerReviews)}
+                            onValueChange={(val) => setRequiredPeerReviews(Number(val) || 3)}
+                          >
+                            <Select.Trigger className="w-full text-xs font-semibold h-10">
+                              <Select.Value />
+                            </Select.Trigger>
+                            <Select.Content>
+                              {[1, 2, 3, 4, 5].map((cnt) => (
+                                <Select.Item key={cnt} value={String(cnt)}>
+                                  {cnt} bài bạn học {cnt === 3 ? "(Mặc định)" : ""}
+                                </Select.Item>
+                              ))}
+                            </Select.Content>
+                          </Select>
+                          <p className="text-[10px] text-muted-foreground mt-1.5 min-h-[2.5rem] leading-relaxed">
+                            Học viên phải chấm đủ số bài này để hoàn thành học phần.
+                          </p>
+                        </div>
+                        <div className="flex flex-col justify-start">
+                          <label className="text-[11px] font-bold text-foreground mb-1 min-h-[2.25rem] flex items-end">
+                            Thời gian chờ chuyển Giảng viên chấm
+                          </label>
+                          <Select
+                            value={String(coldStartHours)}
+                            onValueChange={(val) => setColdStartHours(Number(val) || 48)}
+                          >
+                            <Select.Trigger className="w-full text-xs font-semibold h-10">
+                              <Select.Value />
+                            </Select.Trigger>
+                            <Select.Content>
+                              <Select.Item value="24">24 giờ (1 ngày)</Select.Item>
+                              <Select.Item value="48">48 giờ (2 ngày - Mặc định)</Select.Item>
+                              <Select.Item value="72">72 giờ (3 ngày)</Select.Item>
+                            </Select.Content>
+                          </Select>
+                          <p className="text-[10px] text-muted-foreground mt-1.5 min-h-[2.5rem] leading-relaxed">
+                            Sau số giờ này nếu lớp ít bài, tự động giảm chỉ tiêu chấm.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
                 {/* ─── 1. Đề bài bài tập & Hướng dẫn nộp bài (Markdown Preview) ─── */}
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between border-b border-border pb-2.5">
+                  <div className="flex items-center justify-between">
                     <label
                       htmlFor="peerReadingMarkdown"
                       className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5"
@@ -1152,7 +1056,7 @@ Output: 0.0
 
                 {/* ─── 2. Tiêu chí chấm điểm Peer Review (Visual Rubric Builder) ─── */}
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Users className="w-4 h-4 text-primary" aria-hidden="true" />
                       <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
@@ -1174,164 +1078,107 @@ Output: 0.0
                         <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Thêm tiêu chí</span>
                       </Button>
-
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        size="xs"
-                        onClick={() => setShowRawRubricJson(!showRawRubricJson)}
-                        className="gap-1.5 text-xs"
-                      >
-                        <Code2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{showRawRubricJson ? "Chế độ Trực quan" : "Chế độ JSON"}</span>
-                      </Button>
                     </div>
                   </div>
 
-                  {/* Preset Templates */}
-                  <div className="flex items-center gap-2 flex-wrap p-2.5 rounded-xl bg-surface-container-low border border-border/60">
-                    <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1 shrink-0">
-                      <Sparkles className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                      Gợi ý mẫu nhanh:
-                    </span>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {RUBRIC_PRESETS.map((preset, pIdx) => (
-                        <button
-                          key={preset.name}
-                          type="button"
-                          onClick={() => handleApplyPreset(pIdx)}
-                          className="px-2 py-1 rounded-lg text-[11px] font-medium bg-background border border-border hover:border-primary hover:text-primary transition-colors cursor-pointer"
-                        >
-                          {preset.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {rubricJsonError && (
-                    <div className="p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
-                      {rubricJsonError}
+                  {peerError && (
+                    <div className="p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>{peerError}</span>
                     </div>
                   )}
 
-                  {/* Mode: Raw JSON Editor */}
-                  {showRawRubricJson ? (
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="peerRubricJson"
-                        className="block text-[11px] font-mono text-muted-foreground"
+                  {/* Visual Rubric Builder */}
+                  <div className="space-y-3">
+                    {rubricItems.map((criterion, idx) => (
+                      <div
+                        key={criterion.criteriaId || idx}
+                        className="p-3.5 rounded-xl bg-surface-container-lowest border border-border space-y-2.5 transition-all"
                       >
-                        Cấu hình JSON Rubric (mảng các đối tượng tiêu chí):
-                      </label>
-                      <Textarea
-                        id="peerRubricJson"
-                        rows={8}
-                        value={peerRubricJson}
-                        onChange={(e) => {
-                          const newVal = e.target.value;
-                          setPeerRubricJson(newVal);
-                          const parsed = safeParseRubricJson(newVal);
-                          if (parsed && parsed.length > 0) {
-                            setRubricItems(parsed);
-                            setRubricJsonError("");
-                            setPeerError("");
-                          } else if (newVal.trim().length > 0) {
-                            setRubricJsonError(
-                              "Cú pháp JSON chưa đúng hoặc không phải mảng tiêu chí hợp lệ.",
-                            );
-                          } else {
-                            setRubricJsonError("");
-                          }
-                        }}
-                        className="w-full font-mono text-xs shadow-2xs"
-                      />
-                    </div>
-                  ) : (
-                    /* Mode: Visual Rubric Builder */
-                    <div className="space-y-3">
-                      {rubricItems.map((criterion, idx) => (
-                        <div
-                          key={criterion.criteriaId || idx}
-                          className="p-3.5 rounded-xl bg-surface-container-lowest border border-border space-y-2.5 transition-all"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 justify-between">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
-                                #{idx + 1}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <Input
-                                  value={criterion.title}
-                                  onChange={(e) =>
-                                    handleUpdateRubricCriterion(idx, "title", e.target.value)
-                                  }
-                                  placeholder="Tên tiêu chí (ví dụ: Chất lượng giải pháp, Tính thẩm mỹ...)"
-                                  className="w-full text-xs font-semibold"
-                                  aria-label={`Tên tiêu chí #${idx + 1}`}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                              <div className="flex items-center gap-1">
-                                <span className="text-[11px] text-muted-foreground font-medium">
-                                  Tối đa:
-                                </span>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  max={100}
-                                  value={criterion.maxScore}
-                                  onChange={(e) =>
-                                    handleUpdateRubricCriterion(
-                                      idx,
-                                      "maxScore",
-                                      Number(e.target.value) || 0,
-                                    )
-                                  }
-                                  className="w-20 text-xs font-bold text-center"
-                                  aria-label={`Điểm tối đa tiêu chí #${idx + 1}`}
-                                />
-                                <span className="text-xs text-muted-foreground font-semibold">
-                                  điểm
-                                </span>
-                              </div>
-
-                              <Button
-                                type="button"
-                                variant="text"
-                                size="xs"
-                                disabled={rubricItems.length <= 1}
-                                onClick={() => handleRemoveRubricCriterion(idx)}
-                                className="text-destructive hover:bg-destructive/10 p-1.5 h-auto rounded-lg"
-                                aria-label={`Xóa tiêu chí #${idx + 1}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 justify-between">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                              #{idx + 1}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <Input
+                                required
+                                value={criterion.title}
+                                onChange={(e) => {
+                                  handleUpdateRubricCriterion(idx, "title", e.target.value);
+                                  if (peerError) setPeerError("");
+                                }}
+                                placeholder="Tên tiêu chí (bắt buộc, ví dụ: Tính chính xác, Trình bày...)"
+                                className="w-full text-xs font-semibold"
+                                aria-label={`Tên tiêu chí #${idx + 1}`}
+                              />
                             </div>
                           </div>
 
-                          <Textarea
-                            value={criterion.description}
-                            onChange={(e) =>
-                              handleUpdateRubricCriterion(idx, "description", e.target.value)
-                            }
-                            rows={2}
-                            placeholder="Mô tả chỉ dẫn cách chấm: Tiêu chuẩn để đạt điểm tối đa ở tiêu chí này..."
-                            className="w-full text-xs"
-                            aria-label={`Mô tả tiêu chí #${idx + 1}`}
-                          />
+                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                            <div className="flex items-center gap-1">
+                              <span className="text-[11px] text-muted-foreground font-medium">
+                                Tối đa:
+                              </span>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={criterion.maxScore}
+                                onChange={(e) =>
+                                  handleUpdateRubricCriterion(
+                                    idx,
+                                    "maxScore",
+                                    Number(e.target.value) || 0,
+                                  )
+                                }
+                                className="w-20 text-xs font-bold text-center"
+                                aria-label={`Điểm tối đa tiêu chí #${idx + 1}`}
+                              />
+                              <span className="text-xs text-muted-foreground font-semibold">
+                                điểm
+                              </span>
+                            </div>
+
+                            <Button
+                              type="button"
+                              variant="text"
+                              size="xs"
+                              disabled={rubricItems.length <= 1}
+                              onClick={() => handleRemoveRubricCriterion(idx)}
+                              className="text-destructive hover:bg-destructive/10 p-1.5 h-auto rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
+                              aria-label={`Xóa tiêu chí #${idx + 1}`}
+                              title={
+                                rubricItems.length <= 1
+                                  ? "Bắt buộc phải có ít nhất 1 tiêu chí đánh giá"
+                                  : "Xóa tiêu chí này"
+                              }
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+
+                        <Textarea
+                          value={criterion.description}
+                          onChange={(e) =>
+                            handleUpdateRubricCriterion(idx, "description", e.target.value)
+                          }
+                          rows={2}
+                          placeholder="Mô tả chỉ dẫn cách chấm: Tiêu chuẩn để đạt điểm tối đa ở tiêu chí này..."
+                          className="w-full text-xs"
+                          aria-label={`Mô tả tiêu chí #${idx + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
           {/* Fixed Footer Buttons */}
-          <Dialog.Footer className="pt-3 border-t border-border mt-3 shrink-0">
+          <Dialog.Footer className="pt-3 mt-3 shrink-0">
             <Button
               type="button"
               variant="text"

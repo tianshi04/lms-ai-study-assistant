@@ -111,6 +111,11 @@ def _model_to_domain_lesson(l_model: LessonModel) -> Lesson:
                 rubric_criteria_json=getattr(i_model, "rubric_criteria_json", ""),
                 quiz_matrix_id=getattr(i_model, "quiz_matrix_id", ""),
                 auto_transcribe=getattr(i_model, "auto_transcribe", False),
+                essay_grading_mode=getattr(i_model, "essay_grading_mode", "PEER_REVIEW")
+                or "PEER_REVIEW",
+                required_peer_reviews=getattr(i_model, "required_peer_reviews", 3) or 3,
+                cold_start_hours=getattr(i_model, "cold_start_hours", 48) or 48,
+                essay_max_attempts=getattr(i_model, "essay_max_attempts", 3) or 3,
             )
         )
     return Lesson(
@@ -1146,6 +1151,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
+        essay_grading_mode: str = "PEER_REVIEW",
+        required_peer_reviews: int = 3,
+        cold_start_hours: int = 48,
+        essay_max_attempts: int = 3,
     ) -> LearningItem:
         _ = course_id
         item_id = f"item-{uuid7().hex}"
@@ -1208,6 +1217,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=language or "",
             rubric_criteria_json=rubric_criteria_json or "",
             quiz_matrix_id=quiz_matrix_id or "",
+            essay_grading_mode=essay_grading_mode or "PEER_REVIEW",
+            required_peer_reviews=required_peer_reviews or 3,
+            cold_start_hours=cold_start_hours or 48,
+            essay_max_attempts=essay_max_attempts or 3,
         )
         self.session.add(item_model)
 
@@ -1271,6 +1284,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=language or "",
             rubric_criteria_json=rubric_criteria_json or "",
             quiz_matrix_id=quiz_matrix_id or "",
+            essay_grading_mode=essay_grading_mode or "PEER_REVIEW",
+            required_peer_reviews=required_peer_reviews or 3,
+            cold_start_hours=cold_start_hours or 48,
+            essay_max_attempts=essay_max_attempts or 3,
         )
 
     async def submit_course_review(
@@ -1618,6 +1635,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
+        essay_grading_mode: str | None = None,
+        required_peer_reviews: int | None = None,
+        cold_start_hours: int | None = None,
+        essay_max_attempts: int | None = None,
     ) -> LearningItem | None:
         _ = course_id
         stmt = (
@@ -1656,6 +1677,14 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         item.rubric_criteria_json = rubric_criteria_json
         if quiz_matrix_id:
             item.quiz_matrix_id = quiz_matrix_id
+        if essay_grading_mode is not None:
+            item.essay_grading_mode = essay_grading_mode
+        if required_peer_reviews is not None:
+            item.required_peer_reviews = required_peer_reviews
+        if cold_start_hours is not None:
+            item.cold_start_hours = cold_start_hours
+        if essay_max_attempts is not None:
+            item.essay_max_attempts = essay_max_attempts
 
         if lesson_id:
             item.lesson_id = lesson_id
@@ -1706,6 +1735,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=item.language,
             rubric_criteria_json=item.rubric_criteria_json,
             quiz_matrix_id=item.quiz_matrix_id,
+            essay_grading_mode=getattr(item, "essay_grading_mode", "PEER_REVIEW")
+            or "PEER_REVIEW",
+            required_peer_reviews=getattr(item, "required_peer_reviews", 3) or 3,
+            cold_start_hours=getattr(item, "cold_start_hours", 48) or 48,
         )
 
     async def delete_learning_item(self, item_id: str, course_id: str) -> bool:

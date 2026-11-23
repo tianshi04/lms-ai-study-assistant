@@ -344,6 +344,9 @@ export function VideoPlayer({
             userId={userId}
             instructionsMarkdown={activeItem.readingMarkdown}
             rubricCriteriaJson={activeItem.rubricCriteriaJson}
+            essayGradingMode={activeItem.essayGradingMode}
+            requiredPeerReviews={activeItem.requiredPeerReviews}
+            essayMaxAttempts={activeItem.essayMaxAttempts}
           />
         </div>
       );

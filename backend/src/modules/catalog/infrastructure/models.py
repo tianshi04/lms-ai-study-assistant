@@ -220,6 +220,18 @@ class LearningItemModel(Base):
     auto_transcribe: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )
+    essay_grading_mode: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="PEER_REVIEW", server_default="PEER_REVIEW"
+    )
+    required_peer_reviews: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=3, server_default="3"
+    )
+    cold_start_hours: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=48, server_default="48"
+    )
+    essay_max_attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=3, server_default="3"
+    )
 
     lesson: Mapped["LessonModel"] = relationship("LessonModel", back_populates="items")
     interactive_transcripts: Mapped[list["InteractiveTranscriptModel"]] = relationship(

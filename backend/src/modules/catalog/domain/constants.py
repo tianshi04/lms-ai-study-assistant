@@ -1,5 +1,6 @@
 """Domain constants for the Catalog bounded context."""
 
+DEFAULT_ESSAY_MAX_ATTEMPTS: int = 3
 MIN_RATING_STARS: int = 1
 MAX_RATING_STARS: int = 5
 MAX_REVIEW_COMMENT_LENGTH: int = 2000

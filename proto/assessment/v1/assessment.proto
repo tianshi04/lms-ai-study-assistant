@@ -46,6 +46,7 @@ message SubmitAutoGradedLabRequest {
   string item_id = 1;
   string source_code = 2;
   string language = 3;
+  bool preview = 4;
 }
 
 message AutoGradedLabResult {
@@ -69,6 +70,47 @@ message SubmitPeerAssignmentRequest {
 message SubmitPeerAssignmentResponse {
   string submission_id = 1;
   string status_message = 2;
+}
+
+message AnonymousPeerFeedback {
+  string feedback_label = 1;
+  float total_score = 2;
+  repeated RubricCriteria graded_criteria = 3;
+  string submitted_at = 4;
+  string review_id = 5;
+}
+
+message GetMyPeerSubmissionStatusRequest {
+  string item_id = 1;
+}
+
+message GetMyPeerSubmissionStatusResponse {
+  bool has_submission = 1;
+  string submission_id = 2;
+  string status = 3;
+  string submission_url = 4;
+  string text_content = 5;
+  string created_at = 6;
+  int32 attempt_number = 7;
+  bool is_graded = 8;
+  float final_score = 9;
+  string grade_source = 10;
+  string staff_feedback = 11;
+  repeated RubricCriteria rubric_criteria = 12;
+  repeated AnonymousPeerFeedback peer_feedbacks = 13;
+  string essay_grading_mode = 14;
+  string review_duty_status = 15;
+  string review_duty_waived_reason = 16;
+  int32 reviews_completed_by_user = 17;
+  int32 target_reviews_required = 18;
+  int32 available_pool_count = 19;
+  bool can_appeal = 20;
+  string appeal_status = 21;
+  string assignment_title = 22;
+  string assignment_instructions = 23;
+  float best_published_score = 24;
+  string best_grade_source = 25;
+  int32 max_attempts = 26;
 }
 
 message GetPeerReviewsToGradeRequest {
@@ -270,6 +312,9 @@ service AssessmentService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc SubmitPeerAssignment(SubmitPeerAssignmentRequest) returns (SubmitPeerAssignmentResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetMyPeerSubmissionStatus(GetMyPeerSubmissionStatusRequest) returns (GetMyPeerSubmissionStatusResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetPeerReviewsToGrade(GetPeerReviewsToGradeRequest) returns (GetPeerReviewsToGradeResponse) {
@@ -539,6 +584,9 @@ message GradingQueueItem {
   GradingQueueStatus status = 18;
   float peer_score = 19;
   int32 peer_reviews_count = 20;
+  string essay_grading_mode = 21;
+  int32 required_peer_reviews = 22;
+  int32 cold_start_hours = 23;
 }
 
 message ListGradingQueueRequest {

@@ -3,7 +3,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.modules.catalog.application import CatalogUseCase
-from src.modules.catalog.domain import Course, Lesson, Specialization
+from src.modules.catalog.domain import (
+    Course,
+    CourseStatus,
+    ItemType,
+    LearningItem,
+    Lesson,
+    Specialization,
+)
 from src.shared.auth import CurrentUser
 
 
@@ -991,3 +998,66 @@ async def test_verify_ownership_course_not_found_raises_value_error(
         await catalog_usecase.submit_course_for_launch(
             "non-existent-course", current_user=instructor
         )
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.curriculum_usecase.async_session_scope")
+async def test_create_and_update_learning_item_essay_max_attempts(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    instructor = CurrentUser(
+        id="inst-1", email="instructor@test.com", role="INSTRUCTOR"
+    )
+    mock_repo.get_course_detail.return_value = Course(
+        id="c1",
+        title="Course 1",
+        slug="course-1",
+        owner_id="inst-1",
+        status=CourseStatus.DRAFT,
+    )
+    mock_item = LearningItem(
+        id="item-essay-1",
+        title="Bài tập Tự luận",
+        type=ItemType.PEER_REVIEW,
+        essay_max_attempts=5,
+    )
+    mock_repo.create_learning_item.return_value = mock_item
+    mock_repo.update_learning_item.return_value = mock_item
+
+    # 1. Create with custom essay_max_attempts = 5
+    created = await catalog_usecase.create_learning_item(
+        course_id="c1",
+        lesson_id="l1",
+        title="Bài tập Tự luận",
+        item_type=ItemType.PEER_REVIEW,
+        estimated_minutes=30,
+        video_url="",
+        reading_markdown="# Prompt",
+        essay_max_attempts=5,
+        current_user=instructor,
+    )
+    assert created.essay_max_attempts == 5
+    mock_repo.create_learning_item.assert_called_once()
+    assert mock_repo.create_learning_item.call_args[1]["essay_max_attempts"] == 5
+
+    # 2. Update with essay_max_attempts = 2
+    mock_item.essay_max_attempts = 2
+    updated = await catalog_usecase.update_learning_item(
+        item_id="item-essay-1",
+        course_id="c1",
+        lesson_id="l1",
+        title="Bài tập Tự luận Updated",
+        item_type=6,
+        estimated_minutes=45,
+        video_url="",
+        reading_markdown="# Updated Prompt",
+        essay_max_attempts=2,
+        current_user=instructor,
+    )
+    assert updated.essay_max_attempts == 2
+    mock_repo.update_learning_item.assert_called_once()
+    assert mock_repo.update_learning_item.call_args[1]["essay_max_attempts"] == 2

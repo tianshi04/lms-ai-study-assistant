@@ -1,3 +1,5 @@
+from typing import Any
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -8,6 +10,7 @@ from src.modules.assessment.application import AssessmentUseCase
 from src.modules.assessment.domain import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+    MAX_PEER_SUBMISSION_ATTEMPTS,
     MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
     QUIZ_COOLDOWN_HOURS,
     AdminAssessmentAlertKind,
@@ -27,11 +30,15 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.SubmitHonorCodeRequest, pb.SubmitHonorCodeResponse],
     ) -> pb.SubmitHonorCodeResponse:
         current_user = require_current_user()
-        success, msg = await self.use_case.submit_honor_code(
-            user_id=current_user.id,
-            item_id=request.item_id,
-            is_agreed=request.is_agreed,
-        )
+        try:
+            success, msg = await self.use_case.submit_honor_code(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                is_agreed=request.is_agreed,
+                current_user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
         return pb.SubmitHonorCodeResponse(success=success, message=msg)
 
     async def submit_graded_quiz(
@@ -86,6 +93,8 @@ class AssessmentHandler(AssessmentService):
                 item_id=request.item_id,
                 source_code=request.source_code,
                 language=request.language,
+                preview=request.preview,
+                current_user=current_user,
             )
         except ValueError as e:
             raise ConnectError(Code.FAILED_PRECONDITION, str(e))
@@ -114,12 +123,98 @@ class AssessmentHandler(AssessmentService):
                 item_id=request.item_id,
                 submission_url=request.submission_url,
                 text_content=request.text_content,
+                current_user=current_user,
             )
         except ValueError as e:
             raise ConnectError(Code.FAILED_PRECONDITION, str(e))
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
         return pb.SubmitPeerAssignmentResponse(submission_id=sub_id, status_message=msg)
+
+    async def get_my_peer_submission_status(
+        self,
+        request: pb.GetMyPeerSubmissionStatusRequest,
+        ctx: RequestContext[
+            pb.GetMyPeerSubmissionStatusRequest, pb.GetMyPeerSubmissionStatusResponse
+        ],
+    ) -> pb.GetMyPeerSubmissionStatusResponse:
+        current_user = require_current_user()
+        try:
+            status_data = await self.use_case.get_my_peer_submission_status(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                current_user=current_user,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.NOT_FOUND, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+        pb_feedbacks: list[pb.AnonymousPeerFeedback] = []
+        for fb in status_data.get("peer_feedbacks", []):
+            pb_rubrics = [
+                pb.RubricCriteria(
+                    criteria_id=c.criteria_id,
+                    title=c.title,
+                    max_score=c.max_score,
+                    score_given=c.score_given,
+                    feedback=c.feedback,
+                    description=getattr(c, "description", "") or "",
+                )
+                for c in fb.get("graded_criteria", [])
+            ]
+            pb_feedbacks.append(
+                pb.AnonymousPeerFeedback(
+                    feedback_label=fb.get("feedback_label", ""),
+                    total_score=fb.get("total_score", 0.0),
+                    graded_criteria=pb_rubrics,
+                    submitted_at=fb.get("submitted_at", ""),
+                    review_id=fb.get("review_id", ""),
+                )
+            )
+
+        pb_criteria = [
+            pb.RubricCriteria(
+                criteria_id=c.criteria_id,
+                title=c.title,
+                max_score=c.max_score,
+                score_given=c.score_given,
+                feedback=c.feedback,
+                description=getattr(c, "description", "") or "",
+            )
+            for c in status_data.get("rubric_criteria", [])
+        ]
+
+        return pb.GetMyPeerSubmissionStatusResponse(
+            has_submission=status_data.get("has_submission", False),
+            submission_id=status_data.get("submission_id", ""),
+            status=status_data.get("status", ""),
+            submission_url=status_data.get("submission_url", ""),
+            text_content=status_data.get("text_content", ""),
+            created_at=status_data.get("created_at", ""),
+            attempt_number=status_data.get("attempt_number", 0),
+            is_graded=status_data.get("is_graded", False),
+            final_score=status_data.get("final_score", 0.0),
+            grade_source=status_data.get("grade_source", ""),
+            staff_feedback=status_data.get("staff_feedback", ""),
+            rubric_criteria=pb_criteria,
+            peer_feedbacks=pb_feedbacks,
+            essay_grading_mode=status_data.get("essay_grading_mode", "PEER_REVIEW"),
+            review_duty_status=status_data.get("review_duty_status", "PENDING"),
+            review_duty_waived_reason=status_data.get("review_duty_waived_reason", ""),
+            reviews_completed_by_user=status_data.get("reviews_completed_by_user", 0),
+            target_reviews_required=status_data.get("target_reviews_required", 0),
+            available_pool_count=status_data.get("available_pool_count", 0),
+            can_appeal=status_data.get("can_appeal", False),
+            appeal_status=status_data.get("appeal_status", ""),
+            assignment_title=status_data.get("assignment_title", ""),
+            assignment_instructions=status_data.get("assignment_instructions", ""),
+            best_published_score=status_data.get("best_published_score", 0.0),
+            best_grade_source=status_data.get("best_grade_source", ""),
+            max_attempts=int(
+                status_data.get("max_attempts", MAX_PEER_SUBMISSION_ATTEMPTS)
+            ),
+        )
 
     async def get_peer_reviews_to_grade(
         self,
@@ -129,9 +224,16 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.GetPeerReviewsToGradeResponse:
         current_user = require_current_user()
-        items = await self.use_case.get_peer_reviews_to_grade(
-            user_id=current_user.id, item_id=request.item_id
-        )
+        try:
+            items = await self.use_case.get_peer_reviews_to_grade(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                current_user=current_user,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.FAILED_PRECONDITION, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         pb_items: list[pb.PeerReviewItemToGrade] = []
         for item in items:
             rubrics = [
@@ -179,6 +281,7 @@ class AssessmentHandler(AssessmentService):
                 review_id=request.review_id,
                 reviewer_user_id=current_user.id,
                 graded_criteria=domain_rubrics,
+                current_user=current_user,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
@@ -197,6 +300,7 @@ class AssessmentHandler(AssessmentService):
                 user_id=current_user.id,
                 submission_id=request.submission_id,
                 appeal_reason=request.appeal_reason,
+                current_user=current_user,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
@@ -215,6 +319,7 @@ class AssessmentHandler(AssessmentService):
                 user_id=current_user.id,
                 review_id=request.review_id,
                 report_reason=request.report_reason,
+                current_user=current_user,
             )
             return pb.ReportPeerReviewResponse(success=success, message=msg)
         except PermissionError as e:
@@ -967,6 +1072,33 @@ class AssessmentHandler(AssessmentService):
         }
         return mapping.get(prov_str.upper(), pb.GradingProvenance.UNSPECIFIED)
 
+    def _to_pb_grading_queue_item(self, d: dict[str, Any]) -> pb.GradingQueueItem:
+        return pb.GradingQueueItem(
+            submission_id=d["submission_id"],
+            item_id=d["item_id"],
+            item_title=d["item_title"],
+            course_id=d["course_id"],
+            course_title=d["course_title"],
+            student_id=d["student_id"],
+            student_name=d["student_name"],
+            student_avatar_url=d["student_avatar_url"],
+            submitted_at=d["submitted_at"],
+            is_outlier=d["is_outlier"],
+            is_appeal=d["is_appeal"],
+            appeal_reason=d["appeal_reason"],
+            locked_by_user_id=d["locked_by_user_id"],
+            locked_by_name=d["locked_by_name"],
+            lock_expires_at=d["lock_expires_at"],
+            grade_source=self._to_pb_provenance(d.get("grade_source")),
+            staff_score=float(d["staff_score"]),
+            status=self._to_pb_queue_status(d["status"]),
+            peer_score=float(d["peer_score"]),
+            peer_reviews_count=d["peer_reviews_count"],
+            essay_grading_mode=d.get("essay_grading_mode", "PEER_REVIEW"),
+            required_peer_reviews=int(d.get("required_peer_reviews", 3) or 3),
+            cold_start_hours=int(d.get("cold_start_hours", 48) or 48),
+        )
+
     async def list_grading_queue(
         self,
         request: pb.ListGradingQueueRequest,
@@ -1006,31 +1138,7 @@ class AssessmentHandler(AssessmentService):
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
 
-        items = [
-            pb.GradingQueueItem(
-                submission_id=i["submission_id"],
-                item_id=i["item_id"],
-                item_title=i["item_title"],
-                course_id=i["course_id"],
-                course_title=i["course_title"],
-                student_id=i["student_id"],
-                student_name=i["student_name"],
-                student_avatar_url=i["student_avatar_url"],
-                submitted_at=i["submitted_at"],
-                is_outlier=i["is_outlier"],
-                is_appeal=i["is_appeal"],
-                appeal_reason=i["appeal_reason"],
-                locked_by_user_id=i["locked_by_user_id"],
-                locked_by_name=i["locked_by_name"],
-                lock_expires_at=i["lock_expires_at"],
-                grade_source=self._to_pb_provenance(i.get("grade_source")),
-                staff_score=float(i["staff_score"]),
-                status=self._to_pb_queue_status(i["status"]),
-                peer_score=float(i["peer_score"]),
-                peer_reviews_count=i["peer_reviews_count"],
-            )
-            for i in res["items"]
-        ]
+        items = [self._to_pb_grading_queue_item(i) for i in res["items"]]
 
         return pb.ListGradingQueueResponse(
             items=items,
@@ -1186,29 +1294,7 @@ class AssessmentHandler(AssessmentService):
         except ValueError as e:
             raise ConnectError(Code.NOT_FOUND, str(e)) from e
 
-        sub_dict = res["submission"]
-        sub_pb = pb.GradingQueueItem(
-            submission_id=sub_dict["submission_id"],
-            item_id=sub_dict["item_id"],
-            item_title=sub_dict["item_title"],
-            course_id=sub_dict["course_id"],
-            course_title=sub_dict["course_title"],
-            student_id=sub_dict["student_id"],
-            student_name=sub_dict["student_name"],
-            student_avatar_url=sub_dict["student_avatar_url"],
-            submitted_at=sub_dict["submitted_at"],
-            is_outlier=sub_dict["is_outlier"],
-            is_appeal=sub_dict["is_appeal"],
-            appeal_reason=sub_dict["appeal_reason"],
-            locked_by_user_id=sub_dict["locked_by_user_id"],
-            locked_by_name=sub_dict["locked_by_name"],
-            lock_expires_at=sub_dict["lock_expires_at"],
-            grade_source=self._to_pb_provenance(sub_dict.get("grade_source")),
-            staff_score=float(sub_dict["staff_score"]),
-            status=self._to_pb_queue_status(sub_dict["status"]),
-            peer_score=float(sub_dict["peer_score"]),
-            peer_reviews_count=sub_dict["peer_reviews_count"],
-        )
+        sub_pb = self._to_pb_grading_queue_item(res["submission"])
 
         rubric_pbs = [
             pb.RubricCriteria(
@@ -1234,6 +1320,7 @@ class AssessmentHandler(AssessmentService):
                         title=c.title,
                         max_score=c.max_score,
                         score_given=c.score_given,
+                        feedback=getattr(c, "feedback", "") or "",
                         description=getattr(c, "description", ""),
                     )
                     for c in r.get("graded_criteria", [])

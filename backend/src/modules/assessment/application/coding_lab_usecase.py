@@ -8,6 +8,7 @@ from uuid6 import uuid7
 
 from src.modules.assessment.domain import LabSubmission
 from src.shared.access_policy import require_paid_access
+from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 
 from .base_usecase import BaseAssessmentUseCase
@@ -26,13 +27,23 @@ class CodingLabUseCase(BaseAssessmentUseCase):
         source_code: str,
         language: str,
         test_cases: list[dict[str, Any]] | None = None,
+        preview: bool = False,
+        current_user: CurrentUser | None = None,
     ) -> dict[str, Any]:
-        # 1. Fetch test cases from database if not provided
+        # 1. Enforce course-staff guard and fetch test cases from database if not provided
         test_cases = list(test_cases) if test_cases else []
-        if not test_cases:
-            async with async_session_scope() as session:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            await self._ensure_not_course_staff_for_item(
+                session,
+                repo,
+                user_id,
+                item_id,
+                current_user,
+                preview=preview,
+            )
+            if not test_cases:
                 try:
-                    repo = self.repo_factory(session)
                     test_cases_json = await repo.get_lab_test_cases_json(item_id)
                     if test_cases_json:
                         parsed = json.loads(test_cases_json)
@@ -102,9 +113,10 @@ class CodingLabUseCase(BaseAssessmentUseCase):
             created_at=now_iso,
         )
 
-        async with async_session_scope() as session:
-            repo = await self._get_repo(session)
-            await repo.save_lab_submission(submission)
+        if not preview:
+            async with async_session_scope() as session:
+                repo = await self._get_repo(session)
+                await repo.save_lab_submission(submission)
 
         logger.info(
             "User %s submitted lab %s with score %s (Passed: %s)",

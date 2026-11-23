@@ -1,31 +1,107 @@
 import json
 import logging
+import statistics
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from urllib.parse import urlparse
 
 from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
+    DEFAULT_PASSING_THRESHOLD_PERCENT,
+    ELIGIBLE_REVIEW_DUTY_STATUSES,
+    ESSAY_GRADING_MODE_INSTRUCTOR_ONLY,
+    ESSAY_GRADING_MODE_PEER_REVIEW,
     GRADING_LOCK_TIMEOUT_MINUTES,
     MAX_APPEAL_WINDOW_DAYS,
     MAX_PEER_SUBMISSION_ATTEMPTS,
+    MIN_PEER_REVIEW_FEEDBACK_LENGTH,
+    MIN_PEER_REVIEWS_FOR_OUTLIER_CONSENSUS,
+    MIN_PEER_SUBMISSION_TEXT_LENGTH,
     OUTLIER_SCORE_DELTA_THRESHOLD,
+    PEER_ASSIGNMENT_STATUS_ASSIGNED,
     PEER_REVIEW_COLD_START_HOURS,
+    PEER_SUBMISSION_STATUS_GRADED,
+    PEER_SUBMISSION_STATUS_PUBLISHED,
+    PENDING_APPEAL_STATUSES,
+    REPORT_STATUS_PENDING_STAFF_REVIEW,
     REQUIRED_PEER_REVIEWS_COUNT,
-    GradeAppeal,
+    REVIEW_DUTY_COMPLETED,
+    REVIEW_DUTY_NOT_APPLICABLE,
+    REVIEW_DUTY_PENDING,
+    REVIEW_DUTY_WAITING_POOL,
+    REVIEW_DUTY_WAIVED_EMPTY_POOL,
     PeerAssignmentGradedDomainEvent,
     PeerAssignmentSubmission,
     PeerReview,
+    PeerReviewReport,
+    PeerReviewSubmittedDomainEvent,
     RubricCriteria,
+    normalize_grade_provenance,
 )
 from src.shared.access_policy import require_paid_access
-from src.shared.auth import CurrentUser
+from src.shared.auth import CurrentUser, CurrentUserContext
+from src.shared.domain.events import DomainEvent
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
+from src.shared.permissions import CoursePermission, enforce_course_ownership
 
 from .base_usecase import BaseAssessmentUseCase
 
 logger = logging.getLogger(__name__)
+
+
+def _reconcile_peer_review_outliers(
+    existing_reviews: list[PeerReview],
+    new_review: PeerReview,
+) -> list[PeerReview]:
+    """Evaluates outlier flags across all reviews for an attempt using median consensus once >= 3 reviews exist.
+
+    Returns existing reviews whose `is_outlier` status changed and must be re-persisted.
+    """
+    all_reviews = [*existing_reviews, new_review]
+    if len(all_reviews) < 2:
+        new_review.is_outlier = False
+        return []
+
+    changed: list[PeerReview] = []
+    if len(all_reviews) < MIN_PEER_REVIEWS_FOR_OUTLIER_CONSENSUS:
+        scores = [r.total_score for r in all_reviews]
+        divergent = (max(scores) - min(scores)) > OUTLIER_SCORE_DELTA_THRESHOLD
+        new_review.is_outlier = divergent
+        for rev in existing_reviews:
+            if rev.is_outlier != divergent:
+                rev.is_outlier = divergent
+                changed.append(rev)
+        return changed
+
+    median_score = statistics.median(r.total_score for r in all_reviews)
+    new_review.is_outlier = (
+        abs(new_review.total_score - median_score) > OUTLIER_SCORE_DELTA_THRESHOLD
+    )
+    for rev in existing_reviews:
+        expected_outlier = (
+            abs(rev.total_score - median_score) > OUTLIER_SCORE_DELTA_THRESHOLD
+        )
+        if rev.is_outlier != expected_outlier:
+            rev.is_outlier = expected_outlier
+            changed.append(rev)
+    return changed
+
+
+def _is_cold_start_elapsed(
+    created_at_iso: str | None, cold_start_hours: int, now: datetime
+) -> bool:
+    """Returns True only once cold_start_hours have elapsed since submission creation."""
+    if not created_at_iso:
+        return False
+    try:
+        created_dt = datetime.fromisoformat(created_at_iso)
+        if created_dt.tzinfo is None:
+            created_dt = created_dt.replace(tzinfo=UTC)
+        return (now - created_dt) >= timedelta(hours=cold_start_hours)
+    except (ValueError, TypeError):
+        return False
 
 
 def _parse_rubrics(raw_rubrics: Any) -> list[RubricCriteria]:
@@ -99,39 +175,106 @@ def _parse_rubrics(raw_rubrics: Any) -> list[RubricCriteria]:
 class PeerReviewUseCase(BaseAssessmentUseCase):
     """Application Use Case for Peer Review assignment submissions, grading, staff regrade, and reports."""
 
+    @staticmethod
+    def _validate_peer_review_item(
+        item_info: dict[str, Any] | None, item_id: str
+    ) -> dict[str, Any]:
+        """Ensures the target learning item exists and is a PEER_REVIEW assignment when item_type is known."""
+        if not item_info:
+            raise ValueError(f"Học liệu {item_id} không tồn tại.")
+        item_type = str(item_info.get("item_type") or "").upper()
+        if item_type and item_type not in ("ITEM_TYPE_PEER_REVIEW", "PEER_REVIEW"):
+            raise ValueError("Học liệu này không phải Bài tập tự luận.")
+        return item_info
+
     @require_paid_access()
     async def submit_peer_assignment(
-        self, user_id: str, item_id: str, submission_url: str, text_content: str
+        self,
+        user_id: str,
+        item_id: str,
+        submission_url: str,
+        text_content: str,
+        current_user: CurrentUser | None = None,
     ) -> tuple[str, str]:
         cleaned_url = (submission_url or "").strip()
+        cleaned_text = (text_content or "").strip()
+        if not cleaned_url and not cleaned_text:
+            raise ValueError(
+                "Vui lòng cung cấp liên kết bài làm hoặc nội dung bài tự luận."
+            )
         if cleaned_url:
             lower_url = cleaned_url.lower()
             if lower_url.startswith(("javascript:", "data:", "vbscript:")):
                 raise ValueError(
                     "Liên kết nộp bài không an toàn hoặc chứa giao thức bị cấm (javascript:/data:)."
                 )
-            if not lower_url.startswith(("http://", "https://", "/")):
+            parsed_url = urlparse(cleaned_url)
+            if (
+                parsed_url.scheme.lower() not in ("http", "https")
+                or not parsed_url.netloc
+            ):
                 raise ValueError(
-                    "Liên kết nộp bài phải bắt đầu bằng http:// hoặc https://."
+                    "Liên kết nộp bài phải là URL đầy đủ bắt đầu bằng http:// hoặc https://."
                 )
+        elif len(cleaned_text) < MIN_PEER_SUBMISSION_TEXT_LENGTH:
+            raise ValueError(
+                f"Nội dung bài tự luận phải có ít nhất {MIN_PEER_SUBMISSION_TEXT_LENGTH} ký tự khi không đính kèm liên kết."
+            )
 
-        now_iso = datetime.now(UTC).isoformat()
+        now = datetime.now(UTC)
+        now_iso = now.isoformat()
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            item_info = self._validate_peer_review_item(
+                await repo.get_learning_item_details(item_id), item_id
+            )
+            await self._verify_learner_item_access(
+                session,
+                repo,
+                user_id,
+                item_id,
+                require_paid=True,
+                require_enrolled=True,
+                current_user=current_user,
+            )
+            essay_mode = str(
+                item_info.get("essay_grading_mode") or ESSAY_GRADING_MODE_PEER_REVIEW
+            )
+            req_reviews = int(
+                item_info.get("required_peer_reviews") or REQUIRED_PEER_REVIEWS_COUNT
+            )
+            item_max_attempts = int(
+                item_info.get("essay_max_attempts") or MAX_PEER_SUBMISSION_ATTEMPTS
+            )
+            initial_duty = (
+                REVIEW_DUTY_NOT_APPLICABLE
+                if essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY
+                else REVIEW_DUTY_PENDING
+            )
+
             existing = await repo.get_user_peer_submission(user_id, item_id)
             if existing:
-                if existing.attempt_number >= MAX_PEER_SUBMISSION_ATTEMPTS:
-                    raise ValueError(
-                        f"Bạn đã đạt giới hạn tối đa {MAX_PEER_SUBMISSION_ATTEMPTS} lần nộp bài."
+                existing_appeal = await repo.get_grade_appeal(existing.id)
+                pending_reports = (
+                    await repo.get_pending_peer_review_reports_for_submission(
+                        existing.id
                     )
-                existing.attempt_number += 1
-                existing.submission_url = cleaned_url
-                existing.text_content = text_content
-                existing.created_at = now_iso
-                existing.status = "SUBMITTED"
-                existing.locked_by_user_id = None
-                existing.locked_at = None
-                existing.lock_expires_at = None
+                )
+                if (
+                    existing_appeal
+                    and existing_appeal.status in PENDING_APPEAL_STATUSES
+                ) or pending_reports:
+                    raise ValueError(
+                        "Bài nộp đang có đơn khiếu nại hoặc báo cáo chờ Trợ giảng thẩm định. "
+                        "Không thể nộp lại lúc này."
+                    )
+                existing.prepare_resubmission(
+                    submission_url=cleaned_url,
+                    text_content=cleaned_text,
+                    now=now,
+                    essay_mode=essay_mode,
+                    max_attempts=item_max_attempts,
+                )
                 await repo.save_peer_submission(existing)
                 sub_id = existing.id
             else:
@@ -141,18 +284,20 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     user_id=user_id,
                     item_id=item_id,
                     submission_url=cleaned_url,
-                    text_content=text_content,
+                    text_content=cleaned_text,
                     created_at=now_iso,
                     attempt_number=1,
                     status="SUBMITTED",
+                    review_duty_status=initial_duty,
                 )
                 await repo.save_peer_submission(submission)
 
         logger.info("User %s submitted peer assignment for item %s", user_id, item_id)
-        return (
-            sub_id,
-            f"Assignment submitted successfully. Please complete {REQUIRED_PEER_REVIEWS_COUNT} peer reviews to view your score.",
-        )
+        if essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY:
+            msg = "Nộp bài tự luận thành công. Bài làm đã được chuyển cho Giảng viên/Trợ giảng chấm điểm."
+        else:
+            msg = f"Nộp bài tự luận thành công. Vui lòng chấm điểm {req_reviews} bài cho bạn học để hoàn tất bài tập."
+        return (sub_id, msg)
 
     def _parse_rubric_criteria(self, raw_rubrics: Any) -> list[RubricCriteria]:
         parsed = _parse_rubrics(raw_rubrics)
@@ -180,30 +325,177 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             ),
         ]
 
+    async def _evaluate_review_duty_for_release(
+        self,
+        repo: Any,
+        sub: PeerAssignmentSubmission,
+        essay_mode: str,
+        req_reviews: int,
+        cold_start_hours: int = PEER_REVIEW_COLD_START_HOURS,
+        now: datetime | None = None,
+    ) -> bool:
+        """Evaluates review duty status on grade publish; returns True if completion event should fire."""
+        if essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY:
+            sub.review_duty_status = REVIEW_DUTY_NOT_APPLICABLE
+            return True
+
+        if sub.review_duty_status in (
+            REVIEW_DUTY_COMPLETED,
+            REVIEW_DUTY_WAIVED_EMPTY_POOL,
+        ):
+            return True
+
+        current_now = now or datetime.now(UTC)
+        completed = await repo.count_user_completed_reviews(sub.item_id, sub.user_id)
+        if completed >= req_reviews:
+            sub.review_duty_status = REVIEW_DUTY_COMPLETED
+            return True
+
+        available = await repo.count_available_pool_submissions(
+            sub.item_id, sub.user_id
+        )
+        cold_elapsed = _is_cold_start_elapsed(
+            sub.created_at, cold_start_hours, current_now
+        )
+        if cold_elapsed:
+            target = min(req_reviews, completed + available)
+            if completed >= target > 0:
+                sub.review_duty_status = REVIEW_DUTY_COMPLETED
+                return True
+            if available == 0:
+                sub.review_duty_status = REVIEW_DUTY_WAIVED_EMPTY_POOL
+                sub.review_duty_waived_reason = (
+                    f"Không còn bài làm nào khác trong kho bài sau {cold_start_hours} giờ chờ. "
+                    "Hệ thống tự động giải thoát điều kiện chấm cho bạn."
+                )
+                return True
+
+        sub.review_duty_status = (
+            REVIEW_DUTY_WAITING_POOL if available == 0 else REVIEW_DUTY_PENDING
+        )
+        return False
+
     async def get_peer_reviews_to_grade(
-        self, user_id: str, item_id: str
+        self,
+        user_id: str,
+        item_id: str,
+        current_user: CurrentUser | None = None,
     ) -> list[dict[str, Any]]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
-            submissions = await repo.get_peer_submissions_for_item(
-                item_id, exclude_user_id=user_id
+            item_info = self._validate_peer_review_item(
+                await repo.get_learning_item_details(item_id), item_id
             )
-            rubric_json_str = await repo.get_item_rubric_criteria_json(item_id)
-
-        selected = submissions[:REQUIRED_PEER_REVIEWS_COUNT]
-        result: list[dict[str, Any]] = []
-        rubric_criteria = self._parse_rubric_criteria(rubric_json_str)
-
-        for s in selected:
-            review_id = f"rev-{s.id}"
-            result.append(
-                {
-                    "review_id": review_id,
-                    "submission_url": s.submission_url,
-                    "text_content": s.text_content,
-                    "rubric_criteria": rubric_criteria,
-                }
+            await self._verify_learner_item_access(
+                session,
+                repo,
+                user_id,
+                item_id,
+                require_paid=True,
+                require_enrolled=True,
+                current_user=current_user,
             )
+            essay_mode = str(
+                item_info.get("essay_grading_mode") or ESSAY_GRADING_MODE_PEER_REVIEW
+            )
+            if essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY:
+                return []
+
+            user_sub = await repo.get_user_peer_submission(user_id, item_id)
+            if not user_sub:
+                raise ValueError(
+                    "Bạn cần nộp bài trước khi nhận bài chấm chéo cho bạn học."
+                )
+
+            req_reviews = (
+                int(
+                    item_info.get("required_peer_reviews")
+                    or REQUIRED_PEER_REVIEWS_COUNT
+                )
+                if item_info
+                else REQUIRED_PEER_REVIEWS_COUNT
+            )
+            completed_reviews = await repo.count_user_completed_reviews(
+                item_id, user_id
+            )
+            needed_reviews = max(0, req_reviews - completed_reviews)
+            if needed_reviews == 0:
+                return []
+
+            rubric_json_str = (
+                item_info.get("rubric_criteria_json")
+                if item_info
+                else await repo.get_item_rubric_criteria_json(item_id)
+            )
+            rubric_criteria = self._parse_rubric_criteria(rubric_json_str)
+
+            # Query least-reviewed first submissions with buffer to handle concurrent lock contention
+            fetch_limit = max(needed_reviews * 3, needed_reviews + 4)
+            eligible = await repo.get_eligible_peer_submissions_to_review(
+                item_id, user_id, limit=fetch_limit
+            )
+
+            result: list[dict[str, Any]] = []
+            now = datetime.now(UTC)
+            assigned_at_iso = now.isoformat()
+            expires_at_iso = (
+                now + timedelta(minutes=GRADING_LOCK_TIMEOUT_MINUTES)
+            ).isoformat()
+            for s in eligible:
+                if len(result) >= needed_reviews:
+                    break
+                is_already_held_by_me = (
+                    s.locked_by_user_id == user_id and s.is_lock_active(now)
+                )
+                if is_already_held_by_me:
+                    # Preserve original lock expiration — never allow infinite lock extension on poll
+                    held_assigned_at = s.locked_at or assigned_at_iso
+                    held_expires_at = s.lock_expires_at or expires_at_iso
+                    assignment = await repo.create_or_get_peer_review_assignment(
+                        submission_id=s.id,
+                        reviewer_user_id=user_id,
+                        item_id=item_id,
+                        assigned_at=held_assigned_at,
+                        expires_at=held_expires_at,
+                        submission_attempt_number=s.attempt_number,
+                    )
+                else:
+                    claimed = await repo.claim_submission_lock(
+                        s.id,
+                        user_id,
+                        timeout_minutes=GRADING_LOCK_TIMEOUT_MINUTES,
+                        allow_extend_own=False,
+                    )
+                    if not claimed:
+                        continue
+                    assignment = await repo.create_or_get_peer_review_assignment(
+                        submission_id=s.id,
+                        reviewer_user_id=user_id,
+                        item_id=item_id,
+                        assigned_at=assigned_at_iso,
+                        expires_at=expires_at_iso,
+                        submission_attempt_number=s.attempt_number,
+                    )
+                result.append(
+                    {
+                        "review_id": assignment.id,
+                        "submission_url": s.submission_url,
+                        "text_content": s.text_content,
+                        "rubric_criteria": rubric_criteria,
+                    }
+                )
+
+            if not result:
+                total_available = await repo.count_available_pool_submissions(
+                    item_id, user_id
+                )
+                # Only enter WAITING_POOL when pool is genuinely empty, not when items are temporarily locked
+                if (
+                    total_available == 0
+                    and user_sub.review_duty_status == REVIEW_DUTY_PENDING
+                ):
+                    user_sub.review_duty_status = REVIEW_DUTY_WAITING_POOL
+                    await repo.save_peer_submission(user_sub)
 
         return result
 
@@ -213,41 +505,99 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         reviewer_user_id: str,
         graded_criteria: list[RubricCriteria],
         item_id: str | None = None,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         import math
 
         if not graded_criteria:
             raise ValueError("Danh sách tiêu chí không được để trống.")
+        if not review_id or not review_id.strip():
+            raise ValueError("Mã phiên chấm bài không hợp lệ.")
 
-        submission_id = (
-            review_id.replace("rev-", "") if review_id.startswith("rev-") else review_id
-        )
+        pending_events: list[DomainEvent] = []
+        is_outlier = False
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            now = datetime.now(UTC)
 
-            sub = await repo.get_peer_submission(submission_id)
+            assignment = await repo.get_peer_review_assignment(
+                review_id, reviewer_user_id
+            )
+            if not assignment:
+                raise PermissionError(
+                    "Phiên chấm bài không hợp lệ hoặc không được phân bổ cho bạn."
+                )
+            if assignment.status != PEER_ASSIGNMENT_STATUS_ASSIGNED:
+                raise PermissionError(
+                    "Phiên chấm bài này đã hoàn tất hoặc không còn hiệu lực."
+                )
+            if not assignment.is_active(now):
+                raise PermissionError(
+                    "Phiên chấm bài đã hết hạn. Vui lòng tải lại hàng chờ chấm bài."
+                )
+
+            submission_id = assignment.submission_id
+            sub = await repo.get_peer_submission_for_update(submission_id)
             if not sub:
                 raise ValueError(f"Bài nộp {submission_id} không tồn tại.")
+            if assignment.submission_attempt_number != sub.attempt_number:
+                raise PermissionError(
+                    "Phiên chấm bài không khớp với lần nộp hiện tại của học viên. Vui lòng tải lại hàng chờ chấm bài."
+                )
             if sub.user_id == reviewer_user_id:
                 raise PermissionError(
                     "Bạn không được phép tự chấm điểm bài làm của chính mình."
                 )
+            if item_id and item_id != sub.item_id:
+                raise ValueError("Mã học liệu không khớp với bài nộp.")
 
-            # BR_FORUM / BR_PEER: Check enrollment of reviewer in the course
-            course_id = await repo.get_course_id_by_item_id(sub.item_id)
-            if course_id:
-                learning_repo = self.learning_repo_factory(session)
-                is_enrolled = await learning_repo.check_enrollment(
-                    reviewer_user_id, course_id
+            # Enforce Paid Mode & Course Enrollment before any further checks or writes
+            course_id = await self._verify_learner_item_access(
+                session,
+                repo,
+                reviewer_user_id,
+                sub.item_id,
+                require_paid=True,
+                require_enrolled=True,
+                current_user=current_user,
+            )
+
+            resolved_item_id = sub.item_id
+            item_info = await repo.get_learning_item_details(resolved_item_id)
+            essay_mode = (
+                str(
+                    item_info.get("essay_grading_mode")
+                    or ESSAY_GRADING_MODE_PEER_REVIEW
                 )
-                if not is_enrolled:
-                    raise PermissionError(
-                        "Bạn cần đăng ký khóa học để thực hiện chấm chéo."
-                    )
+                if item_info
+                else ESSAY_GRADING_MODE_PEER_REVIEW
+            )
+            if essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY:
+                raise PermissionError(
+                    "Bài tập này ở chế độ Chỉ Giảng viên/Trợ giảng chấm, không áp dụng chấm chéo."
+                )
 
-            resolved_item_id = item_id or sub.item_id
-            raw_rubrics = await repo.get_item_rubric_criteria_json(resolved_item_id)
+            # BR_PEER_001: Reviewer must have submitted their own assignment first
+            reviewer_sub = await repo.get_user_peer_submission(
+                reviewer_user_id, resolved_item_id
+            )
+            if not reviewer_sub:
+                raise PermissionError(
+                    "Bạn cần nộp bài cá nhân trước khi thực hiện chấm chéo cho bạn học."
+                )
+
+            # Enforce active grading lock held by this reviewer
+            if sub.locked_by_user_id != reviewer_user_id or not sub.is_lock_active(now):
+                raise PermissionError(
+                    "Bạn không giữ khóa chấm bài hợp lệ hoặc khóa đã hết hạn cho bài nộp này."
+                )
+
+            raw_rubrics = (
+                item_info.get("rubric_criteria_json")
+                if item_info and item_info.get("rubric_criteria_json")
+                else await repo.get_item_rubric_criteria_json(resolved_item_id)
+            )
             db_rubrics = self._parse_rubric_criteria(raw_rubrics)
             db_rubric_map = {r.criteria_id: r for r in db_rubrics} if db_rubrics else {}
 
@@ -266,7 +616,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     authoritative_max_score = db_crit.max_score
                     authoritative_title = db_crit.title
                     authoritative_desc = getattr(db_crit, "description", "")
-                elif raw_rubrics is None:
+                elif not raw_rubrics:
                     authoritative_max_score = c.max_score
                     authoritative_title = c.title
                     authoritative_desc = getattr(c, "description", "")
@@ -296,9 +646,17 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         title=authoritative_title,
                         max_score=authoritative_max_score,
                         score_given=c.score_given,
-                        feedback=c.feedback,
+                        feedback=(c.feedback or "").strip(),
                         description=authoritative_desc,
                     )
+                )
+
+            combined_feedback = " ".join(
+                c.feedback for c in final_criteria if c.feedback
+            )
+            if len(combined_feedback) < MIN_PEER_REVIEW_FEEDBACK_LENGTH:
+                raise ValueError(
+                    f"Vui lòng nhập nhận xét chi tiết cho bạn học (tối thiểu {MIN_PEER_REVIEW_FEEDBACK_LENGTH} ký tự)."
                 )
 
             total_given = sum(c.score_given for c in final_criteria)
@@ -311,135 +669,189 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 raise ValueError("Tổng điểm các tiêu chí không hợp lệ.")
             score_percent = round((total_given / max_possible) * 100.0, 2)
 
-            existing_reviews = await repo.get_peer_reviews_for_submission(submission_id)
+            existing_reviews = await repo.get_peer_reviews_for_submission(
+                submission_id, attempt_number=sub.attempt_number
+            )
             if any(r.reviewer_user_id == reviewer_user_id for r in existing_reviews):
                 raise PermissionError(
                     "Bạn đã thực hiện đánh giá cho bài nộp này trước đó rồi."
                 )
-            is_outlier = False
-            if existing_reviews:
-                prev_scores = [r.total_score for r in existing_reviews]
-                all_scores = prev_scores + [score_percent]
-                max_delta = max(all_scores) - min(all_scores)
-                if max_delta > OUTLIER_SCORE_DELTA_THRESHOLD:
-                    is_outlier = True
+            is_already_finalized = (
+                sub.graded_by_staff
+                or sub.status
+                in (PEER_SUBMISSION_STATUS_PUBLISHED, PEER_SUBMISSION_STATUS_GRADED)
+                or sub.final_score is not None
+            )
 
-            now_iso = datetime.now(UTC).isoformat()
+            # Release lock BEFORE persisting review within the single atomic transaction
+            released = await repo.release_submission_lock(
+                submission_id, reviewer_user_id
+            )
+            if not released:
+                raise PermissionError("Không thể giải phóng khóa chấm bài hợp lệ.")
+            sub.release_lock(reviewer_user_id)
+
+            assignment.mark_completed()
+            await repo.save_peer_review_assignment(assignment)
+
+            now_iso = now.isoformat()
+            persisted_review_id = f"rev-{uuid7().hex}"
             review = PeerReview(
-                id=review_id,
+                id=persisted_review_id,
                 submission_id=submission_id,
                 reviewer_user_id=reviewer_user_id,
                 item_id=resolved_item_id,
                 rubric_criteria=final_criteria,
                 total_score=score_percent,
-                is_outlier=is_outlier,
+                is_outlier=False,
                 created_at=now_iso,
+                submission_attempt_number=sub.attempt_number,
             )
+            changed_existing_reviews: list[PeerReview] = []
+            if existing_reviews and not is_already_finalized:
+                changed_existing_reviews = _reconcile_peer_review_outliers(
+                    existing_reviews, review
+                )
+            is_outlier = review.is_outlier
+
             await repo.save_peer_review(review)
+            for updated_rev in changed_existing_reviews:
+                await repo.save_peer_review(updated_rev)
             logger.info(
-                "User %s submitted peer review %s for submission %s with score %s",
+                "User %s submitted peer review %s (assignment %s) for submission %s with score %s",
                 reviewer_user_id,
+                persisted_review_id,
                 review_id,
                 submission_id,
                 score_percent,
             )
 
-            # Update final_score on PeerAssignmentSubmission if not graded by staff
-            if not sub.graded_by_staff:
-                all_revs = await repo.get_peer_reviews_for_submission(submission_id)
-                if len(all_revs) >= REQUIRED_PEER_REVIEWS_COUNT:
+            req_reviews = (
+                int(
+                    item_info.get("required_peer_reviews")
+                    or REQUIRED_PEER_REVIEWS_COUNT
+                )
+                if item_info
+                else REQUIRED_PEER_REVIEWS_COUNT
+            )
+            cold_hours = (
+                int(item_info.get("cold_start_hours") or PEER_REVIEW_COLD_START_HOURS)
+                if item_info
+                else PEER_REVIEW_COLD_START_HOURS
+            )
+
+            published_now = False
+            if not is_already_finalized:
+                all_revs = await repo.get_peer_reviews_for_submission(
+                    submission_id, attempt_number=sub.attempt_number
+                )
+                if len(all_revs) >= req_reviews:
                     avg_score = round(
                         sum(r.total_score for r in all_revs) / len(all_revs), 2
                     )
-                    effective_score = (
-                        max(avg_score, sub.final_score)
-                        if sub.final_score is not None
-                        else avg_score
-                    )
+                    effective_score = avg_score
                     sub.assign_grade(
                         effective_score, is_staff=False, grade_source="PEER_REVIEW"
                     )
-                    sub.published_at = datetime.now(UTC).isoformat()
-                    sub.status = "PUBLISHED"
+                    if not sub.published_at:
+                        sub.published_at = now_iso
+                    sub.status = PEER_SUBMISSION_STATUS_PUBLISHED
+
+                    publish_sub_event = await self._evaluate_review_duty_for_release(
+                        repo,
+                        sub,
+                        essay_mode,
+                        req_reviews,
+                        cold_start_hours=cold_hours,
+                        now=now,
+                    )
                     await repo.save_peer_submission(sub)
 
-                    course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
-                    await EventBus.publish(
-                        PeerAssignmentGradedDomainEvent(
-                            user_id=sub.user_id,
-                            course_id=course_id,
-                            item_id=sub.item_id,
-                            submission_id=sub.id,
-                            final_score=effective_score,
-                            passed=effective_score >= 80.0,
-                            grader_id="peer",
+                    if publish_sub_event:
+                        published_now = True
+                        eff_grade, _, _ = sub.get_effective_published_grade()
+                        event_score = (
+                            eff_grade if eff_grade is not None else effective_score
                         )
+                        pending_events.append(
+                            PeerAssignmentGradedDomainEvent(
+                                user_id=sub.user_id,
+                                course_id=course_id,
+                                item_id=sub.item_id,
+                                submission_id=sub.id,
+                                final_score=event_score,
+                                passed=event_score >= DEFAULT_PASSING_THRESHOLD_PERCENT,
+                                grader_id="peer",
+                            )
+                        )
+
+            if not published_now:
+                # 1st/2nd reviews, pending duty release, or 4th+ reference reviews: notify author only
+                pending_events.append(
+                    PeerReviewSubmittedDomainEvent(
+                        reviewer_id=reviewer_user_id,
+                        submission_id=sub.id,
+                        author_id=sub.user_id,
+                        score=score_percent,
+                        course_id=course_id,
+                        item_id=sub.item_id,
                     )
+                )
+
+            # Check reviewer's own review duty
+            rev_sub = await repo.get_user_peer_submission(
+                reviewer_user_id, resolved_item_id
+            )
+            if rev_sub and rev_sub.review_duty_status not in (
+                REVIEW_DUTY_COMPLETED,
+                REVIEW_DUTY_WAIVED_EMPTY_POOL,
+                REVIEW_DUTY_NOT_APPLICABLE,
+            ):
+                rev_completed = await repo.count_user_completed_reviews(
+                    resolved_item_id, reviewer_user_id
+                )
+                rev_available = await repo.count_available_pool_submissions(
+                    resolved_item_id, reviewer_user_id
+                )
+                rev_cold_elapsed = _is_cold_start_elapsed(
+                    rev_sub.created_at, cold_hours, now
+                )
+                rev_target = (
+                    min(req_reviews, rev_completed + rev_available)
+                    if rev_cold_elapsed
+                    else req_reviews
+                )
+                if rev_completed >= rev_target > 0:
+                    rev_sub.review_duty_status = REVIEW_DUTY_COMPLETED
+                    rev_eff_score, _, _ = rev_sub.get_effective_published_grade()
+                    if rev_eff_score is not None:
+                        pending_events.append(
+                            PeerAssignmentGradedDomainEvent(
+                                user_id=rev_sub.user_id,
+                                course_id=course_id,
+                                item_id=rev_sub.item_id,
+                                submission_id=rev_sub.id,
+                                final_score=rev_eff_score,
+                                passed=rev_eff_score
+                                >= DEFAULT_PASSING_THRESHOLD_PERCENT,
+                                grader_id=rev_sub.graded_by_user_id or "peer",
+                            )
+                        )
+                    await repo.save_peer_submission(rev_sub)
+                elif (
+                    rev_available == 0
+                    and rev_sub.review_duty_status != REVIEW_DUTY_WAITING_POOL
+                ):
+                    rev_sub.review_duty_status = REVIEW_DUTY_WAITING_POOL
+                    await repo.save_peer_submission(rev_sub)
+
+        for evt in pending_events:
+            await EventBus.publish(evt)
 
         msg = "Peer review graded successfully."
         if is_outlier:
             msg += f" (Outlier Flagged: Score variation exceeds {int(OUTLIER_SCORE_DELTA_THRESHOLD)}%, TA notified)."
         return True, msg
-
-    async def submit_grade_appeal(
-        self, user_id: str, submission_id: str, appeal_reason: str
-    ) -> tuple[bool, str]:
-        """Submits a grade appeal for a peer review submission (BR_PEER_007)."""
-        if not appeal_reason or not appeal_reason.strip():
-            raise ValueError("Lý do khiếu nại không được để trống.")
-
-        async with async_session_scope() as session:
-            repo = await self._get_repo(session)
-            sub = await repo.get_peer_submission(submission_id)
-            if not sub:
-                raise ValueError(f"Bài nộp {submission_id} không tồn tại.")
-            if sub.user_id != user_id:
-                logger.warning(
-                    "User %s attempted to submit grade appeal for submission %s belonging to another user",
-                    user_id,
-                    submission_id,
-                )
-                raise PermissionError(
-                    "Bạn chỉ có quyền gửi khiếu nại điểm đối với bài nộp của chính mình."
-                )
-
-            # Constraint 1: Only 1 appeal per submission
-            existing_appeal = await repo.get_grade_appeal(submission_id)
-            if existing_appeal:
-                raise ValueError(
-                    "Bài nộp này đã có đơn khiếu nại trước đó (Mỗi bài chỉ được khiếu nại tối đa 1 lần)."
-                )
-
-            # Constraint 2: Appeal window (MAX_APPEAL_WINDOW_DAYS = 7)
-            ref_date_str = sub.published_at or sub.created_at
-            if ref_date_str:
-                ref_dt = None
-                try:
-                    ref_dt = datetime.fromisoformat(ref_date_str)
-                except (ValueError, TypeError):
-                    pass
-                if ref_dt is not None:
-                    if ref_dt.tzinfo is None:
-                        ref_dt = ref_dt.replace(tzinfo=UTC)
-                    now = datetime.now(UTC)
-                    if now > ref_dt + timedelta(days=MAX_APPEAL_WINDOW_DAYS):
-                        raise ValueError(
-                            f"Đã quá thời hạn khiếu nại {MAX_APPEAL_WINDOW_DAYS} ngày kể từ khi công bố điểm."
-                        )
-
-            appeal_id = f"appeal-{uuid7().hex}"
-            now_iso = datetime.now(UTC).isoformat()
-            appeal = GradeAppeal(
-                id=appeal_id,
-                user_id=user_id,
-                submission_id=submission_id,
-                appeal_reason=appeal_reason.strip(),
-                status="PENDING",
-                created_at=now_iso,
-            )
-            await repo.save_grade_appeal(appeal)
-
-        return True, "PENDING"
 
     async def submit_staff_grading(
         self,
@@ -492,6 +904,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
             )
 
+        staff_event: PeerAssignmentGradedDomainEvent | None = None
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             sub = await repo.get_peer_submission(submission_id)
@@ -539,9 +952,11 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             sub.published_at = now.isoformat()
             sub.status = "PUBLISHED"
 
-            # BR_GRADE_003: Active lock release on save
-            sub.release_lock(staff_user_id)
-            await repo.release_submission_lock(submission_id, staff_user_id)
+            # BR_GRADE_003: Active lock release on save (safely clears own or expired lock)
+            if sub.locked_by_user_id:
+                sub.claim_lock(staff_user_id, now)
+                sub.release_lock(staff_user_id)
+                await repo.release_submission_lock(submission_id, staff_user_id)
 
             if resolve_appeal:
                 appeal = await repo.get_grade_appeal(submission_id)
@@ -553,21 +968,59 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     if appeal_resolution_notes:
                         appeal.rejection_reason = appeal_resolution_notes
                     await repo.save_grade_appeal(appeal)
+            await repo.resolve_pending_peer_review_reports_for_submission(
+                submission_id, staff_user_id, appeal_resolution_notes
+            )
 
+            item_info = await repo.get_learning_item_details(sub.item_id)
+            essay_mode = (
+                str(
+                    item_info.get("essay_grading_mode")
+                    or ESSAY_GRADING_MODE_PEER_REVIEW
+                )
+                if item_info
+                else ESSAY_GRADING_MODE_PEER_REVIEW
+            )
+            req_reviews = (
+                int(
+                    item_info.get("required_peer_reviews")
+                    or REQUIRED_PEER_REVIEWS_COUNT
+                )
+                if item_info
+                else REQUIRED_PEER_REVIEWS_COUNT
+            )
+            cold_hours = (
+                int(item_info.get("cold_start_hours") or PEER_REVIEW_COLD_START_HOURS)
+                if item_info
+                else PEER_REVIEW_COLD_START_HOURS
+            )
+
+            publish_completion_event = await self._evaluate_review_duty_for_release(
+                repo,
+                sub,
+                essay_mode,
+                req_reviews,
+                cold_start_hours=cold_hours,
+                now=now,
+            )
             await repo.save_peer_submission(sub)
 
-            course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
-            await EventBus.publish(
-                PeerAssignmentGradedDomainEvent(
+            if publish_completion_event:
+                course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
+                eff_grade, _, _ = sub.get_effective_published_grade()
+                event_score = eff_grade if eff_grade is not None else effective_score
+                staff_event = PeerAssignmentGradedDomainEvent(
                     user_id=sub.user_id,
                     course_id=course_id,
                     item_id=sub.item_id,
                     submission_id=sub.id,
-                    final_score=effective_score,
-                    passed=effective_score >= 80.0,
+                    final_score=event_score,
+                    passed=event_score >= DEFAULT_PASSING_THRESHOLD_PERCENT,
                     grader_id=staff_user_id,
                 )
-            )
+
+        if staff_event is not None:
+            await EventBus.publish(staff_event)
 
         graded_at_str = sub.published_at or now.isoformat()
         return (
@@ -598,7 +1051,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 raise PermissionError(
                     "Bạn không được phép tự khóa bài làm của chính mình để chấm điểm."
                 )
-            success = await repo.claim_submission_lock(submission_id, staff_user_id)
+            success = await repo.claim_staff_grading_lock(submission_id, staff_user_id)
             if not success:
                 return (
                     False,
@@ -694,6 +1147,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 "Điểm số phải là số thực hữu hạn nằm trong khoảng từ 0 đến 100."
             )
 
+        regrade_event: PeerAssignmentGradedDomainEvent | None = None
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             sub = await repo.get_peer_submission(submission_id)
@@ -704,24 +1158,45 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                     "Bạn không được phép tự chấm điểm bài làm của chính mình."
                 )
 
-            # BR_GRADE_002: Hierarchy Check (AUTO <= PEER < TA < INSTRUCTOR)
-            is_instructor = bool(
-                current_user
-                and getattr(current_user, "role", "")
-                in (
-                    "INSTRUCTOR",
-                    "USER_ROLE_INSTRUCTOR",
-                    "ADMIN",
-                    "USER_ROLE_ADMIN",
-                )
+            course_id, course = await self._resolve_course_for_item(
+                session, repo, sub.item_id
             )
-            if sub.grade_source == "INSTRUCTOR" and not is_instructor:
+            if current_user is not None and course is not None:
+                enforce_course_ownership(
+                    course=course,
+                    user=CurrentUserContext(
+                        id=current_user.id,
+                        role=current_user.role,
+                        email=current_user.email,
+                    ),
+                    required_permission=CoursePermission.GRADE_ASSESSMENTS,
+                    action_name="chấm đè điểm bài nộp",
+                )
+                owner_id = getattr(course, "owner_id", "")
+                co_instructors = getattr(course, "co_instructor_ids", []) or []
+                is_course_instructor = bool(
+                    current_user.is_admin
+                    or current_user.id == owner_id
+                    or current_user.id in co_instructors
+                )
+            else:
+                is_course_instructor = bool(
+                    current_user
+                    and (current_user.is_admin or current_user.is_instructor)
+                )
+
+            # BR_GRADE_002: Hierarchy Check (AUTO <= PEER < TA < INSTRUCTOR)
+            if sub.grade_source == "INSTRUCTOR" and not is_course_instructor:
                 raise PermissionError(
                     "Trợ giảng không thể chấm đè lên điểm đã do Giảng viên chốt."
                 )
 
+            now = datetime.now(UTC)
+            if not sub.can_claim_lock(staff_user_id, now):
+                raise PermissionError("Bài nộp đang được nhân sự khác khóa để chấm.")
+
             # BR_GRADE_002: Master Override & Authoritative Staff Grade
-            grader_role = "INSTRUCTOR" if is_instructor else "TA"
+            grader_role = "INSTRUCTOR" if is_course_instructor else "TA"
             effective_score = ta_score
             sub.assign_grade(
                 effective_score,
@@ -730,8 +1205,44 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 grader_role=grader_role,
                 graded_by_user_id=staff_user_id,
             )
-            sub.published_at = datetime.now(UTC).isoformat()
+            sub.published_at = now.isoformat()
             sub.status = "PUBLISHED"
+
+            if sub.locked_by_user_id:
+                sub.claim_lock(staff_user_id, now)
+                sub.release_lock(staff_user_id)
+                await repo.release_submission_lock(submission_id, staff_user_id)
+
+            item_info = await repo.get_learning_item_details(sub.item_id)
+            essay_mode = (
+                str(
+                    item_info.get("essay_grading_mode")
+                    or ESSAY_GRADING_MODE_PEER_REVIEW
+                )
+                if item_info
+                else ESSAY_GRADING_MODE_PEER_REVIEW
+            )
+            req_reviews = (
+                int(
+                    item_info.get("required_peer_reviews")
+                    or REQUIRED_PEER_REVIEWS_COUNT
+                )
+                if item_info
+                else REQUIRED_PEER_REVIEWS_COUNT
+            )
+            cold_hours = (
+                int(item_info.get("cold_start_hours") or PEER_REVIEW_COLD_START_HOURS)
+                if item_info
+                else PEER_REVIEW_COLD_START_HOURS
+            )
+            publish_completion_event = await self._evaluate_review_duty_for_release(
+                repo,
+                sub,
+                essay_mode,
+                req_reviews,
+                cold_start_hours=cold_hours,
+                now=now,
+            )
             await repo.save_peer_submission(sub)
 
             appeal = await repo.get_grade_appeal(submission_id)
@@ -739,24 +1250,30 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 appeal.approve(reviewer_id=staff_user_id, final_score=effective_score)
                 appeal.status = "RESOLVED"
                 await repo.save_grade_appeal(appeal)
+            await repo.resolve_pending_peer_review_reports_for_submission(
+                submission_id, staff_user_id
+            )
 
-            course_id = await repo.get_course_id_by_item_id(sub.item_id) or ""
-            await EventBus.publish(
-                PeerAssignmentGradedDomainEvent(
+            if publish_completion_event:
+                eff_grade, _, _ = sub.get_effective_published_grade()
+                event_score = eff_grade if eff_grade is not None else effective_score
+                regrade_event = PeerAssignmentGradedDomainEvent(
                     user_id=sub.user_id,
                     course_id=course_id,
                     item_id=sub.item_id,
                     submission_id=sub.id,
-                    final_score=effective_score,
-                    passed=effective_score >= 80.0,
+                    final_score=event_score,
+                    passed=event_score >= DEFAULT_PASSING_THRESHOLD_PERCENT,
                     grader_id=staff_user_id,
                 )
-            )
 
-            return (
-                True,
-                f"Trợ giảng/Giảng viên đã chấm lại bài nộp thành công với điểm số {sub.final_score}% (TA Override).",
-            )
+        if regrade_event is not None:
+            await EventBus.publish(regrade_event)
+
+        return (
+            True,
+            f"Trợ giảng/Giảng viên đã chấm lại bài nộp thành công với điểm số {sub.final_score}% (TA Override).",
+        )
 
     async def list_peer_submissions_needing_staff_regrade(
         self, item_id: str
@@ -777,7 +1294,9 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                 except (ValueError, TypeError):
                     sub_dt = now
 
-                reviews = await repo.get_peer_reviews_for_submission(s.id)
+                reviews = await repo.get_peer_reviews_for_submission(
+                    s.id, attempt_number=s.attempt_number
+                )
                 if (
                     len(reviews) < REQUIRED_PEER_REVIEWS_COUNT
                     and sub_dt <= cold_start_threshold
@@ -797,38 +1316,63 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             return regrade_list
 
     async def report_peer_review(
-        self, user_id: str, review_id: str, report_reason: str
+        self,
+        user_id: str,
+        review_id: str,
+        report_reason: str,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         """Reports a malicious or spam peer review (BR_PEER_005)."""
         if not report_reason or not report_reason.strip():
             raise ValueError("Lý do báo cáo không được để trống.")
+        if not review_id or not review_id.strip():
+            raise ValueError("Mã lượt đánh giá không hợp lệ.")
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
-            submission_id = (
-                review_id.replace("rev-", "")
-                if review_id.startswith("rev-")
-                else review_id
-            )
-            sub = await repo.get_peer_submission(submission_id)
+            review = await repo.get_peer_review_by_id(review_id.strip())
+            if not review:
+                raise ValueError(f"Không tìm thấy lượt đánh giá {review_id}")
+
+            sub = await repo.get_peer_submission(review.submission_id)
             if not sub:
-                raise ValueError(f"Không tìm thấy bài nộp {submission_id}")
+                raise ValueError(f"Không tìm thấy bài nộp {review.submission_id}")
             if sub.user_id != user_id:
                 raise PermissionError(
                     "Chỉ chủ sở hữu bài nộp mới có quyền gửi báo cáo đánh giá bài làm của mình."
                 )
-
-            appeal_id = f"report-{uuid7().hex}"
-            now_iso = datetime.now(UTC).isoformat()
-            appeal = GradeAppeal(
-                id=appeal_id,
-                user_id=user_id,
-                submission_id=submission_id,
-                appeal_reason=f"[REPORT_REVIEW:{review_id}] {report_reason.strip()}",
-                status="PENDING_STAFF_REVIEW",
-                created_at=now_iso,
+            await self._verify_learner_item_access(
+                session,
+                repo,
+                user_id,
+                sub.item_id,
+                require_paid=True,
+                require_enrolled=True,
+                current_user=current_user,
             )
-            await repo.save_grade_appeal(appeal)
+            if review.submission_attempt_number != sub.attempt_number:
+                raise ValueError(
+                    "Chỉ có thể báo cáo lượt đánh giá thuộc lần nộp hiện tại của bài tập."
+                )
+
+            existing_report = await repo.get_peer_review_report_by_user_and_review(
+                user_id, review.id
+            )
+            if existing_report:
+                raise ValueError(
+                    "Bạn đã gửi báo cáo cho lượt đánh giá này trước đó rồi."
+                )
+
+            report = PeerReviewReport(
+                id=f"report-{uuid7().hex}",
+                peer_review_id=review.id,
+                submission_id=sub.id,
+                reporter_user_id=user_id,
+                reason=report_reason.strip(),
+                status=REPORT_STATUS_PENDING_STAFF_REVIEW,
+                created_at=datetime.now(UTC).isoformat(),
+            )
+            await repo.save_peer_review_report(report)
             return (
                 True,
                 "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Review Queue). Bài nộp chuyển sang trạng thái PENDING_STAFF_REVIEW.",
@@ -955,12 +1499,21 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         if sub.final_score is not None and sub.graded_by_staff
                         else 0.0
                     ),
-                    "status": "GRADED" if sub.final_score is not None else "PENDING",
+                    "status": (
+                        "GRADED"
+                        if (
+                            sub.status == PEER_SUBMISSION_STATUS_PUBLISHED
+                            and sub.final_score is not None
+                        )
+                        else "PENDING"
+                    ),
                     "peer_score": 0.0,
                     "peer_reviews_count": 0,
                 }
 
-            reviews = await repo.get_peer_reviews_for_submission(sub.id)
+            reviews = await repo.get_peer_reviews_for_submission(
+                sub.id, attempt_number=sub.attempt_number
+            )
 
             # Query user names and avatars for all peer reviewers and staff evaluators
             reviewer_uids: set[str] = {
@@ -988,13 +1541,6 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             for r in reviews:
                 u_info = user_info_map.get(r.reviewer_user_id, {})
                 fb_text = getattr(r, "feedback", "") or ""
-                if not fb_text and r.rubric_criteria:
-                    fb_parts = [
-                        c.feedback
-                        for c in r.rubric_criteria
-                        if getattr(c, "feedback", None)
-                    ]
-                    fb_text = " | ".join(fb_parts)
                 enriched_criteria = []
                 for c in r.rubric_criteria or []:
                     db_crit = rubric_map.get(c.criteria_id)
@@ -1006,6 +1552,7 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                             title=title,
                             max_score=max_score,
                             score_given=float(c.score_given),
+                            feedback=getattr(c, "feedback", "") or "",
                             description=getattr(c, "description", "")
                             or (db_crit.description if db_crit else ""),
                         )
@@ -1153,10 +1700,14 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
         overdue_count = 0
 
         for i in items:
+            essay_mode = i.get("essay_grading_mode") or ESSAY_GRADING_MODE_PEER_REVIEW
+            cold_hours = int(i.get("cold_start_hours") or PEER_REVIEW_COLD_START_HOURS)
             is_overdue = False
             try:
                 sub_dt = datetime.fromisoformat(i["submitted_at"])
-                if (now - sub_dt) > timedelta(hours=48):
+                if sub_dt.tzinfo is None:
+                    sub_dt = sub_dt.replace(tzinfo=UTC)
+                if (now - sub_dt) > timedelta(hours=cold_hours):
                     is_overdue = True
                     overdue_count += 1
             except (ValueError, TypeError):
@@ -1179,16 +1730,36 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
                         "created_at": i["submitted_at"],
                     }
                 )
+            elif (
+                essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY
+                and i["status"] == "PENDING"
+            ):
+                tasks.append(
+                    {
+                        "id": f"task-direct-{i['submission_id']}",
+                        "type": "DIRECT_GRADING",
+                        "title": f"Chờ Giảng viên chấm: {i['item_title']}",
+                        "lesson_title": i["item_title"],
+                        "student_name": i["student_name"],
+                        "course_title": i["course_title"],
+                        "time_ago": "Cần chấm ngay",
+                        "action_text": "Chấm ngay",
+                        "action_url": f"/instructor/courses/{course_id}/grading?submissionId={i['submission_id']}",
+                        "course_id": course_id,
+                        "priority": "HIGH",
+                        "created_at": i["submitted_at"],
+                    }
+                )
             elif is_overdue and i["status"] == "PENDING":
                 tasks.append(
                     {
                         "id": f"task-overdue-{i['submission_id']}",
                         "type": "OVERDUE_GRADING",
-                        "title": f"Bài nộp quá hạn 48h: {i['item_title']}",
+                        "title": f"Bài nộp quá hạn {cold_hours}h: {i['item_title']}",
                         "lesson_title": i["item_title"],
                         "student_name": i["student_name"],
                         "course_title": i["course_title"],
-                        "time_ago": "Quá 48h",
+                        "time_ago": f"Quá {cold_hours}h",
                         "action_text": "Chấm ngay",
                         "action_url": f"/instructor/courses/{course_id}/grading?submissionId={i['submission_id']}",
                         "course_id": course_id,
@@ -1201,4 +1772,265 @@ class PeerReviewUseCase(BaseAssessmentUseCase):
             "tasks": tasks,
             "total_pending": len(tasks),
             "overdue_count": overdue_count,
+        }
+
+    async def get_my_peer_submission_status(
+        self,
+        user_id: str,
+        item_id: str,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, Any]:
+        """Gets comprehensive status of the learner's own essay/peer submission (BR_PEER_001 - BR_PEER_010)."""
+        pending_events: list[DomainEvent] = []
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            item_info = self._validate_peer_review_item(
+                await repo.get_learning_item_details(item_id), item_id
+            )
+            course_id = await self._verify_learner_item_access(
+                session,
+                repo,
+                user_id,
+                item_id,
+                require_paid=True,
+                require_enrolled=True,
+                current_user=current_user,
+            )
+
+            sub = await repo.get_user_peer_submission(user_id, item_id)
+            raw_rubrics = item_info.get("rubric_criteria_json")
+            rubric_criteria = self._parse_rubric_criteria(raw_rubrics)
+
+            essay_mode = (
+                item_info.get("essay_grading_mode") or ESSAY_GRADING_MODE_PEER_REVIEW
+            )
+            req_reviews = int(
+                item_info.get("required_peer_reviews") or REQUIRED_PEER_REVIEWS_COUNT
+            )
+            cold_hours = int(
+                item_info.get("cold_start_hours") or PEER_REVIEW_COLD_START_HOURS
+            )
+
+            if not sub:
+                return {
+                    "has_submission": False,
+                    "submission_id": "",
+                    "status": "",
+                    "submission_url": "",
+                    "text_content": "",
+                    "created_at": "",
+                    "attempt_number": 0,
+                    "is_graded": False,
+                    "final_score": 0.0,
+                    "grade_source": "",
+                    "staff_feedback": "",
+                    "rubric_criteria": rubric_criteria,
+                    "peer_feedbacks": [],
+                    "essay_grading_mode": essay_mode,
+                    "review_duty_status": (
+                        REVIEW_DUTY_NOT_APPLICABLE
+                        if essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY
+                        else REVIEW_DUTY_PENDING
+                    ),
+                    "review_duty_waived_reason": "",
+                    "reviews_completed_by_user": 0,
+                    "target_reviews_required": (
+                        req_reviews
+                        if essay_mode == ESSAY_GRADING_MODE_PEER_REVIEW
+                        else 0
+                    ),
+                    "available_pool_count": 0,
+                    "can_appeal": False,
+                    "appeal_status": "",
+                    "assignment_title": item_info.get("title", ""),
+                    "assignment_instructions": item_info.get("reading_markdown", ""),
+                    "best_published_score": 0.0,
+                    "best_grade_source": "",
+                    "max_attempts": int(
+                        item_info.get("essay_max_attempts")
+                        or MAX_PEER_SUBMISSION_ATTEMPTS
+                    ),
+                }
+
+            now = datetime.now(UTC)
+            duty_status = sub.review_duty_status or REVIEW_DUTY_PENDING
+            waived_reason = sub.review_duty_waived_reason or ""
+
+            if essay_mode == ESSAY_GRADING_MODE_INSTRUCTOR_ONLY:
+                completed_reviews = 0
+                available_pool = 0
+                target_required = 0
+                duty_status = REVIEW_DUTY_NOT_APPLICABLE
+            else:
+                completed_reviews = await repo.count_user_completed_reviews(
+                    item_id, user_id
+                )
+                available_pool = await repo.count_available_pool_submissions(
+                    item_id, user_id
+                )
+                cold_elapsed = _is_cold_start_elapsed(sub.created_at, cold_hours, now)
+                target_required = (
+                    min(req_reviews, completed_reviews + available_pool)
+                    if cold_elapsed
+                    else req_reviews
+                )
+
+                duty_released_now = False
+                if duty_status in (REVIEW_DUTY_PENDING, REVIEW_DUTY_WAITING_POOL):
+                    if completed_reviews >= target_required > 0:
+                        duty_status = REVIEW_DUTY_COMPLETED
+                        sub.review_duty_status = REVIEW_DUTY_COMPLETED
+                        await repo.save_peer_submission(sub)
+                        duty_released_now = True
+                    elif available_pool == 0:
+                        if (
+                            cold_elapsed
+                            and sub.final_score is not None
+                            and (
+                                sub.graded_by_staff
+                                or sub.status == PEER_SUBMISSION_STATUS_PUBLISHED
+                            )
+                        ):
+                            duty_status = REVIEW_DUTY_WAIVED_EMPTY_POOL
+                            waived_reason = (
+                                f"Không còn bài làm nào khác trong kho bài sau {cold_hours} giờ chờ. "
+                                "Hệ thống tự động giải thoát điều kiện chấm cho bạn."
+                            )
+                            sub.review_duty_status = duty_status
+                            sub.review_duty_waived_reason = waived_reason
+                            await repo.save_peer_submission(sub)
+                            duty_released_now = True
+                        elif duty_status != REVIEW_DUTY_WAITING_POOL:
+                            duty_status = REVIEW_DUTY_WAITING_POOL
+                            sub.review_duty_status = REVIEW_DUTY_WAITING_POOL
+                            await repo.save_peer_submission(sub)
+                    elif available_pool > 0 and duty_status == REVIEW_DUTY_WAITING_POOL:
+                        duty_status = REVIEW_DUTY_PENDING
+                        sub.review_duty_status = REVIEW_DUTY_PENDING
+                        await repo.save_peer_submission(sub)
+
+                if (
+                    duty_released_now
+                    and sub.status == PEER_SUBMISSION_STATUS_PUBLISHED
+                    and sub.final_score is not None
+                ):
+                    eff_score, _, _ = sub.get_effective_published_grade()
+                    ev_score = (
+                        eff_score if eff_score is not None else float(sub.final_score)
+                    )
+                    pending_events.append(
+                        PeerAssignmentGradedDomainEvent(
+                            user_id=sub.user_id,
+                            course_id=course_id,
+                            item_id=sub.item_id,
+                            submission_id=sub.id,
+                            final_score=ev_score,
+                            passed=ev_score >= DEFAULT_PASSING_THRESHOLD_PERCENT,
+                            grader_id=sub.graded_by_user_id or "peer",
+                        )
+                    )
+
+            score_locked_by_duty = (
+                essay_mode == ESSAY_GRADING_MODE_PEER_REVIEW
+                and duty_status not in ELIGIBLE_REVIEW_DUTY_STATUSES
+            )
+            peer_feedbacks = []
+            if not score_locked_by_duty:
+                raw_peer_reviews = await repo.get_peer_reviews_for_submission(
+                    sub.id, attempt_number=sub.attempt_number
+                )
+                for idx, pr in enumerate(raw_peer_reviews, start=1):
+                    p_rubrics = (
+                        pr.rubric_criteria if hasattr(pr, "rubric_criteria") else []
+                    )
+                    peer_feedbacks.append(
+                        {
+                            "review_id": pr.id,
+                            "feedback_label": f"Bạn học #{idx}",
+                            "total_score": pr.total_score,
+                            "graded_criteria": p_rubrics,
+                            "submitted_at": getattr(pr, "created_at", "") or "",
+                        }
+                    )
+
+            appeal = await repo.get_grade_appeal(sub.id)
+            appeal_status = appeal.status if appeal else ""
+            is_graded = (
+                sub.final_score is not None
+                and sub.status == PEER_SUBMISSION_STATUS_PUBLISHED
+            )
+
+            if score_locked_by_duty:
+                can_appeal = False
+                visible_staff_feedback = ""
+                best_published_score = 0.0
+                best_grade_source = ""
+                final_score = 0.0
+                grade_source = ""
+            else:
+                can_appeal = False
+                if (
+                    sub.status == PEER_SUBMISSION_STATUS_PUBLISHED
+                    and sub.final_score is not None
+                    and not appeal
+                ):
+                    if sub.published_at:
+                        try:
+                            pub_dt = datetime.fromisoformat(sub.published_at)
+                            if pub_dt.tzinfo is None:
+                                pub_dt = pub_dt.replace(tzinfo=UTC)
+                            can_appeal = now <= pub_dt + timedelta(
+                                days=MAX_APPEAL_WINDOW_DAYS
+                            )
+                        except (ValueError, TypeError):
+                            can_appeal = True
+                    else:
+                        can_appeal = True
+
+                visible_staff_feedback = sub.staff_feedback or ""
+                eff_best_score, eff_best_source, _ = sub.get_effective_published_grade()
+                best_published_score = float(eff_best_score or 0.0)
+                best_grade_source = normalize_grade_provenance(eff_best_source)
+
+                if is_graded:
+                    final_score = best_published_score
+                    grade_source = best_grade_source
+                else:
+                    final_score = 0.0
+                    grade_source = ""
+
+        for evt in pending_events:
+            await EventBus.publish(evt)
+
+        return {
+            "has_submission": True,
+            "submission_id": sub.id,
+            "status": sub.status,
+            "submission_url": sub.submission_url,
+            "text_content": sub.text_content,
+            "created_at": sub.created_at,
+            "attempt_number": sub.attempt_number,
+            "is_graded": is_graded,
+            "final_score": final_score,
+            "grade_source": grade_source,
+            "staff_feedback": visible_staff_feedback,
+            "rubric_criteria": rubric_criteria,
+            "peer_feedbacks": peer_feedbacks,
+            "essay_grading_mode": essay_mode,
+            "review_duty_status": duty_status,
+            "review_duty_waived_reason": waived_reason,
+            "reviews_completed_by_user": completed_reviews,
+            "target_reviews_required": (
+                target_required if essay_mode == ESSAY_GRADING_MODE_PEER_REVIEW else 0
+            ),
+            "available_pool_count": available_pool,
+            "can_appeal": can_appeal,
+            "appeal_status": appeal_status,
+            "assignment_title": item_info.get("title", ""),
+            "assignment_instructions": item_info.get("reading_markdown", ""),
+            "best_published_score": best_published_score,
+            "best_grade_source": best_grade_source,
+            "max_attempts": int(
+                item_info.get("essay_max_attempts") or MAX_PEER_SUBMISSION_ATTEMPTS
+            ),
         }

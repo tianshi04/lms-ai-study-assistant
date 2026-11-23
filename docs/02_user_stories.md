@@ -62,13 +62,13 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
   * *AC 1:* Giảng viên tạo được khung chương trình theo các tuần học và từng bài học nhỏ.
   * *AC 2:* Giảng viên tải được video kèm phụ đề (.vtt), đặt câu hỏi ngắt ngang video (In-Video Quiz) và bài đọc rich-text.
 
-#### US_05: Bộ tiêu chí chấm điểm và Bài tập thực hành
+#### US_05: Bộ tiêu chí chấm điểm và Bài tập thực hành / Tự luận
 * **Mô tả Story (Problem Space):**
   * **Là một** Giảng viên,
-  * **Tôi muốn** xây dựng bộ tiêu chí (Rubric) cho bài tập chấm chéo và bộ test tự động cho bài tập lập trình,
+  * **Tôi muốn** xây dựng bộ tiêu chí (Rubric) cho Bài tập tự luận (chọn chế độ Chấm chéo bạn học hoặc Chỉ Giảng viên chấm, kèm cấu hình số bài yêu cầu chấm & thời gian chờ chuyển Giảng viên chấm) và bộ test tự động cho bài tập lập trình,
   * **Để** hệ thống tự động hóa việc chấm bài và đánh giá năng lực học viên bám sát giáo trình.
 * **Tiêu chí nghiệm thu:**
-  * *AC 1:* Giảng viên thiết lập được bộ tiêu chí Rubric chia theo mức điểm và tiêu chí đánh giá rõ ràng cho bài tập chấm chéo.
+  * *AC 1:* Giảng viên thiết lập được chế độ chấm (`PEER_REVIEW` / `INSTRUCTOR_ONLY`), tham số số lượt nộp/làm lại & thời gian chờ, cùng bộ tiêu chí Rubric rõ ràng cho Bài tập tự luận.
   * *AC 2:* Giảng viên thiết lập được các bài lab thực hành lập trình tự động chấm.
 
 #### US_06: Diễn đàn thảo luận và Ghim câu trả lời chuẩn
@@ -102,14 +102,14 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
   * *AC 1:* Học viên gửi được câu hỏi trong diễn đàn thảo luận gắn trực tiếp với bài học hiện tại.
   * *AC 2:* Học viên Upvote/Downvote được các câu trả lời và dễ dàng nhận biết câu trả lời chính thức từ Trợ giảng.
 
-#### US_10: Bài kiểm tra năng lực và Chấm điểm chéo
+#### US_10: Bài kiểm tra năng lực và Bài tập Tự luận
 * **Mô tả Story (Problem Space):**
   * **Là một** Học viên,
-  * **Tôi muốn** cam kết liêm chính học thuật (Honor Code), làm bài thi trắc nghiệm, bài tập lập trình tự động chấm và thực hiện nộp bài dự án / chấm chéo bài của bạn học,
+  * **Tôi muốn** cam kết liêm chính học thuật (Honor Code), làm bài thi trắc nghiệm, bài tập lập trình tự động chấm và thực hiện nộp Bài tập tự luận (chấm trực tiếp bởi Giảng viên hoặc chấm chéo ẩn danh bài bạn học theo chế độ của khóa học),
   * **Để** tôi đánh giá chính xác năng lực thực hành của bản thân và rèn luyện kỹ năng phản biện.
 * **Tiêu chí nghiệm thu:**
   * *AC 1:* Học viên tích chọn cam kết Honor Code trước khi nộp bài thi Graded Quiz / Auto-Graded Lab.
-  * *AC 2:* Học viên nộp bài dự án và thực hiện chấm chéo đủ 3 bài của bạn học khác theo tiêu chí Rubric để nhận điểm số công bằng.
+  * *AC 2:* Học viên nộp Bài tập tự luận; nếu ở chế độ chấm chéo thì chấm đủ bài bạn học theo yêu cầu để mở xem điểm, nhận xét và hoàn tất học phần, hoặc nếu ở chế độ Giảng viên chấm thì nhận kết quả và nhận xét trực tiếp từ Giảng viên/TA.
 
 #### US_11: Chứng chỉ xác minh và Huy hiệu năng lực
 * **Mô tả Story (Problem Space):**

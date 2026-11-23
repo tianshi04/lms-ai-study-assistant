@@ -5,8 +5,10 @@ from uuid6 import uuid7
 
 from src.modules.assessment.domain import (
     MAX_APPEAL_WINDOW_DAYS,
+    PEER_SUBMISSION_STATUS_PUBLISHED,
     GradeAppeal,
 )
+from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 
 from .base_usecase import BaseAssessmentUseCase
@@ -18,7 +20,11 @@ class GradeAppealUseCase(BaseAssessmentUseCase):
     """Application Use Case for Grade Appeals handling (BR_PEER_007)."""
 
     async def submit_grade_appeal(
-        self, user_id: str, submission_id: str, appeal_reason: str
+        self,
+        user_id: str,
+        submission_id: str,
+        appeal_reason: str,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         if not appeal_reason or not appeal_reason.strip():
             raise ValueError("Lý do khiếu nại không được để trống.")
@@ -38,19 +44,37 @@ class GradeAppealUseCase(BaseAssessmentUseCase):
                     "Bạn chỉ có quyền gửi khiếu nại điểm đối với bài nộp của chính mình."
                 )
 
-            # BR_PEER_007: Check if already appealed
+            await self._verify_learner_item_access(
+                session,
+                repo,
+                user_id,
+                sub.item_id,
+                require_paid=True,
+                require_enrolled=True,
+                current_user=current_user,
+            )
+
+            # BR_PEER_007: Appeal is only allowed after official grade publication
+            if (
+                sub.status != PEER_SUBMISSION_STATUS_PUBLISHED
+                or sub.final_score is None
+            ):
+                raise ValueError(
+                    "Chỉ có thể gửi khiếu nại sau khi bài nộp đã được công bố điểm chính thức."
+                )
+
+            # BR_PEER_007: Check if already appealed (max 1 appeal per submission)
             existing_appeal = await repo.get_grade_appeal(submission_id)
             if existing_appeal:
                 raise ValueError(
                     "Bài nộp này đã có đơn khiếu nại trước đó (Mỗi bài chỉ được khiếu nại tối đa 1 lần)."
                 )
 
-            # BR_PEER_007: Check appeal window (7 days)
-            ref_date_str = sub.published_at or sub.created_at
-            if ref_date_str:
+            # BR_PEER_007: Check appeal window (7 days strictly from published_at)
+            if sub.published_at:
                 ref_dt = None
                 try:
-                    ref_dt = datetime.fromisoformat(ref_date_str)
+                    ref_dt = datetime.fromisoformat(sub.published_at)
                 except (ValueError, TypeError):
                     pass
                 if ref_dt is not None:
@@ -73,5 +97,12 @@ class GradeAppealUseCase(BaseAssessmentUseCase):
                 created_at=now_iso,
             )
             await repo.save_grade_appeal(appeal)
+
+            # BR_PEER_007: Release any existing locks and cancel in-flight peer review assignments
+            # to transition the submission cleanly into the instructor appeal resolution queue.
+            await repo.release_submission_lock(submission_id)
+            await repo.cancel_pending_peer_review_assignments_for_submission(
+                submission_id
+            )
 
         return True, "PENDING"

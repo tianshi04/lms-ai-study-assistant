@@ -76,7 +76,7 @@ export function LearningItemRow({
           </span>
         ) : item.type === ItemType.PEER_REVIEW ? (
           <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px] shrink-0">
-            PEER REVIEW
+            TỰ LUẬN
           </span>
         ) : (
           <span className="px-2 py-0.5 rounded bg-warning/10 text-warning font-bold text-[10px] shrink-0">

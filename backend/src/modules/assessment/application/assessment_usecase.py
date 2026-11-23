@@ -69,25 +69,34 @@ class AssessmentUseCase(
         )
 
         # Composition sub-usecases for direct modular access
+        sub_learning_factory = kwargs.get("learning_repo_factory")
         self.quiz_uc = QuizUseCase(
             repository=self.repository,
             repo_factory=self.repo_factory,
             sandbox_executor=self.sandbox_executor,
+            catalog_repo_factory=catalog_repo_factory,
+            learning_repo_factory=sub_learning_factory,
         )
         self.coding_lab_uc = CodingLabUseCase(
             repository=self.repository,
             repo_factory=self.repo_factory,
             sandbox_executor=self.sandbox_executor,
+            catalog_repo_factory=catalog_repo_factory,
+            learning_repo_factory=sub_learning_factory,
         )
         self.peer_review_uc = PeerReviewUseCase(
             repository=self.repository,
             repo_factory=self.repo_factory,
             sandbox_executor=self.sandbox_executor,
+            catalog_repo_factory=catalog_repo_factory,
+            learning_repo_factory=sub_learning_factory,
         )
         self.grade_appeal_uc = GradeAppealUseCase(
             repository=self.repository,
             repo_factory=self.repo_factory,
             sandbox_executor=self.sandbox_executor,
+            catalog_repo_factory=catalog_repo_factory,
+            learning_repo_factory=sub_learning_factory,
         )
 
     async def list_admin_assessment_alerts(

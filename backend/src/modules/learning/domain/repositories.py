@@ -69,6 +69,16 @@ class ILearningRepository(ABC):
         pass
 
     @abstractmethod
+    async def check_graded_item_completion_eligibility(
+        self,
+        user_id: str,
+        item_id: str,
+        item_type: str,
+        item_title: str = "",
+    ) -> tuple[bool, str]:
+        """Verify whether a graded item (quiz, lab, peer review) satisfies completion rules."""
+
+    @abstractmethod
     async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
         pass
 

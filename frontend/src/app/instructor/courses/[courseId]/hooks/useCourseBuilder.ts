@@ -6,6 +6,7 @@ import { revalidateCourseCacheAction } from "@/app/actions/cache";
 import {
   CatalogService,
   CourseStatus,
+  EssayGradingMode,
   ItemType,
   type Course,
   type LearningItem,
@@ -28,6 +29,10 @@ export interface LearningItemPayload {
   testCasesJson?: string;
   language?: string;
   rubricCriteriaJson?: string;
+  essayGradingMode?: EssayGradingMode;
+  requiredPeerReviews?: number;
+  coldStartHours?: number;
+  essayMaxAttempts?: number | string;
   quizBankId?: string;
   quizMatrixId?: string;
   quizTimeLimit?: number | string;
@@ -283,6 +288,19 @@ export function useCourseBuilder(courseId: string) {
         testCasesJson: payload.type === ItemType.AUTO_GRADED_LAB ? payload.testCasesJson : "",
         language: payload.type === ItemType.AUTO_GRADED_LAB ? payload.language : "",
         rubricCriteriaJson: payload.type === ItemType.PEER_REVIEW ? payload.rubricCriteriaJson : "",
+        essayGradingMode:
+          payload.type === ItemType.PEER_REVIEW
+            ? payload.essayGradingMode || EssayGradingMode.PEER_REVIEW
+            : EssayGradingMode.UNSPECIFIED,
+        requiredPeerReviews:
+          payload.type === ItemType.PEER_REVIEW ? (payload.requiredPeerReviews ?? 3) : 3,
+        coldStartHours: payload.type === ItemType.PEER_REVIEW ? (payload.coldStartHours ?? 48) : 48,
+        essayMaxAttempts:
+          payload.type === ItemType.PEER_REVIEW
+            ? payload.essayMaxAttempts != null
+              ? Math.max(1, Number(payload.essayMaxAttempts))
+              : 3
+            : 3,
         quizMatrixId:
           payload.type === ItemType.PRACTICE_QUIZ || payload.type === ItemType.GRADED_QUIZ
             ? payload.quizBankId
@@ -358,6 +376,20 @@ export function useCourseBuilder(courseId: string) {
         language: payload.type === ItemType.AUTO_GRADED_LAB ? payload.language : undefined,
         rubricCriteriaJson:
           payload.type === ItemType.PEER_REVIEW ? payload.rubricCriteriaJson : undefined,
+        essayGradingMode:
+          payload.type === ItemType.PEER_REVIEW
+            ? payload.essayGradingMode || EssayGradingMode.PEER_REVIEW
+            : EssayGradingMode.UNSPECIFIED,
+        requiredPeerReviews:
+          payload.type === ItemType.PEER_REVIEW ? (payload.requiredPeerReviews ?? 3) : undefined,
+        coldStartHours:
+          payload.type === ItemType.PEER_REVIEW ? (payload.coldStartHours ?? 48) : undefined,
+        essayMaxAttempts:
+          payload.type === ItemType.PEER_REVIEW
+            ? payload.essayMaxAttempts != null
+              ? Math.max(1, Number(payload.essayMaxAttempts))
+              : 3
+            : undefined,
         quizMatrixId:
           payload.type === ItemType.PRACTICE_QUIZ || payload.type === ItemType.GRADED_QUIZ
             ? payload.quizMatrixId || payload.quizBankId

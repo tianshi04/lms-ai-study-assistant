@@ -41,7 +41,7 @@ test.describe('Full System Blackbox - B2B Partner & Signatures (POM)', () => {
       await partnerAdminPage.createPartner(partnerData);
 
       // Verify created enterprise partner appears in list
-      await expect(page.locator(`text=${partnerData.name}`).first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator(`text=${partnerData.name}`).filter({ visible: true }).first()).toBeVisible({ timeout: 15000 });
     });
   });
 
