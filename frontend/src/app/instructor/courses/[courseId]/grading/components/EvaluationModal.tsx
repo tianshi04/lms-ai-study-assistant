@@ -370,6 +370,7 @@ export function EvaluationModal({
         maxScore: c.maxScore,
         scoreGiven: criteriaScores[c.criteriaId] ?? 0,
         feedback: "",
+        description: c.description || "",
       }),
     );
 
@@ -1093,9 +1094,16 @@ export function EvaluationModal({
                             className="p-4 rounded-2xl bg-background border border-border space-y-3"
                           >
                             <div className="flex items-start justify-between gap-3">
-                              <h4 className="text-sm font-bold text-foreground leading-snug break-words">
-                                {c.title}
-                              </h4>
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <h4 className="text-sm font-bold text-foreground leading-snug break-words">
+                                  {c.title}
+                                </h4>
+                                {c.description && (
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    {c.description}
+                                  </p>
+                                )}
+                              </div>
 
                               {mode === "view" || isLockedByOther ? (
                                 <span className="px-3 py-1 rounded-xl bg-primary/10 border border-primary/20 text-xs font-bold font-mono text-primary shrink-0">

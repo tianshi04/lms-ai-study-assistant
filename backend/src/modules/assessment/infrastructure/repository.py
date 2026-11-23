@@ -639,17 +639,28 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 "max_score": c.max_score,
                 "score_given": c.score_given,
                 "feedback": c.feedback,
+                "description": getattr(c, "description", "") or "",
             }
             for c in review.rubric_criteria
         ]
-        model = await self.session.get(PeerReviewModel, review.id)
+        stmt = select(PeerReviewModel).where(
+            PeerReviewModel.submission_id == review.submission_id,
+            PeerReviewModel.reviewer_user_id == review.reviewer_user_id,
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
         if model:
             model.rubric_criteria_json = {"items": rubric_data}
             model.total_score = review.total_score
             model.is_outlier = review.is_outlier
         else:
+            review_id = (
+                review.id
+                if review.id and review.id != f"rev-{review.submission_id}"
+                else f"rev-{uuid7().hex}"
+            )
             model = PeerReviewModel(
-                id=review.id,
+                id=review_id,
                 submission_id=review.submission_id,
                 reviewer_user_id=review.reviewer_user_id,
                 item_id=review.item_id,
@@ -693,6 +704,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                     max_score=float(c.get("max_score", 10.0) or 10.0),
                     score_given=float(c.get("score_given", 0.0) or 0.0),
                     feedback=str(c.get("feedback", "") or ""),
+                    description=str(c.get("description", "") or ""),
                 )
                 for c in items
                 if isinstance(c, dict)
@@ -742,6 +754,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                     max_score=float(c.get("max_score", 10.0) or 10.0),
                     score_given=float(c.get("score_given", 0.0) or 0.0),
                     feedback=str(c.get("feedback", "") or ""),
+                    description=str(c.get("description", "") or ""),
                 )
                 for c in items
                 if isinstance(c, dict)
