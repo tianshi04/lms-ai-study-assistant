@@ -11,6 +11,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   CatalogService,
+  CourseReviewAction,
   type Course,
   type CourseStatus,
   type Category,
@@ -119,6 +120,38 @@ export function useAcknowledgeLowReviewMutation(
     onSuccess: (data, variables, context, mutationContext) => {
       queryClient.invalidateQueries({ queryKey: ["adminCatalogStats"] });
       options?.onSuccess?.(data, variables, context, mutationContext);
+    },
+  });
+}
+
+export interface ReviewCourseInput {
+  courseId: string;
+  action: CourseReviewAction;
+  rejectionReason?: string;
+}
+
+export function useReviewCourseMutation(
+  options?: Partial<UseMutationOptions<Course | undefined, Error, ReviewCourseInput>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<Course | undefined, Error, ReviewCourseInput>({
+    mutationFn: async ({ courseId, action, rejectionReason }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.reviewCourse({
+        courseId,
+        action,
+        rejectionReason: rejectionReason || "",
+      });
+      return res.course;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["adminCatalogStats"] });
+      queryClient.invalidateQueries({ queryKey: ["adminCourseMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      queryClient.invalidateQueries({ queryKey: ["instructorCourses"] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail", variables.courseId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
 }

@@ -15,9 +15,8 @@ import {
   Edit,
   Settings,
   LayoutDashboard,
-  CheckCircle2,
   Building2,
-  Megaphone,
+  Briefcase,
   LogOut,
   Sparkles,
 } from "lucide-react";
@@ -243,19 +242,11 @@ export function UserDropdown() {
           <>
             <Menu.Item render={<Link href="/admin/dashboard" />} className={itemClasses}>
               <LayoutDashboard aria-hidden="true" className={iconClasses} />
-              <span>{"Trang quản trị"}</span>
+              <span>{"Dashboard Tổng quan"}</span>
             </Menu.Item>
-            <Menu.Item render={<Link href="/admin/applications" />} className={itemClasses}>
-              <CheckCircle2 aria-hidden="true" className={iconClasses} />
-              <span>{"Duyệt đơn Giảng viên"}</span>
-            </Menu.Item>
-            <Menu.Item render={<Link href="/admin/partners" />} className={itemClasses}>
-              <Building2 aria-hidden="true" className={iconClasses} />
-              <span>{"Quản trị Đối tác"}</span>
-            </Menu.Item>
-            <Menu.Item render={<Link href="/admin/announcements" />} className={itemClasses}>
-              <Megaphone aria-hidden="true" className={iconClasses} />
-              <span>{"Thông báo Hệ thống"}</span>
+            <Menu.Item render={<Link href="/admin/enterprise" />} className={itemClasses}>
+              <Briefcase aria-hidden="true" className={iconClasses} />
+              <span>{"Bàn làm việc Quản trị"}</span>
             </Menu.Item>
           </>
         )}

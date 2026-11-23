@@ -78,26 +78,20 @@ export default function AdminInstructorApplicationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8 transition-colors">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="py-8 px-4 sm:px-6 lg:px-8 transition-colors">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Breadcrumb & Title */}
         <PageHeader>
           <div>
             <PageHeader.Breadcrumbs>
-              <Link href="/admin/dashboard" className="hover:underline">
-                Admin Portal
+              <Link href="/admin/enterprise" className="hover:underline">
+                Bàn làm việc Quản trị
               </Link>
               <span className="mx-1.5">/</span>
               <span className="font-semibold text-foreground">Đơn Giảng viên</span>
             </PageHeader.Breadcrumbs>
             <PageHeader.Title>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeader.Title>
           </div>
-
-          <PageHeader.Actions>
-            <Button variant="outlined" render={<Link href="/admin/dashboard" />}>
-              Về Dashboard
-            </Button>
-          </PageHeader.Actions>
         </PageHeader>
 
         {actionSuccessMsg && (

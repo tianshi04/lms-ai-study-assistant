@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Megaphone,
   Bell,
@@ -133,7 +132,6 @@ function StatusBadge({
 }
 
 export default function AdminAnnouncementsPage() {
-  const router = useRouter();
   const { isSuperAdmin } = useAuth();
   const toast = useToast();
   const isMobile = useIsMobile();
@@ -299,8 +297,8 @@ export default function AdminAnnouncementsPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className="min-h-screen bg-background p-6 md:p-12">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         <PageHeader>
           <div className="space-y-1">
             <PageHeader.Title>Thông báo Toàn Hệ thống</PageHeader.Title>
@@ -309,11 +307,6 @@ export default function AdminAnnouncementsPage() {
               đầu trang và Chuông thông báo.
             </PageHeader.Description>
           </div>
-          <PageHeader.Actions>
-            <Button variant="text" size="sm" onClick={() => router.push("/admin/dashboard")}>
-              &larr; Quay lại Bảng điều khiển
-            </Button>
-          </PageHeader.Actions>
         </PageHeader>
 
         {/* Compose + Live Preview */}

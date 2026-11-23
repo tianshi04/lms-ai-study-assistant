@@ -10,16 +10,22 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { NotificationBell } from "@/components/notification/NotificationBell";
 import { StreakBadge } from "@/components/player/StreakBadge";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { NavigationMenu } from "@/components/ui/NavigationMenu";
 import { GoogleOneTapPrompt } from "@/components/auth/GoogleOneTapPrompt";
+import {
+  formatCornerBadgeCount,
+  useAdminNavbarPendingCount,
+} from "@/lib/queries/useAdminNavCounts";
 import { useMyOrganizationsQuery } from "@/lib/query_hooks";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
+  const { totalActionablePending } = useAdminNavbarPendingCount();
   const { data: myOrgs = [] } = useMyOrganizationsQuery();
   const isOrgTA = myOrgs.some((o) => (o.roleInOrg || "").toUpperCase() === "TA");
   const pathname = usePathname();
@@ -41,25 +47,29 @@ export function Navbar() {
     return pathname.startsWith(path);
   };
 
-  const getLinkClasses = (path: string) => {
-    const active = isActive(path);
-    return cn(
+  const isAdminWorkspaceActive = Boolean(
+    pathname && pathname.startsWith("/admin") && pathname !== "/admin/dashboard",
+  );
+
+  const getLinkClassesByActive = (active: boolean) =>
+    cn(
       "relative px-4 py-2 rounded-full transition-colors font-medium",
       active
         ? "text-on-secondary-container font-bold bg-secondary-container shadow-xs"
         : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60",
     );
-  };
 
-  const getMobileLinkClasses = (path: string) => {
-    const active = isActive(path);
-    return cn(
+  const getLinkClasses = (path: string) => getLinkClassesByActive(isActive(path));
+
+  const getMobileLinkClassesByActive = (active: boolean) =>
+    cn(
       "block px-4 py-2.5 rounded-full text-sm font-medium transition-colors",
       active
         ? "font-bold text-on-secondary-container bg-secondary-container"
         : "text-on-surface-variant hover:bg-surface-container-high/60",
     );
-  };
+
+  const getMobileLinkClasses = (path: string) => getMobileLinkClassesByActive(isActive(path));
 
   return (
     <header
@@ -129,17 +139,27 @@ export function Navbar() {
                 </NavigationMenu.Item>
               )}
 
-              {/* Render Admin Enterprise Dashboard Link */}
+              {/* Render Admin Workspace Portal Link */}
               {isSuperAdmin && (
                 <NavigationMenu.Item>
                   <Link
-                    href="/admin/dashboard"
-                    className={`${getLinkClasses("/admin/dashboard")} flex items-center gap-1.5`}
+                    href="/admin/enterprise"
+                    className={`${getLinkClassesByActive(isAdminWorkspaceActive)} flex items-center gap-1.5`}
                   >
                     <span>Admin</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                      Enterprise
+                      Portal
                     </span>
+                    {totalActionablePending > 0 && (
+                      <Badge
+                        variant="error"
+                        size="large"
+                        aria-label={`${totalActionablePending} mục quản trị chờ xử lý`}
+                        className="absolute -top-1 -right-1 shadow-xs ring-2 ring-surface font-mono font-bold"
+                      >
+                        {formatCornerBadgeCount(totalActionablePending)}
+                      </Badge>
+                    )}
                   </Link>
                 </NavigationMenu.Item>
               )}
@@ -252,17 +272,29 @@ export function Navbar() {
           )}
           {isSuperAdmin && (
             <Link
-              href="/admin/dashboard"
+              href="/admin/enterprise"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                getMobileLinkClasses("/admin/dashboard"),
+                getMobileLinkClassesByActive(isAdminWorkspaceActive),
                 "flex items-center justify-between",
               )}
             >
-              <span>Admin</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                Enterprise
+              <span className="flex items-center gap-2">
+                <span>Admin</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                  Portal
+                </span>
               </span>
+              {totalActionablePending > 0 && (
+                <Badge
+                  variant="error"
+                  size="large"
+                  aria-label={`${totalActionablePending} mục quản trị chờ xử lý`}
+                  className="font-mono font-bold"
+                >
+                  {formatCornerBadgeCount(totalActionablePending)}
+                </Badge>
+              )}
             </Link>
           )}
         </div>

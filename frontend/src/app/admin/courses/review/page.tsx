@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Progress } from "@/components/ui/Progress";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
+import { useReviewCourseMutation } from "@/lib/queries/useCatalogQueries";
 import { Eye, XCircle } from "lucide-react";
 
 const emptySubscribe = () => () => {};
@@ -42,6 +43,7 @@ export default function CourseReviewerPortalPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const toast = useToast();
+  const reviewCourseMutation = useReviewCourseMutation();
 
   const fetchCourses = async (status: CourseStatus) => {
     try {
@@ -91,8 +93,7 @@ export default function CourseReviewerPortalPage() {
   const handleApprove = async (courseId: string, title: string) => {
     try {
       setSubmitting(true);
-      const client = getRpcClient(CatalogService);
-      await client.reviewCourse({
+      await reviewCourseMutation.mutateAsync({
         courseId,
         action: CourseReviewAction.APPROVE,
       });
@@ -114,8 +115,7 @@ export default function CourseReviewerPortalPage() {
     }
     try {
       setSubmitting(true);
-      const client = getRpcClient(CatalogService);
-      await client.reviewCourse({
+      await reviewCourseMutation.mutateAsync({
         courseId: rejectingCourseId,
         action: CourseReviewAction.REJECT,
         rejectionReason: rejectionReason.trim(),
@@ -134,8 +134,8 @@ export default function CourseReviewerPortalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="text-foreground transition-colors">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border">
           <div>
@@ -151,13 +151,6 @@ export default function CourseReviewerPortalPage() {
               }
             </p>
           </div>
-
-          <Link
-            href="/admin/dashboard"
-            className="px-4 py-2.5 rounded-xl bg-card border border-border hover:bg-muted text-foreground font-semibold text-sm transition-colors"
-          >
-            {"Về Admin Dashboard"}
-          </Link>
         </div>
 
         {/* Role Warning */}

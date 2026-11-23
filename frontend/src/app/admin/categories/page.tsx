@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { type Category } from "@/gen/catalog/v1/catalog_pb";
 
 import {
@@ -68,7 +67,6 @@ const CategoryList = ({
 );
 
 export default function AdminCategoriesPage() {
-  const router = useRouter();
   const { isSuperAdmin } = useAuth();
   const toast = useToast();
 
@@ -121,17 +119,12 @@ export default function AdminCategoriesPage() {
   };
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12 flex-1">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
       <PageHeader>
         <div>
           <PageHeader.Title>Quản lý Danh mục</PageHeader.Title>
           <PageHeader.Description>Quản lý danh mục khóa học</PageHeader.Description>
         </div>
-        <PageHeader.Actions>
-          <Button variant="text" size="sm" onClick={() => router.push("/admin/dashboard")}>
-            &larr; {"Về trang quản trị"}
-          </Button>
-        </PageHeader.Actions>
       </PageHeader>
 
       <Surface variant="container" shape="2xl" className="p-6 mb-8">

@@ -17,17 +17,17 @@ export class AdminDashboardPage {
     this.assignSeatButton = page.getByRole('button', { name: /Gán Suất học cho Học viên|Assign Seat/i });
 
     this.partnerNameInput = page.locator('input[placeholder*="Bách Khoa"], input[placeholder*="Partner"]');
-    this.seatKeyInput = page.locator('input[placeholder*="BKTPHCM"], input[placeholder*="KEY"]');
+    this.seatKeyInput = page.locator('input[placeholder*="STANFORD-ENT"], input[placeholder*="BKTPHCM"], input[placeholder*="KEY"], input[placeholder*="Tự động"]');
     this.submitCreateSeatButton = page.getByRole('button', { name: /Xác nhận tạo Giấy phép|Confirm|Create/i });
     this.seatsList = page.locator('div.border.rounded-2xl');
   }
 
   async goto() {
-    await this.page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('/admin/enterprise', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
-    await expect(this.page).toHaveURL(/\/admin\/dashboard/);
+    await expect(this.page).toHaveURL(/\/admin\/enterprise/);
     await expect(this.page.locator('body')).toBeVisible();
     await expect(this.createSeatKeyButton).toBeVisible({ timeout: 10000 });
   }

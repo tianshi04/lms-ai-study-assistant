@@ -186,6 +186,8 @@ export interface AdminOverviewCardsProps {
   learningStats?: GetAdminLearningStatsResponse;
   paymentStats?: GetAdminPaymentStatsResponse;
   certificateStats?: GetAdminCertificateStatsResponse;
+  /** Optional trend metric expanded by default when the dashboard mounts. */
+  defaultMetric?: AdminTrendMetric | null;
 }
 
 export function AdminOverviewCards({
@@ -194,8 +196,9 @@ export function AdminOverviewCards({
   learningStats,
   paymentStats,
   certificateStats,
+  defaultMetric = null,
 }: AdminOverviewCardsProps) {
-  const [selectedMetric, setSelectedMetric] = useState<AdminTrendMetric | null>(null);
+  const [selectedMetric, setSelectedMetric] = useState<AdminTrendMetric | null>(defaultMetric);
 
   const toggleMetric = (metric: AdminTrendMetric) => {
     setSelectedMetric((current) => (current === metric ? null : metric));

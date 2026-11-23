@@ -109,19 +109,19 @@ test.describe('Admin Dashboard @ /', () => {
     }
   });
 
-  test('admin: / should render the admin dashboard with quick-ops navigation', async ({ page }) => {
+  test('admin: / should render the standalone overview dashboard and CTA to workspace', async ({ page }) => {
     await page.goto('/');
-    // Admin dashboard embeds quick-ops nav links
-    await expect(page.locator('text=Duyệt Đơn Giảng Viên').first()).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('text=Duyệt Khóa Học').first()).toBeVisible();
-    await expect(page.locator('text=Quản Lý Danh Mục').first()).toBeVisible();
-    await expect(page.locator('text=Quản Trị Đối Tác').first()).toBeVisible();
+    await expect(page.getByText(/Bảng Điều Khiển Quản Trị Hệ Thống/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Tổng quan toàn sàn/i).first()).toBeVisible();
+    await expect(page.locator('a[href="/admin/enterprise"]').first()).toBeVisible();
   });
 
-  test('admin: quick-ops links should navigate to correct routes', async ({ page }) => {
-    await page.goto('/');
+  test('admin: workspace portal should expose all operational navigation tabs', async ({ page }) => {
+    await page.goto('/admin/enterprise', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('a[href="/admin/applications"]').first()).toBeVisible({ timeout: 15000 });
     await expect(page.locator('a[href="/admin/courses/review"]').first()).toBeVisible();
     await expect(page.locator('a[href="/admin/categories"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/admin/partners"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/admin/announcements"]').first()).toBeVisible();
   });
 });

@@ -1,104 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Building2,
-  CheckCircle2,
-  CircleDollarSign,
-  Clock,
-  List,
-  Megaphone,
-  type LucideIcon,
-} from "lucide-react";
-import { useAuth } from "@/components/providers/AuthProvider";
+import { ArrowRight, Briefcase, CircleAlert } from "lucide-react";
+
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
-import { useAdminAssessmentAlertsQuery } from "@/lib/queries/useAssessmentQueries";
 import { useAdminCatalogStatsQuery } from "@/lib/queries/useCatalogQueries";
 import { useAdminCertificateStatsQuery } from "@/lib/queries/useCertificateQueries";
 import { useAdminIdentityStatsQuery } from "@/lib/queries/useIdentityQueries";
 import { useAdminLearningStatsQuery } from "@/lib/queries/useLearningQueries";
-import { useActiveAnnouncementsQuery } from "@/lib/queries/useNotificationQueries";
-import { usePartnersQuery } from "@/lib/queries/usePartnerQueries";
+import { formatCornerBadgeCount } from "@/lib/queries/useAdminNavCounts";
 import { useAdminPaymentStatsQuery } from "@/lib/queries/usePaymentQueries";
-import { AdminCourseQualityTable } from "./admin/AdminCourseQualityTable";
 import { AdminOverviewCards } from "./admin/AdminOverviewCards";
-import { AdminQualityAlerts } from "./admin/AdminQualityAlerts";
 import { formatNumber } from "./admin/formatters";
-import { AdminEnterpriseDashboard } from "./AdminEnterpriseDashboard";
 
-interface QuickActionProps {
+interface PendingShortcut {
   href: string;
-  icon: LucideIcon;
-  iconClassName: string;
-  title: string;
-  description: string;
-  /** Count shown as a badge; `undefined` hides the badge while stats are loading. */
-  count?: number;
-  /** Highlights the badge when the count represents work waiting for the admin. */
-  isPendingQueue?: boolean;
+  label: string;
+  count: number;
 }
 
-function QuickAction({
-  href,
-  icon: Icon,
-  iconClassName,
-  title,
-  description,
-  count,
-  isPendingQueue = false,
-}: QuickActionProps) {
-  const hasPending = isPendingQueue && (count ?? 0) > 0;
-  return (
-    <Link
-      href={href}
-      className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-center gap-4"
-    >
-      <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconClassName}`}
-      >
-        <Icon aria-hidden="true" className="w-5 h-5" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors truncate">
-          {title}
-        </h3>
-        <p className="text-[10px] leading-3.5 text-muted-foreground line-clamp-2 min-h-7">
-          {description}
-        </p>
-      </div>
-      {count !== undefined ? (
-        <span
-          className={`min-w-7 h-5 px-2 rounded-full text-[11px] font-black font-mono shrink-0 inline-flex items-center justify-center transition-all duration-300 ease-out animate-in fade-in ${
-            hasPending ? "bg-warning text-warning-foreground" : "bg-muted text-muted-foreground"
-          }`}
-          aria-label={isPendingQueue ? `${count} mục đang chờ xử lý` : `${count} mục`}
-        >
-          {formatNumber(count)}
-        </span>
-      ) : (
-        <span
-          aria-hidden="true"
-          className="min-w-7 h-5 rounded-full bg-muted/60 animate-pulse shrink-0"
-        />
-      )}
-    </Link>
-  );
-}
-
-export function AdminDashboard({ userName: _userName }: { userName: string }) {
-  const { isAuthenticated, isSuperAdmin } = useAuth();
+export function AdminDashboard({ userName }: { userName: string }) {
   const identityQuery = useAdminIdentityStatsQuery();
   const catalogQuery = useAdminCatalogStatsQuery();
   const learningQuery = useAdminLearningStatsQuery();
   const paymentQuery = useAdminPaymentStatsQuery();
   const certificateQuery = useAdminCertificateStatsQuery();
-  const assessmentQuery = useAdminAssessmentAlertsQuery();
-  const partnersQuery = usePartnersQuery({
-    enabled: isAuthenticated && isSuperAdmin,
-    staleTime: 60 * 1000,
-  });
-  const activeAnnouncementsQuery = useActiveAnnouncementsQuery();
 
   const summaryQueries = [
     identityQuery,
@@ -106,8 +34,6 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
     learningQuery,
     paymentQuery,
     certificateQuery,
-    assessmentQuery,
-    partnersQuery,
   ];
   const failedQuery = summaryQueries.find((q) => q.isError);
   const refetchFailed = () => {
@@ -116,66 +42,116 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
     }
   };
 
-  return (
-    <div className="w-full flex-1 bg-background min-h-screen">
-      {/* Decorative background glow */}
-      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+  const pendingInstructorApplications = identityQuery.data?.pendingInstructorApplications ?? 0;
+  const pendingReviewCourses = catalogQuery.data?.pendingReviewCourses ?? 0;
+  const pendingFinancialAids = certificateQuery.data?.pendingFinancialAids ?? 0;
+  const lowReviewTotal = catalogQuery.data?.lowReviewTotal ?? 0;
 
-      <main className="relative max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Quick Admin Operations Navigation Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <QuickAction
-            href="/admin/applications"
-            icon={CheckCircle2}
-            iconClassName="bg-success/10 text-success"
-            title="Duyệt Đơn Giảng Viên"
-            description="Xét duyệt đơn đăng ký tác giả/giảng viên"
-            count={identityQuery.data?.pendingInstructorApplications}
-            isPendingQueue
-          />
-          <QuickAction
-            href="/admin/courses/review"
-            icon={Clock}
-            iconClassName="bg-warning/10 text-warning"
-            title="Duyệt Khóa Học"
-            description="Kiểm duyệt chất lượng trước khi xuất bản"
-            count={catalogQuery.data?.pendingReviewCourses}
-            isPendingQueue
-          />
-          <QuickAction
-            href="/instructor/financial-aid"
-            icon={CircleDollarSign}
-            iconClassName="bg-primary/10 text-primary"
-            title="Duyệt Hỗ Trợ Tài Chính"
-            description="Xét duyệt đơn xin học bổng của học viên"
-            count={certificateQuery.data?.pendingFinancialAids}
-            isPendingQueue
-          />
-          <QuickAction
-            href="/admin/categories"
-            icon={List}
-            iconClassName="bg-accent text-accent-foreground"
-            title="Quản Lý Danh Mục"
-            description="Cấu hình cây chủ đề và môn học"
-            count={catalogQuery.data?.categoryCount}
-          />
-          <QuickAction
-            href="/admin/partners"
-            icon={Building2}
-            iconClassName="bg-info/10 text-info"
-            title="Quản Trị Đối Tác"
-            description="Trường đại học và doanh nghiệp"
-            count={partnersQuery.data?.length}
-          />
-          <QuickAction
-            href="/admin/announcements"
-            icon={Megaphone}
-            iconClassName="bg-primary/10 text-primary"
-            title="Thông Báo Hệ Thống"
-            description="Phát thông báo bảo trì tới toàn người dùng"
-            count={activeAnnouncementsQuery.data?.length}
-          />
-        </div>
+  const totalActionablePending =
+    pendingInstructorApplications + pendingReviewCourses + pendingFinancialAids + lowReviewTotal;
+
+  const pendingShortcuts: PendingShortcut[] = [
+    {
+      href: "/admin/applications",
+      label: "Đơn Giảng viên",
+      count: pendingInstructorApplications,
+    },
+    {
+      href: "/admin/courses/review",
+      label: "Khóa học chờ duyệt",
+      count: pendingReviewCourses,
+    },
+    {
+      href: "/admin/financial-aid",
+      label: "Hỗ trợ tài chính",
+      count: pendingFinancialAids,
+    },
+    {
+      href: "/admin/moderation",
+      label: "Đánh giá thấp cần xem",
+      count: lowReviewTotal,
+    },
+  ].filter((item) => item.count > 0);
+
+  const displayName = userName.replace(/\s*\([^)]*\)/g, "").trim() || "Quản trị viên";
+
+  return (
+    <div className="w-full flex-1 bg-background min-h-screen relative">
+      {/* Subtle decorative top glow */}
+      <div className="absolute top-0 left-0 w-full h-[40vh] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Standalone Overview Header Banner */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-primary text-primary-foreground rounded-3xl p-6 sm:p-8 shadow-lg">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-foreground/10 text-primary-foreground border border-primary-foreground/20">
+              <span className="w-2 h-2 rounded-full bg-primary-foreground" aria-hidden="true" />
+              Bảng Điều Khiển Quản Trị Hệ Thống
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-balance">
+              Xin chào, <span className="opacity-95">{displayName}</span>
+            </h1>
+            <p className="text-sm opacity-85 max-w-2xl">
+              Theo dõi chỉ số KPI toàn sàn, xu hướng ghi danh theo lĩnh vực, doanh thu, mức hài lòng
+              (CSAT) và tình hình cấp chứng chỉ theo thời gian thực.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <Link
+              href="/admin/enterprise"
+              className="relative inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-primary-foreground text-primary hover:bg-primary-foreground/95 font-bold text-sm shadow-md transition-colors"
+            >
+              <Briefcase className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Mở Bàn làm việc Quản trị</span>
+              <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+              {totalActionablePending > 0 && (
+                <Badge
+                  variant="error"
+                  size="large"
+                  aria-label={`${totalActionablePending} mục đang chờ xử lý`}
+                  className="absolute -top-2 -right-2 shadow-sm ring-2 ring-primary font-mono font-bold"
+                >
+                  {formatCornerBadgeCount(totalActionablePending)}
+                </Badge>
+              )}
+            </Link>
+          </div>
+        </header>
+
+        {/* Compact Actionable Pending Strip */}
+        {pendingShortcuts.length > 0 && (
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="px-4 py-3 border border-error/25 bg-error/5 flex flex-wrap items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+              <CircleAlert className="w-4 h-4 text-error shrink-0" aria-hidden="true" />
+              <span>
+                Đang có{" "}
+                <strong className="font-mono text-error">
+                  {formatNumber(totalActionablePending)}
+                </strong>{" "}
+                hạng mục chờ quản trị viên xử lý:
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {pendingShortcuts.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border hover:border-error/40 text-xs font-semibold text-foreground transition-colors"
+                >
+                  <span>{item.label}</span>
+                  <Badge variant="error" size="large" className="font-mono font-bold">
+                    {formatCornerBadgeCount(item.count)}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          </Surface>
+        )}
 
         {failedQuery && (
           <Surface
@@ -201,22 +177,8 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
           learningStats={learningQuery.data}
           paymentStats={paymentQuery.data}
           certificateStats={certificateQuery.data}
+          defaultMetric="learning"
         />
-
-        <AdminCourseQualityTable />
-
-        <AdminQualityAlerts
-          assessmentAlerts={assessmentQuery.data?.alerts ?? []}
-          assessmentTotal={assessmentQuery.data?.totalCount}
-          lowReviews={catalogQuery.data?.lowReviews ?? []}
-          lowReviewTotal={catalogQuery.data?.lowReviewTotal}
-          certificateTotal={certificateQuery.data?.certificatesIssued}
-          isAssessmentLoading={assessmentQuery.isLoading}
-          isReviewsLoading={catalogQuery.isLoading}
-        />
-
-        {/* Embedded Core Admin Enterprise Seat Management View */}
-        <AdminEnterpriseDashboard />
       </main>
     </div>
   );

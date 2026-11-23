@@ -290,7 +290,7 @@ export default function AdminPartnersPage() {
   };
 
   return (
-    <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-w-0 overflow-x-hidden">
+    <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-w-0 overflow-x-hidden">
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-border gap-4">
         <div>
@@ -299,9 +299,9 @@ export default function AdminPartnersPage() {
               <Breadcrumb.Item>
                 <Breadcrumb.Link
                   className="cursor-pointer"
-                  onClick={() => router.push("/admin/dashboard")}
+                  onClick={() => router.push("/admin/enterprise")}
                 >
-                  Trang quản trị
+                  Bàn làm việc Quản trị
                 </Breadcrumb.Link>
               </Breadcrumb.Item>
               <Breadcrumb.Separator />

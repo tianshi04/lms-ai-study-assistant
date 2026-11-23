@@ -11,6 +11,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import {
   CertificateService,
   type AdminCertificateStatusFilter,
+  type FinancialAidApplication,
   type GetAdminCertificateStatsResponse,
   type GetAdminCertificateTrendResponse,
   type ListAdminCertificatesResponse,
@@ -154,6 +155,41 @@ export function useRevokeCertificateMutation(
       queryClient.invalidateQueries({ queryKey: ["adminCertificateStats"] });
       queryClient.invalidateQueries({ queryKey: ["adminCertificates"] });
       queryClient.invalidateQueries({ queryKey: ["certificate", variables.certificateId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+/**
+ * Reviews (approves or rejects) a learner financial-aid application and refreshes
+ * admin certificate stats so pending notification badges decrement immediately.
+ */
+export function useReviewFinancialAidMutation(
+  options?: Partial<
+    UseMutationOptions<
+      FinancialAidApplication | undefined,
+      Error,
+      { applicationId: string; isApproved: boolean }
+    >
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    FinancialAidApplication | undefined,
+    Error,
+    { applicationId: string; isApproved: boolean }
+  >({
+    mutationFn: async ({ applicationId, isApproved }) => {
+      const client = getRpcClient(CertificateService);
+      const res = await client.reviewFinancialAidApplication({
+        applicationId,
+        isApproved,
+      });
+      return res.application;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["adminCertificateStats"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
