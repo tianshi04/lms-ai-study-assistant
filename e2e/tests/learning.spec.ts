@@ -147,7 +147,9 @@ test.describe('Full System Blackbox - Learning Experience (POM)', () => {
 
     // Clicking "Xem lại từ đầu" resets position to 0 in DB and dismisses the Toast
     const saveResetPromise = page.waitForResponse(
-      (resp) => resp.url().includes('/LearningService/SaveVideoPosition') && resp.status() === 200,
+      (resp) =>
+        resp.url().includes('/rpc/learning.v1.LearningService/SaveVideoPosition') &&
+        resp.status() === 200,
     );
     await learningPage.restartFromBeginningButton.click();
     await saveResetPromise;
