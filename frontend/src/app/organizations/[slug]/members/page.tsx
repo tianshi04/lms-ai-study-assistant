@@ -2,6 +2,7 @@
 
 import { use, useState, Suspense } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import {
   useOrganizationMembersQuery,
   useRemoveOrganizationMemberMutation,
@@ -40,6 +41,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
     roleUpper.includes("OWNER");
 
   const [search, setSearch] = useState("");
+  const isMobile = useIsMobile();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("INSTRUCTOR");
@@ -179,47 +181,133 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               <Users className="w-10 h-10 mx-auto opacity-40" aria-hidden="true" />
               <p className="text-sm font-medium">Không tìm thấy thành viên nào.</p>
             </div>
-          ) : (
-            <>
-              <div className="md:hidden divide-y divide-border">
-                {filteredMembers.map((m) => {
-                  const rawRole = (m.roleId || m.roleName || "INSTRUCTOR").toUpperCase();
-                  const roleLabel =
-                    rawRole === "OWNER"
-                      ? "Chủ sở hữu"
-                      : rawRole === "ADMIN"
-                        ? "Quản trị viên"
-                        : rawRole === "TA"
-                          ? "Trợ giảng"
-                          : rawRole === "LEARNER"
-                            ? "Học viên"
-                            : rawRole === "INSTRUCTOR"
-                              ? "Giảng viên"
-                              : m.roleName || m.roleId || "Giảng viên";
-                  const st = (m.status || "ACTIVE").toUpperCase();
-                  const statusLabel =
-                    st === "ACTIVE"
-                      ? "Hoạt động"
-                      : st === "PENDING"
-                        ? "Chờ duyệt"
-                        : st === "SUSPENDED"
-                          ? "Tạm khóa"
-                          : m.status || "Hoạt động";
-                  return (
-                    <div key={m.memberId || m.userId} className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Avatar name={m.fullName || "Thành viên"} src={m.avatarUrl} size="md" />
-                          <div className="min-w-0">
-                            <p className="font-bold text-foreground truncate">
-                              {m.fullName || "Thành viên"}
-                            </p>
-                            <p className="text-xs font-mono text-muted-foreground truncate">
-                              {m.email}
-                            </p>
-                          </div>
+          ) : isMobile ? (
+            <div className="divide-y divide-border">
+              {filteredMembers.map((m) => {
+                const rawRole = (m.roleId || m.roleName || "INSTRUCTOR").toUpperCase();
+                const roleLabel =
+                  rawRole === "OWNER"
+                    ? "Chủ sở hữu"
+                    : rawRole === "ADMIN"
+                      ? "Quản trị viên"
+                      : rawRole === "TA"
+                        ? "Trợ giảng"
+                        : rawRole === "LEARNER"
+                          ? "Học viên"
+                          : rawRole === "INSTRUCTOR"
+                            ? "Giảng viên"
+                            : m.roleName || m.roleId || "Giảng viên";
+                const st = (m.status || "ACTIVE").toUpperCase();
+                const statusLabel =
+                  st === "ACTIVE"
+                    ? "Hoạt động"
+                    : st === "PENDING"
+                      ? "Chờ duyệt"
+                      : st === "SUSPENDED"
+                        ? "Tạm khóa"
+                        : m.status || "Hoạt động";
+                return (
+                  <div key={m.memberId || m.userId} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar name={m.fullName || "Thành viên"} src={m.avatarUrl} size="md" />
+                        <div className="min-w-0">
+                          <p className="font-bold text-foreground truncate">
+                            {m.fullName || "Thành viên"}
+                          </p>
+                          <p className="text-xs font-mono text-muted-foreground truncate">
+                            {m.email}
+                          </p>
                         </div>
-                        {isOwnerOrAdmin && (
+                      </div>
+                      {isOwnerOrAdmin && (
+                        <IconButton
+                          type="button"
+                          variant="standard"
+                          size="xs"
+                          onClick={() =>
+                            setRemovingMember({
+                              userId: m.userId,
+                              memberName: m.fullName || m.email,
+                            })
+                          }
+                          className="text-destructive hover:bg-destructive/10 shrink-0"
+                          aria-label={`Xóa thành viên ${m.fullName || m.email}`}
+                        >
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        </IconButton>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                        <Shield className="w-3 h-3" aria-hidden="true" />
+                        {roleLabel}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success">
+                        <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
+                        {statusLabel}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head className="px-6 py-3.5">Thành viên</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Email</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Vai trò trong Org</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Trạng thái</Table.Head>
+                    {isOwnerOrAdmin && (
+                      <Table.Head className="px-6 py-3.5 text-right">Hành động</Table.Head>
+                    )}
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {filteredMembers.map((m) => (
+                    <Table.Row key={m.memberId || m.userId}>
+                      <Table.Cell className="px-6 py-4">
+                        <div className="flex items-center space-x-3">
+                          <Avatar name={m.fullName || "Thành viên"} src={m.avatarUrl} size="md" />
+                          <span className="font-bold text-foreground">
+                            {m.fullName || "Thành viên"}
+                          </span>
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-muted-foreground font-mono text-xs">
+                        {m.email}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                          <Shield className="w-3 h-3" aria-hidden="true" />
+                          {(() => {
+                            const raw = (m.roleId || m.roleName || "INSTRUCTOR").toUpperCase();
+                            if (raw === "OWNER") return "Chủ sở hữu";
+                            if (raw === "ADMIN") return "Quản trị viên";
+                            if (raw === "TA") return "Trợ giảng";
+                            if (raw === "LEARNER") return "Học viên";
+                            if (raw === "INSTRUCTOR") return "Giảng viên";
+                            return m.roleName || m.roleId || "Giảng viên";
+                          })()}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success">
+                          <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
+                          {(() => {
+                            const st = (m.status || "ACTIVE").toUpperCase();
+                            if (st === "ACTIVE") return "Hoạt động";
+                            if (st === "PENDING") return "Chờ duyệt";
+                            if (st === "SUSPENDED") return "Tạm khóa";
+                            return m.status || "Hoạt động";
+                          })()}
+                        </span>
+                      </Table.Cell>
+                      {isOwnerOrAdmin && (
+                        <Table.Cell className="px-6 py-4 text-right">
                           <IconButton
                             type="button"
                             variant="standard"
@@ -230,105 +318,18 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                                 memberName: m.fullName || m.email,
                               })
                             }
-                            className="text-destructive hover:bg-destructive/10 shrink-0"
+                            className="text-destructive hover:bg-destructive/10"
                             aria-label={`Xóa thành viên ${m.fullName || m.email}`}
                           >
                             <Trash2 className="w-4 h-4" aria-hidden="true" />
                           </IconButton>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-                          <Shield className="w-3 h-3" aria-hidden="true" />
-                          {roleLabel}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success">
-                          <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
-                          {statusLabel}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="hidden md:block overflow-x-auto">
-                <Table>
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.Head className="px-6 py-3.5">Thành viên</Table.Head>
-                      <Table.Head className="px-6 py-3.5">Email</Table.Head>
-                      <Table.Head className="px-6 py-3.5">Vai trò trong Org</Table.Head>
-                      <Table.Head className="px-6 py-3.5">Trạng thái</Table.Head>
-                      {isOwnerOrAdmin && (
-                        <Table.Head className="px-6 py-3.5 text-right">Hành động</Table.Head>
+                        </Table.Cell>
                       )}
                     </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {filteredMembers.map((m) => (
-                      <Table.Row key={m.memberId || m.userId}>
-                        <Table.Cell className="px-6 py-4">
-                          <div className="flex items-center space-x-3">
-                            <Avatar name={m.fullName || "Thành viên"} src={m.avatarUrl} size="md" />
-                            <span className="font-bold text-foreground">
-                              {m.fullName || "Thành viên"}
-                            </span>
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell className="px-6 py-4 text-muted-foreground font-mono text-xs">
-                          {m.email}
-                        </Table.Cell>
-                        <Table.Cell className="px-6 py-4">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-                            <Shield className="w-3 h-3" aria-hidden="true" />
-                            {(() => {
-                              const raw = (m.roleId || m.roleName || "INSTRUCTOR").toUpperCase();
-                              if (raw === "OWNER") return "Chủ sở hữu";
-                              if (raw === "ADMIN") return "Quản trị viên";
-                              if (raw === "TA") return "Trợ giảng";
-                              if (raw === "LEARNER") return "Học viên";
-                              if (raw === "INSTRUCTOR") return "Giảng viên";
-                              return m.roleName || m.roleId || "Giảng viên";
-                            })()}
-                          </span>
-                        </Table.Cell>
-                        <Table.Cell className="px-6 py-4">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success">
-                            <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
-                            {(() => {
-                              const st = (m.status || "ACTIVE").toUpperCase();
-                              if (st === "ACTIVE") return "Hoạt động";
-                              if (st === "PENDING") return "Chờ duyệt";
-                              if (st === "SUSPENDED") return "Tạm khóa";
-                              return m.status || "Hoạt động";
-                            })()}
-                          </span>
-                        </Table.Cell>
-                        {isOwnerOrAdmin && (
-                          <Table.Cell className="px-6 py-4 text-right">
-                            <IconButton
-                              type="button"
-                              variant="standard"
-                              size="xs"
-                              onClick={() =>
-                                setRemovingMember({
-                                  userId: m.userId,
-                                  memberName: m.fullName || m.email,
-                                })
-                              }
-                              className="text-destructive hover:bg-destructive/10"
-                              aria-label={`Xóa thành viên ${m.fullName || m.email}`}
-                            >
-                              <Trash2 className="w-4 h-4" aria-hidden="true" />
-                            </IconButton>
-                          </Table.Cell>
-                        )}
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table>
-              </div>
-            </>
+                  ))}
+                </Table.Body>
+              </Table>
+            </div>
           )}
         </Surface>
 

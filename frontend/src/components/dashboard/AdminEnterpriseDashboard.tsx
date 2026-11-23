@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/Progress";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
@@ -27,6 +28,7 @@ const columnHelper = createColumnHelper<EnterpriseSeat>();
 
 export function AdminEnterpriseDashboard() {
   const { isInstructorOrAdmin: isAdmin } = useAuth();
+  const isMobile = useIsMobile();
 
   const {
     data: seats = [],
@@ -316,53 +318,88 @@ export function AdminEnterpriseDashboard() {
                 Hãy bấm &quot;Tạo Mã Enterprise Mới&quot; để tạo gói tài trợ học tập đầu tiên.
               </p>
             </div>
-          ) : (
-            <Table>
-              <Table.Header>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <Table.Row key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <Table.Head key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </Table.Head>
-                    ))}
-                    <Table.Head className="text-right">Thao tác</Table.Head>
-                  </Table.Row>
-                ))}
-              </Table.Header>
-              <Table.Body>
-                {seats.map((seat) => (
-                  <Table.Row key={seat.id}>
-                    <Table.Cell className="font-bold">{seat.partnerName}</Table.Cell>
-                    <Table.Cell className="font-mono font-bold text-primary">
-                      {seat.seatKey}
-                    </Table.Cell>
-                    <Table.Cell className="font-mono font-semibold">
+          ) : isMobile ? (
+            <div className="divide-y divide-border">
+              {seats.map((seat) => (
+                <div key={seat.id} className="p-4 space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-foreground">{seat.partnerName}</p>
+                      <p className="font-mono text-xs font-bold text-primary break-all">
+                        {seat.seatKey}
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20 shrink-0">
+                      {seat.status === "ACTIVE" ? "Đang hoạt động" : seat.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <span className="text-xs font-mono font-semibold text-muted-foreground">
                       {(seat.assignedUserId || "").replace(/\s*seats\b/i, " suất")}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
-                        {seat.status === "ACTIVE" ? "Đang hoạt động" : seat.status}
-                      </span>
-                    </Table.Cell>
-                    <Table.Cell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="outlined"
-                        onClick={() => {
-                          setSelectedSeatKey(seat.seatKey);
-                          setShowAssignModal(true);
-                        }}
-                      >
-                        Gán học viên
-                      </Button>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outlined"
+                      onClick={() => {
+                        setSelectedSeatKey(seat.seatKey);
+                        setShowAssignModal(true);
+                      }}
+                    >
+                      Gán học viên
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <Table.Header>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <Table.Row key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <Table.Head key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </Table.Head>
+                      ))}
+                      <Table.Head className="text-right">Thao tác</Table.Head>
+                    </Table.Row>
+                  ))}
+                </Table.Header>
+                <Table.Body>
+                  {seats.map((seat) => (
+                    <Table.Row key={seat.id}>
+                      <Table.Cell className="font-bold">{seat.partnerName}</Table.Cell>
+                      <Table.Cell className="font-mono font-bold text-primary">
+                        {seat.seatKey}
+                      </Table.Cell>
+                      <Table.Cell className="font-mono font-semibold">
+                        {(seat.assignedUserId || "").replace(/\s*seats\b/i, " suất")}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
+                          {seat.status === "ACTIVE" ? "Đang hoạt động" : seat.status}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outlined"
+                          onClick={() => {
+                            setSelectedSeatKey(seat.seatKey);
+                            setShowAssignModal(true);
+                          }}
+                        >
+                          Gán học viên
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            </div>
           )}
         </Surface>
       </div>

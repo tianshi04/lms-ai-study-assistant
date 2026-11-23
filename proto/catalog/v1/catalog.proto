@@ -234,7 +234,6 @@ message CreateCourseRequest {
   string description = 3;
   string partner_name = 4;
   string partner_logo_url = 5;
-  repeated string instructor_names = 6;
   string subject = 7;
   string level = 8;
   bool financial_aid_enabled = 9;
@@ -253,7 +252,6 @@ message UpdateCourseRequest {
   string description = 4;
   string partner_name = 5;
   string partner_logo_url = 6;
-  repeated string instructor_names = 7;
   string subject = 8;
   string level = 9;
   bool financial_aid_enabled = 10;

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { BarChart3, TrendingDown, Award, Filter } from "lucide-react";
+import { Select } from "@/components/ui/Select";
 import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
@@ -201,20 +202,38 @@ export function InstructorOverviewView({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
+                  <Select
                     value={chartDateRange}
-                    onChange={(e) => setChartDateRange(e.target.value)}
-                    className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                    aria-label="Chọn khoảng thời gian biểu đồ toàn sàn"
+                    onValueChange={(val) => {
+                      if (val) setChartDateRange(val as string);
+                    }}
                   >
-                    <option value="today">Hôm nay</option>
-                    <option value="7d">7 ngày gần nhất</option>
-                    <option value="this_week">Tuần này</option>
-                    <option value="last_week">Tuần trước</option>
-                    <option value="this_month">Tháng này</option>
-                    <option value="last_month">Tháng trước</option>
-                    {allChartTab === "trend" && <option value="custom">Chọn thời gian</option>}
-                  </select>
+                    <Select.Trigger
+                      aria-label="Chọn khoảng thời gian biểu đồ toàn sàn"
+                      className="w-auto h-8 px-3 text-[11px] font-semibold rounded-lg"
+                    >
+                      <Select.Value>
+                        {{
+                          today: "Hôm nay",
+                          "7d": "7 ngày gần nhất",
+                          this_week: "Tuần này",
+                          last_week: "Tuần trước",
+                          this_month: "Tháng này",
+                          last_month: "Tháng trước",
+                          custom: "Chọn thời gian",
+                        }[chartDateRange] ?? chartDateRange}
+                      </Select.Value>
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="today">Hôm nay</Select.Item>
+                      <Select.Item value="7d">7 ngày gần nhất</Select.Item>
+                      <Select.Item value="this_week">Tuần này</Select.Item>
+                      <Select.Item value="last_week">Tuần trước</Select.Item>
+                      <Select.Item value="this_month">Tháng này</Select.Item>
+                      <Select.Item value="last_month">Tháng trước</Select.Item>
+                      <Select.Item value="custom">Chọn thời gian</Select.Item>
+                    </Select.Content>
+                  </Select>
 
                   {allChartTab === "trend" && chartDateRange === "custom" && (
                     <InstructorDateRangeForm
@@ -227,19 +246,30 @@ export function InstructorOverviewView({
                     />
                   )}
 
-                  <select
+                  <Select
                     value={chartLearnerFilter}
-                    onChange={(e) =>
-                      setChartLearnerFilter(e.target.value as "all" | "in_progress" | "completed")
-                    }
-                    className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                    aria-label="Phân khúc đối tượng học viên vĩ mô"
-                    title="Lọc xu hướng phân tích theo nhóm đối tượng học viên trên toàn hệ thống"
+                    onValueChange={(val) => {
+                      if (val) setChartLearnerFilter(val as "all" | "in_progress" | "completed");
+                    }}
                   >
-                    <option value="all">Nhóm: Tất cả học viên</option>
-                    <option value="in_progress">Nhóm: Đang học</option>
-                    <option value="completed">Nhóm: Đã tốt nghiệp</option>
-                  </select>
+                    <Select.Trigger
+                      aria-label="Phân khúc đối tượng học viên vĩ mô"
+                      className="w-auto h-8 px-3 text-[11px] font-semibold rounded-lg"
+                    >
+                      <Select.Value>
+                        {chartLearnerFilter === "in_progress"
+                          ? "Nhóm: Đang học"
+                          : chartLearnerFilter === "completed"
+                            ? "Nhóm: Đã tốt nghiệp"
+                            : "Nhóm: Tất cả học viên"}
+                      </Select.Value>
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="all">Nhóm: Tất cả học viên</Select.Item>
+                      <Select.Item value="in_progress">Nhóm: Đang học</Select.Item>
+                      <Select.Item value="completed">Nhóm: Đã tốt nghiệp</Select.Item>
+                    </Select.Content>
+                  </Select>
                 </div>
               </div>
             ) : allChartTab === "certs" ? (
@@ -250,19 +280,31 @@ export function InstructorOverviewView({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
+                  <Select
                     value={certCourseFilter}
-                    onChange={(e) => setCertCourseFilter(e.target.value)}
-                    className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus:ring-1 focus:ring-primary outline-hidden cursor-pointer"
-                    aria-label="Lọc chứng chỉ theo khóa học"
+                    onValueChange={(val) => {
+                      if (val) setCertCourseFilter(val as string);
+                    }}
                   >
-                    <option value="all">Tất cả khóa học ({courses.length})</option>
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.title}>
-                        {c.title}
-                      </option>
-                    ))}
-                  </select>
+                    <Select.Trigger
+                      aria-label="Lọc chứng chỉ theo khóa học"
+                      className="w-auto h-8 px-3 text-[11px] font-semibold rounded-lg"
+                    >
+                      <Select.Value>
+                        {certCourseFilter === "all"
+                          ? `Tất cả khóa học (${courses.length})`
+                          : certCourseFilter}
+                      </Select.Value>
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="all">Tất cả khóa học ({courses.length})</Select.Item>
+                      {courses.map((c) => (
+                        <Select.Item key={c.id} value={c.title}>
+                          {c.title}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select>
                 </div>
               </div>
             ) : null}

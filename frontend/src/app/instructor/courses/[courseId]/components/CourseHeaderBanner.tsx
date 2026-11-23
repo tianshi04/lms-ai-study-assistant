@@ -120,15 +120,14 @@ export function CourseHeaderBanner({
           <p className="text-sm text-muted-foreground leading-relaxed min-w-0 line-clamp-2">
             {course.description}
           </p>
-          <div className="text-xs font-medium text-muted-foreground flex items-center gap-2 pt-1">
-            <User className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <span>
-              {"Giảng viên:"}{" "}
-              {course.instructorNames.length > 0
-                ? course.instructorNames.join(", ")
-                : "Chưa cập nhật"}
-            </span>
-          </div>
+          {course.instructorNames.length > 0 && (
+            <div className="text-xs font-medium text-muted-foreground flex items-center gap-2 pt-1">
+              <User className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+              <span>
+                {"Giảng viên:"} {course.instructorNames.join(", ")}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">

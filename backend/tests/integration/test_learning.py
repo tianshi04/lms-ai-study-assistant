@@ -19,7 +19,6 @@ async def test_list_enrolled_courses():
         description="Test course for learning enrollment.",
         partner_name="DeepLearning.AI",
         partner_logo_url="",
-        instructor_names=["Test Instructor"],
     )
     assert course is not None
 

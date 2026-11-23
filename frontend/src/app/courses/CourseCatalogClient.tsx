@@ -15,7 +15,7 @@ import {
   useRecordCourseSearchMutation,
 } from "@/lib/query_hooks";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Search, RotateCcw } from "lucide-react";
+import { Search, RotateCcw, X } from "lucide-react";
 
 import type { Course, Category } from "@/gen/catalog/v1/catalog_pb";
 
@@ -144,7 +144,7 @@ export function CourseCatalogClient({
                 aria-label="Xóa tìm kiếm"
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant"
               >
-                ✕
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
               </IconButton>
             )}
           </div>

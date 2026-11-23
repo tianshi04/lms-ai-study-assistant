@@ -2,7 +2,7 @@
 
 import React, { useState, use, Suspense } from "react";
 import Link from "next/link";
-import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react";
+import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info, Check } from "lucide-react";
 
 import { Dialog } from "@/components/ui/Dialog";
 import { Progress } from "@/components/ui/Progress";
@@ -494,7 +494,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                                 >
                                   {opt.isCorrect ? (
                                     <span className="w-5 h-5 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold text-[10px] shadow-xs flex-shrink-0">
-                                      ✓
+                                      <Check className="w-3 h-3" aria-hidden="true" />
                                     </span>
                                   ) : (
                                     <span className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center font-bold text-[10px] text-muted-foreground flex-shrink-0">

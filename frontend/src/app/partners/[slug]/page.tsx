@@ -10,7 +10,15 @@ import { Card } from "@/components/ui/Card";
 import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { Chip } from "@/components/ui/Chip";
-import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
+import {
+  AlertTriangle,
+  ExternalLink,
+  BookOpen,
+  PenTool,
+  Globe,
+  GraduationCap,
+  Star,
+} from "lucide-react";
 
 function PartnerPublicContent() {
   const params = useParams();
@@ -166,8 +174,8 @@ function PartnerPublicContent() {
 
             {/* Courses List */}
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <div className="min-w-0">
                   <h2 className="text-2xl font-bold text-foreground">
                     Các khóa học do {partner.name} phát hành
                   </h2>
@@ -176,7 +184,7 @@ function PartnerPublicContent() {
                     {partner.name}.
                   </p>
                 </div>
-                <span className="text-sm font-semibold text-primary">
+                <span className="text-sm font-semibold text-primary shrink-0 whitespace-nowrap">
                   {partnerCourses.length} Khóa học
                 </span>
               </div>
@@ -224,8 +232,14 @@ function PartnerPublicContent() {
 
                       <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
                         <div className="flex items-center space-x-1 text-xs font-semibold text-amber-400">
-                          <span>
-                            ★ {course.averageRating ? course.averageRating.toFixed(1) : "5.0"}
+                          <span className="inline-flex items-center gap-1">
+                            <Star
+                              className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                              aria-hidden="true"
+                            />
+                            <span>
+                              {course.averageRating ? course.averageRating.toFixed(1) : "5.0"}
+                            </span>
                           </span>
                           <span className="text-muted-foreground font-normal">
                             ({course.reviewCount || 0})

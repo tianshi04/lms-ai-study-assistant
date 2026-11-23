@@ -45,6 +45,8 @@ async def test_list_foundational_course_candidates(
         stmt_str = str(stmt).lower()
         if "count(" in stmt_str:
             res.scalar.return_value = 1
+        elif "from users" in stmt_str or "users.full_name" in stmt_str:
+            res.all.return_value = [("user_inst", "Test Instructor")]
         elif "course_embeddings" in stmt_str or "specializations" in stmt_str:
             res.scalar_one_or_none.return_value = None
         else:
@@ -173,3 +175,49 @@ async def test_validate_foundational_course_ids_rules(repo, mock_session):
         foundational_ids=["c_v1", "c_v2", "c_v1"],
     )
     assert res == ["c_v1", "c_v2"]
+
+
+@pytest.mark.asyncio
+async def test_hydrate_instructor_names_ordering_and_dedup():
+    from src.modules.catalog.domain.entities import Course
+
+    mock_session = AsyncMock()
+    repo = SQLAlchemyCatalogRepository(mock_session)
+
+    c1 = Course(
+        id="c1",
+        title="Course 1",
+        slug="c-1",
+        description="",
+        partner_name="",
+        partner_logo_url="",
+        owner_id="u_owner",
+        co_instructor_ids=["u_co1", "u_owner", "u_blank", "u_missing"],
+    )
+    c2 = Course(
+        id="c2",
+        title="Course 2",
+        slug="c-2",
+        description="",
+        partner_name="",
+        partner_logo_url="",
+        owner_id="",
+        co_instructor_ids=[],
+    )
+
+    with patch(
+        "src.modules.identity.infrastructure.repository.IdentityRepository.get_user_names_by_ids",
+        new_callable=AsyncMock,
+        return_value={
+            "u_owner": "  Prof. Andrew Ng  ",
+            "u_co1": "Dr. Fei-Fei Li",
+            "u_blank": "   ",
+        },
+    ) as mock_batch_lookup:
+        result = await repo._hydrate_instructor_names([c1, c2])
+
+        mock_batch_lookup.assert_awaited_once_with(
+            ["u_owner", "u_co1", "u_blank", "u_missing"]
+        )
+        assert result[0].instructor_names == ["Prof. Andrew Ng", "Dr. Fei-Fei Li"]
+        assert result[1].instructor_names == []

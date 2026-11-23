@@ -17,6 +17,8 @@ import {
   Sparkles,
   MessageCircle,
   Search,
+  Megaphone,
+  X,
 } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
@@ -791,7 +793,10 @@ function ForumPageContent() {
                   Đang lọc:{" "}
                   <strong>{statusFilter === "UNANSWERED" ? "Cần giải đáp" : "Đã giải đáp"}</strong>
                 </span>
-                <span className="text-muted-foreground hover:text-foreground">✕</span>
+                <X
+                  className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground"
+                  aria-hidden="true"
+                />
               </Badge>
             )}
             <span>
@@ -897,8 +902,9 @@ function ForumPageContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-2 min-w-0">
                         {isTargetThread && (
-                          <Badge variant="primary" className="animate-pulse">
-                            📌 Bài thảo luận mục tiêu
+                          <Badge variant="primary" className="animate-pulse gap-1">
+                            <Pin className="w-3 h-3" aria-hidden="true" />
+                            <span>Bài thảo luận mục tiêu</span>
                           </Badge>
                         )}
                         {thread.isStaffPinned && <Badge variant="warning">GHIM</Badge>}
@@ -907,8 +913,9 @@ function ForumPageContent() {
                           thread.title.trim().toLowerCase().startsWith("[thong bao]") ||
                           (thread.authorRole || "").toUpperCase().includes("INSTRUCTOR"),
                         ) && (
-                          <Badge variant="primary" className="text-[11px] font-bold">
-                            📢 Thông báo GV
+                          <Badge variant="primary" className="text-[11px] font-bold gap-1">
+                            <Megaphone className="w-3 h-3" aria-hidden="true" />
+                            <span>Thông báo GV</span>
                           </Badge>
                         )}
                         {(() => {
@@ -918,11 +925,12 @@ function ForumPageContent() {
                           return (
                             <Badge
                               variant="secondary"
-                              className="text-[11px] font-semibold cursor-pointer hover:opacity-85 transition-opacity max-w-full truncate"
+                              className="text-[11px] font-semibold cursor-pointer hover:opacity-85 transition-opacity max-w-full truncate gap-1"
                               onClick={() => setSelectedCourseId(thread.courseId)}
                               title={`Lọc chỉ xem khóa học: ${courseTitle}`}
                             >
-                              📚 {courseTitle}
+                              <BookOpen className="w-3 h-3 shrink-0" aria-hidden="true" />
+                              <span className="truncate">{courseTitle}</span>
                             </Badge>
                           );
                         })()}

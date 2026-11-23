@@ -15,7 +15,6 @@ async def test_instructor_create_and_update_course():
             description="Master PyTorch for deep learning applications.",
             partner_name="Meta AI Partner",
             partner_logo_url="https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
-            instructor_names=["Yann LeCun", "Giảng viên AI"],
         )
 
         assert new_course is not None
@@ -33,7 +32,6 @@ async def test_instructor_create_and_update_course():
             description="Master PyTorch for deep learning and LLM fine-tuning.",
             partner_name="Meta AI & Coursera Partner",
             partner_logo_url="",
-            instructor_names=["Yann LeCun"],
         )
 
         assert updated_course is not None
@@ -55,7 +53,6 @@ async def test_instructor_create_lesson_structure():
             description="Deep dive into Self-Attention and Transformer architectures.",
             partner_name="DeepLearning.AI",
             partner_logo_url="",
-            instructor_names=["Andrew Ng"],
         )
         assert course is not None
 
