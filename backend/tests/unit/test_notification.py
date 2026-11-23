@@ -73,7 +73,7 @@ class _FakeAnnouncementRepo(SystemAnnouncementRepository):
         active = [
             replace(a)
             for a in self.items.values()
-            if a.status != AnnouncementStatus.CANCELLED
+            if a.status in (AnnouncementStatus.SENDING, AnnouncementStatus.SENT)
             and a.starts_at <= now < a.expires_at
         ]
         active.sort(key=lambda x: x.starts_at, reverse=True)
@@ -385,6 +385,8 @@ async def test_system_announcement_business_rules():
         is_critical=False,
     )
     assert ann1.status == AnnouncementStatus.SCHEDULED
+    # Not yet visible on active banners before dispatcher claims/sends it
+    assert await uc.list_active() == []
 
     dispatched = await uc.dispatch_due()
     assert dispatched == 1
