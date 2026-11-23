@@ -8,6 +8,7 @@ from src.modules.learning.application import LearningUseCase
 from src.modules.learning.domain import (
     DeadlineStatus,
     EnrolledCourseSummary,
+    LearningItemProgress,
     LearningProgress,
     PersonalNote,
     WeeklyDeadline,
@@ -77,6 +78,15 @@ def _to_pb_note(note: PersonalNote) -> pb.PersonalNote:
     )
 
 
+def _to_pb_video_position(item: LearningItemProgress) -> pb.VideoPositionRecord:
+    return pb.VideoPositionRecord(
+        item_id=item.item_id,
+        position_seconds=item.last_position_seconds,
+        duration_seconds=item.video_duration_seconds,
+        updated_at=item.position_updated_at,
+    )
+
+
 class LearningHandler(LearningService):
     def __init__(self, use_case: LearningUseCase) -> None:
         self.use_case = use_case
@@ -89,7 +99,10 @@ class LearningHandler(LearningService):
         current_user = require_current_user()
         current_item_id = request.current_item_id or None
         try:
-            progress = await self.use_case.get_progress(
+            (
+                progress,
+                video_positions,
+            ) = await self.use_case.get_progress_with_video_positions(
                 user_id=current_user.id,
                 course_id=request.course_id,
                 current_item_id=current_item_id,
@@ -97,7 +110,10 @@ class LearningHandler(LearningService):
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
-        return pb.GetProgressResponse(progress=_to_pb_progress(progress))
+        return pb.GetProgressResponse(
+            progress=_to_pb_progress(progress),
+            video_positions=[_to_pb_video_position(vp) for vp in video_positions],
+        )
 
     async def reset_deadlines(
         self,
@@ -231,6 +247,30 @@ class LearningHandler(LearningService):
             today_total_seconds=today_total,
             current_streak=streak,
             is_streak_extended_today=is_extended,
+        )
+
+    async def save_video_position(
+        self,
+        request: pb.SaveVideoPositionRequest,
+        ctx: RequestContext[pb.SaveVideoPositionRequest, pb.SaveVideoPositionResponse],
+    ) -> pb.SaveVideoPositionResponse:
+        current_user = require_current_user()
+        try:
+            saved_pos, updated_at = await self.use_case.save_video_position(
+                user_id=current_user.id,
+                course_id=request.course_id,
+                item_id=request.item_id,
+                position_seconds=request.position_seconds,
+                duration_seconds=request.duration_seconds,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+        return pb.SaveVideoPositionResponse(
+            success=True,
+            saved_position_seconds=saved_pos,
+            updated_at=updated_at,
         )
 
     async def get_learning_streak(

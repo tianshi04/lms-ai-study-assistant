@@ -2934,3 +2934,32 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         await self.session.execute(upsert_stmt)
         await self.session.flush()
         return True
+
+    async def resolve_course_video_item(
+        self, course_id_or_slug: str, item_id: str
+    ) -> tuple[str, bool] | None:
+        clean_course = course_id_or_slug.strip()
+        clean_item = item_id.strip()
+        if not clean_course or not clean_item:
+            return None
+        stmt = (
+            select(
+                CourseModel.id,
+                LearningItemModel.type,
+                LearningItemModel.video_url,
+            )
+            .select_from(LearningItemModel)
+            .join(LessonModel, LearningItemModel.lesson_id == LessonModel.id)
+            .join(WeekModuleModel, LessonModel.week_module_id == WeekModuleModel.id)
+            .join(CourseModel, WeekModuleModel.course_id == CourseModel.id)
+            .where(
+                LearningItemModel.id == clean_item,
+                or_(CourseModel.id == clean_course, CourseModel.slug == clean_course),
+            )
+            .limit(1)
+        )
+        row = (await self.session.execute(stmt)).first()
+        if not row:
+            return None
+        is_video = row.type == ItemType.VIDEO or bool(row.video_url)
+        return str(row.id), is_video

@@ -6,6 +6,7 @@ from src.modules.learning.domain.entities import (
     AdminLearningTrendPoint,
     DailyStudyRecord,
     EnrolledCourseSummary,
+    LearningItemProgress,
     LearningProgress,
     PersonalNote,
     UserLearningStreak,
@@ -134,3 +135,25 @@ class ILearningRepository(ABC):
         self, course_ids: list[str]
     ) -> dict[str, tuple[int, int]]:
         """Return ``{course_id: (enrolled_count, completed_count)}`` for ``course_ids``."""
+
+    @abstractmethod
+    async def is_enrolled(self, user_id: str, course_id: str) -> bool:
+        """Read-only check whether the user is enrolled in the course."""
+
+    @abstractmethod
+    async def save_video_position(
+        self,
+        user_id: str,
+        course_id: str,
+        item_id: str,
+        position_seconds: int,
+        duration_seconds: int,
+        now_iso: str,
+    ) -> tuple[int, str]:
+        """Upsert video playback position and return (saved_position_seconds, updated_at)."""
+
+    @abstractmethod
+    async def list_course_video_positions(
+        self, user_id: str, course_id: str
+    ) -> list[LearningItemProgress]:
+        """Return video item progress rows with last_position_seconds > 0 for the course."""
