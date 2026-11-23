@@ -33,10 +33,13 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Table } from "@/components/ui/Table";
 import { Surface } from "@/components/ui/Surface";
 import { Dialog } from "@/components/ui/Dialog";
 import { PageHeader } from "@/components/ui/LayoutPrimitives";
 import { AnnouncementBannerStyle } from "@/components/notification/AnnouncementBanner";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 
 const PAGE_SIZE = 20;
 
@@ -58,6 +61,13 @@ function formatDateTime(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatLocalInputPreview(localValue: string): string {
+  if (!localValue) return "—";
+  const d = new Date(localValue);
+  if (Number.isNaN(d.getTime())) return "—";
+  return formatDateTime(d.toISOString());
 }
 
 function isBannerStillActive(
@@ -126,6 +136,7 @@ export default function AdminAnnouncementsPage() {
   const router = useRouter();
   const { isSuperAdmin } = useAuth();
   const toast = useToast();
+  const isMobile = useIsMobile();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -197,8 +208,14 @@ export default function AdminAnnouncementsPage() {
       toast.error("Vui lòng nhập tiêu đề thông báo");
       return;
     }
-    if (!expiresAtLocal) {
-      toast.error("Vui lòng chọn thời điểm kết thúc hiển thị");
+    if (scheduleMode === "LATER") {
+      if (!startsAtLocal || Number.isNaN(new Date(startsAtLocal).getTime())) {
+        toast.error("Vui lòng chọn thời điểm bắt đầu phát hợp lệ");
+        return;
+      }
+    }
+    if (!expiresAtLocal || Number.isNaN(new Date(expiresAtLocal).getTime())) {
+      toast.error("Vui lòng chọn thời điểm kết thúc hiển thị hợp lệ");
       return;
     }
     const cleanUrl = actionUrl.trim();
@@ -340,14 +357,13 @@ export default function AdminAnnouncementsPage() {
                   </label>
                   <span className="text-xs text-muted-foreground">{content.length}/1000</span>
                 </div>
-                <textarea
+                <Textarea
                   id="ann-content"
                   rows={3}
                   maxLength={1000}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Mô tả thời gian dự kiến, phạm vi ảnh hưởng và khuyến nghị cho người học..."
-                  className="w-full rounded-xl bg-surface-container-highest/60 border border-outline-variant/60 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -586,18 +602,94 @@ export default function AdminAnnouncementsPage() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-                      <th className="py-3 pr-4">Thông báo</th>
-                      <th className="py-3 px-4">Trạng thái</th>
-                      <th className="py-3 px-4">Hiệu lực Banner</th>
-                      <th className="py-3 px-4">Chuông</th>
-                      <th className="py-3 pl-4 text-right">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
+              {isMobile ? (
+                <div className="space-y-3">
+                  {announcements.map((ann) => {
+                    const canCancel = ann.status === AnnouncementStatus.SCHEDULED;
+                    const canExpire = isBannerStillActive(
+                      ann,
+                      activeIds,
+                      recentlyExpiredIds,
+                      nowMs,
+                    );
+                    return (
+                      <div
+                        key={ann.id}
+                        className="p-4 rounded-2xl bg-card border border-border space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-sm text-foreground break-words">
+                              {ann.title}
+                            </p>
+                            {ann.content && (
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                                {ann.content}
+                              </p>
+                            )}
+                          </div>
+                          <StatusBadge status={ann.status} isBannerActive={canExpire} />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground pt-2 border-t border-border/60">
+                          <div>Từ: {formatDateTime(ann.startsAt)}</div>
+                          <div>Đến: {formatDateTime(ann.expiresAt)}</div>
+                          <div>
+                            Chuông:{" "}
+                            {ann.alsoNotifyBell ? (
+                              <span className="font-semibold text-foreground">
+                                {ann.recipientCount} người nhận
+                              </span>
+                            ) : (
+                              <span>Chỉ banner</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {(canCancel || canExpire) && (
+                          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+                            {canCancel && (
+                              <Button
+                                type="button"
+                                variant="outlined"
+                                size="sm"
+                                onClick={() => setCancelTarget(ann)}
+                                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                              >
+                                <Ban className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>Huỷ lịch</span>
+                              </Button>
+                            )}
+                            {canExpire && (
+                              <Button
+                                type="button"
+                                variant="outlined"
+                                size="sm"
+                                onClick={() => setExpireTarget(ann)}
+                                className="text-amber-700 dark:text-amber-300 border-amber-500/40 hover:bg-amber-500/10"
+                              >
+                                <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>Gỡ banner</span>
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Table>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.Head>Thông báo</Table.Head>
+                      <Table.Head>Trạng thái</Table.Head>
+                      <Table.Head>Hiệu lực Banner</Table.Head>
+                      <Table.Head>Chuông</Table.Head>
+                      <Table.Head className="text-right">Thao tác</Table.Head>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
                     {announcements.map((ann) => {
                       const canCancel = ann.status === AnnouncementStatus.SCHEDULED;
                       const canExpire = isBannerStillActive(
@@ -607,23 +699,23 @@ export default function AdminAnnouncementsPage() {
                         nowMs,
                       );
                       return (
-                        <tr key={ann.id} className="align-top">
-                          <td className="py-3.5 pr-4 max-w-md">
+                        <Table.Row key={ann.id} className="align-top">
+                          <Table.Cell className="max-w-md">
                             <p className="font-bold text-foreground">{ann.title}</p>
                             {ann.content && (
                               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                                 {ann.content}
                               </p>
                             )}
-                          </td>
-                          <td className="py-3.5 px-4 whitespace-nowrap">
+                          </Table.Cell>
+                          <Table.Cell className="whitespace-nowrap">
                             <StatusBadge status={ann.status} isBannerActive={canExpire} />
-                          </td>
-                          <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">
+                          </Table.Cell>
+                          <Table.Cell className="text-xs text-muted-foreground whitespace-nowrap">
                             <div>Từ: {formatDateTime(ann.startsAt)}</div>
                             <div>Đến: {formatDateTime(ann.expiresAt)}</div>
-                          </td>
-                          <td className="py-3.5 px-4 text-xs whitespace-nowrap">
+                          </Table.Cell>
+                          <Table.Cell className="text-xs whitespace-nowrap">
                             {ann.alsoNotifyBell ? (
                               <span className="font-semibold text-foreground">
                                 {ann.recipientCount} người nhận
@@ -631,8 +723,8 @@ export default function AdminAnnouncementsPage() {
                             ) : (
                               <span className="text-muted-foreground">Chỉ banner</span>
                             )}
-                          </td>
-                          <td className="py-3.5 pl-4 text-right whitespace-nowrap">
+                          </Table.Cell>
+                          <Table.Cell className="text-right whitespace-nowrap">
                             {canCancel && (
                               <Button
                                 type="button"
@@ -663,13 +755,13 @@ export default function AdminAnnouncementsPage() {
                                 <span>Đã gỡ banner</span>
                               </span>
                             )}
-                          </td>
-                        </tr>
+                          </Table.Cell>
+                        </Table.Row>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
+                  </Table.Body>
+                </Table>
+              )}
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-3 border-t border-border text-xs text-muted-foreground">
@@ -715,15 +807,13 @@ export default function AdminAnnouncementsPage() {
         <Dialog.Content size="sm">
           <Dialog.Header>
             <Dialog.Icon className="bg-primary/10 text-primary">
-              <Megaphone className="w-6 h-6" />
+              <Megaphone className="w-6 h-6" aria-hidden="true" />
             </Dialog.Icon>
             <Dialog.Title>Xác nhận phát thông báo</Dialog.Title>
             <Dialog.Description>
               {scheduleMode === "NOW"
                 ? "Thông báo sẽ hiển thị ngay lập tức trên thanh Banner toàn hệ thống"
-                : `Thông báo sẽ tự động hiển thị vào lúc ${formatDateTime(
-                    new Date(startsAtLocal).toISOString(),
-                  )}`}
+                : `Thông báo sẽ tự động hiển thị vào lúc ${formatLocalInputPreview(startsAtLocal)}`}
               {alsoNotifyBell ? " và được gửi tới Chuông thông báo của toàn bộ người dùng." : "."}
             </Dialog.Description>
           </Dialog.Header>
@@ -748,7 +838,7 @@ export default function AdminAnnouncementsPage() {
         <Dialog.Content size="sm">
           <Dialog.Header>
             <Dialog.Icon className="bg-error/10 text-error">
-              <AlertTriangle className="w-6 h-6" />
+              <AlertTriangle className="w-6 h-6" aria-hidden="true" />
             </Dialog.Icon>
             <Dialog.Title>Huỷ thông báo đã lên lịch</Dialog.Title>
             <Dialog.Description>
@@ -782,7 +872,7 @@ export default function AdminAnnouncementsPage() {
         <Dialog.Content size="sm">
           <Dialog.Header>
             <Dialog.Icon className="bg-amber-500/15 text-amber-600">
-              <EyeOff className="w-6 h-6" />
+              <EyeOff className="w-6 h-6" aria-hidden="true" />
             </Dialog.Icon>
             <Dialog.Title>Gỡ banner khỏi toàn hệ thống</Dialog.Title>
             <Dialog.Description>

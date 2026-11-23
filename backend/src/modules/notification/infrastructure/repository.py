@@ -318,7 +318,9 @@ class PostgresSystemAnnouncementRepository(SystemAnnouncementRepository):
         stmt = (
             select(SystemAnnouncementModel)
             .where(
-                SystemAnnouncementModel.status != AnnouncementStatus.CANCELLED.value,
+                SystemAnnouncementModel.status.in_(
+                    [AnnouncementStatus.SENDING.value, AnnouncementStatus.SENT.value]
+                ),
                 SystemAnnouncementModel.starts_at <= now,
                 SystemAnnouncementModel.expires_at > now,
             )
@@ -455,7 +457,7 @@ class PostgresSystemAnnouncementRepository(SystemAnnouncementRepository):
             {
                 "id": f"notif_{uuid7().hex}",
                 "recipient_id": rid,
-                "category": NotificationCategory.ANNOUNCEMENT.value,
+                "category": NotificationCategory.SYSTEM.value,
                 "title": announcement.title,
                 "content": announcement.content,
                 "action_url": announcement.action_url,
