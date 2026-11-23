@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Users, Mail, Settings, LayoutDashboard, ChevronRight } from "lucide-react";
+import { ArrowLeft, Briefcase, ChevronRight, Layers, Mail, Settings, Users } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 interface OrgHeaderNavProps {
@@ -22,13 +24,14 @@ export function OrgHeaderNav({
   isOwnerOrAdmin = true,
 }: OrgHeaderNavProps) {
   const pathname = usePathname();
+  const [imgError, setImgError] = useState(false);
 
   const allNavItems = [
     {
       id: "manage",
-      label: "Tổng quan",
+      label: "Khóa học & Seat",
       href: `/organizations/${slug}/manage`,
-      icon: LayoutDashboard,
+      icon: Layers,
       adminOnly: false,
     },
     {
@@ -59,29 +62,48 @@ export function OrgHeaderNav({
   return (
     <div className="space-y-6">
       {/* Breadcrumb Navigation */}
-      <nav className="flex items-center space-x-2 text-xs text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition-colors">
-          Trang chủ
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav className="flex items-center space-x-2 text-xs text-muted-foreground">
+          <Link href="/" className="hover:text-foreground transition-colors">
+            Trang chủ
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+          <Link href="/my-organizations" className="hover:text-foreground transition-colors">
+            Tổ chức của tôi
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+          <Link
+            href={`/organizations/${slug}/dashboard`}
+            className="hover:text-foreground transition-colors"
+          >
+            {orgName}
+          </Link>
+          <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="text-foreground font-semibold">Bàn làm việc</span>
+        </nav>
+
+        <Link
+          href={`/organizations/${slug}/dashboard`}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/15 border border-primary/20 transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+          Dashboard Tổ chức
         </Link>
-        <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-        <Link href="/my-organizations" className="hover:text-foreground transition-colors">
-          Tổ chức của tôi
-        </Link>
-        <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-        <span className="text-foreground font-semibold">{orgName}</span>
-      </nav>
+      </div>
 
       {/* Header Banner */}
-      <header className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-2xl shrink-0 border border-primary/20">
-            {avatarUrl ? (
+      <header className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+        <div className="flex items-center space-x-4 min-w-0">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-2xl shrink-0 border border-primary/20 overflow-hidden">
+            {avatarUrl && !imgError ? (
               <Image
                 src={avatarUrl}
                 alt={orgName || "Org"}
                 width={64}
                 height={64}
-                className="w-full h-full object-cover rounded-2xl"
+                unoptimized
+                onError={() => setImgError(true)}
+                className="w-full h-full object-contain rounded-2xl p-1.5"
               />
             ) : (
               orgName.charAt(0).toUpperCase() || "O"
@@ -89,8 +111,8 @@ export function OrgHeaderNav({
           </div>
           <div className="space-y-1 min-w-0">
             <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-              <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
-              Partner Organization
+              <Briefcase className="w-3.5 h-3.5" aria-hidden="true" />
+              Bàn làm việc Tổ chức
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight truncate">
               {orgName}
@@ -99,7 +121,7 @@ export function OrgHeaderNav({
           </div>
         </div>
 
-        {/* Tab Navigation Links */}
+        {/* Workspace Tab Navigation Links */}
         <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-muted/50 border border-border rounded-2xl">
           {navItems.map((item) => {
             const Icon = item.icon;

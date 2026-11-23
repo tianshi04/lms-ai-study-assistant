@@ -440,7 +440,7 @@ export default function AdminPartnersPage() {
                     variant="tonal"
                     size="sm"
                     onClick={() =>
-                      router.push(`/organizations/${partner.slug || partner.id}/manage`)
+                      router.push(`/organizations/${partner.slug || partner.id}/dashboard`)
                     }
                     title="Mở Bảng điều khiển Tổ chức"
                   >
@@ -536,7 +536,7 @@ export default function AdminPartnersPage() {
                           variant="tonal"
                           size="sm"
                           onClick={() =>
-                            router.push(`/organizations/${partner.slug || partner.id}/manage`)
+                            router.push(`/organizations/${partner.slug || partner.id}/dashboard`)
                           }
                           title="Mở Bảng điều khiển Tổ chức"
                         >

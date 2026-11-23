@@ -22,6 +22,12 @@ export function Navbar() {
   const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
   const { data: myOrgs = [] } = useMyOrganizationsQuery();
   const isOrgTA = myOrgs.some((o) => (o.roleInOrg || "").toUpperCase() === "TA");
+  const ownedOrg = myOrgs.find((org) => {
+    if (org.id === "partner_community") return false;
+    const roleUpper = (org.roleInOrg || "").toUpperCase();
+    return roleUpper.includes("OWNER") || roleUpper.includes("ADMIN");
+  });
+  const ownedOrgSlug = ownedOrg ? ownedOrg.slug || ownedOrg.id : "";
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -38,6 +44,9 @@ export function Navbar() {
   const isActive = (path: string) => {
     if (!pathname) return false;
     if (path === "/") return pathname === "/";
+    if (path.startsWith("/organizations/")) {
+      return pathname.startsWith("/organizations/") && !pathname.endsWith("/dashboard");
+    }
     return pathname.startsWith(path);
   };
 
@@ -124,6 +133,21 @@ export function Navbar() {
                     <span>{"Trợ giảng"}</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                       TA Portal
+                    </span>
+                  </Link>
+                </NavigationMenu.Item>
+              )}
+
+              {/* Render Organization Workspace Portal for Partner Owners/Admins */}
+              {ownedOrgSlug && !isSuperAdmin && (
+                <NavigationMenu.Item>
+                  <Link
+                    href={`/organizations/${ownedOrgSlug}/manage`}
+                    className={`${getLinkClasses(`/organizations/${ownedOrgSlug}/manage`)} flex items-center gap-1.5`}
+                  >
+                    <span>{"Tổ chức"}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                      Portal
                     </span>
                   </Link>
                 </NavigationMenu.Item>
@@ -247,6 +271,21 @@ export function Navbar() {
               <span>{"Trợ giảng"}</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                 TA Portal
+              </span>
+            </Link>
+          )}
+          {ownedOrgSlug && !isSuperAdmin && (
+            <Link
+              href={`/organizations/${ownedOrgSlug}/manage`}
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                getMobileLinkClasses(`/organizations/${ownedOrgSlug}/manage`),
+                "flex items-center justify-between",
+              )}
+            >
+              <span>{"Tổ chức"}</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                Portal
               </span>
             </Link>
           )}

@@ -87,7 +87,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               href={`/organizations/${slug}/manage`}
               className="inline-flex items-center px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs"
             >
-              Quay lại Tổng quan
+              Quay lại Bàn làm việc
             </Link>
           </Surface>
         </main>

@@ -1,26 +1,54 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import Link from "next/link";
+import { Suspense, useState } from "react";
 import Image from "next/image";
-import { useMyOrganizationsQuery } from "@/lib/query_hooks";
-import { MyInvitationsDrawer } from "@/components/invitation/MyInvitationsDrawer";
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 import {
+  Briefcase,
   Building2,
-  Users,
-  Shield,
-  Mail,
-  Loader2,
-  Clock,
   CheckCircle2,
   ChevronRight,
+  Clock,
+  LayoutDashboard,
+  Loader2,
+  Mail,
+  Shield,
+  Users,
 } from "lucide-react";
+
+import { MyInvitationsDrawer } from "@/components/invitation/MyInvitationsDrawer";
+import { Button } from "@/components/ui/Button";
+import { useMyOrganizationsQuery } from "@/lib/query_hooks";
+
+function OrgCardAvatar({ src, name }: { src?: string; name?: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (src && !hasError) {
+    return (
+      <Image
+        src={src}
+        alt={name || "Org"}
+        width={48}
+        height={48}
+        unoptimized
+        onError={() => setHasError(true)}
+        className="w-full h-full object-contain rounded-2xl p-1"
+      />
+    );
+  }
+
+  return <span>{name?.charAt(0).toUpperCase() || "O"}</span>;
+}
 
 function MyOrganizationsContent() {
   const [isInvitationsOpen, setIsInvitationsOpen] = useState(false);
 
   const { data: organizations = [], isLoading, error } = useMyOrganizationsQuery();
+
+  const isOrgAdminRole = (roleStr?: string) => {
+    const roleUpper = (roleStr || "").toUpperCase();
+    return roleUpper.includes("ADMIN") || roleUpper.includes("OWNER");
+  };
 
   const getRoleBadge = (roleStr: string) => {
     const roleUpper = (roleStr || "").toUpperCase();
@@ -73,8 +101,8 @@ function MyOrganizationsContent() {
               Tổ chức của tôi
             </h1>
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Danh sách các Partner Organization mà bạn đang tham gia với tư cách Giảng viên hoặc
-              Quản trị viên. Bạn có thể quản lý thành viên và xem lời mời trực tiếp tại đây.
+              Danh sách các Partner Organization mà bạn đang tham gia. Xem số liệu tổng hợp tại
+              Dashboard Tổ chức hoặc thực hiện thao tác quản lý tại Bàn làm việc.
             </p>
           </div>
 
@@ -122,71 +150,83 @@ function MyOrganizationsContent() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {organizations.map((org) => (
-                <Link
-                  key={org.id}
-                  href={`/organizations/${org.slug || org.id}/manage`}
-                  className="p-6 rounded-3xl bg-card border border-border shadow-xs hover:border-primary/50 hover:shadow-md group transition-all flex flex-col justify-between space-y-6"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center space-x-3.5 min-w-0">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 font-black text-lg">
-                          {org.avatarUrl ? (
-                            <Image
-                              src={org.avatarUrl}
-                              alt={org.name || "Org"}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-cover rounded-2xl"
+              {organizations.map((org) => {
+                const orgSlug = org.slug || org.id;
+                const isAdmin = isOrgAdminRole(org.roleInOrg);
+                return (
+                  <div
+                    key={org.id}
+                    className="p-6 rounded-3xl bg-card border border-border shadow-xs hover:border-primary/40 transition-all flex flex-col justify-between space-y-6"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center space-x-3.5 min-w-0">
+                          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 font-black text-lg overflow-hidden border border-primary/15">
+                            <OrgCardAvatar src={org.avatarUrl} name={org.name} />
+                          </div>
+                          <div className="min-w-0 space-y-0.5">
+                            <h3 className="font-bold text-foreground text-base truncate">
+                              {org.name}
+                            </h3>
+                            {org.slug && (
+                              <p className="text-xs text-muted-foreground font-mono truncate">
+                                Slug: {org.slug}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {getRoleBadge(org.roleInOrg)}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-muted/40 border border-border/50 text-xs">
+                        <div>
+                          <span className="text-muted-foreground block">Trạng thái:</span>
+                          <span className="font-bold text-success flex items-center gap-1 mt-0.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            Hoạt động (Active)
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Ngày tham gia:</span>
+                          <span className="font-semibold text-foreground flex items-center gap-1 mt-0.5">
+                            <Clock
+                              className="w-3.5 h-3.5 text-muted-foreground"
+                              aria-hidden="true"
                             />
-                          ) : (
-                            org.name?.charAt(0).toUpperCase() || "O"
-                          )}
-                        </div>
-                        <div className="min-w-0 space-y-0.5">
-                          <h3 className="font-bold text-foreground text-base truncate group-hover:text-primary transition-colors">
-                            {org.name}
-                          </h3>
-                          {org.slug && (
-                            <p className="text-xs text-muted-foreground font-mono truncate">
-                              Slug: {org.slug}
-                            </p>
-                          )}
+                            {org.joinedAt
+                              ? new Date(org.joinedAt).toLocaleDateString("vi-VN")
+                              : "Gần đây"}
+                          </span>
                         </div>
                       </div>
-                      {getRoleBadge(org.roleInOrg)}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-muted/40 border border-border/50 text-xs">
-                      <div>
-                        <span className="text-muted-foreground block">Trạng thái:</span>
-                        <span className="font-bold text-success flex items-center gap-1 mt-0.5">
-                          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                          Hoạt động (Active)
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground block">Ngày tham gia:</span>
-                        <span className="font-semibold text-foreground flex items-center gap-1 mt-0.5">
-                          <Clock className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
-                          {org.joinedAt
-                            ? new Date(org.joinedAt).toLocaleDateString("vi-VN")
-                            : "Gần đây"}
-                        </span>
-                      </div>
+                    <div className="pt-4 border-t border-border flex flex-wrap items-center justify-end gap-2.5">
+                      {isAdmin && (
+                        <Button
+                          variant="tonal"
+                          size="sm"
+                          render={<Link href={`/organizations/${orgSlug}/dashboard`} />}
+                          className="rounded-xl font-bold text-xs"
+                        >
+                          <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+                          Dashboard Thống kê
+                        </Button>
+                      )}
+                      <Button
+                        variant={isAdmin ? "filled" : "tonal"}
+                        size="sm"
+                        render={<Link href={`/organizations/${orgSlug}/manage`} />}
+                        className="rounded-xl font-bold text-xs"
+                      >
+                        <Briefcase className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+                        Bàn làm việc
+                        <ChevronRight className="w-3.5 h-3.5 ml-1" aria-hidden="true" />
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="pt-4 border-t border-border flex items-center justify-between text-xs font-bold text-primary group-hover:underline">
-                    <span>Vào trang Quản lý Tổ chức</span>
-                    <ChevronRight
-                      className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform"
-                      aria-hidden="true"
-                    />
-                  </div>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

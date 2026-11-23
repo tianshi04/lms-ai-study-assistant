@@ -8,7 +8,9 @@ test.describe('Dashboard Redirect', () => {
     await page.goto('/dashboard');
     // toHaveURL matches full URL — check pathname is root or role-specific dashboard
     const url = new URL(page.url());
-    expect(url.pathname).toMatch(/\/(instructor\/dashboard|admin\/dashboard|learner\/dashboard)?$/);
+    expect(url.pathname).toMatch(
+      /\/(instructor\/dashboard|admin\/dashboard|learner\/dashboard|organizations\/[^/]+\/dashboard)?$/,
+    );
   });
 });
 

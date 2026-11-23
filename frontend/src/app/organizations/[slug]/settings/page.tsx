@@ -64,7 +64,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               có quyền thay đổi thông tin cài đặt của Tổ chức này.
             </p>
             <Button render={<Link href={`/organizations/${slug}/manage`} />} size="sm">
-              Quay lại Tổng quan
+              Quay lại Bàn làm việc
             </Button>
           </Surface>
         </main>

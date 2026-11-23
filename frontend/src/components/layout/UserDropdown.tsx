@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   BookOpen,
+  Briefcase,
   Building2,
   CheckCircle2,
   Edit,
@@ -219,13 +220,22 @@ export function UserDropdown() {
         </Menu.Item>
 
         {ownedOrg && (
-          <Menu.Item
-            render={<Link href={`/organizations/${ownedOrg.slug || ownedOrg.id}/manage`} />}
-            className={itemClasses}
-          >
-            <LayoutDashboard aria-hidden="true" className={iconClasses} />
-            <span>{"Bảng điều khiển Tổ chức"}</span>
-          </Menu.Item>
+          <>
+            <Menu.Item
+              render={<Link href={`/organizations/${ownedOrg.slug || ownedOrg.id}/dashboard`} />}
+              className={itemClasses}
+            >
+              <LayoutDashboard aria-hidden="true" className={iconClasses} />
+              <span>{"Dashboard Tổ chức"}</span>
+            </Menu.Item>
+            <Menu.Item
+              render={<Link href={`/organizations/${ownedOrg.slug || ownedOrg.id}/manage`} />}
+              className={itemClasses}
+            >
+              <Briefcase aria-hidden="true" className={iconClasses} />
+              <span>{"Bàn làm việc Tổ chức"}</span>
+            </Menu.Item>
+          </>
         )}
 
         <Menu.Item render={<Link href="/account-settings" />} className={itemClasses}>

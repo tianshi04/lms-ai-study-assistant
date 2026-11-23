@@ -54,7 +54,7 @@ export function HomeDashboardSwitch({ initialToken, initialUserRole }: HomeDashb
     });
 
     if (ownedOrg) {
-      router.replace(`/organizations/${ownedOrg.slug || ownedOrg.id}/manage`);
+      router.replace(`/organizations/${ownedOrg.slug || ownedOrg.id}/dashboard`);
     } else {
       router.replace("/learner/dashboard");
     }
