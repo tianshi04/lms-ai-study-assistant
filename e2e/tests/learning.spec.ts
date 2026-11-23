@@ -98,4 +98,66 @@ test.describe('Full System Blackbox - Learning Experience (POM)', () => {
     await expect(cleanPage).toHaveURL(/\/auth\/login/, { timeout: 10000 });
     await context.close();
   });
+
+  test('should persist video playback position and support auto-resume with restart from beginning', async ({
+    page,
+  }) => {
+    const VIDEO_ITEM_ID = 'item-ml-intro-video';
+    const learningPage = new LearningPage(page);
+    await learningPage.goto(COURSE_ID, VIDEO_ITEM_ID);
+    await learningPage.verifyPageLoaded();
+
+    // Save a mid-video playback position directly through ConnectRPC and clear local cache
+    // so reload verifies real server persistence via GetProgressResponse.video_positions.
+    const saveResult = await page.evaluate(
+      async ({ courseId, itemId }) => {
+        const res = await fetch('/rpc/learning.v1.LearningService/SaveVideoPosition', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Connect-Protocol-Version': '1',
+          },
+          body: JSON.stringify({
+            courseId,
+            itemId,
+            positionSeconds: 95,
+            durationSeconds: 600,
+          }),
+        });
+        const data = await res.json();
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith('lms_video_pos:')) {
+            localStorage.removeItem(key);
+          }
+        }
+        return { ok: res.ok, savedPositionSeconds: data?.savedPositionSeconds };
+      },
+      { courseId: COURSE_ID, itemId: VIDEO_ITEM_ID },
+    );
+
+    expect(saveResult.ok).toBe(true);
+    expect(saveResult.savedPositionSeconds).toBe(95);
+
+    // Reloading the video item should display the auto-resume Toast with restart action
+    await learningPage.goto(COURSE_ID, VIDEO_ITEM_ID);
+    await learningPage.verifyPageLoaded();
+    await expect(learningPage.resumeToast).toBeVisible({ timeout: 15000 });
+    await expect(learningPage.restartFromBeginningButton).toBeVisible();
+
+    // Clicking "Xem lại từ đầu" resets position to 0 in DB and dismisses the Toast
+    const saveResetPromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes('/rpc/learning.v1.LearningService/SaveVideoPosition') &&
+        resp.status() === 200,
+    );
+    await learningPage.restartFromBeginningButton.click();
+    await saveResetPromise;
+    await expect(learningPage.resumeToast).toHaveCount(0);
+
+    // Reloading after restart should start cleanly from 00:00 without a resume Toast
+    await learningPage.goto(COURSE_ID, VIDEO_ITEM_ID);
+    await learningPage.verifyPageLoaded();
+    await expect(learningPage.resumeToast).toHaveCount(0);
+  });
 });

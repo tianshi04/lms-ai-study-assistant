@@ -1,8 +1,13 @@
 "use client";
 
 export function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
+  const safeSeconds = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
+  const hrs = Math.floor(safeSeconds / 3600);
+  const mins = Math.floor((safeSeconds % 3600) / 60);
+  const secs = safeSeconds % 60;
+  if (hrs > 0) {
+    return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 

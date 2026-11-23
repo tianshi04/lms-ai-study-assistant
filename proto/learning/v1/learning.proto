@@ -41,6 +41,13 @@ message PersonalNote {
   string updated_at = 9;
 }
 
+message VideoPositionRecord {
+  string item_id = 1;
+  int32 position_seconds = 2;
+  int32 duration_seconds = 3;
+  string updated_at = 4;
+}
+
 message GetProgressRequest {
   string course_id = 1;
   optional string current_item_id = 2;
@@ -48,6 +55,20 @@ message GetProgressRequest {
 
 message GetProgressResponse {
   LearningProgress progress = 1;
+  repeated VideoPositionRecord video_positions = 2;
+}
+
+message SaveVideoPositionRequest {
+  string course_id = 1;
+  string item_id = 2;
+  int32 position_seconds = 3;
+  int32 duration_seconds = 4;
+}
+
+message SaveVideoPositionResponse {
+  bool success = 1;
+  int32 saved_position_seconds = 2;
+  string updated_at = 3;
 }
 
 message ResetDeadlinesRequest {
@@ -171,6 +192,9 @@ service LearningService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc RecordLearningTime(RecordLearningTimeRequest) returns (RecordLearningTimeResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SaveVideoPosition(SaveVideoPositionRequest) returns (SaveVideoPositionResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetLearningStreak(GetLearningStreakRequest) returns (GetLearningStreakResponse) {

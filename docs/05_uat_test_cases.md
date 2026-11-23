@@ -147,6 +147,25 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
 
 ---
 
+## KỊCH BẢN UAT-09: KIỂM THỬ GHI NHỚ & TỰ ĐỘNG KHÔI PHỤC VỊ TRÍ PHÁT VIDEO (VIDEO AUTO-RESUME FLOW)
+
+* **Mục tiêu:** Xác minh hệ thống lưu vết vị trí xem dở của bài học video theo thời gian thực, tự động khôi phục vị trí khi tải lại trang hoặc quay lại từ `/my-learning`, hỗ trợ "Xem lại từ đầu", và đặt lại về `00:00` khi video chạy hết.
+* **Tác nhân thực hiện:** Học viên (Learner).
+* **Điều kiện bắt đầu:** Học viên đã ghi danh khóa học có các bài học Video (gắn phụ đề Transcript và có 1 In-Video Quiz ở mốc 00:45).
+* **Các bước thực hiện:**
+  1. Học viên mở Video bài giảng 1, xem hoặc tua đến mốc **01:30**, tạm dừng (Pause) hoặc chuyển sang Video bài giảng 2.
+  2. Học viên tải lại trang (`/learn/[courseId]`) hoặc quay lại `/my-learning` rồi bấm **"Tiếp tục học"**.
+  3. Trên thông báo Toast khôi phục vị trí, học viên bấm nút **"Xem lại từ đầu"**.
+  4. Học viên xem Video bài giảng 1 đến hết (`onEnded`) hoặc trong 5 giây cuối của video.
+  5. Học viên tải lại trang và mở lại Video bài giảng 1.
+* **Kết quả mong đợi (Expected Results):**
+  * *Tại bước 1:* Vị trí `90s` được lưu qua `SaveVideoPosition` (ngay khi Pause / keepalive khi đổi bài); sidebar lộ trình hiển thị `• Đã xem 01:30` cho bài giảng chưa hoàn thành.
+  * *Tại bước 2:* Hệ thống mở đúng Video bài giảng 1, trình phát tự động tua tới **01:30**, bảng Transcript cuộn/sáng đúng đoạn 01:30, In-Video Quiz ở 00:45 được tự động bỏ qua, và Toast hiển thị `"Đã tiếp tục từ 01:30"` kèm nút **"Xem lại từ đầu"**.
+  * *Tại bước 3:* Trình phát lập tức tua về **00:00**, Toast tự đóng, bộ đánh dấu In-Video Quiz được đặt lại và server lưu vị trí mới là `0`.
+  * *Tại bước 4 & 5:* Video được đánh dấu hoàn thành, đồng thời vị trí phát được tự động chuẩn hóa đặt lại về **00:00** để lần mở xem lại sau phát từ đầu mà vẫn giữ dấu tích hoàn thành.
+
+---
+
 ## KỊCH BẢN UAT-10: KIỂM THỬ LƯU NHÁP BÀI QUIZ CHỐNG MẤT BÀI & KHÔI PHỤC PHIÊN LÀM BÀI (QUIZ DRAFT AUTO-SAVE & RECOVERY FLOW)
 
 * **Mục tiêu:** Xác minh hệ thống tự động lưu nháp các đáp án đã chọn khi làm bài Quiz, bảo toàn đề thi và thời gian đếm ngược khi tải lại trang (F5) hoặc tạm thoát, hỗ trợ xác nhận khi làm lại từ đầu và xóa sạch bản nháp sau khi nộp bài.

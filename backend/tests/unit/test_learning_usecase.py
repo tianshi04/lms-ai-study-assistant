@@ -11,8 +11,10 @@ from src.modules.catalog.domain import (
 )
 from src.modules.learning.application import LearningUseCase
 from src.modules.learning.domain import (
+    LearningItemProgress,
     LearningProgress,
     PersonalNote,
+    normalize_video_position,
 )
 
 
@@ -235,3 +237,93 @@ async def test_list_enrolled_courses_preserves_timestamps(
     assert s.last_accessed_item_id == "i1"
     assert s.enrolled_at == "2026-11-01T10:00:00Z"
     assert s.completed_at == "2026-11-03T19:00:00Z"
+
+
+def test_normalize_video_position_rules():
+    assert normalize_video_position(125, 600) == (125, 600)
+    assert normalize_video_position(595, 600) == (0, 600)
+    assert normalize_video_position(750, 600) == (0, 600)
+    # Short clips (<= 15s) are not prematurely reset at duration - 5
+    assert normalize_video_position(10, 12) == (10, 12)
+    # Unknown duration preserves positive position up to MAX_VIDEO_POSITION_SECONDS
+    assert normalize_video_position(245, 0) == (245, 0)
+    assert normalize_video_position(100000, 0) == (86400, 0)
+
+    with pytest.raises(ValueError, match="Vị trí video"):
+        normalize_video_position(-1, 600)
+
+    with pytest.raises(ValueError, match="Thời lượng video"):
+        normalize_video_position(10, -5)
+
+
+@pytest.mark.asyncio
+async def test_get_progress_with_video_positions(
+    use_case, mock_repo, mock_session_scope
+):
+    expected_progress = LearningProgress(
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=20.0,
+        completed_item_ids=[],
+        weekly_deadlines=[],
+    )
+    expected_positions = [
+        LearningItemProgress(
+            user_id="u1",
+            item_id="vid-1",
+            course_id="c1",
+            last_position_seconds=142,
+            video_duration_seconds=600,
+            position_updated_at="2026-11-17T10:00:00Z",
+        )
+    ]
+    mock_repo.get_progress.return_value = expected_progress
+    mock_repo.list_course_video_positions.return_value = expected_positions
+
+    progress, positions = await use_case.get_progress_with_video_positions(
+        "u1", "c1", current_item_id="vid-1"
+    )
+    assert progress == expected_progress
+    assert positions == expected_positions
+    mock_repo.get_progress.assert_awaited_once_with("u1", "c1", "vid-1")
+    mock_repo.list_course_video_positions.assert_awaited_once_with("u1", "c1")
+
+
+@pytest.mark.asyncio
+async def test_save_video_position_validation_and_success(
+    mock_repo, mock_session_scope
+):
+    mock_catalog_repo = AsyncMock()
+    use_case = LearningUseCase(
+        repo_factory=lambda session: mock_repo,
+        catalog_repo_factory=lambda session: mock_catalog_repo,
+    )
+
+    # 1. Non-existent course or item
+    mock_catalog_repo.resolve_course_video_item.return_value = None
+    with pytest.raises(ValueError, match="không thuộc khóa học"):
+        await use_case.save_video_position("u1", "slug-1", "vid-1", 45, 300)
+
+    # 2. Non-video item rejected
+    mock_catalog_repo.resolve_course_video_item.return_value = ("c1", False)
+    with pytest.raises(ValueError, match="không phải học liệu video"):
+        await use_case.save_video_position("u1", "slug-1", "reading-1", 45, 300)
+
+    # 3. Unenrolled user rejected without auto-enrolling
+    mock_catalog_repo.resolve_course_video_item.return_value = ("c1", True)
+    mock_repo.is_enrolled.return_value = False
+    with pytest.raises(PermissionError, match="chưa ghi danh"):
+        await use_case.save_video_position("u1", "slug-1", "vid-1", 45, 300)
+    mock_repo.get_progress.assert_not_called()
+
+    # 4. Success with near-end reset normalization
+    mock_repo.is_enrolled.return_value = True
+    mock_repo.save_video_position.return_value = (0, "2026-11-17T10:00:00Z")
+    saved_pos, updated_at = await use_case.save_video_position(
+        "u1", "slug-1", "vid-1", 297, 300
+    )
+    assert saved_pos == 0
+    assert updated_at == "2026-11-17T10:00:00Z"
+    assert mock_repo.save_video_position.call_args[1]["course_id"] == "c1"
+    assert mock_repo.save_video_position.call_args[1]["position_seconds"] == 0
+    assert mock_repo.save_video_position.call_args[1]["duration_seconds"] == 300
