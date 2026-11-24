@@ -682,6 +682,7 @@ export default function AdminPartnersPage() {
                   </label>
                   <SignatureUploadField
                     id="signatureImg"
+                    compact
                     value={signatureImageUrl}
                     onChange={setSignatureImageUrl}
                   />
