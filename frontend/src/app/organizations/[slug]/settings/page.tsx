@@ -48,7 +48,9 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
   } | null>(null);
 
   const orgName =
-    partner?.name || (slug === "partner_community" ? "Coursera Project Network" : slug);
+    partner?.name ||
+    currentOrg?.name ||
+    (slug === "partner_community" ? "Coursera Project Network" : slug);
 
   useEffect(() => {
     if (partner) {
@@ -58,11 +60,13 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
       setBannerUrl(partner.bannerUrl || "");
       setWebsiteUrl(partner.websiteUrl || "");
       setAllowedDomainsStr((partner.allowedDomains || []).join(", "));
+    } else if (currentOrg?.name) {
+      setName(currentOrg.name);
     } else if (slug === "partner_community") {
       setName("Coursera Project Network");
       setDescription("Tổ chức Đối tác bảo chứng mặc định toàn sàn.");
     }
-  }, [partner, slug]);
+  }, [partner, currentOrg, slug]);
 
   const updateMutation = useUpdatePartnerMutation({
     onSuccess: () => {
