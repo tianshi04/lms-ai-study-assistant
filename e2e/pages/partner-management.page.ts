@@ -1,5 +1,10 @@
 import { Page, Locator, expect } from '@playwright/test';
 
+const SAMPLE_SIGNATURE_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'base64'
+);
+
 export interface CreatePartnerData {
   name: string;
   slug: string;
@@ -47,7 +52,7 @@ export class PartnerAdminPage {
     this.allowedDomainsInput = page.locator('input[placeholder="hcmut.edu.vn, vnuhcm.edu.vn"]');
     this.signerNameInput = page.locator('input[placeholder="GS.TS. Nguyễn Văn A"]');
     this.signerTitleInput = page.locator('input[placeholder="Hiệu trưởng"]');
-    this.signatureImageUrlInput = page.locator('input[placeholder="https://example.com/signature.png"]');
+    this.signatureImageUrlInput = page.locator('#signatureImg');
     this.publicKeyPemInput = page.locator('textarea[placeholder*="BEGIN PUBLIC KEY"]');
     this.submitButton = page.locator('button[type="submit"]', { hasText: /Thêm đối tác|Cập nhật đối tác/i });
   }
@@ -75,7 +80,14 @@ export class PartnerAdminPage {
     if (data.allowedDomains) await this.allowedDomainsInput.fill(data.allowedDomains);
     if (data.signerName) await this.signerNameInput.fill(data.signerName);
     if (data.signerTitle) await this.signerTitleInput.fill(data.signerTitle);
-    if (data.signatureImageUrl) await this.signatureImageUrlInput.fill(data.signatureImageUrl);
+    if (data.signatureImageUrl) {
+      await this.signatureImageUrlInput.setInputFiles({
+        name: 'signature.png',
+        mimeType: 'image/png',
+        buffer: SAMPLE_SIGNATURE_PNG,
+      });
+      await expect(this.page.getByRole('button', { name: /Đổi ảnh chữ ký/i })).toBeVisible({ timeout: 15000 });
+    }
     if (data.publicKeyPem) await this.publicKeyPemInput.fill(data.publicKeyPem);
   }
 
