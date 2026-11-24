@@ -908,7 +908,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                                 )}
                                 {specCourse.level && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-foreground text-[10px] font-semibold border border-border">
-                                    {specCourse.level}
+                                    {levelMap.get(specCourse.level) || specCourse.level}
                                   </span>
                                 )}
                               </div>
