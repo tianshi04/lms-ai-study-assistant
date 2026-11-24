@@ -152,10 +152,7 @@ export function VerifyDetailClient({
             {/* Top Partner Branding */}
             <div className="flex items-center justify-between border-b border-border pb-8 mb-8">
               <div>
-                <Badge
-                  variant="primary"
-                  className="font-mono text-primary uppercase tracking-widest block mb-1"
-                >
+                <Badge variant="primary" className="font-mono uppercase tracking-widest mb-1">
                   COURSERA VERIFIED SPECIALIZATION CERTIFICATE
                 </Badge>
                 <h2 className="text-2xl font-black text-foreground tracking-tight mt-1">
