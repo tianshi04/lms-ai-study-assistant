@@ -301,7 +301,7 @@ export default function InstructorCoursesPage() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
+    <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
       {/* Top Header */}
       <PageHeader>
         <div>
@@ -313,7 +313,7 @@ export default function InstructorCoursesPage() {
           <PageHeader.Title>{"Quản lý Khóa học Giảng dạy"}</PageHeader.Title>
           <PageHeader.Description>
             {
-              "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI."
+              "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng LMS AI Platform."
             }
           </PageHeader.Description>
         </div>
@@ -370,11 +370,11 @@ export default function InstructorCoursesPage() {
           </Tabs.Trigger>
           <Tabs.Trigger
             value="specializations"
-            className="gap-2 cursor-pointer whitespace-nowrap shrink-0"
+            className="gap-1.5 sm:gap-2 cursor-pointer flex-wrap max-w-full"
           >
-            <Layers className="w-4 h-4" aria-hidden="true" />
-            <span>{"Chuyên ngành (Specializations)"}</span>
-            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+            <Layers className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{"Chuyên ngành"}</span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
               {"Combo -25%"}
             </span>
           </Tabs.Trigger>
@@ -769,6 +769,6 @@ export default function InstructorCoursesPage() {
           </Dialog.Footer>
         </Dialog.Content>
       </Dialog>
-    </div>
+    </main>
   );
 }
