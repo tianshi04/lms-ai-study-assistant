@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   usePartnersQuery,
@@ -14,9 +15,10 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
+import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import { Textarea } from "@/components/ui/Textarea";
 import { Progress } from "@/components/ui/Progress";
-import { Settings, Building2, Save, Globe, Shield, ImageIcon, ShieldAlert } from "lucide-react";
+import { Settings, Building2, Save, Globe, Shield, ShieldAlert } from "lucide-react";
 
 function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -236,33 +238,60 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <Input
+                  <label
+                    htmlFor="orgLogoInput"
+                    className="block text-sm font-medium text-foreground mb-1.5"
+                  >
+                    Logo Tổ chức
+                  </label>
+                  <ImageUploadField
                     id="orgLogoInput"
-                    label="URL Logo Tổ chức"
-                    type="url"
-                    inputMode="url"
+                    folder="public/logos"
+                    itemLabel="logo"
                     value={logoUrl}
-                    onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                    startAdornment={
-                      <ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" />
-                    }
+                    onChange={setLogoUrl}
                   />
+                  {logoUrl && (
+                    <div className="mt-2 p-2.5 bg-muted rounded-xl border border-border flex items-center gap-3">
+                      <Image
+                        src={logoUrl}
+                        alt="Logo Preview"
+                        width={140}
+                        height={48}
+                        className="h-12 w-auto max-w-[140px] object-contain rounded-lg"
+                        unoptimized
+                      />
+                      <span className="text-xs text-muted-foreground">Xem trước Logo</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
-                  <Input
+                  <label
+                    htmlFor="orgBannerInput"
+                    className="block text-sm font-medium text-foreground mb-1.5"
+                  >
+                    Ảnh Banner Tổ chức
+                  </label>
+                  <ImageUploadField
                     id="orgBannerInput"
-                    label="URL Ảnh Banner Tổ chức"
-                    type="url"
-                    inputMode="url"
+                    folder="public/banners"
+                    itemLabel="banner"
                     value={bannerUrl}
-                    onChange={(e) => setBannerUrl(e.target.value)}
-                    placeholder="https://example.com/banner.png"
-                    startAdornment={
-                      <ImageIcon className="w-4 h-4 text-primary" aria-hidden="true" />
-                    }
+                    onChange={setBannerUrl}
                   />
+                  {bannerUrl && (
+                    <div className="mt-2 p-2 bg-muted rounded-xl border border-border overflow-hidden">
+                      <Image
+                        src={bannerUrl}
+                        alt="Banner Preview"
+                        width={480}
+                        height={160}
+                        className="w-full aspect-[3/1] max-h-36 object-cover rounded-lg"
+                        unoptimized
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">

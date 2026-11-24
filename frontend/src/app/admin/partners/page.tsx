@@ -19,6 +19,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import { SignatureUploadField } from "@/components/ui/SignatureUploadField";
 import { Textarea } from "@/components/ui/Textarea";
 import { Table } from "@/components/ui/Table";
@@ -568,25 +569,35 @@ export default function AdminPartnersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Input
+                <label
+                  htmlFor="partnerLogo"
+                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+                >
+                  Logo đối tác
+                </label>
+                <ImageUploadField
                   id="partnerLogo"
-                  label="URL Logo đối tác"
-                  type="url"
-                  inputMode="url"
+                  compact
+                  folder="public/logos"
+                  itemLabel="logo"
                   value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://example.com/logo.png"
+                  onChange={setLogoUrl}
                 />
               </div>
               <div>
-                <Input
+                <label
+                  htmlFor="partnerBanner"
+                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+                >
+                  Banner bìa
+                </label>
+                <ImageUploadField
                   id="partnerBanner"
-                  label="URL Banner bìa"
-                  type="url"
-                  inputMode="url"
+                  compact
+                  folder="public/banners"
+                  itemLabel="banner"
                   value={bannerUrl}
-                  onChange={(e) => setBannerUrl(e.target.value)}
-                  placeholder="https://example.com/banner.jpg"
+                  onChange={setBannerUrl}
                 />
               </div>
               <div>

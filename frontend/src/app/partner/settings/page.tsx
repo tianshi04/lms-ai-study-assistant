@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import { SignatureUploadField } from "@/components/ui/SignatureUploadField";
 import { Textarea } from "@/components/ui/Textarea";
 import { Dialog } from "@/components/ui/Dialog";
@@ -337,13 +338,19 @@ function PartnerSettingsForm({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <Input
-                label="URL Logo Đối tác"
-                type="url"
-                inputMode="url"
+              <label
+                htmlFor="partnerLogoInput"
+                className="block text-sm font-medium text-foreground mb-1.5"
+              >
+                Logo Đối tác
+              </label>
+              <ImageUploadField
+                id="partnerLogoInput"
+                compact
+                folder="public/logos"
+                itemLabel="logo"
                 value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="https://example.com/logo.png"
+                onChange={setLogoUrl}
               />
               {logoUrl && (
                 <div className="mt-2 p-2.5 bg-muted rounded-xl border border-border flex items-center gap-3">
@@ -361,13 +368,19 @@ function PartnerSettingsForm({
             </div>
 
             <div>
-              <Input
-                label="URL Banner Bìa"
-                type="url"
-                inputMode="url"
+              <label
+                htmlFor="partnerBannerInput"
+                className="block text-sm font-medium text-foreground mb-1.5"
+              >
+                Banner Bìa
+              </label>
+              <ImageUploadField
+                id="partnerBannerInput"
+                compact
+                folder="public/banners"
+                itemLabel="banner"
                 value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-                placeholder="https://example.com/banner.jpg"
+                onChange={setBannerUrl}
               />
               {bannerUrl && (
                 <div className="mt-2 p-2 bg-muted rounded-xl border border-border overflow-hidden">
