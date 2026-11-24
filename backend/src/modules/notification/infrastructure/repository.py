@@ -357,7 +357,7 @@ class PostgresSystemAnnouncementRepository(SystemAnnouncementRepository):
             .values(status=AnnouncementStatus.SENDING.value)
         )
         await self._session.flush()
-        if result.rowcount != 1:  # type: ignore[attr-defined]
+        if getattr(result, "rowcount", 0) != 1:
             return None
         return await self.get_by_id(candidate)
 
@@ -371,7 +371,7 @@ class PostgresSystemAnnouncementRepository(SystemAnnouncementRepository):
             .values(status=AnnouncementStatus.CANCELLED.value)
         )
         await self._session.flush()
-        return int(result.rowcount or 0)  # type: ignore[attr-defined]
+        return int(getattr(result, "rowcount", 0) or 0)
 
     async def cancel_scheduled(self, announcement_id: str) -> SystemAnnouncement | None:
         result = await self._session.execute(
@@ -383,7 +383,7 @@ class PostgresSystemAnnouncementRepository(SystemAnnouncementRepository):
             .values(status=AnnouncementStatus.CANCELLED.value)
         )
         await self._session.flush()
-        if result.rowcount != 1:  # type: ignore[attr-defined]
+        if getattr(result, "rowcount", 0) != 1:
             return None
         self._session.expire_all()
         return await self.get_by_id(announcement_id)
@@ -403,7 +403,7 @@ class PostgresSystemAnnouncementRepository(SystemAnnouncementRepository):
             .values(expires_at=now)
         )
         await self._session.flush()
-        if result.rowcount != 1:  # type: ignore[attr-defined]
+        if getattr(result, "rowcount", 0) != 1:
             return None
         self._session.expire_all()
         return await self.get_by_id(announcement_id)
@@ -480,4 +480,4 @@ class PostgresSystemAnnouncementRepository(SystemAnnouncementRepository):
         )
         result = await self._session.execute(stmt)
         await self._session.flush()
-        return int(result.rowcount or 0)  # type: ignore[attr-defined]
+        return int(getattr(result, "rowcount", 0) or 0)
