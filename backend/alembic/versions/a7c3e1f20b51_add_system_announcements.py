@@ -1,7 +1,7 @@
 """add system announcements
 
 Revision ID: a7c3e1f20b51
-Revises: 968d39b0bbd0
+Revises: 6ed40cb6003e
 Create Date: 2026-11-18 19:30:00
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "a7c3e1f20b51"
-down_revision: str | Sequence[str] | None = "968d39b0bbd0"
+down_revision: str | Sequence[str] | None = "6ed40cb6003e"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

@@ -179,7 +179,7 @@ export default function AdminAnnouncementsPage() {
   const expireMutation = useExpireSystemAnnouncementMutation();
 
   if (!isSuperAdmin) {
-    return <div className="p-12 text-center text-destructive font-bold">Từ chối truy cập</div>;
+    return <main className="p-12 text-center text-destructive font-bold">Từ chối truy cập</main>;
   }
 
   const applyMaintenanceTemplate = () => {
@@ -299,7 +299,7 @@ export default function AdminAnnouncementsPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className="min-h-screen bg-background p-6 md:p-12">
+    <main className="min-h-screen bg-background p-6 md:p-12">
       <div className="max-w-6xl mx-auto space-y-8">
         <PageHeader>
           <div className="space-y-1">
@@ -890,6 +890,6 @@ export default function AdminAnnouncementsPage() {
           </Dialog.Footer>
         </Dialog.Content>
       </Dialog>
-    </div>
+    </main>
   );
 }
