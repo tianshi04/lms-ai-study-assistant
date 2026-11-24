@@ -463,16 +463,18 @@ function FinancialAidContent() {
 
 export default function FinancialAidPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-24">
-          <span aria-live="polite" className="text-sm text-muted-foreground">
-            Đang tải dữ liệu…
-          </span>
-        </div>
-      }
-    >
-      <FinancialAidContent />
-    </Suspense>
+    <main className="w-full flex-1">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-24">
+            <span aria-live="polite" className="text-sm text-muted-foreground">
+              Đang tải dữ liệu…
+            </span>
+          </div>
+        }
+      >
+        <FinancialAidContent />
+      </Suspense>
+    </main>
   );
 }
