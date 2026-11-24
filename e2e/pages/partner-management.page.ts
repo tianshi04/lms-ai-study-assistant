@@ -46,8 +46,8 @@ export class PartnerAdminPage {
     this.nameInput = page.locator('input[placeholder="VD: Đại học Bách Khoa TP.HCM"]');
     this.slugInput = page.locator('input[placeholder="VD: hcmut"]');
     this.descriptionInput = page.locator('textarea[placeholder*="Giới thiệu sơ lược về tổ chức đối tác"]');
-    this.logoUrlInput = page.locator('input[placeholder="https://example.com/logo.png"]');
-    this.bannerUrlInput = page.locator('input[placeholder="https://example.com/banner.jpg"]');
+    this.logoUrlInput = page.locator('#partnerLogo');
+    this.bannerUrlInput = page.locator('#partnerBanner');
     this.websiteUrlInput = page.locator('input[placeholder="https://hcmut.edu.vn"]');
     this.allowedDomainsInput = page.locator('input[placeholder="hcmut.edu.vn, vnuhcm.edu.vn"]');
     this.signerNameInput = page.locator('input[placeholder="GS.TS. Nguyễn Văn A"]');
@@ -74,8 +74,22 @@ export class PartnerAdminPage {
     if (data.name) await this.nameInput.fill(data.name);
     if (data.slug) await this.slugInput.fill(data.slug);
     if (data.description) await this.descriptionInput.fill(data.description);
-    if (data.logoUrl) await this.logoUrlInput.fill(data.logoUrl);
-    if (data.bannerUrl) await this.bannerUrlInput.fill(data.bannerUrl);
+    if (data.logoUrl) {
+      await this.logoUrlInput.setInputFiles({
+        name: 'logo.png',
+        mimeType: 'image/png',
+        buffer: SAMPLE_SIGNATURE_PNG,
+      });
+      await expect(this.page.getByRole('button', { name: /Đổi logo/i })).toBeVisible({ timeout: 15000 });
+    }
+    if (data.bannerUrl) {
+      await this.bannerUrlInput.setInputFiles({
+        name: 'banner.png',
+        mimeType: 'image/png',
+        buffer: SAMPLE_SIGNATURE_PNG,
+      });
+      await expect(this.page.getByRole('button', { name: /Đổi banner/i })).toBeVisible({ timeout: 15000 });
+    }
     if (data.websiteUrl) await this.websiteUrlInput.fill(data.websiteUrl);
     if (data.allowedDomains) await this.allowedDomainsInput.fill(data.allowedDomains);
     if (data.signerName) await this.signerNameInput.fill(data.signerName);
