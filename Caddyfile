@@ -26,7 +26,7 @@
 		# Chỉ áp dụng cho Login/Register/OAuth/Verification, không ảnh hưởng các truy vấn quản trị của IdentityService
 		zone auth_zone {
 			match {
-				path /rpc/identity.v1.IdentityService/Login* /rpc/identity.v1.IdentityService/Register* /rpc/identity.v1.IdentityService/Google* /rpc/identity.v1.IdentityService/Complete* /rpc/identity.v1.IdentityService/VerifyIdentity /api/auth/* /auth/*
+				path /rpc/identity.v1.IdentityService/Login* /rpc/identity.v1.IdentityService/Register* /rpc/identity.v1.IdentityService/Google* /rpc/identity.v1.IdentityService/Complete* /rpc/identity.v1.IdentityService/VerifyIdentity /api/auth/*
 			}
 			key {client_ip}
 			ipv6_prefix 64
@@ -70,8 +70,15 @@
 
 	# 4. Tùy biến phản hồi khi vượt quá giới hạn tần suất (HTTP 429 Too Many Requests)
 	handle_errors 429 {
-		header Content-Type "application/json; charset=utf-8"
-		respond `{"code":"resource_exhausted","message":"Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ít phút."}` 429
+		@api_429 path /rpc/* /api/* /copilotkit/*
+		handle @api_429 {
+			header Content-Type "application/json; charset=utf-8"
+			respond `{"code":"resource_exhausted","message":"Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ít phút."}` 429
+		}
+		handle {
+			header Content-Type "text/html; charset=utf-8"
+			respond `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quá nhiều yêu cầu - LMS AI Platform</title><style>body{font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;color:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:1rem}.card{max-width:420px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:28px;text-align:center;box-shadow:0 4px 12px rgba(15,23,42,.06)}h1{font-size:1.125rem;margin:0 0 8px}p{font-size:.875rem;color:#475569;margin:0 0 20px;line-height:1.5}button{background:#2563eb;color:#fff;border:none;border-radius:999px;padding:10px 20px;font-size:.875rem;font-weight:600;cursor:pointer}</style></head><body><div class="card"><h1>Bạn thao tác quá nhanh</h1><p>Hệ thống tạm giới hạn tần suất truy cập để đảm bảo ổn định. Vui lòng thử lại sau ít phút.</p><button onclick="location.reload()">Thử lại</button></div></body></html>` 429
+		}
 	}
 
 	# 5. Stream Video & Media Assets (Bypass Next.js, đi thẳng vào Backend)
