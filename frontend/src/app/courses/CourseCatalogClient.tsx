@@ -133,7 +133,7 @@ export function CourseCatalogClient({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={"Tìm kiếm khóa học theo tên hoặc từ khóa…"}
-              className="w-full pl-11 pr-9 py-2.5 text-xs sm:text-sm bg-surface-container-lowest border border-outline-variant rounded-full text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full pl-11 pr-9 py-2.5 text-xs sm:text-sm bg-surface-container-lowest border border-outline-variant rounded-full text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary [&::-webkit-search-cancel-button]:appearance-none"
             />
             {searchQuery && (
               <IconButton
