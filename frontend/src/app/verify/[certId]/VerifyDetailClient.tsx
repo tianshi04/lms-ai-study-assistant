@@ -138,7 +138,7 @@ export function VerifyDetailClient({
               <div className="font-bold text-sm">{"Chứng chỉ Xác minh Chính thức"}</div>
               <p className="text-xs opacity-90">
                 {
-                  "Chứng chỉ này hoàn toàn hợp lệ và được lưu trữ trên hệ thống cơ sở dữ liệu Coursera AI LMS."
+                  "Chứng chỉ này hoàn toàn hợp lệ và được lưu trữ trên hệ thống cơ sở dữ liệu LMS AI Platform."
                 }{" "}
                 (#{cert.certificateId})
               </p>
@@ -146,16 +146,19 @@ export function VerifyDetailClient({
           </div>
 
           {/* Certificate Presentation Document */}
-          <div className="bg-card border-8 border-border rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+          <div className="bg-card border-8 border-border rounded-3xl p-5 sm:p-12 shadow-2xl relative overflow-hidden">
             <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
             {/* Top Partner Branding */}
-            <div className="flex items-center justify-between border-b border-border pb-8 mb-8">
-              <div>
-                <Badge variant="primary" className="font-mono uppercase tracking-widest mb-1">
-                  COURSERA VERIFIED SPECIALIZATION CERTIFICATE
+            <div className="flex items-center justify-between gap-3 border-b border-border pb-6 sm:pb-8 mb-6 sm:mb-8">
+              <div className="min-w-0 flex-1">
+                <Badge
+                  variant="primary"
+                  className="font-mono uppercase tracking-wider sm:tracking-widest mb-1 max-w-full whitespace-normal text-left"
+                >
+                  LMS AI PLATFORM VERIFIED CERTIFICATE
                 </Badge>
-                <h2 className="text-2xl font-black text-foreground tracking-tight mt-1">
+                <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight mt-1 break-words">
                   {cert.partnerName}
                 </h2>
               </div>
@@ -258,7 +261,7 @@ export function VerifyDetailClient({
                 )}
                 <div className="text-left text-xs text-muted-foreground space-y-1">
                   <p className="font-semibold text-foreground">
-                    {"Được xác thực bởi Coursera AI LMS Platform"}
+                    {"Được xác thực bởi LMS AI Platform"}
                   </p>
                   <p className="text-[11px]">
                     {"Quét mã QR để kiểm tra tính toàn vẹn của chữ ký số."}
