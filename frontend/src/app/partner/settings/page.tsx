@@ -346,13 +346,13 @@ function PartnerSettingsForm({
                 placeholder="https://example.com/logo.png"
               />
               {logoUrl && (
-                <div className="mt-2 p-2 bg-muted rounded-xl border border-border flex items-center space-x-3">
+                <div className="mt-2 p-2.5 bg-muted rounded-xl border border-border flex items-center gap-3">
                   <Image
                     src={logoUrl}
                     alt="Logo Preview"
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 object-contain rounded-lg"
+                    width={140}
+                    height={48}
+                    className="h-12 w-auto max-w-[140px] object-contain rounded-lg"
                     unoptimized
                   />
                   <span className="text-xs text-muted-foreground">Xem trước Logo</span>
@@ -370,13 +370,13 @@ function PartnerSettingsForm({
                 placeholder="https://example.com/banner.jpg"
               />
               {bannerUrl && (
-                <div className="mt-2 p-2 bg-muted rounded-xl border border-border">
+                <div className="mt-2 p-2 bg-muted rounded-xl border border-border overflow-hidden">
                   <Image
                     src={bannerUrl}
                     alt="Banner Preview"
-                    width={160}
-                    height={48}
-                    className="w-full h-12 object-cover rounded-lg"
+                    width={480}
+                    height={160}
+                    className="w-full aspect-[3/1] max-h-36 object-cover rounded-lg"
                     unoptimized
                   />
                 </div>
