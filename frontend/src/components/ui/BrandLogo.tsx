@@ -12,7 +12,7 @@ export const brandLogoBoxVariants = cva(
     variants: {
       size: {
         sm: "w-8 h-8 rounded-lg",
-        md: "w-10 h-10 rounded-xl",
+        md: "w-8 h-8 sm:w-10 sm:h-10 rounded-xl",
         lg: "w-12 h-12 rounded-2xl",
       },
     },
@@ -26,7 +26,7 @@ export const brandLogoIconVariants = cva("", {
   variants: {
     size: {
       sm: "w-5 h-5",
-      md: "w-6.5 h-6.5",
+      md: "w-5 h-5 sm:w-6.5 sm:h-6.5",
       lg: "w-8 h-8",
     },
   },
@@ -35,11 +35,11 @@ export const brandLogoIconVariants = cva("", {
   },
 });
 
-export const brandLogoTextVariants = cva("tracking-tight text-foreground whitespace-nowrap", {
+export const brandLogoTextVariants = cva("tracking-tight text-foreground truncate", {
   variants: {
     size: {
       sm: "text-sm sm:text-base font-bold",
-      md: "text-sm sm:text-lg font-extrabold",
+      md: "text-[13px] sm:text-lg font-extrabold",
       lg: "text-xl sm:text-2xl font-black",
     },
   },
