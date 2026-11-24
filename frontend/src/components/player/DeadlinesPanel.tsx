@@ -34,7 +34,8 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
     );
   }
 
-  const hasOverdue = progress.weeklyDeadlines.some((d) => d.status === 2);
+  const deadlines = progress.weeklyDeadlines ?? [];
+  const hasOverdue = deadlines.some((d) => d.status === 2);
 
   return (
     <div className="w-full space-y-3">
@@ -54,40 +55,48 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2.5">
-        {progress.weeklyDeadlines.map((d) => (
-          <div
-            key={d.weekNumber}
-            className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between transition-all ${
-              d.status === 2
-                ? "bg-destructive/10 border-destructive/30 text-destructive font-medium"
-                : d.status === 3
-                  ? "bg-success/10 border-success/30 text-foreground"
-                  : "bg-surface-container-low/50 border-border/80 text-foreground hover:border-primary/40"
-            }`}
-          >
-            <div>
-              <span className="font-bold block text-sm">
-                {"Tuần"} {d.weekNumber}
-              </span>
-              <span className="text-[11px] text-muted-foreground">{formatDueDate(d.dueDate)}</span>
+      {deadlines.length === 0 ? (
+        <div className="text-center text-xs text-muted-foreground py-8 px-4 rounded-2xl border border-dashed border-border">
+          Khóa học này chưa có mốc thời hạn theo tuần. Bạn có thể học theo tiến độ tự do.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-2.5">
+          {deadlines.map((d) => (
+            <div
+              key={d.weekNumber}
+              className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between transition-all ${
+                d.status === 2
+                  ? "bg-destructive/10 border-destructive/30 text-destructive font-medium"
+                  : d.status === 3
+                    ? "bg-success/10 border-success/30 text-foreground"
+                    : "bg-surface-container-low/50 border-border/80 text-foreground hover:border-primary/40"
+              }`}
+            >
+              <div>
+                <span className="font-bold block text-sm">
+                  {"Tuần"} {d.weekNumber}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {formatDueDate(d.dueDate)}
+                </span>
+              </div>
+              {d.status === 2 ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
+                  QUÁ HẠN
+                </span>
+              ) : d.status === 3 ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/15 text-success border border-success/30">
+                  HOÀN THÀNH
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/15 text-primary border border-primary/30">
+                  ĐÚNG HẠN
+                </span>
+              )}
             </div>
-            {d.status === 2 ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
-                QUÁ HẠN
-              </span>
-            ) : d.status === 3 ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-success/15 text-success border border-success/30">
-                HOÀN THÀNH
-              </span>
-            ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/15 text-primary border border-primary/30">
-                ĐÚNG HẠN
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
