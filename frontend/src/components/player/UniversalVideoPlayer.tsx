@@ -641,7 +641,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
 
     if (isYouTube) {
       return (
-        <div className="w-full h-full relative rounded-2xl overflow-hidden bg-black">
+        <div className="w-full h-full relative rounded-2xl overflow-hidden bg-black [&_iframe]:w-full [&_iframe]:h-full [&_iframe]:max-w-full">
           <div ref={mountPointRef} className="w-full h-full" />
           {!isYtReady && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-xs font-semibold">

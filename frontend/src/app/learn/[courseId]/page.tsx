@@ -1110,7 +1110,7 @@ function CoursePlayerContent() {
       </header>
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden p-2 sm:p-3 gap-2 sm:gap-3">
+      <div className="flex-1 flex overflow-hidden p-2 sm:p-3 gap-2 sm:gap-3 min-w-0">
         {/* Left Sidebar - MD3 Collapsible Floating Surface Container Drawer */}
         {!isPreviewMode && !isQuizActive && (
           <>
