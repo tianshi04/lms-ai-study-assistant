@@ -78,7 +78,7 @@ export default function AdminInstructorApplicationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8 transition-colors">
+    <main className="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header Breadcrumb & Title */}
         <PageHeader>
@@ -372,6 +372,6 @@ export default function AdminInstructorApplicationsPage() {
           </Dialog.Footer>
         </Dialog.Content>
       </Dialog>
-    </div>
+    </main>
   );
 }

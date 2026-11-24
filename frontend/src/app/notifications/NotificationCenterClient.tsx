@@ -78,7 +78,7 @@ export function NotificationCenterClient() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface py-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-surface text-on-surface py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header Title Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl bg-surface-container-low border border-outline-variant/40 shadow-2xs">
@@ -226,6 +226,6 @@ export function NotificationCenterClient() {
         isOpen={isPrefModalOpen}
         onClose={() => setIsPrefModalOpen(false)}
       />
-    </div>
+    </main>
   );
 }
