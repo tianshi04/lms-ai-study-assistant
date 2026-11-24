@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import { SignatureUploadField } from "@/components/ui/SignatureUploadField";
 import { Textarea } from "@/components/ui/Textarea";
 import { Dialog } from "@/components/ui/Dialog";
 import { Progress } from "@/components/ui/Progress";
@@ -512,12 +513,7 @@ function PartnerSettingsForm({
                 onChange={(e) => setNewSigDept(e.target.value)}
                 placeholder="Khoa / Chuyên ngành (VD: Khoa Điện - Điện tử)"
               />
-              <Input
-                type="text"
-                value={newSigImage}
-                onChange={(e) => setNewSigImage(e.target.value)}
-                placeholder="URL Ảnh chữ ký (tùy chọn)"
-              />
+              <SignatureUploadField compact value={newSigImage} onChange={setNewSigImage} />
             </div>
             <div className="flex justify-end">
               <Button type="button" onClick={handleAddSignatory} variant="filled" size="sm">

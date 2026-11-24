@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import { SignatureUploadField } from "@/components/ui/SignatureUploadField";
 import { Avatar } from "@/components/ui/Avatar";
 import { Progress } from "@/components/ui/Progress";
 
@@ -196,17 +197,15 @@ export default function InstructorProfilePage() {
               htmlFor="signatureImageUrl"
               className="block text-sm font-semibold text-muted-foreground mb-1.5"
             >
-              URL Ảnh Chữ ký tay Điện tử (PNG / SVG nền trong suốt)
+              Ảnh Chữ ký tay Điện tử (PNG / SVG nền trong suốt)
             </label>
-            <Input
+            <SignatureUploadField
               id="signatureImageUrl"
-              type="text"
               value={signatureImageUrl}
-              onChange={(e) => {
-                setSignatureInput(e.target.value);
+              onChange={(url) => {
+                setSignatureInput(url);
                 setSignatureImgError(false);
               }}
-              placeholder="https://example.com/signature.png"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Khuyến nghị tải lên ảnh dạng nét mực chữ ký tay trên nền trong suốt (Format PNG/SVG)

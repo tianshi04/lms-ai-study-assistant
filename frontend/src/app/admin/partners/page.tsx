@@ -19,6 +19,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import { SignatureUploadField } from "@/components/ui/SignatureUploadField";
 import { Textarea } from "@/components/ui/Textarea";
 import { Table } from "@/components/ui/Table";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -677,14 +678,12 @@ export default function AdminPartnersPage() {
                     htmlFor="signatureImg"
                     className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
                   >
-                    URL Ảnh chữ ký
+                    Ảnh chữ ký
                   </label>
-                  <Input
+                  <SignatureUploadField
                     id="signatureImg"
-                    type="text"
                     value={signatureImageUrl}
-                    onChange={(e) => setSignatureImageUrl(e.target.value)}
-                    placeholder="https://example.com/signature.png"
+                    onChange={setSignatureImageUrl}
                   />
                 </div>
               </div>
