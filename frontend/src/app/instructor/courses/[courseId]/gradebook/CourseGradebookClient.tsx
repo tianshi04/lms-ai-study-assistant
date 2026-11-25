@@ -24,6 +24,7 @@ import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Progress } from "@/components/ui/Progress";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Table } from "@/components/ui/Table";
 import { useCourseGradebookQuery } from "@/lib/query_hooks";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
@@ -340,7 +341,11 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
               <span className="text-xs font-semibold">Tổng học viên ghi danh</span>
               <Users className="w-4 h-4 text-primary" aria-hidden="true" />
             </div>
-            <div className="text-2xl font-black text-foreground">{totalStudents}</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-black text-foreground">{totalStudents}</div>
+            )}
             <p className="text-[11px] text-muted-foreground">
               Bao gồm toàn bộ học viên đang học và đã hoàn thành
             </p>
@@ -351,11 +356,21 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
               <span className="text-xs font-semibold">Tỷ lệ tốt nghiệp (≥80%)</span>
               <Award className="w-4 h-4 text-success" aria-hidden="true" />
             </div>
-            <div className="text-2xl font-black text-success">
-              {totalStudents > 0 ? `${((completedCount / totalStudents) * 100).toFixed(1)}%` : "0%"}
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <div className="text-2xl font-black text-success">
+                {totalStudents > 0
+                  ? `${((completedCount / totalStudents) * 100).toFixed(1)}%`
+                  : "0%"}
+              </div>
+            )}
             <p className="text-[11px] text-muted-foreground">
-              {completedCount} / {totalStudents} học viên đã hoàn thành điều kiện cấp bằng
+              {isLoading ? (
+                <Skeleton className="h-3.5 w-44 inline-block" />
+              ) : (
+                `${completedCount} / ${totalStudents} học viên đã hoàn thành điều kiện cấp bằng`
+              )}
             </p>
           </div>
 
@@ -364,7 +379,11 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
               <span className="text-xs font-semibold">Điểm trung bình toàn lớp</span>
               <ArrowUpDown className="w-4 h-4 text-warning" aria-hidden="true" />
             </div>
-            <div className="text-2xl font-black text-foreground">{avgGrade.toFixed(1)}%</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <div className="text-2xl font-black text-foreground">{avgGrade.toFixed(1)}%</div>
+            )}
             <p className="text-[11px] text-muted-foreground">
               Tính toán tự động theo trọng số từng cột bài tập
             </p>
@@ -413,9 +432,28 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
 
         {/* TanStack Table Data View */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center p-16 text-muted-foreground space-y-3 bg-card rounded-2xl border border-border">
-            <Progress.Circular size="md" ariaLabel="Đang tải dữ liệu sổ điểm" />
-            <p className="text-sm">Đang tải ma trận Sổ điểm khóa học…</p>
+          <div aria-busy="true" className="bg-card rounded-2xl border border-border p-6 space-y-4">
+            <span className="sr-only" aria-live="polite">
+              Đang tải ma trận Sổ điểm khóa học…
+            </span>
+            <div className="flex items-center justify-between gap-4 pb-3 border-b border-border">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-4 w-24 hidden sm:block" />
+              <Skeleton className="h-4 w-24 hidden md:block" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="flex items-center justify-between gap-4 py-2">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton className="h-4 w-36 max-w-full" />
+                    <Skeleton className="h-3 w-48 max-w-full" />
+                  </div>
+                </div>
+                <Skeleton className="h-6 w-16 rounded-full shrink-0" />
+              </div>
+            ))}
           </div>
         ) : isError ? (
           <div className="p-8 text-center text-destructive bg-destructive/10 rounded-2xl border border-destructive/20 space-y-2">
