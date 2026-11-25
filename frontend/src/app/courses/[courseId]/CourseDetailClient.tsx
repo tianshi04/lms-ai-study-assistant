@@ -392,17 +392,19 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </span>
                 <span className="font-semibold text-foreground">{course.partnerName}</span>
               </div>
-              <div className="h-8 w-px bg-border" />
-              <div>
-                <span className="block text-xs text-muted-foreground uppercase font-semibold">
-                  {"Giảng viên"}
-                </span>
-                <span className="font-semibold text-foreground">
-                  {course.instructorNames.length > 0
-                    ? course.instructorNames.join(", ")
-                    : `Đội ngũ ${course.partnerName}`}
-                </span>
-              </div>
+              {course.instructorNames.length > 0 && (
+                <>
+                  <div className="h-8 w-px bg-border" />
+                  <div>
+                    <span className="block text-xs text-muted-foreground uppercase font-semibold">
+                      {"Giảng viên"}
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {course.instructorNames.join(", ")}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -624,14 +626,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     </p>
 
                     <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
-                      <span>
-                        {(foundationalCourses[0].instructorNames ?? []).length > 0
-                          ? (foundationalCourses[0].instructorNames ?? []).join(", ")
-                          : `Đội ngũ ${foundationalCourses[0].partnerName}`}
-                      </span>
+                      {(foundationalCourses[0].instructorNames ?? []).length > 0 && (
+                        <span>{(foundationalCourses[0].instructorNames ?? []).join(", ")}</span>
+                      )}
                       {(foundationalCourses[0].weekModules ?? []).length > 0 && (
                         <>
-                          <span>•</span>
+                          {(foundationalCourses[0].instructorNames ?? []).length > 0 && (
+                            <span>•</span>
+                          )}
                           <span>
                             {(foundationalCourses[0].weekModules ?? []).length} {"tuần học"}
                           </span>
@@ -701,14 +703,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                       </p>
 
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-1">
-                        <span>
-                          {(fc.instructorNames ?? []).length > 0
-                            ? (fc.instructorNames ?? []).join(", ")
-                            : `Đội ngũ ${fc.partnerName}`}
-                        </span>
+                        {(fc.instructorNames ?? []).length > 0 && (
+                          <span>{(fc.instructorNames ?? []).join(", ")}</span>
+                        )}
                         {fc.averageRating > 0 && (
                           <>
-                            <span>•</span>
+                            {(fc.instructorNames ?? []).length > 0 && <span>•</span>}
                             <span className="flex items-center gap-1 text-warning font-semibold">
                               <Star
                                 className="w-3 h-3 fill-amber-400 text-amber-400"
@@ -908,7 +908,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                                 )}
                                 {specCourse.level && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-foreground text-[10px] font-semibold border border-border">
-                                    {specCourse.level}
+                                    {levelMap.get(specCourse.level) || specCourse.level}
                                   </span>
                                 )}
                               </div>
@@ -1194,9 +1194,11 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                             {rev.userName || "Học viên LMS"}
                           </h4>
                           {rev.isVerifiedCompleter ? (
-                            <Badge variant="success">✓</Badge>
+                            <Badge variant="success" aria-label="Đã hoàn thành khóa học">
+                              <Check className="w-3 h-3" aria-hidden="true" />
+                            </Badge>
                           ) : (
-                            <Badge variant="outlined">HỌC</Badge>
+                            <Badge variant="outlined">Học viên</Badge>
                           )}
                         </div>
                         <span className="text-[11px] text-muted-foreground">

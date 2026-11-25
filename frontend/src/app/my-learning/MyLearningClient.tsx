@@ -225,7 +225,7 @@ export function MyLearningClient() {
                     <Link
                       href={
                         course.lastAccessedItemId
-                          ? `/learn/${course.courseId}?item=${course.lastAccessedItemId}`
+                          ? `/learn/${course.courseId}?itemId=${course.lastAccessedItemId}`
                           : `/learn/${course.courseId}`
                       }
                       prefetch={true}

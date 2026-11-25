@@ -82,7 +82,7 @@ Tất cả các thành phần được đóng gói và kết nối an toàn qua 
   - `api_zone`: 150 requests / phút / IP cho toàn bộ `/rpc/*` và `/api/*`.
   - `global_zone`: 600 requests / phút / IP cho toàn hệ thống (ngoại trừ tài nguyên tĩnh `/_next/static/*`, hỗ trợ dung sai mạng NAT).
   - Tích hợp `ipv6_prefix 64` trên toàn bộ các zone để ngăn chặn nguy cơ xoay vòng IP trong dải IPv6 subnet.
-  - Khi vượt ngưỡng, Caddy trả ngay HTTP 429 dạng JSON chuẩn (`code: resource_exhausted`) kèm header `Retry-After`.
+  - Khi vượt ngưỡng, Caddy trả HTTP 429 dạng JSON chuẩn (`code: resource_exhausted`) cho `/rpc/*`, `/api/*`, `/copilotkit/*` và trang HTML thông báo thân thiện cho các route giao diện web, kèm header `Retry-After`.
 
 ---
 

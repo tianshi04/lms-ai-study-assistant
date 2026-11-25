@@ -66,7 +66,7 @@ export function StreakBadge({ className }: StreakBadgeProps) {
     return (
       <div
         className={cn(
-          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted animate-pulse h-7 w-16",
+          "inline-flex items-center gap-1.5 px-2.5 rounded-full text-sm font-medium bg-muted animate-pulse h-8 w-12",
           className,
         )}
       />
@@ -77,24 +77,25 @@ export function StreakBadge({ className }: StreakBadgeProps) {
     <Popover.Root>
       <Popover.Trigger
         className={cn(
-          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all select-none outline-none focus-visible:ring-2 focus-visible:ring-ring border cursor-pointer",
-          currentStreak > 0
-            ? "bg-warning/10 text-warning border-warning/30 hover:bg-warning/20 shadow-xs"
-            : "bg-surface-container text-muted-foreground border-outline-variant/50 hover:bg-surface-container-high",
+          "inline-flex items-center gap-1 h-8 px-2 rounded-full text-sm font-bold transition-colors select-none outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer hover:bg-surface-container",
+          currentStreak === 0 ? "text-muted-foreground" : "text-warning",
           className,
         )}
+        title={`Chuỗi ${currentStreak} ngày học liên tục`}
         aria-label={`Chuỗi ngày học: ${currentStreak} ngày liên tục`}
       >
         <Flame
           className={cn(
-            "w-3.5 h-3.5 transition-transform",
-            currentStreak > 0
-              ? "fill-warning text-warning animate-bounce-subtle"
-              : "text-muted-foreground",
+            "w-4.5 h-4.5 transition-transform",
+            currentStreak === 0
+              ? "text-muted-foreground"
+              : isTodayGoalMet
+                ? "fill-warning text-warning stroke-[1.5] animate-bounce-subtle"
+                : "text-warning",
           )}
           aria-hidden="true"
         />
-        <span>{currentStreak} ngày</span>
+        <span className="tabular-nums">{currentStreak}</span>
       </Popover.Trigger>
 
       <Popover.Popup className="w-80 p-4 space-y-4">

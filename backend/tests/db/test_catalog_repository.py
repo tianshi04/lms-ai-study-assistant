@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.modules.catalog.domain import CourseStatus
+from src.modules.catalog.domain import CourseStatus, ItemType
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
     InteractiveTranscriptModel,
@@ -540,3 +540,32 @@ async def test_get_instructor_analytics_excludes_teaching_personnel(repo, mock_s
         assert analytics.students[0].user_id == "student-1"
         assert analytics.students[0].enrolled_at == ""
         assert analytics.average_completion_rate == 50.0
+
+
+@pytest.mark.asyncio
+async def test_resolve_course_video_item(repo, mock_session):
+    assert await repo.resolve_course_video_item("", "i1") is None
+    assert await repo.resolve_course_video_item("c1", " ") is None
+
+    mock_res_missing = MagicMock()
+    mock_res_missing.first.return_value = None
+
+    mock_res_video = MagicMock()
+    mock_res_video.first.return_value = MagicMock(
+        id="c1", type=ItemType.VIDEO, video_url=""
+    )
+
+    mock_res_reading = MagicMock()
+    mock_res_reading.first.return_value = MagicMock(
+        id="c1", type=ItemType.READING, video_url=""
+    )
+
+    mock_session.execute.side_effect = [
+        mock_res_missing,
+        mock_res_video,
+        mock_res_reading,
+    ]
+
+    assert await repo.resolve_course_video_item("c1", "missing") is None
+    assert await repo.resolve_course_video_item("c-1", "i1") == ("c1", True)
+    assert await repo.resolve_course_video_item("c1", "i2") == ("c1", False)

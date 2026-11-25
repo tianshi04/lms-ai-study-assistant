@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { CourseStatus, type AdminCourseQualityMetric } from "@/gen/catalog/v1/catalog_pb";
+import { Star } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
@@ -15,6 +16,7 @@ import { AdminTableFilters, type FilterOption } from "./AdminTableFilters";
 import { formatNumber, formatPercent, formatVnd, toPercent } from "./formatters";
 import { PagedQueryStatus } from "./PagedQueryStatus";
 import { useAdminTableState } from "./useAdminTableState";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 
 const PAGE_SIZE = 10;
 const NO_COURSES: AdminCourseQualityMetric[] = [];
@@ -125,8 +127,9 @@ const columns: ColumnDef<AdminCourseQualityMetric>[] = [
     header: "Đánh giá",
     cell: ({ row }) =>
       row.original.reviewCount > 0 ? (
-        <span className="font-mono">
-          {row.original.averageRating.toFixed(1)} ★{" "}
+        <span className="inline-flex items-center gap-1 font-mono">
+          <span>{row.original.averageRating.toFixed(1)}</span>
+          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" aria-hidden="true" />
           <span className="text-xs text-muted-foreground">
             ({formatNumber(row.original.reviewCount)})
           </span>
@@ -163,6 +166,7 @@ const columns: ColumnDef<AdminCourseQualityMetric>[] = [
 ];
 
 export function AdminCourseQualityTable() {
+  const isMobile = useIsMobile();
   const tableState = useAdminTableState(PAGE_SIZE);
   const { pagination } = tableState;
   const { data, isLoading, isError, error, refetch, isPlaceholderData } =
@@ -231,11 +235,89 @@ export function AdminCourseQualityTable() {
           className={isPlaceholderData ? "opacity-60 transition-opacity" : "transition-opacity"}
           aria-busy={isLoading || isPlaceholderData}
         >
-          <AdminDataTable
-            table={table}
-            columnClassNames={COLUMN_CLASS_NAMES}
-            isLoading={isLoading}
-          />
+          {isMobile ? (
+            <div className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
+              {isLoading && courses.length === 0 ? (
+                <div className="p-4 space-y-2">
+                  <div className="h-4 w-48 rounded bg-muted/70 animate-pulse" />
+                  <div className="h-3 w-32 rounded bg-muted/50 animate-pulse" />
+                </div>
+              ) : (
+                courses.map((course) => (
+                  <div key={course.courseId} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-bold text-foreground">{course.title}</p>
+                        <p className="text-xs text-muted-foreground">{course.partnerName || "—"}</p>
+                      </div>
+                      <div className="shrink-0">
+                        <CourseStatusBadge status={course.status} />
+                      </div>
+                    </div>
+                    <CompletionProgressCell
+                      title={course.title}
+                      completedCount={course.completedCount}
+                      enrolledCount={course.enrolledCount}
+                    />
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground block">Ghi danh</span>
+                        <span className="font-mono font-bold text-foreground">
+                          {formatNumber(course.enrolledCount)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Đánh giá</span>
+                        <span className="inline-flex items-center gap-1 font-mono font-bold text-foreground">
+                          {course.reviewCount > 0 ? (
+                            <>
+                              <span>{course.averageRating.toFixed(1)}</span>
+                              <Star
+                                className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0"
+                                aria-hidden="true"
+                              />
+                            </>
+                          ) : (
+                            "Chưa có"
+                          )}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Doanh thu</span>
+                        <span className="font-mono font-bold text-foreground">
+                          {formatVnd(course.revenue)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap justify-end gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outlined"
+                        render={<Link href={`/courses/${course.courseId}`} />}
+                      >
+                        Xem
+                      </Button>
+                      {course.status === CourseStatus.PENDING_REVIEW && (
+                        <Button
+                          size="sm"
+                          variant="tonal"
+                          render={<Link href="/admin/courses/review" />}
+                        >
+                          Kiểm duyệt
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <AdminDataTable
+              table={table}
+              columnClassNames={COLUMN_CLASS_NAMES}
+              isLoading={isLoading}
+            />
+          )}
         </div>
       )}
 

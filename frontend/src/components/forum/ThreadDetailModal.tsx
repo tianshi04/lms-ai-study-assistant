@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { ThumbsUp, MessageSquare, Pin, ExternalLink } from "lucide-react";
+import { ThumbsUp, MessageSquare, Pin, ExternalLink, Megaphone } from "lucide-react";
 import type { ForumThread, ForumReply } from "@/gen/forum/v1/forum_pb";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -141,8 +141,12 @@ export function ThreadDetailModal({
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 {isNotificationTarget && (
-                  <Badge variant="primary" className="gap-1 px-3 py-1 shadow-xs font-bold text-xs">
-                    <span>📌 Bài viết từ thông báo</span>
+                  <Badge
+                    variant="primary"
+                    className="gap-1.5 px-3 py-1 shadow-xs font-bold text-xs"
+                  >
+                    <Pin className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <span>Bài viết từ thông báo</span>
                   </Badge>
                 )}
                 {Boolean(
@@ -150,8 +154,12 @@ export function ThreadDetailModal({
                   thread.title.trim().toLowerCase().startsWith("[thong bao]") ||
                   thread.title.trim().toLowerCase().startsWith("[announcement]"),
                 ) && (
-                  <Badge variant="primary" className="gap-1 px-3 py-1 shadow-xs font-bold text-xs">
-                    <span>📢 Thông báo từ Giảng viên</span>
+                  <Badge
+                    variant="primary"
+                    className="gap-1.5 px-3 py-1 shadow-xs font-bold text-xs"
+                  >
+                    <Megaphone className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <span>Thông báo từ Giảng viên</span>
                   </Badge>
                 )}
                 {thread.isStaffPinned && (

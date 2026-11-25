@@ -35,7 +35,7 @@ export function PublicLanding() {
         <div className="lg:col-span-7 space-y-6">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-primary-container border border-primary/20 text-on-primary-container text-xs font-bold uppercase tracking-wider shadow-xs">
             <Sparkles className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-            <span>Next-Gen Coursera AI LMS</span>
+            <span>Next-Gen LMS AI Platform</span>
           </div>
 
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-on-surface leading-[1.1] text-balance">
@@ -44,8 +44,8 @@ export function PublicLanding() {
           </h1>
 
           <p className="text-lg text-on-surface-variant max-w-2xl leading-relaxed">
-            Trải nghiệm trình phát bài học chuẩn Coursera với phụ đề tương tác, bài tập ngắt ngang
-            video và chứng chỉ xác thực công khai.
+            Trải nghiệm trình phát bài học hiện đại với phụ đề tương tác, bài tập ngắt ngang video
+            và chứng chỉ xác thực công khai.
           </p>
 
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">

@@ -26,6 +26,7 @@ import {
   Award,
   MessageSquare,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
@@ -713,7 +714,7 @@ export function PeerAssignmentWorkspace({
               >
                 {isSubmitting ? (
                   <>
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                     <span>Đang nộp…</span>
                   </>
                 ) : (
@@ -758,7 +759,7 @@ export function PeerAssignmentWorkspace({
           <div className="space-y-4">
             {isLoadingReviews ? (
               <div className="p-8 rounded-2xl border border-border bg-card text-center space-y-3">
-                <span className="w-6 h-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin inline-block" />
+                <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" aria-hidden="true" />
                 <p className="text-xs text-muted-foreground font-semibold">
                   Đang tải bài làm của bạn học để bạn chấm…
                 </p>

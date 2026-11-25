@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import { ImageUploadField } from "@/components/ui/ImageUploadField";
+import { SignatureUploadField } from "@/components/ui/SignatureUploadField";
 import { Textarea } from "@/components/ui/Textarea";
 import { Dialog } from "@/components/ui/Dialog";
 import { Progress } from "@/components/ui/Progress";
@@ -336,22 +338,28 @@ function PartnerSettingsForm({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <Input
-                label="URL Logo Đối tác"
-                type="url"
-                inputMode="url"
+              <label
+                htmlFor="partnerLogoInput"
+                className="block text-sm font-medium text-foreground mb-1.5"
+              >
+                Logo Đối tác
+              </label>
+              <ImageUploadField
+                id="partnerLogoInput"
+                compact
+                folder="public/logos"
+                itemLabel="logo"
                 value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="https://example.com/logo.png"
+                onChange={setLogoUrl}
               />
               {logoUrl && (
-                <div className="mt-2 p-2 bg-muted rounded-xl border border-border flex items-center space-x-3">
+                <div className="mt-2 p-2.5 bg-muted rounded-xl border border-border flex items-center gap-3">
                   <Image
                     src={logoUrl}
                     alt="Logo Preview"
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 object-contain rounded-lg"
+                    width={140}
+                    height={48}
+                    className="h-12 w-auto max-w-[140px] object-contain rounded-lg"
                     unoptimized
                   />
                   <span className="text-xs text-muted-foreground">Xem trước Logo</span>
@@ -360,22 +368,28 @@ function PartnerSettingsForm({
             </div>
 
             <div>
-              <Input
-                label="URL Banner Bìa"
-                type="url"
-                inputMode="url"
+              <label
+                htmlFor="partnerBannerInput"
+                className="block text-sm font-medium text-foreground mb-1.5"
+              >
+                Banner Bìa
+              </label>
+              <ImageUploadField
+                id="partnerBannerInput"
+                compact
+                folder="public/banners"
+                itemLabel="banner"
                 value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-                placeholder="https://example.com/banner.jpg"
+                onChange={setBannerUrl}
               />
               {bannerUrl && (
-                <div className="mt-2 p-2 bg-muted rounded-xl border border-border">
+                <div className="mt-2 p-2 bg-muted rounded-xl border border-border overflow-hidden">
                   <Image
                     src={bannerUrl}
                     alt="Banner Preview"
-                    width={160}
-                    height={48}
-                    className="w-full h-12 object-cover rounded-lg"
+                    width={480}
+                    height={160}
+                    className="w-full aspect-[3/1] max-h-36 object-cover rounded-lg"
                     unoptimized
                   />
                 </div>
@@ -512,12 +526,7 @@ function PartnerSettingsForm({
                 onChange={(e) => setNewSigDept(e.target.value)}
                 placeholder="Khoa / Chuyên ngành (VD: Khoa Điện - Điện tử)"
               />
-              <Input
-                type="text"
-                value={newSigImage}
-                onChange={(e) => setNewSigImage(e.target.value)}
-                placeholder="URL Ảnh chữ ký (tùy chọn)"
-              />
+              <SignatureUploadField compact value={newSigImage} onChange={setNewSigImage} />
             </div>
             <div className="flex justify-end">
               <Button type="button" onClick={handleAddSignatory} variant="filled" size="sm">

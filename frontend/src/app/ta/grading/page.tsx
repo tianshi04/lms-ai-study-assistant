@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Table } from "@/components/ui/Table";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 
 interface DemoSubmission {
   id: string;
@@ -69,6 +70,7 @@ const INITIAL_SUBMISSIONS: DemoSubmission[] = [
 
 export default function TAGradingPage() {
   const toast = useToast();
+  const isMobile = useIsMobile();
   const [submissions, setSubmissions] = useState<DemoSubmission[]>(INITIAL_SUBMISSIONS);
   const [filterStatus, setFilterStatus] = useState<"ALL" | "PENDING" | "APPEALED" | "GRADED">(
     "ALL",
@@ -181,133 +183,128 @@ export default function TAGradingPage() {
             <div className="py-16 text-center text-muted-foreground space-y-2">
               <p className="text-sm font-semibold">Không có bài nộp nào trong mục này</p>
             </div>
-          ) : (
-            <>
-              <div className="md:hidden divide-y divide-border">
-                {filteredSubmissions.map((sub) => (
-                  <div key={sub.id} className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="font-bold text-foreground">{sub.studentName}</div>
-                        <div className="text-[11px] text-muted-foreground font-mono truncate">
-                          {sub.studentEmail}
-                        </div>
+          ) : isMobile ? (
+            <div className="divide-y divide-border">
+              {filteredSubmissions.map((sub) => (
+                <div key={sub.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-bold text-foreground">{sub.studentName}</div>
+                      <div className="text-[11px] text-muted-foreground font-mono truncate">
+                        {sub.studentEmail}
                       </div>
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 ${
-                          sub.status === "GRADED"
-                            ? "bg-success/10 text-success"
-                            : sub.status === "APPEALED"
-                              ? "bg-warning/10 text-warning animate-pulse"
-                              : "bg-info/10 text-info"
-                        }`}
-                      >
-                        {sub.status === "GRADED"
-                          ? "Đã chấm"
+                    </div>
+                    <span
+                      className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 ${
+                        sub.status === "GRADED"
+                          ? "bg-success/10 text-success"
                           : sub.status === "APPEALED"
-                            ? "Có kháng nghị"
-                            : "Chờ trợ giảng"}
-                      </span>
+                            ? "bg-warning/10 text-warning animate-pulse"
+                            : "bg-info/10 text-info"
+                      }`}
+                    >
+                      {sub.status === "GRADED"
+                        ? "Đã chấm"
+                        : sub.status === "APPEALED"
+                          ? "Có kháng nghị"
+                          : "Chờ trợ giảng"}
+                    </span>
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-bold text-foreground">{sub.itemTitle}</div>
+                    <div className="text-xs text-muted-foreground font-medium">
+                      {sub.courseTitle}
                     </div>
-                    <div className="space-y-0.5">
-                      <div className="text-sm font-bold text-foreground">{sub.itemTitle}</div>
-                      <div className="text-xs text-muted-foreground font-medium">
-                        {sub.courseTitle}
-                      </div>
-                      <div className="text-[11px] font-mono text-muted-foreground">
-                        {sub.submittedAt}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <div className="flex items-center gap-3 text-xs font-mono">
-                        <span className="text-muted-foreground">
-                          Peer: <strong className="text-foreground">{sub.peerScore}/100</strong>
-                        </span>
-                        <span className="text-muted-foreground">
-                          TA:{" "}
-                          <strong className="text-primary">
-                            {sub.taScore !== null ? `${sub.taScore}/100` : "--"}
-                          </strong>
-                        </span>
-                      </div>
-                      <Button size="sm" variant="tonal" onClick={() => handleOpenGradeModal(sub)}>
-                        {sub.status === "GRADED" ? "Xem & Sửa điểm" : "Chấm điểm ngay"}
-                      </Button>
+                    <div className="text-[11px] font-mono text-muted-foreground">
+                      {sub.submittedAt}
                     </div>
                   </div>
-                ))}
-              </div>
-              <div className="hidden md:block overflow-x-auto">
-                <Table>
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.Head>Học viên</Table.Head>
-                      <Table.Head>Bài tập / Khóa học</Table.Head>
-                      <Table.Head>Thời gian nộp</Table.Head>
-                      <Table.Head>Điểm Peer</Table.Head>
-                      <Table.Head>Điểm TA</Table.Head>
-                      <Table.Head>Trạng thái</Table.Head>
-                      <Table.Head className="text-right">Thao tác</Table.Head>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {filteredSubmissions.map((sub) => (
-                      <Table.Row key={sub.id}>
-                        <Table.Cell>
-                          <div className="font-bold text-foreground">{sub.studentName}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">
-                            {sub.studentEmail}
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell className="max-w-xs">
-                          <div className="font-bold text-foreground min-w-0 truncate">
-                            {sub.itemTitle}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate font-medium">
-                            {sub.courseTitle}
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell className="text-xs font-mono text-muted-foreground">
-                          {sub.submittedAt}
-                        </Table.Cell>
-                        <Table.Cell className="font-mono text-xs font-bold text-foreground">
-                          {sub.peerScore}/100
-                        </Table.Cell>
-                        <Table.Cell className="font-mono text-xs font-bold text-primary">
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <div className="flex items-center gap-3 text-xs font-mono">
+                      <span className="text-muted-foreground">
+                        Peer: <strong className="text-foreground">{sub.peerScore}/100</strong>
+                      </span>
+                      <span className="text-muted-foreground">
+                        TA:{" "}
+                        <strong className="text-primary">
                           {sub.taScore !== null ? `${sub.taScore}/100` : "--"}
-                        </Table.Cell>
-                        <Table.Cell>
-                          <span
-                            className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                              sub.status === "GRADED"
-                                ? "bg-success/10 text-success"
-                                : sub.status === "APPEALED"
-                                  ? "bg-warning/10 text-warning animate-pulse"
-                                  : "bg-info/10 text-info"
-                            }`}
-                          >
-                            {sub.status === "GRADED"
-                              ? "Đã chấm"
+                        </strong>
+                      </span>
+                    </div>
+                    <Button size="sm" variant="tonal" onClick={() => handleOpenGradeModal(sub)}>
+                      {sub.status === "GRADED" ? "Xem & Sửa điểm" : "Chấm điểm ngay"}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head>Học viên</Table.Head>
+                    <Table.Head>Bài tập / Khóa học</Table.Head>
+                    <Table.Head>Thời gian nộp</Table.Head>
+                    <Table.Head>Điểm Peer</Table.Head>
+                    <Table.Head>Điểm TA</Table.Head>
+                    <Table.Head>Trạng thái</Table.Head>
+                    <Table.Head className="text-right">Thao tác</Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {filteredSubmissions.map((sub) => (
+                    <Table.Row key={sub.id}>
+                      <Table.Cell>
+                        <div className="font-bold text-foreground">{sub.studentName}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">
+                          {sub.studentEmail}
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="max-w-xs">
+                        <div className="font-bold text-foreground min-w-0 truncate">
+                          {sub.itemTitle}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate font-medium">
+                          {sub.courseTitle}
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="text-xs font-mono text-muted-foreground">
+                        {sub.submittedAt}
+                      </Table.Cell>
+                      <Table.Cell className="font-mono text-xs font-bold text-foreground">
+                        {sub.peerScore}/100
+                      </Table.Cell>
+                      <Table.Cell className="font-mono text-xs font-bold text-primary">
+                        {sub.taScore !== null ? `${sub.taScore}/100` : "--"}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            sub.status === "GRADED"
+                              ? "bg-success/10 text-success"
                               : sub.status === "APPEALED"
-                                ? "Có kháng nghị"
-                                : "Chờ trợ giảng"}
-                          </span>
-                        </Table.Cell>
-                        <Table.Cell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="tonal"
-                            onClick={() => handleOpenGradeModal(sub)}
-                          >
-                            {sub.status === "GRADED" ? "Xem & Sửa điểm" : "Chấm điểm ngay"}
-                          </Button>
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table>
-              </div>
-            </>
+                                ? "bg-warning/10 text-warning animate-pulse"
+                                : "bg-info/10 text-info"
+                          }`}
+                        >
+                          {sub.status === "GRADED"
+                            ? "Đã chấm"
+                            : sub.status === "APPEALED"
+                              ? "Có kháng nghị"
+                              : "Chờ trợ giảng"}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell className="text-right">
+                        <Button size="sm" variant="tonal" onClick={() => handleOpenGradeModal(sub)}>
+                          {sub.status === "GRADED" ? "Xem & Sửa điểm" : "Chấm điểm ngay"}
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            </div>
           )}
         </div>
 

@@ -114,10 +114,6 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   * *Tại bước 2:* Hệ thống xử lý tải video thành công và tự động trích xuất chuỗi phụ đề thành **Interactive Transcript**.
   * *Tại bước 3:* Mốc thời gian 03:15 trên video được đánh dấu vị trí chèn quiz thành công.
   * *Tại bước 4:* Bộ Rubric được lưu cấu trúc đầy đủ chuẩn xác (tiêu chí, thang điểm và hướng dẫn chấm bài cho học viên).
-  * *Tại bước 5:* Ngân hàng câu hỏi lưu 10 câu, cấu hình đề thi tính điểm hiển thị chính xác các tham số ngẫu nhiên.
-  * *Tại bước 6:* Khóa học chuyển trạng thái từ `Draft` sang `Published`, hiển thị công khai trên danh mục khóa học (Catalog) cho Học viên đăng ký học.
-  * *Tại bước 3:* Mốc thời gian 03:15 trên video được đánh dấu vị trí chèn quiz thành công.
-  * *Tại bước 4:* Bộ Rubric được lưu cấu trúc đầy đủ chuẩn xác (tiêu chí, thang điểm và hướng dẫn chấm bài cho học viên).
   * *Tại bước 5:* Ngân hàng câu hỏi lưu 10 câu, cấu hình đề thi tính điểm hiển thị chính xác các tham số ngẫu nhiên & cooldown.
   * *Tại bước 6:* Khóa học chuyển trạng thái từ `Draft` sang `Published`, hiển thị công khai trên danh mục khóa học (Catalog) cho Học viên đăng ký học.
 
@@ -143,6 +139,25 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
 
 ---
 
+## KỊCH BẢN UAT-09: KIỂM THỬ GHI NHỚ & TỰ ĐỘNG KHÔI PHỤC VỊ TRÍ PHÁT VIDEO (VIDEO AUTO-RESUME FLOW)
+
+* **Mục tiêu:** Xác minh hệ thống lưu vết vị trí xem dở của bài học video theo thời gian thực, tự động khôi phục vị trí khi tải lại trang hoặc quay lại từ `/my-learning`, hỗ trợ "Xem lại từ đầu", và đặt lại về `00:00` khi video chạy hết.
+* **Tác nhân thực hiện:** Học viên (Learner).
+* **Điều kiện bắt đầu:** Học viên đã ghi danh khóa học có các bài học Video (gắn phụ đề Transcript và có 1 In-Video Quiz ở mốc 00:45).
+* **Các bước thực hiện:**
+  1. Học viên mở Video bài giảng 1, xem hoặc tua đến mốc **01:30**, tạm dừng (Pause) hoặc chuyển sang Video bài giảng 2.
+  2. Học viên tải lại trang (`/learn/[courseId]`) hoặc quay lại `/my-learning` rồi bấm **"Tiếp tục học"**.
+  3. Trên thông báo Toast khôi phục vị trí, học viên bấm nút **"Xem lại từ đầu"**.
+  4. Học viên xem Video bài giảng 1 đến hết (`onEnded`) hoặc trong 5 giây cuối của video.
+  5. Học viên tải lại trang và mở lại Video bài giảng 1.
+* **Kết quả mong đợi (Expected Results):**
+  * *Tại bước 1:* Vị trí `90s` được lưu qua `SaveVideoPosition` (ngay khi Pause / keepalive khi đổi bài); sidebar lộ trình hiển thị `• Đã xem 01:30` cho bài giảng chưa hoàn thành.
+  * *Tại bước 2:* Hệ thống mở đúng Video bài giảng 1, trình phát tự động tua tới **01:30**, bảng Transcript cuộn/sáng đúng đoạn 01:30, In-Video Quiz ở 00:45 được tự động bỏ qua, và Toast hiển thị `"Đã tiếp tục từ 01:30"` kèm nút **"Xem lại từ đầu"**.
+  * *Tại bước 3:* Trình phát lập tức tua về **00:00**, Toast tự đóng, bộ đánh dấu In-Video Quiz được đặt lại và server lưu vị trí mới là `0`.
+  * *Tại bước 4 & 5:* Video được đánh dấu hoàn thành, đồng thời vị trí phát được tự động chuẩn hóa đặt lại về **00:00** để lần mở xem lại sau phát từ đầu mà vẫn giữ dấu tích hoàn thành.
+
+---
+
 ## KỊCH BẢN UAT-10: KIỂM THỬ LƯU NHÁP BÀI QUIZ CHỐNG MẤT BÀI & KHÔI PHỤC PHIÊN LÀM BÀI (QUIZ DRAFT AUTO-SAVE & RECOVERY FLOW)
 
 * **Mục tiêu:** Xác minh hệ thống tự động lưu nháp các đáp án đã chọn khi làm bài Quiz, bảo toàn đề thi và thời gian đếm ngược khi tải lại trang (F5) hoặc tạm thoát, hỗ trợ xác nhận khi làm lại từ đầu và xóa sạch bản nháp sau khi nộp bài.
@@ -160,4 +175,3 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   * *Tại bước 3:* Màn hình Tổng quan hiển thị thẻ thông báo **"Phiên làm bài đang được bảo toàn (Đã chọn 3/5 câu)"** kèm thời gian đếm ngược còn lại cùng 2 nút **"Tiếp tục làm bài"** và **"Làm bài mới từ đầu"**.
   * *Tại bước 4:* Hệ thống mở lại đúng bộ câu hỏi và thứ tự phương án cũ, giữ nguyên 3 đáp án đã chọn trước đó và đồng hồ đếm ngược tiếp tục chạy từ mốc Server (không bị reset lại từ đầu).
   * *Tại bước 5:* Bài thi được chấm điểm chính xác và bản nháp trong cả `quiz_active_sessions` lẫn `localStorage` được dọn sạch hoàn toàn.
-

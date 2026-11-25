@@ -83,7 +83,7 @@ export function UserDropdown() {
   }, [userName]);
 
   const roleLabel = useMemo(() => {
-    if (isSuperAdmin) return "Quản trị viên hệ thống";
+    if (isSuperAdmin) return "Admin";
     const r = String(userRole || "").toUpperCase();
     if (r === "2" || r.includes("INSTRUCTOR")) return "Giảng viên";
     if (r === "TA" || r.includes("TA")) return "Trợ giảng";
@@ -109,7 +109,7 @@ export function UserDropdown() {
       <Menu.Content
         sideOffset={14}
         align="end"
-        className="w-68 p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
+        className="w-68 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-y-auto p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
       >
         {/* User Info Header with Avatar and Stacked Role Badge */}
         <div className="flex items-center gap-3.5 px-3.5 py-3 mb-1.5">
@@ -152,7 +152,7 @@ export function UserDropdown() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
                 <Sparkles className="w-4 h-4 text-primary animate-pulse" aria-hidden="true" />
-                <span>{"Coursera Plus"}</span>
+                <span>{"LMS AI Plus"}</span>
               </div>
               <Chip
                 variant="assist"

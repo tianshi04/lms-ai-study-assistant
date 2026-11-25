@@ -15,7 +15,7 @@ import {
   useRecordCourseSearchMutation,
 } from "@/lib/query_hooks";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Search, RotateCcw } from "lucide-react";
+import { Search, RotateCcw, X } from "lucide-react";
 
 import type { Course, Category } from "@/gen/catalog/v1/catalog_pb";
 
@@ -133,7 +133,7 @@ export function CourseCatalogClient({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={"Tìm kiếm khóa học theo tên hoặc từ khóa…"}
-              className="w-full pl-11 pr-9 py-2.5 text-xs sm:text-sm bg-surface-container-lowest border border-outline-variant rounded-full text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
+              className="w-full pl-11 pr-9 py-2.5 text-xs sm:text-sm bg-surface-container-lowest border border-outline-variant rounded-full text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary [&::-webkit-search-cancel-button]:appearance-none"
             />
             {searchQuery && (
               <IconButton
@@ -144,7 +144,7 @@ export function CourseCatalogClient({
                 aria-label="Xóa tìm kiếm"
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant"
               >
-                ✕
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
               </IconButton>
             )}
           </div>

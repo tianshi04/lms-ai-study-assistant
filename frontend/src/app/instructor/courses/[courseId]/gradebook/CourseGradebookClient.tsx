@@ -27,6 +27,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Progress } from "@/components/ui/Progress";
 import { Table } from "@/components/ui/Table";
 import { useCourseGradebookQuery } from "@/lib/query_hooks";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import type {
   GradebookStudentRow,
   GradebookColumn as ProtoGradebookColumn,
@@ -38,6 +39,7 @@ interface CourseGradebookClientProps {
 }
 
 export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) {
+  const isMobile = useIsMobile();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -275,7 +277,7 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 space-y-6">
         {/* Breadcrumb Navigation */}
         <Breadcrumb>
           <Breadcrumb.List className="text-xs">
@@ -438,77 +440,80 @@ export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) 
           </div>
         ) : (
           <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <div className="md:hidden divide-y divide-border">
-              {table.getRowModel().rows.map((row) => {
-                const student = row.original;
-                return (
-                  <div key={row.id} className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="font-bold text-foreground truncate">
-                          {student.fullName || "Học viên"}
-                        </div>
-                        <div className="text-xs font-mono text-muted-foreground truncate">
-                          {student.email}
-                        </div>
-                      </div>
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary shrink-0">
-                        {student.finalWeightedGrade.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                      {columnsData.map((col) => {
-                        const cellData = student.cells.find((c) => c.itemId === col.itemId);
-                        return (
-                          <div
-                            key={col.itemId}
-                            className="flex items-center justify-between gap-2 text-xs bg-muted/40 rounded-xl px-3 py-2"
-                          >
-                            <span className="font-medium text-foreground truncate">
-                              {col.itemTitle}
-                            </span>
-                            <span className="font-mono font-bold text-foreground shrink-0">
-                              {cellData &&
-                              (cellData.gradedAt || cellData.submissionId || cellData.provenance)
-                                ? `${cellData.score.toFixed(1)}/${col.maxScore || 100}`
-                                : "Chưa có"}
-                            </span>
+            {isMobile ? (
+              <div className="divide-y divide-border">
+                {table.getRowModel().rows.map((row) => {
+                  const student = row.original;
+                  return (
+                    <div key={row.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-bold text-foreground truncate">
+                            {student.fullName || "Học viên"}
                           </div>
-                        );
-                      })}
+                          <div className="text-xs font-mono text-muted-foreground truncate">
+                            {student.email}
+                          </div>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary shrink-0">
+                          {student.finalWeightedGrade.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {columnsData.map((col) => {
+                          const cellData = student.cells.find((c) => c.itemId === col.itemId);
+                          return (
+                            <div
+                              key={col.itemId}
+                              className="flex items-center justify-between gap-2 text-xs bg-muted/40 rounded-xl px-3 py-2"
+                            >
+                              <span className="font-medium text-foreground truncate">
+                                {col.itemTitle}
+                              </span>
+                              <span className="font-mono font-bold text-foreground shrink-0">
+                                {cellData &&
+                                (cellData.gradedAt || cellData.submissionId || cellData.provenance)
+                                  ? `${cellData.score.toFixed(1)}/${col.maxScore || 100}`
+                                  : "Chưa có"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="hidden md:block overflow-x-auto">
-              <Table>
-                <Table.Header>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <Table.Row key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <Table.Head key={header.id} className="py-3 px-3">
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </Table.Head>
-                      ))}
-                    </Table.Row>
-                  ))}
-                </Table.Header>
-                <Table.Body>
-                  {table.getRowModel().rows.map((row) => (
-                    <Table.Row key={row.id} className="hover:bg-muted/40 transition-colors">
-                      {row.getVisibleCells().map((cell) => (
-                        <Table.Cell key={cell.id} className="py-3 px-3">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </Table.Cell>
-                      ))}
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table>
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <Table.Header>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <Table.Row key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <Table.Head key={header.id} className="py-3 px-3">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(header.column.columnDef.header, header.getContext())}
+                          </Table.Head>
+                        ))}
+                      </Table.Row>
+                    ))}
+                  </Table.Header>
+                  <Table.Body>
+                    {table.getRowModel().rows.map((row) => (
+                      <Table.Row key={row.id} className="hover:bg-muted/40 transition-colors">
+                        {row.getVisibleCells().map((cell) => (
+                          <Table.Cell key={cell.id} className="py-3 px-3">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </Table.Cell>
+                        ))}
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table>
+              </div>
+            )}
           </div>
         )}
       </main>

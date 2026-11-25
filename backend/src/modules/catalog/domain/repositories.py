@@ -136,7 +136,6 @@ class ICatalogRepository(ABC):
         description: str,
         partner_name: str,
         partner_logo_url: str,
-        instructor_names: list[str] | None = None,
         subject: str = "",
         level: str = "",
         owner_id: str = "",
@@ -155,7 +154,6 @@ class ICatalogRepository(ABC):
         description: str,
         partner_name: str,
         partner_logo_url: str,
-        instructor_names: list[str] | None = None,
         subject: str = "",
         level: str = "",
         financial_aid_enabled: bool = True,
@@ -470,3 +468,9 @@ class ICatalogRepository(ABC):
     @abstractmethod
     async def acknowledge_low_review(self, review_id: str, admin_id: str) -> bool:
         pass
+
+    @abstractmethod
+    async def resolve_course_video_item(
+        self, course_id_or_slug: str, item_id: str
+    ) -> tuple[str, bool] | None:
+        """Resolve (course_id, is_video_item) if item belongs to course, else None."""

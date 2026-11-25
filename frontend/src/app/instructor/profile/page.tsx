@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import { SignatureUploadField } from "@/components/ui/SignatureUploadField";
 import { Avatar } from "@/components/ui/Avatar";
 import { Progress } from "@/components/ui/Progress";
 
@@ -45,30 +46,32 @@ export default function InstructorProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <main className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">
           <Progress.Circular size="sm" />
           <span aria-live="polite">Đang tải thông tin hồ sơ…</span>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (!isInstructorOrTA) {
     return (
-      <Surface
-        variant="low"
-        shape="2xl"
-        className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/30"
-      >
-        <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
-        <p className="text-muted-foreground text-sm">
-          Trang này chỉ dành cho Giảng viên (Instructor) thiết lập hồ sơ và chữ ký tay điện tử.
-        </p>
-        <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
-          Về trang chủ
-        </Button>
-      </Surface>
+      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <Surface
+          variant="low"
+          shape="2xl"
+          className="max-w-md mx-auto p-8 text-center bg-destructive/10 border-destructive/30"
+        >
+          <h1 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h1>
+          <p className="text-muted-foreground text-sm">
+            Trang này chỉ dành cho Giảng viên (Instructor) thiết lập hồ sơ và chữ ký tay điện tử.
+          </p>
+          <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
+            Về trang chủ
+          </Button>
+        </Surface>
+      </main>
     );
   }
 
@@ -94,7 +97,7 @@ export default function InstructorProfilePage() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-w-0">
+    <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-w-0">
       {/* Header */}
       <div className="pb-6 border-b border-border">
         <Breadcrumb className="mb-1">
@@ -196,17 +199,15 @@ export default function InstructorProfilePage() {
               htmlFor="signatureImageUrl"
               className="block text-sm font-semibold text-muted-foreground mb-1.5"
             >
-              URL Ảnh Chữ ký tay Điện tử (PNG / SVG nền trong suốt)
+              Ảnh Chữ ký tay Điện tử (PNG / SVG nền trong suốt)
             </label>
-            <Input
+            <SignatureUploadField
               id="signatureImageUrl"
-              type="text"
               value={signatureImageUrl}
-              onChange={(e) => {
-                setSignatureInput(e.target.value);
+              onChange={(url) => {
+                setSignatureInput(url);
                 setSignatureImgError(false);
               }}
-              placeholder="https://example.com/signature.png"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Khuyến nghị tải lên ảnh dạng nét mực chữ ký tay trên nền trong suốt (Format PNG/SVG)
@@ -262,6 +263,6 @@ export default function InstructorProfilePage() {
           </Button>
         </div>
       </form>
-    </div>
+    </main>
   );
 }

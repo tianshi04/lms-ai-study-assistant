@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useId,
   useImperativeHandle,
@@ -25,8 +26,10 @@ export interface UniversalVideoRef {
 
 interface UniversalVideoPlayerProps {
   videoUrl: string;
+  initialTime?: number;
   onTimeUpdate?: (currentTime: number) => void;
   onSeeking?: () => void;
+  onSeeked?: (currentTime: number) => void;
   onEnded?: () => void;
   onPlay?: () => void;
   onPause?: () => void;
@@ -116,8 +119,10 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
   function UniversalVideoPlayer(
     {
       videoUrl,
+      initialTime = 0,
       onTimeUpdate,
       onSeeking,
+      onSeeked,
       onEnded,
       onPlay,
       onPause,
@@ -143,22 +148,120 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
     const activeVideoIdRef = useRef<string | null>(null);
     const [isYtReady, setIsYtReady] = useState(false);
 
-    const lastKnownTimeRef = useRef<number>(0);
+    const lastKnownTimeRef = useRef<number>(initialTime >= 5 ? Math.floor(initialTime) : 0);
+    const lastYtTimeWallMsRef = useRef<number>(0);
+    const ytPendingSeekRef = useRef<{ target: number; expiresAt: number } | null>(null);
+    const hasYtInitialTimeSettledRef = useRef<boolean>(initialTime < 5);
+    const hasAppliedHtmlInitialSeekRef = useRef<boolean>(false);
+    const htmlInitialSeekTargetRef = useRef<number | null>(
+      initialTime >= 5 ? Math.floor(initialTime) : null,
+    );
 
+    const initialTimeRef = useRef(initialTime);
     const onTimeUpdateRef = useRef(onTimeUpdate);
     const onSeekingRef = useRef(onSeeking);
+    const onSeekedRef = useRef(onSeeked);
     const onEndedRef = useRef(onEnded);
     const onPlayRef = useRef(onPlay);
     const onPauseRef = useRef(onPause);
 
     useLayoutEffect(() => {
       containerIdRef.current = containerId;
+      initialTimeRef.current = initialTime;
       onTimeUpdateRef.current = onTimeUpdate;
       onSeekingRef.current = onSeeking;
+      onSeekedRef.current = onSeeked;
       onEndedRef.current = onEnded;
       onPlayRef.current = onPlay;
       onPauseRef.current = onPause;
     });
+
+    const applyHtmlInitialSeek = useCallback(() => {
+      const video = htmlVideoRef.current;
+      const target = initialTimeRef.current;
+      if (!video || isYouTube || hasAppliedHtmlInitialSeekRef.current) return;
+      if (!Number.isFinite(target) || target < 5) {
+        hasAppliedHtmlInitialSeekRef.current = true;
+        htmlInitialSeekTargetRef.current = null;
+        return;
+      }
+      if (video.readyState < 1) return;
+
+      const duration = video.duration;
+      const clampedTarget =
+        typeof duration === "number" && Number.isFinite(duration) && duration > 0
+          ? Math.min(target, Math.max(0, duration - 0.5))
+          : target;
+
+      htmlInitialSeekTargetRef.current = clampedTarget;
+      lastKnownTimeRef.current = clampedTarget;
+      hasAppliedHtmlInitialSeekRef.current = true;
+      if (Math.abs(video.currentTime - clampedTarget) > 0.5) {
+        video.currentTime = clampedTarget;
+      }
+    }, [isYouTube]);
+
+    useEffect(() => {
+      hasAppliedHtmlInitialSeekRef.current = false;
+    }, [videoUrl]);
+
+    useEffect(() => {
+      applyHtmlInitialSeek();
+    }, [videoUrl, applyHtmlInitialSeek, initialTime]);
+
+    const handleYtReportedTime = useCallback((t: number, explicitState?: number) => {
+      if (typeof t !== "number" || !Number.isFinite(t)) return;
+
+      const pendingSeek = ytPendingSeekRef.current;
+      if (pendingSeek) {
+        const hasCaughtUp = Math.abs(t - pendingSeek.target) <= 2.0;
+        if (hasCaughtUp || Date.now() > pendingSeek.expiresAt) {
+          ytPendingSeekRef.current = null;
+        } else {
+          return;
+        }
+      }
+
+      const player = ytPlayerRef.current;
+      const resolvedState = explicitState ?? player?.getPlayerState?.();
+      const isPausedOrEnded = resolvedState === 2 || resolvedState === 0;
+      const isUnstartedOrCued = resolvedState === -1 || resolvedState === 5;
+
+      if (t === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
+      if (t === 0 && isUnstartedOrCued && lastKnownTimeRef.current > 0) return;
+
+      const prevT = lastKnownTimeRef.current;
+      const now = Date.now();
+      const elapsedSec =
+        lastYtTimeWallMsRef.current > 0 ? (now - lastYtTimeWallMsRef.current) / 1000 : 0;
+      lastYtTimeWallMsRef.current = now;
+
+      const isPlaying = resolvedState === 1;
+      let playbackRate = 1;
+      try {
+        playbackRate = player?.getPlaybackRate?.() || 1;
+      } catch {
+        playbackRate = 1;
+      }
+      const expectedDelta = isPlaying ? Math.max(0, elapsedSec) * playbackRate : 0;
+      const unexpectedJump = Math.abs(t - prevT - expectedDelta);
+
+      if (t > 0 || isPausedOrEnded) {
+        lastKnownTimeRef.current = t;
+      }
+      onTimeUpdateRef.current?.(t);
+
+      if (!hasYtInitialTimeSettledRef.current && t > 0) {
+        hasYtInitialTimeSettledRef.current = true;
+        if (Math.abs(t - initialTimeRef.current) <= 10) {
+          return;
+        }
+      }
+
+      if (unexpectedJump > 2.5 && prevT >= 0 && resolvedState !== 0) {
+        onSeekedRef.current?.(t);
+      }
+    }, []);
 
     // ─── Modern Web API: Media Session Integration ───
     useMediaSession({
@@ -275,9 +378,13 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         activeVideoIdRef.current !== videoId
       ) {
         try {
+          const startSeconds = initialTimeRef.current >= 5 ? Math.floor(initialTimeRef.current) : 0;
           activeVideoIdRef.current = videoId;
-          ytPlayerRef.current.cueVideoById(videoId);
-          lastKnownTimeRef.current = 0;
+          ytPlayerRef.current.cueVideoById({ videoId, startSeconds });
+          lastKnownTimeRef.current = startSeconds;
+          lastYtTimeWallMsRef.current = 0;
+          ytPendingSeekRef.current = null;
+          hasYtInitialTimeSettledRef.current = startSeconds < 5;
           setIsYtReady(true);
         } catch {
           try {
@@ -293,7 +400,13 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
           if (isCancelled || !window.YT || !window.YT.Player) return;
           if (!mountPointRef.current) return;
 
+          const startSeconds = initialTimeRef.current >= 5 ? Math.floor(initialTimeRef.current) : 0;
           activeVideoIdRef.current = videoId;
+          lastKnownTimeRef.current = startSeconds;
+          lastYtTimeWallMsRef.current = 0;
+          ytPendingSeekRef.current = null;
+          hasYtInitialTimeSettledRef.current = startSeconds < 5;
+
           try {
             mountPointRef.current.innerHTML = "";
             const dummyDiv = document.createElement("div");
@@ -311,6 +424,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
                 enablejsapi: 1,
                 modestbranding: 1,
                 origin: typeof window !== "undefined" ? window.location.origin : undefined,
+                ...(startSeconds > 0 ? { start: startSeconds } : {}),
               },
               events: {
                 onReady: (event: any) => {
@@ -323,22 +437,14 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
                   if (event.target && typeof event.target.getCurrentTime === "function") {
                     ytPlayerRef.current = event.target;
                     try {
-                      const t = event.target.getCurrentTime();
-                      const state = event.target.getPlayerState?.();
-                      const isPausedOrEnded = state === 2 || state === 0;
-                      if (typeof t === "number" && !isNaN(t)) {
-                        if (t === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
-                        if (t > 0) lastKnownTimeRef.current = t;
-                        onTimeUpdateRef.current?.(t);
-                      }
+                      handleYtReportedTime(event.target.getCurrentTime(), event.data);
                     } catch {}
                   }
                   if (event.data === 1) {
                     onPlayRef.current?.();
-                  } else if (event.data === 2 || event.data === 0) {
+                  } else if (event.data === 2) {
                     onPauseRef.current?.();
-                  }
-                  if (event.data === 0) {
+                  } else if (event.data === 0) {
                     onEndedRef.current?.();
                   }
                 },
@@ -356,14 +462,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         const player = ytPlayerRef.current;
         if (player && typeof player.getCurrentTime === "function") {
           try {
-            const currentTime = player.getCurrentTime();
-            const state = player.getPlayerState?.();
-            const isPausedOrEnded = state === 2 || state === 0;
-            if (typeof currentTime === "number" && !isNaN(currentTime)) {
-              if (currentTime === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
-              if (currentTime > 0) lastKnownTimeRef.current = currentTime;
-              onTimeUpdateRef.current?.(currentTime);
-            }
+            handleYtReportedTime(player.getCurrentTime());
           } catch {
             // Player may be unmounting or destroyed
           }
@@ -374,7 +473,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         isCancelled = true;
         if (intervalId) clearInterval(intervalId);
       };
-    }, [isYouTube, videoId]);
+    }, [isYouTube, videoId, handleYtReportedTime]);
 
     // Raw YouTube postMessage listener to ensure fail-safe time tracking
     useEffect(() => {
@@ -388,14 +487,8 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
             data = JSON.parse(data);
           }
           if (data && data.event === "infoDelivery" && data.info) {
-            if (typeof data.info.currentTime === "number" && !isNaN(data.info.currentTime)) {
-              const t = data.info.currentTime;
-              const player = ytPlayerRef.current;
-              const state = player?.getPlayerState?.();
-              const isPausedOrEnded = state === 2 || state === 0;
-              if (t === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
-              if (t > 0) lastKnownTimeRef.current = t;
-              onTimeUpdateRef.current?.(t);
+            if (typeof data.info.currentTime === "number") {
+              handleYtReportedTime(data.info.currentTime);
             }
           }
         } catch {}
@@ -405,57 +498,87 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
       return () => {
         window.removeEventListener("message", handleWindowMessage);
       };
+    }, [isYouTube, handleYtReportedTime]);
+
+    const readCurrentTime = useCallback(() => {
+      if (isYouTube) {
+        const player = ytPlayerRef.current;
+        if (player && typeof player.getCurrentTime === "function") {
+          try {
+            const t = player.getCurrentTime();
+            if (typeof t === "number" && Number.isFinite(t) && t > 0) {
+              lastKnownTimeRef.current = t;
+              return t;
+            }
+          } catch {
+            // Return cached fallback time
+          }
+        }
+        return lastKnownTimeRef.current || 0;
+      }
+      const htmlTime = htmlVideoRef.current?.currentTime;
+      return typeof htmlTime === "number" && Number.isFinite(htmlTime) ? htmlTime : 0;
     }, [isYouTube]);
+
+    const readDuration = useCallback(() => {
+      if (isYouTube) {
+        const player = ytPlayerRef.current;
+        if (player && typeof player.getDuration === "function") {
+          try {
+            const d = player.getDuration();
+            if (typeof d === "number" && Number.isFinite(d) && d > 0) return d;
+          } catch {}
+        }
+        return 0;
+      }
+      const d = htmlVideoRef.current?.duration;
+      return typeof d === "number" && Number.isFinite(d) && d > 0 ? d : 0;
+    }, [isYouTube]);
+
+    const performSeek = useCallback(
+      (seconds: number) => {
+        const safeSeconds = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
+        htmlInitialSeekTargetRef.current = null;
+        hasYtInitialTimeSettledRef.current = true;
+        lastKnownTimeRef.current = safeSeconds;
+        lastYtTimeWallMsRef.current = Date.now();
+        ytPendingSeekRef.current = { target: safeSeconds, expiresAt: Date.now() + 2000 };
+
+        if (isYouTube) {
+          const player = ytPlayerRef.current;
+          if (player) {
+            try {
+              const state = player.getPlayerState?.();
+              if (
+                (state === -1 || state === 5) &&
+                safeSeconds === 0 &&
+                typeof player.cueVideoById === "function" &&
+                activeVideoIdRef.current
+              ) {
+                player.cueVideoById({ videoId: activeVideoIdRef.current, startSeconds: 0 });
+              } else if (typeof player.seekTo === "function") {
+                player.seekTo(safeSeconds, true);
+              }
+            } catch {
+              // Ignore seek error if player not fully ready
+            }
+          }
+        } else if (htmlVideoRef.current) {
+          htmlVideoRef.current.currentTime = safeSeconds;
+        }
+
+        onTimeUpdateRef.current?.(safeSeconds);
+        onSeekedRef.current?.(safeSeconds);
+      },
+      [isYouTube],
+    );
 
     useImperativeHandle(
       ref,
       () => ({
-        getCurrentTime: () => {
-          if (isYouTube) {
-            const player = ytPlayerRef.current;
-            if (player && typeof player.getCurrentTime === "function") {
-              try {
-                const t = player.getCurrentTime();
-                if (typeof t === "number" && !isNaN(t) && t > 0) {
-                  lastKnownTimeRef.current = t;
-                  return t;
-                }
-              } catch {
-                // Return cached fallback time
-              }
-            }
-            return lastKnownTimeRef.current || 0;
-          }
-          return htmlVideoRef.current?.currentTime || 0;
-        },
-        getDuration: () => {
-          if (isYouTube) {
-            const player = ytPlayerRef.current;
-            if (player && typeof player.getDuration === "function") {
-              try {
-                const d = player.getDuration();
-                if (typeof d === "number" && !isNaN(d)) return d;
-              } catch {}
-            }
-            return 0;
-          }
-          return htmlVideoRef.current?.duration || 0;
-        },
-        seekTo: (seconds: number) => {
-          lastKnownTimeRef.current = seconds;
-          if (isYouTube) {
-            const player = ytPlayerRef.current;
-            if (player && typeof player.seekTo === "function") {
-              try {
-                player.seekTo(seconds, true);
-              } catch {
-                // Ignore seek error if player not fully ready
-              }
-            }
-          } else if (htmlVideoRef.current) {
-            htmlVideoRef.current.currentTime = seconds;
-          }
-        },
+        getCurrentTime: readCurrentTime,
+        getDuration: readDuration,
+        seekTo: performSeek,
         play: () => {
           if (isYouTube) {
             const player = ytPlayerRef.current;
@@ -485,50 +608,13 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
           }
         },
         get currentTime() {
-          if (isYouTube) {
-            const player = ytPlayerRef.current;
-            if (player && typeof player.getCurrentTime === "function") {
-              try {
-                const t = player.getCurrentTime();
-                if (typeof t === "number" && !isNaN(t) && t > 0) {
-                  lastKnownTimeRef.current = t;
-                  return t;
-                }
-              } catch {
-                // Return cached fallback time
-              }
-            }
-            return lastKnownTimeRef.current || 0;
-          }
-          return htmlVideoRef.current?.currentTime || 0;
+          return readCurrentTime();
         },
         set currentTime(seconds: number) {
-          lastKnownTimeRef.current = seconds;
-          if (isYouTube) {
-            const player = ytPlayerRef.current;
-            if (player && typeof player.seekTo === "function") {
-              try {
-                player.seekTo(seconds, true);
-              } catch {
-                // Ignore seek error
-              }
-            }
-          } else if (htmlVideoRef.current) {
-            htmlVideoRef.current.currentTime = seconds;
-          }
+          performSeek(seconds);
         },
         get duration() {
-          if (isYouTube) {
-            const player = ytPlayerRef.current;
-            if (player && typeof player.getDuration === "function") {
-              try {
-                const d = player.getDuration();
-                if (typeof d === "number" && !isNaN(d)) return d;
-              } catch {}
-            }
-            return 0;
-          }
-          return htmlVideoRef.current?.duration || 0;
+          return readDuration();
         },
         togglePictureInPicture: async () => {
           if (typeof document === "undefined") return;
@@ -550,12 +636,12 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
           }
         },
       }),
-      [isYouTube],
+      [isYouTube, readCurrentTime, readDuration, performSeek],
     );
 
     if (isYouTube) {
       return (
-        <div className="w-full h-full relative rounded-2xl overflow-hidden bg-black">
+        <div className="w-full h-full relative rounded-2xl overflow-hidden bg-black [&_iframe]:w-full [&_iframe]:h-full [&_iframe]:max-w-full">
           <div ref={mountPointRef} className="w-full h-full" />
           {!isYtReady && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-xs font-semibold">
@@ -572,14 +658,44 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         ref={htmlVideoRef}
         src={videoUrl || undefined}
         controls
+        onLoadedMetadata={applyHtmlInitialSeek}
         onTimeUpdate={() => {
           if (htmlVideoRef.current) {
-            onTimeUpdateRef.current?.(htmlVideoRef.current.currentTime);
+            const t = htmlVideoRef.current.currentTime;
+            if (t > 0) {
+              lastKnownTimeRef.current = t;
+            }
+            if (
+              htmlInitialSeekTargetRef.current !== null &&
+              Math.abs(t - htmlInitialSeekTargetRef.current) > 2.5
+            ) {
+              htmlInitialSeekTargetRef.current = null;
+            }
+            onTimeUpdateRef.current?.(t);
           }
         }}
         onSeeking={() => onSeekingRef.current?.()}
+        onSeeked={() => {
+          if (htmlVideoRef.current) {
+            const t = htmlVideoRef.current.currentTime;
+            lastKnownTimeRef.current = t;
+            if (
+              htmlInitialSeekTargetRef.current !== null &&
+              Math.abs(t - htmlInitialSeekTargetRef.current) <= 1.5
+            ) {
+              htmlInitialSeekTargetRef.current = null;
+              return;
+            }
+            htmlInitialSeekTargetRef.current = null;
+            onSeekedRef.current?.(t);
+          }
+        }}
         onPlay={() => onPlayRef.current?.()}
-        onPause={() => onPauseRef.current?.()}
+        onPause={() => {
+          if (!htmlVideoRef.current?.ended) {
+            onPauseRef.current?.();
+          }
+        }}
         onEnded={() => onEndedRef.current?.()}
         aria-label={title}
         className={className}

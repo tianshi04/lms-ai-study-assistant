@@ -76,7 +76,7 @@ export default function AssessmentsPage() {
         </div>
       </div>
       {/* Item ID Configuration */}
-      <div className="flex items-center gap-3 bg-muted p-4 rounded-xl border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 bg-muted p-4 rounded-xl border border-border">
         <label
           htmlFor="itemId"
           className="text-sm font-semibold text-muted-foreground whitespace-nowrap"
@@ -86,7 +86,7 @@ export default function AssessmentsPage() {
         <Input
           id="itemId"
           type="text"
-          className="flex-1 max-w-sm"
+          className="w-full sm:flex-1 sm:max-w-sm"
           value={
             activeAssessment === "quiz"
               ? quizItemId

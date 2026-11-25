@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import case, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -31,6 +32,7 @@ from src.modules.learning.domain import (
     DeadlineStatus,
     EnrolledCourseSummary,
     ILearningRepository,
+    LearningItemProgress,
     LearningProgress,
     PersonalNote,
     UserLearningStreak,
@@ -863,3 +865,86 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         )
         rows = (await self.session.execute(stmt)).all()
         return {str(r.course_id): (int(r.enrolled), int(r.completed)) for r in rows}
+
+    async def is_enrolled(self, user_id: str, course_id: str) -> bool:
+        key = self._get_key(user_id, course_id)
+        stmt = select(LearningProgressModel.id).where(
+            LearningProgressModel.id == key,
+            LearningProgressModel.enrolled_at != "",
+        )
+        res = await self.session.execute(stmt)
+        return res.scalar_one_or_none() is not None
+
+    async def save_video_position(
+        self,
+        user_id: str,
+        course_id: str,
+        item_id: str,
+        position_seconds: int,
+        duration_seconds: int,
+        now_iso: str,
+    ) -> tuple[int, str]:
+        update_values: dict[str, Any] = {
+            "course_id": course_id,
+            "last_position_seconds": position_seconds,
+            "position_updated_at": now_iso,
+        }
+        if duration_seconds > 0:
+            update_values["video_duration_seconds"] = duration_seconds
+
+        stmt = (
+            pg_insert(LearningItemProgressModel)
+            .values(
+                user_id=user_id,
+                item_id=item_id,
+                course_id=course_id,
+                time_spent_seconds=0,
+                last_studied_at="",
+                last_position_seconds=position_seconds,
+                video_duration_seconds=duration_seconds,
+                position_updated_at=now_iso,
+            )
+            .on_conflict_do_update(
+                index_elements=[
+                    LearningItemProgressModel.user_id,
+                    LearningItemProgressModel.item_id,
+                ],
+                set_=update_values,
+            )
+            .returning(
+                LearningItemProgressModel.last_position_seconds,
+                LearningItemProgressModel.position_updated_at,
+            )
+        )
+        res = await self.session.execute(stmt)
+        row = res.one()
+        await self.session.commit()
+        return int(row.last_position_seconds), str(row.position_updated_at)
+
+    async def list_course_video_positions(
+        self, user_id: str, course_id: str
+    ) -> list[LearningItemProgress]:
+        stmt = (
+            select(LearningItemProgressModel)
+            .where(
+                LearningItemProgressModel.user_id == user_id,
+                LearningItemProgressModel.course_id == course_id,
+                LearningItemProgressModel.last_position_seconds > 0,
+            )
+            .order_by(LearningItemProgressModel.position_updated_at.desc())
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [
+            LearningItemProgress(
+                user_id=m.user_id,
+                item_id=m.item_id,
+                course_id=m.course_id,
+                time_spent_seconds=m.time_spent_seconds,
+                last_studied_at=m.last_studied_at,
+                last_position_seconds=m.last_position_seconds,
+                video_duration_seconds=m.video_duration_seconds,
+                position_updated_at=m.position_updated_at,
+            )
+            for m in models
+        ]

@@ -4,12 +4,13 @@ import { useEffect, useState, use, Suspense } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
-import { Users } from "lucide-react";
+import { Users, Star } from "lucide-react";
 import { Surface } from "@/components/ui/Surface";
 import { Table } from "@/components/ui/Table";
 import { Progress } from "@/components/ui/Progress";
 
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 
 function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
@@ -17,6 +18,7 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
 
   const [analytics, setAnalytics] = useState<InstructorAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     async function loadAnalytics() {
@@ -37,7 +39,7 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors">
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 space-y-8">
         {/* Breadcrumb */}
         <div className="flex items-center justify-between">
           <Breadcrumb>
@@ -123,9 +125,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Đánh Giá Trung Bình
                 </span>
-                <div className="text-3xl font-black text-warning flex items-center gap-1">
+                <div className="text-3xl font-black text-warning flex items-center gap-1.5">
                   <span>{analytics.averageRating.toFixed(1)}</span>
-                  <span className="text-lg">★</span>
+                  <Star className="w-5 h-5 fill-amber-400 text-amber-400" aria-hidden="true" />
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Dựa trên {analytics.reviewCount} nhận xét
@@ -154,99 +156,98 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                 <div className="py-10 text-center text-muted-foreground text-sm">
                   Chưa có dữ liệu học viên tham gia khóa học này.
                 </div>
+              ) : isMobile ? (
+                <div className="divide-y divide-border">
+                  {analytics.students.map((student) => (
+                    <div key={student.userId} className="py-4 space-y-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-foreground">{student.userName}</div>
+                          <div className="text-xs font-mono text-muted-foreground truncate">
+                            {student.userEmail || "Learner"}
+                          </div>
+                          <div className="text-[11px] font-mono text-muted-foreground truncate">
+                            {student.userId}
+                          </div>
+                        </div>
+                        {student.progressPercent >= 100 ? (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success shrink-0">
+                            HOÀN THÀNH
+                          </span>
+                        ) : student.progressPercent > 0 ? (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary shrink-0">
+                            ĐANG HỌC
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground shrink-0">
+                            MỚI GHI DANH
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <Progress.Linear value={Math.min(100, student.progressPercent)} />
+                        </div>
+                        <span className="text-xs font-bold text-foreground font-mono shrink-0">
+                          {student.progressPercent.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <>
-                  <div className="md:hidden divide-y divide-border">
-                    {analytics.students.map((student) => (
-                      <div key={student.userId} className="py-4 space-y-2.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="font-semibold text-foreground">{student.userName}</div>
-                            <div className="text-xs font-mono text-muted-foreground truncate">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <Table.Header>
+                      <Table.Row>
+                        <Table.Head>Tên / Email</Table.Head>
+                        <Table.Head>Mã Học Viên</Table.Head>
+                        <Table.Head className="text-center">Tiến Độ Học Tập</Table.Head>
+                        <Table.Head className="text-right">Trạng Thái</Table.Head>
+                      </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                      {analytics.students.map((student) => (
+                        <Table.Row key={student.userId}>
+                          <Table.Cell className="font-semibold">
+                            <div>{student.userName}</div>
+                            <div className="text-xs font-mono font-normal text-muted-foreground">
                               {student.userEmail || "Learner"}
                             </div>
-                            <div className="text-[11px] font-mono text-muted-foreground truncate">
-                              {student.userId}
+                          </Table.Cell>
+                          <Table.Cell className="font-mono text-xs text-muted-foreground">
+                            {student.userId}
+                          </Table.Cell>
+                          <Table.Cell className="text-center">
+                            <div className="flex items-center justify-center gap-3">
+                              <div className="w-32">
+                                <Progress.Linear value={Math.min(100, student.progressPercent)} />
+                              </div>
+                              <span className="text-xs font-bold text-foreground font-mono">
+                                {student.progressPercent.toFixed(1)}%
+                              </span>
                             </div>
-                          </div>
-                          {student.progressPercent >= 100 ? (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success shrink-0">
-                              HOÀN THÀNH
-                            </span>
-                          ) : student.progressPercent > 0 ? (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary shrink-0">
-                              ĐANG HỌC
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground shrink-0">
-                              MỚI GHI DANH
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <Progress.Linear value={Math.min(100, student.progressPercent)} />
-                          </div>
-                          <span className="text-xs font-bold text-foreground font-mono shrink-0">
-                            {student.progressPercent.toFixed(1)}%
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="hidden md:block overflow-x-auto">
-                    <Table>
-                      <Table.Header>
-                        <Table.Row>
-                          <Table.Head>Tên / Email</Table.Head>
-                          <Table.Head>Mã Học Viên</Table.Head>
-                          <Table.Head className="text-center">Tiến Độ Học Tập</Table.Head>
-                          <Table.Head className="text-right">Trạng Thái</Table.Head>
+                          </Table.Cell>
+                          <Table.Cell className="text-right">
+                            {student.progressPercent >= 100 ? (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success">
+                                HOÀN THÀNH
+                              </span>
+                            ) : student.progressPercent > 0 ? (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary">
+                                ĐANG HỌC
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground">
+                                MỚI GHI DANH
+                              </span>
+                            )}
+                          </Table.Cell>
                         </Table.Row>
-                      </Table.Header>
-                      <Table.Body>
-                        {analytics.students.map((student) => (
-                          <Table.Row key={student.userId}>
-                            <Table.Cell className="font-semibold">
-                              <div>{student.userName}</div>
-                              <div className="text-xs font-mono font-normal text-muted-foreground">
-                                {student.userEmail || "Learner"}
-                              </div>
-                            </Table.Cell>
-                            <Table.Cell className="font-mono text-xs text-muted-foreground">
-                              {student.userId}
-                            </Table.Cell>
-                            <Table.Cell className="text-center">
-                              <div className="flex items-center justify-center gap-3">
-                                <div className="w-32">
-                                  <Progress.Linear value={Math.min(100, student.progressPercent)} />
-                                </div>
-                                <span className="text-xs font-bold text-foreground font-mono">
-                                  {student.progressPercent.toFixed(1)}%
-                                </span>
-                              </div>
-                            </Table.Cell>
-                            <Table.Cell className="text-right">
-                              {student.progressPercent >= 100 ? (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success">
-                                  HOÀN THÀNH
-                                </span>
-                              ) : student.progressPercent > 0 ? (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary">
-                                  ĐANG HỌC
-                                </span>
-                              ) : (
-                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground">
-                                  MỚI GHI DANH
-                                </span>
-                              )}
-                            </Table.Cell>
-                          </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table>
-                  </div>
-                </>
+                      ))}
+                    </Table.Body>
+                  </Table>
+                </div>
               )}
             </Surface>
           </div>

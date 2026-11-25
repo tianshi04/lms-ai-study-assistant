@@ -9,6 +9,7 @@ import {
   type FinancialAidApplication,
 } from "@/gen/certificate/v1/certificate_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useCoursesQuery } from "@/lib/query_hooks";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -20,6 +21,7 @@ const emptySubscribe = () => () => {};
 
 export default function InstructorFinancialAidPage() {
   const { isStaff: isInstructorOrAdmin } = useAuth();
+  const { data: courses = [] } = useCoursesQuery();
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -253,7 +255,10 @@ export default function InstructorFinancialAidPage() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-muted-foreground">
-                        Khóa học: <span className="font-bold text-foreground">{app.courseId}</span>
+                        Khóa học:{" "}
+                        <span className="font-bold text-foreground">
+                          {courses.find((c) => c.id === app.courseId)?.title || app.courseId}
+                        </span>
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">

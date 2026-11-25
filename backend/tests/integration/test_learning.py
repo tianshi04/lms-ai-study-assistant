@@ -19,7 +19,6 @@ async def test_list_enrolled_courses():
         description="Test course for learning enrollment.",
         partner_name="DeepLearning.AI",
         partner_logo_url="",
-        instructor_names=["Test Instructor"],
     )
     assert course is not None
 
@@ -118,3 +117,88 @@ async def test_learning_handler_list_enrolled_courses():
         learning_uc.list_enrolled_courses.assert_called_once_with(
             user_id="test_user", current_user=mock_user
         )
+
+
+@pytest.mark.asyncio
+async def test_learning_handler_get_progress_and_save_video_position():
+    from unittest.mock import AsyncMock, patch
+
+    from connectrpc.code import Code
+    from connectrpc.errors import ConnectError
+
+    from src.gen.learning.v1 import learning_pb as pb
+    from src.modules.learning.domain import LearningItemProgress, LearningProgress
+    from src.modules.learning.presentation.learning_handler import LearningHandler
+
+    learning_uc = LearningUseCase()
+    learning_uc.get_progress_with_video_positions = AsyncMock(
+        return_value=(
+            LearningProgress(user_id="u1", course_id="c1", last_accessed_item_id="i1"),
+            [
+                LearningItemProgress(
+                    user_id="u1",
+                    item_id="i1",
+                    course_id="c1",
+                    last_position_seconds=95,
+                    video_duration_seconds=300,
+                    position_updated_at="2026-11-17T10:00:00Z",
+                )
+            ],
+        )
+    )
+    learning_uc.save_video_position = AsyncMock(
+        return_value=(95, "2026-11-17T10:00:00Z")
+    )
+    handler = LearningHandler(use_case=learning_uc)
+
+    class MockUser:
+        id = "u1"
+
+    with patch(
+        "src.modules.learning.presentation.learning_handler.require_current_user",
+        return_value=MockUser(),
+    ):
+        ctx = AsyncMock()
+        progress_res = await handler.get_progress(
+            pb.GetProgressRequest(course_id="c1"), ctx
+        )
+        assert len(progress_res.video_positions) == 1
+        assert progress_res.video_positions[0].item_id == "i1"
+        assert progress_res.video_positions[0].position_seconds == 95
+        assert progress_res.video_positions[0].duration_seconds == 300
+
+        save_res = await handler.save_video_position(
+            pb.SaveVideoPositionRequest(
+                course_id="c1",
+                item_id="i1",
+                position_seconds=95,
+                duration_seconds=300,
+            ),
+            ctx,
+        )
+        assert save_res.success is True
+        assert save_res.saved_position_seconds == 95
+
+        learning_uc.save_video_position = AsyncMock(
+            side_effect=ValueError("bad argument")
+        )
+        with pytest.raises(ConnectError) as exc_invalid:
+            await handler.save_video_position(
+                pb.SaveVideoPositionRequest(
+                    course_id="c1", item_id="i1", position_seconds=-1
+                ),
+                ctx,
+            )
+        assert exc_invalid.value.code == Code.INVALID_ARGUMENT
+
+        learning_uc.save_video_position = AsyncMock(
+            side_effect=PermissionError("not enrolled")
+        )
+        with pytest.raises(ConnectError) as exc_perm:
+            await handler.save_video_position(
+                pb.SaveVideoPositionRequest(
+                    course_id="c1", item_id="i1", position_seconds=10
+                ),
+                ctx,
+            )
+        assert exc_perm.value.code == Code.PERMISSION_DENIED

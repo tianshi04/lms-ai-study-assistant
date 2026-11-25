@@ -6,6 +6,7 @@ from sqlalchemy import (
     Date,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -105,6 +106,9 @@ class PersonalNoteModel(Base):
 
 class LearningItemProgressModel(Base):
     __tablename__ = "learning_item_progresses"
+    __table_args__ = (
+        Index("ix_learning_item_progresses_user_course", "user_id", "course_id"),
+    )
 
     user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     item_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -114,6 +118,15 @@ class LearningItemProgressModel(Base):
     )
     last_studied_at: Mapped[str] = mapped_column(
         String(64), nullable=False, default=utc_now_str, server_default=""
+    )
+    last_position_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    video_duration_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    position_updated_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="", server_default=""
     )
 
 

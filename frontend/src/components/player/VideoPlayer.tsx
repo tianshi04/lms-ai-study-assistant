@@ -67,12 +67,15 @@ interface VideoPlayerProps {
   videoRef: RefObject<UniversalVideoRef | HTMLVideoElement | any>;
   activeItem: LearningItem | null;
   userId?: string;
+  initialTime?: number;
   activeQuiz: InVideoQuiz | null;
   selectedOption: number | null;
   quizSubmitted: boolean;
   completedItemIds?: string[];
-  onTimeUpdate: () => void;
+  onTimeUpdate: (currentTime?: number) => void;
   onSeeking?: () => void;
+  onSeeked?: (currentTime: number) => void;
+  onEnded?: () => void;
   onPlay?: () => void;
   onPause?: () => void;
   onSelectOption: (index: number) => void;
@@ -91,12 +94,15 @@ export function VideoPlayer({
   videoRef,
   activeItem,
   userId,
+  initialTime = 0,
   activeQuiz,
   selectedOption,
   quizSubmitted,
   completedItemIds = [],
   onTimeUpdate,
   onSeeking,
+  onSeeked,
+  onEnded,
   onPlay,
   onPause,
   onSelectOption,
@@ -353,11 +359,16 @@ export function VideoPlayer({
             key={activeItem.id}
             ref={videoRef}
             videoUrl={activeItem.videoUrl || ""}
+            initialTime={initialTime}
             onTimeUpdate={onTimeUpdate}
             onSeeking={onSeeking}
+            onSeeked={onSeeked}
             onPlay={onPlay}
             onPause={onPause}
-            onEnded={() => onMarkComplete?.(activeItem.id)}
+            onEnded={() => {
+              onEnded?.();
+              onMarkComplete?.(activeItem.id);
+            }}
             title={activeItem.title || "Video bài giảng"}
             captionUrl={computedCaptionUrl}
             onNextLesson={onNextLesson}

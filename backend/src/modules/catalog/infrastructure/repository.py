@@ -290,6 +290,45 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    async def _hydrate_instructor_names(self, courses: list[Course]) -> list[Course]:
+        """Resolve display instructor names from owner_id + co_instructor_ids in one batch query."""
+        if not courses:
+            return courses
+
+        ordered_ids: list[str] = []
+        seen_ids: set[str] = set()
+        for course in courses:
+            for uid in [course.owner_id, *(course.co_instructor_ids or [])]:
+                clean_uid = (uid or "").strip()
+                if clean_uid and clean_uid not in seen_ids:
+                    seen_ids.add(clean_uid)
+                    ordered_ids.append(clean_uid)
+
+        if not ordered_ids:
+            return courses
+
+        from src.modules.identity.infrastructure.repository import (
+            IdentityRepository,
+        )
+
+        user_repo = IdentityRepository(self.session)
+        name_map = await user_repo.get_user_names_by_ids(ordered_ids)
+
+        for course in courses:
+            names: list[str] = []
+            seen_names: set[str] = set()
+            for uid in [course.owner_id, *(course.co_instructor_ids or [])]:
+                clean_uid = (uid or "").strip()
+                if not clean_uid:
+                    continue
+                resolved = (name_map.get(clean_uid) or "").strip()
+                if resolved and resolved not in seen_names:
+                    seen_names.add(resolved)
+                    names.append(resolved)
+            course.instructor_names = names
+
+        return courses
+
     async def list_courses(
         self,
         page_size: int = 10,
@@ -348,7 +387,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         res = await self.session.execute(stmt)
         models = res.scalars().all()
-        return [_model_to_domain_course(m) for m in models], ""
+        courses = [_model_to_domain_course(m) for m in models]
+        return await self._hydrate_instructor_names(courses), ""
 
     async def list_instructor_courses(
         self,
@@ -393,7 +433,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         res = await self.session.execute(stmt)
         models = res.scalars().all()
         courses: list[Course] = [_model_to_domain_course(m) for m in models]
-        return courses, ""
+        return await self._hydrate_instructor_names(courses), ""
 
     async def get_course_detail(self, course_id: str) -> Course | None:
         stmt = (
@@ -414,7 +454,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         model = res.scalar_one_or_none()
         if not model:
             return None
-        return _model_to_domain_course(model)
+        hydrated = await self._hydrate_instructor_names(
+            [_model_to_domain_course(model)]
+        )
+        return hydrated[0]
 
     async def get_course_recommendations(
         self, course_id: str, target_count: int = DEFAULT_RECOMMENDED_COURSES_COUNT
@@ -446,9 +489,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             target_count=target_count,
             exclude_ids=exclude_ids,
         )
+        recommended_courses = [_model_to_domain_course(r.course) for r in rec_dtos]
+        await self._hydrate_instructor_names(
+            [*foundational_domain, *recommended_courses]
+        )
         recommended_domain: list[tuple[Course, str, float]] = [
-            (_model_to_domain_course(r.course), r.badge_label, r.score)
-            for r in rec_dtos
+            (course, r.badge_label, r.score)
+            for course, r in zip(recommended_courses, rec_dtos, strict=True)
         ]
         return foundational_domain, recommended_domain
 
@@ -509,7 +556,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             )
         )
         c_res = await self.session.execute(courses_stmt)
-        c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+        hydrated = await self._hydrate_instructor_names(
+            [_model_to_domain_course(c) for c in c_res.scalars().all()]
+        )
+        c_map = {c.id: c for c in hydrated}
         courses = [c_map[cid] for cid in spec_model.course_ids if cid in c_map]
         return _model_to_domain_specialization(spec_model, courses), courses
 
@@ -538,7 +588,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             )
         )
         c_res = await self.session.execute(courses_stmt)
-        c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+        hydrated = await self._hydrate_instructor_names(
+            [_model_to_domain_course(c) for c in c_res.scalars().all()]
+        )
+        c_map = {c.id: c for c in hydrated}
         if course_id not in c_map:
             return None
 
@@ -593,7 +646,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 )
             )
             c_res = await self.session.execute(c_stmt)
-            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+            hydrated = await self._hydrate_instructor_names(
+                [_model_to_domain_course(c) for c in c_res.scalars().all()]
+            )
+            c_map = {c.id: c for c in hydrated}
             courses = [c_map[cid] for cid in course_ids if cid in c_map]
         return _model_to_domain_specialization(model, courses)
 
@@ -628,7 +684,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 )
             )
             c_res = await self.session.execute(c_stmt)
-            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+            hydrated = await self._hydrate_instructor_names(
+                [_model_to_domain_course(c) for c in c_res.scalars().all()]
+            )
+            c_map = {c.id: c for c in hydrated}
 
         for sm in spec_models:
             courses = [c_map[cid] for cid in (sm.course_ids or []) if cid in c_map]
@@ -676,7 +735,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 )
             )
             c_res = await self.session.execute(c_stmt)
-            c_map = {c.id: _model_to_domain_course(c) for c in c_res.scalars().all()}
+            hydrated = await self._hydrate_instructor_names(
+                [_model_to_domain_course(c) for c in c_res.scalars().all()]
+            )
+            c_map = {c.id: c for c in hydrated}
             courses = [c_map[cid] for cid in model.course_ids if cid in c_map]
         return _model_to_domain_specialization(model, courses)
 
@@ -796,7 +858,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         result = await self.session.execute(query)
         models = result.scalars().all()
 
-        courses = [_model_to_domain_course(m) for m in models]
+        courses = await self._hydrate_instructor_names(
+            [_model_to_domain_course(m) for m in models]
+        )
         next_offset = offset + len(courses)
         next_page_token = str(next_offset) if next_offset < total_count else ""
 
@@ -862,7 +926,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         description: str,
         partner_name: str,
         partner_logo_url: str,
-        instructor_names: list[str] | None = None,
         subject: str = "",
         level: str = "",
         owner_id: str = "",
@@ -871,7 +934,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         organization_id: str = "partner_community",
         foundational_course_ids: list[str] | None = None,
     ) -> Course:
-        _ = instructor_names
         import re
 
         safe_slug = (
@@ -959,13 +1021,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         description: str,
         partner_name: str,
         partner_logo_url: str,
-        instructor_names: list[str] | None = None,
         subject: str = "",
         level: str = "",
         financial_aid_enabled: bool = True,
         foundational_course_ids: list[str] | None = None,
     ) -> Course | None:
-        _ = instructor_names
         stmt = select(CourseModel).where(CourseModel.id == course_id)
         res = await self.session.execute(stmt)
         model = res.scalar_one_or_none()
@@ -2983,6 +3043,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     course=course_domain,
                 )
             )
+        bookmark_courses = [b.course for b in bookmarks if b.course is not None]
+        if bookmark_courses:
+            await self._hydrate_instructor_names(bookmark_courses)
         return bookmarks
 
     async def record_search_query(
@@ -3845,3 +3908,32 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             assessments=tuple(assessment_summaries),
             daily_logs=tuple(daily_logs),
         )
+
+    async def resolve_course_video_item(
+        self, course_id_or_slug: str, item_id: str
+    ) -> tuple[str, bool] | None:
+        clean_course = course_id_or_slug.strip()
+        clean_item = item_id.strip()
+        if not clean_course or not clean_item:
+            return None
+        stmt = (
+            select(
+                CourseModel.id,
+                LearningItemModel.type,
+                LearningItemModel.video_url,
+            )
+            .select_from(LearningItemModel)
+            .join(LessonModel, LearningItemModel.lesson_id == LessonModel.id)
+            .join(WeekModuleModel, LessonModel.week_module_id == WeekModuleModel.id)
+            .join(CourseModel, WeekModuleModel.course_id == CourseModel.id)
+            .where(
+                LearningItemModel.id == clean_item,
+                or_(CourseModel.id == clean_course, CourseModel.slug == clean_course),
+            )
+            .limit(1)
+        )
+        row = (await self.session.execute(stmt)).first()
+        if not row:
+            return None
+        is_video = row.type == ItemType.VIDEO or bool(row.video_url)
+        return str(row.id), is_video

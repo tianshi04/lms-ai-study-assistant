@@ -14,9 +14,13 @@ import {
   type EnrolledCourseSummary,
   type GetLearningStreakResponse,
   type RecordLearningTimeResponse,
+  type SaveVideoPositionResponse,
+  type VideoPositionRecord,
   type GetAdminLearningStatsResponse,
   type GetAdminLearningTrendResponse,
 } from "@/gen/learning/v1/learning_pb";
+
+export type { VideoPositionRecord };
 
 /**
  * Super Admin enrollment and completion KPIs owned by the Learning bounded context.
@@ -213,5 +217,29 @@ export function useRecordLearningTimeMutation(
       queryClient.invalidateQueries({ queryKey: ["learningStreak"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
+  });
+}
+
+export interface SaveVideoPositionInput {
+  courseId: string;
+  itemId: string;
+  positionSeconds: number;
+  durationSeconds?: number;
+}
+
+export function useSaveVideoPositionMutation(
+  options?: Partial<UseMutationOptions<SaveVideoPositionResponse, Error, SaveVideoPositionInput>>,
+) {
+  return useMutation<SaveVideoPositionResponse, Error, SaveVideoPositionInput>({
+    mutationFn: async ({ courseId, itemId, positionSeconds, durationSeconds = 0 }) => {
+      const client = getRpcClient(LearningService);
+      return await client.saveVideoPosition({
+        courseId,
+        itemId,
+        positionSeconds: Math.max(0, Math.floor(positionSeconds)),
+        durationSeconds: Math.max(0, Math.floor(durationSeconds)),
+      });
+    },
+    ...options,
   });
 }

@@ -127,8 +127,8 @@ export function Footer() {
                 <span>OpenBadges 3.0 Standard</span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Tất cả chứng chỉ hoàn thành khóa học được xác thực mật mã mã hóa bởi đối tác và
-                chứng nhận trên toàn cầu.
+                Tất cả chứng chỉ hoàn thành khóa học được xác thực mật mã bởi đối tác và chứng nhận
+                trên toàn cầu.
               </p>
             </div>
           </div>

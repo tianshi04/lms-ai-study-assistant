@@ -4,6 +4,7 @@ import pytest
 
 from src.modules.learning.domain import DeadlineStatus
 from src.modules.learning.infrastructure.models import (
+    LearningItemProgressModel,
     LearningProgressModel,
     PersonalNoteModel,
     WeeklyDeadlineModel,
@@ -884,3 +885,85 @@ async def test_check_graded_item_completion_eligibility_repository(
     )
     assert ok is True
     assert err == ""
+
+
+@pytest.mark.asyncio
+async def test_is_enrolled_repository(repository, mock_session):
+    mock_yes = MagicMock()
+    mock_yes.scalar_one_or_none.return_value = "u1:c1"
+    mock_no = MagicMock()
+    mock_no.scalar_one_or_none.return_value = None
+    mock_session.execute.side_effect = [mock_yes, mock_no]
+
+    assert await repository.is_enrolled("u1", "c1") is True
+    assert await repository.is_enrolled("u1", "c2") is False
+
+
+@pytest.mark.asyncio
+async def test_save_video_position_repository_preserves_duration_when_zero(
+    repository, mock_session
+):
+    mock_row_1 = MagicMock(
+        last_position_seconds=120, position_updated_at="2026-11-17T10:00:00Z"
+    )
+    mock_res_1 = MagicMock()
+    mock_res_1.one.return_value = mock_row_1
+
+    mock_row_2 = MagicMock(
+        last_position_seconds=150, position_updated_at="2026-11-17T10:01:00Z"
+    )
+    mock_res_2 = MagicMock()
+    mock_res_2.one.return_value = mock_row_2
+
+    mock_session.execute.side_effect = [mock_res_1, mock_res_2]
+
+    pos1, ts1 = await repository.save_video_position(
+        user_id="u1",
+        course_id="c1",
+        item_id="i1",
+        position_seconds=120,
+        duration_seconds=600,
+        now_iso="2026-11-17T10:00:00Z",
+    )
+    assert (pos1, ts1) == (120, "2026-11-17T10:00:00Z")
+    stmt1 = mock_session.execute.call_args_list[0][0][0]
+    sql1 = str(stmt1.compile())
+    assert "video_duration_seconds" in sql1
+
+    pos2, ts2 = await repository.save_video_position(
+        user_id="u1",
+        course_id="c1",
+        item_id="i1",
+        position_seconds=150,
+        duration_seconds=0,
+        now_iso="2026-11-17T10:01:00Z",
+    )
+    assert (pos2, ts2) == (150, "2026-11-17T10:01:00Z")
+    stmt2 = mock_session.execute.call_args_list[1][0][0]
+    sql2_update_part = str(stmt2.compile()).split("DO UPDATE SET")[-1]
+    assert "video_duration_seconds" not in sql2_update_part
+    assert mock_session.commit.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_list_course_video_positions_repository(repository, mock_session):
+    model = LearningItemProgressModel(
+        user_id="u1",
+        item_id="vid-1",
+        course_id="c1",
+        time_spent_seconds=90,
+        last_studied_at="2026-11-17T09:50:00Z",
+        last_position_seconds=84,
+        video_duration_seconds=320,
+        position_updated_at="2026-11-17T10:00:00Z",
+    )
+    mock_res = MagicMock()
+    mock_res.scalars.return_value.all.return_value = [model]
+    mock_session.execute.return_value = mock_res
+
+    items = await repository.list_course_video_positions("u1", "c1")
+    assert len(items) == 1
+    assert items[0].item_id == "vid-1"
+    assert items[0].last_position_seconds == 84
+    assert items[0].video_duration_seconds == 320
+    assert items[0].position_updated_at == "2026-11-17T10:00:00Z"

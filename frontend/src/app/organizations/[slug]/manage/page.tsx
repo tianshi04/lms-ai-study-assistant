@@ -41,9 +41,13 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
   const { data: allCourses = [] } = useCoursesQuery();
   const { data: partners = [] } = usePartnersQuery();
 
-  const partner = partners.find((p) => p.slug === slug || p.id === slug);
+  const partner = partners.find(
+    (p) => p.slug === slug || p.id === slug || (currentOrg && p.id === currentOrg.id),
+  );
   const orgName =
-    partner?.name || (slug === "partner_community" ? "Coursera Project Network" : slug);
+    partner?.name ||
+    currentOrg?.name ||
+    (slug === "partner_community" ? "Coursera Project Network" : slug);
 
   const pendingInvitations = invitations.filter((i) => i.status === InvitationStatus.PENDING);
   const orgCourses = allCourses.filter(

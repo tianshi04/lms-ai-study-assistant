@@ -103,7 +103,6 @@ export default function InstructorCoursesPage() {
   const [partnerLogoUrl, setPartnerLogoUrl] = useState(
     "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
   );
-  const [instructorNames, setInstructorNames] = useState("Andrew Ng, Giảng viên AI");
   const [financialAidEnabled, setFinancialAidEnabled] = useState(true);
   const [foundationalCourses, setFoundationalCourses] = useState<Course[]>([]);
   const [showFoundationalPicker, setShowFoundationalPicker] = useState(false);
@@ -156,7 +155,6 @@ export default function InstructorCoursesPage() {
     setPartnerLogoUrl(
       "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
     );
-    setInstructorNames("Andrew Ng, Giảng viên AI");
     setFinancialAidEnabled(true);
     setFoundationalCourses([]);
     setShowModal(true);
@@ -174,7 +172,6 @@ export default function InstructorCoursesPage() {
     setDescription(course.description);
     setPartnerName(course.partnerName);
     setPartnerLogoUrl(course.partnerLogoUrl);
-    setInstructorNames(course.instructorNames.join(", "));
     setFinancialAidEnabled(course.financialAidEnabled);
 
     const fcIds = course.foundationalCourseIds || [];
@@ -228,10 +225,6 @@ export default function InstructorCoursesPage() {
 
     try {
       const client = getRpcClient(CatalogService);
-      const instructors = instructorNames
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
 
       if (editingCourseId) {
         // Edit Mode
@@ -241,7 +234,6 @@ export default function InstructorCoursesPage() {
           description,
           partnerName,
           partnerLogoUrl,
-          instructorNames: instructors,
           financialAidEnabled,
           foundationalCourseIds: foundationalCourses.map((fc) => fc.id),
         });
@@ -260,7 +252,6 @@ export default function InstructorCoursesPage() {
           description,
           partnerName,
           partnerLogoUrl,
-          instructorNames: instructors,
           financialAidEnabled,
           foundationalCourseIds: foundationalCourses.map((fc) => fc.id),
         });
@@ -310,7 +301,7 @@ export default function InstructorCoursesPage() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
+    <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 flex-1">
       {/* Top Header */}
       <PageHeader>
         <div>
@@ -322,7 +313,7 @@ export default function InstructorCoursesPage() {
           <PageHeader.Title>{"Quản lý Khóa học Giảng dạy"}</PageHeader.Title>
           <PageHeader.Description>
             {
-              "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI."
+              "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng LMS AI Platform."
             }
           </PageHeader.Description>
         </div>
@@ -379,11 +370,11 @@ export default function InstructorCoursesPage() {
           </Tabs.Trigger>
           <Tabs.Trigger
             value="specializations"
-            className="gap-2 cursor-pointer whitespace-nowrap shrink-0"
+            className="gap-1.5 sm:gap-2 cursor-pointer flex-wrap max-w-full"
           >
-            <Layers className="w-4 h-4" aria-hidden="true" />
-            <span>{"Chuyên ngành (Specializations)"}</span>
-            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+            <Layers className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{"Chuyên ngành"}</span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
               {"Combo -25%"}
             </span>
           </Tabs.Trigger>
@@ -640,13 +631,6 @@ export default function InstructorCoursesPage() {
               </div>
             </div>
 
-            <Input
-              label="Giảng Viên (cách nhau bởi dấu phẩy)"
-              type="text"
-              value={instructorNames}
-              onChange={(e) => setInstructorNames(e.target.value)}
-            />
-
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -785,6 +769,6 @@ export default function InstructorCoursesPage() {
           </Dialog.Footer>
         </Dialog.Content>
       </Dialog>
-    </div>
+    </main>
   );
 }

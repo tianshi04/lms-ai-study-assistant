@@ -184,7 +184,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   };
 
   return (
-    <div className="w-full flex-1 bg-background text-foreground min-h-screen">
+    <main className="w-full flex-1 bg-background text-foreground min-h-screen pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* TẦNG 1: EXECUTIVE TOOLBAR */}
         <InstructorExecutiveToolbar
@@ -393,6 +393,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           }}
         />
       )}
-    </div>
+    </main>
   );
 }

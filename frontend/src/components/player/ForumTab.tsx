@@ -399,8 +399,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {isTarget && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
-                          📌 Thảo luận từ thông báo
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
+                          <Pin className="w-3 h-3 shrink-0" aria-hidden="true" />
+                          <span>Thảo luận từ thông báo</span>
                         </span>
                       )}
                       {thread.isStaffPinned && (

@@ -90,11 +90,6 @@ export function NotFoundClient() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="relative z-10 py-6 border-t border-outline-variant text-center text-xs text-muted-foreground">
-        <p>© 2026 LMS Platform. Nền tảng học tập trực tuyến hàng đầu.</p>
-      </footer>
     </div>
   );
 }

@@ -1,5 +1,10 @@
 import { Page, Locator, expect } from '@playwright/test';
 
+const SAMPLE_SIGNATURE_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'base64'
+);
+
 export interface CreatePartnerData {
   name: string;
   slug: string;
@@ -41,13 +46,13 @@ export class PartnerAdminPage {
     this.nameInput = page.locator('input[placeholder="VD: Đại học Bách Khoa TP.HCM"]');
     this.slugInput = page.locator('input[placeholder="VD: hcmut"]');
     this.descriptionInput = page.locator('textarea[placeholder*="Giới thiệu sơ lược về tổ chức đối tác"]');
-    this.logoUrlInput = page.locator('input[placeholder="https://example.com/logo.png"]');
-    this.bannerUrlInput = page.locator('input[placeholder="https://example.com/banner.jpg"]');
+    this.logoUrlInput = page.locator('#partnerLogo');
+    this.bannerUrlInput = page.locator('#partnerBanner');
     this.websiteUrlInput = page.locator('input[placeholder="https://hcmut.edu.vn"]');
     this.allowedDomainsInput = page.locator('input[placeholder="hcmut.edu.vn, vnuhcm.edu.vn"]');
     this.signerNameInput = page.locator('input[placeholder="GS.TS. Nguyễn Văn A"]');
     this.signerTitleInput = page.locator('input[placeholder="Hiệu trưởng"]');
-    this.signatureImageUrlInput = page.locator('input[placeholder="https://example.com/signature.png"]');
+    this.signatureImageUrlInput = page.locator('#signatureImg');
     this.publicKeyPemInput = page.locator('textarea[placeholder*="BEGIN PUBLIC KEY"]');
     this.submitButton = page.locator('button[type="submit"]', { hasText: /Thêm đối tác|Cập nhật đối tác/i });
   }
@@ -69,13 +74,34 @@ export class PartnerAdminPage {
     if (data.name) await this.nameInput.fill(data.name);
     if (data.slug) await this.slugInput.fill(data.slug);
     if (data.description) await this.descriptionInput.fill(data.description);
-    if (data.logoUrl) await this.logoUrlInput.fill(data.logoUrl);
-    if (data.bannerUrl) await this.bannerUrlInput.fill(data.bannerUrl);
+    if (data.logoUrl) {
+      await this.logoUrlInput.setInputFiles({
+        name: 'logo.png',
+        mimeType: 'image/png',
+        buffer: SAMPLE_SIGNATURE_PNG,
+      });
+      await expect(this.page.getByRole('button', { name: /Đổi logo/i })).toBeVisible({ timeout: 15000 });
+    }
+    if (data.bannerUrl) {
+      await this.bannerUrlInput.setInputFiles({
+        name: 'banner.png',
+        mimeType: 'image/png',
+        buffer: SAMPLE_SIGNATURE_PNG,
+      });
+      await expect(this.page.getByRole('button', { name: /Đổi banner/i })).toBeVisible({ timeout: 15000 });
+    }
     if (data.websiteUrl) await this.websiteUrlInput.fill(data.websiteUrl);
     if (data.allowedDomains) await this.allowedDomainsInput.fill(data.allowedDomains);
     if (data.signerName) await this.signerNameInput.fill(data.signerName);
     if (data.signerTitle) await this.signerTitleInput.fill(data.signerTitle);
-    if (data.signatureImageUrl) await this.signatureImageUrlInput.fill(data.signatureImageUrl);
+    if (data.signatureImageUrl) {
+      await this.signatureImageUrlInput.setInputFiles({
+        name: 'signature.png',
+        mimeType: 'image/png',
+        buffer: SAMPLE_SIGNATURE_PNG,
+      });
+      await expect(this.page.getByRole('button', { name: /Đổi ảnh chữ ký/i })).toBeVisible({ timeout: 15000 });
+    }
     if (data.publicKeyPem) await this.publicKeyPemInput.fill(data.publicKeyPem);
   }
 
