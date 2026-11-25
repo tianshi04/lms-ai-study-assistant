@@ -494,6 +494,28 @@ class CourseUseCase:
             )
             return await repo.get_instructor_analytics(course_id=course_id)
 
+    async def get_instructor_student_dossier(
+        self,
+        course_id: str,
+        student_id: str,
+        current_user: CurrentUser | None = None,
+    ):
+        if not course_id or not student_id:
+            raise ValueError("Thiếu mã khóa học hoặc mã học viên.")
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xem hồ sơ học tập học viên",
+                allow_read_only_pending=True,
+                required_permission=CoursePermission.GRADE_ASSESSMENTS,
+            )
+            return await repo.get_instructor_student_dossier(
+                course_id=course_id, student_id=student_id
+            )
+
     async def list_categories(self, type_filter: str = "") -> list[Category]:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)

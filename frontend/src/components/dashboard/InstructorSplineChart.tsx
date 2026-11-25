@@ -162,8 +162,14 @@ function InstructorSplineChartComponent({
         viewBox={`0 0 ${width} ${height}`}
         className="w-full h-auto overflow-visible cursor-crosshair touch-none focus:outline-none"
         style={{ minHeight: height }}
-        role="region"
+        role="slider"
         aria-label="Biểu đồ xu hướng học tập đối sánh"
+        aria-valuemin={0}
+        aria-valuemax={Math.max(0, points.length - 1)}
+        aria-valuenow={hoveredIdx ?? 0}
+        aria-valuetext={
+          activePoint ? activePoint.data.fullDateLabel || activePoint.data.day : undefined
+        }
         tabIndex={0}
         suppressHydrationWarning
         onMouseMove={handleMouseMove}

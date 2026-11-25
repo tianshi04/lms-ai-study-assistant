@@ -201,13 +201,73 @@ export function useInstructorOverviewData({
     let hours = 0;
     courses.forEach((c) => {
       const an = analyticsByCourseId.get(c.id);
-      const students = an?.students || [];
-      students.forEach((s) => {
-        hours += Math.round((s.progressPercent / 10) * 1.5);
-      });
+      if (an?.totalLearningHours && an.totalLearningHours > 0) {
+        hours += an.totalLearningHours;
+      } else if (an?.students) {
+        const sec = an.students.reduce((acc, s) => acc + (s.totalTimeSpentSeconds || 0), 0);
+        hours += sec / 3600;
+      }
     });
-    return hours || (totalStudentsAllCourses > 0 ? totalStudentsAllCourses * 8 : 0);
-  }, [courses, analyticsByCourseId, totalStudentsAllCourses]);
+    return Math.round(hours * 10) / 10;
+  }, [courses, analyticsByCourseId]);
+
+  const paidLearningHoursAllCourses = useMemo(() => {
+    let hours = 0;
+    courses.forEach((c) => {
+      const an = analyticsByCourseId.get(c.id);
+      if (an?.paidLearningHours && an.paidLearningHours > 0) {
+        hours += an.paidLearningHours;
+      } else if (an?.students) {
+        const sec = an.students
+          .filter((s) => s.enrollmentType !== "AUDIT")
+          .reduce((acc, s) => acc + (s.totalTimeSpentSeconds || 0), 0);
+        hours += sec / 3600;
+      }
+    });
+    return Math.round(hours * 10) / 10;
+  }, [courses, analyticsByCourseId]);
+
+  const auditLearningHoursAllCourses = useMemo(() => {
+    let hours = 0;
+    courses.forEach((c) => {
+      const an = analyticsByCourseId.get(c.id);
+      if (an?.auditLearningHours && an.auditLearningHours > 0) {
+        hours += an.auditLearningHours;
+      } else if (an?.students) {
+        const sec = an.students
+          .filter((s) => s.enrollmentType === "AUDIT")
+          .reduce((acc, s) => acc + (s.totalTimeSpentSeconds || 0), 0);
+        hours += sec / 3600;
+      }
+    });
+    return Math.round(hours * 10) / 10;
+  }, [courses, analyticsByCourseId]);
+
+  const paidStudentsAllCourses = useMemo(() => {
+    let count = 0;
+    courses.forEach((c) => {
+      const an = analyticsByCourseId.get(c.id);
+      if (an?.paidStudentsCount && an.paidStudentsCount > 0) {
+        count += an.paidStudentsCount;
+      } else if (an?.students) {
+        count += an.students.filter((s) => s.enrollmentType !== "AUDIT").length;
+      }
+    });
+    return count;
+  }, [courses, analyticsByCourseId]);
+
+  const auditStudentsAllCourses = useMemo(() => {
+    let count = 0;
+    courses.forEach((c) => {
+      const an = analyticsByCourseId.get(c.id);
+      if (an?.auditStudentsCount && an.auditStudentsCount > 0) {
+        count += an.auditStudentsCount;
+      } else if (an?.students) {
+        count += an.students.filter((s) => s.enrollmentType === "AUDIT").length;
+      }
+    });
+    return count;
+  }, [courses, analyticsByCourseId]);
 
   const growthPercent = useMemo(() => {
     return 0;
@@ -233,7 +293,7 @@ export function useInstructorOverviewData({
 
   const { overviewActionTasks, totalOverdueTasksCount, overdueGradingByCourseId } = useMemo(() => {
     const instructorCourseIds = new Set(courses.map((c) => c.id));
-    const nowMs = currentTimeMs > 0 ? currentTimeMs : Date.now();
+    const nowMs = currentTimeMs;
 
     const overdueByCourse = new Map<string, number>();
 
@@ -563,6 +623,8 @@ export function useInstructorOverviewData({
     analyticsByCourseId,
     courseStudentCounts,
     totalStudentsAllCourses,
+    paidStudentsAllCourses,
+    auditStudentsAllCourses,
     allCompletedStudentsList,
     totalCertificatesAllCourses,
     enrichedCoursesForComparison,
@@ -571,6 +633,8 @@ export function useInstructorOverviewData({
     totalReviewsAllCourses,
     avgCompletionRateAllCourses,
     totalLearningHoursAllCourses,
+    paidLearningHoursAllCourses,
+    auditLearningHoursAllCourses,
     growthPercent,
     overviewActionTasks,
     totalPendingTasksCount,

@@ -501,7 +501,7 @@ async def test_handle_student_reminder_sent_event():
         mock_uc_instance.send_batch_notifications.assert_called_once_with(
             recipient_ids=["student-1", "student-2"],
             category=NotificationCategory.ACADEMIC,
-            title="Nhắc nhở học tập từ Giảng viên Thầy Ba: Nhắc nhở nộp bài tập",
+            title="Nhắc nhở nộp bài tập",
             content="Hãy vào học đúng hạn nhé",
             action_url="/learn/course-123",
         )

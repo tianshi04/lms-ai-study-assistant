@@ -37,6 +37,7 @@ from src.modules.learning.domain import (
     WeeklyDeadline,
 )
 from src.modules.learning.infrastructure.models import (
+    DailyCourseItemRecordModel,
     DailyLearningRecordModel,
     LearningItemProgressModel,
     LearningProgressModel,
@@ -574,6 +575,33 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         )
         res_item = await self.session.execute(item_stmt)
         item_total_seconds = res_item.scalar_one()
+
+        # 1b. Atomic upsert daily_course_item_records (per-course & per-item daily breakdown)
+        course_daily_stmt = (
+            pg_insert(DailyCourseItemRecordModel)
+            .values(
+                user_id=user_id,
+                course_id=course_id,
+                study_date=study_date,
+                item_id=item_id,
+                seconds_spent=delta_seconds,
+                last_studied_at=now_iso,
+            )
+            .on_conflict_do_update(
+                index_elements=[
+                    DailyCourseItemRecordModel.user_id,
+                    DailyCourseItemRecordModel.course_id,
+                    DailyCourseItemRecordModel.study_date,
+                    DailyCourseItemRecordModel.item_id,
+                ],
+                set_={
+                    "seconds_spent": DailyCourseItemRecordModel.seconds_spent
+                    + delta_seconds,
+                    "last_studied_at": now_iso,
+                },
+            )
+        )
+        await self.session.execute(course_daily_stmt)
 
         # 2. Atomic upsert daily_learning_records
         daily_stmt = (

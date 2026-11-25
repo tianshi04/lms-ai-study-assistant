@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
@@ -21,6 +21,10 @@ import {
   InstructorBulkReminderModal,
   type BulkReminderStudent,
 } from "./InstructorBulkReminderModal";
+import {
+  InstructorStudentDetailModal,
+  type StudentDetailRecord,
+} from "./InstructorStudentDetailModal";
 
 export type PacingCategory = "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND";
 
@@ -45,8 +49,6 @@ export interface InstructorPacingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialCategory?: PacingCategory;
-  initialCourseId?: string;
-  coursesList?: { id: string; title: string }[];
   students?: StudentPacingRecord[];
   bottleneckWeek?: {
     weekNumber: number;
@@ -59,38 +61,45 @@ export function InstructorPacingModal({
   open,
   onOpenChange,
   initialCategory = "ALL",
-  initialCourseId = "ALL",
-  coursesList = [],
   students = [],
   bottleneckWeek = null,
 }: InstructorPacingModalProps) {
   const [selectedPace, setSelectedPace] = useState<PacingCategory>(initialCategory);
-  const [selectedCourse, setSelectedCourse] = useState<string>(initialCourseId);
   const [searchQuery, setSearchQuery] = useState("");
   const [nudgedStudentIds, setNudgedStudentIds] = useState<Set<string>>(new Set());
   const [isBulkReminderModalOpen, setIsBulkReminderModalOpen] = useState(false);
   const [reminderTargetStudents, setReminderTargetStudents] = useState<
     BulkReminderStudent[] | null
   >(null);
+  const [selectedStudentForDetail, setSelectedStudentForDetail] =
+    useState<StudentDetailRecord | null>(null);
 
   // Phân trang & Tải động (Progressive Loading: Mặc định 25 học viên, lướt xuống tải thêm)
   const [visibleCount, setVisibleCount] = useState(25);
 
-  useEffect(() => {
-    setVisibleCount(25);
-  }, [searchQuery, selectedPace, selectedCourse]);
-
-  // Đồng bộ state khi mở hộp thoại hoặc bộ lọc ban đầu thay đổi
-  const [prevOpenState, setPrevOpenState] = useState({ open, initialCategory, initialCourseId });
+  // Đồng bộ state khi mở hộp thoại hoặc bộ lọc thay đổi
+  const [prevSyncState, setPrevSyncState] = useState({
+    open,
+    initialCategory,
+    searchQuery,
+    selectedPace,
+  });
   if (
-    prevOpenState.open !== open ||
-    prevOpenState.initialCategory !== initialCategory ||
-    prevOpenState.initialCourseId !== initialCourseId
+    prevSyncState.open !== open ||
+    prevSyncState.initialCategory !== initialCategory ||
+    prevSyncState.searchQuery !== searchQuery ||
+    prevSyncState.selectedPace !== selectedPace
   ) {
-    setPrevOpenState({ open, initialCategory, initialCourseId });
-    if (open) {
+    const filterChanged =
+      prevSyncState.searchQuery !== searchQuery || prevSyncState.selectedPace !== selectedPace;
+    const openChanged =
+      prevSyncState.open !== open || prevSyncState.initialCategory !== initialCategory;
+    setPrevSyncState({ open, initialCategory, searchQuery, selectedPace });
+    if (openChanged && open) {
       setSelectedPace(initialCategory);
-      setSelectedCourse(initialCourseId);
+    }
+    if (filterChanged) {
+      setVisibleCount(25);
     }
   }
 
@@ -104,7 +113,7 @@ export function InstructorPacingModal({
     };
   }, [students]);
 
-  // Lọc danh sách học viên theo Pace, Môn học và Từ khóa tìm kiếm
+  // Lọc danh sách học viên theo Pace và Từ khóa tìm kiếm
   const filteredStudents = useMemo(() => {
     return students.filter((st) => {
       // 1. Lọc theo pace
@@ -112,21 +121,19 @@ export function InstructorPacingModal({
       if (selectedPace === "ON_TRACK" && st.pace !== "ON_TRACK") return false;
       if (selectedPace === "BEHIND" && st.pace !== "BEHIND") return false;
 
-      // 2. Lọc theo khóa học
-      if (selectedCourse !== "ALL" && st.courseId !== selectedCourse) return false;
-
-      // 3. Lọc theo từ khóa tìm kiếm
+      // 2. Lọc theo từ khóa tìm kiếm (tên, email, bài học, môn học)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchName = st.name.toLowerCase().includes(q);
         const matchEmail = st.email.toLowerCase().includes(q);
         const matchLesson = st.currentLesson.toLowerCase().includes(q);
-        if (!matchName && !matchEmail && !matchLesson) return false;
+        const matchCourse = st.courseTitle.toLowerCase().includes(q);
+        if (!matchName && !matchEmail && !matchLesson && !matchCourse) return false;
       }
 
       return true;
     });
-  }, [students, selectedPace, selectedCourse, searchQuery]);
+  }, [students, selectedPace, searchQuery]);
 
   // Giới hạn số học viên hiển thị theo phân trang 25 mục
   const pagedStudents = useMemo(() => {
@@ -145,21 +152,18 @@ export function InstructorPacingModal({
     }
   };
 
-  // Tương tác sư phạm: Khích lệ (Vượt tiến độ) hoặc Nhắc nhở (Chậm/Đúng tiến độ) -> Mở modal soạn nháp
+  // Tương tác sư phạm: Mở trực tiếp Modal Chi Tiết Học Viên (đã tích hợp kênh thông báo & văn bản soạn sẵn)
   const handleNudgeStudent = (student: StudentPacingRecord) => {
-    setReminderTargetStudents([
-      {
-        userId: student.id,
-        userName: student.name,
-        userEmail: student.email,
-        progressPercent: student.progressPercent,
-        pace: student.pace,
-        paceDesc: student.paceDescription,
-        courseId: student.courseId,
-        courseTitle: student.courseTitle,
-      },
-    ]);
-    setIsBulkReminderModalOpen(true);
+    setSelectedStudentForDetail({
+      userId: student.id,
+      userName: student.name,
+      userEmail: student.email,
+      progressPercent: student.progressPercent,
+      pace: student.pace,
+      currentLessonTitle: student.currentLesson,
+      currentWeekNumber: student.currentWeekNumber,
+      lastActiveTime: student.lastActive,
+    });
   };
 
   return (
@@ -280,48 +284,31 @@ export function InstructorPacingModal({
             </button>
           </div>
 
-          {/* Thanh công cụ Tìm kiếm & Lọc môn học & Nút Nhắc nhở hàng loạt */}
+          {/* Thanh công cụ Tìm kiếm & Nút Nhắc nhở hàng loạt */}
           <div className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2 flex-1">
-              <div className="flex-1 max-w-sm">
-                <Input
-                  type="text"
-                  placeholder="Tìm tên..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  startAdornment={
-                    <Search className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
-                  }
-                  endAdornment={
-                    searchQuery ? (
-                      <button
-                        type="button"
-                        onClick={() => setSearchQuery("")}
-                        className="text-muted-foreground hover:text-foreground cursor-pointer"
-                        aria-label="Xóa từ khóa tìm kiếm"
-                      >
-                        <X className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                    ) : null
-                  }
-                  className="h-8.5 text-xs rounded-xl bg-surface border-outline-variant"
-                />
-              </div>
-
-              <div className="relative min-w-[200px] w-auto">
-                <select
-                  value={selectedCourse}
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground focus:ring-1 focus:ring-primary focus:border-primary outline-hidden cursor-pointer"
-                >
-                  <option value="ALL">Tất cả môn học ({coursesList.length})</option>
-                  {coursesList.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex-1 max-w-md">
+              <Input
+                type="text"
+                placeholder="Tìm tên học viên, email, bài học hoặc môn học..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                startAdornment={
+                  <Search className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                }
+                endAdornment={
+                  searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer"
+                      aria-label="Xóa từ khóa tìm kiếm"
+                    >
+                      <X className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  ) : null
+                }
+                className="h-8.5 text-xs rounded-xl bg-surface border-outline-variant"
+              />
             </div>
 
             {/* Nút Nhắc nhở hàng loạt (chỉ sáng khi có học sinh chậm tiến độ) */}
@@ -587,8 +574,28 @@ export function InstructorPacingModal({
         </Dialog.Content>
       </Dialog>
 
-      {/* Modal Nhắc nhở học viên (Đơn lẻ hoặc Hàng loạt) */}
-      {isBulkReminderModalOpen && reminderTargetStudents && (
+      {/* Modal Chi Tiết Học Viên (Tích hợp kênh thông báo & văn bản soạn sẵn) */}
+      {selectedStudentForDetail && (
+        <InstructorStudentDetailModal
+          open={Boolean(selectedStudentForDetail)}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setSelectedStudentForDetail(null);
+          }}
+          student={selectedStudentForDetail}
+          courseId={students.find((s) => s.id === selectedStudentForDetail.userId)?.courseId || ""}
+          courseTitle={
+            students.find((s) => s.id === selectedStudentForDetail.userId)?.courseTitle ||
+            "Khóa học"
+          }
+          isNudged={nudgedStudentIds.has(selectedStudentForDetail.userId)}
+          onSendReminder={(studentId) => {
+            setNudgedStudentIds((prev) => new Set(prev).add(studentId));
+          }}
+        />
+      )}
+
+      {/* Modal Nhắc nhở học viên Hàng loạt */}
+      {isBulkReminderModalOpen && reminderTargetStudents && reminderTargetStudents.length > 1 && (
         <InstructorBulkReminderModal
           key={`pacing-reminder-${isBulkReminderModalOpen}-${reminderTargetStudents.map((s) => s.userId).join("-")}`}
           open={isBulkReminderModalOpen}
@@ -598,21 +605,8 @@ export function InstructorPacingModal({
               setReminderTargetStudents(null);
             }
           }}
-          courseId={
-            reminderTargetStudents.length === 1
-              ? reminderTargetStudents[0].courseId || selectedCourse
-              : selectedCourse
-          }
-          courseTitle={
-            reminderTargetStudents.length === 1
-              ? reminderTargetStudents[0].courseTitle ||
-                (selectedCourse !== "ALL"
-                  ? coursesList.find((c) => c.id === selectedCourse)?.title
-                  : "Khóa học")
-              : selectedCourse !== "ALL"
-                ? coursesList.find((c) => c.id === selectedCourse)?.title || "Khóa học"
-                : "các khóa học phụ trách"
-          }
+          courseId=""
+          courseTitle="các khóa học phụ trách"
           students={reminderTargetStudents}
           bottleneckWeek={bottleneckWeek ?? null}
           onSuccess={(studentIds) => {

@@ -25,7 +25,7 @@ async def test_get_instructor_activity_timeline_empty_courses():
         assert pt.active_learners == 0
         assert pt.completed_items == 0
         assert pt.in_progress == 0
-    assert len(res.heatmap) == 28
+    assert len(res.heatmap) == 35
     for cell in res.heatmap:
         assert cell.count == 0
         assert cell.is_peak is False
@@ -109,7 +109,7 @@ async def test_get_instructor_activity_timeline_with_data_and_peak():
     assert res.total_active_in_period == 3
 
     # Heatmap should have 28 cells
-    assert len(res.heatmap) == 28
+    assert len(res.heatmap) == 35
     # Today evening has 2 active users (user-1 and user-2)
     # Check that at least one peak cell exists
     peak_cells = [c for c in res.heatmap if c.is_peak]
@@ -135,7 +135,7 @@ async def test_get_instructor_activity_timeline_date_ranges():
             date_range=dr,
         )
         assert len(res.timeline) >= 7
-        assert len(res.heatmap) == 28
+        assert len(res.heatmap) == 35
 
 
 @pytest.mark.asyncio
@@ -166,3 +166,25 @@ async def test_usecase_get_instructor_activity_timeline():
     )
     assert res is not None
     repo_mock.get_instructor_activity_timeline.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_get_instructor_activity_timeline_paid_segmented_filters():
+    session = AsyncMock()
+    repo = SQLAlchemyCatalogRepository(session)
+
+    async def mock_execute(stmt):
+        m = MagicMock()
+        m.scalars.return_value.all.return_value = []
+        return m
+
+    session.execute.side_effect = mock_execute
+
+    for flt in ["paid_in_progress", "paid_completed", "paid", "audit"]:
+        res = await repo.get_instructor_activity_timeline(
+            course_ids=["c1"],
+            date_range="7d",
+            learner_filter=flt,
+        )
+        assert len(res.timeline) == 7
+        assert len(res.heatmap) == 35

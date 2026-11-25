@@ -134,11 +134,7 @@ async def handle_student_reminder_sent(
 ) -> None:
     if not event.student_ids:
         return
-    title = (
-        f"Nhắc nhở học tập từ Giảng viên {event.instructor_name}: {event.title}"
-        if event.instructor_name
-        else (event.title or "Nhắc nhở học tập từ Giảng viên")
-    )
+    title = (event.title or "").strip() or "Nhắc nhở học tập từ Giảng viên"
     notif_uc = NotificationUseCase()
     await notif_uc.send_batch_notifications(
         recipient_ids=event.student_ids,

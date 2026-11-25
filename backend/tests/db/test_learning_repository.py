@@ -687,6 +687,8 @@ async def test_record_learning_time_repository(repository, mock_session):
     mock_item_res = MagicMock()
     mock_item_res.scalar_one.return_value = 60
 
+    mock_course_daily_res = MagicMock()
+
     mock_daily_res = MagicMock()
     mock_daily_res.scalar_one.return_value = 60
 
@@ -703,6 +705,7 @@ async def test_record_learning_time_repository(repository, mock_session):
 
     mock_session.execute.side_effect = [
         mock_item_res,
+        mock_course_daily_res,
         mock_daily_res,
         mock_init_res,
         mock_streak_res,

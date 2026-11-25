@@ -2,8 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { Plus, Users, ChevronDown, Sparkles } from "lucide-react";
+import { Plus, Users, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 
 interface InstructorExecutiveToolbarProps {
@@ -120,42 +121,61 @@ export function InstructorExecutiveToolbar({
 
         {/* Dropdown danh sách khóa học kèm số lượng học viên (Xử lý cả khi có và chưa có khóa học) */}
         {viewMode === "specific" && (
-          <div className="relative animate-in fade-in duration-150 flex-1 min-w-[220px] max-w-md">
+          <div className="animate-in fade-in duration-150 flex-1 min-w-[260px] max-w-xl sm:max-w-2xl">
             {hasNoCourses ? (
-              <select
-                disabled
-                className="h-9 w-full px-3 pr-8 rounded-xl bg-muted/50 border border-outline-variant/60 text-xs font-medium text-muted-foreground cursor-not-allowed"
-                aria-label="Chưa có khóa học nào"
-              >
-                <option>Chưa có khóa học nào</option>
-              </select>
+              <Select disabled value="">
+                <Select.Trigger
+                  disabled
+                  aria-label="Chưa có khóa học nào"
+                  className="h-9 w-full px-3 py-0 rounded-xl bg-muted/50 border border-outline-variant/60 text-xs font-medium text-muted-foreground"
+                >
+                  <Select.Value placeholder="Chưa có khóa học nào" />
+                </Select.Trigger>
+              </Select>
             ) : (
-              <select
+              <Select
                 value={selectedCourseId}
-                onChange={(e) => onSelectCourse(e.target.value)}
-                className="h-9 w-full px-3 pr-8 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary/40 focus:border-primary outline-hidden appearance-none cursor-pointer truncate shadow-2xs"
-                aria-label="Chọn khóa học để xem phân tích chi tiết"
-                title={courses.find((c) => c.id === selectedCourseId)?.title}
+                onValueChange={(val) => {
+                  if (val) onSelectCourse(String(val));
+                }}
               >
-                {courses.map((course) => {
-                  const studentCount = courseStudentCounts?.[course.id];
-                  const countLabel =
-                    studentCount !== undefined ? ` (${studentCount} học viên)` : "";
-                  return (
-                    <option key={course.id} value={course.id}>
-                      {course.title}
-                      {countLabel}
-                    </option>
-                  );
-                })}
-              </select>
+                <Select.Trigger
+                  aria-label="Chọn khóa học để xem phân tích chi tiết"
+                  className="h-9 w-full px-3 py-0 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground shadow-2xs hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all"
+                  title={courses.find((c) => c.id === selectedCourseId)?.title}
+                >
+                  <Select.Value placeholder="Chọn khóa học...">
+                    {(() => {
+                      const currentCourse = courses.find((c) => c.id === selectedCourseId);
+                      if (!currentCourse) return "Chọn khóa học...";
+                      const studentCount = courseStudentCounts?.[currentCourse.id];
+                      const countLabel =
+                        studentCount !== undefined ? ` (${studentCount} học viên)` : "";
+                      return `${currentCourse.title}${countLabel}`;
+                    })()}
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content className="min-w-[var(--anchor-width)] w-max max-w-[min(calc(100vw-2rem),46rem)]">
+                  {courses.map((course) => {
+                    const studentCount = courseStudentCounts?.[course.id];
+                    const countLabel =
+                      studentCount !== undefined ? ` (${studentCount} học viên)` : "";
+                    return (
+                      <Select.Item
+                        key={course.id}
+                        value={course.id}
+                        className="text-xs py-2 px-3 rounded-xl cursor-pointer"
+                      >
+                        <span className="whitespace-normal leading-relaxed">
+                          {course.title}
+                          {countLabel}
+                        </span>
+                      </Select.Item>
+                    );
+                  })}
+                </Select.Content>
+              </Select>
             )}
-            <ChevronDown
-              className={`w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${
-                hasNoCourses ? "text-muted-foreground/50" : "text-muted-foreground"
-              }`}
-              aria-hidden="true"
-            />
           </div>
         )}
       </div>

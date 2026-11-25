@@ -10,6 +10,10 @@ export interface InstructorWeeklyFunnelTabProps {
   selectedWeekFilter: number | null;
   onSelectWeekFilter: (weekNumber: number | null) => void;
   totalStudents: number;
+  weeklyCohortFilter?: "ALL" | "PAID" | "AUDIT";
+  onSelectCohortFilter?: (cohort: "ALL" | "PAID" | "AUDIT") => void;
+  paidCount?: number;
+  auditCount?: number;
 }
 
 export function InstructorWeeklyFunnelTab({
@@ -18,21 +22,62 @@ export function InstructorWeeklyFunnelTab({
   selectedWeekFilter,
   onSelectWeekFilter,
   totalStudents,
+  weeklyCohortFilter = "PAID",
+  onSelectCohortFilter,
+  paidCount = 0,
+  auditCount = 0,
 }: InstructorWeeklyFunnelTabProps) {
   return (
     <div className="space-y-4">
-      {/* Header: Tiêu đề & Cảnh báo điểm nghẽn */}
+      {/* Header: Tiêu đề, Bộ lọc Gói & Cảnh báo điểm nghẽn */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
         <div>
-          <p className="text-xs font-bold text-foreground">
-            Lộ Trình Tuần Học &amp; Phễu Tỷ Lệ Vượt Qua
-          </p>
+          <p className="text-xs font-bold text-foreground">Tiến độ hoàn thành theo tuần học</p>
           <p className="text-[11px] text-muted-foreground">
             Theo dõi mức độ hoàn thành qua từng tuần để phát hiện rào cản kiến thức:
           </p>
         </div>
 
-        <div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Bộ lọc phân loại Gói học để loại bỏ điểm nghẽn ảo */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-outline-variant/60">
+            <button
+              type="button"
+              onClick={() => onSelectCohortFilter?.("ALL")}
+              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                weeklyCohortFilter === "ALL"
+                  ? "bg-surface text-primary shadow-xs font-black"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Tất cả ({totalStudents})
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectCohortFilter?.("PAID")}
+              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                weeklyCohortFilter === "PAID"
+                  ? "bg-surface text-primary shadow-xs font-black"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Đo lường tiến độ chuẩn xác của học viên chính thức (không bị nhiễu do giới hạn tài khoản học thử)"
+            >
+              Chính thức ({paidCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectCohortFilter?.("AUDIT")}
+              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                weeklyCohortFilter === "AUDIT"
+                  ? "bg-surface text-primary shadow-xs font-black"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Theo dõi học viên học thử Tuần 1"
+            >
+              Học thử ({auditCount})
+            </button>
+          </div>
+
           {bottleneckWeek ? (
             <span className="px-2.5 py-1 rounded-lg bg-destructive/10 text-destructive text-[11px] font-bold flex items-center gap-1.5 shrink-0">
               <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />

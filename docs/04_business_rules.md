@@ -479,11 +479,40 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_INSTRUCTOR_003 (Quy định Đăng Thông báo Khóa học Course Announcements):**
   * Giảng viên đăng thông báo (`CreateCourseAnnouncement`) phải cung cấp Tiêu đề (`title`) và Nội dung (`content`). Thông báo sau khi đăng được lưu kèm mốc thời gian và hiển thị công khai cho tất cả học viên ghi danh khóa học qua RPC `ListCourseAnnouncements`.
 * **BR_INSTRUCTOR_004 (Thống kê Tiến độ Lớp học & Danh sách Học viên Instructor Analytics):**
-  * Giảng viên truy xuất báo cáo lớp học qua RPC `GetInstructorAnalytics` nhận thông tin thống kê thời gian thực: Tổng số học viên (`total_enrolled_students`), Tỷ lệ hoàn thành trung bình (`average_completion_rate`), Điểm đánh giá trung bình (`average_rating`), và Danh sách chi tiết tiến độ từng học viên (`students`).
+  * Giảng viên truy xuất báo cáo lớp học qua RPC `GetInstructorAnalytics` nhận thông tin thống kê thời gian thực: Tổng số học viên (`total_enrolled_students`), Tỷ lệ hoàn thành trung bình (`average_completion_rate`), Điểm đánh giá trung bình (`average_rating`), Tổng học viên chính thức (`paid_students_count`), Tổng học viên học thử (`audit_students_count`), Tổng số giờ học tích lũy (`total_learning_hours`), Thời lượng học chính thức (`paid_learning_hours`), Thời lượng học thử (`audit_learning_hours`), Điểm bài thi trung bình của khóa (`course_average_quiz_score`), và Danh sách chi tiết tiến độ từng học viên (`students`).
+  * **Quy tắc Phân định Gói Ghi danh (`enrollment_type`):**
+    * Hệ thống xác định hạng gói theo thứ tự ưu tiên chặt chẽ:
+      1. Đã mua lẻ khóa học (`CoursePurchaseModel`) -> `PAID` (Chính thức).
+      2. Có gói Plus Subscription đang hoạt động (`UserSubscriptionModel`) -> `PLUS` (Plus).
+      3. Có mã kích hoạt doanh nghiệp hợp lệ (`EnterpriseLicenseModel`) -> `ENTERPRISE` (Doanh nghiệp).
+      4. Có đơn hỗ trợ tài chính được duyệt (`FinancialAidModel`) -> `FINANCIAL_AID` (Học bổng).
+      5. Còn lại ghi danh miễn phí -> `AUDIT` (Học thử).
+  * **Quy tắc Ràng buộc & Chuẩn hóa Phân khúc Học viên (Cohort Segmentation & Mutual Exclusion):**
+    * Học viên học thử (`AUDIT`) chỉ được truy cập tuần 1 bài giảng lý thuyết; các tuần 2+ và bài kiểm tra tính điểm bị khóa. Do đó, học viên học thử KHÔNG THỂ đạt trạng thái Đã tốt nghiệp (`COMPLETED`) hoặc nhận chứng chỉ.
+    * Hệ thống thống nhất 4 phân khúc chuẩn hóa không chồng lấn trên toàn bộ giao diện Giảng viên (Dropdown Sơ đồ & Cụm nút Bảng danh sách):
+      1. `Tất cả học viên` (Toàn bộ học viên của khóa).
+      2. `Chính thức — Đang học` (Học viên trả phí/học bổng/doanh nghiệp có tiến độ < 100%).
+      3. `Chính thức — Đã tốt nghiệp` (Học viên chính thức đã hoàn thành 100% khóa học).
+      4. `Học thử` (Học viên tài khoản Audit chỉ học nội dung mở Tuần 1).
+    * Thiết kế này triệt tiêu hoàn toàn rủi ro mâu thuẫn dữ liệu giữa học thử và hoàn thành.
+  * **Quy tắc Tính Nhịp độ cho Học viên Học thử (Pacing for Audit Learners):**
+    * Do bị giới hạn phạm vi tuần 1, hệ thống không phạt nhịp độ của học viên Audit là "Chậm tiến độ" (`BEHIND`) khi họ đã học hết tuần 1, mà đánh giá nhịp độ dựa trên mức độ hoạt động và tính chuyên cần thực tế thay vì ép tiến độ theo ngày ghi danh như học viên chính thức.
+  * **Quy tắc Theo dõi Khóa Kiểm tra (Assessment Cooldown Observation):**
+    * Khi học viên thi trượt quá 3 lần liên tiếp, hệ thống ghi nhận `is_in_cooldown = True` và thời điểm mở lại `cooldown_until`. Giảng viên quan sát được trạng thái này trên Dashboard để chủ động gửi thông báo hỗ trợ giải đáp kiến thức kịp thời.
+  * **Quy tắc Giám sát & Quá hạn Nghĩa vụ Chấm chéo (Peer Review Duty & Overdue Tracking):**
+    * Học viên nộp bài tập tự luận có nghĩa vụ chấm chéo tối thiểu 3 bài tập của bạn học (`peer_review_duty_status = 'PENDING'`).
+    * **Thời hạn chấm chéo (Review Window):** Được xác định chính xác theo cấu hình thời gian khởi động bài tập (`cold_start_hours`: 24h, 48h, 72h) do Giảng viên thiết lập trên bài tập tự luận tương ứng.
+    * Khi học viên còn nợ chấm nhưng chưa quá hạn: Giao diện hiển thị trạng thái đang trong hạn `[🕒 Đang trong hạn chấm]`.
+    * Khi khoảng thời gian từ lúc nộp bài vượt quá `cold_start_hours` mà học viên chưa hoàn thành nghĩa vụ: Hệ thống kích hoạt cờ `is_peer_review_overdue = True`, giao diện hiển thị cảnh báo đỏ `[⚠️ Nợ chấm chéo (Quá hạn)]` và tự động cập nhật tiêu đề/nội dung thư đôn đốc khẩn cấp trong Modal chi tiết.
+  * **Quy tắc Bản đồ Nhiệt & Nhật ký Hoạt động Cá nhân theo Môn học (`DailyLearningRecordModel` & `DailyCourseItemRecordModel`):**
+    * Ở bảng tổng quan lớp học, hệ thống tổng hợp hoạt động 30 ngày gần nhất từ `DailyLearningRecordModel` thành mảng `daily_activities` cùng chuỗi ngày học (`current_streak`, `longest_streak`).
+    * Ở hồ sơ chi tiết từng học viên (`GetInstructorStudentDossier`), thời lượng học mỗi ngày được cô lập chặt chẽ theo từng khóa học qua bảng `daily_course_item_records` (`user_id`, `course_id`, `study_date`, `item_id`), đảm bảo tổng số phút của mỗi ngày luôn khớp tuyệt đối với danh sách các bài học đã mở trong ngày đó trên toàn bộ lịch sử từ lúc ghi danh (`30 ngày ‹ ›` và `Toàn khóa`).
+    * **Cảnh báo Học lướt Bất thường (`is_suspicious_fast_pace`):** Khi học viên đã hoàn thành từ `3` mục bài học trở lên (`MIN_COMPLETED_ITEMS_FOR_FAST_PACE_CHECK = 3`) nhưng tổng thời lượng thực học thấp hơn `25%` (`FAST_PACE_MIN_ESTIMATED_RATIO = 0.25`) tổng thời lượng ước tính (`estimated_minutes` do giảng viên cấu hình trên từng học liệu, mặc định `DEFAULT_ESTIMATED_ITEM_MINUTES = 10` phút nếu chưa nhập) của các bài đã hoàn thành, hệ thống tự động gắn nhãn cảnh báo thời lượng ít bất thường để giảng viên kịp thời rà soát.
 * **BR_INSTRUCTOR_006 (Thống kê Hoạt động Chuỗi thời gian & Bản đồ nhiệt Heatmap):**
   * Giảng viên truy xuất dữ liệu chuỗi thời gian qua RPC `GetInstructorActivityTimeline` được phân quyền chặt chẽ (`enforce_course_ownership` khi truyền `course_id`, hoặc tự động giới hạn phạm vi các khóa học mà giảng viên sở hữu hoặc là đồng giảng dạy khi `course_id` rỗng).
   * Chuỗi dữ liệu thời gian (`timeline`) phân nhóm hoạt động theo khung giờ (`today`) hoặc theo ngày (`7d`, `this_week`, `last_week`, `this_month`, `last_month`, `custom`).
-  * Bản đồ nhiệt (`heatmap`) bao gồm 28 ô cố định (7 ngày x 4 khung giờ: Sáng, Chiều, Tối, Đêm), tự động phát hiện ô cao điểm nhất với điều kiện `count > 0 && count == max_count` để gán nhãn `is_peak = True`.
+  * Hỗ trợ bộ lọc đối tượng học viên (`learner_filter`): `all` (Tất cả học viên), `paid_in_progress` (Chính thức — Đang học), `paid_completed` (Chính thức — Đã tốt nghiệp), `audit` (Học viên học thử), `paid` (Học viên chính thức), `in_progress` (Đang học), `completed` (Đã tốt nghiệp). Đối với các nhóm đối tượng phân khúc, hệ thống thực hiện pushdown SQL lọc danh sách người dùng đã thanh toán / học bổng / doanh nghiệp kết hợp tiến độ hoàn thành.
+  * Bản đồ nhiệt (`heatmap`) bao gồm 35 ô cố định (7 ngày x 5 khung giờ: Sáng 06h-12h, Chiều 12h-18h, Tối 18h-22h, Đêm 22h-02h, Rạng sáng 02h-06h phủ trọn 24 tiếng trong ngày), tự động phát hiện ô cao điểm nhất với điều kiện `count > 0 && count == max_count` để gán nhãn `is_peak = True`.
 
 * **BR_INSTRUCTOR_005 (Kéo thả & Sắp xếp Thứ tự Cấu trúc Bài giảng Batch Reordering):**
   * Giảng viên/Admin được phép sắp xếp lại thứ tự của Tuần học (`ReorderWeekModules`), Bài học (`ReorderLessons`) và Học liệu (`ReorderLearningItems`) bằng giao diện Kéo thả (Drag & Drop) hoặc Nút di chuyển Nhanh (Up/Down).

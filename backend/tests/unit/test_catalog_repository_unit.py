@@ -173,3 +173,39 @@ async def test_validate_foundational_course_ids_rules(repo, mock_session):
         foundational_ids=["c_v1", "c_v2", "c_v1"],
     )
     assert res == ["c_v1", "c_v2"]
+
+
+@pytest.mark.asyncio
+async def test_get_instructor_analytics_empty(repo, mock_session):
+    def mock_exec(stmt):
+        stmt_str = str(stmt).lower()
+        res = MagicMock()
+        if "course_reviews" in stmt_str:
+            res.one_or_none.return_value = (0.0, 0)
+        elif "course_collaborators" in stmt_str:
+            scalars_m = MagicMock()
+            scalars_m.all.return_value = []
+            res.scalars.return_value = scalars_m
+        elif "courses.owner_id" in stmt_str:
+            res.scalar_one_or_none.return_value = "instructor_1"
+        elif "courses.id" in stmt_str:
+            res.scalar_one_or_none.return_value = "c1"
+        elif "learning_progresses" in stmt_str:
+            scalars_m = MagicMock()
+            scalars_m.all.return_value = []
+            res.scalars.return_value = scalars_m
+        else:
+            res.scalar_one_or_none.return_value = "c1"
+            res.one_or_none.return_value = None
+            scalars_m = MagicMock()
+            scalars_m.all.return_value = []
+            res.scalars.return_value = scalars_m
+        return res
+
+    mock_session.execute.side_effect = mock_exec
+
+    analytics = await repo.get_instructor_analytics("c1")
+    assert analytics.course_id == "c1"
+    assert analytics.total_enrolled_students == 0
+    assert analytics.total_learning_hours == 0.0
+    assert analytics.students == []

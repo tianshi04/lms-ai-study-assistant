@@ -1,34 +1,42 @@
 "use client";
 
 import React from "react";
-import { Users, CheckCircle2, Star, Award } from "lucide-react";
+import { Users, Star, Award, Clock } from "lucide-react";
 
 interface InstructorKpiRibbonProps {
   viewMode: "all" | "specific";
   totalStudents: number;
+  paidStudentsCount?: number;
+  auditStudentsCount?: number;
   growthPercent?: number;
   avgCompletionRate: number;
   avgRating: string | number;
   reviewCount: number;
   totalCertificates: number;
   totalLearningHours?: number;
+  paidLearningHours?: number;
+  auditLearningHours?: number;
   loading?: boolean;
 }
 
 export function InstructorKpiRibbon({
   viewMode,
   totalStudents,
+  paidStudentsCount,
+  auditStudentsCount,
   growthPercent: _growthPercent = 18,
   avgCompletionRate,
   avgRating,
   reviewCount,
   totalCertificates,
-  totalLearningHours: _totalLearningHours = 0,
+  totalLearningHours = 0,
+  paidLearningHours,
+  auditLearningHours,
   loading = false,
 }: InstructorKpiRibbonProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      {/* 1. Tổng Học Viên */}
+      {/* 1. Tổng Học Viên & Phân tầng Gói học */}
       <div className="p-4 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs flex items-center gap-3.5 transition-all hover:border-primary/40">
         <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
           <Users className="w-5 h-5" aria-hidden="true" />
@@ -43,27 +51,44 @@ export function InstructorKpiRibbon({
             </span>
           </div>
           <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
-            {viewMode === "all" ? "Tất cả các khóa phụ trách" : "Sinh viên trong lớp này"}
+            {loading
+              ? "Đang tải dữ liệu…"
+              : paidStudentsCount !== undefined
+                ? `${paidStudentsCount} chính thức • ${auditStudentsCount || 0} học thử`
+                : viewMode === "all"
+                  ? "Tất cả các khóa phụ trách"
+                  : "Sinh viên trong lớp này"}
           </span>
         </div>
       </div>
 
-      {/* 2. Tỷ Lệ Hoàn Thành TB */}
+      {/* 2. Tiến Độ & Thời Lượng Học Thực Tế */}
       <div className="p-4 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs flex items-center gap-3.5 transition-all hover:border-success/40">
         <div className="w-11 h-11 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
-          <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+          <Clock className="w-5 h-5" aria-hidden="true" />
         </div>
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate">
-            Tỷ lệ hoàn thành
+            Tiến độ &amp; Thời lượng học
           </p>
           <div className="flex items-baseline gap-2 mt-0.5">
             <span className="text-xl sm:text-2xl font-black text-success font-mono leading-none">
               {loading ? "…" : `${Math.round(avgCompletionRate)}%`}
             </span>
+            {totalLearningHours > 0 && (
+              <span className="text-[11px] font-mono font-bold text-muted-foreground">
+                ({totalLearningHours}h tích lũy)
+              </span>
+            )}
           </div>
           <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
-            {avgCompletionRate >= 60 ? "Vượt ngưỡng cam kết sàn" : "Cần tăng cường hỗ trợ"}
+            {loading
+              ? "Đang tải dữ liệu…"
+              : paidLearningHours !== undefined && auditLearningHours !== undefined
+                ? `${paidLearningHours}h chính thức • ${auditLearningHours}h học thử`
+                : avgCompletionRate >= 60
+                  ? "Tiến độ học tập rất tốt"
+                  : "Cần theo dõi & đôn đốc học viên"}
           </span>
         </div>
       </div>
@@ -75,7 +100,7 @@ export function InstructorKpiRibbon({
         </div>
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate">
-            Đánh giá trung bình
+            Đánh giá chất lượng
           </p>
           <div className="flex items-baseline gap-2 mt-0.5">
             <span className="text-xl sm:text-2xl font-black text-foreground font-mono leading-none">
@@ -87,10 +112,13 @@ export function InstructorKpiRibbon({
               {reviewCount} đánh giá
             </span>
           </div>
+          <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+            Chất lượng khóa học theo học viên
+          </span>
         </div>
       </div>
 
-      {/* 4. Tác Động Giảng Dạy */}
+      {/* 4. Tác Động & Chứng Chỉ Đã Cấp */}
       <div className="p-4 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs flex items-center gap-3.5 transition-all hover:border-primary/40">
         <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
           <Award className="w-5 h-5" aria-hidden="true" />

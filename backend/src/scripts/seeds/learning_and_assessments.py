@@ -1,5 +1,7 @@
 """Seed data for Learning Progress, Deadlines, Notes, and Assessments (Quizzes, Question Banks, Labs, Peer Reviews)."""
 
+from datetime import date
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.assessment.infrastructure.models import (
@@ -16,6 +18,9 @@ from src.modules.assessment.infrastructure.models import (
 )
 from src.modules.learning.domain import DeadlineStatus
 from src.modules.learning.infrastructure.models import (
+    DailyCourseItemRecordModel,
+    DailyLearningRecordModel,
+    LearningItemProgressModel,
     LearningProgressModel,
     PersonalNoteModel,
     WeeklyDeadlineModel,
@@ -108,9 +113,130 @@ async def seed_learning_and_assessments(session: AsyncSession) -> None:
             overall_progress_percent=0.0,
             completed_item_ids=[],
         ),
+        LearningProgressModel(
+            id="user_learner_03:course-microeconomics-foundations",
+            user_id="user_learner_03",
+            course_id="course-microeconomics-foundations",
+            overall_progress_percent=88.9,
+            completed_item_ids=[
+                "item-micro-v1",
+                "item-micro-r1",
+                "item-micro-v2",
+                "item-micro-r2",
+                "item-micro-q1",
+                "item-micro-v3",
+                "item-micro-r3",
+                "item-micro-q2",
+            ],
+            enrolled_at="2026-11-10T08:00:00Z",
+            last_accessed_at="2026-11-24T09:30:00Z",
+            last_accessed_item_id="item-micro-v3",
+        ),
     ]
     for prog in progresses:
         await session.merge(prog)
+
+    # Rich daily learning records & item progresses for learner 03 (demonstrating multi-day progression)
+    learner03_items_time = {
+        "item-micro-v1": 1500,
+        "item-micro-r1": 900,
+        "item-micro-v2": 1800,
+        "item-micro-r2": 1200,
+        "item-micro-q1": 900,
+        "item-micro-v3": 2100,
+        "item-micro-r3": 1200,
+        "item-micro-q2": 1800,
+    }
+    for item_id, secs in learner03_items_time.items():
+        await session.merge(
+            LearningItemProgressModel(
+                user_id="user_learner_03",
+                item_id=item_id,
+                course_id="course-microeconomics-foundations",
+                time_spent_seconds=secs,
+                last_studied_at="2026-11-24T09:30:00Z",
+            )
+        )
+
+    learner03_daily_records = [
+        # 10/11 - Ngay bat dau ghi danh
+        (date(2026, 11, 10), "item-micro-v1", 1500, "2026-11-10T09:00:00Z"),
+        (date(2026, 11, 10), "item-micro-r1", 900, "2026-11-10T09:30:00Z"),
+        # 12/11
+        (date(2026, 11, 12), "item-micro-v2", 1800, "2026-11-12T14:30:00Z"),
+        # 14/11
+        (date(2026, 11, 14), "item-micro-r2", 1200, "2026-11-14T10:00:00Z"),
+        (date(2026, 11, 14), "item-micro-q1", 900, "2026-11-14T10:30:00Z"),
+        # 17/11
+        (date(2026, 11, 17), "item-micro-v3", 1500, "2026-11-17T15:00:00Z"),
+        # 19/11
+        (date(2026, 11, 19), "item-micro-r3", 1200, "2026-11-19T11:00:00Z"),
+        # 22/11
+        (date(2026, 11, 22), "item-micro-q2", 1800, "2026-11-22T16:00:00Z"),
+        # 24/11 - Hom nay
+        (date(2026, 11, 24), "item-micro-v3", 600, "2026-11-24T09:30:00Z"),
+    ]
+    for d, it_id, secs, ts in learner03_daily_records:
+        await session.merge(
+            DailyCourseItemRecordModel(
+                user_id="user_learner_03",
+                course_id="course-microeconomics-foundations",
+                study_date=d,
+                item_id=it_id,
+                seconds_spent=secs,
+                last_studied_at=ts,
+            )
+        )
+
+    learner03_daily_sums: dict[date, int] = {}
+    for d, _, s_spent, _ in learner03_daily_records:
+        learner03_daily_sums[d] = learner03_daily_sums.get(d, 0) + s_spent
+    for d, total_s in learner03_daily_sums.items():
+        await session.merge(
+            DailyLearningRecordModel(
+                user_id="user_learner_03",
+                study_date=d,
+                total_seconds=total_s,
+                is_streak_qualified=total_s >= 900,
+            )
+        )
+
+    await session.merge(
+        QuizSubmissionModel(
+            id="quiz_sub_learner03_q1",
+            user_id="user_learner_03",
+            item_id="item-micro-q1",
+            selected_option_indexes=[0, 1, 0],
+            score_percent=90.0,
+            passed=True,
+            attempt_number=1,
+            created_at="2026-11-14T10:30:00Z",
+        )
+    )
+    await session.merge(
+        QuizSubmissionModel(
+            id="quiz_sub_learner03_q2_att1",
+            user_id="user_learner_03",
+            item_id="item-micro-q2",
+            selected_option_indexes=[1, 1, 0],
+            score_percent=60.0,
+            passed=False,
+            attempt_number=1,
+            created_at="2026-11-22T15:00:00Z",
+        )
+    )
+    await session.merge(
+        QuizSubmissionModel(
+            id="quiz_sub_learner03_q2_att2",
+            user_id="user_learner_03",
+            item_id="item-micro-q2",
+            selected_option_indexes=[0, 1, 0],
+            score_percent=85.0,
+            passed=True,
+            attempt_number=2,
+            created_at="2026-11-22T16:00:00Z",
+        )
+    )
 
     deadlines = [
         WeeklyDeadlineModel(

@@ -1100,6 +1100,12 @@ class CatalogHandler(CatalogService):
                 average_completion_rate=analytics.average_completion_rate,
                 average_rating=analytics.average_rating,
                 review_count=analytics.review_count,
+                paid_students_count=analytics.paid_students_count,
+                audit_students_count=analytics.audit_students_count,
+                total_learning_hours=analytics.total_learning_hours,
+                course_average_quiz_score=analytics.course_average_quiz_score,
+                paid_learning_hours=analytics.paid_learning_hours,
+                audit_learning_hours=analytics.audit_learning_hours,
                 students=[
                     pb.EnrolledStudent(
                         user_id=s.user_id,
@@ -1107,6 +1113,28 @@ class CatalogHandler(CatalogService):
                         user_email=s.user_email,
                         progress_percent=s.progress_percent,
                         enrolled_at=s.enrolled_at,
+                        enrollment_type=s.enrollment_type,
+                        total_time_spent_seconds=s.total_time_spent_seconds,
+                        last_accessed_at=s.last_accessed_at,
+                        last_accessed_item_title=s.last_accessed_item_title,
+                        average_quiz_score=s.average_quiz_score,
+                        quiz_attempts_count=s.quiz_attempts_count,
+                        is_in_cooldown=s.is_in_cooldown,
+                        cooldown_until=s.cooldown_until,
+                        peer_review_duty_status=s.peer_review_duty_status,
+                        completed_items_count=s.completed_items_count,
+                        total_course_items=s.total_course_items,
+                        daily_activities=[
+                            pb.StudentDailyActivity(
+                                study_date=d.study_date,
+                                total_seconds=d.total_seconds,
+                                is_streak_qualified=d.is_streak_qualified,
+                            )
+                            for d in s.daily_activities
+                        ],
+                        current_streak=s.current_streak,
+                        longest_streak=s.longest_streak,
+                        is_peer_review_overdue=s.is_peer_review_overdue,
                     )
                     for s in analytics.students
                 ],
@@ -1743,4 +1771,70 @@ class CatalogHandler(CatalogService):
         return pb.AcknowledgeLowReviewResponse(
             success=True,
             message="Đã ghi nhận xác nhận đánh giá.",
+        )
+
+    async def get_instructor_student_dossier(
+        self,
+        request: pb.GetInstructorStudentDossierRequest,
+        ctx: RequestContext[
+            pb.GetInstructorStudentDossierRequest,
+            pb.GetInstructorStudentDossierResponse,
+        ],
+    ) -> pb.GetInstructorStudentDossierResponse:
+        user = self._verify_instructor_permission()
+        try:
+            dossier = await self.use_case.get_instructor_student_dossier(
+                course_id=request.course_id,
+                student_id=request.student_id,
+                current_user=user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e)) from e
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e)) from e
+
+        return pb.GetInstructorStudentDossierResponse(
+            enrolled_at=dossier.enrolled_at,
+            furthest_item_title=dossier.furthest_item_title,
+            furthest_week_number=dossier.furthest_week_number,
+            last_accessed_item_title=dossier.last_accessed_item_title,
+            last_accessed_week_number=dossier.last_accessed_week_number,
+            final_weighted_grade=dossier.final_weighted_grade,
+            is_suspicious_fast_pace=dossier.is_suspicious_fast_pace,
+            assessments=[
+                pb.StudentAssessmentSummaryItem(
+                    item_id=a.item_id,
+                    week_number=a.week_number,
+                    week_title=a.week_title,
+                    item_title=a.item_title,
+                    item_type=a.item_type,
+                    weight=a.weight,
+                    score=a.score,
+                    max_score=a.max_score,
+                    is_submitted=a.is_submitted,
+                    is_passed=a.is_passed,
+                    attempts_count=a.attempts_count,
+                    provenance=a.provenance,
+                    status_note=a.status_note,
+                    submitted_at=a.submitted_at,
+                )
+                for a in dossier.assessments
+            ],
+            daily_logs=[
+                pb.StudentCourseDailyLog(
+                    study_date=d.study_date,
+                    total_seconds=d.total_seconds,
+                    is_streak_qualified=d.is_streak_qualified,
+                    items=[
+                        pb.StudentDayItemLog(
+                            item_id=it.item_id,
+                            item_title=it.item_title,
+                            item_type=it.item_type,
+                            seconds_spent=it.seconds_spent,
+                        )
+                        for it in d.items
+                    ],
+                )
+                for d in dossier.daily_logs
+            ],
         )

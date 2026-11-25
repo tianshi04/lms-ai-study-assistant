@@ -519,12 +519,33 @@ message SendStudentReminderResponse {
   repeated string sent_student_ids = 3;
 }
 
+message StudentDailyActivity {
+  string study_date = 1;
+  int32 total_seconds = 2;
+  bool is_streak_qualified = 3;
+}
+
 message EnrolledStudent {
   string user_id = 1;
   string user_name = 2;
   string user_email = 3;
   float progress_percent = 4;
   string enrolled_at = 5;
+  string enrollment_type = 6;
+  int32 total_time_spent_seconds = 7;
+  string last_accessed_at = 8;
+  string last_accessed_item_title = 9;
+  double average_quiz_score = 10;
+  int32 quiz_attempts_count = 11;
+  bool is_in_cooldown = 12;
+  string cooldown_until = 13;
+  string peer_review_duty_status = 14;
+  int32 completed_items_count = 15;
+  int32 total_course_items = 16;
+  repeated StudentDailyActivity daily_activities = 17;
+  int32 current_streak = 18;
+  int32 longest_streak = 19;
+  bool is_peer_review_overdue = 20;
 }
 
 message InstructorAnalytics {
@@ -534,6 +555,12 @@ message InstructorAnalytics {
   double average_rating = 4;
   int32 review_count = 5;
   repeated EnrolledStudent students = 6;
+  int32 paid_students_count = 7;
+  int32 audit_students_count = 8;
+  double total_learning_hours = 9;
+  double course_average_quiz_score = 10;
+  double paid_learning_hours = 11;
+  double audit_learning_hours = 12;
 }
 
 message GetInstructorAnalyticsRequest {
@@ -825,6 +852,9 @@ service CatalogService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc AcknowledgeLowReview(AcknowledgeLowReviewRequest) returns (AcknowledgeLowReviewResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetInstructorStudentDossier(GetInstructorStudentDossierRequest) returns (GetInstructorStudentDossierResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }
@@ -1138,4 +1168,52 @@ message AcknowledgeLowReviewRequest {
 message AcknowledgeLowReviewResponse {
   bool success = 1;
   string message = 2;
+}
+
+message StudentDayItemLog {
+  string item_id = 1;
+  string item_title = 2;
+  string item_type = 3;
+  int32 seconds_spent = 4;
+}
+
+message StudentCourseDailyLog {
+  string study_date = 1;
+  int32 total_seconds = 2;
+  bool is_streak_qualified = 3;
+  repeated StudentDayItemLog items = 4;
+}
+
+message StudentAssessmentSummaryItem {
+  string item_id = 1;
+  int32 week_number = 2;
+  string week_title = 3;
+  string item_title = 4;
+  string item_type = 5;
+  float weight = 6;
+  float score = 7;
+  float max_score = 8;
+  bool is_submitted = 9;
+  bool is_passed = 10;
+  int32 attempts_count = 11;
+  string provenance = 12;
+  string status_note = 13;
+  string submitted_at = 14;
+}
+
+message GetInstructorStudentDossierRequest {
+  string course_id = 1;
+  string student_id = 2;
+}
+
+message GetInstructorStudentDossierResponse {
+  string enrolled_at = 1;
+  string furthest_item_title = 2;
+  int32 furthest_week_number = 3;
+  string last_accessed_item_title = 4;
+  int32 last_accessed_week_number = 5;
+  float final_weighted_grade = 6;
+  bool is_suspicious_fast_pace = 7;
+  repeated StudentAssessmentSummaryItem assessments = 8;
+  repeated StudentCourseDailyLog daily_logs = 9;
 }

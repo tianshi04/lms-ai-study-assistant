@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Course, InstructorAnalytics, EnrolledStudent } from "@/gen/catalog/v1/catalog_pb";
 import type { SpecificCompletedStudent } from "../components/InstructorCertificatesTab";
 import type { CalculatedWeek, StudentWithPacing } from "../types";
@@ -41,18 +41,70 @@ export function useInstructorCourseData({
     }, 0);
   }, [activeCourse]);
 
+  const [weeklyCohortFilter, setWeeklyCohortFilter] = useState<"ALL" | "PAID" | "AUDIT">("PAID");
+
+  const paidStudentsCount = useMemo(() => {
+    return rawStudents.filter((s) => s.enrollmentType !== "AUDIT").length;
+  }, [rawStudents]);
+
+  const auditStudentsCount = useMemo(() => {
+    return rawStudents.filter((s) => s.enrollmentType === "AUDIT").length;
+  }, [rawStudents]);
+
+  const totalLearningHours = useMemo(() => {
+    if (analytics?.totalLearningHours !== undefined && analytics.totalLearningHours > 0) {
+      return analytics.totalLearningHours;
+    }
+    const totalSeconds = rawStudents.reduce((acc, s) => acc + (s.totalTimeSpentSeconds || 0), 0);
+    return Math.round((totalSeconds / 3600) * 10) / 10;
+  }, [analytics, rawStudents]);
+
+  const paidLearningHours = useMemo(() => {
+    if (analytics?.paidLearningHours !== undefined && analytics.paidLearningHours > 0) {
+      return analytics.paidLearningHours;
+    }
+    const paidSeconds = rawStudents
+      .filter((s) => s.enrollmentType !== "AUDIT")
+      .reduce((acc, s) => acc + (s.totalTimeSpentSeconds || 0), 0);
+    return Math.round((paidSeconds / 3600) * 10) / 10;
+  }, [analytics, rawStudents]);
+
+  const auditLearningHours = useMemo(() => {
+    if (analytics?.auditLearningHours !== undefined && analytics.auditLearningHours > 0) {
+      return analytics.auditLearningHours;
+    }
+    const auditSeconds = rawStudents
+      .filter((s) => s.enrollmentType === "AUDIT")
+      .reduce((acc, s) => acc + (s.totalTimeSpentSeconds || 0), 0);
+    return Math.round((auditSeconds / 3600) * 10) / 10;
+  }, [analytics, rawStudents]);
+
+  const filteredStudentsForWeeks = useMemo(() => {
+    if (weeklyCohortFilter === "PAID") {
+      return rawStudents.filter((s) => s.enrollmentType !== "AUDIT");
+    }
+    if (weeklyCohortFilter === "AUDIT") {
+      return rawStudents.filter((s) => s.enrollmentType === "AUDIT");
+    }
+    return rawStudents;
+  }, [rawStudents, weeklyCohortFilter]);
+
   const calculatedWeeks = useMemo<CalculatedWeek[]>(() => {
     const weeks = activeCourse?.weekModules || [];
     if (weeks.length === 0) return [];
-    const total = rawStudents.length;
+    const total = filteredStudentsForWeeks.length;
 
     return weeks.map((w, idx) => {
       const weekCount = weeks.length;
       const startPct = (idx / weekCount) * 100;
       const endPct = ((idx + 1) / weekCount) * 100;
 
-      const reached = rawStudents.filter((s) => s.progressPercent >= startPct - 0.01).length;
-      const completed = rawStudents.filter((s) => s.progressPercent >= endPct - 0.01).length;
+      const reached = filteredStudentsForWeeks.filter(
+        (s) => s.progressPercent >= startPct - 0.01,
+      ).length;
+      const completed = filteredStudentsForWeeks.filter(
+        (s) => s.progressPercent >= endPct - 0.01,
+      ).length;
 
       const passRate = total > 0 ? Math.round((completed / total) * 100) : 0;
       const dropRate = reached > 0 ? Math.round(((reached - completed) / reached) * 100) : 0;
@@ -68,10 +120,10 @@ export function useInstructorCourseData({
         dropRate,
       };
     });
-  }, [activeCourse, rawStudents]);
+  }, [activeCourse, filteredStudentsForWeeks]);
 
   const bottleneckWeek = useMemo(() => {
-    if (calculatedWeeks.length === 0 || rawStudents.length === 0) return null;
+    if (calculatedWeeks.length === 0 || filteredStudentsForWeeks.length === 0) return null;
     const withDrop = [...calculatedWeeks].filter((w) => w.dropRate > 0);
     if (withDrop.length === 0) return null;
     withDrop.sort(
@@ -80,7 +132,7 @@ export function useInstructorCourseData({
         b.reachedCount - b.completedCount - (a.reachedCount - a.completedCount),
     );
     return withDrop[0];
-  }, [calculatedWeeks, rawStudents.length]);
+  }, [calculatedWeeks, filteredStudentsForWeeks.length]);
 
   const rawStudentsWithPacing = useMemo<StudentWithPacing[]>(() => {
     const totalWeeks = calculatedWeeks.length || 2;
@@ -99,10 +151,21 @@ export function useInstructorCourseData({
         Math.round((daysElapsed / courseDurationDays) * 100),
       );
 
-      if (st.progressPercent >= 100) {
+      if (st.enrollmentType === "AUDIT") {
+        pace = "ON_TRACK";
+        paceLabel = "Học thử (Audit)";
+        paceDesc =
+          st.progressPercent >= 20
+            ? "Đã học xong Tuần 1 • Sẵn sàng nâng cấp"
+            : "Đang xem bài học Tuần 1";
+      } else if (st.progressPercent >= 100) {
         pace = "AHEAD";
         paceLabel = "Vượt tiến độ";
         paceDesc = "Đã hoàn thành khóa";
+      } else if (st.isInCooldown) {
+        pace = "BEHIND";
+        paceLabel = "Khóa Cooldown";
+        paceDesc = "Tạm khóa thi lại do trượt nhiều lần";
       } else if (st.progressPercent >= 80 || st.progressPercent >= expectedProgressPct + 20) {
         pace = "AHEAD";
         paceLabel = "Vượt tiến độ";
@@ -149,6 +212,13 @@ export function useInstructorCourseData({
     totalItemsInActiveCourse,
     calculatedWeeks,
     bottleneckWeek,
+    weeklyCohortFilter,
+    setWeeklyCohortFilter,
+    paidStudentsCount,
+    auditStudentsCount,
+    totalLearningHours,
+    paidLearningHours,
+    auditLearningHours,
     rawStudentsWithPacing,
     coursePacingCounts,
   };

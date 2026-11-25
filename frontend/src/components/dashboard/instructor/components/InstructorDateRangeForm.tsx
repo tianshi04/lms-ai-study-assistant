@@ -78,21 +78,24 @@ export function InstructorDateRangeForm({
     year: String(endParsed.year),
   });
 
-  useEffect(() => {
-    setStartInput({
-      day: String(startParsed.day),
-      month: String(startParsed.month),
-      year: String(startParsed.year),
-    });
-  }, [startParsed]);
-
-  useEffect(() => {
-    setEndInput({
-      day: String(endParsed.day),
-      month: String(endParsed.month),
-      year: String(endParsed.year),
-    });
-  }, [endParsed]);
+  const [prevDates, setPrevDates] = useState({ startDate, endDate });
+  if (prevDates.startDate !== startDate || prevDates.endDate !== endDate) {
+    setPrevDates({ startDate, endDate });
+    if (prevDates.startDate !== startDate) {
+      setStartInput({
+        day: String(startParsed.day),
+        month: String(startParsed.month),
+        year: String(startParsed.year),
+      });
+    }
+    if (prevDates.endDate !== endDate) {
+      setEndInput({
+        day: String(endParsed.day),
+        month: String(endParsed.month),
+        year: String(endParsed.year),
+      });
+    }
+  }
 
   // Chuẩn hóa ban đầu nếu prop không hợp lệ
   useEffect(() => {
@@ -159,7 +162,7 @@ export function InstructorDateRangeForm({
           onChange={(e) => setStartInput((prev) => ({ ...prev, day: e.target.value }))}
           onBlur={commitStart}
           onKeyDown={(e) => e.key === "Enter" && commitStart()}
-          className="w-7 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
+          className="w-8 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 px-0.5 text-[11px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           aria-label="Ngày bắt đầu"
           title={`Ngày (1 - ${maxStartDays})`}
         />
@@ -172,7 +175,7 @@ export function InstructorDateRangeForm({
           onChange={(e) => setStartInput((prev) => ({ ...prev, month: e.target.value }))}
           onBlur={commitStart}
           onKeyDown={(e) => e.key === "Enter" && commitStart()}
-          className="w-7 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
+          className="w-8 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 px-0.5 text-[11px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           aria-label="Tháng bắt đầu"
           title="Tháng (1 - 12)"
         />
@@ -185,7 +188,7 @@ export function InstructorDateRangeForm({
           onChange={(e) => setStartInput((prev) => ({ ...prev, year: e.target.value }))}
           onBlur={commitStart}
           onKeyDown={(e) => e.key === "Enter" && commitStart()}
-          className="w-12 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
+          className="w-14 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 px-0.5 text-[11px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           aria-label="Năm bắt đầu"
           title="Năm"
         />
@@ -229,7 +232,7 @@ export function InstructorDateRangeForm({
           onChange={(e) => setEndInput((prev) => ({ ...prev, day: e.target.value }))}
           onBlur={commitEnd}
           onKeyDown={(e) => e.key === "Enter" && commitEnd()}
-          className="w-7 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
+          className="w-8 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 px-0.5 text-[11px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           aria-label="Ngày kết thúc"
           title={`Ngày (1 - ${maxEndDays})`}
         />
@@ -242,7 +245,7 @@ export function InstructorDateRangeForm({
           onChange={(e) => setEndInput((prev) => ({ ...prev, month: e.target.value }))}
           onBlur={commitEnd}
           onKeyDown={(e) => e.key === "Enter" && commitEnd()}
-          className="w-7 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
+          className="w-8 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 px-0.5 text-[11px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           aria-label="Tháng kết thúc"
           title="Tháng (1 - 12)"
         />
@@ -255,7 +258,7 @@ export function InstructorDateRangeForm({
           onChange={(e) => setEndInput((prev) => ({ ...prev, year: e.target.value }))}
           onBlur={commitEnd}
           onKeyDown={(e) => e.key === "Enter" && commitEnd()}
-          className="w-12 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 text-[11px]"
+          className="w-14 text-center font-mono font-bold text-foreground bg-muted/60 rounded border border-outline-variant/60 focus:border-primary outline-hidden py-0.5 px-0.5 text-[11px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           aria-label="Năm kết thúc"
           title="Năm"
         />

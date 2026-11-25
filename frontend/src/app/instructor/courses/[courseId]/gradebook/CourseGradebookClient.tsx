@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
 import {
   Search,
@@ -37,7 +38,8 @@ interface CourseGradebookClientProps {
 }
 
 export function CourseGradebookClient({ courseId }: CourseGradebookClientProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const { data, isLoading, isError, error } = useCourseGradebookQuery({

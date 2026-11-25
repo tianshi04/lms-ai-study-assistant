@@ -13,11 +13,26 @@ import {
   Filter,
   BookOpen,
   X,
-  Mail,
+  Lock,
+  ShieldAlert,
 } from "lucide-react";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 import type { CalculatedWeek, StudentWithPacing } from "../types";
 import type { StudentDetailRecord } from "../../InstructorStudentDetailModal";
+import { formatLastActiveLabel, isInactiveOver7Days } from "../../student-dossier/dossier_helpers";
+
+function getTierBadge(tier?: string) {
+  if (tier === "AUDIT") {
+    return {
+      label: "Học thử",
+      className: "bg-muted text-muted-foreground border-outline-variant/60",
+    };
+  }
+  return {
+    label: "Chính thức",
+    className: "bg-success/15 text-success border-success/30",
+  };
+}
 
 export interface InstructorSpecificStudentTableProps {
   filteredStudents: StudentWithPacing[];
@@ -32,6 +47,8 @@ export interface InstructorSpecificStudentTableProps {
   onChangeStudentPacingFilter: (filter: "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND") => void;
   studentStatusFilter: "ALL" | "IN_PROGRESS" | "COMPLETED" | "OVERDUE";
   onChangeStudentStatusFilter: (filter: "ALL" | "IN_PROGRESS" | "COMPLETED" | "OVERDUE") => void;
+  studentTierFilter?: "ALL" | "PAID" | "AUDIT";
+  onChangeStudentTierFilter?: (filter: "ALL" | "PAID" | "AUDIT") => void;
   studentSearchQuery: string;
   onChangeStudentSearchQuery: (query: string) => void;
   selectedDayFilter: { day: string; date: string } | null;
@@ -42,8 +59,8 @@ export interface InstructorSpecificStudentTableProps {
   calculatedWeeks: CalculatedWeek[];
   totalItemsInActiveCourse: number;
   currentTimeMs: number;
-  nudgedSpecificStudentIds: Set<string>;
-  onNudgeStudent: (student: StudentWithPacing) => void;
+  nudgedSpecificStudentIds?: Set<string>;
+  onNudgeStudent?: (student: StudentWithPacing) => void;
   onNudgeAllBehind: () => void;
   onSelectStudentForDetail: (record: StudentDetailRecord) => void;
 }
@@ -56,6 +73,8 @@ export function InstructorSpecificStudentTable({
   onChangeStudentPacingFilter,
   studentStatusFilter,
   onChangeStudentStatusFilter,
+  studentTierFilter = "ALL",
+  onChangeStudentTierFilter,
   studentSearchQuery,
   onChangeStudentSearchQuery,
   selectedDayFilter,
@@ -66,8 +85,8 @@ export function InstructorSpecificStudentTable({
   calculatedWeeks,
   totalItemsInActiveCourse,
   currentTimeMs,
-  nudgedSpecificStudentIds,
-  onNudgeStudent,
+  nudgedSpecificStudentIds: _nudgedSpecificStudentIds,
+  onNudgeStudent: _onNudgeStudent,
   onNudgeAllBehind,
   onSelectStudentForDetail,
 }: InstructorSpecificStudentTableProps) {
@@ -75,14 +94,53 @@ export function InstructorSpecificStudentTable({
   const isDayFiltered = Boolean(selectedDayFilter);
   const isPacingFiltered = studentPacingFilter !== "ALL";
   const isStatusFiltered = studentStatusFilter !== "ALL";
+  const isTierFiltered = studentTierFilter !== "ALL";
   const isSearchFiltered = studentSearchQuery.trim() !== "";
   const isStudentFiltered = Boolean(selectedStudentId);
+
+  const cohortCounts = React.useMemo(() => {
+    let paidInProgress = 0;
+    let paidCompleted = 0;
+    let audit = 0;
+    rawStudentsWithPacing.forEach((s) => {
+      if (s.enrollmentType === "AUDIT") {
+        audit += 1;
+      } else if (s.progressPercent >= 100) {
+        paidCompleted += 1;
+      } else {
+        paidInProgress += 1;
+      }
+    });
+    return {
+      all: rawStudentsWithPacing.length,
+      paidInProgress,
+      paidCompleted,
+      audit,
+    };
+  }, [rawStudentsWithPacing]);
+
+  const activeCohort = React.useMemo(() => {
+    if (studentTierFilter === "AUDIT") return "AUDIT";
+    if (studentTierFilter === "PAID" && studentStatusFilter === "IN_PROGRESS") {
+      return "PAID_IN_PROGRESS";
+    }
+    if (studentTierFilter === "PAID" && studentStatusFilter === "COMPLETED") {
+      return "PAID_COMPLETED";
+    }
+    if (studentTierFilter === "ALL" && studentStatusFilter === "ALL") {
+      return "ALL";
+    }
+    if (studentStatusFilter === "IN_PROGRESS") return "PAID_IN_PROGRESS";
+    if (studentStatusFilter === "COMPLETED") return "PAID_COMPLETED";
+    return "ALL";
+  }, [studentTierFilter, studentStatusFilter]);
 
   const hasActiveFilter =
     isWeekFiltered ||
     isDayFiltered ||
     isPacingFiltered ||
     isStatusFiltered ||
+    isTierFiltered ||
     isSearchFiltered ||
     isStudentFiltered;
 
@@ -94,6 +152,13 @@ export function InstructorSpecificStudentTable({
     if (isSearchFiltered) {
       return `Tìm kiếm "${studentSearchQuery}"`;
     }
+    if (activeCohort === "AUDIT") return "Học viên Học thử";
+    if (activeCohort === "PAID_IN_PROGRESS") return "Học viên Chính thức — Đang học";
+    if (activeCohort === "PAID_COMPLETED") return "Học viên Chính thức — Đã tốt nghiệp";
+    if (isTierFiltered) {
+      if (studentTierFilter === "PAID") return "Học viên Chính thức";
+      if (studentTierFilter === "AUDIT") return "Học viên Học thử";
+    }
     if (isPacingFiltered) {
       if (studentPacingFilter === "AHEAD") return "Học viên Vượt tiến độ";
       if (studentPacingFilter === "ON_TRACK") return "Học viên Đúng tiến độ";
@@ -101,7 +166,7 @@ export function InstructorSpecificStudentTable({
     }
     if (isStatusFiltered) {
       if (studentStatusFilter === "IN_PROGRESS") return "Học viên Đang học";
-      if (studentStatusFilter === "COMPLETED") return "Học viên Đã xong";
+      if (studentStatusFilter === "COMPLETED") return "Học viên Đã tốt nghiệp";
       if (studentStatusFilter === "OVERDUE") return "Học viên Quá hạn";
     }
     if (isDayFiltered && selectedDayFilter) {
@@ -117,6 +182,9 @@ export function InstructorSpecificStudentTable({
     rawStudentsWithPacing,
     isSearchFiltered,
     studentSearchQuery,
+    activeCohort,
+    isTierFiltered,
+    studentTierFilter,
     isPacingFiltered,
     studentPacingFilter,
     isStatusFiltered,
@@ -260,46 +328,71 @@ export function InstructorSpecificStudentTable({
           />
         </div>
 
-        <div className="flex items-center gap-1 p-0.5 rounded-xl bg-muted/60 text-[11px] font-semibold">
-          <button
-            type="button"
-            onClick={() => onChangeStudentStatusFilter("ALL")}
-            className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
-              studentStatusFilter === "ALL"
-                ? "bg-surface text-foreground font-bold shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Tất cả
-          </button>
-          <button
-            type="button"
-            onClick={() => onChangeStudentStatusFilter("IN_PROGRESS")}
-            className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
-              studentStatusFilter === "IN_PROGRESS"
-                ? "bg-surface text-primary font-bold shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Đang học
-          </button>
-          <button
-            type="button"
-            onClick={() => onChangeStudentStatusFilter("COMPLETED")}
-            className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
-              studentStatusFilter === "COMPLETED"
-                ? "bg-surface text-success font-bold shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Đã xong
-          </button>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1 p-0.5 rounded-xl bg-muted/60 text-[11px] font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                onChangeStudentTierFilter?.("ALL");
+                onChangeStudentStatusFilter("ALL");
+              }}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                activeCohort === "ALL"
+                  ? "bg-surface text-foreground font-bold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Tất cả ({cohortCounts.all})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onChangeStudentTierFilter?.("PAID");
+                onChangeStudentStatusFilter("IN_PROGRESS");
+              }}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                activeCohort === "PAID_IN_PROGRESS"
+                  ? "bg-surface text-primary font-bold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Chính thức — Đang học ({cohortCounts.paidInProgress})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onChangeStudentTierFilter?.("PAID");
+                onChangeStudentStatusFilter("COMPLETED");
+              }}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                activeCohort === "PAID_COMPLETED"
+                  ? "bg-surface text-success font-bold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Chính thức — Đã tốt nghiệp ({cohortCounts.paidCompleted})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onChangeStudentTierFilter?.("AUDIT");
+                onChangeStudentStatusFilter("ALL");
+              }}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                activeCohort === "AUDIT"
+                  ? "bg-surface text-foreground font-bold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Học thử ({cohortCounts.audit})
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Tag trạng thái lọc đang hoạt động */}
       {hasActiveFilter && (
-        <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary flex items-center justify-between">
+        <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary flex items-center justify-between transition-opacity duration-150 animate-in fade-in-50">
           <span className="flex items-center gap-1.5 font-semibold">
             <Filter className="w-3.5 h-3.5" aria-hidden="true" />
             Đang lọc theo: <strong>{activeFilterLabel}</strong>
@@ -327,42 +420,32 @@ export function InstructorSpecificStudentTable({
         </div>
       )}
 
-      {/* Bảng Danh Sách Học Viên */}
-      <div className="rounded-2xl border border-outline-variant/60 overflow-x-auto bg-surface max-h-96 overflow-y-auto">
-        <Table className="table-fixed min-w-[700px] w-full">
+      {/* Bảng Danh Sách Học Viên với chiều cao tối thiểu ổn định chống co giật */}
+      <div className="rounded-2xl border border-outline-variant/60 overflow-x-auto bg-surface min-h-[360px] max-h-96 overflow-y-auto">
+        <Table className="table-fixed min-w-[720px] w-full">
           <Table.Header className="sticky top-0 z-10 bg-surface shadow-xs">
             <Table.Row className="text-[11px] text-muted-foreground border-b border-outline-variant/60">
-              <Table.Head className="w-[28%] min-w-[180px]">Học viên</Table.Head>
-              <Table.Head className="w-[18%] min-w-[130px]">Tiến độ khóa học</Table.Head>
-              <Table.Head className="w-[18%] min-w-[130px]">Phân loại nhịp độ</Table.Head>
-              <Table.Head className="w-[20%] min-w-[150px]">Lộ trình &amp; Hạn chuẩn</Table.Head>
-              <Table.Head className="w-[16%] min-w-[120px] text-right">
-                Kiểm soát sư phạm
+              <Table.Head className="w-[28%] min-w-[190px]">Học viên &amp; Gói</Table.Head>
+              <Table.Head className="w-[20%] min-w-[130px]">Tiến độ khóa học</Table.Head>
+              <Table.Head className="w-[22%] min-w-[140px]">Nhịp độ &amp; Điểm TB</Table.Head>
+              <Table.Head className="w-[30%] min-w-[200px]">
+                Bài học &amp; Lần học gần nhất
               </Table.Head>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {filteredStudents.length === 0 ? (
               <Table.Row>
-                <Table.Cell colSpan={5} className="text-center py-10 text-xs text-muted-foreground">
+                <Table.Cell colSpan={4} className="text-center py-24 text-xs text-muted-foreground">
                   Không tìm thấy học viên nào phù hợp với bộ lọc hiện tại.
                 </Table.Cell>
               </Table.Row>
             ) : (
               filteredStudents.map((st) => {
                 const isDone = st.progressPercent >= 100;
-                const enrolledDate = st.enrolledAt
-                  ? new Date(st.enrolledAt)
-                  : currentTimeMs > 0
-                    ? new Date(currentTimeMs)
-                    : new Date();
-                const deadlineDate = new Date(enrolledDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-                const daysLeft =
-                  currentTimeMs > 0
-                    ? Math.ceil((deadlineDate.getTime() - currentTimeMs) / (1000 * 60 * 60 * 24))
-                    : 30;
-                const isNearDeadline = !isDone && daysLeft <= 3;
-                const isNudged = nudgedSpecificStudentIds.has(st.userId);
+                const tierInfo = getTierBadge(st.enrollmentType);
+                const lastActiveLabel = formatLastActiveLabel(st.lastAccessedAt, currentTimeMs);
+                const isInactive = isInactiveOver7Days(st.lastAccessedAt, currentTimeMs);
 
                 const studentWeekNum =
                   st.progressPercent >= 100
@@ -381,15 +464,32 @@ export function InstructorSpecificStudentTable({
                   userEmail: st.userEmail,
                   progressPercent: st.progressPercent,
                   pace: st.pace,
+                  enrolledAt: st.enrolledAt,
+                  enrollmentType: st.enrollmentType,
+                  totalTimeSpentSeconds: st.totalTimeSpentSeconds,
                   currentWeekNumber: studentWeekNum,
                   currentWeekTitle,
-                  currentLessonTitle:
-                    st.pace === "BEHIND"
-                      ? "Chưa hoàn thành video và bài quiz tuần"
-                      : "Đang xem video bài giảng",
-                  quizScore: 8.5,
-                  lastActiveTime: st.pace === "BEHIND" ? "4 ngày trước" : "Hôm nay",
+                  currentLessonTitle: st.lastAccessedItemTitle || undefined,
+                  quizScore:
+                    st.quizAttemptsCount && st.quizAttemptsCount > 0
+                      ? Number(st.averageQuizScore.toFixed(1))
+                      : undefined,
+                  quizAttemptsCount: st.quizAttemptsCount,
+                  isInCooldown: st.isInCooldown,
+                  cooldownUntil: st.cooldownUntil,
+                  peerReviewDutyStatus: st.peerReviewDutyStatus,
+                  isPeerReviewOverdue: st.isPeerReviewOverdue,
+                  lastActiveTime: lastActiveLabel,
+                  isInactive,
                   isCompleted: isDone,
+                  completedItemsCount:
+                    totalItemsInActiveCourse > 0
+                      ? Math.round((st.progressPercent / 100) * totalItemsInActiveCourse)
+                      : 0,
+                  totalCourseItems: totalItemsInActiveCourse,
+                  dailyActivities: st.dailyActivities,
+                  currentStreak: st.currentStreak,
+                  longestStreak: st.longestStreak,
                 };
 
                 return (
@@ -399,15 +499,24 @@ export function InstructorSpecificStudentTable({
                     className="text-xs hover:bg-primary/5 cursor-pointer transition-colors"
                   >
                     <Table.Cell className="w-[28%] min-w-[180px]">
-                      <div className="font-bold text-foreground hover:text-primary transition-colors flex items-center gap-1.5">
-                        <span>{st.userName}</span>
-                      </div>
-                      <div className="text-[11px] text-muted-foreground font-mono">
-                        {st.userEmail}
+                      <div className="space-y-0.5 min-w-0">
+                        <div
+                          className="font-bold text-foreground hover:text-primary transition-colors text-xs leading-tight"
+                          title={st.userName}
+                        >
+                          {st.userName}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`px-1.5 py-0.2 rounded-md text-[9px] font-bold border uppercase tracking-wider ${tierInfo.className}`}
+                          >
+                            {tierInfo.label}
+                          </span>
+                        </div>
                       </div>
                     </Table.Cell>
 
-                    <Table.Cell className="w-[18%] min-w-[130px]">
+                    <Table.Cell className="w-[20%] min-w-[130px]">
                       <div className="space-y-1 max-w-[140px]">
                         <div className="flex items-center justify-between text-[11px] font-mono">
                           <span className="font-bold text-foreground">{st.progressPercent}%</span>
@@ -436,90 +545,95 @@ export function InstructorSpecificStudentTable({
                       </div>
                     </Table.Cell>
 
-                    <Table.Cell className="w-[18%] min-w-[130px]">
-                      {st.pace === "AHEAD" ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
-                          <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
-                        </span>
-                      ) : st.pace === "ON_TRACK" ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
-                          <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
-                          <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
-                        </span>
-                      )}
-                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
-                        {st.paceDesc}
+                    <Table.Cell className="w-[22%] min-w-[140px]">
+                      <div className="space-y-1">
+                        {isDone ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
+                            <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Đã tốt nghiệp
+                          </span>
+                        ) : st.pace === "AHEAD" ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
+                            <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Vượt tiến độ
+                          </span>
+                        ) : st.pace === "ON_TRACK" ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/15 text-primary border border-primary/30">
+                            <Clock className="w-3 h-3" aria-hidden="true" /> Đúng tiến độ
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-destructive/15 text-destructive border border-destructive/30">
+                            <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Chậm tiến độ
+                          </span>
+                        )}
+
+                        {st.quizAttemptsCount && st.quizAttemptsCount > 0 ? (
+                          <div className="text-[11px] font-mono text-muted-foreground">
+                            Điểm TB:{" "}
+                            <strong className="text-primary font-bold">
+                              {st.averageQuizScore.toFixed(1)}/10
+                            </strong>
+                          </div>
+                        ) : null}
+
+                        {st.isInCooldown && (
+                          <div
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-destructive/10 text-destructive border border-destructive/30"
+                            title="Đã làm quá 3 lần làm bài trắc nghiệm, đang trong thời gian chờ mở lại"
+                          >
+                            <Lock className="w-2.5 h-2.5" aria-hidden="true" />
+                            <span>Khóa Quiz tạm thời</span>
+                          </div>
+                        )}
+
+                        {st.peerReviewDutyStatus === "PENDING" &&
+                          (st.isPeerReviewOverdue ? (
+                            <div
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-destructive/15 text-destructive border border-destructive/30"
+                              title="Đã quá hạn thời gian chấm chéo theo quy định của giảng viên"
+                            >
+                              <ShieldAlert className="w-2.5 h-2.5" aria-hidden="true" />
+                              <span>⚠️ Nợ chấm chéo (Quá hạn)</span>
+                            </div>
+                          ) : (
+                            <div
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-primary/10 text-primary border border-primary/25"
+                              title="Đang trong hạn thời gian chấm chéo bài tập cùng lớp"
+                            >
+                              <Clock className="w-2.5 h-2.5" aria-hidden="true" />
+                              <span>🕒 Đang trong hạn chấm</span>
+                            </div>
+                          ))}
                       </div>
                     </Table.Cell>
 
-                    <Table.Cell className="w-[20%] min-w-[150px]">
-                      {isDone ? (
-                        <span className="text-[11px] font-mono text-success font-semibold">
-                          Đã hoàn thành khóa
-                        </span>
-                      ) : (
-                        <div>
-                          <div
-                            className={`text-[11px] font-mono ${
-                              daysLeft <= 0
-                                ? "text-destructive font-semibold"
-                                : isNearDeadline
-                                  ? "text-warning font-semibold"
-                                  : "text-foreground"
-                            }`}
-                          >
-                            {daysLeft > 0
-                              ? `${deadlineDate.toLocaleDateString("vi-VN")} (Còn ${daysLeft} ngày)`
-                              : `Quá hạn chuẩn (${Math.abs(daysLeft)} ngày)`}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground">
-                            Lộ trình chuẩn theo ngày mua
-                          </div>
+                    <Table.Cell className="w-[30%] min-w-[200px]">
+                      <div className="space-y-1">
+                        <div
+                          className="text-xs font-semibold text-foreground line-clamp-2 leading-relaxed"
+                          title={st.lastAccessedItemTitle || currentWeekTitle}
+                        >
+                          {st.lastAccessedItemTitle || currentWeekTitle}
                         </div>
-                      )}
-                    </Table.Cell>
 
-                    <Table.Cell className="w-[16%] min-w-[120px] text-right">
-                      <div className="flex items-center justify-end">
-                        {isDone ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20 whitespace-nowrap">
-                            Đã cấp chứng chỉ
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onNudgeStudent(st);
-                            }}
-                            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap ${
-                              isNudged
-                                ? "bg-muted text-muted-foreground hover:bg-muted/80 border border-outline-variant/60"
-                                : st.pace === "BEHIND"
-                                  ? "bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground border border-destructive/30"
-                                  : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30"
-                            }`}
-                            title={
-                              isNudged
-                                ? "Đã gửi nhắc nhở gần đây • Nhấn để xem hoặc gửi thông điệp mới"
-                                : "Soạn tin nhắn nhắc nhở học tập"
+                        <div className="text-[11px] font-mono flex items-center gap-1.5 whitespace-nowrap">
+                          <Clock
+                            className="w-3 h-3 text-muted-foreground shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span
+                            className={
+                              isInactive && !isDone
+                                ? "text-destructive font-bold"
+                                : "text-foreground font-medium"
                             }
                           >
-                            {isNudged ? (
-                              <>
-                                <CheckCircle2 className="w-3 h-3 text-success" aria-hidden="true" />
-                                <span>Đã gửi</span>
-                              </>
-                            ) : (
-                              <>
-                                <Mail className="w-3 h-3" aria-hidden="true" />
-                                <span>Nhắc nhở</span>
-                              </>
-                            )}
-                          </button>
+                            {lastActiveLabel}
+                          </span>
+                        </div>
+
+                        {isInactive && !isDone && (
+                          <div className="text-[10px] text-destructive font-semibold">
+                            (Vắng mặt &gt; 7 ngày • Cần hỗ trợ)
+                          </div>
                         )}
                       </div>
                     </Table.Cell>

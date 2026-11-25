@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
@@ -350,12 +350,34 @@ class CourseAnnouncement(Entity):
 
 
 @dataclass(frozen=True)
+class StudentDailyActivity(ValueObject):
+    study_date: str
+    total_seconds: int = 0
+    is_streak_qualified: bool = False
+
+
+@dataclass(frozen=True)
 class EnrolledStudent(ValueObject):
     user_id: str
     user_name: str
     user_email: str
     progress_percent: float
     enrolled_at: str
+    enrollment_type: str = "AUDIT"
+    total_time_spent_seconds: int = 0
+    last_accessed_at: str = ""
+    last_accessed_item_title: str = ""
+    average_quiz_score: float = 0.0
+    quiz_attempts_count: int = 0
+    is_in_cooldown: bool = False
+    cooldown_until: str = ""
+    peer_review_duty_status: str = "NONE"
+    completed_items_count: int = 0
+    total_course_items: int = 0
+    daily_activities: list[StudentDailyActivity] = field(default_factory=list)
+    current_streak: int = 0
+    longest_streak: int = 0
+    is_peer_review_overdue: bool = False
 
 
 class InstructorAnalytics(Entity):
@@ -368,6 +390,12 @@ class InstructorAnalytics(Entity):
         average_rating: float = 0.0,
         review_count: int = 0,
         students: list[EnrolledStudent] | None = None,
+        paid_students_count: int = 0,
+        audit_students_count: int = 0,
+        total_learning_hours: float = 0.0,
+        course_average_quiz_score: float = 0.0,
+        paid_learning_hours: float = 0.0,
+        audit_learning_hours: float = 0.0,
     ) -> None:
         super().__init__(id=id)
         self.course_id = course_id
@@ -376,6 +404,12 @@ class InstructorAnalytics(Entity):
         self.average_rating = average_rating
         self.review_count = review_count
         self.students = students or []
+        self.paid_students_count = paid_students_count
+        self.audit_students_count = audit_students_count
+        self.total_learning_hours = total_learning_hours
+        self.course_average_quiz_score = course_average_quiz_score
+        self.paid_learning_hours = paid_learning_hours
+        self.audit_learning_hours = audit_learning_hours
 
 
 @dataclass
@@ -490,3 +524,50 @@ class AdminCourseMetricsPage(ValueObject):
     total_count: int = 0
     page: int = 1
     page_size: int = ADMIN_PAGE_SIZE_DEFAULT
+
+
+@dataclass(frozen=True)
+class StudentDayItemLog(ValueObject):
+    item_id: str
+    item_title: str
+    item_type: str = ""
+    seconds_spent: int = 0
+
+
+@dataclass(frozen=True)
+class StudentCourseDailyLog(ValueObject):
+    study_date: str
+    total_seconds: int = 0
+    is_streak_qualified: bool = False
+    items: tuple[StudentDayItemLog, ...] = ()
+
+
+@dataclass(frozen=True)
+class StudentAssessmentSummaryItem(ValueObject):
+    item_id: str
+    week_number: int
+    week_title: str
+    item_title: str
+    item_type: str
+    weight: float = 0.0
+    score: float = 0.0
+    max_score: float = 100.0
+    is_submitted: bool = False
+    is_passed: bool = False
+    attempts_count: int = 0
+    provenance: str = ""
+    status_note: str = ""
+    submitted_at: str = ""
+
+
+@dataclass(frozen=True)
+class InstructorStudentDossier(ValueObject):
+    enrolled_at: str = ""
+    furthest_item_title: str = ""
+    furthest_week_number: int = 0
+    last_accessed_item_title: str = ""
+    last_accessed_week_number: int = 0
+    final_weighted_grade: float = 0.0
+    is_suspicious_fast_pace: bool = False
+    assessments: tuple[StudentAssessmentSummaryItem, ...] = ()
+    daily_logs: tuple[StudentCourseDailyLog, ...] = ()

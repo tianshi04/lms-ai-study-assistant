@@ -12,11 +12,23 @@ from src.modules.notification.domain import (
     NotificationPreferences,
     NotificationRepository,
 )
+from src.modules.notification.domain.constants import (
+    ACTION_URL_MAX_LENGTH,
+    CONTENT_MAX_LENGTH,
+    TITLE_MAX_LENGTH,
+)
 from src.modules.notification.infrastructure.repository import (
     PostgresNotificationPreferenceRepository,
     PostgresNotificationRepository,
 )
 from src.shared.infrastructure.database import async_session_scope
+
+
+def _clamp_text(value: str, max_length: int) -> str:
+    cleaned = (value or "").strip()
+    if len(cleaned) <= max_length:
+        return cleaned
+    return f"{cleaned[: max_length - 1].rstrip()}…"
 
 
 class NotificationUseCase:
@@ -79,9 +91,9 @@ class NotificationUseCase:
             id=f"notif_{uuid7().hex}",
             recipient_id=recipient_id,
             category=category,
-            title=title,
-            content=content,
-            action_url=action_url,
+            title=_clamp_text(title, TITLE_MAX_LENGTH),
+            content=_clamp_text(content, CONTENT_MAX_LENGTH),
+            action_url=_clamp_text(action_url, ACTION_URL_MAX_LENGTH),
             actor_avatar_url=actor_avatar_url,
             is_read=False,
             created_at=datetime.now(UTC),
@@ -133,14 +145,17 @@ class NotificationUseCase:
         actor_avatar_url: str,
     ) -> int:
         now = datetime.now(UTC)
+        safe_title = _clamp_text(title, TITLE_MAX_LENGTH)
+        safe_content = _clamp_text(content, CONTENT_MAX_LENGTH)
+        safe_action_url = _clamp_text(action_url, ACTION_URL_MAX_LENGTH)
         notifs = [
             Notification(
                 id=f"notif_{uuid7().hex}",
                 recipient_id=rid,
                 category=category,
-                title=title,
-                content=content,
-                action_url=action_url,
+                title=safe_title,
+                content=safe_content,
+                action_url=safe_action_url,
                 actor_avatar_url=actor_avatar_url,
                 is_read=False,
                 created_at=now,
