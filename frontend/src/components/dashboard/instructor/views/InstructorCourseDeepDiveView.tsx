@@ -24,6 +24,7 @@ import { InstructorActionTasksCard } from "../components/InstructorActionTasksCa
 import { InstructorContentBottleneckCard } from "../components/InstructorContentBottleneckCard";
 import { InstructorActivityHeatmap } from "../components/InstructorActivityHeatmap";
 import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
 import { useInstructorActivityTimelineQuery } from "@/lib/queries/useCatalogQueries";
 import { formatTimelineToSplineData } from "../utils/time_labels";
 import type { StudentDetailRecord } from "../../InstructorStudentDetailModal";
@@ -55,6 +56,86 @@ export interface InstructorCourseDeepDiveViewProps {
   auditStudentsCount?: number;
 }
 
+const VN_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function toVnIsoDate(iso?: string): string {
+  if (!iso) return "";
+  const ms = Date.parse(iso);
+  if (Number.isNaN(ms)) return "";
+  return VN_DATE_FORMATTER.format(new Date(ms));
+}
+
+function matchesSelectedDayFilter(
+  student: StudentWithPacing,
+  dayFilter: { day: string; date: string; timestamp?: string } | null,
+  dateRange: string,
+  customStartDate: string,
+  customEndDate: string,
+): boolean {
+  if (!dayFilter) return true;
+  const ts = dayFilter.timestamp;
+  if (!ts) return true;
+
+  if (ts.includes("T")) {
+    const startMs = Date.parse(ts);
+    if (Number.isNaN(startMs)) return true;
+    const endMs = startMs + 3 * 3600 * 1000;
+    const accMs = student.lastAccessedAt ? Date.parse(student.lastAccessedAt) : NaN;
+    const enrMs = student.enrolledAt ? Date.parse(student.enrolledAt) : NaN;
+    return (
+      (!Number.isNaN(accMs) && accMs >= startMs && accMs < endMs) ||
+      (!Number.isNaN(enrMs) && enrMs >= startMs && enrMs < endMs)
+    );
+  }
+
+  const accDate = toVnIsoDate(student.lastAccessedAt);
+  const enrDate = toVnIsoDate(student.enrolledAt);
+
+  if (ts.length === 10) {
+    let isWeeklyBucket = false;
+    if (dateRange === "custom" && customStartDate && customEndDate) {
+      const sMs = Date.parse(customStartDate);
+      const eMs = Date.parse(customEndDate);
+      if (!Number.isNaN(sMs) && !Number.isNaN(eMs)) {
+        const diffDays = Math.round((eMs - sMs) / 86_400_000) + 1;
+        isWeeklyBucket = diffDays > 31 && diffDays <= 180;
+      }
+    }
+    if (isWeeklyBucket) {
+      const wStartMs = Date.parse(`${ts}T00:00:00+07:00`);
+      const wEndMs = wStartMs + 7 * 86_400_000;
+      const hasDailyInWeek = student.dailyActivities?.some((act) => {
+        if (act.totalSeconds <= 0) return false;
+        const dMs = Date.parse(`${act.studyDate}T12:00:00+07:00`);
+        return dMs >= wStartMs && dMs < wEndMs;
+      });
+      const accMs = student.lastAccessedAt ? Date.parse(student.lastAccessedAt) : NaN;
+      const enrMs = student.enrolledAt ? Date.parse(student.enrolledAt) : NaN;
+      return Boolean(
+        hasDailyInWeek ||
+        (!Number.isNaN(accMs) && accMs >= wStartMs && accMs < wEndMs) ||
+        (!Number.isNaN(enrMs) && enrMs >= wStartMs && enrMs < wEndMs),
+      );
+    }
+
+    const hasDaily = student.dailyActivities?.some(
+      (act) => act.studyDate === ts && act.totalSeconds > 0,
+    );
+    return Boolean(hasDaily || accDate === ts || enrDate === ts);
+  }
+
+  // Monthly (YYYY-MM) or Yearly (YYYY)
+  const hasDailyPrefix = student.dailyActivities?.some(
+    (act) => act.studyDate.startsWith(ts) && act.totalSeconds > 0,
+  );
+  return Boolean(hasDailyPrefix || accDate.startsWith(ts) || enrDate.startsWith(ts));
+}
+
 export function InstructorCourseDeepDiveView({
   activeCourse,
   pendingQaCount,
@@ -82,9 +163,11 @@ export function InstructorCourseDeepDiveView({
     "all" | "paid_in_progress" | "paid_completed" | "audit" | "paid" | "in_progress" | "completed"
   >("all");
   const [selectedWeekFilter, setSelectedWeekFilter] = useState<number | null>(null);
-  const [selectedDayFilter, setSelectedDayFilter] = useState<{ day: string; date: string } | null>(
-    null,
-  );
+  const [selectedDayFilter, setSelectedDayFilter] = useState<{
+    day: string;
+    date: string;
+    timestamp?: string;
+  } | null>(null);
   const [studentStatusFilter, setStudentStatusFilter] = useState<
     "ALL" | "IN_PROGRESS" | "COMPLETED" | "OVERDUE"
   >("ALL");
@@ -176,6 +259,18 @@ export function InstructorCourseDeepDiveView({
         return false;
       }
 
+      if (
+        !matchesSelectedDayFilter(
+          student,
+          selectedDayFilter,
+          chartDateRange,
+          customStartDate,
+          customEndDate,
+        )
+      ) {
+        return false;
+      }
+
       if (studentSearchQuery.trim()) {
         const q = studentSearchQuery.toLowerCase();
         const matchName = student.userName.toLowerCase().includes(q);
@@ -192,6 +287,10 @@ export function InstructorCourseDeepDiveView({
     studentPacingFilter,
     studentTierFilter,
     selectedWeekFilter,
+    selectedDayFilter,
+    chartDateRange,
+    customStartDate,
+    customEndDate,
     studentSearchQuery,
   ]);
 
@@ -214,59 +313,44 @@ export function InstructorCourseDeepDiveView({
           <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
             <div className="space-y-3 pb-1">
               {/* Tabs biểu đồ */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
-                <button
-                  type="button"
-                  onClick={() => setChartTab("bar")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                    chartTab === "bar"
-                      ? "bg-surface text-foreground shadow-xs font-black"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                  <span>Hoạt động</span>
-                </button>
+              <Tabs.Root
+                value={chartTab}
+                onValueChange={(val) => setChartTab(val as "bar" | "heatmap" | "funnel" | "certs")}
+              >
+                <Tabs.List className="border-b-0 flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
+                  <Tabs.Tab
+                    value="bar"
+                    className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                  >
+                    <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                    <span>Hoạt động</span>
+                  </Tabs.Tab>
 
-                <button
-                  type="button"
-                  onClick={() => setChartTab("heatmap")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                    chartTab === "heatmap"
-                      ? "bg-surface text-foreground shadow-xs font-black"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Flame className="w-3.5 h-3.5 text-destructive" aria-hidden="true" />
-                  <span>Khung giờ học</span>
-                </button>
+                  <Tabs.Tab
+                    value="heatmap"
+                    className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                  >
+                    <Flame className="w-3.5 h-3.5 text-destructive" aria-hidden="true" />
+                    <span>Khung giờ học</span>
+                  </Tabs.Tab>
 
-                <button
-                  type="button"
-                  onClick={() => setChartTab("funnel")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                    chartTab === "funnel"
-                      ? "bg-surface text-foreground shadow-xs font-black"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-                  <span>Tiến độ theo tuần ({calculatedWeeks.length} tuần)</span>
-                </button>
+                  <Tabs.Tab
+                    value="funnel"
+                    className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                  >
+                    <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
+                    <span>Tiến độ theo tuần ({calculatedWeeks.length} tuần)</span>
+                  </Tabs.Tab>
 
-                <button
-                  type="button"
-                  onClick={() => setChartTab("certs")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                    chartTab === "certs"
-                      ? "bg-surface text-foreground shadow-xs font-black"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Award className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
-                  <span>Chứng chỉ đã cấp</span>
-                </button>
-              </div>
+                  <Tabs.Tab
+                    value="certs"
+                    className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                  >
+                    <Award className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
+                    <span>Chứng chỉ đã cấp</span>
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.Root>
 
               {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên (Cố định cho cả Hoạt động và Khung giờ học) */}
               {chartTab === "bar" || chartTab === "heatmap" ? (
@@ -280,7 +364,10 @@ export function InstructorCourseDeepDiveView({
                     <Select
                       value={chartDateRange}
                       onValueChange={(val) => {
-                        if (val) setChartDateRange(String(val));
+                        if (val) {
+                          setChartDateRange(String(val));
+                          setSelectedDayFilter(null);
+                        }
                       }}
                     >
                       <Select.Trigger
@@ -414,12 +501,21 @@ export function InstructorCourseDeepDiveView({
                   <InstructorSplineChart
                     data={currentSplineData}
                     height={270}
-                    selectedDay={selectedDayFilter?.day}
-                    onSelectDay={(pt) =>
+                    selectedDay={selectedDayFilter?.timestamp ?? selectedDayFilter?.day}
+                    onSelectDay={(pt) => {
+                      const isSame = selectedDayFilter?.timestamp
+                        ? selectedDayFilter.timestamp === pt.timestamp
+                        : selectedDayFilter?.day === pt.day;
                       setSelectedDayFilter(
-                        selectedDayFilter?.day === pt.day ? null : { day: pt.day, date: pt.date },
-                      )
-                    }
+                        isSame
+                          ? null
+                          : {
+                              day: pt.day,
+                              date: pt.date || pt.fullDateLabel || pt.day,
+                              timestamp: pt.timestamp,
+                            },
+                      );
+                    }}
                   />
 
                   {/* Hàng 3 thẻ tóm tắt nhanh dữ liệu kỳ hoạt động */}

@@ -1779,7 +1779,7 @@ class CatalogHandler(CatalogService):
             pb.GetInstructorStudentDossierResponse,
         ],
     ) -> pb.GetInstructorStudentDossierResponse:
-        user = self._verify_instructor_permission()
+        user = require_current_user()
         try:
             dossier = await self.use_case.get_instructor_student_dossier(
                 course_id=request.course_id,

@@ -1,7 +1,7 @@
 """add daily_course_item_records
 
 Revision ID: 0d3341671506
-Revises: 01a1eca59a2d
+Revises: 6ed40cb6003e
 Create Date: 2026-11-24 12:45:05.368629
 
 """

@@ -5,6 +5,7 @@ import React, { useState, useRef, useId, memo } from "react";
 export interface SplineDataPoint {
   day: string; // Tên ngắn hiển thị trục X (ví dụ: "T2", "01/11", "04h")
   date: string; // Ngày hoặc giờ (ví dụ: "03/11", "14:00")
+  timestamp?: string; // Khóa ISO của bucket từ backend để lọc chính xác
   count: number; // Tổng lượng học viên tương tác
   completed: number; // Số lượt hoàn thành bài
   inProgress: number; // Số lượt đang học
@@ -295,7 +296,11 @@ function InstructorSplineChartComponent({
 
         {/* Các điểm dữ liệu & Nhãn trục X thích ứng */}
         {points.map((pt, i) => {
-          const isSelected = selectedDay === pt.data.day || selectedDay === pt.data.date;
+          const isSelected =
+            Boolean(selectedDay) &&
+            (selectedDay === pt.data.timestamp ||
+              selectedDay === pt.data.day ||
+              selectedDay === pt.data.date);
           const isHovered = hoveredIdx === i;
           const candidateTickCount = points.filter((p) => p.data.showTick !== false).length;
           const autoStride = candidateTickCount > 10 ? Math.ceil(points.length / 6) : 1;

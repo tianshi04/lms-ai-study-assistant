@@ -64,6 +64,24 @@ test.describe('Instructor Dashboard', () => {
     await page.goto('/');
     await expect(page.getByRole('link', { name: /Tạo khóa học mới/i }).first()).toBeVisible({ timeout: 15000 });
   });
+
+  test('instructor: should switch to 24h heatmap tab and open student detail modal', async ({ page }) => {
+    await page.goto('/instructor/dashboard', { waitUntil: 'domcontentloaded' });
+    const heatmapTab = page.getByRole('tab', { name: /Khung giờ học/i }).first();
+    await expect(heatmapTab).toBeVisible({ timeout: 15000 });
+    await heatmapTab.click();
+    await expect(page.getByText(/Sơ đồ Mật độ Khung giờ Học tập/i).first()).toBeVisible({ timeout: 10000 });
+
+    const specificModeBtn = page.getByRole('button', { name: /Chi tiết từng lớp/i }).first();
+    if (await specificModeBtn.isVisible()) {
+      await specificModeBtn.click();
+      const studentRow = page.locator('tbody tr').first();
+      if (await studentRow.isVisible({ timeout: 8000 }).catch(() => false)) {
+        await studentRow.click();
+        await expect(page.getByText(/Tiến độ khóa học/i).first()).toBeVisible({ timeout: 10000 });
+      }
+    }
+  });
 });
 
 // ─── TA Grading Queue (chromium-instructor project has TA auth too in this setup)

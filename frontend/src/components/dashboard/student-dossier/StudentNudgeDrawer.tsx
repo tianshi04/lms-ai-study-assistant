@@ -90,12 +90,19 @@ export function StudentNudgeDrawer({
     }
 
     try {
-      await sendReminderMutation.mutateAsync({
+      const res = await sendReminderMutation.mutateAsync({
         courseId,
         studentIds: [student.userId],
         title: subject.trim(),
         content: body.trim(),
       });
+
+      if (res.sentCount === 0) {
+        toast.error(
+          "Học viên không còn ghi danh trong khóa học này hoặc không thể nhận thông báo.",
+        );
+        return;
+      }
 
       const nowStr = new Date().toLocaleTimeString("vi-VN", {
         hour: "2-digit",

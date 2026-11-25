@@ -21,6 +21,7 @@ import { InstructorRecentReviewsCard } from "../components/InstructorRecentRevie
 import { InstructorActionTasksCard } from "../components/InstructorActionTasksCard";
 import { InstructorActivityHeatmap } from "../components/InstructorActivityHeatmap";
 import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
 import { useInstructorActivityTimelineQuery } from "@/lib/queries/useCatalogQueries";
 import { formatTimelineToSplineData } from "../utils/time_labels";
 import type {
@@ -157,59 +158,46 @@ export function InstructorOverviewView({
         <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
           <div className="space-y-3 pb-1">
             {/* Tabs biểu đồ toàn sàn */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-muted/60 w-full sm:w-fit max-w-full">
-              <button
-                type="button"
-                onClick={() => setAllChartTab("trend")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  allChartTab === "trend"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                <span>Hoạt động</span>
-              </button>
+            <Tabs.Root
+              value={allChartTab}
+              onValueChange={(val) =>
+                setAllChartTab(val as "trend" | "heatmap" | "compare" | "certs")
+              }
+            >
+              <Tabs.List className="border-b-0 flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-muted/60 w-full sm:w-fit max-w-full">
+                <Tabs.Tab
+                  value="trend"
+                  className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                >
+                  <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                  <span>Hoạt động</span>
+                </Tabs.Tab>
 
-              <button
-                type="button"
-                onClick={() => setAllChartTab("heatmap")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  allChartTab === "heatmap"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Flame className="w-3.5 h-3.5 text-destructive" aria-hidden="true" />
-                <span>Khung giờ học</span>
-              </button>
+                <Tabs.Tab
+                  value="heatmap"
+                  className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                >
+                  <Flame className="w-3.5 h-3.5 text-destructive" aria-hidden="true" />
+                  <span>Khung giờ học</span>
+                </Tabs.Tab>
 
-              <button
-                type="button"
-                onClick={() => setAllChartTab("compare")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  allChartTab === "compare"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-                <span>Đối sánh môn học</span>
-              </button>
+                <Tabs.Tab
+                  value="compare"
+                  className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                >
+                  <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
+                  <span>Đối sánh môn học</span>
+                </Tabs.Tab>
 
-              <button
-                type="button"
-                onClick={() => setAllChartTab("certs")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  allChartTab === "certs"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Award className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
-                <span>Chứng chỉ đã cấp</span>
-              </button>
-            </div>
+                <Tabs.Tab
+                  value="certs"
+                  className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                >
+                  <Award className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
+                  <span>Chứng chỉ đã cấp</span>
+                </Tabs.Tab>
+              </Tabs.List>
+            </Tabs.Root>
 
             {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên (Cố định cho cả Hoạt động và Khung giờ học) */}
             {allChartTab === "trend" || allChartTab === "heatmap" ? (

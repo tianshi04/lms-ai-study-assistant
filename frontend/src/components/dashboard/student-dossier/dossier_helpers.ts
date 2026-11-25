@@ -206,9 +206,12 @@ export function evaluateStudentRisk(
   dossier?: GetInstructorStudentDossierResponse,
 ): StudentRiskEvaluation {
   const isDone = Boolean(student.isCompleted || student.progressPercent >= 100);
+  const totalCourseItems = student.totalCourseItems ?? 0;
   const completedCount =
     student.completedItemsCount ??
-    Math.round(((student.progressPercent || 0) / 100) * (student.totalCourseItems || 9));
+    (totalCourseItems > 0
+      ? Math.round(((student.progressPercent || 0) / 100) * totalCourseItems)
+      : 0);
   const totalStudySeconds = computeTotalStudySeconds(student, dossier);
   const expectedEstimatedSeconds =
     student.courseEstimatedMinutes && student.courseEstimatedMinutes > 0

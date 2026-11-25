@@ -257,3 +257,86 @@ async def test_get_instructor_analytics_empty(repo, mock_session):
     assert analytics.total_enrolled_students == 0
     assert analytics.total_learning_hours == 0.0
     assert analytics.students == []
+
+
+@pytest.mark.asyncio
+async def test_get_instructor_analytics_best_graded_quiz_max_cooldown_and_course_daily(
+    repo, mock_session
+):
+    from datetime import date
+
+    from src.modules.identity.infrastructure.models import UserModel
+    from src.modules.learning.infrastructure.models import LearningProgressModel
+
+    lp = LearningProgressModel(
+        id="stu-1:c1",
+        user_id="stu-1",
+        course_id="c1",
+        overall_progress_percent=88.9,
+        completed_item_ids=["q1", "q2", "pq1"],
+        enrolled_at="2026-11-10T08:00:00Z",
+        last_accessed_at="2026-11-24T09:30:00Z",
+    )
+
+    def mock_exec(stmt):
+        s = str(stmt).lower()
+        res = MagicMock()
+        if "course_reviews" in s:
+            res.one_or_none.return_value = (4.5, 2)
+        elif "courses.owner_id" in s:
+            res.scalar_one_or_none.return_value = "inst-1"
+        elif "courses.id" in s:
+            res.scalar_one_or_none.return_value = "c1"
+        elif "course_collaborators" in s:
+            res.scalars.return_value.all.return_value = []
+        elif "learning_progresses" in s:
+            res.scalars.return_value.all.return_value = [lp]
+        elif "learning_items" in s:
+            res.all.return_value = [
+                ("q1", "Quiz 1", 48, "GRADED_QUIZ"),
+                ("q2", "Quiz 2", 48, "GRADED_QUIZ"),
+                ("pq1", "Practice 1", 48, "PRACTICE_QUIZ"),
+            ]
+        elif "from users" in s:
+            res.scalars.return_value.all.return_value = [
+                UserModel(
+                    id="stu-1",
+                    email="stu1@test.com",
+                    full_name="Học viên 03",
+                )
+            ]
+        elif "quiz_submissions" in s:
+            # q1: 90%, q2: 60% then 85% -> best per quiz = (90 + 85) / 2 = 87.5% -> 8.8/10
+            res.all.return_value = [
+                ("stu-1", "q1", 90.0),
+                ("stu-1", "q2", 60.0),
+                ("stu-1", "q2", 85.0),
+            ]
+        elif "quiz_cooldowns" in s:
+            # Later timestamp returned first, earlier second -> must keep max
+            res.all.return_value = [
+                ("stu-1", "2099-01-02T12:00:00+00:00"),
+                ("stu-1", "2099-01-01T08:00:00+00:00"),
+            ]
+        elif "daily_course_item_records" in s:
+            res.all.return_value = [
+                ("stu-1", date(2026, 11, 20), 1200),
+            ]
+        else:
+            res.all.return_value = []
+            res.scalars.return_value.all.return_value = []
+        return res
+
+    mock_session.execute.side_effect = mock_exec
+    analytics = await repo.get_instructor_analytics("c1")
+
+    assert len(analytics.students) == 1
+    st = analytics.students[0]
+    assert st.average_quiz_score == pytest.approx(8.8)
+    assert st.quiz_attempts_count == 3
+    assert st.is_in_cooldown is True
+    assert st.cooldown_until == "2099-01-02T12:00:00+00:00"
+    assert len(st.daily_activities) == 1
+    assert st.daily_activities[0].study_date == "2026-11-20"
+    assert st.daily_activities[0].total_seconds == 1200
+    assert st.daily_activities[0].is_streak_qualified is True

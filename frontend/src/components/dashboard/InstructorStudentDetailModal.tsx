@@ -269,10 +269,12 @@ export function InstructorStudentDetailModal({
   const hasMasterSidebar = Boolean(students && students.length > 1 && onSelectStudent);
   const risk = evaluateStudentRisk(student, dossier);
 
+  const totalCourseItems = student.totalCourseItems ?? 0;
   const completedCount =
     student.completedItemsCount ??
-    Math.round(((student.progressPercent || 0) / 100) * (student.totalCourseItems || 9));
-  const totalCourseItems = student.totalCourseItems || 9;
+    (totalCourseItems > 0
+      ? Math.round(((student.progressPercent || 0) / 100) * totalCourseItems)
+      : 0);
 
   const currentStopWeekNumber =
     dossier?.lastAccessedWeekNumber ||
@@ -534,7 +536,9 @@ export function InstructorStudentDetailModal({
                   </div>
                   <div className="mt-2">
                     <div className="text-xs text-muted-foreground">
-                      {completedCount}/{totalCourseItems} bài hoàn thành
+                      {totalCourseItems > 0
+                        ? `${completedCount}/${totalCourseItems} bài hoàn thành`
+                        : `${completedCount} bài hoàn thành`}
                     </div>
                     <div className="h-1 w-full bg-muted rounded-full overflow-hidden mt-1.5">
                       <div
@@ -577,7 +581,7 @@ export function InstructorStudentDetailModal({
                   <div>
                     <div className="text-xs text-muted-foreground">Điểm tổng kết</div>
                     <div className="text-xl font-bold text-foreground tabular-nums mt-1">
-                      {dossier && totalAssessmentsCount > 0 && dossier.finalWeightedGrade > 0
+                      {dossier && submittedAssessmentsCount > 0
                         ? `${dossier.finalWeightedGrade.toFixed(1)}%`
                         : student.quizScore !== undefined
                           ? `${formatScoreNumber(student.quizScore)}/10`

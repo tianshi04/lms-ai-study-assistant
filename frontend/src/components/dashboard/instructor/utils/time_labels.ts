@@ -334,6 +334,7 @@ export function formatTimelineToSplineData(
       return {
         day,
         date,
+        timestamp: p.timestamp,
         fullDateLabel,
         showTick,
         isFuture: false,

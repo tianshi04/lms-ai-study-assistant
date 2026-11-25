@@ -11,6 +11,7 @@ import { GradingQueueStatus, type GradingQueueItem } from "@/gen/assessment/v1/a
 import { getAvatarDataUri } from "@/lib/avatar";
 import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import type { StudentPacingRecord } from "../../InstructorPacingModal";
+import { formatLastActiveLabel, isInactiveOver7Days } from "../../student-dossier/dossier_helpers";
 import type {
   OverviewActionTask,
   OverviewReview,
@@ -513,6 +514,17 @@ export function useInstructorOverviewData({
 
       const totalWeeks = course.weekModules?.length || 2;
       const courseDurationDays = Math.max(14, totalWeeks * 7);
+      let courseTotalItems = 0;
+      let courseEstimatedMinutes = 0;
+      for (const wm of course.weekModules || []) {
+        for (const lesson of wm.lessons || []) {
+          for (const item of lesson.items || []) {
+            courseTotalItems += 1;
+            courseEstimatedMinutes +=
+              item.estimatedMinutes && item.estimatedMinutes > 0 ? item.estimatedMinutes : 10;
+          }
+        }
+      }
 
       an.students.forEach((st) => {
         let pace: "AHEAD" | "ON_TRACK" | "BEHIND" = "ON_TRACK";
@@ -543,6 +555,21 @@ export function useInstructorOverviewData({
           1,
           Math.min(totalWeeks, Math.ceil((st.progressPercent / 100) * totalWeeks)),
         );
+        const currentWeekTitle =
+          course.weekModules?.find((w) => w.weekNumber === currentWeekNumber)?.title ||
+          `Tuần ${currentWeekNumber}`;
+        const lastAccessedMs = st.lastAccessedAt ? new Date(st.lastAccessedAt).getTime() : 0;
+        const daysInactive =
+          lastAccessedMs > 0 && nowMs > lastAccessedMs
+            ? Math.floor((nowMs - lastAccessedMs) / (1000 * 60 * 60 * 24))
+            : 0;
+        const resolvedTotalItems = st.totalCourseItems > 0 ? st.totalCourseItems : courseTotalItems;
+        const resolvedCompletedItems =
+          st.totalCourseItems > 0
+            ? st.completedItemsCount
+            : resolvedTotalItems > 0
+              ? Math.round((st.progressPercent / 100) * resolvedTotalItems)
+              : 0;
 
         result.push({
           id: st.userId,
@@ -552,15 +579,36 @@ export function useInstructorOverviewData({
           courseTitle: course.title,
           progressPercent: Math.round(st.progressPercent),
           currentLesson:
-            st.progressPercent >= 100
+            st.lastAccessedItemTitle ||
+            (st.progressPercent >= 100
               ? "Đã hoàn thành toàn bộ khóa học"
-              : `Tiến độ ${Math.round(st.progressPercent)}% đề cương`,
+              : `Tiến độ ${Math.round(st.progressPercent)}% đề cương`),
           currentWeekNumber,
-          lastActive: "Gần đây",
-          daysInactive: 0,
+          currentWeekTitle,
+          lastActive: formatLastActiveLabel(st.lastAccessedAt, nowMs),
+          daysInactive,
+          isInactive: isInactiveOver7Days(st.lastAccessedAt, nowMs),
           pace,
           paceDescription,
           bottleneckStuck: pace === "BEHIND",
+          enrolledAt: st.enrolledAt,
+          enrollmentType: st.enrollmentType,
+          totalTimeSpentSeconds: st.totalTimeSpentSeconds,
+          quizScore:
+            st.quizAttemptsCount && st.quizAttemptsCount > 0
+              ? Number(st.averageQuizScore.toFixed(1))
+              : undefined,
+          quizAttemptsCount: st.quizAttemptsCount,
+          isInCooldown: st.isInCooldown,
+          cooldownUntil: st.cooldownUntil,
+          peerReviewDutyStatus: st.peerReviewDutyStatus,
+          isPeerReviewOverdue: st.isPeerReviewOverdue,
+          completedItemsCount: resolvedCompletedItems,
+          totalCourseItems: resolvedTotalItems,
+          courseEstimatedMinutes,
+          dailyActivities: st.dailyActivities,
+          currentStreak: st.currentStreak,
+          longestStreak: st.longestStreak,
         });
       });
     });

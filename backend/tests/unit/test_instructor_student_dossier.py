@@ -209,7 +209,14 @@ async def test_repository_student_dossier_fallback_to_item_progress():
     res_syllabus.all.return_value = [(it1, 1, "Tuần 1")]
 
     res_lp = MagicMock()
-    res_lp.scalar_one_or_none.return_value = None
+    res_lp.scalar_one_or_none.return_value = LearningProgressModel(
+        id="stu-2:c-fallback",
+        user_id="stu-2",
+        course_id="c-fallback",
+        overall_progress_percent=0.0,
+        completed_item_ids=[],
+        enrolled_at="2026-11-18T00:00:00+00:00",
+    )
 
     res_empty_all = MagicMock()
     res_empty_all.all.return_value = []
@@ -246,6 +253,28 @@ async def test_repository_student_dossier_fallback_to_item_progress():
     assert dossier.daily_logs[0].total_seconds == 960
     assert dossier.daily_logs[0].is_streak_qualified is True
     assert dossier.is_suspicious_fast_pace is False
+
+
+@pytest.mark.asyncio
+async def test_repository_student_dossier_not_enrolled_raises():
+    session = AsyncMock()
+    repo = SQLAlchemyCatalogRepository(session)
+    repo.get_course_id_by_slug_or_id = AsyncMock(return_value="c-1")
+
+    res_syllabus = MagicMock()
+    res_syllabus.all.return_value = [
+        (
+            LearningItemModel(id="it-1", title="Video 1", type="VIDEO", lesson_id="l1"),
+            1,
+            "Tuần 1",
+        )
+    ]
+    res_lp = MagicMock()
+    res_lp.scalar_one_or_none.return_value = None
+    session.execute.side_effect = [res_syllabus, res_lp]
+
+    with pytest.raises(ValueError, match="chưa ghi danh"):
+        await repo.get_instructor_student_dossier("c-1", "stranger-user")
 
 
 @pytest.mark.asyncio
@@ -324,9 +353,8 @@ async def test_usecase_and_handler_get_instructor_student_dossier():
     handler = CatalogHandler(use_case=mock_uc)
     ctx = MagicMock()
 
-    with patch.object(
-        handler,
-        "_verify_instructor_permission",
+    with patch(
+        "src.modules.catalog.presentation.catalog_handler.require_current_user",
         return_value=CurrentUser(id="inst-1", email="inst@test.com", role="INSTRUCTOR"),
     ):
         mock_uc.get_instructor_student_dossier.return_value = sample_dossier
@@ -347,3 +375,16 @@ async def test_usecase_and_handler_get_instructor_student_dossier():
                 ctx,
             )
         assert exc_perm.value.code == Code.PERMISSION_DENIED
+
+    # Teaching Assistant with global LEARNER role must not be blocked at handler
+    with patch(
+        "src.modules.catalog.presentation.catalog_handler.require_current_user",
+        return_value=CurrentUser(id="ta-1", email="ta@test.com", role="LEARNER"),
+    ):
+        mock_uc.get_instructor_student_dossier.side_effect = None
+        mock_uc.get_instructor_student_dossier.return_value = sample_dossier
+        resp_ta = await handler.get_instructor_student_dossier(
+            pb.GetInstructorStudentDossierRequest(course_id="c1", student_id="stu-1"),
+            ctx,
+        )
+        assert resp_ta.final_weighted_grade == pytest.approx(85.0)

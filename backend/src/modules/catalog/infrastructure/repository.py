@@ -1,6 +1,7 @@
 import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import Numeric, and_, case, delete, func, or_, select, true, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -1825,6 +1826,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         end_date: str = "",
         learner_filter: str = "all",
     ) -> InstructorActivityTimeline:
+        vn_tz = ZoneInfo("Asia/Ho_Chi_Minh")
+
         def _parse_iso_dt(ts_str: str | None) -> datetime | None:
             if not ts_str:
                 return None
@@ -1837,10 +1840,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             except (ValueError, TypeError, OverflowError):
                 return None
 
-        now = datetime.now(UTC)
-        today_start = datetime(now.year, now.month, now.day, 0, 0, 0, tzinfo=UTC)
+        now = datetime.now(vn_tz)
+        today_start = datetime(now.year, now.month, now.day, 0, 0, 0, tzinfo=vn_tz)
         today_end = datetime(
-            now.year, now.month, now.day, 23, 59, 59, 999999, tzinfo=UTC
+            now.year, now.month, now.day, 23, 59, 59, 999999, tzinfo=vn_tz
         )
 
         normalized_range = (
@@ -1870,7 +1873,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             for sh, eh in hour_intervals:
                 b_start = today_start + timedelta(hours=sh)
                 b_end = today_start + timedelta(hours=eh)
-                ts_str = f"{today_str}T{sh:02d}:00:00Z"
+                ts_str = f"{today_str}T{sh:02d}:00:00+07:00"
                 lbl = f"{sh:02d}h"
                 buckets.append((b_start, b_end, ts_str, lbl))
         elif normalized_range == "7d":
@@ -1906,11 +1909,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 lbl = day_names[i]
                 buckets.append((b_start, b_end, ts_str, lbl))
         elif normalized_range == "this_month":
-            first_day = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=UTC)
+            first_day = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=vn_tz)
             next_month_year = now.year + 1 if now.month == 12 else now.year
             next_month_num = 1 if now.month == 12 else now.month + 1
             next_month = datetime(
-                next_month_year, next_month_num, 1, 0, 0, 0, tzinfo=UTC
+                next_month_year, next_month_num, 1, 0, 0, 0, tzinfo=vn_tz
             )
             range_start = first_day
             range_end = next_month - timedelta(microseconds=1)
@@ -1925,8 +1928,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         elif normalized_range == "last_month":
             lm_year = now.year - 1 if now.month == 1 else now.year
             lm_month = 12 if now.month == 1 else now.month - 1
-            first_day = datetime(lm_year, lm_month, 1, 0, 0, 0, tzinfo=UTC)
-            next_month = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=UTC)
+            first_day = datetime(lm_year, lm_month, 1, 0, 0, 0, tzinfo=vn_tz)
+            next_month = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=vn_tz)
             range_start = first_day
             range_end = next_month - timedelta(microseconds=1)
             curr = first_day
@@ -1941,9 +1944,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             try:
                 s_parts = [int(p) for p in start_date.split("-")]
                 e_parts = [int(p) for p in end_date.split("-")]
-                s_dt = datetime(s_parts[0], s_parts[1], s_parts[2], 0, 0, 0, tzinfo=UTC)
+                s_dt = datetime(
+                    s_parts[0], s_parts[1], s_parts[2], 0, 0, 0, tzinfo=vn_tz
+                )
                 e_dt = datetime(
-                    e_parts[0], e_parts[1], e_parts[2], 23, 59, 59, 999999, tzinfo=UTC
+                    e_parts[0], e_parts[1], e_parts[2], 23, 59, 59, 999999, tzinfo=vn_tz
                 )
                 if s_dt <= e_dt:
                     range_start = s_dt
@@ -1985,11 +1990,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                             cur_year == end_year and cur_month <= end_month
                         ):
                             m_start = datetime(
-                                cur_year, cur_month, 1, 0, 0, 0, tzinfo=UTC
+                                cur_year, cur_month, 1, 0, 0, 0, tzinfo=vn_tz
                             )
                             next_y = cur_year + 1 if cur_month == 12 else cur_year
                             next_m = 1 if cur_month == 12 else cur_month + 1
-                            m_end = datetime(next_y, next_m, 1, 0, 0, 0, tzinfo=UTC)
+                            m_end = datetime(next_y, next_m, 1, 0, 0, 0, tzinfo=vn_tz)
 
                             b_start = max(s_dt, m_start)
                             b_end = min(e_dt, m_end - timedelta(microseconds=1))
@@ -2005,8 +2010,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     else:
                         # 4. Hàng năm (Yearly step > 3 năm)
                         for y in range(s_dt.year, e_dt.year + 1):
-                            y_start = datetime(y, 1, 1, 0, 0, 0, tzinfo=UTC)
-                            y_end = datetime(y, 12, 31, 23, 59, 59, 999999, tzinfo=UTC)
+                            y_start = datetime(y, 1, 1, 0, 0, 0, tzinfo=vn_tz)
+                            y_end = datetime(
+                                y, 12, 31, 23, 59, 59, 999999, tzinfo=vn_tz
+                            )
                             b_start = max(s_dt, y_start)
                             b_end = min(e_dt, y_end)
                             ts_str = str(y)
@@ -2045,34 +2052,36 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 lbl = "Hôm nay" if i == 6 else day_names[b_start.weekday()]
                 buckets.append((b_start, b_end, ts_str, lbl))
 
-        if not course_ids:
-            empty_timeline = [
-                ActivityDataPoint(
-                    timestamp=b[2],
-                    label=b[3],
-                    active_learners=0,
-                    completed_items=0,
-                    in_progress=0,
-                )
-                for b in buckets
-            ]
-            empty_heatmap = [
-                HeatmapCell(
-                    day=d,
-                    time_slot=ts,
-                    count=0,
-                    is_peak=False,
-                )
-                for d in HEATMAP_DAYS
-                for ts in HEATMAP_TIME_SLOTS
-            ]
+        def _empty_timeline_response() -> InstructorActivityTimeline:
             return InstructorActivityTimeline(
-                timeline=empty_timeline,
-                heatmap=empty_heatmap,
+                timeline=[
+                    ActivityDataPoint(
+                        timestamp=b[2],
+                        label=b[3],
+                        active_learners=0,
+                        completed_items=0,
+                        in_progress=0,
+                    )
+                    for b in buckets
+                ],
+                heatmap=[
+                    HeatmapCell(
+                        day=d,
+                        time_slot=ts,
+                        count=0,
+                        is_peak=False,
+                    )
+                    for d in HEATMAP_DAYS
+                    for ts in HEATMAP_TIME_SLOTS
+                ],
                 total_active_in_period=0,
             )
 
+        if not course_ids:
+            return _empty_timeline_response()
+
         from src.modules.learning.infrastructure.models import (
+            DailyCourseItemRecordModel,
             LearningItemProgressModel,
             LearningProgressModel,
             PersonalNoteModel,
@@ -2090,8 +2099,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     if collab.user_id:
                         staff_ids.add(collab.user_id)
 
-        range_start_iso = range_start.isoformat()
-        range_end_iso = range_end.isoformat()
+        range_start_iso = range_start.astimezone(UTC).isoformat()
+        range_end_iso = range_end.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
         lp_stmt = select(LearningProgressModel).where(
             LearningProgressModel.course_id.in_(course_ids),
@@ -2112,72 +2121,126 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
         if staff_ids:
             lp_stmt = lp_stmt.where(LearningProgressModel.user_id.notin_(staff_ids))
-        if learner_filter == "in_progress":
+        if learner_filter in ("in_progress", "paid_in_progress"):
             lp_stmt = lp_stmt.where(
                 LearningProgressModel.overall_progress_percent < 100.0
             )
-        elif learner_filter == "completed":
+        elif learner_filter in ("completed", "paid_completed"):
             lp_stmt = lp_stmt.where(
                 LearningProgressModel.overall_progress_percent >= 100.0
             )
-        elif learner_filter in (
+
+        lp_res = await self.session.execute(lp_stmt)
+        progresses = list(lp_res.scalars().all())
+        if not progresses:
+            return _empty_timeline_response()
+
+        if learner_filter in (
             "paid",
             "audit",
             "paid_in_progress",
             "paid_completed",
         ):
             from src.modules.certificate.infrastructure.models import FinancialAidModel
-            from src.modules.identity.infrastructure.models import UserModel
+            from src.modules.identity.infrastructure.models import (
+                EnterpriseLicenseModel,
+                UserModel,
+            )
             from src.modules.payment.infrastructure.models import (
                 CoursePurchaseModel,
                 UserSubscriptionModel,
             )
 
-            p_stmt = select(CoursePurchaseModel.user_id).where(
-                CoursePurchaseModel.course_id.in_(course_ids)
-            )
-            p_res = await self.session.execute(p_stmt)
-            paid_uids = set(p_res.scalars().all())
+            candidate_uids = list({p.user_id for p in progresses})
+            candidate_cids = list({p.course_id for p in progresses})
+            now_utc_iso = datetime.now(UTC).isoformat()
 
-            sub_stmt = select(UserSubscriptionModel.user_id).where(
-                UserSubscriptionModel.status == "ACTIVE"
+            p_stmt = select(CoursePurchaseModel).where(
+                CoursePurchaseModel.user_id.in_(candidate_uids),
+                CoursePurchaseModel.course_id.in_(candidate_cids),
+                CoursePurchaseModel.status == "COMPLETED",
             )
-            sub_res = await self.session.execute(sub_stmt)
-            paid_uids.update(sub_res.scalars().all())
+            purchased_pairs = {
+                (row.user_id, row.course_id)
+                for row in (await self.session.execute(p_stmt)).scalars().all()
+            }
 
-            ent_user_stmt = select(UserModel.id).where(
+            sub_stmt = select(UserSubscriptionModel).where(
+                UserSubscriptionModel.user_id.in_(candidate_uids),
+                UserSubscriptionModel.status == "ACTIVE",
+                UserSubscriptionModel.expires_at >= now_utc_iso,
+            )
+            subscribed_uids = {
+                row.user_id
+                for row in (await self.session.execute(sub_stmt)).scalars().all()
+            }
+
+            fa_stmt = select(FinancialAidModel).where(
+                FinancialAidModel.user_id.in_(candidate_uids),
+                FinancialAidModel.course_id.in_(candidate_cids),
+                FinancialAidModel.status.in_(["APPROVED", "AUTO_APPROVED"]),
+            )
+            fa_pairs = {
+                (row.user_id, row.course_id)
+                for row in (await self.session.execute(fa_stmt)).scalars().all()
+            }
+
+            ent_user_stmt = select(UserModel).where(
+                UserModel.id.in_(candidate_uids),
                 UserModel.enterprise_seat_key.isnot(None),
                 UserModel.enterprise_seat_key != "",
             )
-            ent_user_res = await self.session.execute(ent_user_stmt)
-            paid_uids.update(ent_user_res.scalars().all())
+            user_ent_keys: dict[str, str] = {}
+            for u in (await self.session.execute(ent_user_stmt)).scalars().all():
+                key = (u.enterprise_seat_key or "").strip().upper()
+                if key:
+                    user_ent_keys[u.id] = key
 
-            fa_stmt = select(FinancialAidModel.user_id).where(
-                FinancialAidModel.course_id.in_(course_ids),
-                FinancialAidModel.status == "APPROVED",
-            )
-            fa_res = await self.session.execute(fa_stmt)
-            paid_uids.update(fa_res.scalars().all())
+            valid_licenses: dict[str, tuple[str, set[str]]] = {}
+            if user_ent_keys:
+                lic_stmt = select(EnterpriseLicenseModel).where(
+                    EnterpriseLicenseModel.key.in_(set(user_ent_keys.values())),
+                    EnterpriseLicenseModel.is_active.is_(True),
+                )
+                for lic in (await self.session.execute(lic_stmt)).scalars().all():
+                    valid_licenses[lic.key] = (
+                        str(lic.scope_type or "ALL_COURSES"),
+                        set(lic.allowed_course_ids or []),
+                    )
 
-            if learner_filter == "paid":
-                lp_stmt = lp_stmt.where(LearningProgressModel.user_id.in_(paid_uids))
-            elif learner_filter == "paid_in_progress":
-                lp_stmt = lp_stmt.where(
-                    LearningProgressModel.user_id.in_(paid_uids),
-                    LearningProgressModel.overall_progress_percent < 100.0,
-                )
-            elif learner_filter == "paid_completed":
-                lp_stmt = lp_stmt.where(
-                    LearningProgressModel.user_id.in_(paid_uids),
-                    LearningProgressModel.overall_progress_percent >= 100.0,
-                )
+            def _is_paid_for_course(uid: str, cid: str) -> bool:
+                if (
+                    uid in subscribed_uids
+                    or (uid, cid) in purchased_pairs
+                    or (uid, cid) in fa_pairs
+                ):
+                    return True
+                ent_key = user_ent_keys.get(uid)
+                if ent_key and ent_key in valid_licenses:
+                    scope_type, allowed = valid_licenses[ent_key]
+                    if scope_type == "ALL_COURSES" or not allowed or cid in allowed:
+                        return True
+                return False
+
+            if learner_filter == "audit":
+                progresses = [
+                    p
+                    for p in progresses
+                    if not _is_paid_for_course(p.user_id, p.course_id)
+                ]
             else:
-                lp_stmt = lp_stmt.where(LearningProgressModel.user_id.notin_(paid_uids))
+                progresses = [
+                    p for p in progresses if _is_paid_for_course(p.user_id, p.course_id)
+                ]
 
-        lp_res = await self.session.execute(lp_stmt)
-        progresses = lp_res.scalars().all()
+            if not progresses:
+                return _empty_timeline_response()
+
+        valid_pairs = {(p.user_id, p.course_id) for p in progresses}
+        valid_user_ids = list({p.user_id for p in progresses})
 
         note_stmt = select(PersonalNoteModel).where(
+            PersonalNoteModel.user_id.in_(valid_user_ids),
             PersonalNoteModel.course_id.in_(course_ids),
             or_(
                 and_(
@@ -2194,6 +2257,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         notes = note_res.scalars().all()
 
         item_stmt = select(LearningItemProgressModel).where(
+            LearningItemProgressModel.user_id.in_(valid_user_ids),
             LearningItemProgressModel.course_id.in_(course_ids),
             LearningItemProgressModel.last_studied_at >= range_start_iso,
             LearningItemProgressModel.last_studied_at <= range_end_iso,
@@ -2201,12 +2265,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         item_res = await self.session.execute(item_stmt)
         item_progresses = item_res.scalars().all()
 
-        valid_user_ids = {p.user_id for p in progresses}
-        user_is_completed = {
-            p.user_id: (p.overall_progress_percent >= 100.0) for p in progresses
-        }
-        user_completed_items_count = {
-            p.user_id: len(p.completed_item_ids or []) for p in progresses
+        dc_stmt = select(DailyCourseItemRecordModel).where(
+            DailyCourseItemRecordModel.user_id.in_(valid_user_ids),
+            DailyCourseItemRecordModel.course_id.in_(course_ids),
+            DailyCourseItemRecordModel.last_studied_at >= range_start_iso,
+            DailyCourseItemRecordModel.last_studied_at <= range_end_iso,
+        )
+        dc_records = (await self.session.execute(dc_stmt)).scalars().all()
+
+        user_has_in_progress = {
+            p.user_id for p in progresses if p.overall_progress_percent < 100.0
         }
 
         user_events: list[tuple[str, datetime]] = []
@@ -2222,7 +2290,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 user_events.append((p.user_id, dt_enr))
 
         for n in notes:
-            if n.user_id in valid_user_ids:
+            if (n.user_id, n.course_id) in valid_pairs:
                 dt_c = _parse_iso_dt(n.created_at)
                 if dt_c:
                     user_events.append((n.user_id, dt_c))
@@ -2231,10 +2299,115 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     user_events.append((n.user_id, dt_u))
 
         for ip in item_progresses:
-            if ip.user_id in valid_user_ids:
+            if (ip.user_id, ip.course_id) in valid_pairs:
                 dt_s = _parse_iso_dt(ip.last_studied_at)
                 if dt_s:
                     user_events.append((ip.user_id, dt_s))
+
+        for dc in dc_records:
+            if (dc.user_id, dc.course_id) in valid_pairs:
+                dt_dc = _parse_iso_dt(dc.last_studied_at)
+                if dt_dc:
+                    user_events.append((dc.user_id, dt_dc))
+
+        # Deduplicated per-item completion timestamps (each completed item counted at most once)
+        completed_items_by_pair: dict[tuple[str, str], set[str]] = {}
+        all_completed_item_ids: set[str] = set()
+        for p in progresses:
+            c_items = {str(iid) for iid in (p.completed_item_ids or []) if iid}
+            if c_items:
+                completed_items_by_pair[(p.user_id, p.course_id)] = c_items
+                all_completed_item_ids.update(c_items)
+
+        completion_events: list[datetime] = []
+        if all_completed_item_ids:
+            from src.modules.assessment.infrastructure.models import (
+                LabSubmissionModel,
+                PeerAssignmentSubmissionModel,
+                QuizSubmissionModel,
+            )
+
+            earliest_pass_quiz: dict[tuple[str, str], datetime] = {}
+            q_pass_stmt = select(QuizSubmissionModel).where(
+                QuizSubmissionModel.user_id.in_(valid_user_ids),
+                QuizSubmissionModel.item_id.in_(all_completed_item_ids),
+                QuizSubmissionModel.passed.is_(True),
+            )
+            for qs in (await self.session.execute(q_pass_stmt)).scalars().all():
+                dt_q = _parse_iso_dt(qs.created_at)
+                if dt_q:
+                    key = (qs.user_id, qs.item_id)
+                    if key not in earliest_pass_quiz or dt_q < earliest_pass_quiz[key]:
+                        earliest_pass_quiz[key] = dt_q
+
+            earliest_pass_lab: dict[tuple[str, str], datetime] = {}
+            lab_pass_stmt = select(LabSubmissionModel).where(
+                LabSubmissionModel.user_id.in_(valid_user_ids),
+                LabSubmissionModel.item_id.in_(all_completed_item_ids),
+                LabSubmissionModel.passed.is_(True),
+            )
+            for ls in (await self.session.execute(lab_pass_stmt)).scalars().all():
+                dt_l = _parse_iso_dt(ls.created_at)
+                if dt_l:
+                    key = (ls.user_id, ls.item_id)
+                    if key not in earliest_pass_lab or dt_l < earliest_pass_lab[key]:
+                        earliest_pass_lab[key] = dt_l
+
+            peer_sub_ts: dict[tuple[str, str], datetime] = {}
+            peer_sub_stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.user_id.in_(valid_user_ids),
+                PeerAssignmentSubmissionModel.item_id.in_(all_completed_item_ids),
+            )
+            for ps in (await self.session.execute(peer_sub_stmt)).scalars().all():
+                dt_p = _parse_iso_dt(ps.created_at)
+                if dt_p:
+                    key = (ps.user_id, ps.item_id)
+                    if key not in peer_sub_ts or dt_p < peer_sub_ts[key]:
+                        peer_sub_ts[key] = dt_p
+
+            earliest_dc_item: dict[tuple[str, str, str], datetime] = {}
+            dc_all_stmt = select(DailyCourseItemRecordModel).where(
+                DailyCourseItemRecordModel.user_id.in_(valid_user_ids),
+                DailyCourseItemRecordModel.course_id.in_(course_ids),
+                DailyCourseItemRecordModel.item_id.in_(all_completed_item_ids),
+            )
+            for dc in (await self.session.execute(dc_all_stmt)).scalars().all():
+                dt_dc = _parse_iso_dt(dc.last_studied_at)
+                if dt_dc:
+                    key = (dc.user_id, dc.course_id, dc.item_id)
+                    if key not in earliest_dc_item or dt_dc < earliest_dc_item[key]:
+                        earliest_dc_item[key] = dt_dc
+
+            ip_ts: dict[tuple[str, str, str], datetime] = {}
+            ip_all_stmt = select(LearningItemProgressModel).where(
+                LearningItemProgressModel.user_id.in_(valid_user_ids),
+                LearningItemProgressModel.course_id.in_(course_ids),
+                LearningItemProgressModel.item_id.in_(all_completed_item_ids),
+            )
+            for ip in (await self.session.execute(ip_all_stmt)).scalars().all():
+                dt_ip = _parse_iso_dt(ip.last_studied_at)
+                if dt_ip:
+                    ip_ts[(ip.user_id, ip.course_id, ip.item_id)] = dt_ip
+
+            for p in progresses:
+                pair = (p.user_id, p.course_id)
+                c_items = completed_items_by_pair.get(pair)
+                if not c_items:
+                    continue
+                p_comp_dt = _parse_iso_dt(p.completed_at)
+                for iid in c_items:
+                    uid_iid = (p.user_id, iid)
+                    triple = (p.user_id, p.course_id, iid)
+                    comp_dt = (
+                        earliest_pass_quiz.get(uid_iid)
+                        or earliest_pass_lab.get(uid_iid)
+                        or peer_sub_ts.get(uid_iid)
+                        or earliest_dc_item.get(triple)
+                        or ip_ts.get(triple)
+                        or p_comp_dt
+                    )
+                    if comp_dt is not None:
+                        completion_events.append(comp_dt)
 
         timeline_points: list[ActivityDataPoint] = []
         period_active_users: set[str] = set()
@@ -2248,10 +2421,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
             active_count = len(bucket_users)
             completed_items_in_bucket = sum(
-                user_completed_items_count.get(uid, 0) for uid in bucket_users
+                1 for comp_dt in completion_events if b_start <= comp_dt < b_end
             )
             in_prog_count = sum(
-                1 for uid in bucket_users if not user_is_completed.get(uid, False)
+                1 for uid in bucket_users if uid in user_has_in_progress
             )
             timeline_points.append(
                 ActivityDataPoint(
@@ -2270,8 +2443,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         for uid, dt in user_events:
             if range_start <= dt <= range_end:
-                day_str = day_labels[dt.weekday()]
-                h = dt.hour
+                dt_vn = dt.astimezone(vn_tz)
+                day_str = day_labels[dt_vn.weekday()]
+                h = dt_vn.hour
                 if 6 <= h < 12:
                     slot = "Sáng (06h-12h)"
                 elif 12 <= h < 18:
@@ -2330,8 +2504,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             if uid:
                 staff_ids.add(uid)
 
+        from src.modules.assessment.domain import is_practice_quiz_item
+        from src.modules.learning.domain import MIN_DAILY_STUDY_SECONDS_FOR_STREAK
         from src.modules.learning.infrastructure.models import (
-            DailyLearningRecordModel,
+            DailyCourseItemRecordModel,
             LearningItemProgressModel,
             LearningProgressModel,
             UserLearningStreakModel,
@@ -2364,12 +2540,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         student_user_ids = [p.user_id for p in progresses if p.user_id not in staff_ids]
 
-        # 1. Course items map: item_id -> title, cold_start_hours and count total items
+        # 1. Course items map: item_id -> title, cold_start_hours and graded quiz set
         items_stmt = (
             select(
                 LearningItemModel.id,
                 LearningItemModel.title,
                 LearningItemModel.cold_start_hours,
+                LearningItemModel.type,
             )
             .join(LessonModel, LearningItemModel.lesson_id == LessonModel.id)
             .join(WeekModuleModel, LessonModel.week_module_id == WeekModuleModel.id)
@@ -2378,9 +2555,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         items_res = await self.session.execute(items_stmt)
         course_items_map: dict[str, str] = {}
         course_item_cold_map: dict[str, int] = {}
+        graded_quiz_item_ids: set[str] = set()
         for row in items_res.all():
-            course_items_map[row[0]] = row[1]
-            course_item_cold_map[row[0]] = int(row[2] or 48)
+            item_id = row[0]
+            course_items_map[item_id] = row[1]
+            course_item_cold_map[item_id] = int(row[2] or 48)
+            raw_type_val = row[3] if len(row) > 3 else ""
+            raw_type = (
+                str(getattr(raw_type_val, "value", raw_type_val) or "").strip().upper()
+            )
+            if not is_practice_quiz_item(raw_type) and (
+                "GRADED_QUIZ" in raw_type or raw_type in {"QUIZ", "4"}
+            ):
+                graded_quiz_item_ids.add(item_id)
         total_course_items = len(course_items_map)
         course_item_ids = set(course_items_map.keys())
 
@@ -2474,18 +2661,24 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             QuizSubmissionModel,
         )
 
-        quiz_scores_map: dict[str, list[float]] = {}
-        if course_item_ids:
+        quiz_best_scores_map: dict[str, dict[str, float]] = {}
+        quiz_attempts_map: dict[str, int] = {}
+        if graded_quiz_item_ids:
             quiz_stmt = select(
                 QuizSubmissionModel.user_id,
+                QuizSubmissionModel.item_id,
                 QuizSubmissionModel.score_percent,
             ).where(
                 QuizSubmissionModel.user_id.in_(student_user_ids),
-                QuizSubmissionModel.item_id.in_(course_item_ids),
+                QuizSubmissionModel.item_id.in_(graded_quiz_item_ids),
             )
             quiz_res = await self.session.execute(quiz_stmt)
-            for uid, score in quiz_res.all():
-                quiz_scores_map.setdefault(uid, []).append(float(score or 0.0))
+            for uid, q_item_id, score in quiz_res.all():
+                quiz_attempts_map[uid] = quiz_attempts_map.get(uid, 0) + 1
+                val = float(score or 0.0)
+                user_quizzes = quiz_best_scores_map.setdefault(uid, {})
+                if q_item_id not in user_quizzes or val > user_quizzes[q_item_id]:
+                    user_quizzes[q_item_id] = val
 
         # Cooldowns
         cooldown_map: dict[str, str] = {}
@@ -2502,7 +2695,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             cd_res = await self.session.execute(cd_stmt)
             for uid, cd_until in cd_res.all():
                 if cd_until:
-                    cooldown_map[uid] = str(cd_until)
+                    cd_str = str(cd_until)
+                    if cd_str > cooldown_map.get(uid, ""):
+                        cooldown_map[uid] = cd_str
 
         # Peer assignment duty & Overdue check
         peer_duty_map: dict[str, str] = {}
@@ -2548,26 +2743,38 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                             sub_created,
                         )
 
-        # 6. Batch query 30-day Daily activities & Streaks
+        # 6. Batch query 30-day course-scoped Daily activities & Streaks
         thirty_days_ago = (
-            now_dt - timedelta(days=STUDENT_DAILY_ACTIVITY_DAYS_WINDOW)
+            datetime.now(ZoneInfo("Asia/Ho_Chi_Minh"))
+            - timedelta(days=STUDENT_DAILY_ACTIVITY_DAYS_WINDOW)
         ).date()
         daily_stmt = (
-            select(DailyLearningRecordModel)
-            .where(
-                DailyLearningRecordModel.user_id.in_(student_user_ids),
-                DailyLearningRecordModel.study_date >= thirty_days_ago,
+            select(
+                DailyCourseItemRecordModel.user_id,
+                DailyCourseItemRecordModel.study_date,
+                func.sum(DailyCourseItemRecordModel.seconds_spent),
             )
-            .order_by(DailyLearningRecordModel.study_date.asc())
+            .where(
+                DailyCourseItemRecordModel.user_id.in_(student_user_ids),
+                DailyCourseItemRecordModel.course_id == real_id,
+                DailyCourseItemRecordModel.study_date >= thirty_days_ago,
+                DailyCourseItemRecordModel.seconds_spent > 0,
+            )
+            .group_by(
+                DailyCourseItemRecordModel.user_id,
+                DailyCourseItemRecordModel.study_date,
+            )
+            .order_by(DailyCourseItemRecordModel.study_date.asc())
         )
         daily_res = await self.session.execute(daily_stmt)
         daily_map: dict[str, list[StudentDailyActivity]] = {}
-        for rec in daily_res.scalars().all():
-            daily_map.setdefault(rec.user_id, []).append(
+        for uid, s_date, total_secs in daily_res.all():
+            secs = int(total_secs or 0)
+            daily_map.setdefault(uid, []).append(
                 StudentDailyActivity(
-                    study_date=rec.study_date.isoformat(),
-                    total_seconds=rec.total_seconds,
-                    is_streak_qualified=rec.is_streak_qualified,
+                    study_date=s_date.isoformat(),
+                    total_seconds=secs,
+                    is_streak_qualified=secs >= MIN_DAILY_STUDY_SECONDS_FOR_STREAK,
                 )
             )
 
@@ -2606,7 +2813,17 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             enrolled_at_str = p.enrolled_at or ""
             last_accessed_at_str = p.last_accessed_at or ""
             last_item_title = course_items_map.get(p.last_accessed_item_id or "", "")
-            completed_count = len(p.completed_item_ids or [])
+            completed_count = (
+                len(
+                    [
+                        iid
+                        for iid in (p.completed_item_ids or [])
+                        if iid in course_item_ids
+                    ]
+                )
+                if course_item_ids
+                else len(p.completed_item_ids or [])
+            )
 
             # Determine enrollment tier
             user_ent_key = (u.enterprise_seat_key or "").strip().upper() if u else ""
@@ -2630,8 +2847,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 audit_count += 1
                 audit_time_spent_all += t_spent
 
-            q_scores = quiz_scores_map.get(p.user_id, [])
-            q_attempts = len(q_scores)
+            best_scores_dict = quiz_best_scores_map.get(p.user_id, {})
+            q_scores = list(best_scores_dict.values())
+            q_attempts = quiz_attempts_map.get(p.user_id, 0)
             avg_q_score = (
                 round(
                     sum(q_scores) / (len(q_scores) * QUIZ_PERCENT_TO_SCORE_DIVISOR), 1
@@ -3431,9 +3649,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             LearningProgressModel.course_id == real_id,
         )
         lp = (await self.session.execute(lp_stmt)).scalar_one_or_none()
-        enrolled_at = (lp.enrolled_at or "") if lp else ""
-        completed_ids = set(lp.completed_item_ids or []) if lp else set()
-        last_accessed_id = (lp.last_accessed_item_id or "") if lp else ""
+        if lp is None:
+            raise ValueError("Học viên chưa ghi danh khóa học này.")
+        enrolled_at = lp.enrolled_at or ""
+        completed_ids = set(lp.completed_item_ids or [])
+        last_accessed_id = lp.last_accessed_item_id or ""
 
         furthest_item_title = ""
         furthest_week_number = 0

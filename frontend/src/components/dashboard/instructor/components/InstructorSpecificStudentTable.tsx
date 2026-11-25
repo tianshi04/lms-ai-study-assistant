@@ -51,7 +51,7 @@ export interface InstructorSpecificStudentTableProps {
   onChangeStudentTierFilter?: (filter: "ALL" | "PAID" | "AUDIT") => void;
   studentSearchQuery: string;
   onChangeStudentSearchQuery: (query: string) => void;
-  selectedDayFilter: { day: string; date: string } | null;
+  selectedDayFilter: { day: string; date: string; timestamp?: string } | null;
   selectedWeekFilter: number | null;
   selectedStudentId?: string | null;
   onClearFilters: () => void;
@@ -170,7 +170,9 @@ export function InstructorSpecificStudentTable({
       if (studentStatusFilter === "OVERDUE") return "Học viên Quá hạn";
     }
     if (isDayFiltered && selectedDayFilter) {
-      return `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`;
+      return selectedDayFilter.date && selectedDayFilter.date !== selectedDayFilter.day
+        ? `Ngày ${selectedDayFilter.day} (${selectedDayFilter.date})`
+        : `Ngày ${selectedDayFilter.day}`;
     }
     if (isWeekFiltered) {
       return `Tuần học thứ ${selectedWeekFilter}`;
@@ -483,10 +485,13 @@ export function InstructorSpecificStudentTable({
                   isInactive,
                   isCompleted: isDone,
                   completedItemsCount:
-                    totalItemsInActiveCourse > 0
-                      ? Math.round((st.progressPercent / 100) * totalItemsInActiveCourse)
-                      : 0,
-                  totalCourseItems: totalItemsInActiveCourse,
+                    st.totalCourseItems > 0
+                      ? st.completedItemsCount
+                      : totalItemsInActiveCourse > 0
+                        ? Math.round((st.progressPercent / 100) * totalItemsInActiveCourse)
+                        : 0,
+                  totalCourseItems:
+                    st.totalCourseItems > 0 ? st.totalCourseItems : totalItemsInActiveCourse,
                   dailyActivities: st.dailyActivities,
                   currentStreak: st.currentStreak,
                   longestStreak: st.longestStreak,

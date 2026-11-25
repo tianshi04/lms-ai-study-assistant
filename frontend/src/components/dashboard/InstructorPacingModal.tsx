@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import {
   Search,
   Zap,
@@ -26,6 +27,8 @@ import {
   type StudentDetailRecord,
 } from "./InstructorStudentDetailModal";
 
+import type { StudentDailyActivity } from "@/gen/catalog/v1/catalog_pb";
+
 export type PacingCategory = "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND";
 
 export interface StudentPacingRecord {
@@ -38,11 +41,28 @@ export interface StudentPacingRecord {
   progressPercent: number;
   currentLesson: string;
   currentWeekNumber: number;
+  currentWeekTitle?: string;
   lastActive: string;
   daysInactive: number;
+  isInactive?: boolean;
   pace: "AHEAD" | "ON_TRACK" | "BEHIND";
   paceDescription: string;
   bottleneckStuck?: boolean;
+  enrolledAt?: string;
+  enrollmentType?: string;
+  totalTimeSpentSeconds?: number;
+  quizScore?: number;
+  quizAttemptsCount?: number;
+  isInCooldown?: boolean;
+  cooldownUntil?: string;
+  peerReviewDutyStatus?: string;
+  isPeerReviewOverdue?: boolean;
+  completedItemsCount?: number;
+  totalCourseItems?: number;
+  courseEstimatedMinutes?: number;
+  dailyActivities?: StudentDailyActivity[];
+  currentStreak?: number;
+  longestStreak?: number;
 }
 
 export interface InstructorPacingModalProps {
@@ -160,9 +180,29 @@ export function InstructorPacingModal({
       userEmail: student.email,
       progressPercent: student.progressPercent,
       pace: student.pace,
-      currentLessonTitle: student.currentLesson,
+      enrolledAt: student.enrolledAt,
+      enrollmentType: student.enrollmentType,
+      totalTimeSpentSeconds: student.totalTimeSpentSeconds,
       currentWeekNumber: student.currentWeekNumber,
+      currentWeekTitle: student.currentWeekTitle,
+      currentLessonTitle: student.currentLesson,
+      quizScore: student.quizScore,
+      quizAttemptsCount: student.quizAttemptsCount,
+      isInCooldown: student.isInCooldown,
+      cooldownUntil: student.cooldownUntil,
+      peerReviewDutyStatus: student.peerReviewDutyStatus,
+      isPeerReviewOverdue: student.isPeerReviewOverdue,
       lastActiveTime: student.lastActive,
+      isInactive: student.isInactive,
+      isCompleted: student.progressPercent >= 100,
+      completedItemsCount: student.completedItemsCount,
+      totalCourseItems: student.totalCourseItems,
+      courseEstimatedMinutes: student.courseEstimatedMinutes,
+      dailyActivities: student.dailyActivities,
+      currentStreak: student.currentStreak,
+      longestStreak: student.longestStreak,
+      courseId: student.courseId,
+      courseTitle: student.courseTitle,
     });
   };
 
@@ -189,13 +229,15 @@ export function InstructorPacingModal({
           {/* Thẻ Tab Phân Loại Nhịp Độ (Cohort Pacing Tabs) */}
           <div className="pt-3 pb-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
             {/* Tất cả */}
-            <button
+            <Button
               type="button"
+              variant="outlined"
+              shape="square"
               onClick={() => setSelectedPace("ALL")}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+              className={`h-auto block p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                 selectedPace === "ALL"
                   ? "bg-surface border-primary ring-2 ring-primary/20 shadow-xs"
-                  : "bg-surface-container-low border-outline-variant/60 hover:border-primary/50"
+                  : "bg-surface-container-low border-outline-variant/60 hover:border-primary/50 hover:bg-surface-container-low"
               }`}
             >
               <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -207,16 +249,18 @@ export function InstructorPacingModal({
               <div className="text-[10px] text-muted-foreground mt-0.5">
                 Toàn bộ các khóa phụ trách
               </div>
-            </button>
+            </Button>
 
             {/* Vượt tiến độ */}
-            <button
+            <Button
               type="button"
+              variant="outlined"
+              shape="square"
               onClick={() => setSelectedPace("AHEAD")}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+              className={`h-auto block p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                 selectedPace === "AHEAD"
-                  ? "bg-success/10 border-success ring-2 ring-success/20 shadow-xs"
-                  : "bg-surface-container-low border-outline-variant/60 hover:border-success/50"
+                  ? "bg-success/10 border-success ring-2 ring-success/20 shadow-xs hover:bg-success/10"
+                  : "bg-surface-container-low border-outline-variant/60 hover:border-success/50 hover:bg-surface-container-low"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -231,16 +275,18 @@ export function InstructorPacingModal({
                 {counts.ahead} SV
               </div>
               <div className="text-[10px] text-muted-foreground mt-0.5">Học nhanh hơn hạn</div>
-            </button>
+            </Button>
 
             {/* Đúng tiến độ */}
-            <button
+            <Button
               type="button"
+              variant="outlined"
+              shape="square"
               onClick={() => setSelectedPace("ON_TRACK")}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+              className={`h-auto block p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                 selectedPace === "ON_TRACK"
-                  ? "bg-primary/10 border-primary ring-2 ring-primary/20 shadow-xs"
-                  : "bg-surface-container-low border-outline-variant/60 hover:border-primary/50"
+                  ? "bg-primary/10 border-primary ring-2 ring-primary/20 shadow-xs hover:bg-primary/10"
+                  : "bg-surface-container-low border-outline-variant/60 hover:border-primary/50 hover:bg-surface-container-low"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -255,16 +301,18 @@ export function InstructorPacingModal({
                 {counts.onTrack} SV
               </div>
               <div className="text-[10px] text-muted-foreground mt-0.5">Bám sát lịch tuần</div>
-            </button>
+            </Button>
 
             {/* Chậm tiến độ */}
-            <button
+            <Button
               type="button"
+              variant="outlined"
+              shape="square"
               onClick={() => setSelectedPace("BEHIND")}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+              className={`h-auto block p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                 selectedPace === "BEHIND"
-                  ? "bg-destructive/10 border-destructive ring-2 ring-destructive/20 shadow-xs"
-                  : "bg-surface-container-low border-outline-variant/60 hover:border-destructive/50"
+                  ? "bg-destructive/10 border-destructive ring-2 ring-destructive/20 shadow-xs hover:bg-destructive/10"
+                  : "bg-surface-container-low border-outline-variant/60 hover:border-destructive/50 hover:bg-surface-container-low"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -281,7 +329,7 @@ export function InstructorPacingModal({
               <div className="text-[10px] text-destructive/80 font-bold mt-0.5">
                 Cần can thiệp gấp
               </div>
-            </button>
+            </Button>
           </div>
 
           {/* Thanh công cụ Tìm kiếm & Nút Nhắc nhở hàng loạt */}
@@ -313,8 +361,10 @@ export function InstructorPacingModal({
 
             {/* Nút Nhắc nhở hàng loạt (chỉ sáng khi có học sinh chậm tiến độ) */}
             {selectedPace === "BEHIND" || counts.behind > 0 ? (
-              <button
+              <Button
                 type="button"
+                size="xs"
+                shape="square"
                 disabled={filteredStudents.filter((s) => s.pace === "BEHIND").length === 0}
                 onClick={() => {
                   const behindStudents = filteredStudents
@@ -332,14 +382,14 @@ export function InstructorPacingModal({
                   setReminderTargetStudents(behindStudents);
                   setIsBulkReminderModalOpen(true);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 shrink-0 self-end sm:self-auto"
+                className="px-3.5 py-1.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50 shrink-0 self-end sm:self-auto"
                 title="Mở hộp thoại xem trước và tùy chỉnh thông báo nhắc nhở"
               >
                 <Zap className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>
                   {`Nhắc nhở toàn bộ (${filteredStudents.filter((s) => s.pace === "BEHIND").length} SV chậm)`}
                 </span>
-              </button>
+              </Button>
             ) : null}
           </div>
 
@@ -490,11 +540,14 @@ export function InstructorPacingModal({
                               <span>Đã tốt nghiệp</span>
                             </span>
                           ) : (
-                            <button
+                            <Button
                               type="button"
+                              size="xs"
+                              shape="square"
+                              variant="outlined"
                               disabled={isNudged}
                               onClick={() => handleNudgeStudent(st)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 ${
                                 isNudged
                                   ? "bg-success/15 text-success border border-success/30 cursor-default"
                                   : st.pace === "BEHIND"
@@ -523,7 +576,7 @@ export function InstructorPacingModal({
                                   <span>Nhắc nhở</span>
                                 </>
                               )}
-                            </button>
+                            </Button>
                           )}
                         </Table.Cell>
                       </Table.Row>
@@ -582,11 +635,8 @@ export function InstructorPacingModal({
             if (!isOpen) setSelectedStudentForDetail(null);
           }}
           student={selectedStudentForDetail}
-          courseId={students.find((s) => s.id === selectedStudentForDetail.userId)?.courseId || ""}
-          courseTitle={
-            students.find((s) => s.id === selectedStudentForDetail.userId)?.courseTitle ||
-            "Khóa học"
-          }
+          courseId={selectedStudentForDetail.courseId || ""}
+          courseTitle={selectedStudentForDetail.courseTitle || "Khóa học"}
           isNudged={nudgedStudentIds.has(selectedStudentForDetail.userId)}
           onSendReminder={(studentId) => {
             setNudgedStudentIds((prev) => new Set(prev).add(studentId));

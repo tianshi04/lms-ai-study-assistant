@@ -154,8 +154,12 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         isInactive: isInactiveOver7Days(student.lastAccessedAt, currentTimeMs),
         isCompleted: isDone,
         completedItemsCount:
-          totalItems > 0 ? Math.round((student.progressPercent / 100) * totalItems) : 0,
-        totalCourseItems: totalItems,
+          student.totalCourseItems > 0
+            ? student.completedItemsCount
+            : totalItems > 0
+              ? Math.round((student.progressPercent / 100) * totalItems)
+              : 0,
+        totalCourseItems: student.totalCourseItems > 0 ? student.totalCourseItems : totalItems,
         courseEstimatedMinutes: activeCourseEstimatedMinutes,
         dailyActivities: student.dailyActivities,
         currentStreak: student.currentStreak,
