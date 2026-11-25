@@ -1,7 +1,7 @@
 """add daily_course_item_records
 
 Revision ID: 0d3341671506
-Revises: 6ed40cb6003e
+Revises: a1132ccd501b
 Create Date: 2026-11-24 12:45:05.368629
 
 """
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "0d3341671506"
-down_revision: str | Sequence[str] | None = "6ed40cb6003e"
+down_revision: str | Sequence[str] | None = "a1132ccd501b"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
