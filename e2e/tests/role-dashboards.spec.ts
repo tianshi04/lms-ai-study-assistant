@@ -42,7 +42,7 @@ test.describe('Instructor Dashboard', () => {
     await page.goto('/');
     await expect(page.getByText(/Thầy\/Cô/i).first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(/Tổng học viên/i).first()).toBeVisible();
-    await expect(page.getByText(/Tỷ lệ hoàn thành/i).first()).toBeVisible();
+    await expect(page.getByText(/Tiến độ & Thời lượng học/i).first()).toBeVisible();
   });
 
   test('instructor: /instructor/dashboard should render the instructor dashboard', async ({ page }) => {
