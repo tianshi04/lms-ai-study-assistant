@@ -600,6 +600,38 @@ def test_forum_thread_and_reply_lifecycle():
     with pytest.raises(ValueError, match="Nội dung"):
         reply.edit(new_content="", edited_at=edited_at)
 
+    # Thread is_solved domain lifecycle
+    assert thread.is_solved is False
+    thread.mark_solved()
+    assert thread.is_solved is True
+    thread.mark_unsolved()
+    assert thread.is_solved is False
+
+    solved_reply = ForumReplyEntity(
+        id="rep-staff",
+        thread_id="th-1",
+        author_name="TA Nam",
+        author_role="TA",
+        content="Official answer",
+        is_staff_answer=True,
+        created_at=now_str,
+    )
+    thread.replies.append(solved_reply)
+    thread.sync_solved_state()
+    assert thread.is_solved is True
+
+    auto_solved_thread = ForumThreadEntity(
+        id="th-auto",
+        course_id="c1",
+        item_id="i1",
+        title="Auto solved",
+        content="Question",
+        author_name="Alice",
+        author_role="Learner",
+        replies=[solved_reply],
+    )
+    assert auto_solved_thread.is_solved is True
+
 
 def test_check_peer_submission_pass_eligibility():
     from src.modules.assessment.domain import (

@@ -8,6 +8,7 @@ from uuid6 import uuid7
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.forum.domain import (
     DEFAULT_FORUM_AUTHOR_ROLE,
+    MAX_FORUM_SEARCH_QUERY_LEN,
     ForumReplyCreatedDomainEvent,
     ForumReplyEntity,
     ForumThreadEntity,
@@ -131,10 +132,13 @@ class ForumUseCase:
         item_id: str = "",
         current_user_id: str = "",
         user: CurrentUser | None = None,
+        search_query: str = "",
+        resolution_filter: str = "",
     ) -> Sequence[ForumThreadEntity]:
         normalized_course_id = (
             "" if not course_id or course_id.upper() == "ALL" else course_id
         )
+        normalized_query = search_query.strip()[:MAX_FORUM_SEARCH_QUERY_LEN]
 
         async with async_session_scope() as session:
             # 1. Super Admin bypasses scope filtering
@@ -144,6 +148,8 @@ class ForumUseCase:
                     course_id=normalized_course_id,
                     item_id=item_id,
                     current_user_id=current_user_id or user.id,
+                    search_query=normalized_query,
+                    resolution_filter=resolution_filter,
                 )
 
             # 2. For non-admin users, resolve their accessible courses
@@ -179,6 +185,8 @@ class ForumUseCase:
                     course_id=target_id,
                     item_id=item_id,
                     current_user_id=actual_user_id,
+                    search_query=normalized_query,
+                    resolution_filter=resolution_filter,
                 )
 
             # If viewing all courses (feed), restrict strictly to accessible_course_ids
@@ -191,6 +199,8 @@ class ForumUseCase:
                 item_id=item_id,
                 current_user_id=actual_user_id,
                 course_ids=list(accessible_course_ids),
+                search_query=normalized_query,
+                resolution_filter=resolution_filter,
             )
 
     async def create_thread(
@@ -287,7 +297,7 @@ class ForumUseCase:
             # Contextual role resolution & enrollment enforcement
             (
                 contextual_role,
-                _is_staff,
+                is_staff,
                 _canonical_course_id,
             ) = await self._resolve_course_role_and_enforce_enrollment(
                 session=session,
@@ -303,7 +313,7 @@ class ForumUseCase:
                 author_name=author_name,
                 author_role=contextual_role,
                 content=content,
-                is_staff_answer=False,
+                is_staff_answer=is_staff,
                 upvote_count=0,
                 created_at=created_at,
                 author_user_id=author_user_id,
@@ -316,7 +326,7 @@ class ForumUseCase:
                 reply_id,
                 thread_id,
                 contextual_role,
-                False,
+                is_staff,
             )
 
             # Trigger domain event

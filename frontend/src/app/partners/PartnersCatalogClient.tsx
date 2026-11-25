@@ -25,6 +25,7 @@ import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Dialog } from "@/components/ui/Dialog";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -151,9 +152,11 @@ export function PartnersCatalogClient() {
               <div className="bg-card border border-border p-4 rounded-2xl shadow-xs">
                 <div className="flex items-center space-x-2 text-primary mb-1">
                   <Building2 className="w-5 h-5" aria-hidden="true" />
-                  <span className="text-2xl font-black">
-                    {partnersLoading ? "—" : partners.length}
-                  </span>
+                  {partnersLoading ? (
+                    <Skeleton className="h-8 w-12" />
+                  ) : (
+                    <span className="text-2xl font-black">{partners.length}</span>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground font-medium">Đối tác Giáo dục</p>
               </div>
@@ -161,9 +164,11 @@ export function PartnersCatalogClient() {
               <div className="bg-card border border-border p-4 rounded-2xl shadow-xs">
                 <div className="flex items-center space-x-2 text-primary mb-1">
                   <BookOpen className="w-5 h-5" aria-hidden="true" />
-                  <span className="text-2xl font-black">
-                    {partnersLoading || coursesLoading ? "—" : totalPartnerCourses}
-                  </span>
+                  {partnersLoading || coursesLoading ? (
+                    <Skeleton className="h-8 w-12" />
+                  ) : (
+                    <span className="text-2xl font-black">{totalPartnerCourses}</span>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground font-medium">Khóa học phát hành</p>
               </div>

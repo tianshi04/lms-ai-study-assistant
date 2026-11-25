@@ -288,7 +288,7 @@ export function useInstructorOverviewData({
   }, [allGradingQueries]);
 
   // Truy vấn chủ đề thảo luận trên toàn bộ các môn học phụ trách
-  const { data: allThreads = [] } = useForumThreadsQuery("", {
+  const { data: allThreads = [] } = useForumThreadsQuery("ALL", undefined, {
     enabled,
   });
 

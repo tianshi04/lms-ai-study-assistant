@@ -8,6 +8,7 @@ import { Users, Star } from "lucide-react";
 import { Surface } from "@/components/ui/Surface";
 import { Table } from "@/components/ui/Table";
 import { Progress } from "@/components/ui/Progress";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
@@ -85,9 +86,36 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center">
-            <Progress.Circular color="success" size="md" className="mx-auto mb-3" />
-            <span aria-live="polite">Đang tổng hợp dữ liệu học tập…</span>
+          <div className="space-y-8" aria-busy="true">
+            <span className="sr-only" aria-live="polite">
+              Đang tổng hợp dữ liệu học tập…
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <Surface key={idx} variant="low" shape="2xl" className="space-y-2.5 p-5">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-3 w-32" />
+                </Surface>
+              ))}
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+              <Skeleton className="h-5 w-48" />
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, idx) => (
+                  <div key={idx} className="flex items-center justify-between gap-4 py-2">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Skeleton className="w-9 h-9 rounded-full shrink-0" />
+                      <div className="space-y-1.5 flex-1">
+                        <Skeleton className="h-4 w-40 max-w-full" />
+                        <Skeleton className="h-3 w-52 max-w-full" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-4 w-24 shrink-0" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : !analytics ? (
           <Surface

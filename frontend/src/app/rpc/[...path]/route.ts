@@ -23,12 +23,11 @@ async function handleRpcProxy(
 
   try {
     const isBodyAllowed = request.method !== "GET" && request.method !== "HEAD";
+    const body = isBodyAllowed && request.body ? await request.arrayBuffer() : undefined;
     const backendResponse = await fetch(targetUrl, {
       method: request.method,
       headers,
-      body: isBodyAllowed ? request.body : undefined,
-      // @ts-expect-error duplex is required in Node.js fetch for streaming request bodies
-      duplex: "half",
+      body,
       redirect: "manual",
     });
 

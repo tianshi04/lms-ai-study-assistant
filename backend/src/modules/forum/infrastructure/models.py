@@ -1,6 +1,15 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid6 import uuid7
 
@@ -35,8 +44,34 @@ class ForumThreadORM(Base):
     is_staff_pinned: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+    is_solved: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false", index=True
+    )
     is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     edited_at: Mapped[str] = mapped_column(String(100), nullable=False, default="")
+
+    __table_args__ = (
+        Index(
+            "idx_forum_threads_title_trgm",
+            func.immutable_unaccent(func.lower(title)).label("title_unaccent"),
+            postgresql_using="gin",
+            postgresql_ops={"title_unaccent": "gin_trgm_ops"},
+        ),
+        Index(
+            "idx_forum_threads_content_trgm",
+            func.immutable_unaccent(func.lower(content)).label("content_unaccent"),
+            postgresql_using="gin",
+            postgresql_ops={"content_unaccent": "gin_trgm_ops"},
+        ),
+        Index(
+            "idx_forum_threads_author_name_trgm",
+            func.immutable_unaccent(func.lower(author_name)).label(
+                "author_name_unaccent"
+            ),
+            postgresql_using="gin",
+            postgresql_ops={"author_name_unaccent": "gin_trgm_ops"},
+        ),
+    )
 
     replies: Mapped[list["ForumReplyORM"]] = relationship(
         "ForumReplyORM",
@@ -74,6 +109,17 @@ class ForumReplyORM(Base):
     )
     is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     edited_at: Mapped[str] = mapped_column(String(100), nullable=False, default="")
+
+    __table_args__ = (
+        Index(
+            "idx_forum_replies_content_trgm",
+            func.immutable_unaccent(func.lower(content)).label(
+                "reply_content_unaccent"
+            ),
+            postgresql_using="gin",
+            postgresql_ops={"reply_content_unaccent": "gin_trgm_ops"},
+        ),
+    )
 
     thread: Mapped[ForumThreadORM] = relationship(
         "ForumThreadORM", back_populates="replies"

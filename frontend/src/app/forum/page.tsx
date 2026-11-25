@@ -16,17 +16,14 @@ import {
   AlertCircle,
   Sparkles,
   MessageCircle,
-  Search,
   Megaphone,
   X,
 } from "lucide-react";
-import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import { cn } from "@/lib/utils";
 import {
   ForumService,
-  ForumThreadSchema,
-  ForumReplySchema,
+  ThreadResolutionFilter,
   type ForumThread,
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
@@ -41,6 +38,17 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
+import { ForumSearchAndFilterBar } from "@/components/forum/ForumSearchAndFilterBar";
+import { ForumSolvedBadge } from "@/components/forum/ForumSolvedBadge";
+import {
+  applyOptimisticVoteToThread,
+  applyReplyToThreadSnapshot,
+  applyVoteCountToThread,
+  formatForumRoleName,
+  isThreadSolved,
+  pinReplyInThreadSnapshot,
+  removeReplyFromThreadSnapshot,
+} from "@/components/forum/forumHelpers";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { Select } from "@/components/ui/Select";
 
@@ -49,29 +57,32 @@ interface ForumCourseItem {
   title: string;
 }
 
-function formatRoleName(role: string): string {
-  if (!role) return "Học viên";
-  const r = role.toUpperCase();
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
-  if (r.includes("INSTRUCTOR") || r === "2") return "Giảng viên";
-  if (r.includes("ADMIN") || r === "3") return "Quản trị viên";
-  return role;
-}
-
 function ForumPageContent() {
   const locale = "vi";
   const toast = useToast();
+  const searchParams = useSearchParams();
+  const urlCourseId = searchParams?.get("courseId") || "";
+  const urlThreadId = searchParams?.get("threadId") || "";
+
   const [courses, setCourses] = useState<ForumCourseItem[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState<boolean>(true);
   const [teachingCourseIds, setTeachingCourseIds] = useState<Set<string>>(new Set());
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("ALL");
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(() => urlCourseId || "ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
+  const [resolutionFilter, setResolutionFilter] = useState<ThreadResolutionFilter>(
+    ThreadResolutionFilter.UNSPECIFIED,
+  );
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef<boolean>(false);
+  const fetchSeqRef = useRef<number>(0);
 
-  // Status Filter & Search State (Interactive Discussion KPI Strip)
+  // Status Filter State (Interactive Discussion KPI Strip)
   type ForumStatusFilter = "ALL" | "UNANSWERED" | "ANSWERED";
   const [statusFilter, setStatusFilter] = useState<ForumStatusFilter>("ALL");
-  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const forumKpis = useMemo(() => {
     const total = threads.length;
@@ -94,7 +105,7 @@ function ForumPageContent() {
         titleLower.startsWith("[thông báo]") ||
         titleLower.startsWith("[thong bao]") ||
         titleLower.startsWith("[announcement]");
-      const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
+      const hasStaffAnswer = isThreadSolved(thread);
 
       if (hasStaffAnswer) {
         answered++;
@@ -116,9 +127,8 @@ function ForumPageContent() {
   }, [threads]);
 
   const filteredThreads = useMemo(() => {
-    let base = threads;
     if (statusFilter === "UNANSWERED") {
-      base = threads.filter((thread) => {
+      return threads.filter((thread) => {
         const r = (thread.authorRole || "").toUpperCase();
         const isStaffThread =
           r.includes("INSTRUCTOR") ||
@@ -132,19 +142,14 @@ function ForumPageContent() {
           titleLower.startsWith("[thông báo]") ||
           titleLower.startsWith("[thong bao]") ||
           titleLower.startsWith("[announcement]");
-        const hasStaffAnswer = thread.replies.some((reply) => reply.isStaffAnswer);
-        return !isStaffThread && !isAnnouncement && !hasStaffAnswer;
+        return !isStaffThread && !isAnnouncement && !isThreadSolved(thread);
       });
-    } else if (statusFilter === "ANSWERED") {
-      base = threads.filter((thread) => thread.replies.some((reply) => reply.isStaffAnswer));
     }
-
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return base;
-    return base.filter(
-      (t) => t.title.toLowerCase().includes(q) || t.content.toLowerCase().includes(q),
-    );
-  }, [threads, statusFilter, searchQuery]);
+    if (statusFilter === "ANSWERED") {
+      return threads.filter((thread) => isThreadSolved(thread));
+    }
+    return threads;
+  }, [threads, statusFilter]);
 
   const { userId: authUserId, isStaff: isStaffOrAdmin, isSuperAdmin, isAuthenticated } = useAuth();
   const currentUserId = authUserId || "";
@@ -250,6 +255,10 @@ function ForumPageContent() {
         if (!cancelled) {
           console.error("Error fetching accessible courses for forum:", err);
         }
+      } finally {
+        if (!cancelled) {
+          setCoursesLoading(false);
+        }
       }
     }
 
@@ -260,23 +269,60 @@ function ForumPageContent() {
     };
   }, [isAuthenticated, authUserId, isSuperAdmin, isStaffOrAdmin]);
 
+  // Debounce search query
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    const timer = setTimeout(
+      () => {
+        setDebouncedSearchQuery(trimmed);
+      },
+      trimmed ? 300 : 0,
+    );
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Fetch Forum Threads
   const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
+  const [selectedModalThreadId, setSelectedModalThreadId] = useState<string | null>(null);
+  const [modalThreadSnapshot, setModalThreadSnapshot] = useState<ForumThread | null>(null);
+  const selectedModalThreadIdRef = useRef<string | null>(null);
+  const lastSyncedUrlCourseIdRef = useRef<string>(urlCourseId);
+  const lastAutoOpenedThreadIdRef = useRef<string>("");
+
+  useEffect(() => {
+    selectedModalThreadIdRef.current = selectedModalThreadId;
+  }, [selectedModalThreadId]);
 
   useEffect(() => {
     let cancelled = false;
 
     const doFetch = async () => {
-      setLoading(true);
+      const seq = ++fetchSeqRef.current;
+      // Defer past synchronous effect body so refreshing state satisfies react lint rules cleanly.
+      await Promise.resolve();
+      if (cancelled || seq !== fetchSeqRef.current) return;
+      if (hasLoadedOnceRef.current) {
+        setIsRefreshing(true);
+      }
       setError(null);
       try {
         const client = getRpcClient(ForumService);
         const res = await client.listThreads({
           courseId: selectedCourseId === "ALL" ? "" : selectedCourseId,
           itemId: "",
+          searchQuery: debouncedSearchQuery,
+          resolutionFilter,
         });
-        if (!cancelled) {
+        if (!cancelled && seq === fetchSeqRef.current) {
+          hasLoadedOnceRef.current = true;
           setThreads(res.threads);
+          const activeModalId = selectedModalThreadIdRef.current;
+          if (activeModalId) {
+            const matched = res.threads.find((t) => t.id === activeModalId);
+            if (matched) {
+              setModalThreadSnapshot(matched);
+            }
+          }
           const initialExpanded: Record<string, boolean> = {};
           res.threads.forEach((th) => {
             initialExpanded[th.id] = true;
@@ -284,61 +330,58 @@ function ForumPageContent() {
           setExpandedThreads((prev) => ({ ...initialExpanded, ...prev }));
         }
       } catch (err: unknown) {
-        if (!cancelled) {
+        if (!cancelled && seq === fetchSeqRef.current) {
           console.error("Failed to load forum threads:", err);
           const msg = err instanceof Error ? err.message : "Có lỗi xảy ra";
           setError(msg);
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && seq === fetchSeqRef.current) {
           setLoading(false);
+          setIsRefreshing(false);
         }
       }
     };
 
     fetchThreadsRef.current = doFetch;
-    doFetch();
+    void doFetch();
 
     return () => {
       cancelled = true;
     };
-  }, [selectedCourseId]);
-
-  const searchParams = useSearchParams();
-  const urlCourseId = searchParams?.get("courseId") || "";
-  const urlThreadId = searchParams?.get("threadId") || "";
-
-  const [selectedModalThreadId, setSelectedModalThreadId] = useState<string | null>(null);
+  }, [selectedCourseId, debouncedSearchQuery, resolutionFilter]);
 
   useEffect(() => {
-    if (urlCourseId && urlCourseId !== "ALL") {
-      setSelectedCourseId(urlCourseId);
+    if (urlCourseId && urlCourseId !== lastSyncedUrlCourseIdRef.current) {
+      lastSyncedUrlCourseIdRef.current = urlCourseId;
+      const timer = setTimeout(() => {
+        setSelectedCourseId(urlCourseId);
+      }, 0);
+      return () => clearTimeout(timer);
     }
-    if (urlThreadId) {
-      setStatusFilter("ALL");
-    }
-  }, [urlCourseId, urlThreadId]);
+  }, [urlCourseId]);
 
   useEffect(() => {
-    if (urlThreadId && !loading && threads.length > 0) {
-      setExpandedThreads((prev) => ({ ...prev, [urlThreadId]: true }));
-      // Cuộn mượt mà trực tiếp tới bài thảo luận mục tiêu trên trang
-      const scrollToThread = () => {
+    if (
+      urlThreadId &&
+      urlThreadId !== lastAutoOpenedThreadIdRef.current &&
+      !loading &&
+      threads.length > 0
+    ) {
+      const target = threads.find((t) => t.id === urlThreadId);
+      if (!target) return;
+      lastAutoOpenedThreadIdRef.current = urlThreadId;
+      const timer = setTimeout(() => {
+        setStatusFilter("ALL");
+        setModalThreadSnapshot(target);
+        setSelectedModalThreadId(urlThreadId);
+        setExpandedThreads((prev) => ({ ...prev, [urlThreadId]: true }));
         const el = document.getElementById(`thread-${urlThreadId}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
-          return true;
         }
-        return false;
-      };
-
-      if (!scrollToThread()) {
-        const timer = setTimeout(scrollToThread, 150);
-        return () => clearTimeout(timer);
-      } else {
-        const timer = setTimeout(scrollToThread, 300);
-        return () => clearTimeout(timer);
-      }
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [urlThreadId, loading, threads]);
 
@@ -347,14 +390,14 @@ function ForumPageContent() {
   // Handle Create Thread
   const handleCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || submittingThread) return;
 
     setSubmittingThread(true);
     try {
       const client = getRpcClient(ForumService);
       const targetCourseId =
         newCourseId ||
-        (selectedCourseId !== "ALL" ? selectedCourseId : "") ||
+        (selectedCourseId === "ALL" ? "" : selectedCourseId) ||
         (courses[0]?.id ?? "course-web-dev");
 
       await client.createThread({
@@ -370,8 +413,23 @@ function ForumPageContent() {
       toast.success(
         locale === "vi" ? "Đã đăng chủ đề thảo luận mới!" : "New discussion thread created!",
       );
-      if (selectedCourseId !== "ALL" && selectedCourseId !== targetCourseId) {
-        setSelectedCourseId("ALL");
+      const shouldResetCourse =
+        Boolean(selectedCourseId) &&
+        selectedCourseId !== "ALL" &&
+        selectedCourseId !== targetCourseId;
+      const willRefetchFromEffect =
+        Boolean(debouncedSearchQuery) ||
+        resolutionFilter !== ThreadResolutionFilter.UNSPECIFIED ||
+        shouldResetCourse;
+
+      setStatusFilter("ALL");
+      setSearchQuery("");
+      if (willRefetchFromEffect) {
+        setDebouncedSearchQuery("");
+        setResolutionFilter(ThreadResolutionFilter.UNSPECIFIED);
+        if (shouldResetCourse) {
+          setSelectedCourseId("ALL");
+        }
       } else {
         fetchThreads();
       }
@@ -421,6 +479,10 @@ function ForumPageContent() {
     try {
       const client = getRpcClient(ForumService);
       await client.deleteThread({ threadId: deletingThreadId });
+      if (selectedModalThreadId === deletingThreadId) {
+        setSelectedModalThreadId(null);
+        setModalThreadSnapshot(null);
+      }
       toast.success("Bài viết đã được xóa!");
       fetchThreads();
     } catch (err: unknown) {
@@ -491,6 +553,9 @@ function ForumPageContent() {
     try {
       const client = getRpcClient(ForumService);
       await client.deleteReply({ replyId: deletingReplyId });
+      setModalThreadSnapshot((prev) =>
+        prev ? removeReplyFromThreadSnapshot(prev, deletingReplyId) : null,
+      );
       toast.success("Phản hồi đã được xóa!");
       fetchThreads();
     } catch (err: unknown) {
@@ -506,50 +571,18 @@ function ForumPageContent() {
     if (votingPostIds.has(postId)) return;
     setVotingPostIds((prev) => new Set(prev).add(postId));
 
-    setThreads((prevThreads) =>
-      prevThreads.map((th) => {
-        if (th.id === postId) {
-          const wasVoted = th.isUpvotedByMe;
-          const newCount = wasVoted ? Math.max(0, th.upvoteCount - 1) : th.upvoteCount + 1;
-          return create(ForumThreadSchema, {
-            ...th,
-            isUpvotedByMe: !wasVoted,
-            upvoteCount: newCount,
-          });
-        }
-        const updatedReplies = th.replies.map((r) => {
-          if (r.id === postId) {
-            const wasVoted = r.isUpvotedByMe;
-            const newCount = wasVoted ? Math.max(0, r.upvoteCount - 1) : r.upvoteCount + 1;
-            return create(ForumReplySchema, {
-              ...r,
-              isUpvotedByMe: !wasVoted,
-              upvoteCount: newCount,
-            });
-          }
-          return r;
-        });
-        return create(ForumThreadSchema, { ...th, replies: updatedReplies });
-      }),
-    );
+    setThreads((prevThreads) => prevThreads.map((th) => applyOptimisticVoteToThread(th, postId)));
+    setModalThreadSnapshot((prev) => (prev ? applyOptimisticVoteToThread(prev, postId) : null));
 
     try {
       const client = getRpcClient(ForumService);
       const res = await client.votePost({ postId, isUpvote });
 
       setThreads((prevThreads) =>
-        prevThreads.map((th) => {
-          if (th.id === postId) {
-            return create(ForumThreadSchema, { ...th, upvoteCount: res.updatedUpvoteCount });
-          }
-          const updatedReplies = th.replies.map((r) => {
-            if (r.id === postId) {
-              return create(ForumReplySchema, { ...r, upvoteCount: res.updatedUpvoteCount });
-            }
-            return r;
-          });
-          return create(ForumThreadSchema, { ...th, replies: updatedReplies });
-        }),
+        prevThreads.map((th) => applyVoteCountToThread(th, postId, res.updatedUpvoteCount)),
+      );
+      setModalThreadSnapshot((prev) =>
+        prev ? applyVoteCountToThread(prev, postId, res.updatedUpvoteCount) : null,
       );
     } catch (err) {
       console.error("Failed to vote post:", err);
@@ -567,6 +600,7 @@ function ForumPageContent() {
     try {
       const client = getRpcClient(ForumService);
       await client.pinStaffAnswer({ replyId });
+      setModalThreadSnapshot((prev) => (prev ? pinReplyInThreadSnapshot(prev, replyId) : null));
       toast.success("Đã cập nhật trạng thái ghim câu trả lời!");
       fetchThreads();
     } catch (err: unknown) {
@@ -731,26 +765,8 @@ function ForumPageContent() {
         </div>
 
         {/* Filter Bar */}
-        <Surface
-          variant="container"
-          shape="2xl"
-          className="p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto flex-1">
-            <div className="relative w-full sm:w-64">
-              <Search
-                className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                aria-hidden="true"
-              />
-              <Input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm kiếm chủ đề thảo luận…"
-                aria-label="Tìm kiếm chủ đề thảo luận"
-                className="pl-9 text-xs h-9"
-              />
-            </div>
+        <Surface variant="container" shape="2xl" className="p-4 mb-8 flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                 {"Khóa học"}:
@@ -780,33 +796,46 @@ function ForumPageContent() {
                 </Select.Content>
               </Select>
             </div>
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {statusFilter !== "ALL" && (
+                <Badge
+                  variant="outlined"
+                  className="cursor-pointer gap-1.5 hover:bg-muted text-xs font-medium border-primary/30 text-primary"
+                  onClick={() => setStatusFilter("ALL")}
+                >
+                  <span>
+                    Đang lọc:{" "}
+                    <strong>
+                      {statusFilter === "UNANSWERED" ? "Cần giải đáp" : "Đã giải đáp"}
+                    </strong>
+                  </span>
+                  <X
+                    className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground"
+                    aria-hidden="true"
+                  />
+                </Badge>
+              )}
+              <span>
+                {"Hiển thị "}
+                <span className="font-bold text-foreground">{filteredThreads.length}</span>
+                {" / "}
+                {threads.length}
+                {" chủ đề"}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {statusFilter !== "ALL" && (
-              <Badge
-                variant="outlined"
-                className="cursor-pointer gap-1.5 hover:bg-muted text-xs font-medium border-primary/30 text-primary"
-                onClick={() => setStatusFilter("ALL")}
-              >
-                <span>
-                  Đang lọc:{" "}
-                  <strong>{statusFilter === "UNANSWERED" ? "Cần giải đáp" : "Đã giải đáp"}</strong>
-                </span>
-                <X
-                  className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground"
-                  aria-hidden="true"
-                />
-              </Badge>
-            )}
-            <span>
-              {"Hiển thị "}
-              <span className="font-bold text-foreground">{filteredThreads.length}</span>
-              {" / "}
-              {threads.length}
-              {" chủ đề"}
-            </span>
-          </div>
+          <ForumSearchAndFilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            resolutionFilter={resolutionFilter}
+            onResolutionChange={(next) => {
+              setResolutionFilter(next);
+              if (statusFilter !== "ALL") setStatusFilter("ALL");
+            }}
+            isSearching={isRefreshing}
+          />
         </Surface>
 
         {/* Content */}
@@ -824,7 +853,7 @@ function ForumPageContent() {
           <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
             <p className="font-semibold">{error}</p>
           </div>
-        ) : courses.length === 0 ? (
+        ) : !coursesLoading && courses.length === 0 && threads.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-2xl border border-border p-8 space-y-4">
             <BookOpen aria-hidden="true" className="w-12 h-12 text-primary mx-auto mb-3" />
             <h3 className="text-lg font-bold text-foreground">
@@ -844,14 +873,34 @@ function ForumPageContent() {
             </div>
           </div>
         ) : threads.length === 0 ? (
-          <div className="text-center py-16 bg-card rounded-2xl border border-border p-8">
-            <MessageSquare
-              aria-hidden="true"
-              className="w-12 h-12 text-muted-foreground mx-auto mb-3"
-            />
-            <p className="text-muted-foreground font-medium">
-              {"Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"}
-            </p>
+          <div className="text-center py-16 bg-card rounded-2xl border border-border p-8 space-y-3">
+            <MessageSquare aria-hidden="true" className="w-12 h-12 text-muted-foreground mx-auto" />
+            {Boolean(debouncedSearchQuery) ||
+            resolutionFilter !== ThreadResolutionFilter.UNSPECIFIED ||
+            (selectedCourseId !== "" && selectedCourseId !== "ALL") ? (
+              <>
+                <p className="text-muted-foreground font-medium">
+                  {"Không tìm thấy chủ đề phù hợp."}
+                </p>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setDebouncedSearchQuery("");
+                    setResolutionFilter(ThreadResolutionFilter.UNSPECIFIED);
+                    setSelectedCourseId("ALL");
+                  }}
+                >
+                  Xóa bộ lọc
+                </Button>
+              </>
+            ) : (
+              <p className="text-muted-foreground font-medium">
+                {"Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"}
+              </p>
+            )}
           </div>
         ) : filteredThreads.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-2xl border border-border p-8 space-y-3">
@@ -884,6 +933,7 @@ function ForumPageContent() {
               );
               const canDeleteThread = isThreadAuthor || isCourseModerator(thread.courseId);
               const isTargetThread = urlThreadId === thread.id;
+              const threadSolved = isThreadSolved(thread);
 
               return (
                 <Surface
@@ -908,6 +958,7 @@ function ForumPageContent() {
                           </Badge>
                         )}
                         {thread.isStaffPinned && <Badge variant="warning">GHIM</Badge>}
+                        {threadSolved && <ForumSolvedBadge />}
                         {Boolean(
                           thread.title.trim().toLowerCase().startsWith("[thông báo]") ||
                           thread.title.trim().toLowerCase().startsWith("[thong bao]") ||
@@ -939,7 +990,7 @@ function ForumPageContent() {
                           <strong className="text-foreground">
                             {thread.authorName || "Thành viên LMS"}
                           </strong>{" "}
-                          ({formatRoleName(thread.authorRole)})
+                          ({formatForumRoleName(thread.authorRole)})
                         </span>
                         <span className="text-muted-foreground/40">•</span>
                         <span className="text-xs text-muted-foreground">
@@ -1000,7 +1051,10 @@ function ForumPageContent() {
                       <Button
                         type="button"
                         variant="text"
-                        onClick={() => setSelectedModalThreadId(thread.id)}
+                        onClick={() => {
+                          setModalThreadSnapshot(thread);
+                          setSelectedModalThreadId(thread.id);
+                        }}
                         className="text-left w-full justify-start h-auto p-0 cursor-pointer group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng xem thảo luận riêng"
                       >
@@ -1085,7 +1139,7 @@ function ForumPageContent() {
                                   </span>
                                   {reply.isStaffAnswer && <Badge variant="warning">BQT</Badge>}
                                   <span className="text-xs text-muted-foreground">
-                                    ({formatRoleName(reply.authorRole)})
+                                    ({formatForumRoleName(reply.authorRole)})
                                   </span>
                                   {reply.isEdited && (
                                     <span className="text-xs text-warning font-medium italic">
@@ -1166,11 +1220,7 @@ function ForumPageContent() {
                                       variant="filled"
                                       size="sm"
                                       onClick={() => handleUpdateReply(reply.id)}
-                                      disabled={
-                                        submittingEditReply ||
-                                        !editReplyContent.trim() ||
-                                        submittingEditReply
-                                      }
+                                      disabled={submittingEditReply || !editReplyContent.trim()}
                                       className="text-xs font-semibold"
                                     >
                                       {"Lưu thay đổi"}
@@ -1231,8 +1281,7 @@ function ForumPageContent() {
                                 onClick={() => handlePostReply(thread.id)}
                                 disabled={
                                   submittingReply[thread.id] ||
-                                  !(replyInputs[thread.id] || "").trim() ||
-                                  submittingReply[thread.id]
+                                  !(replyInputs[thread.id] || "").trim()
                                 }
                                 className="text-xs font-semibold"
                               >
@@ -1314,7 +1363,7 @@ function ForumPageContent() {
               <Button
                 type="submit"
                 variant="filled"
-                disabled={submittingThread || !newTitle.trim() || submittingThread}
+                disabled={submittingThread || !newTitle.trim()}
                 className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
               >
                 {"Đăng bài"}
@@ -1365,7 +1414,7 @@ function ForumPageContent() {
               <Button
                 type="submit"
                 variant="filled"
-                disabled={submittingEditThread || !editThreadTitle.trim() || submittingEditThread}
+                disabled={submittingEditThread || !editThreadTitle.trim()}
                 className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
               >
                 {"Lưu thay đổi"}
@@ -1378,8 +1427,11 @@ function ForumPageContent() {
       {/* Thread Detail Modal (Facebook Post Style) */}
       <ThreadDetailModal
         isOpen={Boolean(selectedModalThreadId)}
-        onClose={() => setSelectedModalThreadId(null)}
-        thread={threads.find((t) => t.id === selectedModalThreadId) || null}
+        onClose={() => {
+          setSelectedModalThreadId(null);
+          setModalThreadSnapshot(null);
+        }}
+        thread={threads.find((t) => t.id === selectedModalThreadId) ?? modalThreadSnapshot}
         currentUserId={currentUserId}
         isStaffOrAdmin={Boolean(
           selectedModalThreadId &&
@@ -1388,7 +1440,13 @@ function ForumPageContent() {
         onVote={handleVote}
         onPostReply={async (threadId, content) => {
           const client = getRpcClient(ForumService);
-          await client.postReply({ threadId, content });
+          const res = await client.postReply({ threadId, content });
+          if (res.reply) {
+            const postedReply = res.reply;
+            setModalThreadSnapshot((prev) =>
+              prev && prev.id === threadId ? applyReplyToThreadSnapshot(prev, postedReply) : prev,
+            );
+          }
           fetchThreads();
         }}
         onEditReply={async (replyId, content) => {

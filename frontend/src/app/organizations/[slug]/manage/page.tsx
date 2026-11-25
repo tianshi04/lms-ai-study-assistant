@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/Card";
 import { Surface } from "@/components/ui/Surface";
 import { Users, Mail, BookOpen, UserPlus, Settings, ArrowRight, BadgeCheck } from "lucide-react";
 import { Progress } from "@/components/ui/Progress";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -33,12 +34,12 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
     roleUpper.includes("ADMIN") ||
     roleUpper.includes("OWNER");
 
-  const { data: members = [] } = useOrganizationMembersQuery(slug);
-  const { data: invitations = [] } = useSentInvitationsQuery(
+  const { data: members = [], isLoading: membersLoading } = useOrganizationMembersQuery(slug);
+  const { data: invitations = [], isLoading: invitationsLoading } = useSentInvitationsQuery(
     InvitationType.ORGANIZATION_MEMBER,
     slug,
   );
-  const { data: allCourses = [] } = useCoursesQuery();
+  const { data: allCourses = [], isLoading: coursesLoading } = useCoursesQuery();
   const { data: partners = [] } = usePartnersQuery();
 
   const partner = partners.find(
@@ -80,7 +81,11 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Tổng Thành viên
               </p>
-              <p className="text-3xl font-black text-foreground font-mono">{members.length}</p>
+              {membersLoading ? (
+                <Skeleton className="h-9 w-12 mt-0.5" />
+              ) : (
+                <p className="text-3xl font-black text-foreground font-mono">{members.length}</p>
+              )}
             </div>
           </Surface>
 
@@ -96,9 +101,13 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Lời mời đang chờ
               </p>
-              <p className="text-3xl font-black text-warning font-mono">
-                {pendingInvitations.length}
-              </p>
+              {invitationsLoading ? (
+                <Skeleton className="h-9 w-12 mt-0.5" />
+              ) : (
+                <p className="text-3xl font-black text-warning font-mono">
+                  {pendingInvitations.length}
+                </p>
+              )}
             </div>
           </Surface>
 
@@ -114,9 +123,13 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Khóa học đã xuất bản
               </p>
-              <p className="text-3xl font-black text-success font-mono">
-                {publishedCourses.length}
-              </p>
+              {coursesLoading ? (
+                <Skeleton className="h-9 w-12 mt-0.5" />
+              ) : (
+                <p className="text-3xl font-black text-success font-mono">
+                  {publishedCourses.length}
+                </p>
+              )}
             </div>
           </Surface>
 
@@ -132,7 +145,11 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Tổng Khóa học Org
               </p>
-              <p className="text-3xl font-black text-info font-mono">{orgCourses.length}</p>
+              {coursesLoading ? (
+                <Skeleton className="h-9 w-12 mt-0.5" />
+              ) : (
+                <p className="text-3xl font-black text-info font-mono">{orgCourses.length}</p>
+              )}
             </div>
           </Surface>
         </div>
