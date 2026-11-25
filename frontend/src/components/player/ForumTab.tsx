@@ -2,16 +2,25 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Pin, ChevronUp, MessageSquare, MessageSquarePlus, Trash2 } from "lucide-react";
-import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
   ForumService,
-  ForumThreadSchema,
-  ForumReplySchema,
+  ThreadResolutionFilter,
   type ForumThread,
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
+import { ForumSearchAndFilterBar } from "@/components/forum/ForumSearchAndFilterBar";
+import { ForumSolvedBadge } from "@/components/forum/ForumSolvedBadge";
+import {
+  applyOptimisticVoteToThread,
+  applyReplyToThreadSnapshot,
+  applyVoteCountToThread,
+  formatForumRoleName,
+  isThreadSolved,
+  pinReplyInThreadSnapshot,
+  removeReplyFromThreadSnapshot,
+} from "@/components/forum/forumHelpers";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCourseDetailQuery } from "@/lib/queries/useCatalogQueries";
@@ -27,24 +36,20 @@ interface ForumTabProps {
   targetThreadId?: string;
 }
 
-function formatRoleName(role: string): string {
-  if (!role) return "Học viên";
-  const r = role.toUpperCase();
-  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN") || r === "3")
-    return "Quản trị viên";
-  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "COURSE_TA")
-    return "Trợ giảng (TA)";
-  if (r.includes("INSTRUCTOR") || r === "2") return "Giảng viên";
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Học viên";
-  return role;
-}
-
 export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [resolutionFilter, setResolutionFilter] = useState<ThreadResolutionFilter>(
+    ThreadResolutionFilter.UNSPECIFIED,
+  );
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const hasLoadedOnceRef = useRef(false);
+  const fetchSeqRef = useRef(0);
 
   const { userId: authUserId, isSuperAdmin } = useAuth();
   const currentUserId = authUserId || "";
@@ -84,33 +89,91 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
   // Selected Modal Thread for Facebook Post Style View
   const [selectedModalThreadId, setSelectedModalThreadId] = useState<string | null>(null);
+  const [modalThreadSnapshot, setModalThreadSnapshot] = useState<ForumThread | null>(null);
+  const selectedModalThreadIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    selectedModalThreadIdRef.current = selectedModalThreadId;
+  }, [selectedModalThreadId]);
 
   const autoOpenedRef = useRef(false);
 
-  const fetchThreads = useCallback(async () => {
-    try {
-      const client = getRpcClient(ForumService);
-      const res = await client.listThreads({ courseId, itemId });
-      setThreads(res.threads);
-    } catch (err) {
-      console.error("Error fetching forum threads:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, itemId]);
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    const timer = setTimeout(
+      () => {
+        setDebouncedSearchQuery(trimmed);
+      },
+      trimmed ? 300 : 0,
+    );
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
-    fetchThreads();
-  }, [fetchThreads]);
+    let cancelled = false;
+
+    const doFetch = async () => {
+      const seq = ++fetchSeqRef.current;
+      // Defer past synchronous effect body so refreshing state satisfies react lint rules cleanly.
+      await Promise.resolve();
+      if (cancelled || seq !== fetchSeqRef.current) return;
+      if (hasLoadedOnceRef.current) {
+        setIsRefreshing(true);
+      }
+      try {
+        const client = getRpcClient(ForumService);
+        const res = await client.listThreads({
+          courseId,
+          itemId,
+          searchQuery: debouncedSearchQuery,
+          resolutionFilter,
+        });
+        if (!cancelled && seq === fetchSeqRef.current) {
+          hasLoadedOnceRef.current = true;
+          setThreads(res.threads);
+          const activeModalId = selectedModalThreadIdRef.current;
+          if (activeModalId) {
+            const matched = res.threads.find((t) => t.id === activeModalId);
+            if (matched) {
+              setModalThreadSnapshot(matched);
+            }
+          }
+        }
+      } catch (err) {
+        if (!cancelled && seq === fetchSeqRef.current) {
+          console.error("Error fetching forum threads:", err);
+        }
+      } finally {
+        if (!cancelled && seq === fetchSeqRef.current) {
+          setLoading(false);
+          setIsRefreshing(false);
+        }
+      }
+    };
+
+    fetchThreadsRef.current = doFetch;
+    void doFetch();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, itemId, debouncedSearchQuery, resolutionFilter]);
+
+  const fetchThreads = useCallback(() => fetchThreadsRef.current(), []);
 
   // Auto-scroll or auto-open target thread from notification URL
   useEffect(() => {
     if (targetThreadId && threads.length > 0 && !autoOpenedRef.current) {
+      const targetThread = threads.find((t) => t.id === targetThreadId);
+      if (!targetThread) return;
       autoOpenedRef.current = true;
-      const targetThreadExists = threads.some((t) => t.id === targetThreadId);
-      if (targetThreadExists) {
+      const timer = setTimeout(() => {
+        setModalThreadSnapshot(targetThread);
         setSelectedModalThreadId(targetThreadId);
-      }
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [targetThreadId, threads]);
 
@@ -129,7 +192,15 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
       });
       setNewTitle("");
       setNewContent("");
-      await fetchThreads();
+      const willRefetchFromEffect =
+        Boolean(debouncedSearchQuery) || resolutionFilter !== ThreadResolutionFilter.UNSPECIFIED;
+      setSearchQuery("");
+      if (willRefetchFromEffect) {
+        setDebouncedSearchQuery("");
+        setResolutionFilter(ThreadResolutionFilter.UNSPECIFIED);
+      } else {
+        await fetchThreads();
+      }
     } catch (err) {
       console.error("Error creating thread:", err);
     } finally {
@@ -172,6 +243,10 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     try {
       const client = getRpcClient(ForumService);
       await client.deleteThread({ threadId: deletingThreadId });
+      if (selectedModalThreadId === deletingThreadId) {
+        setSelectedModalThreadId(null);
+        setModalThreadSnapshot(null);
+      }
       fetchThreads();
     } catch (err) {
       console.error("Error deleting thread:", err);
@@ -231,6 +306,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     try {
       const client = getRpcClient(ForumService);
       await client.deleteReply({ replyId: deletingReplyId });
+      setModalThreadSnapshot((prev) =>
+        prev ? removeReplyFromThreadSnapshot(prev, deletingReplyId) : null,
+      );
       fetchThreads();
     } catch (err) {
       console.error("Error deleting reply:", err);
@@ -244,6 +322,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     try {
       const client = getRpcClient(ForumService);
       await client.pinStaffAnswer({ replyId });
+      setModalThreadSnapshot((prev) => (prev ? pinReplyInThreadSnapshot(prev, replyId) : prev));
       fetchThreads();
     } catch (err) {
       console.error("Failed to pin staff answer:", err);
@@ -264,50 +343,18 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     if (votingPostIds.has(postId)) return;
     setVotingPostIds((prev) => new Set(prev).add(postId));
 
-    setThreads((prevThreads) =>
-      prevThreads.map((t) => {
-        if (t.id === postId) {
-          const wasVoted = t.isUpvotedByMe;
-          const newCount = wasVoted ? Math.max(0, t.upvoteCount - 1) : t.upvoteCount + 1;
-          return create(ForumThreadSchema, {
-            ...t,
-            isUpvotedByMe: !wasVoted,
-            upvoteCount: newCount,
-          });
-        }
-        const updatedReplies = t.replies.map((r) => {
-          if (r.id === postId) {
-            const wasVoted = r.isUpvotedByMe;
-            const newCount = wasVoted ? Math.max(0, r.upvoteCount - 1) : r.upvoteCount + 1;
-            return create(ForumReplySchema, {
-              ...r,
-              isUpvotedByMe: !wasVoted,
-              upvoteCount: newCount,
-            });
-          }
-          return r;
-        });
-        return create(ForumThreadSchema, { ...t, replies: updatedReplies });
-      }),
-    );
+    setThreads((prevThreads) => prevThreads.map((t) => applyOptimisticVoteToThread(t, postId)));
+    setModalThreadSnapshot((prev) => (prev ? applyOptimisticVoteToThread(prev, postId) : null));
 
     try {
       const client = getRpcClient(ForumService);
       const res = await client.votePost({ postId, isUpvote });
 
       setThreads((prevThreads) =>
-        prevThreads.map((t) => {
-          if (t.id === postId) {
-            return create(ForumThreadSchema, { ...t, upvoteCount: res.updatedUpvoteCount });
-          }
-          const updatedReplies = t.replies.map((r) => {
-            if (r.id === postId) {
-              return create(ForumReplySchema, { ...r, upvoteCount: res.updatedUpvoteCount });
-            }
-            return r;
-          });
-          return create(ForumThreadSchema, { ...t, replies: updatedReplies });
-        }),
+        prevThreads.map((t) => applyVoteCountToThread(t, postId, res.updatedUpvoteCount)),
+      );
+      setModalThreadSnapshot((prev) =>
+        prev ? applyVoteCountToThread(prev, postId, res.updatedUpvoteCount) : null,
       );
     } catch (err) {
       console.error("Error voting:", err);
@@ -369,13 +416,42 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         )}
       </form>
 
+      {/* Search & Solved Filter Bar */}
+      <ForumSearchAndFilterBar
+        compact
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        resolutionFilter={resolutionFilter}
+        onResolutionChange={setResolutionFilter}
+        isSearching={isRefreshing}
+      />
+
       {/* Threads List */}
       {threads.length === 0 ? (
         <div className="w-full border border-dashed border-outline-variant/70 bg-surface-container-low/30 p-6 rounded-2xl text-center text-xs text-on-surface-variant flex flex-col items-center justify-center gap-2">
           <MessageSquare className="w-6 h-6 text-on-surface-variant/50" aria-hidden="true" />
-          <span>
-            {"Chưa có câu hỏi thảo luận nào cho bài học này. Hãy gửi thắc mắc đầu tiên của bạn!"}
-          </span>
+          {Boolean(debouncedSearchQuery) ||
+          resolutionFilter !== ThreadResolutionFilter.UNSPECIFIED ? (
+            <>
+              <span>{"Không tìm thấy thảo luận phù hợp."}</span>
+              <Button
+                type="button"
+                variant="outlined"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setDebouncedSearchQuery("");
+                  setResolutionFilter(ThreadResolutionFilter.UNSPECIFIED);
+                }}
+              >
+                Xóa bộ lọc
+              </Button>
+            </>
+          ) : (
+            <span>
+              {"Chưa có câu hỏi thảo luận nào cho bài học này. Hãy gửi thắc mắc đầu tiên của bạn!"}
+            </span>
+          )}
         </div>
       ) : (
         <div className="w-full space-y-3">
@@ -384,6 +460,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
             const canDeleteThread = isThreadAuthor || isCourseStaffOrAdmin;
             const isEditingThisThread = editingThreadId === thread.id;
             const isTarget = targetThreadId === thread.id;
+            const threadSolved = isThreadSolved(thread);
 
             return (
               <div
@@ -410,9 +487,10 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                           Staff Pinned
                         </span>
                       )}
+                      {threadSolved && <ForumSolvedBadge />}
                       <span className="font-bold text-on-surface">{thread.authorName}</span>
                       <span className="text-[10px] text-on-surface-variant">
-                        ({formatRoleName(thread.authorRole)})
+                        ({formatForumRoleName(thread.authorRole)})
                       </span>
                       {thread.isEdited && (
                         <span className="text-[10px] text-warning font-medium italic">
@@ -481,7 +559,10 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                       <Button
                         type="button"
                         variant="text"
-                        onClick={() => setSelectedModalThreadId(thread.id)}
+                        onClick={() => {
+                          setModalThreadSnapshot(thread);
+                          setSelectedModalThreadId(thread.id);
+                        }}
                         className="text-left w-full justify-start h-auto p-0 group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng bài viết"
                       >
@@ -572,14 +653,23 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
       {/* Thread Detail Modal (Facebook Post Style) */}
       <ThreadDetailModal
         isOpen={Boolean(selectedModalThreadId)}
-        onClose={() => setSelectedModalThreadId(null)}
-        thread={threads.find((t) => t.id === selectedModalThreadId) || null}
+        onClose={() => {
+          setSelectedModalThreadId(null);
+          setModalThreadSnapshot(null);
+        }}
+        thread={threads.find((t) => t.id === selectedModalThreadId) ?? modalThreadSnapshot}
         currentUserId={currentUserId}
         isStaffOrAdmin={isCourseStaffOrAdmin}
         onVote={handleVote}
         onPostReply={async (threadId, content) => {
           const client = getRpcClient(ForumService);
-          await client.postReply({ threadId, content });
+          const res = await client.postReply({ threadId, content });
+          if (res.reply) {
+            const postedReply = res.reply;
+            setModalThreadSnapshot((prev) =>
+              prev && prev.id === threadId ? applyReplyToThreadSnapshot(prev, postedReply) : prev,
+            );
+          }
           fetchThreads();
         }}
         onEditReply={async (replyId, content) => {
