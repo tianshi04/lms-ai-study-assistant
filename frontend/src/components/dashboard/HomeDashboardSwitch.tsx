@@ -55,9 +55,16 @@ export function HomeDashboardSwitch({ initialToken, initialUserRole }: HomeDashb
 
     if (ownedOrg) {
       router.replace(`/organizations/${ownedOrg.slug || ownedOrg.id}/manage`);
-    } else {
-      router.replace("/learner/dashboard");
+      return;
     }
+
+    const isOrgTA = myOrgs.some((org) => (org.roleInOrg || "").toUpperCase() === "TA");
+    if (isOrgTA) {
+      router.replace("/ta/dashboard");
+      return;
+    }
+
+    router.replace("/learner/dashboard");
   }, [isUserAuthenticated, isAdminRole, isInstructorRole, orgsLoading, myOrgs, router]);
 
   if (!isUserAuthenticated) {

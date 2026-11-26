@@ -61,28 +61,30 @@ export function UserDropdown() {
   }, [purchasesData]);
 
   useEffect(() => {
-    if (userName && !userAvatar) {
-      try {
-        const client = getRpcClient(IdentityService);
-        client
-          .getUserProfile({})
-          .then((res) => {
-            if (res.user?.avatarUrl) {
-              setAuth({
-                userId: res.user.id || userId,
-                userName: res.user.fullName || userName,
-                userEmail: res.user.email || userEmail,
-                userRole: String(res.user.role || userRole),
-                userAvatar: res.user.avatarUrl,
-              });
-            }
-          })
-          .catch(() => {});
-      } catch {
-        // Ignore
-      }
+    if (!userId) return;
+    try {
+      const client = getRpcClient(IdentityService);
+      client
+        .getUserProfile({})
+        .then((res) => {
+          if (!res.user) return;
+          const nextRole = String(res.user.role || userRole);
+          const nextAvatar = res.user.avatarUrl || userAvatar || "";
+          if (nextRole !== String(userRole || "") || (!userAvatar && nextAvatar)) {
+            setAuth({
+              userId: res.user.id || userId,
+              userName: res.user.fullName || userName,
+              userEmail: res.user.email || userEmail,
+              userRole: nextRole,
+              userAvatar: nextAvatar,
+            });
+          }
+        })
+        .catch(() => {});
+    } catch {
+      // Ignore
     }
-  }, [userName, userAvatar, userId, userEmail, userRole, setAuth]);
+  }, [userId, userName, userEmail, userRole, userAvatar, setAuth]);
 
   const avatarSrc = useMemo(
     () => userAvatar || getAvatarDataUri(userEmail || "user"),
@@ -94,14 +96,19 @@ export function UserDropdown() {
     return userName.replace(/\s*\([^)]*\)/g, "").trim();
   }, [userName]);
 
+  const isOrgTA = useMemo(
+    () => myOrgs.some((org) => (org.roleInOrg || "").toUpperCase() === "TA"),
+    [myOrgs],
+  );
+
   const roleLabel = useMemo(() => {
     if (isSuperAdmin) return "Quản trị viên hệ thống";
-    if (ownedOrg) return "Quản trị viên Tổ chức";
     const r = String(userRole || "").toUpperCase();
     if (r === "2" || r.includes("INSTRUCTOR")) return "Giảng viên";
-    if (r === "TA" || r.includes("TA")) return "Trợ giảng";
+    if (ownedOrg) return "Quản trị viên Tổ chức";
+    if (isOrgTA || r === "TA" || r.includes("TA")) return "Trợ giảng";
     return "Học viên";
-  }, [userRole, isSuperAdmin, ownedOrg]);
+  }, [userRole, isSuperAdmin, ownedOrg, isOrgTA]);
 
   return (
     <Menu>
