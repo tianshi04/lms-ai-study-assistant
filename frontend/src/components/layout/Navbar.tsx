@@ -22,6 +22,12 @@ export function Navbar() {
   const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
   const { data: myOrgs = [] } = useMyOrganizationsQuery();
   const isOrgTA = myOrgs.some((o) => (o.roleInOrg || "").toUpperCase() === "TA");
+  const ownedOrg = myOrgs.find((org) => {
+    if (org.id === "partner_community") return false;
+    const roleUpper = (org.roleInOrg || "").toUpperCase();
+    return roleUpper.includes("OWNER") || roleUpper.includes("ADMIN");
+  });
+  const ownedOrgSlug = ownedOrg ? ownedOrg.slug || ownedOrg.id : "";
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -107,6 +113,21 @@ export function Navbar() {
                     className={`${getLinkClasses("/instructor/courses")} flex items-center gap-1.5`}
                   >
                     <span>{"Giảng Viên"}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                      Portal
+                    </span>
+                  </Link>
+                </NavigationMenu.Item>
+              )}
+
+              {/* Render Organization Portal for Organization Owners / Admins */}
+              {ownedOrgSlug && (
+                <NavigationMenu.Item>
+                  <Link
+                    href={`/organizations/${ownedOrgSlug}/manage`}
+                    className={`${getLinkClasses("/organizations/")} flex items-center gap-1.5`}
+                  >
+                    <span>{"Tổ chức"}</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                       Portal
                     </span>
@@ -230,6 +251,21 @@ export function Navbar() {
               )}
             >
               <span>{"Giảng Viên"}</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                Portal
+              </span>
+            </Link>
+          )}
+          {ownedOrgSlug && (
+            <Link
+              href={`/organizations/${ownedOrgSlug}/manage`}
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                getMobileLinkClasses("/organizations/"),
+                "flex items-center justify-between",
+              )}
+            >
+              <span>{"Tổ chức"}</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                 Portal
               </span>

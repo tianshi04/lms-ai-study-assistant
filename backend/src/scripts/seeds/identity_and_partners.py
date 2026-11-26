@@ -242,7 +242,7 @@ async def seed_identity_and_partners(session: AsyncSession) -> None:
             id="user_partner_01",
             email="partner@coursera.ai",
             full_name="Stanford Organization Admin",
-            role=UserRole.INSTRUCTOR,
+            role=UserRole.LEARNER,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=partner@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,

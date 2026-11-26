@@ -11,13 +11,14 @@ import {
   Layers,
   LayoutDashboard,
   LogOut,
+  Megaphone,
   Settings,
   ShoppingBag,
   Sparkles,
 } from "lucide-react";
 
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Chip } from "@/components/ui/Chip";
+import { Badge } from "@/components/ui/Badge";
 import { Menu } from "@/components/ui/Menu";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { getAvatarDataUri } from "@/lib/avatar";
@@ -94,8 +95,8 @@ export function UserDropdown() {
   }, [userName]);
 
   const roleLabel = useMemo(() => {
-    if (isSuperAdmin) return "Admin";
-    if (ownedOrg) return "QT Tổ chức";
+    if (isSuperAdmin) return "Quản trị viên hệ thống";
+    if (ownedOrg) return "Quản trị viên Tổ chức";
     const r = String(userRole || "").toUpperCase();
     if (r === "2" || r.includes("INSTRUCTOR")) return "Giảng viên";
     if (r === "TA" || r.includes("TA")) return "Trợ giảng";
@@ -121,37 +122,47 @@ export function UserDropdown() {
       <Menu.Content
         sideOffset={14}
         align="end"
-        className="w-68 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-y-auto p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
+        className="w-76 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-y-auto p-2 rounded-2xl bg-card border border-outline-variant shadow-xl"
       >
-        <div className="flex items-center gap-3.5 px-3.5 py-3 mb-1.5">
+        <div className="flex items-center gap-3 px-3 py-2.5 mb-1.5 border-b border-outline-variant/40">
           <Image
             src={avatarSrc}
             alt={displayUserName}
-            width={48}
-            height={48}
+            width={44}
+            height={44}
             unoptimized
             className="w-11 h-11 rounded-full bg-primary-container object-cover ring-2 ring-primary/20 shrink-0"
           />
-          <div className="min-w-0 flex-1 space-y-1">
-            <p className="text-sm font-bold text-on-surface truncate min-w-0 leading-snug">
+          <div className="min-w-0 flex-1">
+            <p
+              title={displayUserName}
+              className="text-sm font-bold text-on-surface truncate leading-tight"
+            >
               {displayUserName}
             </p>
-            <p className="text-xs text-on-surface-variant truncate min-w-0">{userEmail}</p>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Chip
-                variant="assist"
-                className="h-5 text-[10px] py-0 px-2.5 bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container uppercase tracking-wider pointer-events-none cursor-default font-bold"
+            <p
+              title={userEmail ?? undefined}
+              className="text-xs text-on-surface-variant truncate leading-tight mt-0.5"
+            >
+              {userEmail}
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+              <Badge
+                size="sm"
+                variant="secondary"
+                className="max-w-full truncate px-2.5 py-0.5 text-[11px] font-semibold bg-primary/15 text-primary border border-primary/25"
               >
                 {roleLabel}
-              </Chip>
+              </Badge>
               {isPlusActive && (
-                <Chip
-                  variant="assist"
-                  className="h-5 text-[10px] py-0 px-2 bg-primary-container text-primary border-primary/20 hover:bg-primary-container uppercase tracking-wider pointer-events-none cursor-default font-bold"
-                  leadingIcon={<Sparkles className="w-2.5 h-2.5 text-primary" aria-hidden="true" />}
+                <Badge
+                  size="sm"
+                  variant="secondary"
+                  className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25 gap-1"
                 >
-                  PLUS
-                </Chip>
+                  <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" aria-hidden="true" />
+                  <span>PLUS</span>
+                </Badge>
               )}
             </div>
           </div>
@@ -164,12 +175,9 @@ export function UserDropdown() {
                 <Sparkles className="w-4 h-4 text-primary animate-pulse" aria-hidden="true" />
                 <span>{"LMS AI Plus"}</span>
               </div>
-              <Chip
-                variant="assist"
-                className="h-5 text-[10px] py-0 px-2 bg-success/10 text-success border-success/20 hover:bg-success/15 pointer-events-none cursor-default font-bold"
-              >
+              <Badge size="sm" variant="success" className="font-bold">
                 Đang hoạt động
-              </Chip>
+              </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
               {"Còn "}
@@ -270,6 +278,10 @@ export function UserDropdown() {
             <Menu.Item render={<Link href="/admin/partners" />} className={itemClasses}>
               <Building2 aria-hidden="true" className={iconClasses} />
               <span>{"Quản trị Đối tác"}</span>
+            </Menu.Item>
+            <Menu.Item render={<Link href="/admin/announcements" />} className={itemClasses}>
+              <Megaphone aria-hidden="true" className={iconClasses} />
+              <span>{"Thông báo Hệ thống"}</span>
             </Menu.Item>
           </>
         )}
