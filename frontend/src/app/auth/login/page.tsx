@@ -47,9 +47,16 @@ function LoginFormContent() {
     try {
       const client = getRpcClient(IdentityService);
       const orgRes = await client.listMyOrganizations({});
-      const isOrgTA = (orgRes.organizations || []).some(
-        (o) => (o.roleInOrg || "").toUpperCase() === "TA",
-      );
+      const orgs = orgRes.organizations || [];
+      const ownedOrg = orgs.find((o) => {
+        if (o.id === "partner_community") return false;
+        const roleUpper = (o.roleInOrg || "").toUpperCase();
+        return roleUpper.includes("OWNER") || roleUpper.includes("ADMIN");
+      });
+      if (ownedOrg) {
+        return `/organizations/${ownedOrg.slug || ownedOrg.id}/manage`;
+      }
+      const isOrgTA = orgs.some((o) => (o.roleInOrg || "").toUpperCase() === "TA");
       if (isOrgTA) {
         return "/ta/dashboard";
       }

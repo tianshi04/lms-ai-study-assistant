@@ -214,6 +214,7 @@ class Course(Entity):
         organization_id: str = "partner_community",
         price: float = 0.0,
         foundational_course_ids: list[str] | None = None,
+        issuer_partner_id: str = "",
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -236,6 +237,7 @@ class Course(Entity):
         self.organization_id = organization_id
         self.price = price
         self.foundational_course_ids = foundational_course_ids or []
+        self.issuer_partner_id = issuer_partner_id
 
     def check_pre_submit_checklist(self) -> list[str]:
         """Validates BR_CATALOG_003 pre-submit 4 criteria."""
@@ -314,6 +316,7 @@ class Specialization(Entity):
         discount_percent: int = 0,
         owner_id: str = "",
         organization_id: str = "partner_community",
+        issuer_partner_id: str = "",
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -327,6 +330,7 @@ class Specialization(Entity):
         self.discount_percent = discount_percent
         self.owner_id = owner_id
         self.organization_id = organization_id
+        self.issuer_partner_id = issuer_partner_id
 
 
 class CourseAnnouncement(Entity):
@@ -571,3 +575,16 @@ class InstructorStudentDossier(ValueObject):
     is_suspicious_fast_pace: bool = False
     assessments: tuple[StudentAssessmentSummaryItem, ...] = ()
     daily_logs: tuple[StudentCourseDailyLog, ...] = ()
+
+
+@dataclass(frozen=True)
+class OrganizationCatalogStats(ValueObject):
+    """Organization/Partner-scoped course lifecycle and rating counters."""
+
+    total_courses: int = 0
+    published_courses: int = 0
+    pending_review_courses: int = 0
+    draft_courses: int = 0
+    rejected_courses: int = 0
+    total_reviews: int = 0
+    average_rating: float = 0.0

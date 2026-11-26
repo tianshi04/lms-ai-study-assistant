@@ -25,6 +25,7 @@ from .entities import (
     FinancialAidApplication,
     FinancialAidStatus,
     InvalidCertificateIdError,
+    OrganizationCertificateStats,
     VerifiedCertificate,
     count_words,
 )
@@ -65,6 +66,7 @@ __all__ = [
     "ICertificatePdfRenderer",
     "ICertificateRepository",
     "InvalidCertificateIdError",
+    "OrganizationCertificateStats",
     "VerifiedCertificate",
     "count_words",
 ]

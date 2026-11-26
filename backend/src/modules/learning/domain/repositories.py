@@ -157,3 +157,9 @@ class ILearningRepository(ABC):
         self, user_id: str, course_id: str
     ) -> list[LearningItemProgress]:
         """Return video item progress rows with last_position_seconds > 0 for the course."""
+
+    @abstractmethod
+    async def get_user_progress_summaries(
+        self, user_ids: list[str]
+    ) -> dict[str, tuple[int, float]]:
+        """Return ``{user_id: (enrolled_courses_count, max_progress_percent)}`` for ``user_ids``."""

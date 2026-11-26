@@ -30,22 +30,12 @@ from src.shared.permissions import (
 logger = logging.getLogger(__name__)
 
 
-def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
-    from src.modules.catalog.infrastructure.repository import (
-        SQLAlchemyCatalogRepository,
-    )
-
-    return SQLAlchemyCatalogRepository(session)
-
-
 class InvitationUseCase:
     def __init__(
         self,
         catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
     ) -> None:
-        self.catalog_repo_factory = (
-            catalog_repo_factory or _default_catalog_repo_factory
-        )
+        self.catalog_repo_factory = catalog_repo_factory
 
     async def _resolve_target_org_id(
         self,
@@ -161,6 +151,8 @@ class InvitationUseCase:
                 if not target_id:
                     raise ValueError("Thiếu ID khóa học (target_id).")
 
+                if self.catalog_repo_factory is None:
+                    raise RuntimeError("catalog_repo_factory chưa được cấu hình.")
                 cat_repo = self.catalog_repo_factory(session)
                 course = await cat_repo.get_course_detail(target_id)
                 if (
@@ -181,17 +173,35 @@ class InvitationUseCase:
                 if not target_name:
                     target_name = course.title if course else f"Khóa học {target_id}"
             elif "ENTERPRISE" in type_str or "SEAT" in type_str or type_str == "3":
-                if current_user.role not in [
+                license_repo = repo_module.EnterpriseLicenseRepository(session)
+                license_entity = (
+                    await license_repo.get_by_key(target_id.strip())
+                    if target_id
+                    else None
+                )
+                is_super_admin = current_user.role in [
                     UserRole.ADMIN.value,
                     UserRole.ADMIN,
                     "ADMIN",
-                ]:
-                    raise PermissionError(
-                        "Chỉ Quản trị viên mới có quyền gửi lời mời Suất học Doanh nghiệp."
+                ]
+                if not is_super_admin:
+                    if not license_entity or not license_entity.organization_id:
+                        raise PermissionError(
+                            "Chỉ Quản trị viên hoặc Chủ sở hữu Tổ chức mới có quyền gửi lời mời Suất học Doanh nghiệp."
+                        )
+                    await permissions.enforce_strict_organization_permission(
+                        session,
+                        current_user,
+                        license_entity.organization_id,
+                        required_permission=OrgPermission.MANAGE_MEMBERS,
                     )
                 type_enum = InvitationType.ENTERPRISE_SEAT
                 if not target_name:
-                    target_name = "Suất học Doanh nghiệp"
+                    target_name = (
+                        f"Suất học {license_entity.partner_name}"
+                        if license_entity
+                        else "Suất học Doanh nghiệp"
+                    )
             else:
                 type_enum = InvitationType.ORGANIZATION_MEMBER
 
@@ -413,6 +423,8 @@ class InvitationUseCase:
                     details=f"Gia nhập với vai trò {inv.role_id or 'MEMBER'} qua lời mời.",
                 )
             elif "COURSE" in inv_type_str or "CO_INSTRUCTOR" in inv_type_str:
+                if self.catalog_repo_factory is None:
+                    raise RuntimeError("catalog_repo_factory chưa được cấu hình.")
                 cat_repo = self.catalog_repo_factory(session)
                 await cat_repo.add_course_collaborator(
                     course_id=inv.target_id,

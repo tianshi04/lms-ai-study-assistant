@@ -6,7 +6,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.identity.domain import INTERNAL_SYSTEM_ORG_ID
+from src.modules.identity.domain import (
+    INTERNAL_SYSTEM_ORG_ID,
+    INTERNAL_SYSTEM_ORG_SLUG,
+)
 from src.shared.auth import CurrentUserContext
 
 
@@ -118,6 +121,40 @@ async def enforce_organization_permission(
             raise PermissionError(
                 f"Tài khoản của bạn không có quyền '{required_permission.value}' trong Tổ chức này"
             )
+
+
+async def enforce_strict_organization_permission(
+    session: AsyncSession,
+    user: CurrentUserContext | None,
+    organization_id: str,
+    required_permission: OrgPermission | None = None,
+) -> None:
+    """Enforces strict Organization membership/permissions without public/internal org bypass.
+
+    Used by Organization Dashboard, Partner Self-Service, Seat Management, and Org Course Review
+    where empty organization_id or INTERNAL_SYSTEM_ORG_ID must NOT bypass authorization.
+    """
+    clean_org_id = organization_id.strip() if organization_id else ""
+    if not clean_org_id:
+        raise ValueError("Thiếu mã tổ chức.")
+
+    if not user or not user.id:
+        raise PermissionError("Vui lòng đăng nhập để truy cập Tổ chức này")
+
+    if user.is_admin:
+        return
+
+    if clean_org_id in {INTERNAL_SYSTEM_ORG_ID, INTERNAL_SYSTEM_ORG_SLUG}:
+        raise PermissionError(
+            "Tài khoản của bạn không có quyền quản trị tổ chức mặc định của hệ thống"
+        )
+
+    await enforce_organization_permission(
+        session,
+        user,
+        clean_org_id,
+        required_permission=required_permission,
+    )
 
 
 class CourseRole(str, Enum):

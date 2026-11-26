@@ -11,6 +11,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   CatalogService,
+  CourseReviewAction,
   type Course,
   type CourseStatus,
   type Category,
@@ -29,6 +30,8 @@ import {
   type GetAdminCatalogTrendResponse,
   type ListAdminCourseMetricsResponse,
   type GetInstructorStudentDossierResponse,
+  type GetOrganizationCatalogStatsResponse,
+  type ListOrganizationCourseMetricsResponse,
 } from "@/gen/catalog/v1/catalog_pb";
 
 /**
@@ -120,6 +123,91 @@ export function useAcknowledgeLowReviewMutation(
     onSuccess: (data, variables, context, mutationContext) => {
       queryClient.invalidateQueries({ queryKey: ["adminCatalogStats"] });
       options?.onSuccess?.(data, variables, context, mutationContext);
+    },
+  });
+}
+
+export function useOrganizationCatalogStatsQuery(
+  organizationId: string,
+  options?: Partial<UseQueryOptions<GetOrganizationCatalogStatsResponse, Error>>,
+) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<GetOrganizationCatalogStatsResponse, Error>({
+    queryKey: ["organizationCatalogStats", organizationId],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return client.getOrganizationCatalogStats({ organizationId });
+    },
+    staleTime: 60 * 1000,
+    ...options,
+    enabled: isAuthenticated && !!organizationId && (options?.enabled ?? true),
+  });
+}
+
+export interface OrganizationCourseMetricsParams {
+  organizationId: string;
+  page: number;
+  pageSize: number;
+  searchQuery: string;
+  status: CourseStatus;
+}
+
+export function useOrganizationCourseMetricsQuery({
+  organizationId,
+  page,
+  pageSize,
+  searchQuery,
+  status,
+}: OrganizationCourseMetricsParams) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<ListOrganizationCourseMetricsResponse, Error>({
+    queryKey: ["organizationCourseMetrics", organizationId, page, pageSize, searchQuery, status],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return client.listOrganizationCourseMetrics({
+        organizationId,
+        page,
+        pageSize,
+        searchQuery,
+        status,
+      });
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    enabled: isAuthenticated && !!organizationId,
+  });
+}
+
+export interface ReviewCourseInput {
+  courseId: string;
+  action: CourseReviewAction;
+  rejectionReason?: string;
+}
+
+export function useReviewCourseMutation(
+  options?: Partial<UseMutationOptions<Course | undefined, Error, ReviewCourseInput>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<Course | undefined, Error, ReviewCourseInput>({
+    mutationFn: async ({ courseId, action, rejectionReason }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.reviewCourse({
+        courseId,
+        action,
+        rejectionReason: rejectionReason || "",
+      });
+      return res.course;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["organizationCatalogStats"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationCourseMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["adminCatalogStats"] });
+      queryClient.invalidateQueries({ queryKey: ["adminCourseMetrics"] });
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      queryClient.invalidateQueries({ queryKey: ["instructorCourses"] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail", variables.courseId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
 }

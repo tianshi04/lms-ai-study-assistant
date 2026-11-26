@@ -948,3 +948,25 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             )
             for m in models
         ]
+
+    async def get_user_progress_summaries(
+        self, user_ids: list[str]
+    ) -> dict[str, tuple[int, float]]:
+        unique_ids = list({uid for uid in user_ids if uid})
+        if not unique_ids:
+            return {}
+        stmt = (
+            select(
+                LearningProgressModel.user_id,
+                func.count(LearningProgressModel.id).label("enrolled_count"),
+                func.coalesce(
+                    func.max(LearningProgressModel.overall_progress_percent), 0.0
+                ).label("max_progress"),
+            )
+            .where(LearningProgressModel.user_id.in_(unique_ids))
+            .group_by(LearningProgressModel.user_id)
+        )
+        rows = (await self.session.execute(stmt)).all()
+        return {
+            str(r.user_id): (int(r.enrolled_count), float(r.max_progress)) for r in rows
+        }

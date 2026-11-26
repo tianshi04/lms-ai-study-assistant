@@ -87,6 +87,8 @@ class PartnerHandler(PartnerService):
             return pb.UpdatePartnerResponse(partner=_to_pb_partner(partner))
         except PermissionError as err:
             raise ConnectError(Code.PERMISSION_DENIED, str(err))
+        except KeyError as err:
+            raise ConnectError(Code.NOT_FOUND, str(err))
         except ValueError as err:
             raise ConnectError(Code.INVALID_ARGUMENT, str(err))
 
@@ -98,8 +100,10 @@ class PartnerHandler(PartnerService):
         try:
             partner = await self._use_case.get_partner(partner_id=request.id)
             return pb.GetPartnerResponse(partner=_to_pb_partner(partner))
-        except ValueError as err:
+        except KeyError as err:
             raise ConnectError(Code.NOT_FOUND, str(err))
+        except ValueError as err:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(err))
 
     async def list_partners(
         self,
@@ -122,6 +126,8 @@ class PartnerHandler(PartnerService):
             return pb.DeletePartnerResponse(success=success)
         except PermissionError as err:
             raise ConnectError(Code.PERMISSION_DENIED, str(err))
+        except KeyError as err:
+            raise ConnectError(Code.NOT_FOUND, str(err))
         except ValueError as err:
             raise ConnectError(Code.INVALID_ARGUMENT, str(err))
 
@@ -140,5 +146,7 @@ class PartnerHandler(PartnerService):
             return pb.RotatePartnerKeyPairResponse(public_key_pem=new_pem)
         except PermissionError as err:
             raise ConnectError(Code.PERMISSION_DENIED, str(err))
+        except KeyError as err:
+            raise ConnectError(Code.NOT_FOUND, str(err))
         except ValueError as err:
             raise ConnectError(Code.INVALID_ARGUMENT, str(err))

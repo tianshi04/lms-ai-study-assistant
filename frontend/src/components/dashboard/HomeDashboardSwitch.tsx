@@ -2,8 +2,10 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/providers/AuthProvider";
+
 import { PublicLanding } from "@/components/home/PublicLanding";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useMyOrganizationsQuery } from "@/lib/query_hooks";
 
 interface HomeDashboardSwitchProps {
   initialToken?: string;
@@ -18,22 +20,52 @@ export function HomeDashboardSwitch({ initialToken, initialUserRole }: HomeDashb
   const isUserAuthenticated = Boolean(initialToken) || isAuthenticated;
   const userRole = clientUserRole || initialUserRole || "1";
 
+  const isAdminRole =
+    isSuperAdmin ||
+    userRole === "3" ||
+    userRole === "USER_ROLE_ADMIN" ||
+    userRole === "USER_ROLE_SUPER_ADMIN";
+  const isInstructorRole = userRole === "2" || userRole === "USER_ROLE_INSTRUCTOR";
+
+  const shouldCheckOrgOwnership = isUserAuthenticated && !isAdminRole && !isInstructorRole;
+  const { data: myOrgs = [], isLoading: orgsLoading } = useMyOrganizationsQuery({
+    enabled: shouldCheckOrgOwnership,
+  });
+
   useEffect(() => {
-    if (isUserAuthenticated) {
-      if (
-        isSuperAdmin ||
-        userRole === "3" ||
-        userRole === "USER_ROLE_ADMIN" ||
-        userRole === "USER_ROLE_SUPER_ADMIN"
-      ) {
-        router.replace("/admin/dashboard");
-      } else if (userRole === "2" || userRole === "USER_ROLE_INSTRUCTOR") {
-        router.replace("/instructor/dashboard");
-      } else {
-        router.replace("/learner/dashboard");
-      }
+    if (!isUserAuthenticated) return;
+
+    if (isAdminRole) {
+      router.replace("/admin/dashboard");
+      return;
     }
-  }, [isUserAuthenticated, userRole, isSuperAdmin, router]);
+
+    if (isInstructorRole) {
+      router.replace("/instructor/dashboard");
+      return;
+    }
+
+    if (orgsLoading) return;
+
+    const ownedOrg = myOrgs.find((org) => {
+      if (org.id === "partner_community") return false;
+      const roleUpper = (org.roleInOrg || "").toUpperCase();
+      return roleUpper.includes("OWNER") || roleUpper.includes("ADMIN");
+    });
+
+    if (ownedOrg) {
+      router.replace(`/organizations/${ownedOrg.slug || ownedOrg.id}/manage`);
+      return;
+    }
+
+    const isOrgTA = myOrgs.some((org) => (org.roleInOrg || "").toUpperCase() === "TA");
+    if (isOrgTA) {
+      router.replace("/ta/dashboard");
+      return;
+    }
+
+    router.replace("/learner/dashboard");
+  }, [isUserAuthenticated, isAdminRole, isInstructorRole, orgsLoading, myOrgs, router]);
 
   if (!isUserAuthenticated) {
     return <PublicLanding />;

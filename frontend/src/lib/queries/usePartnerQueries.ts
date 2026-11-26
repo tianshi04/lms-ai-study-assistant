@@ -33,6 +33,7 @@ export function usePartnerDetailQuery(
       return res.partner ?? null;
     },
     enabled: !!partnerId,
+    retry: false,
     ...options,
   });
 }
@@ -97,6 +98,7 @@ export function useUpdatePartnerMutation(
     ...options,
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["partners"] });
+      queryClient.invalidateQueries({ queryKey: ["partnerDetail"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
@@ -115,6 +117,7 @@ export function useDeletePartnerMutation(
     ...options,
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["partners"] });
+      queryClient.invalidateQueries({ queryKey: ["partnerDetail"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });
@@ -123,6 +126,7 @@ export function useDeletePartnerMutation(
 export function useRotatePartnerKeyPairMutation(
   options?: Partial<UseMutationOptions<string, Error, { partnerId: string }>>,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<string, Error, { partnerId: string }>({
     mutationFn: async ({ partnerId }) => {
       const client = getRpcClient(PartnerService);
@@ -130,5 +134,10 @@ export function useRotatePartnerKeyPairMutation(
       return res.publicKeyPem;
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      queryClient.invalidateQueries({ queryKey: ["partnerDetail"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }

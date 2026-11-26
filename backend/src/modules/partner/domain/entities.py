@@ -66,7 +66,11 @@ class Partner(Entity):
         if website_url is not None:
             self.website_url = website_url
         if allowed_domains is not None:
-            self.allowed_domains = allowed_domains
+            self.allowed_domains = [
+                d.strip().lstrip("@").lower()
+                for d in allowed_domains
+                if d and d.strip()
+            ]
         if signature_image_url is not None:
             self.signature_image_url = signature_image_url
         if signer_name is not None:
@@ -79,3 +83,38 @@ class Partner(Entity):
             self.historical_public_keys = historical_public_keys
 
         self.updated_at = datetime.now(UTC).isoformat()
+
+    def rotate_public_key(self, new_public_key_pem: str, rotated_at: str = "") -> None:
+        """Rotates the active OpenBadges/EdDSA/ECDSA public key and archives the previous key."""
+        cleaned_pem = (new_public_key_pem or "").strip()
+        if not cleaned_pem or "BEGIN PUBLIC KEY" not in cleaned_pem:
+            raise ValueError("Khóa công khai (Public Key PEM) không hợp lệ")
+
+        archived_keys = list(self.historical_public_keys or [])
+        current_pem = (self.public_key_pem or "").strip()
+        if (
+            current_pem
+            and current_pem != cleaned_pem
+            and current_pem not in archived_keys
+        ):
+            archived_keys.append(current_pem)
+
+        self.public_key_pem = new_public_key_pem
+        self.historical_public_keys = archived_keys
+        self.updated_at = rotated_at or datetime.now(UTC).isoformat()
+
+    def matches_email_domain(self, email: str) -> bool:
+        """Checks whether an email belongs to this partner's allowed domains (BR_PARTNER_001)."""
+        if not email or "@" not in email or not self.allowed_domains:
+            return False
+        email_domain = email.rsplit("@", 1)[-1].strip().lower()
+        if not email_domain:
+            return False
+
+        for raw_domain in self.allowed_domains:
+            norm_domain = raw_domain.strip().lstrip("@").lstrip(".").lower()
+            if not norm_domain:
+                continue
+            if email_domain == norm_domain or email_domain.endswith(f".{norm_domain}"):
+                return True
+        return False
