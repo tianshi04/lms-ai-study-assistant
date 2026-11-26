@@ -359,15 +359,17 @@ function PartnerPublicContent() {
 
 export default function PartnerPublicPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
-          <Progress.Circular size="sm" className="mr-3" />
-          <span aria-live="polite">Đang tải thông tin đối tác…</span>
-        </div>
-      }
-    >
-      <PartnerPublicContent />
-    </Suspense>
+    <main className="w-full flex-1">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
+            <Progress.Circular size="sm" className="mr-3" />
+            <span aria-live="polite">Đang tải thông tin đối tác…</span>
+          </div>
+        }
+      >
+        <PartnerPublicContent />
+      </Suspense>
+    </main>
   );
 }

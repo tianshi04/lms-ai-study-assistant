@@ -150,7 +150,7 @@ export function CourseCatalogClient({
           </div>
 
           {/* Action Controls: Reset Filters + Sort Dropdown */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             {subject || level || searchQuery || sortBy ? (
               <Button
                 type="button"
@@ -162,7 +162,7 @@ export function CourseCatalogClient({
                   setSearchQuery("");
                   setSortBy("");
                 }}
-                className="h-10 px-4 text-xs font-bold text-error bg-error-container/30 hover:bg-error-container/60 rounded-full border border-error/20"
+                className="h-10 px-4 text-xs font-bold text-error bg-error-container/30 hover:bg-error-container/60 rounded-full border border-error/20 whitespace-nowrap shrink-0"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
                 <span>{"Xóa bộ lọc"}</span>
