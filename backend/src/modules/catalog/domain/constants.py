@@ -57,15 +57,37 @@ VALID_TIMELINE_DATE_RANGES: set[str] = {
     "last_month",
     "custom",
 }
+VALID_TIMELINE_LEARNER_FILTERS: set[str] = {
+    "all",
+    "paid",
+    "audit",
+    "in_progress",
+    "completed",
+    "paid_in_progress",
+    "paid_completed",
+}
 HEATMAP_DAYS: list[str] = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
 HEATMAP_TIME_SLOTS: list[str] = [
     "Sáng (06h-12h)",
     "Chiều (12h-18h)",
     "Tối (18h-22h)",
     "Đêm (22h-02h)",
+    "Rạng sáng (02h-06h)",
 ]
 
 # Admin Catalog Moderation & Quality Analytics
 ADMIN_LOW_RATING_MAX_STARS: int = 2
 ADMIN_LOW_REVIEW_ALERT_LIMIT: int = 20
 RATING_ROUND_DECIMALS: int = 2
+
+# Instructor Dashboard Analytics & Student Activity Constants
+STUDENT_DAILY_ACTIVITY_DAYS_WINDOW: int = 30
+AT_RISK_INACTIVE_DAYS_THRESHOLD: int = 7
+SECONDS_PER_HOUR: float = 3600.0
+QUIZ_PERCENT_TO_SCORE_DIVISOR: float = 10.0
+MIN_COMPLETED_ITEMS_FOR_FAST_PACE_CHECK: int = 3
+FAST_PACE_MIN_ESTIMATED_RATIO: float = 0.25
+DEFAULT_ESTIMATED_ITEM_MINUTES: int = 10
+SECONDS_PER_MINUTE: int = 60
+DEFAULT_ASSESSMENT_MAX_SCORE_QUIZ: float = 10.0
+DEFAULT_ASSESSMENT_MAX_SCORE_HUNDRED: float = 100.0

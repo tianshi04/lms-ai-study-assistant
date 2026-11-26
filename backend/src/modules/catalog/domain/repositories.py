@@ -14,6 +14,7 @@ from src.modules.catalog.domain.entities import (
     CourseStatus,
     InstructorActivityTimeline,
     InstructorAnalytics,
+    InstructorStudentDossier,
     ItemType,
     Lesson,
     Specialization,
@@ -345,6 +346,12 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def get_instructor_analytics(self, course_id: str) -> InstructorAnalytics:
+        pass
+
+    @abstractmethod
+    async def get_instructor_student_dossier(
+        self, course_id: str, student_id: str
+    ) -> InstructorStudentDossier:
         pass
 
     @abstractmethod

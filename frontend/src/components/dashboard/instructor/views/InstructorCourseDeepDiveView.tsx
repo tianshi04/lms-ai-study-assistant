@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { BarChart3, TrendingDown, Award, Filter } from "lucide-react";
-import { Select } from "@/components/ui/Select";
+import {
+  BarChart3,
+  TrendingDown,
+  Award,
+  Filter,
+  Flame,
+  Users,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 import type { Course, EnrolledStudent } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
@@ -13,8 +21,12 @@ import {
 } from "../components/InstructorCertificatesTab";
 import { InstructorSpecificStudentTable } from "../components/InstructorSpecificStudentTable";
 import { InstructorActionTasksCard } from "../components/InstructorActionTasksCard";
+import { InstructorContentBottleneckCard } from "../components/InstructorContentBottleneckCard";
+import { InstructorActivityHeatmap } from "../components/InstructorActivityHeatmap";
+import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
 import { useInstructorActivityTimelineQuery } from "@/lib/queries/useCatalogQueries";
-import { generateTimeLabels } from "../utils/time_labels";
+import { formatTimelineToSplineData } from "../utils/time_labels";
 import type { StudentDetailRecord } from "../../InstructorStudentDetailModal";
 import type { CalculatedWeek, StudentWithPacing } from "../types";
 
@@ -38,6 +50,90 @@ export interface InstructorCourseDeepDiveViewProps {
   onNudgeStudent: (student: StudentWithPacing) => void;
   onNudgeAllBehind: () => void;
   onSelectStudentForDetail: (record: StudentDetailRecord) => void;
+  weeklyCohortFilter?: "ALL" | "PAID" | "AUDIT";
+  onSelectCohortFilter?: (c: "ALL" | "PAID" | "AUDIT") => void;
+  paidStudentsCount?: number;
+  auditStudentsCount?: number;
+}
+
+const VN_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function toVnIsoDate(iso?: string): string {
+  if (!iso) return "";
+  const ms = Date.parse(iso);
+  if (Number.isNaN(ms)) return "";
+  return VN_DATE_FORMATTER.format(new Date(ms));
+}
+
+function matchesSelectedDayFilter(
+  student: StudentWithPacing,
+  dayFilter: { day: string; date: string; timestamp?: string } | null,
+  dateRange: string,
+  customStartDate: string,
+  customEndDate: string,
+): boolean {
+  if (!dayFilter) return true;
+  const ts = dayFilter.timestamp;
+  if (!ts) return true;
+
+  if (ts.includes("T")) {
+    const startMs = Date.parse(ts);
+    if (Number.isNaN(startMs)) return true;
+    const endMs = startMs + 3 * 3600 * 1000;
+    const accMs = student.lastAccessedAt ? Date.parse(student.lastAccessedAt) : NaN;
+    const enrMs = student.enrolledAt ? Date.parse(student.enrolledAt) : NaN;
+    return (
+      (!Number.isNaN(accMs) && accMs >= startMs && accMs < endMs) ||
+      (!Number.isNaN(enrMs) && enrMs >= startMs && enrMs < endMs)
+    );
+  }
+
+  const accDate = toVnIsoDate(student.lastAccessedAt);
+  const enrDate = toVnIsoDate(student.enrolledAt);
+
+  if (ts.length === 10) {
+    let isWeeklyBucket = false;
+    if (dateRange === "custom" && customStartDate && customEndDate) {
+      const sMs = Date.parse(customStartDate);
+      const eMs = Date.parse(customEndDate);
+      if (!Number.isNaN(sMs) && !Number.isNaN(eMs)) {
+        const diffDays = Math.round((eMs - sMs) / 86_400_000) + 1;
+        isWeeklyBucket = diffDays > 31 && diffDays <= 180;
+      }
+    }
+    if (isWeeklyBucket) {
+      const wStartMs = Date.parse(`${ts}T00:00:00+07:00`);
+      const wEndMs = wStartMs + 7 * 86_400_000;
+      const hasDailyInWeek = student.dailyActivities?.some((act) => {
+        if (act.totalSeconds <= 0) return false;
+        const dMs = Date.parse(`${act.studyDate}T12:00:00+07:00`);
+        return dMs >= wStartMs && dMs < wEndMs;
+      });
+      const accMs = student.lastAccessedAt ? Date.parse(student.lastAccessedAt) : NaN;
+      const enrMs = student.enrolledAt ? Date.parse(student.enrolledAt) : NaN;
+      return Boolean(
+        hasDailyInWeek ||
+        (!Number.isNaN(accMs) && accMs >= wStartMs && accMs < wEndMs) ||
+        (!Number.isNaN(enrMs) && enrMs >= wStartMs && enrMs < wEndMs),
+      );
+    }
+
+    const hasDaily = student.dailyActivities?.some(
+      (act) => act.studyDate === ts && act.totalSeconds > 0,
+    );
+    return Boolean(hasDaily || accDate === ts || enrDate === ts);
+  }
+
+  // Monthly (YYYY-MM) or Yearly (YYYY)
+  const hasDailyPrefix = student.dailyActivities?.some(
+    (act) => act.studyDate.startsWith(ts) && act.totalSeconds > 0,
+  );
+  return Boolean(hasDailyPrefix || accDate.startsWith(ts) || enrDate.startsWith(ts));
 }
 
 export function InstructorCourseDeepDiveView({
@@ -55,24 +151,45 @@ export function InstructorCourseDeepDiveView({
   onNudgeStudent,
   onNudgeAllBehind,
   onSelectStudentForDetail,
+  weeklyCohortFilter = "PAID",
+  onSelectCohortFilter,
+  paidStudentsCount = 0,
+  auditStudentsCount = 0,
 }: InstructorCourseDeepDiveViewProps) {
-  // Tab biểu đồ ở chế độ môn học: "bar" | "funnel" | "certs"
-  const [chartTab, setChartTab] = useState<"bar" | "funnel" | "certs">("bar");
+  // Tab biểu đồ ở chế độ môn học: "bar" | "heatmap" | "funnel" | "certs"
+  const [chartTab, setChartTab] = useState<"bar" | "heatmap" | "funnel" | "certs">("bar");
   const [chartDateRange, setChartDateRange] = useState("7d");
-  const [chartLearnerFilter, setChartLearnerFilter] = useState<"all" | "in_progress" | "completed">(
-    "all",
-  );
+  const [chartLearnerFilter, setChartLearnerFilter] = useState<
+    "all" | "paid_in_progress" | "paid_completed" | "audit" | "paid" | "in_progress" | "completed"
+  >("all");
   const [selectedWeekFilter, setSelectedWeekFilter] = useState<number | null>(null);
-  const [selectedDayFilter, setSelectedDayFilter] = useState<{ day: string; date: string } | null>(
-    null,
-  );
+  const [selectedDayFilter, setSelectedDayFilter] = useState<{
+    day: string;
+    date: string;
+    timestamp?: string;
+  } | null>(null);
   const [studentStatusFilter, setStudentStatusFilter] = useState<
     "ALL" | "IN_PROGRESS" | "COMPLETED" | "OVERDUE"
   >("ALL");
   const [studentPacingFilter, setStudentPacingFilter] = useState<
     "ALL" | "AHEAD" | "ON_TRACK" | "BEHIND"
   >("ALL");
+  const [studentTierFilter, setStudentTierFilter] = useState<"ALL" | "PAID" | "AUDIT">("ALL");
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
+
+  const handleSelectTierFilter = (tier: "ALL" | "PAID" | "AUDIT") => {
+    setStudentTierFilter(tier);
+    if (tier === "AUDIT" && studentStatusFilter === "COMPLETED") {
+      setStudentStatusFilter("ALL");
+    }
+  };
+
+  const handleSelectStatusFilter = (status: "ALL" | "IN_PROGRESS" | "COMPLETED" | "OVERDUE") => {
+    setStudentStatusFilter(status);
+    if (status === "COMPLETED" && studentTierFilter === "AUDIT") {
+      setStudentTierFilter("ALL");
+    }
+  };
 
   const [customStartDate, setCustomStartDate] = useState(() => {
     const d = new Date();
@@ -94,35 +211,37 @@ export function InstructorCourseDeepDiveView({
 
   // Dữ liệu biểu đồ từ API thực tế 100% (Zero-Fallback & No Mock Math.sin)
   const currentSplineData = useMemo(() => {
-    const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
-    const timeline = activityTimelineData?.timeline || [];
+    return formatTimelineToSplineData(
+      activityTimelineData?.timeline,
+      chartDateRange,
+      customStartDate,
+      customEndDate,
+    );
+  }, [activityTimelineData?.timeline, chartDateRange, customStartDate, customEndDate]);
 
-    return labels.map((l, idx) => {
-      const p = timeline[idx];
-      return {
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: l.isFuture,
-        count: !p
-          ? 0
-          : chartLearnerFilter === "in_progress"
-            ? p.inProgress
-            : chartLearnerFilter === "completed"
-              ? p.completedItems
-              : p.activeLearners,
-        completed: !p ? 0 : chartLearnerFilter === "in_progress" ? 0 : p.completedItems,
-        inProgress: !p ? 0 : chartLearnerFilter === "completed" ? 0 : p.inProgress,
-      };
+  // Thống kê nhanh dữ liệu chuỗi hoạt động để lấp đầy không gian và tăng giá trị thông tin
+  const splineSummary = useMemo(() => {
+    let totalAccess = 0;
+    let totalCompleted = 0;
+    let peakCount = 0;
+    let peakLabel = "";
+
+    currentSplineData.forEach((d) => {
+      totalAccess += d.count || 0;
+      totalCompleted += d.completed || 0;
+      if (d.count > peakCount) {
+        peakCount = d.count;
+        peakLabel = d.fullDateLabel || d.day;
+      }
     });
-  }, [
-    activityTimelineData?.timeline,
-    chartDateRange,
-    chartLearnerFilter,
-    customStartDate,
-    customEndDate,
-  ]);
+
+    return {
+      totalAccess,
+      totalCompleted,
+      peakCount,
+      peakLabel: peakLabel || "Chưa có đỉnh",
+    };
+  }, [currentSplineData]);
 
   // Bộ lọc danh sách sinh viên
   const filteredStudents = useMemo(() => {
@@ -131,9 +250,24 @@ export function InstructorCourseDeepDiveView({
       if (studentStatusFilter === "COMPLETED" && student.progressPercent < 100) return false;
       if (studentStatusFilter === "OVERDUE" && student.pace !== "BEHIND") return false;
 
+      if (studentTierFilter === "PAID" && student.enrollmentType === "AUDIT") return false;
+      if (studentTierFilter === "AUDIT" && student.enrollmentType !== "AUDIT") return false;
+
       if (studentPacingFilter !== "ALL" && student.pace !== studentPacingFilter) return false;
 
       if (selectedWeekFilter !== null && student.currentWeekNumber !== selectedWeekFilter) {
+        return false;
+      }
+
+      if (
+        !matchesSelectedDayFilter(
+          student,
+          selectedDayFilter,
+          chartDateRange,
+          customStartDate,
+          customEndDate,
+        )
+      ) {
         return false;
       }
 
@@ -151,7 +285,12 @@ export function InstructorCourseDeepDiveView({
     rawStudentsWithPacing,
     studentStatusFilter,
     studentPacingFilter,
+    studentTierFilter,
     selectedWeekFilter,
+    selectedDayFilter,
+    chartDateRange,
+    customStartDate,
+    customEndDate,
     studentSearchQuery,
   ]);
 
@@ -160,220 +299,365 @@ export function InstructorCourseDeepDiveView({
     setSelectedWeekFilter(null);
     setStudentPacingFilter("ALL");
     setStudentStatusFilter("ALL");
+    setStudentTierFilter("ALL");
     setStudentSearchQuery("");
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-      {/* CỘT TRÁI (8/12 - 67%): BIỂU ĐỒ & BẢNG HỌC VIÊN CHI TIẾT */}
-      <div className="lg:col-span-8 space-y-5">
-        {/* Card 1: Khung Biểu Đồ Khóa Học */}
-        <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
-          <div className="space-y-3 pb-1">
-            {/* Tabs biểu đồ */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
-              <button
-                type="button"
-                onClick={() => setChartTab("bar")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  chartTab === "bar"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+    <div className="space-y-5">
+      {/* HÀNG 1: BIỂU ĐỒ KHÓA HỌC (8/12) + ĐIỀU HÀNH & ĐIỂM NGHẼN (4/12) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* CỘT TRÁI (8/12 - 67%): BIỂU ĐỒ KHÓA HỌC */}
+        <div className="lg:col-span-8 space-y-5">
+          {/* Card 1: Khung Biểu Đồ Khóa Học */}
+          <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
+            <div className="space-y-3 pb-1">
+              {/* Tabs biểu đồ */}
+              <Tabs.Root
+                value={chartTab}
+                onValueChange={(val) => setChartTab(val as "bar" | "heatmap" | "funnel" | "certs")}
               >
-                <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                <span>Hoạt động</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setChartTab("funnel")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  chartTab === "funnel"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-                <span>Phễu hoàn thành theo tuần ({calculatedWeeks.length} tuần)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setChartTab("certs")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  chartTab === "certs"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Award className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
-                <span>Chứng chỉ ({completedStudents.length})</span>
-              </button>
-            </div>
-
-            {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
-            {chartTab === "bar" ? (
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
-                  <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                  <span>Bộ lọc hiển thị:</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Select
-                    value={chartDateRange}
-                    onValueChange={(val) => {
-                      if (val) setChartDateRange(val as string);
-                    }}
+                <Tabs.List className="border-b-0 flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 overflow-x-auto no-scrollbar w-full sm:w-fit max-w-full">
+                  <Tabs.Tab
+                    value="bar"
+                    className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
                   >
-                    <Select.Trigger
-                      aria-label="Chọn khoảng thời gian biểu đồ môn học"
-                      className="w-auto h-8 px-3 text-[11px] font-semibold rounded-lg"
-                    >
-                      <Select.Value>
-                        {{
-                          today: "Hôm nay",
-                          "7d": "7 ngày gần nhất",
-                          this_week: "Tuần này",
-                          last_week: "Tuần trước",
-                          this_month: "Tháng này",
-                          last_month: "Tháng trước",
-                          custom: "Chọn thời gian",
-                        }[chartDateRange] ?? chartDateRange}
-                      </Select.Value>
-                    </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="today">Hôm nay</Select.Item>
-                      <Select.Item value="7d">7 ngày gần nhất</Select.Item>
-                      <Select.Item value="this_week">Tuần này</Select.Item>
-                      <Select.Item value="last_week">Tuần trước</Select.Item>
-                      <Select.Item value="this_month">Tháng này</Select.Item>
-                      <Select.Item value="last_month">Tháng trước</Select.Item>
-                      <Select.Item value="custom">Chọn thời gian</Select.Item>
-                    </Select.Content>
-                  </Select>
+                    <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                    <span>Hoạt động</span>
+                  </Tabs.Tab>
 
-                  {chartTab === "bar" && chartDateRange === "custom" && (
-                    <InstructorDateRangeForm
-                      startDate={customStartDate}
-                      endDate={customEndDate}
-                      onChange={(s, e) => {
-                        setCustomStartDate(s);
-                        setCustomEndDate(e);
+                  <Tabs.Tab
+                    value="heatmap"
+                    className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                  >
+                    <Flame className="w-3.5 h-3.5 text-destructive" aria-hidden="true" />
+                    <span>Khung giờ học</span>
+                  </Tabs.Tab>
+
+                  <Tabs.Tab
+                    value="funnel"
+                    className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                  >
+                    <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
+                    <span>Tiến độ theo tuần ({calculatedWeeks.length} tuần)</span>
+                  </Tabs.Tab>
+
+                  <Tabs.Tab
+                    value="certs"
+                    className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                  >
+                    <Award className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
+                    <span>Chứng chỉ đã cấp</span>
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.Root>
+
+              {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên (Cố định cho cả Hoạt động và Khung giờ học) */}
+              {chartTab === "bar" || chartTab === "heatmap" ? (
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                    <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                    <span>Bộ lọc hiển thị:</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select
+                      value={chartDateRange}
+                      onValueChange={(val) => {
+                        if (val) {
+                          setChartDateRange(String(val));
+                          setSelectedDayFilter(null);
+                        }
                       }}
-                    />
-                  )}
-
-                  <Select
-                    value={chartLearnerFilter}
-                    onValueChange={(val) => {
-                      if (val) setChartLearnerFilter(val as "all" | "in_progress" | "completed");
-                    }}
-                  >
-                    <Select.Trigger
-                      aria-label="Phân khúc đối tượng học viên"
-                      className="w-auto h-8 px-3 text-[11px] font-semibold rounded-lg"
                     >
-                      <Select.Value>
-                        {chartLearnerFilter === "in_progress"
-                          ? "Nhóm: Đang học"
-                          : chartLearnerFilter === "completed"
-                            ? "Nhóm: Đã tốt nghiệp"
-                            : "Nhóm: Tất cả học viên"}
-                      </Select.Value>
-                    </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="all">Nhóm: Tất cả học viên</Select.Item>
-                      <Select.Item value="in_progress">Nhóm: Đang học</Select.Item>
-                      <Select.Item value="completed">Nhóm: Đã tốt nghiệp</Select.Item>
-                    </Select.Content>
-                  </Select>
-                </div>
-              </div>
-            ) : null}
-          </div>
+                      <Select.Trigger
+                        aria-label="Chọn khoảng thời gian biểu đồ môn học"
+                        className="h-8 px-2.5 py-0 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus-visible:ring-1 focus-visible:ring-primary shadow-2xs hover:border-primary/50 transition-all gap-1.5"
+                      >
+                        <Select.Value>
+                          {chartDateRange === "today"
+                            ? "Hôm nay"
+                            : chartDateRange === "7d"
+                              ? "7 ngày gần nhất"
+                              : chartDateRange === "this_week"
+                                ? "Tuần này"
+                                : chartDateRange === "last_week"
+                                  ? "Tuần trước"
+                                  : chartDateRange === "this_month"
+                                    ? "Tháng này"
+                                    : chartDateRange === "last_month"
+                                      ? "Tháng trước"
+                                      : chartDateRange === "custom"
+                                        ? "Chọn thời gian"
+                                        : chartDateRange}
+                        </Select.Value>
+                      </Select.Trigger>
+                      <Select.Content className="w-[160px]">
+                        <Select.Item value="today" className="text-xs py-1.5">
+                          Hôm nay
+                        </Select.Item>
+                        <Select.Item value="7d" className="text-xs py-1.5">
+                          7 ngày gần nhất
+                        </Select.Item>
+                        <Select.Item value="this_week" className="text-xs py-1.5">
+                          Tuần này
+                        </Select.Item>
+                        <Select.Item value="last_week" className="text-xs py-1.5">
+                          Tuần trước
+                        </Select.Item>
+                        <Select.Item value="this_month" className="text-xs py-1.5">
+                          Tháng này
+                        </Select.Item>
+                        <Select.Item value="last_month" className="text-xs py-1.5">
+                          Tháng trước
+                        </Select.Item>
+                        <Select.Item value="custom" className="text-xs py-1.5">
+                          Chọn thời gian
+                        </Select.Item>
+                      </Select.Content>
+                    </Select>
 
-          {/* Tab 1: Biểu đồ Hoạt động học tập (Spline Chart) */}
-          {chartTab === "bar" && (
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
-                <span>Số lượng sinh viên tương tác hàng ngày:</span>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-primary" /> Lượt truy cập
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-success" /> Hoàn thành bài học
-                  </span>
-                </div>
-              </div>
+                    {chartDateRange === "custom" && (
+                      <InstructorDateRangeForm
+                        startDate={customStartDate}
+                        endDate={customEndDate}
+                        onChange={(s, e) => {
+                          setCustomStartDate(s);
+                          setCustomEndDate(e);
+                        }}
+                      />
+                    )}
 
-              <InstructorSplineChart
-                data={currentSplineData}
-                selectedDay={selectedDayFilter?.day}
-                onSelectDay={(pt) =>
-                  setSelectedDayFilter(
-                    selectedDayFilter?.day === pt.day ? null : { day: pt.day, date: pt.date },
-                  )
-                }
-              />
+                    <Select
+                      value={chartLearnerFilter}
+                      onValueChange={(val) => {
+                        if (val) {
+                          setChartLearnerFilter(
+                            val as
+                              | "all"
+                              | "paid_in_progress"
+                              | "paid_completed"
+                              | "audit"
+                              | "paid"
+                              | "in_progress"
+                              | "completed",
+                          );
+                        }
+                      }}
+                    >
+                      <Select.Trigger
+                        aria-label="Phân khúc đối tượng học viên"
+                        className="h-8 px-2.5 py-0 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus-visible:ring-1 focus-visible:ring-primary shadow-2xs hover:border-primary/50 transition-all gap-1.5"
+                      >
+                        <Select.Value>
+                          {chartLearnerFilter === "all"
+                            ? "Nhóm: Tất cả học viên"
+                            : chartLearnerFilter === "paid_in_progress"
+                              ? "Nhóm: Chính thức — Đang học"
+                              : chartLearnerFilter === "paid_completed"
+                                ? "Nhóm: Chính thức — Đã tốt nghiệp"
+                                : chartLearnerFilter === "audit"
+                                  ? "Nhóm: Học viên học thử"
+                                  : chartLearnerFilter}
+                        </Select.Value>
+                      </Select.Trigger>
+                      <Select.Content className="w-[230px]">
+                        <Select.Item value="all" className="text-xs py-1.5">
+                          Nhóm: Tất cả học viên
+                        </Select.Item>
+                        <Select.Item value="paid_in_progress" className="text-xs py-1.5">
+                          Nhóm: Chính thức — Đang học
+                        </Select.Item>
+                        <Select.Item value="paid_completed" className="text-xs py-1.5">
+                          Nhóm: Chính thức — Đã tốt nghiệp
+                        </Select.Item>
+                        <Select.Item value="audit" className="text-xs py-1.5">
+                          Nhóm: Học viên học thử
+                        </Select.Item>
+                      </Select.Content>
+                    </Select>
+                  </div>
+                </div>
+              ) : null}
             </div>
-          )}
 
-          {/* Tab 3: Phễu hoàn thành theo tuần */}
-          {chartTab === "funnel" && (
-            <InstructorWeeklyFunnelTab
-              calculatedWeeks={calculatedWeeks}
-              bottleneckWeek={bottleneckWeek}
-              selectedWeekFilter={selectedWeekFilter}
-              onSelectWeekFilter={setSelectedWeekFilter}
-              totalStudents={rawStudents.length}
-            />
-          )}
+            {/* VÙNG NỘI DUNG BIỂU ĐỒ VỚI CHIỀU CAO TỐI THIỂU CHUẨN HÓA (CHỐNG GIẬT LAYOUT SHIFT) */}
+            <div className="min-h-[420px] transition-opacity duration-200 animate-in fade-in-50">
+              {/* Tab 1: Biểu đồ Hoạt động học tập (Spline Chart) */}
+              {chartTab === "bar" && (
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span>Số lượng sinh viên tương tác hàng ngày:</span>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-primary" /> Lượt truy cập
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-success" /> Hoàn thành bài học
+                      </span>
+                    </div>
+                  </div>
 
-          {/* Tab 4: Sinh viên nhận chứng chỉ môn học */}
-          {chartTab === "certs" && (
-            <InstructorCertificatesTab mode="specific" completedStudents={completedStudents} />
-          )}
+                  <InstructorSplineChart
+                    data={currentSplineData}
+                    height={270}
+                    selectedDay={selectedDayFilter?.timestamp ?? selectedDayFilter?.day}
+                    onSelectDay={(pt) => {
+                      const isSame = selectedDayFilter?.timestamp
+                        ? selectedDayFilter.timestamp === pt.timestamp
+                        : selectedDayFilter?.day === pt.day;
+                      setSelectedDayFilter(
+                        isSame
+                          ? null
+                          : {
+                              day: pt.day,
+                              date: pt.date || pt.fullDateLabel || pt.day,
+                              timestamp: pt.timestamp,
+                            },
+                      );
+                    }}
+                  />
+
+                  {/* Hàng 3 thẻ tóm tắt nhanh dữ liệu kỳ hoạt động */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                    <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-surface border border-outline-variant/60">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Users className="w-4 h-4" aria-hidden="true" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider truncate">
+                          Tổng lượt truy cập
+                        </div>
+                        <div className="text-sm font-bold text-foreground font-mono">
+                          {splineSummary.totalAccess}{" "}
+                          <span className="text-[11px] font-normal text-muted-foreground font-sans">
+                            lượt
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-surface border border-outline-variant/60">
+                      <div className="w-8 h-8 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider truncate">
+                          Tổng bài hoàn thành
+                        </div>
+                        <div className="text-sm font-bold text-foreground font-mono">
+                          {splineSummary.totalCompleted}{" "}
+                          <span className="text-[11px] font-normal text-muted-foreground font-sans">
+                            bài
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-surface border border-outline-variant/60">
+                      <div className="w-8 h-8 rounded-lg bg-warning/10 text-warning flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4 h-4" aria-hidden="true" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider truncate">
+                          Ngày cao điểm nhất
+                        </div>
+                        <div
+                          className="text-xs font-bold text-foreground font-mono truncate"
+                          title={splineSummary.peakLabel}
+                        >
+                          {splineSummary.peakCount > 0 ? (
+                            <>
+                              {splineSummary.peakLabel}{" "}
+                              <span className="text-[11px] font-normal text-primary">
+                                ({splineSummary.peakCount} SV)
+                              </span>
+                            </>
+                          ) : (
+                            "Chưa có dữ liệu"
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Sơ đồ Mật độ Khung giờ học tập môn học */}
+              {chartTab === "heatmap" && (
+                <InstructorActivityHeatmap heatmap={activityTimelineData?.heatmap || []} />
+              )}
+
+              {/* Tab 3: Tiến độ hoàn thành theo tuần */}
+              {chartTab === "funnel" && (
+                <InstructorWeeklyFunnelTab
+                  calculatedWeeks={calculatedWeeks}
+                  bottleneckWeek={bottleneckWeek}
+                  selectedWeekFilter={selectedWeekFilter}
+                  onSelectWeekFilter={setSelectedWeekFilter}
+                  totalStudents={rawStudents.length}
+                  weeklyCohortFilter={weeklyCohortFilter}
+                  onSelectCohortFilter={onSelectCohortFilter}
+                  paidCount={paidStudentsCount}
+                  auditCount={auditStudentsCount}
+                />
+              )}
+
+              {/* Tab 4: Sinh viên nhận chứng chỉ môn học */}
+              {chartTab === "certs" && (
+                <InstructorCertificatesTab mode="specific" completedStudents={completedStudents} />
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Card 2: Bảng Danh Sách Học Viên Môn Đang Chọn (Kèm Bộ Lọc Pacing & Nhắc Nhở) */}
-        <InstructorSpecificStudentTable
-          filteredStudents={filteredStudents}
-          rawStudentsWithPacing={rawStudentsWithPacing}
-          coursePacingCounts={coursePacingCounts}
-          studentPacingFilter={studentPacingFilter}
-          onChangeStudentPacingFilter={setStudentPacingFilter}
-          studentStatusFilter={studentStatusFilter}
-          onChangeStudentStatusFilter={setStudentStatusFilter}
-          studentSearchQuery={studentSearchQuery}
-          onChangeStudentSearchQuery={setStudentSearchQuery}
-          selectedDayFilter={selectedDayFilter}
-          selectedWeekFilter={selectedWeekFilter}
-          onClearFilters={handleClearFilters}
-          activeCourse={activeCourse}
-          calculatedWeeks={calculatedWeeks}
-          totalItemsInActiveCourse={totalItemsInActiveCourse}
-          currentTimeMs={currentTimeMs}
-          nudgedSpecificStudentIds={nudgedSpecificStudentIds}
-          onNudgeStudent={onNudgeStudent}
-          onNudgeAllBehind={onNudgeAllBehind}
-          onSelectStudentForDetail={onSelectStudentForDetail}
-        />
+        {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN XỬ LÝ & ĐIỂM NGHẼN BÀI GIẢNG */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* Box 1: Việc Cần Xử Lý */}
+          <InstructorActionTasksCard
+            courseId={activeCourse?.id}
+            courseTitle={activeCourse?.title}
+            totalQaCount={pendingQaCount}
+            behindCount={coursePacingCounts.behind}
+            onFilterBehind={() => setStudentPacingFilter("BEHIND")}
+          />
+
+          {/* Box 2: Điểm Nghẽn Bài Giảng */}
+          <InstructorContentBottleneckCard
+            courseId={activeCourse?.id}
+            bottleneckWeek={bottleneckWeek}
+            rawStudents={rawStudents}
+            selectedWeekFilter={selectedWeekFilter}
+            onSelectWeekFilter={setSelectedWeekFilter}
+          />
+        </div>
       </div>
 
-      {/* CỘT PHẢI (4/12 - 33%): VIỆC CẦN XỬ LÝ */}
-      <div className="lg:col-span-4 space-y-4">
-        {/* Box: Việc Cần Xử Lý */}
-        <InstructorActionTasksCard
-          courseId={activeCourse?.id}
-          courseTitle={activeCourse?.title}
-          totalQaCount={pendingQaCount}
-          behindCount={coursePacingCounts.behind}
-          onFilterBehind={() => setStudentPacingFilter("BEHIND")}
-        />
-      </div>
+      {/* HÀNG 2 (12/12 - FULL WIDTH): BẢNG DANH SÁCH HỌC VIÊN MÔN ĐANG CHỌN */}
+      <InstructorSpecificStudentTable
+        filteredStudents={filteredStudents}
+        rawStudentsWithPacing={rawStudentsWithPacing}
+        coursePacingCounts={coursePacingCounts}
+        studentPacingFilter={studentPacingFilter}
+        onChangeStudentPacingFilter={setStudentPacingFilter}
+        studentStatusFilter={studentStatusFilter}
+        onChangeStudentStatusFilter={handleSelectStatusFilter}
+        studentTierFilter={studentTierFilter}
+        onChangeStudentTierFilter={handleSelectTierFilter}
+        studentSearchQuery={studentSearchQuery}
+        onChangeStudentSearchQuery={setStudentSearchQuery}
+        selectedDayFilter={selectedDayFilter}
+        selectedWeekFilter={selectedWeekFilter}
+        onClearFilters={handleClearFilters}
+        activeCourse={activeCourse}
+        calculatedWeeks={calculatedWeeks}
+        totalItemsInActiveCourse={totalItemsInActiveCourse}
+        currentTimeMs={currentTimeMs}
+        nudgedSpecificStudentIds={nudgedSpecificStudentIds}
+        onNudgeStudent={onNudgeStudent}
+        onNudgeAllBehind={onNudgeAllBehind}
+        onSelectStudentForDetail={onSelectStudentForDetail}
+      />
     </div>
   );
 }

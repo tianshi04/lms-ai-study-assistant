@@ -85,20 +85,26 @@ export function InstructorCourseComparisonTab({
           >
             <Select.Trigger
               aria-label="Sắp xếp danh sách khóa học"
-              className="h-8 px-2.5 text-[11px] font-semibold rounded-lg min-w-[165px]"
+              className="h-8 px-2.5 py-0 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus-visible:ring-1 focus-visible:ring-primary shadow-2xs hover:border-primary/50 transition-all gap-1.5"
             >
               <Select.Value>
-                {compareSortBy === "students"
-                  ? "Đông học viên nhất"
-                  : compareSortBy === "rating"
-                    ? "Đánh giá cao nhất"
-                    : "Hoàn thành cao nhất"}
+                {compareSortBy === "rate"
+                  ? "Hoàn thành cao nhất"
+                  : compareSortBy === "students"
+                    ? "Đông học viên nhất"
+                    : "Đánh giá cao nhất"}
               </Select.Value>
             </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="rate">Hoàn thành cao nhất</Select.Item>
-              <Select.Item value="students">Đông học viên nhất</Select.Item>
-              <Select.Item value="rating">Đánh giá cao nhất</Select.Item>
+            <Select.Content className="w-[180px]">
+              <Select.Item value="rate" className="text-xs py-1.5">
+                Hoàn thành cao nhất
+              </Select.Item>
+              <Select.Item value="students" className="text-xs py-1.5">
+                Đông học viên nhất
+              </Select.Item>
+              <Select.Item value="rating" className="text-xs py-1.5">
+                Đánh giá cao nhất
+              </Select.Item>
             </Select.Content>
           </Select>
         </div>

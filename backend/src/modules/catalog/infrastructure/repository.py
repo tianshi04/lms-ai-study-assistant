@@ -1,6 +1,7 @@
 import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import Numeric, and_, case, delete, func, or_, select, true, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -30,24 +31,38 @@ from src.modules.catalog.domain import (
     ICatalogRepository,
     InstructorActivityTimeline,
     InstructorAnalytics,
+    InstructorStudentDossier,
     InteractiveTranscript,
     InVideoQuiz,
     ItemType,
     LearningItem,
     Lesson,
     Specialization,
+    StudentAssessmentSummaryItem,
+    StudentCourseDailyLog,
+    StudentDailyActivity,
+    StudentDayItemLog,
     WeekModule,
 )
 from src.modules.catalog.domain.constants import (
+    DEFAULT_ASSESSMENT_MAX_SCORE_HUNDRED,
+    DEFAULT_ASSESSMENT_MAX_SCORE_QUIZ,
+    DEFAULT_ESTIMATED_ITEM_MINUTES,
     DEFAULT_RECOMMENDED_COURSES_COUNT,
     DEFAULT_SPECIALIZATION_DISCOUNT_PERCENT,
     DEFAULT_TIMELINE_DATE_RANGE,
+    FAST_PACE_MIN_ESTIMATED_RATIO,
     HEATMAP_DAYS,
     HEATMAP_TIME_SLOTS,
     MAX_FOUNDATIONAL_COURSES_COUNT,
     MAX_SEARCH_QUERY_LENGTH,
+    MIN_COMPLETED_ITEMS_FOR_FAST_PACE_CHECK,
     MIN_SEARCH_QUERY_LENGTH,
+    QUIZ_PERCENT_TO_SCORE_DIVISOR,
     SEARCH_HISTORY_THROTTLE_SECONDS,
+    SECONDS_PER_HOUR,
+    SECONDS_PER_MINUTE,
+    STUDENT_DAILY_ACTIVITY_DAYS_WINDOW,
     VALID_TIMELINE_DATE_RANGES,
 )
 from src.modules.catalog.infrastructure.models import (
@@ -1811,6 +1826,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         end_date: str = "",
         learner_filter: str = "all",
     ) -> InstructorActivityTimeline:
+        vn_tz = ZoneInfo("Asia/Ho_Chi_Minh")
+
         def _parse_iso_dt(ts_str: str | None) -> datetime | None:
             if not ts_str:
                 return None
@@ -1823,10 +1840,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             except (ValueError, TypeError, OverflowError):
                 return None
 
-        now = datetime.now(UTC)
-        today_start = datetime(now.year, now.month, now.day, 0, 0, 0, tzinfo=UTC)
+        now = datetime.now(vn_tz)
+        today_start = datetime(now.year, now.month, now.day, 0, 0, 0, tzinfo=vn_tz)
         today_end = datetime(
-            now.year, now.month, now.day, 23, 59, 59, 999999, tzinfo=UTC
+            now.year, now.month, now.day, 23, 59, 59, 999999, tzinfo=vn_tz
         )
 
         normalized_range = (
@@ -1856,7 +1873,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             for sh, eh in hour_intervals:
                 b_start = today_start + timedelta(hours=sh)
                 b_end = today_start + timedelta(hours=eh)
-                ts_str = f"{today_str}T{sh:02d}:00:00Z"
+                ts_str = f"{today_str}T{sh:02d}:00:00+07:00"
                 lbl = f"{sh:02d}h"
                 buckets.append((b_start, b_end, ts_str, lbl))
         elif normalized_range == "7d":
@@ -1892,11 +1909,11 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 lbl = day_names[i]
                 buckets.append((b_start, b_end, ts_str, lbl))
         elif normalized_range == "this_month":
-            first_day = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=UTC)
+            first_day = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=vn_tz)
             next_month_year = now.year + 1 if now.month == 12 else now.year
             next_month_num = 1 if now.month == 12 else now.month + 1
             next_month = datetime(
-                next_month_year, next_month_num, 1, 0, 0, 0, tzinfo=UTC
+                next_month_year, next_month_num, 1, 0, 0, 0, tzinfo=vn_tz
             )
             range_start = first_day
             range_end = next_month - timedelta(microseconds=1)
@@ -1911,8 +1928,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         elif normalized_range == "last_month":
             lm_year = now.year - 1 if now.month == 1 else now.year
             lm_month = 12 if now.month == 1 else now.month - 1
-            first_day = datetime(lm_year, lm_month, 1, 0, 0, 0, tzinfo=UTC)
-            next_month = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=UTC)
+            first_day = datetime(lm_year, lm_month, 1, 0, 0, 0, tzinfo=vn_tz)
+            next_month = datetime(now.year, now.month, 1, 0, 0, 0, tzinfo=vn_tz)
             range_start = first_day
             range_end = next_month - timedelta(microseconds=1)
             curr = first_day
@@ -1927,21 +1944,81 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             try:
                 s_parts = [int(p) for p in start_date.split("-")]
                 e_parts = [int(p) for p in end_date.split("-")]
-                s_dt = datetime(s_parts[0], s_parts[1], s_parts[2], 0, 0, 0, tzinfo=UTC)
-                e_dt = datetime(
-                    e_parts[0], e_parts[1], e_parts[2], 23, 59, 59, 999999, tzinfo=UTC
+                s_dt = datetime(
+                    s_parts[0], s_parts[1], s_parts[2], 0, 0, 0, tzinfo=vn_tz
                 )
-                if s_dt <= e_dt and (e_dt - s_dt).days <= 90:
+                e_dt = datetime(
+                    e_parts[0], e_parts[1], e_parts[2], 23, 59, 59, 999999, tzinfo=vn_tz
+                )
+                if s_dt <= e_dt:
                     range_start = s_dt
                     range_end = e_dt
-                    curr = s_dt
-                    while curr <= e_dt:
-                        b_start = curr
-                        b_end = curr + timedelta(days=1)
-                        ts_str = b_start.date().isoformat()
-                        lbl = f"{b_start.day:02d}/{b_start.month:02d}"
-                        buckets.append((b_start, b_end, ts_str, lbl))
-                        curr += timedelta(days=1)
+                    diff_days = (e_dt.date() - s_dt.date()).days + 1
+
+                    if diff_days <= 31:
+                        # 1. Hàng ngày (Daily step <= 31 ngày)
+                        curr = s_dt
+                        while curr <= e_dt:
+                            b_start = curr
+                            b_end = curr + timedelta(days=1)
+                            ts_str = b_start.date().isoformat()
+                            lbl = f"{b_start.day:02d}/{b_start.month:02d}"
+                            buckets.append((b_start, b_end, ts_str, lbl))
+                            curr += timedelta(days=1)
+                    elif diff_days <= 180:
+                        # 2. Hàng tuần (Weekly step 32 - 180 ngày)
+                        curr = s_dt
+                        while curr <= e_dt:
+                            b_start = curr
+                            b_end = min(
+                                curr + timedelta(days=7),
+                                e_dt + timedelta(microseconds=1),
+                            )
+                            ts_str = b_start.date().isoformat()
+                            lbl = f"{b_start.day:02d}/{b_start.month:02d}"
+                            buckets.append((b_start, b_end, ts_str, lbl))
+                            curr += timedelta(days=7)
+                    elif diff_days <= 1095:
+                        # 3. Hàng tháng (Monthly step 181 - 1095 ngày / 6 tháng đến 3 năm)
+                        cur_year = s_dt.year
+                        cur_month = s_dt.month
+                        end_year = e_dt.year
+                        end_month = e_dt.month
+                        same_year = s_dt.year == e_dt.year
+
+                        while (cur_year < end_year) or (
+                            cur_year == end_year and cur_month <= end_month
+                        ):
+                            m_start = datetime(
+                                cur_year, cur_month, 1, 0, 0, 0, tzinfo=vn_tz
+                            )
+                            next_y = cur_year + 1 if cur_month == 12 else cur_year
+                            next_m = 1 if cur_month == 12 else cur_month + 1
+                            m_end = datetime(next_y, next_m, 1, 0, 0, 0, tzinfo=vn_tz)
+
+                            b_start = max(s_dt, m_start)
+                            b_end = min(e_dt, m_end - timedelta(microseconds=1))
+                            ts_str = f"{cur_year}-{cur_month:02d}"
+                            year_suffix = (
+                                f"/{str(cur_year)[2:]}" if not same_year else ""
+                            )
+                            lbl = f"T{cur_month}{year_suffix}"
+                            buckets.append((b_start, b_end, ts_str, lbl))
+
+                            cur_year = next_y
+                            cur_month = next_m
+                    else:
+                        # 4. Hàng năm (Yearly step > 3 năm)
+                        for y in range(s_dt.year, e_dt.year + 1):
+                            y_start = datetime(y, 1, 1, 0, 0, 0, tzinfo=vn_tz)
+                            y_end = datetime(
+                                y, 12, 31, 23, 59, 59, 999999, tzinfo=vn_tz
+                            )
+                            b_start = max(s_dt, y_start)
+                            b_end = min(e_dt, y_end)
+                            ts_str = str(y)
+                            lbl = str(y)
+                            buckets.append((b_start, b_end, ts_str, lbl))
                 else:
                     normalized_range = "7d"
                     range_start = today_start - timedelta(days=6)
@@ -1975,34 +2052,36 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 lbl = "Hôm nay" if i == 6 else day_names[b_start.weekday()]
                 buckets.append((b_start, b_end, ts_str, lbl))
 
-        if not course_ids:
-            empty_timeline = [
-                ActivityDataPoint(
-                    timestamp=b[2],
-                    label=b[3],
-                    active_learners=0,
-                    completed_items=0,
-                    in_progress=0,
-                )
-                for b in buckets
-            ]
-            empty_heatmap = [
-                HeatmapCell(
-                    day=d,
-                    time_slot=ts,
-                    count=0,
-                    is_peak=False,
-                )
-                for d in HEATMAP_DAYS
-                for ts in HEATMAP_TIME_SLOTS
-            ]
+        def _empty_timeline_response() -> InstructorActivityTimeline:
             return InstructorActivityTimeline(
-                timeline=empty_timeline,
-                heatmap=empty_heatmap,
+                timeline=[
+                    ActivityDataPoint(
+                        timestamp=b[2],
+                        label=b[3],
+                        active_learners=0,
+                        completed_items=0,
+                        in_progress=0,
+                    )
+                    for b in buckets
+                ],
+                heatmap=[
+                    HeatmapCell(
+                        day=d,
+                        time_slot=ts,
+                        count=0,
+                        is_peak=False,
+                    )
+                    for d in HEATMAP_DAYS
+                    for ts in HEATMAP_TIME_SLOTS
+                ],
                 total_active_in_period=0,
             )
 
+        if not course_ids:
+            return _empty_timeline_response()
+
         from src.modules.learning.infrastructure.models import (
+            DailyCourseItemRecordModel,
             LearningItemProgressModel,
             LearningProgressModel,
             PersonalNoteModel,
@@ -2020,8 +2099,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     if collab.user_id:
                         staff_ids.add(collab.user_id)
 
-        range_start_iso = range_start.isoformat()
-        range_end_iso = range_end.isoformat()
+        range_start_iso = range_start.astimezone(UTC).isoformat()
+        range_end_iso = range_end.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
         lp_stmt = select(LearningProgressModel).where(
             LearningProgressModel.course_id.in_(course_ids),
@@ -2042,19 +2121,126 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
         if staff_ids:
             lp_stmt = lp_stmt.where(LearningProgressModel.user_id.notin_(staff_ids))
-        if learner_filter == "in_progress":
+        if learner_filter in ("in_progress", "paid_in_progress"):
             lp_stmt = lp_stmt.where(
                 LearningProgressModel.overall_progress_percent < 100.0
             )
-        elif learner_filter == "completed":
+        elif learner_filter in ("completed", "paid_completed"):
             lp_stmt = lp_stmt.where(
                 LearningProgressModel.overall_progress_percent >= 100.0
             )
 
         lp_res = await self.session.execute(lp_stmt)
-        progresses = lp_res.scalars().all()
+        progresses = list(lp_res.scalars().all())
+        if not progresses:
+            return _empty_timeline_response()
+
+        if learner_filter in (
+            "paid",
+            "audit",
+            "paid_in_progress",
+            "paid_completed",
+        ):
+            from src.modules.certificate.infrastructure.models import FinancialAidModel
+            from src.modules.identity.infrastructure.models import (
+                EnterpriseLicenseModel,
+                UserModel,
+            )
+            from src.modules.payment.infrastructure.models import (
+                CoursePurchaseModel,
+                UserSubscriptionModel,
+            )
+
+            candidate_uids = list({p.user_id for p in progresses})
+            candidate_cids = list({p.course_id for p in progresses})
+            now_utc_iso = datetime.now(UTC).isoformat()
+
+            p_stmt = select(CoursePurchaseModel).where(
+                CoursePurchaseModel.user_id.in_(candidate_uids),
+                CoursePurchaseModel.course_id.in_(candidate_cids),
+                CoursePurchaseModel.status == "COMPLETED",
+            )
+            purchased_pairs = {
+                (row.user_id, row.course_id)
+                for row in (await self.session.execute(p_stmt)).scalars().all()
+            }
+
+            sub_stmt = select(UserSubscriptionModel).where(
+                UserSubscriptionModel.user_id.in_(candidate_uids),
+                UserSubscriptionModel.status == "ACTIVE",
+                UserSubscriptionModel.expires_at >= now_utc_iso,
+            )
+            subscribed_uids = {
+                row.user_id
+                for row in (await self.session.execute(sub_stmt)).scalars().all()
+            }
+
+            fa_stmt = select(FinancialAidModel).where(
+                FinancialAidModel.user_id.in_(candidate_uids),
+                FinancialAidModel.course_id.in_(candidate_cids),
+                FinancialAidModel.status.in_(["APPROVED", "AUTO_APPROVED"]),
+            )
+            fa_pairs = {
+                (row.user_id, row.course_id)
+                for row in (await self.session.execute(fa_stmt)).scalars().all()
+            }
+
+            ent_user_stmt = select(UserModel).where(
+                UserModel.id.in_(candidate_uids),
+                UserModel.enterprise_seat_key.isnot(None),
+                UserModel.enterprise_seat_key != "",
+            )
+            user_ent_keys: dict[str, str] = {}
+            for u in (await self.session.execute(ent_user_stmt)).scalars().all():
+                key = (u.enterprise_seat_key or "").strip().upper()
+                if key:
+                    user_ent_keys[u.id] = key
+
+            valid_licenses: dict[str, tuple[str, set[str]]] = {}
+            if user_ent_keys:
+                lic_stmt = select(EnterpriseLicenseModel).where(
+                    EnterpriseLicenseModel.key.in_(set(user_ent_keys.values())),
+                    EnterpriseLicenseModel.is_active.is_(True),
+                )
+                for lic in (await self.session.execute(lic_stmt)).scalars().all():
+                    valid_licenses[lic.key] = (
+                        str(lic.scope_type or "ALL_COURSES"),
+                        set(lic.allowed_course_ids or []),
+                    )
+
+            def _is_paid_for_course(uid: str, cid: str) -> bool:
+                if (
+                    uid in subscribed_uids
+                    or (uid, cid) in purchased_pairs
+                    or (uid, cid) in fa_pairs
+                ):
+                    return True
+                ent_key = user_ent_keys.get(uid)
+                if ent_key and ent_key in valid_licenses:
+                    scope_type, allowed = valid_licenses[ent_key]
+                    if scope_type == "ALL_COURSES" or not allowed or cid in allowed:
+                        return True
+                return False
+
+            if learner_filter == "audit":
+                progresses = [
+                    p
+                    for p in progresses
+                    if not _is_paid_for_course(p.user_id, p.course_id)
+                ]
+            else:
+                progresses = [
+                    p for p in progresses if _is_paid_for_course(p.user_id, p.course_id)
+                ]
+
+            if not progresses:
+                return _empty_timeline_response()
+
+        valid_pairs = {(p.user_id, p.course_id) for p in progresses}
+        valid_user_ids = list({p.user_id for p in progresses})
 
         note_stmt = select(PersonalNoteModel).where(
+            PersonalNoteModel.user_id.in_(valid_user_ids),
             PersonalNoteModel.course_id.in_(course_ids),
             or_(
                 and_(
@@ -2071,6 +2257,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         notes = note_res.scalars().all()
 
         item_stmt = select(LearningItemProgressModel).where(
+            LearningItemProgressModel.user_id.in_(valid_user_ids),
             LearningItemProgressModel.course_id.in_(course_ids),
             LearningItemProgressModel.last_studied_at >= range_start_iso,
             LearningItemProgressModel.last_studied_at <= range_end_iso,
@@ -2078,12 +2265,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         item_res = await self.session.execute(item_stmt)
         item_progresses = item_res.scalars().all()
 
-        valid_user_ids = {p.user_id for p in progresses}
-        user_is_completed = {
-            p.user_id: (p.overall_progress_percent >= 100.0) for p in progresses
-        }
-        user_completed_items_count = {
-            p.user_id: len(p.completed_item_ids or []) for p in progresses
+        dc_stmt = select(DailyCourseItemRecordModel).where(
+            DailyCourseItemRecordModel.user_id.in_(valid_user_ids),
+            DailyCourseItemRecordModel.course_id.in_(course_ids),
+            DailyCourseItemRecordModel.last_studied_at >= range_start_iso,
+            DailyCourseItemRecordModel.last_studied_at <= range_end_iso,
+        )
+        dc_records = (await self.session.execute(dc_stmt)).scalars().all()
+
+        user_has_in_progress = {
+            p.user_id for p in progresses if p.overall_progress_percent < 100.0
         }
 
         user_events: list[tuple[str, datetime]] = []
@@ -2099,7 +2290,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 user_events.append((p.user_id, dt_enr))
 
         for n in notes:
-            if n.user_id in valid_user_ids:
+            if (n.user_id, n.course_id) in valid_pairs:
                 dt_c = _parse_iso_dt(n.created_at)
                 if dt_c:
                     user_events.append((n.user_id, dt_c))
@@ -2108,10 +2299,115 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     user_events.append((n.user_id, dt_u))
 
         for ip in item_progresses:
-            if ip.user_id in valid_user_ids:
+            if (ip.user_id, ip.course_id) in valid_pairs:
                 dt_s = _parse_iso_dt(ip.last_studied_at)
                 if dt_s:
                     user_events.append((ip.user_id, dt_s))
+
+        for dc in dc_records:
+            if (dc.user_id, dc.course_id) in valid_pairs:
+                dt_dc = _parse_iso_dt(dc.last_studied_at)
+                if dt_dc:
+                    user_events.append((dc.user_id, dt_dc))
+
+        # Deduplicated per-item completion timestamps (each completed item counted at most once)
+        completed_items_by_pair: dict[tuple[str, str], set[str]] = {}
+        all_completed_item_ids: set[str] = set()
+        for p in progresses:
+            c_items = {str(iid) for iid in (p.completed_item_ids or []) if iid}
+            if c_items:
+                completed_items_by_pair[(p.user_id, p.course_id)] = c_items
+                all_completed_item_ids.update(c_items)
+
+        completion_events: list[datetime] = []
+        if all_completed_item_ids:
+            from src.modules.assessment.infrastructure.models import (
+                LabSubmissionModel,
+                PeerAssignmentSubmissionModel,
+                QuizSubmissionModel,
+            )
+
+            earliest_pass_quiz: dict[tuple[str, str], datetime] = {}
+            q_pass_stmt = select(QuizSubmissionModel).where(
+                QuizSubmissionModel.user_id.in_(valid_user_ids),
+                QuizSubmissionModel.item_id.in_(all_completed_item_ids),
+                QuizSubmissionModel.passed.is_(True),
+            )
+            for qs in (await self.session.execute(q_pass_stmt)).scalars().all():
+                dt_q = _parse_iso_dt(qs.created_at)
+                if dt_q:
+                    key = (qs.user_id, qs.item_id)
+                    if key not in earliest_pass_quiz or dt_q < earliest_pass_quiz[key]:
+                        earliest_pass_quiz[key] = dt_q
+
+            earliest_pass_lab: dict[tuple[str, str], datetime] = {}
+            lab_pass_stmt = select(LabSubmissionModel).where(
+                LabSubmissionModel.user_id.in_(valid_user_ids),
+                LabSubmissionModel.item_id.in_(all_completed_item_ids),
+                LabSubmissionModel.passed.is_(True),
+            )
+            for ls in (await self.session.execute(lab_pass_stmt)).scalars().all():
+                dt_l = _parse_iso_dt(ls.created_at)
+                if dt_l:
+                    key = (ls.user_id, ls.item_id)
+                    if key not in earliest_pass_lab or dt_l < earliest_pass_lab[key]:
+                        earliest_pass_lab[key] = dt_l
+
+            peer_sub_ts: dict[tuple[str, str], datetime] = {}
+            peer_sub_stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.user_id.in_(valid_user_ids),
+                PeerAssignmentSubmissionModel.item_id.in_(all_completed_item_ids),
+            )
+            for ps in (await self.session.execute(peer_sub_stmt)).scalars().all():
+                dt_p = _parse_iso_dt(ps.created_at)
+                if dt_p:
+                    key = (ps.user_id, ps.item_id)
+                    if key not in peer_sub_ts or dt_p < peer_sub_ts[key]:
+                        peer_sub_ts[key] = dt_p
+
+            earliest_dc_item: dict[tuple[str, str, str], datetime] = {}
+            dc_all_stmt = select(DailyCourseItemRecordModel).where(
+                DailyCourseItemRecordModel.user_id.in_(valid_user_ids),
+                DailyCourseItemRecordModel.course_id.in_(course_ids),
+                DailyCourseItemRecordModel.item_id.in_(all_completed_item_ids),
+            )
+            for dc in (await self.session.execute(dc_all_stmt)).scalars().all():
+                dt_dc = _parse_iso_dt(dc.last_studied_at)
+                if dt_dc:
+                    key = (dc.user_id, dc.course_id, dc.item_id)
+                    if key not in earliest_dc_item or dt_dc < earliest_dc_item[key]:
+                        earliest_dc_item[key] = dt_dc
+
+            ip_ts: dict[tuple[str, str, str], datetime] = {}
+            ip_all_stmt = select(LearningItemProgressModel).where(
+                LearningItemProgressModel.user_id.in_(valid_user_ids),
+                LearningItemProgressModel.course_id.in_(course_ids),
+                LearningItemProgressModel.item_id.in_(all_completed_item_ids),
+            )
+            for ip in (await self.session.execute(ip_all_stmt)).scalars().all():
+                dt_ip = _parse_iso_dt(ip.last_studied_at)
+                if dt_ip:
+                    ip_ts[(ip.user_id, ip.course_id, ip.item_id)] = dt_ip
+
+            for p in progresses:
+                pair = (p.user_id, p.course_id)
+                c_items = completed_items_by_pair.get(pair)
+                if not c_items:
+                    continue
+                p_comp_dt = _parse_iso_dt(p.completed_at)
+                for iid in c_items:
+                    uid_iid = (p.user_id, iid)
+                    triple = (p.user_id, p.course_id, iid)
+                    comp_dt = (
+                        earliest_pass_quiz.get(uid_iid)
+                        or earliest_pass_lab.get(uid_iid)
+                        or peer_sub_ts.get(uid_iid)
+                        or earliest_dc_item.get(triple)
+                        or ip_ts.get(triple)
+                        or p_comp_dt
+                    )
+                    if comp_dt is not None:
+                        completion_events.append(comp_dt)
 
         timeline_points: list[ActivityDataPoint] = []
         period_active_users: set[str] = set()
@@ -2125,12 +2421,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
             active_count = len(bucket_users)
             completed_items_in_bucket = sum(
-                user_completed_items_count.get(uid, 0)
-                for uid in bucket_users
-                if user_is_completed.get(uid, False)
+                1 for comp_dt in completion_events if b_start <= comp_dt < b_end
             )
             in_prog_count = sum(
-                1 for uid in bucket_users if not user_is_completed.get(uid, False)
+                1 for uid in bucket_users if uid in user_has_in_progress
             )
             timeline_points.append(
                 ActivityDataPoint(
@@ -2149,16 +2443,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         for uid, dt in user_events:
             if range_start <= dt <= range_end:
-                day_str = day_labels[dt.weekday()]
-                h = dt.hour
+                dt_vn = dt.astimezone(vn_tz)
+                day_str = day_labels[dt_vn.weekday()]
+                h = dt_vn.hour
                 if 6 <= h < 12:
                     slot = "Sáng (06h-12h)"
                 elif 12 <= h < 18:
                     slot = "Chiều (12h-18h)"
                 elif 18 <= h < 22:
                     slot = "Tối (18h-22h)"
-                else:
+                elif 22 <= h or h < 2:
                     slot = "Đêm (22h-02h)"
+                else:
+                    slot = "Rạng sáng (02h-06h)"
                 heatmap_counts[(day_str, slot)].add(uid)
 
         max_count = 0
@@ -2207,45 +2504,371 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             if uid:
                 staff_ids.add(uid)
 
-        identity_repo_factory = __import__(
-            "src.modules.identity.infrastructure.repository",
-            fromlist=["IdentityRepository"],
-        ).IdentityRepository
+        from src.modules.assessment.domain import is_practice_quiz_item
+        from src.modules.learning.domain import MIN_DAILY_STUDY_SECONDS_FOR_STREAK
+        from src.modules.learning.infrastructure.models import (
+            DailyCourseItemRecordModel,
+            LearningItemProgressModel,
+            LearningProgressModel,
+            UserLearningStreakModel,
+        )
 
-        identity_repo = identity_repo_factory(self.session)
-
-        learning_progress_model = __import__(
-            "src.modules.learning.infrastructure.models",
-            fromlist=["LearningProgressModel"],
-        ).LearningProgressModel
-        stmt = select(learning_progress_model).where(
-            learning_progress_model.course_id == real_id
+        lp_stmt = select(LearningProgressModel).where(
+            LearningProgressModel.course_id == real_id
         )
         if staff_ids:
-            stmt = stmt.where(learning_progress_model.user_id.notin_(staff_ids))
-        res = await self.session.execute(stmt)
-        progresses = res.scalars().all()
+            lp_stmt = lp_stmt.where(LearningProgressModel.user_id.notin_(staff_ids))
+        lp_res = await self.session.execute(lp_stmt)
+        progresses = lp_res.scalars().all()
 
+        if not progresses:
+            return InstructorAnalytics(
+                id=f"analytics_{real_id}",
+                course_id=real_id,
+                total_enrolled_students=0,
+                average_completion_rate=0.0,
+                average_rating=avg_rating,
+                review_count=total_reviews,
+                students=[],
+                paid_students_count=0,
+                audit_students_count=0,
+                total_learning_hours=0.0,
+                course_average_quiz_score=0.0,
+                paid_learning_hours=0.0,
+                audit_learning_hours=0.0,
+            )
+
+        student_user_ids = [p.user_id for p in progresses if p.user_id not in staff_ids]
+
+        # 1. Course items map: item_id -> title, cold_start_hours and graded quiz set
+        items_stmt = (
+            select(
+                LearningItemModel.id,
+                LearningItemModel.title,
+                LearningItemModel.cold_start_hours,
+                LearningItemModel.type,
+            )
+            .join(LessonModel, LearningItemModel.lesson_id == LessonModel.id)
+            .join(WeekModuleModel, LessonModel.week_module_id == WeekModuleModel.id)
+            .where(WeekModuleModel.course_id == real_id)
+        )
+        items_res = await self.session.execute(items_stmt)
+        course_items_map: dict[str, str] = {}
+        course_item_cold_map: dict[str, int] = {}
+        graded_quiz_item_ids: set[str] = set()
+        for row in items_res.all():
+            item_id = row[0]
+            course_items_map[item_id] = row[1]
+            course_item_cold_map[item_id] = int(row[2] or 48)
+            raw_type_val = row[3] if len(row) > 3 else ""
+            raw_type = (
+                str(getattr(raw_type_val, "value", raw_type_val) or "").strip().upper()
+            )
+            if not is_practice_quiz_item(raw_type) and (
+                "GRADED_QUIZ" in raw_type or raw_type in {"QUIZ", "4"}
+            ):
+                graded_quiz_item_ids.add(item_id)
+        total_course_items = len(course_items_map)
+        course_item_ids = set(course_items_map.keys())
+
+        # 2. Batch query User identities
+        from src.modules.identity.infrastructure.models import (
+            EnterpriseLicenseModel,
+            UserModel,
+        )
+
+        user_stmt = select(UserModel).where(UserModel.id.in_(student_user_ids))
+        user_res = await self.session.execute(user_stmt)
+        user_map = {u.id: u for u in user_res.scalars().all()}
+
+        # 3. Batch query Access Tiers (Paid, Plus, Enterprise, Financial Aid)
+        from src.modules.certificate.infrastructure.models import FinancialAidModel
+        from src.modules.payment.infrastructure.models import (
+            CoursePurchaseModel,
+            UserSubscriptionModel,
+        )
+
+        now_dt = datetime.now(UTC)
+        now_iso = now_dt.isoformat()
+
+        # 3a. Course purchases
+        purchases_stmt = select(CoursePurchaseModel.user_id).where(
+            CoursePurchaseModel.user_id.in_(student_user_ids),
+            CoursePurchaseModel.course_id == real_id,
+            CoursePurchaseModel.status == "COMPLETED",
+        )
+        purchased_users = set(
+            (await self.session.execute(purchases_stmt)).scalars().all()
+        )
+
+        # 3b. Active subscriptions (Coursera Plus)
+        subs_stmt = select(UserSubscriptionModel.user_id).where(
+            UserSubscriptionModel.user_id.in_(student_user_ids),
+            UserSubscriptionModel.status == "ACTIVE",
+            UserSubscriptionModel.expires_at >= now_iso,
+        )
+        subscribed_users = set((await self.session.execute(subs_stmt)).scalars().all())
+
+        # 3c. Approved Financial Aid
+        fa_stmt = select(FinancialAidModel.user_id).where(
+            FinancialAidModel.user_id.in_(student_user_ids),
+            FinancialAidModel.course_id == real_id,
+            FinancialAidModel.status.in_(["APPROVED", "AUTO_APPROVED"]),
+        )
+        fa_users = set((await self.session.execute(fa_stmt)).scalars().all())
+
+        # 3d. Enterprise licenses
+        enterprise_keys = {
+            u.enterprise_seat_key.strip().upper()
+            for u in user_map.values()
+            if u.enterprise_seat_key and u.enterprise_seat_key.strip()
+        }
+        valid_enterprise_keys: set[str] = set()
+        if enterprise_keys:
+            lic_stmt = select(EnterpriseLicenseModel).where(
+                EnterpriseLicenseModel.key.in_(enterprise_keys),
+                EnterpriseLicenseModel.is_active.is_(True),
+            )
+            lic_res = await self.session.execute(lic_stmt)
+            for lic in lic_res.scalars().all():
+                allowed_courses = set(lic.allowed_course_ids or [])
+                if (
+                    lic.scope_type == "ALL_COURSES"
+                    or not allowed_courses
+                    or real_id in allowed_courses
+                ):
+                    valid_enterprise_keys.add(lic.key)
+
+        # 4. Batch query Time Spent per student on this course
+        time_stmt = (
+            select(
+                LearningItemProgressModel.user_id,
+                func.sum(LearningItemProgressModel.time_spent_seconds),
+            )
+            .where(
+                LearningItemProgressModel.user_id.in_(student_user_ids),
+                LearningItemProgressModel.course_id == real_id,
+            )
+            .group_by(LearningItemProgressModel.user_id)
+        )
+        time_res = await self.session.execute(time_stmt)
+        time_spent_map = {row[0]: int(row[1] or 0) for row in time_res.all()}
+
+        # 5. Batch query Assessments (Quiz submissions & Cooldowns & Peer review duty)
+        from src.modules.assessment.infrastructure.models import (
+            PeerAssignmentSubmissionModel,
+            QuizCooldownModel,
+            QuizSubmissionModel,
+        )
+
+        quiz_best_scores_map: dict[str, dict[str, float]] = {}
+        quiz_attempts_map: dict[str, int] = {}
+        if graded_quiz_item_ids:
+            quiz_stmt = select(
+                QuizSubmissionModel.user_id,
+                QuizSubmissionModel.item_id,
+                QuizSubmissionModel.score_percent,
+            ).where(
+                QuizSubmissionModel.user_id.in_(student_user_ids),
+                QuizSubmissionModel.item_id.in_(graded_quiz_item_ids),
+            )
+            quiz_res = await self.session.execute(quiz_stmt)
+            for uid, q_item_id, score in quiz_res.all():
+                quiz_attempts_map[uid] = quiz_attempts_map.get(uid, 0) + 1
+                val = float(score or 0.0)
+                user_quizzes = quiz_best_scores_map.setdefault(uid, {})
+                if q_item_id not in user_quizzes or val > user_quizzes[q_item_id]:
+                    user_quizzes[q_item_id] = val
+
+        # Cooldowns
+        cooldown_map: dict[str, str] = {}
+        if course_item_ids:
+            cd_stmt = select(
+                QuizCooldownModel.user_id,
+                QuizCooldownModel.cooldown_until,
+            ).where(
+                QuizCooldownModel.user_id.in_(student_user_ids),
+                QuizCooldownModel.item_id.in_(course_item_ids),
+                QuizCooldownModel.cooldown_until.isnot(None),
+                QuizCooldownModel.cooldown_until > now_iso,
+            )
+            cd_res = await self.session.execute(cd_stmt)
+            for uid, cd_until in cd_res.all():
+                if cd_until:
+                    cd_str = str(cd_until)
+                    if cd_str > cooldown_map.get(uid, ""):
+                        cooldown_map[uid] = cd_str
+
+        # Peer assignment duty & Overdue check
+        peer_duty_map: dict[str, str] = {}
+        peer_overdue_map: dict[str, bool] = {}
+        if course_item_ids:
+            peer_stmt = select(
+                PeerAssignmentSubmissionModel.user_id,
+                PeerAssignmentSubmissionModel.review_duty_status,
+                PeerAssignmentSubmissionModel.created_at,
+                PeerAssignmentSubmissionModel.item_id,
+            ).where(
+                PeerAssignmentSubmissionModel.user_id.in_(student_user_ids),
+                PeerAssignmentSubmissionModel.item_id.in_(course_item_ids),
+            )
+            peer_res = await self.session.execute(peer_stmt)
+            for uid, duty, sub_created, p_item_id in peer_res.all():
+                curr = peer_duty_map.get(uid)
+                val = str(duty or "PENDING")
+                # Priority: PENDING > WAITING_POOL > others
+                if curr is None:
+                    peer_duty_map[uid] = val
+                elif curr == "PENDING" or val == "PENDING":
+                    peer_duty_map[uid] = "PENDING"
+                elif curr == "WAITING_POOL" or val == "WAITING_POOL":
+                    peer_duty_map[uid] = "WAITING_POOL"
+                elif val == "COMPLETED":
+                    peer_duty_map[uid] = "COMPLETED"
+                else:
+                    peer_duty_map[uid] = val
+
+                # Check if overdue based on instructor's cold_start_hours
+                if val == "PENDING" and sub_created:
+                    item_cold_hours = course_item_cold_map.get(p_item_id, 48)
+                    try:
+                        sub_dt = datetime.fromisoformat(str(sub_created))
+                        if sub_dt.tzinfo is None:
+                            sub_dt = sub_dt.replace(tzinfo=UTC)
+                        if (now_dt - sub_dt) > timedelta(hours=item_cold_hours):
+                            peer_overdue_map[uid] = True
+                    except (ValueError, TypeError):
+                        logger.debug(
+                            "Không thể phân tích thời điểm nộp bài peer review: %s",
+                            sub_created,
+                        )
+
+        # 6. Batch query 30-day course-scoped Daily activities & Streaks
+        thirty_days_ago = (
+            datetime.now(ZoneInfo("Asia/Ho_Chi_Minh"))
+            - timedelta(days=STUDENT_DAILY_ACTIVITY_DAYS_WINDOW)
+        ).date()
+        daily_stmt = (
+            select(
+                DailyCourseItemRecordModel.user_id,
+                DailyCourseItemRecordModel.study_date,
+                func.sum(DailyCourseItemRecordModel.seconds_spent),
+            )
+            .where(
+                DailyCourseItemRecordModel.user_id.in_(student_user_ids),
+                DailyCourseItemRecordModel.course_id == real_id,
+                DailyCourseItemRecordModel.study_date >= thirty_days_ago,
+                DailyCourseItemRecordModel.seconds_spent > 0,
+            )
+            .group_by(
+                DailyCourseItemRecordModel.user_id,
+                DailyCourseItemRecordModel.study_date,
+            )
+            .order_by(DailyCourseItemRecordModel.study_date.asc())
+        )
+        daily_res = await self.session.execute(daily_stmt)
+        daily_map: dict[str, list[StudentDailyActivity]] = {}
+        for uid, s_date, total_secs in daily_res.all():
+            secs = int(total_secs or 0)
+            daily_map.setdefault(uid, []).append(
+                StudentDailyActivity(
+                    study_date=s_date.isoformat(),
+                    total_seconds=secs,
+                    is_streak_qualified=secs >= MIN_DAILY_STUDY_SECONDS_FOR_STREAK,
+                )
+            )
+
+        streak_stmt = select(UserLearningStreakModel).where(
+            UserLearningStreakModel.user_id.in_(student_user_ids)
+        )
+        streak_res = await self.session.execute(streak_stmt)
+        streak_map = {s.user_id: s for s in streak_res.scalars().all()}
+
+        # Build EnrolledStudent list
         students: list[EnrolledStudent] = []
         sum_progress = 0.0
+        total_time_spent_all = 0
+        paid_time_spent_all = 0
+        audit_time_spent_all = 0
+        paid_count = 0
+        audit_count = 0
+        all_quiz_scores: list[float] = []
 
         for p in progresses:
             if p.user_id in staff_ids:
                 continue
 
             sum_progress += p.overall_progress_percent
-            user_entity = await identity_repo.get_by_id(p.user_id)
+            u = user_map.get(p.user_id)
             u_name = (
-                user_entity.full_name
-                if user_entity and user_entity.full_name
+                u.full_name
+                if u and u.full_name
                 else (
-                    user_entity.email.split("@")[0]
-                    if user_entity and user_entity.email
+                    u.email.split("@")[0]
+                    if u and u.email
                     else f"Học viên #{p.user_id[:6]}"
                 )
             )
-            u_email = user_entity.email if user_entity else ""
+            u_email = u.email if u else ""
             enrolled_at_str = p.enrolled_at or ""
+            last_accessed_at_str = p.last_accessed_at or ""
+            last_item_title = course_items_map.get(p.last_accessed_item_id or "", "")
+            completed_count = (
+                len(
+                    [
+                        iid
+                        for iid in (p.completed_item_ids or [])
+                        if iid in course_item_ids
+                    ]
+                )
+                if course_item_ids
+                else len(p.completed_item_ids or [])
+            )
+
+            # Determine enrollment tier
+            user_ent_key = (u.enterprise_seat_key or "").strip().upper() if u else ""
+            if p.user_id in purchased_users:
+                tier = "PAID"
+            elif p.user_id in subscribed_users:
+                tier = "PLUS"
+            elif user_ent_key and user_ent_key in valid_enterprise_keys:
+                tier = "ENTERPRISE"
+            elif p.user_id in fa_users:
+                tier = "FINANCIAL_AID"
+            else:
+                tier = "AUDIT"
+
+            t_spent = time_spent_map.get(p.user_id, 0)
+            total_time_spent_all += t_spent
+            if tier in ("PAID", "PLUS", "ENTERPRISE", "FINANCIAL_AID"):
+                paid_count += 1
+                paid_time_spent_all += t_spent
+            else:
+                audit_count += 1
+                audit_time_spent_all += t_spent
+
+            best_scores_dict = quiz_best_scores_map.get(p.user_id, {})
+            q_scores = list(best_scores_dict.values())
+            q_attempts = quiz_attempts_map.get(p.user_id, 0)
+            avg_q_score = (
+                round(
+                    sum(q_scores) / (len(q_scores) * QUIZ_PERCENT_TO_SCORE_DIVISOR), 1
+                )
+                if q_scores
+                else 0.0
+            )
+            if q_scores:
+                all_quiz_scores.append(avg_q_score)
+
+            cd_until = cooldown_map.get(p.user_id, "")
+            is_cooldown = bool(cd_until)
+            peer_duty = peer_duty_map.get(p.user_id, "NONE")
+            is_peer_overdue = peer_overdue_map.get(p.user_id, False)
+
+            d_acts = daily_map.get(p.user_id, [])
+            stk = streak_map.get(p.user_id)
+            c_streak = stk.current_streak if stk else 0
+            l_streak = stk.longest_streak if stk else 0
 
             students.append(
                 EnrolledStudent(
@@ -2254,12 +2877,35 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     user_email=u_email,
                     progress_percent=round(p.overall_progress_percent, 1),
                     enrolled_at=enrolled_at_str,
+                    enrollment_type=tier,
+                    total_time_spent_seconds=t_spent,
+                    last_accessed_at=last_accessed_at_str,
+                    last_accessed_item_title=last_item_title,
+                    average_quiz_score=avg_q_score,
+                    quiz_attempts_count=q_attempts,
+                    is_in_cooldown=is_cooldown,
+                    cooldown_until=cd_until,
+                    peer_review_duty_status=peer_duty,
+                    completed_items_count=completed_count,
+                    total_course_items=total_course_items,
+                    daily_activities=d_acts,
+                    current_streak=c_streak,
+                    longest_streak=l_streak,
+                    is_peer_review_overdue=is_peer_overdue,
                 )
             )
 
         total_students = len(students)
         avg_completion = (
             round(sum_progress / total_students, 1) if total_students > 0 else 0.0
+        )
+        total_learning_hours = round(total_time_spent_all / SECONDS_PER_HOUR, 1)
+        paid_learning_hours = round(paid_time_spent_all / SECONDS_PER_HOUR, 1)
+        audit_learning_hours = round(audit_time_spent_all / SECONDS_PER_HOUR, 1)
+        course_avg_quiz = (
+            round(sum(all_quiz_scores) / len(all_quiz_scores), 1)
+            if all_quiz_scores
+            else 0.0
         )
 
         return InstructorAnalytics(
@@ -2270,6 +2916,12 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             average_rating=avg_rating,
             review_count=total_reviews,
             students=students,
+            paid_students_count=paid_count,
+            audit_students_count=audit_count,
+            total_learning_hours=total_learning_hours,
+            course_average_quiz_score=course_avg_quiz,
+            paid_learning_hours=paid_learning_hours,
+            audit_learning_hours=audit_learning_hours,
         )
 
     async def reorder_week_modules(
@@ -2934,6 +3586,548 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         await self.session.execute(upsert_stmt)
         await self.session.flush()
         return True
+
+    async def get_instructor_student_dossier(
+        self, course_id: str, student_id: str
+    ) -> InstructorStudentDossier:
+        from src.modules.assessment.domain import (
+            DEFAULT_PASSING_THRESHOLD_PERCENT,
+            REQUIRED_PEER_REVIEWS_COUNT,
+            REVIEW_DUTY_PENDING,
+            is_practice_quiz_item,
+            normalize_grade_provenance,
+            resolve_peer_effective_grade,
+        )
+        from src.modules.assessment.infrastructure.models import (
+            LabSubmissionModel,
+            PeerAssignmentSubmissionModel,
+            PeerReviewModel,
+            QuizCooldownModel,
+            QuizMatrixModel,
+            QuizSubmissionModel,
+        )
+        from src.modules.learning.domain import MIN_DAILY_STUDY_SECONDS_FOR_STREAK
+        from src.modules.learning.infrastructure.models import (
+            DailyCourseItemRecordModel,
+            LearningItemProgressModel,
+            LearningProgressModel,
+        )
+
+        real_id = await self.get_course_id_by_slug_or_id(course_id)
+        now_iso = datetime.now(UTC).isoformat()
+
+        # 1. Query ordered syllabus items with week info
+        syllabus_stmt = (
+            select(
+                LearningItemModel,
+                WeekModuleModel.week_number,
+                WeekModuleModel.title,
+            )
+            .join(LessonModel, LessonModel.id == LearningItemModel.lesson_id)
+            .join(WeekModuleModel, WeekModuleModel.id == LessonModel.week_module_id)
+            .where(WeekModuleModel.course_id == real_id)
+            .order_by(
+                WeekModuleModel.week_number.asc(),
+                LessonModel.order_index.asc(),
+                LearningItemModel.order_index.asc(),
+            )
+        )
+        syllabus_rows = (await self.session.execute(syllabus_stmt)).all()
+
+        ordered_items: list[tuple[LearningItemModel, int, str]] = [
+            (row[0], int(row[1] or 1), str(row[2] or f"Tuần {row[1] or 1}"))
+            for row in syllabus_rows
+        ]
+        item_meta: dict[str, tuple[LearningItemModel, int, str]] = {
+            it.id: (it, wk_num, wk_title) for it, wk_num, wk_title in ordered_items
+        }
+        all_item_ids = list(item_meta.keys())
+
+        # 2. Query student LearningProgress in this course
+        lp_stmt = select(LearningProgressModel).where(
+            LearningProgressModel.user_id == student_id,
+            LearningProgressModel.course_id == real_id,
+        )
+        lp = (await self.session.execute(lp_stmt)).scalar_one_or_none()
+        if lp is None:
+            raise ValueError("Học viên chưa ghi danh khóa học này.")
+        enrolled_at = lp.enrolled_at or ""
+        completed_ids = set(lp.completed_item_ids or [])
+        last_accessed_id = lp.last_accessed_item_id or ""
+
+        furthest_item_title = ""
+        furthest_week_number = 0
+        for it, wk_num, _ in ordered_items:
+            if it.id in completed_ids:
+                furthest_item_title = it.title
+                furthest_week_number = wk_num
+
+        if not furthest_item_title and ordered_items:
+            first_it, first_wk, _ = ordered_items[0]
+            furthest_item_title = first_it.title
+            furthest_week_number = first_wk
+
+        last_accessed_item_title = ""
+        last_accessed_week_number = 0
+        if last_accessed_id and last_accessed_id in item_meta:
+            acc_it, acc_wk, _ = item_meta[last_accessed_id]
+            last_accessed_item_title = acc_it.title
+            last_accessed_week_number = acc_wk
+
+        # 3. Query assessments (graded items + submitted practice quizzes) ordered by week
+        quiz_rows_by_item: dict[str, list[QuizSubmissionModel]] = {}
+        quiz_thresholds: dict[str, float] = {}
+        cooldown_items: set[str] = set()
+        lab_rows_by_item: dict[str, list[LabSubmissionModel]] = {}
+        peer_sub_by_item: dict[str, PeerAssignmentSubmissionModel] = {}
+        peer_reviews_done_by_item: dict[str, int] = {}
+
+        if all_item_ids:
+            matrix_rows = (
+                await self.session.execute(
+                    select(
+                        QuizMatrixModel.item_id,
+                        QuizMatrixModel.passing_threshold_percent,
+                    ).where(QuizMatrixModel.item_id.in_(all_item_ids))
+                )
+            ).all()
+            quiz_thresholds = {
+                str(mid): float(th) for mid, th in matrix_rows if th is not None
+            }
+
+            q_rows = (
+                (
+                    await self.session.execute(
+                        select(QuizSubmissionModel).where(
+                            QuizSubmissionModel.user_id == student_id,
+                            QuizSubmissionModel.item_id.in_(all_item_ids),
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for q in q_rows:
+                quiz_rows_by_item.setdefault(q.item_id, []).append(q)
+
+            cd_rows = (
+                (
+                    await self.session.execute(
+                        select(QuizCooldownModel.item_id).where(
+                            QuizCooldownModel.user_id == student_id,
+                            QuizCooldownModel.item_id.in_(all_item_ids),
+                            QuizCooldownModel.cooldown_until.isnot(None),
+                            QuizCooldownModel.cooldown_until > now_iso,
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            cooldown_items = {str(cid) for cid in cd_rows if cid}
+
+            l_rows = (
+                (
+                    await self.session.execute(
+                        select(LabSubmissionModel).where(
+                            LabSubmissionModel.user_id == student_id,
+                            LabSubmissionModel.item_id.in_(all_item_ids),
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for lb in l_rows:
+                lab_rows_by_item.setdefault(lb.item_id, []).append(lb)
+
+            p_rows = (
+                (
+                    await self.session.execute(
+                        select(PeerAssignmentSubmissionModel).where(
+                            PeerAssignmentSubmissionModel.user_id == student_id,
+                            PeerAssignmentSubmissionModel.item_id.in_(all_item_ids),
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for ps in p_rows:
+                peer_sub_by_item[ps.item_id] = ps
+
+            pr_counts = (
+                await self.session.execute(
+                    select(PeerReviewModel.item_id, func.count(PeerReviewModel.id))
+                    .where(
+                        PeerReviewModel.reviewer_user_id == student_id,
+                        PeerReviewModel.item_id.in_(all_item_ids),
+                    )
+                    .group_by(PeerReviewModel.item_id)
+                )
+            ).all()
+            peer_reviews_done_by_item = {
+                str(iid): int(cnt or 0) for iid, cnt in pr_counts
+            }
+
+        def _classify_assessment_kind(item: LearningItemModel) -> str | None:
+            raw_type = (item.type or "").strip().upper()
+            if is_practice_quiz_item(raw_type):
+                return "PRACTICE_QUIZ"
+            if "GRADED_QUIZ" in raw_type or raw_type in {"QUIZ", "4"}:
+                return "GRADED_QUIZ"
+            if "LAB" in raw_type or raw_type == "5":
+                return "CODING_LAB"
+            if "PEER" in raw_type or raw_type == "6":
+                return "PEER_REVIEW"
+            if getattr(item, "is_graded", False):
+                return "GRADED_QUIZ"
+            return None
+
+        graded_item_entries: list[tuple[LearningItemModel, int, str, str]] = []
+        all_candidate_entries: list[tuple[LearningItemModel, int, str, str]] = []
+        for it, wk_num, wk_title in ordered_items:
+            kind = _classify_assessment_kind(it)
+            if kind is None:
+                continue
+            if kind == "PRACTICE_QUIZ":
+                if it.id in quiz_rows_by_item:
+                    all_candidate_entries.append((it, wk_num, wk_title, kind))
+            else:
+                graded_item_entries.append((it, wk_num, wk_title, kind))
+                all_candidate_entries.append((it, wk_num, wk_title, kind))
+
+        num_graded = len(graded_item_entries)
+        graded_weight = round(1.0 / num_graded, 4) if num_graded > 0 else 0.0
+
+        assessment_summaries: list[StudentAssessmentSummaryItem] = []
+        total_weighted_grade = 0.0
+
+        for it, wk_num, wk_title, kind in all_candidate_entries:
+            w = 0.0 if kind == "PRACTICE_QUIZ" else graded_weight
+
+            if kind in ("GRADED_QUIZ", "PRACTICE_QUIZ"):
+                subs = quiz_rows_by_item.get(it.id, [])
+                attempts = len(subs)
+                if attempts == 0:
+                    assessment_summaries.append(
+                        StudentAssessmentSummaryItem(
+                            item_id=it.id,
+                            week_number=wk_num,
+                            week_title=wk_title,
+                            item_title=it.title,
+                            item_type=kind,
+                            weight=w,
+                            score=0.0,
+                            max_score=DEFAULT_ASSESSMENT_MAX_SCORE_QUIZ,
+                            is_submitted=False,
+                            is_passed=False,
+                            attempts_count=0,
+                            provenance="AUTO",
+                            status_note="",
+                            submitted_at="",
+                        )
+                    )
+                else:
+                    best_sub = max(subs, key=lambda s: float(s.score_percent or 0.0))
+                    best_pct = float(best_sub.score_percent or 0.0)
+                    threshold = quiz_thresholds.get(
+                        it.id, DEFAULT_PASSING_THRESHOLD_PERCENT
+                    )
+                    passed = best_pct >= threshold
+                    scaled_score = round(best_pct / QUIZ_PERCENT_TO_SCORE_DIVISOR, 1)
+                    if it.id in cooldown_items:
+                        note = f"{attempts} lượt nộp · Đang khóa"
+                    elif not passed and kind == "GRADED_QUIZ":
+                        note = f"{attempts} lượt nộp · Chưa đạt"
+                    elif kind == "PRACTICE_QUIZ":
+                        note = f"Ôn tập · {attempts} lượt"
+                    else:
+                        note = f"{attempts} lượt nộp"
+
+                    if kind == "GRADED_QUIZ":
+                        total_weighted_grade += best_pct * w
+
+                    assessment_summaries.append(
+                        StudentAssessmentSummaryItem(
+                            item_id=it.id,
+                            week_number=wk_num,
+                            week_title=wk_title,
+                            item_title=it.title,
+                            item_type=kind,
+                            weight=w,
+                            score=scaled_score,
+                            max_score=DEFAULT_ASSESSMENT_MAX_SCORE_QUIZ,
+                            is_submitted=True,
+                            is_passed=passed,
+                            attempts_count=attempts,
+                            provenance="AUTO",
+                            status_note=note,
+                            submitted_at=best_sub.created_at or "",
+                        )
+                    )
+            elif kind == "CODING_LAB":
+                subs = lab_rows_by_item.get(it.id, [])
+                attempts = len(subs)
+                if attempts == 0:
+                    assessment_summaries.append(
+                        StudentAssessmentSummaryItem(
+                            item_id=it.id,
+                            week_number=wk_num,
+                            week_title=wk_title,
+                            item_title=it.title,
+                            item_type=kind,
+                            weight=w,
+                            score=0.0,
+                            max_score=DEFAULT_ASSESSMENT_MAX_SCORE_HUNDRED,
+                            is_submitted=False,
+                            is_passed=False,
+                            attempts_count=0,
+                            provenance="AUTO",
+                            status_note="",
+                            submitted_at="",
+                        )
+                    )
+                else:
+                    best_lab = max(subs, key=lambda s: float(s.score_percent or 0.0))
+                    best_pct = round(float(best_lab.score_percent or 0.0), 1)
+                    passed = best_pct >= DEFAULT_PASSING_THRESHOLD_PERCENT
+                    note = "Máy chấm" if passed else f"{attempts} lượt nộp · Chưa đạt"
+                    total_weighted_grade += best_pct * w
+                    assessment_summaries.append(
+                        StudentAssessmentSummaryItem(
+                            item_id=it.id,
+                            week_number=wk_num,
+                            week_title=wk_title,
+                            item_title=it.title,
+                            item_type=kind,
+                            weight=w,
+                            score=best_pct,
+                            max_score=DEFAULT_ASSESSMENT_MAX_SCORE_HUNDRED,
+                            is_submitted=True,
+                            is_passed=passed,
+                            attempts_count=attempts,
+                            provenance="AUTO",
+                            status_note=note,
+                            submitted_at=best_lab.created_at or "",
+                        )
+                    )
+            else:
+                # PEER_REVIEW
+                p_sub = peer_sub_by_item.get(it.id)
+                done_reviews = peer_reviews_done_by_item.get(it.id, 0)
+                if p_sub is None:
+                    assessment_summaries.append(
+                        StudentAssessmentSummaryItem(
+                            item_id=it.id,
+                            week_number=wk_num,
+                            week_title=wk_title,
+                            item_title=it.title,
+                            item_type=kind,
+                            weight=w,
+                            score=0.0,
+                            max_score=DEFAULT_ASSESSMENT_MAX_SCORE_HUNDRED,
+                            is_submitted=False,
+                            is_passed=False,
+                            attempts_count=0,
+                            provenance="PEER",
+                            status_note="",
+                            submitted_at="",
+                        )
+                    )
+                else:
+                    eff_score, eff_source, eff_pub_at = resolve_peer_effective_grade(
+                        status=p_sub.status,
+                        final_score=p_sub.final_score,
+                        grade_source=p_sub.grade_source,
+                        published_at=p_sub.published_at,
+                        previous_best_score=getattr(p_sub, "previous_best_score", None),
+                        previous_best_grade_source=getattr(
+                            p_sub, "previous_best_grade_source", None
+                        ),
+                        previous_best_published_at=getattr(
+                            p_sub, "previous_best_published_at", None
+                        ),
+                    )
+                    if eff_score is not None:
+                        val_score = round(float(eff_score), 1)
+                        passed = val_score >= DEFAULT_PASSING_THRESHOLD_PERCENT
+                        prov = normalize_grade_provenance(eff_source) or "PEER"
+                        req_reviews = (
+                            int(getattr(it, "required_peer_reviews", 0) or 0)
+                            or REQUIRED_PEER_REVIEWS_COUNT
+                        )
+                        if prov == "INSTRUCTOR":
+                            note = "Giảng viên chấm"
+                        elif prov == "TA":
+                            note = "Trợ giảng chấm"
+                        elif done_reviews > 0:
+                            note = f"Bạn học chấm ({done_reviews}/{req_reviews})"
+                        else:
+                            note = "Bạn học chấm"
+                        total_weighted_grade += val_score * w
+                        assessment_summaries.append(
+                            StudentAssessmentSummaryItem(
+                                item_id=it.id,
+                                week_number=wk_num,
+                                week_title=wk_title,
+                                item_title=it.title,
+                                item_type=kind,
+                                weight=w,
+                                score=val_score,
+                                max_score=DEFAULT_ASSESSMENT_MAX_SCORE_HUNDRED,
+                                is_submitted=True,
+                                is_passed=passed,
+                                attempts_count=int(p_sub.attempt_number or 1),
+                                provenance=prov,
+                                status_note=note,
+                                submitted_at=eff_pub_at or p_sub.created_at or "",
+                            )
+                        )
+                    else:
+                        req_reviews = (
+                            int(getattr(it, "required_peer_reviews", 0) or 0)
+                            or REQUIRED_PEER_REVIEWS_COUNT
+                        )
+                        if str(p_sub.review_duty_status or "") == REVIEW_DUTY_PENDING:
+                            remaining = max(1, req_reviews - done_reviews)
+                            note = f"Nợ chấm {remaining} bài bạn học"
+                        else:
+                            note = "Đang chờ chấm điểm"
+                        assessment_summaries.append(
+                            StudentAssessmentSummaryItem(
+                                item_id=it.id,
+                                week_number=wk_num,
+                                week_title=wk_title,
+                                item_title=it.title,
+                                item_type=kind,
+                                weight=w,
+                                score=0.0,
+                                max_score=DEFAULT_ASSESSMENT_MAX_SCORE_HUNDRED,
+                                is_submitted=True,
+                                is_passed=False,
+                                attempts_count=int(p_sub.attempt_number or 1),
+                                provenance="PEER",
+                                status_note=note,
+                                submitted_at=p_sub.created_at or "",
+                            )
+                        )
+
+        # 4. Query course-scoped daily item activity across entire enrollment history
+        dc_rows = (
+            (
+                await self.session.execute(
+                    select(DailyCourseItemRecordModel)
+                    .where(
+                        DailyCourseItemRecordModel.user_id == student_id,
+                        DailyCourseItemRecordModel.course_id == real_id,
+                        DailyCourseItemRecordModel.seconds_spent > 0,
+                    )
+                    .order_by(
+                        DailyCourseItemRecordModel.study_date.asc(),
+                        DailyCourseItemRecordModel.last_studied_at.asc(),
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        grouped_days: dict[str, list[StudentDayItemLog]] = {}
+        if dc_rows:
+            for rec in dc_rows:
+                d_str = rec.study_date.isoformat()
+                meta = item_meta.get(rec.item_id)
+                title = meta[0].title if meta else f"Bài học #{rec.item_id[:6]}"
+                itype = (meta[0].type or "") if meta else ""
+                grouped_days.setdefault(d_str, []).append(
+                    StudentDayItemLog(
+                        item_id=rec.item_id,
+                        item_title=title,
+                        item_type=itype,
+                        seconds_spent=int(rec.seconds_spent or 0),
+                    )
+                )
+        else:
+            # Fallback to LearningItemProgressModel if no daily_course_item_records exist yet
+            ip_rows = (
+                (
+                    await self.session.execute(
+                        select(LearningItemProgressModel)
+                        .where(
+                            LearningItemProgressModel.user_id == student_id,
+                            LearningItemProgressModel.course_id == real_id,
+                            LearningItemProgressModel.time_spent_seconds > 0,
+                        )
+                        .order_by(LearningItemProgressModel.last_studied_at.asc())
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for ip in ip_rows:
+                raw_ts = str(ip.last_studied_at or "")
+                d_str = (
+                    raw_ts[:10]
+                    if len(raw_ts) >= 10 and raw_ts[:4].isdigit()
+                    else now_iso[:10]
+                )
+                meta = item_meta.get(ip.item_id)
+                title = meta[0].title if meta else f"Bài học #{ip.item_id[:6]}"
+                itype = (meta[0].type or "") if meta else ""
+                grouped_days.setdefault(d_str, []).append(
+                    StudentDayItemLog(
+                        item_id=ip.item_id,
+                        item_title=title,
+                        item_type=itype,
+                        seconds_spent=int(ip.time_spent_seconds or 0),
+                    )
+                )
+
+        daily_logs: list[StudentCourseDailyLog] = []
+        total_course_seconds = 0
+        for d_str in sorted(grouped_days.keys()):
+            day_items = tuple(grouped_days[d_str])
+            day_secs = sum(i.seconds_spent for i in day_items)
+            total_course_seconds += day_secs
+            daily_logs.append(
+                StudentCourseDailyLog(
+                    study_date=d_str,
+                    total_seconds=day_secs,
+                    is_streak_qualified=day_secs >= MIN_DAILY_STUDY_SECONDS_FOR_STREAK,
+                    items=day_items,
+                )
+            )
+
+        valid_completed_ids = completed_ids & set(all_item_ids)
+        valid_completed_count = len(valid_completed_ids)
+        completed_estimated_seconds = sum(
+            (
+                int(item_meta[iid][0].estimated_minutes or 0)
+                or DEFAULT_ESTIMATED_ITEM_MINUTES
+            )
+            * SECONDS_PER_MINUTE
+            for iid in valid_completed_ids
+            if iid in item_meta
+        )
+        is_suspicious_fast_pace = (
+            valid_completed_count >= MIN_COMPLETED_ITEMS_FOR_FAST_PACE_CHECK
+            and completed_estimated_seconds > 0
+            and total_course_seconds
+            < completed_estimated_seconds * FAST_PACE_MIN_ESTIMATED_RATIO
+        )
+
+        return InstructorStudentDossier(
+            enrolled_at=enrolled_at,
+            furthest_item_title=furthest_item_title,
+            furthest_week_number=furthest_week_number,
+            last_accessed_item_title=last_accessed_item_title,
+            last_accessed_week_number=last_accessed_week_number,
+            final_weighted_grade=round(total_weighted_grade, 1),
+            is_suspicious_fast_pace=is_suspicious_fast_pace,
+            assessments=tuple(assessment_summaries),
+            daily_logs=tuple(daily_logs),
+        )
 
     async def resolve_course_video_item(
         self, course_id_or_slug: str, item_id: str

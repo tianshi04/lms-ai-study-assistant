@@ -499,14 +499,32 @@ async def test_get_instructor_analytics_excludes_teaching_personnel(repo, mock_s
         enrolled_at="",
     )
 
-    res_progress = MagicMock()
-    res_progress.scalars.return_value.all.return_value = [
-        progress_inst,
-        progress_ta,
-        progress_student,
-    ]
+    def mock_execute(stmt):
+        stmt_str = str(stmt).lower()
+        res = MagicMock()
+        if "courses.owner_id" in stmt_str:
+            res.scalar_one_or_none.return_value = "inst-1"
+        elif "course_collaborators" in stmt_str:
+            res.scalars.return_value.all.return_value = ["inst-ta-1"]
+        elif "learning_progresses" in stmt_str:
+            res.scalars.return_value.all.return_value = [
+                progress_inst,
+                progress_ta,
+                progress_student,
+            ]
+        elif "users" in stmt_str:
+            mock_user = MagicMock(
+                id="student-1", full_name="Nguyễn Văn A", email="student@test.com"
+            )
+            res.scalars.return_value.all.return_value = [mock_user]
+        else:
+            res.all.return_value = []
+            res.scalars.return_value.all.return_value = []
+            res.scalar_one_or_none.return_value = None
+            res.one_or_none.return_value = None
+        return res
 
-    mock_session.execute.side_effect = [res_owner, res_collab, res_progress]
+    mock_session.execute.side_effect = mock_execute
 
     with patch(
         "src.modules.identity.infrastructure.repository.IdentityRepository.get_by_id",

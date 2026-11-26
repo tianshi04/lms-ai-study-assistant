@@ -143,6 +143,21 @@ class DailyLearningRecordModel(Base):
     )
 
 
+class DailyCourseItemRecordModel(Base):
+    __tablename__ = "daily_course_item_records"
+
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    course_id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    study_date: Mapped[date] = mapped_column(Date, primary_key=True)
+    item_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    seconds_spent: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    last_studied_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default=utc_now_str, server_default=""
+    )
+
+
 class UserLearningStreakModel(Base):
     __tablename__ = "user_learning_streaks"
 

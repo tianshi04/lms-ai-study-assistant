@@ -121,52 +121,55 @@ export function InstructorExecutiveToolbar({
 
         {/* Dropdown danh sách khóa học kèm số lượng học viên (Xử lý cả khi có và chưa có khóa học) */}
         {viewMode === "specific" && (
-          <div className="animate-in fade-in duration-150 flex-1 min-w-[220px] max-w-md">
+          <div className="animate-in fade-in duration-150 flex-1 min-w-[260px] max-w-xl sm:max-w-2xl">
             {hasNoCourses ? (
-              <Select disabled value="empty">
+              <Select disabled value="">
                 <Select.Trigger
+                  disabled
                   aria-label="Chưa có khóa học nào"
-                  className="h-9 w-full text-xs font-medium rounded-xl"
+                  className="h-9 w-full px-3 py-0 rounded-xl bg-muted/50 border border-outline-variant/60 text-xs font-medium text-muted-foreground"
                 >
-                  <Select.Value>Chưa có khóa học nào</Select.Value>
+                  <Select.Value placeholder="Chưa có khóa học nào" />
                 </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="empty">Chưa có khóa học nào</Select.Item>
-                </Select.Content>
               </Select>
             ) : (
               <Select
                 value={selectedCourseId}
                 onValueChange={(val) => {
-                  if (val) onSelectCourse(val as string);
+                  if (val) onSelectCourse(String(val));
                 }}
               >
                 <Select.Trigger
                   aria-label="Chọn khóa học để xem phân tích chi tiết"
-                  className="h-9 w-full text-xs font-semibold rounded-xl"
+                  className="h-9 w-full px-3 py-0 rounded-xl bg-surface border border-outline-variant text-xs font-semibold text-foreground shadow-2xs hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all"
+                  title={courses.find((c) => c.id === selectedCourseId)?.title}
                 >
-                  <span className="truncate">
-                    <Select.Value>
-                      {(() => {
-                        const active = courses.find((c) => c.id === selectedCourseId);
-                        if (!active) return "Chọn khóa học";
-                        const cnt = courseStudentCounts?.[active.id];
-                        return cnt !== undefined
-                          ? `${active.title} (${cnt} học viên)`
-                          : active.title;
-                      })()}
-                    </Select.Value>
-                  </span>
+                  <Select.Value placeholder="Chọn khóa học...">
+                    {(() => {
+                      const currentCourse = courses.find((c) => c.id === selectedCourseId);
+                      if (!currentCourse) return "Chọn khóa học...";
+                      const studentCount = courseStudentCounts?.[currentCourse.id];
+                      const countLabel =
+                        studentCount !== undefined ? ` (${studentCount} học viên)` : "";
+                      return `${currentCourse.title}${countLabel}`;
+                    })()}
+                  </Select.Value>
                 </Select.Trigger>
-                <Select.Content>
+                <Select.Content className="min-w-[var(--anchor-width)] w-max max-w-[min(calc(100vw-2rem),46rem)]">
                   {courses.map((course) => {
                     const studentCount = courseStudentCounts?.[course.id];
                     const countLabel =
                       studentCount !== undefined ? ` (${studentCount} học viên)` : "";
                     return (
-                      <Select.Item key={course.id} value={course.id}>
-                        {course.title}
-                        {countLabel}
+                      <Select.Item
+                        key={course.id}
+                        value={course.id}
+                        className="text-xs py-2 px-3 rounded-xl cursor-pointer"
+                      >
+                        <span className="whitespace-normal leading-relaxed">
+                          {course.title}
+                          {countLabel}
+                        </span>
                       </Select.Item>
                     );
                   })}

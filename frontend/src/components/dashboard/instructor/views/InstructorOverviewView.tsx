@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { BarChart3, TrendingDown, Award, Filter } from "lucide-react";
-import { Select } from "@/components/ui/Select";
+import {
+  BarChart3,
+  TrendingDown,
+  Award,
+  Filter,
+  Flame,
+  Users,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 import type { Course, InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { InstructorSplineChart } from "../../InstructorSplineChart";
 import { InstructorDateRangeForm } from "../components/InstructorDateRangeForm";
@@ -11,8 +19,11 @@ import { InstructorCertificatesTab } from "../components/InstructorCertificatesT
 import { InstructorPacingCohortsCard } from "../components/InstructorPacingCohortsCard";
 import { InstructorRecentReviewsCard } from "../components/InstructorRecentReviewsCard";
 import { InstructorActionTasksCard } from "../components/InstructorActionTasksCard";
+import { InstructorActivityHeatmap } from "../components/InstructorActivityHeatmap";
+import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
 import { useInstructorActivityTimelineQuery } from "@/lib/queries/useCatalogQueries";
-import { generateTimeLabels } from "../utils/time_labels";
+import { formatTimelineToSplineData } from "../utils/time_labels";
 import type {
   OverviewActionTask,
   OverviewReview,
@@ -52,7 +63,7 @@ export interface InstructorOverviewViewProps {
 }
 
 export function InstructorOverviewView({
-  courses,
+  courses: _courses,
   activeCourse: _activeCourse,
   onSelectCourse,
   analyticsByCourseId: _analyticsByCourseId,
@@ -73,13 +84,14 @@ export function InstructorOverviewView({
   onOpenPacingModal,
   enrichedCoursesForComparison,
 }: InstructorOverviewViewProps) {
-  // Tab biểu đồ ở chế độ tất cả môn: "trend" | "compare" | "certs"
-  const [allChartTab, setAllChartTab] = useState<"trend" | "compare" | "certs">("trend");
-  const [chartDateRange, setChartDateRange] = useState("7d");
-  const [chartLearnerFilter, setChartLearnerFilter] = useState<"all" | "in_progress" | "completed">(
-    "all",
+  // Tab biểu đồ ở chế độ tất cả môn: "trend" | "heatmap" | "compare" | "certs"
+  const [allChartTab, setAllChartTab] = useState<"trend" | "heatmap" | "compare" | "certs">(
+    "trend",
   );
-  const [certCourseFilter, setCertCourseFilter] = useState<string>("all");
+  const [chartDateRange, setChartDateRange] = useState("7d");
+  const [chartLearnerFilter, setChartLearnerFilter] = useState<
+    "all" | "paid_in_progress" | "paid_completed" | "audit" | "paid" | "in_progress" | "completed"
+  >("all");
   const [selectedDayFilter, setSelectedDayFilter] = useState<{ day: string; date: string } | null>(
     null,
   );
@@ -104,45 +116,39 @@ export function InstructorOverviewView({
     learnerFilter: chartLearnerFilter,
   });
 
-  // Lọc danh sách chứng chỉ theo bộ lọc khóa học
-  const filteredCertificates = useMemo(() => {
-    if (certCourseFilter === "all") return allCompletedStudentsList;
-    return allCompletedStudentsList.filter((c) =>
-      c.courseTitle.toLowerCase().includes(certCourseFilter.toLowerCase()),
-    );
-  }, [allCompletedStudentsList, certCourseFilter]);
-
   // Dữ liệu biểu đồ từ API thực tế 100% (Zero-Fallback & No Mock Math.sin)
   const allCoursesWeekDaysData = useMemo(() => {
-    const labels = generateTimeLabels(chartDateRange, customStartDate, customEndDate);
-    const timeline = activityTimelineData?.timeline || [];
+    return formatTimelineToSplineData(
+      activityTimelineData?.timeline,
+      chartDateRange,
+      customStartDate,
+      customEndDate,
+    );
+  }, [activityTimelineData?.timeline, chartDateRange, customStartDate, customEndDate]);
 
-    return labels.map((l, idx) => {
-      const p = timeline[idx];
-      return {
-        day: l.day,
-        date: l.date,
-        fullDateLabel: l.fullDateLabel,
-        showTick: l.showTick,
-        isFuture: l.isFuture,
-        count: !p
-          ? 0
-          : chartLearnerFilter === "in_progress"
-            ? p.inProgress
-            : chartLearnerFilter === "completed"
-              ? p.completedItems
-              : p.activeLearners,
-        completed: !p ? 0 : chartLearnerFilter === "in_progress" ? 0 : p.completedItems,
-        inProgress: !p ? 0 : chartLearnerFilter === "completed" ? 0 : p.inProgress,
-      };
+  // Thống kê nhanh dữ liệu chuỗi hoạt động để lấp đầy không gian và tăng giá trị thông tin
+  const splineSummary = useMemo(() => {
+    let totalAccess = 0;
+    let totalCompleted = 0;
+    let peakCount = 0;
+    let peakLabel = "";
+
+    allCoursesWeekDaysData.forEach((d) => {
+      totalAccess += d.count || 0;
+      totalCompleted += d.completed || 0;
+      if (d.count > peakCount) {
+        peakCount = d.count;
+        peakLabel = d.fullDateLabel || d.day;
+      }
     });
-  }, [
-    activityTimelineData?.timeline,
-    chartDateRange,
-    chartLearnerFilter,
-    customStartDate,
-    customEndDate,
-  ]);
+
+    return {
+      totalAccess,
+      totalCompleted,
+      peakCount,
+      peakLabel: peakLabel || "Chưa có đỉnh",
+    };
+  }, [allCoursesWeekDaysData]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -152,49 +158,49 @@ export function InstructorOverviewView({
         <div className="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/60 shadow-xs space-y-4 overflow-hidden">
           <div className="space-y-3 pb-1">
             {/* Tabs biểu đồ toàn sàn */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-muted/60 w-full sm:w-fit max-w-full">
-              <button
-                type="button"
-                onClick={() => setAllChartTab("trend")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  allChartTab === "trend"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                <span>Hoạt động</span>
-              </button>
+            <Tabs.Root
+              value={allChartTab}
+              onValueChange={(val) =>
+                setAllChartTab(val as "trend" | "heatmap" | "compare" | "certs")
+              }
+            >
+              <Tabs.List className="border-b-0 flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-muted/60 w-full sm:w-fit max-w-full">
+                <Tabs.Tab
+                  value="trend"
+                  className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                >
+                  <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                  <span>Hoạt động</span>
+                </Tabs.Tab>
 
-              <button
-                type="button"
-                onClick={() => setAllChartTab("compare")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  allChartTab === "compare"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-                <span>Đối sánh môn học</span>
-              </button>
+                <Tabs.Tab
+                  value="heatmap"
+                  className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                >
+                  <Flame className="w-3.5 h-3.5 text-destructive" aria-hidden="true" />
+                  <span>Khung giờ học</span>
+                </Tabs.Tab>
 
-              <button
-                type="button"
-                onClick={() => setAllChartTab("certs")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                  allChartTab === "certs"
-                    ? "bg-surface text-foreground shadow-xs font-black"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Award className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
-                <span>Chứng chỉ đã cấp ({totalCertificatesAllCourses})</span>
-              </button>
-            </div>
+                <Tabs.Tab
+                  value="compare"
+                  className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                >
+                  <TrendingDown className="w-3.5 h-3.5 text-success" aria-hidden="true" />
+                  <span>Đối sánh môn học</span>
+                </Tabs.Tab>
 
-            {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên */}
-            {allChartTab === "trend" ? (
+                <Tabs.Tab
+                  value="certs"
+                  className="pb-1.5 pt-1.5 px-3 rounded-lg text-xs font-bold mb-0 after:hidden transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap text-muted-foreground hover:text-foreground data-[selected]:bg-surface data-[selected]:text-foreground data-[selected]:shadow-xs data-[selected]:font-black"
+                >
+                  <Award className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
+                  <span>Chứng chỉ đã cấp</span>
+                </Tabs.Tab>
+              </Tabs.List>
+            </Tabs.Root>
+
+            {/* Thanh điều khiển bộ lọc thời gian & đối tượng học viên (Cố định cho cả Hoạt động và Khung giờ học) */}
+            {allChartTab === "trend" || allChartTab === "heatmap" ? (
               <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
                   <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
@@ -205,37 +211,57 @@ export function InstructorOverviewView({
                   <Select
                     value={chartDateRange}
                     onValueChange={(val) => {
-                      if (val) setChartDateRange(val as string);
+                      if (val) setChartDateRange(String(val));
                     }}
                   >
                     <Select.Trigger
                       aria-label="Chọn khoảng thời gian biểu đồ toàn sàn"
-                      className="w-auto h-8 px-3 text-[11px] font-semibold rounded-lg"
+                      className="h-8 px-2.5 py-0 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus-visible:ring-1 focus-visible:ring-primary shadow-2xs hover:border-primary/50 transition-all gap-1.5"
                     >
                       <Select.Value>
-                        {{
-                          today: "Hôm nay",
-                          "7d": "7 ngày gần nhất",
-                          this_week: "Tuần này",
-                          last_week: "Tuần trước",
-                          this_month: "Tháng này",
-                          last_month: "Tháng trước",
-                          custom: "Chọn thời gian",
-                        }[chartDateRange] ?? chartDateRange}
+                        {chartDateRange === "today"
+                          ? "Hôm nay"
+                          : chartDateRange === "7d"
+                            ? "7 ngày gần nhất"
+                            : chartDateRange === "this_week"
+                              ? "Tuần này"
+                              : chartDateRange === "last_week"
+                                ? "Tuần trước"
+                                : chartDateRange === "this_month"
+                                  ? "Tháng này"
+                                  : chartDateRange === "last_month"
+                                    ? "Tháng trước"
+                                    : chartDateRange === "custom"
+                                      ? "Chọn thời gian"
+                                      : chartDateRange}
                       </Select.Value>
                     </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="today">Hôm nay</Select.Item>
-                      <Select.Item value="7d">7 ngày gần nhất</Select.Item>
-                      <Select.Item value="this_week">Tuần này</Select.Item>
-                      <Select.Item value="last_week">Tuần trước</Select.Item>
-                      <Select.Item value="this_month">Tháng này</Select.Item>
-                      <Select.Item value="last_month">Tháng trước</Select.Item>
-                      <Select.Item value="custom">Chọn thời gian</Select.Item>
+                    <Select.Content className="w-[160px]">
+                      <Select.Item value="today" className="text-xs py-1.5">
+                        Hôm nay
+                      </Select.Item>
+                      <Select.Item value="7d" className="text-xs py-1.5">
+                        7 ngày gần nhất
+                      </Select.Item>
+                      <Select.Item value="this_week" className="text-xs py-1.5">
+                        Tuần này
+                      </Select.Item>
+                      <Select.Item value="last_week" className="text-xs py-1.5">
+                        Tuần trước
+                      </Select.Item>
+                      <Select.Item value="this_month" className="text-xs py-1.5">
+                        Tháng này
+                      </Select.Item>
+                      <Select.Item value="last_month" className="text-xs py-1.5">
+                        Tháng trước
+                      </Select.Item>
+                      <Select.Item value="custom" className="text-xs py-1.5">
+                        Chọn thời gian
+                      </Select.Item>
                     </Select.Content>
                   </Select>
 
-                  {allChartTab === "trend" && chartDateRange === "custom" && (
+                  {chartDateRange === "custom" && (
                     <InstructorDateRangeForm
                       startDate={customStartDate}
                       endDate={customEndDate}
@@ -249,60 +275,50 @@ export function InstructorOverviewView({
                   <Select
                     value={chartLearnerFilter}
                     onValueChange={(val) => {
-                      if (val) setChartLearnerFilter(val as "all" | "in_progress" | "completed");
+                      if (val) {
+                        setChartLearnerFilter(
+                          val as
+                            | "all"
+                            | "paid_in_progress"
+                            | "paid_completed"
+                            | "audit"
+                            | "paid"
+                            | "in_progress"
+                            | "completed",
+                        );
+                      }
                     }}
                   >
                     <Select.Trigger
                       aria-label="Phân khúc đối tượng học viên vĩ mô"
-                      className="w-auto h-8 px-3 text-[11px] font-semibold rounded-lg"
+                      title="Lọc xu hướng phân tích theo nhóm đối tượng học viên trên toàn hệ thống"
+                      className="h-8 px-2.5 py-0 rounded-lg bg-surface border border-outline-variant text-[11px] font-semibold text-foreground focus-visible:ring-1 focus-visible:ring-primary shadow-2xs hover:border-primary/50 transition-all gap-1.5"
                     >
                       <Select.Value>
-                        {chartLearnerFilter === "in_progress"
-                          ? "Nhóm: Đang học"
-                          : chartLearnerFilter === "completed"
-                            ? "Nhóm: Đã tốt nghiệp"
-                            : "Nhóm: Tất cả học viên"}
+                        {chartLearnerFilter === "all"
+                          ? "Nhóm: Tất cả học viên"
+                          : chartLearnerFilter === "paid_in_progress"
+                            ? "Nhóm: Chính thức — Đang học"
+                            : chartLearnerFilter === "paid_completed"
+                              ? "Nhóm: Chính thức — Đã tốt nghiệp"
+                              : chartLearnerFilter === "audit"
+                                ? "Nhóm: Học viên học thử"
+                                : chartLearnerFilter}
                       </Select.Value>
                     </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="all">Nhóm: Tất cả học viên</Select.Item>
-                      <Select.Item value="in_progress">Nhóm: Đang học</Select.Item>
-                      <Select.Item value="completed">Nhóm: Đã tốt nghiệp</Select.Item>
-                    </Select.Content>
-                  </Select>
-                </div>
-              </div>
-            ) : allChartTab === "certs" ? (
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
-                  <Filter className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                  <span>Khóa học cấp chứng chỉ:</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Select
-                    value={certCourseFilter}
-                    onValueChange={(val) => {
-                      if (val) setCertCourseFilter(val as string);
-                    }}
-                  >
-                    <Select.Trigger
-                      aria-label="Lọc chứng chỉ theo khóa học"
-                      className="w-auto h-8 px-3 text-[11px] font-semibold rounded-lg"
-                    >
-                      <Select.Value>
-                        {certCourseFilter === "all"
-                          ? `Tất cả khóa học (${courses.length})`
-                          : certCourseFilter}
-                      </Select.Value>
-                    </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="all">Tất cả khóa học ({courses.length})</Select.Item>
-                      {courses.map((c) => (
-                        <Select.Item key={c.id} value={c.title}>
-                          {c.title}
-                        </Select.Item>
-                      ))}
+                    <Select.Content className="w-[230px]">
+                      <Select.Item value="all" className="text-xs py-1.5">
+                        Nhóm: Tất cả học viên
+                      </Select.Item>
+                      <Select.Item value="paid_in_progress" className="text-xs py-1.5">
+                        Nhóm: Chính thức — Đang học
+                      </Select.Item>
+                      <Select.Item value="paid_completed" className="text-xs py-1.5">
+                        Nhóm: Chính thức — Đã tốt nghiệp
+                      </Select.Item>
+                      <Select.Item value="audit" className="text-xs py-1.5">
+                        Nhóm: Học viên học thử
+                      </Select.Item>
                     </Select.Content>
                   </Select>
                 </div>
@@ -310,51 +326,127 @@ export function InstructorOverviewView({
             ) : null}
           </div>
 
-          {/* Tab 1: Biểu đồ Hoạt động học tập (Đường cong Spline) */}
-          {allChartTab === "trend" && (
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
-                <span>Lượng học viên hoạt động hàng ngày trên tất cả các khóa học giảng dạy:</span>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-primary" /> Lượt học viên truy cập
+          {/* VÙNG NỘI DUNG BIỂU ĐỒ VỚI CHIỀU CAO TỐI THIỂU CHUẨN HÓA (CHỐNG GIẬT LAYOUT SHIFT) */}
+          <div className="min-h-[420px] transition-opacity duration-200 animate-in fade-in-50">
+            {/* Tab 1: Biểu đồ Hoạt động học tập (Đường cong Spline) */}
+            {allChartTab === "trend" && (
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <span>
+                    Lượng học viên hoạt động hàng ngày trên tất cả các khóa học giảng dạy:
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-success" /> Lượt hoàn thành bài học
-                  </span>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-primary" /> Lượt học viên truy
+                      cập
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-success" /> Lượt hoàn thành bài
+                      học
+                    </span>
+                  </div>
+                </div>
+
+                <InstructorSplineChart
+                  data={allCoursesWeekDaysData}
+                  height={270}
+                  selectedDay={selectedDayFilter?.day}
+                  onSelectDay={(pt) =>
+                    setSelectedDayFilter(
+                      selectedDayFilter?.day === pt.day ? null : { day: pt.day, date: pt.date },
+                    )
+                  }
+                />
+
+                {/* Hàng 3 thẻ tóm tắt nhanh dữ liệu kỳ hoạt động */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                  <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-surface border border-outline-variant/60">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <Users className="w-4 h-4" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider truncate">
+                        Tổng lượt truy cập
+                      </div>
+                      <div className="text-sm font-bold text-foreground font-mono">
+                        {splineSummary.totalAccess}{" "}
+                        <span className="text-[11px] font-normal text-muted-foreground font-sans">
+                          lượt
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-surface border border-outline-variant/60">
+                    <div className="w-8 h-8 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider truncate">
+                        Tổng bài hoàn thành
+                      </div>
+                      <div className="text-sm font-bold text-foreground font-mono">
+                        {splineSummary.totalCompleted}{" "}
+                        <span className="text-[11px] font-normal text-muted-foreground font-sans">
+                          bài
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-surface border border-outline-variant/60">
+                    <div className="w-8 h-8 rounded-lg bg-warning/10 text-warning flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider truncate">
+                        Ngày cao điểm nhất
+                      </div>
+                      <div
+                        className="text-xs font-bold text-foreground font-mono truncate"
+                        title={splineSummary.peakLabel}
+                      >
+                        {splineSummary.peakCount > 0 ? (
+                          <>
+                            {splineSummary.peakLabel}{" "}
+                            <span className="text-[11px] font-normal text-primary">
+                              ({splineSummary.peakCount} SV)
+                            </span>
+                          </>
+                        ) : (
+                          "Chưa có dữ liệu"
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <InstructorSplineChart
-                data={allCoursesWeekDaysData}
-                selectedDay={selectedDayFilter?.day}
-                onSelectDay={(pt) =>
-                  setSelectedDayFilter(
-                    selectedDayFilter?.day === pt.day ? null : { day: pt.day, date: pt.date },
-                  )
-                }
+            {/* Tab 2: Sơ đồ Mật độ Khung giờ học tập toàn sàn */}
+            {allChartTab === "heatmap" && (
+              <InstructorActivityHeatmap heatmap={activityTimelineData?.heatmap || []} />
+            )}
+
+            {/* Tab 3: So sánh tỷ lệ hoàn thành & hiệu suất giữa các môn */}
+            {allChartTab === "compare" && (
+              <InstructorCourseComparisonTab
+                courses={enrichedCoursesForComparison}
+                compareSortBy={compareSortBy}
+                onChangeCompareSortBy={setCompareSortBy}
+                onSelectCourse={onSelectCourse}
               />
-            </div>
-          )}
+            )}
 
-          {/* Tab 2: So sánh tỷ lệ hoàn thành & hiệu suất giữa các môn */}
-          {allChartTab === "compare" && (
-            <InstructorCourseComparisonTab
-              courses={enrichedCoursesForComparison}
-              compareSortBy={compareSortBy}
-              onChangeCompareSortBy={setCompareSortBy}
-              onSelectCourse={onSelectCourse}
-            />
-          )}
-
-          {/* Tab 4: Danh sách toàn bộ chứng chỉ đã cấp */}
-          {allChartTab === "certs" && (
-            <InstructorCertificatesTab
-              mode="all"
-              certificates={filteredCertificates}
-              totalCount={totalCertificatesAllCourses}
-            />
-          )}
+            {/* Tab 4: Danh sách toàn bộ chứng chỉ đã cấp */}
+            {allChartTab === "certs" && (
+              <InstructorCertificatesTab
+                mode="all"
+                certificates={allCompletedStudentsList}
+                totalCount={totalCertificatesAllCourses}
+              />
+            )}
+          </div>
         </div>
 
         {/* Card 2: Kiểm Soát Nhịp Độ Học Tập Toàn Hệ Thống */}
@@ -371,7 +463,7 @@ export function InstructorOverviewView({
       </div>
 
       {/* CỘT PHẢI (4/12 - 33%): ACTION CENTER & ĐIỀU HÀNH GIẢNG DẠY */}
-      <div className="lg:col-span-4 space-y-4">
+      <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-6">
         {/* Box 1: Việc Cần Xử Lý */}
         <InstructorActionTasksCard
           tasks={overviewActionTasks}

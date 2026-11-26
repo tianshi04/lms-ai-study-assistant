@@ -28,6 +28,7 @@ import {
   type GetAdminCatalogStatsResponse,
   type GetAdminCatalogTrendResponse,
   type ListAdminCourseMetricsResponse,
+  type GetInstructorStudentDossierResponse,
 } from "@/gen/catalog/v1/catalog_pb";
 
 /**
@@ -820,6 +821,25 @@ export function useCourseGradebookQuery(
     },
     enabled: !!params.courseId,
     placeholderData: keepPreviousData,
+    ...options,
+  });
+}
+
+export function useInstructorStudentDossierQuery(
+  courseId?: string,
+  studentId?: string,
+  options?: Partial<UseQueryOptions<GetInstructorStudentDossierResponse, Error>>,
+) {
+  return useQuery<GetInstructorStudentDossierResponse, Error>({
+    queryKey: ["instructorStudentDossier", courseId, studentId],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      return await client.getInstructorStudentDossier({
+        courseId: courseId || "",
+        studentId: studentId || "",
+      });
+    },
+    enabled: Boolean(courseId && studentId),
     ...options,
   });
 }

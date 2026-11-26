@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 import { useSendStudentReminderMutation } from "@/lib/query_hooks";
-import { Users, RotateCcw, Loader2, Send } from "lucide-react";
+import { Users, RotateCcw, Loader2, Send, Info } from "lucide-react";
 
 export interface BulkReminderStudent {
   userId: string;
@@ -18,6 +18,14 @@ export interface BulkReminderStudent {
   paceDesc?: string;
   courseId?: string;
   courseTitle?: string;
+  isCompleted?: boolean;
+  isInCooldown?: boolean;
+  cooldownUntil?: string;
+  peerReviewDutyStatus?: string;
+  isPeerReviewOverdue?: boolean;
+  enrollmentType?: string;
+  currentWeekNumber?: number;
+  currentWeekTitle?: string;
 }
 
 export interface InstructorBulkReminderModalProps {
@@ -61,40 +69,7 @@ function getStudentPaceConfig(pace?: "AHEAD" | "ON_TRACK" | "BEHIND") {
 function getSmartTemplates(
   courseTitle: string,
   bottleneckWeek?: { weekNumber: number; title: string; dropRate?: number } | null,
-  singleStudent?: BulkReminderStudent | null,
 ) {
-  const isSingle = Boolean(singleStudent);
-  const effectiveCourseTitle =
-    singleStudent?.courseTitle || (courseTitle !== "Tất cả khóa học" ? courseTitle : "Khóa học");
-
-  if (isSingle && singleStudent) {
-    if (singleStudent.pace === "AHEAD") {
-      return {
-        subject: `[Khích lệ học tập] Bạn đang học rất xuất sắc môn ${effectiveCourseTitle}`,
-        body: `Chào em ${singleStudent.userName},\n\nThầy/Cô rất vui mừng nhận thấy em đang học vượt tiến độ đề xuất môn "${effectiveCourseTitle}" (${Math.round(singleStudent.progressPercent ?? 0)}% đề cương).\n\nChúc em tiếp tục phát huy tinh thần tự học tuyệt vời này để sớm hoàn thành xuất sắc khóa học nhé!`,
-      };
-    }
-
-    if (singleStudent.pace === "ON_TRACK") {
-      return {
-        subject: `[Đôn đốc học tập] Duy trì nhịp độ học tập tốt môn ${effectiveCourseTitle}`,
-        body: `Chào em ${singleStudent.userName},\n\nThầy/Cô nhận thấy em đang bám sát rất tốt lộ trình học tập môn "${effectiveCourseTitle}" (${Math.round(singleStudent.progressPercent ?? 0)}% đề cương).\n\nHãy tiếp tục duy trì nhịp độ học tập ổn định này để hoàn thành khóa học đúng hạn nhé!\n\nChúc em học tập hiệu quả!`,
-      };
-    }
-
-    if (bottleneckWeek) {
-      return {
-        subject: `[Đôn đốc học tập] Thầy/Cô hỗ trợ tiến độ môn ${effectiveCourseTitle}`,
-        body: `Chào em ${singleStudent.userName},\n\nQua theo dõi nhịp độ học tập môn "${effectiveCourseTitle}", Thầy/Cô nhận thấy em đang gặp khó khăn và dừng lại ở nội dung Tuần ${bottleneckWeek.weekNumber} (${bottleneckWeek.title}).\n\nEm hãy sắp xếp thời gian xem lại video bài giảng, trao đổi trên Diễn đàn thảo luận và hoàn thành các bài tập tuần này để bám sát lộ trình nhé!\n\nNếu gặp bất kỳ vướng mắc nào, em đừng ngần ngại nhắn Thầy/Cô hoặc đặt câu hỏi trên Diễn đàn để được trợ giúp kịp thời. Chúc em học tập hiệu quả!`,
-      };
-    }
-
-    return {
-      subject: `[Đôn đốc học tập] Thầy/Cô hỗ trợ tiến độ môn ${effectiveCourseTitle}`,
-      body: `Chào em ${singleStudent.userName},\n\nThầy/Cô gửi lời nhắc nhở và động viên tới em về tiến độ học tập môn "${effectiveCourseTitle}".\n\nEm hãy sắp xếp thời gian hoàn thành các bài học và bài kiểm tra tuần này để bám sát lộ trình và đạt chứng chỉ khóa học đúng hạn nhé!\n\nNếu gặp khó khăn trong quá trình học, em đừng ngần ngại trao đổi trên Diễn đàn môn học. Chúc em học tốt!`,
-    };
-  }
-
   const subject = `[Đôn đốc học tập] Thầy/Cô hỗ trợ tiến độ môn ${courseTitle}`;
 
   let body = "";
@@ -119,25 +94,21 @@ export function InstructorBulkReminderModal({
   const toast = useToast();
   const sendReminderMutation = useSendStudentReminderMutation();
 
-  const isSingle = students.length === 1;
-  const singleStudent = isSingle ? students[0] : null;
-  const isAhead = singleStudent?.pace === "AHEAD";
-  const isOnTrack = singleStudent?.pace === "ON_TRACK";
-  const effectiveCourseTitle =
-    singleStudent?.courseTitle || (courseTitle !== "Tất cả khóa học" ? courseTitle : "Khóa học");
-
   const smartTemplates = React.useMemo(
-    () => getSmartTemplates(courseTitle, bottleneckWeek, singleStudent),
-    [courseTitle, bottleneckWeek, singleStudent],
+    () => getSmartTemplates(courseTitle, bottleneckWeek),
+    [courseTitle, bottleneckWeek],
   );
+  const templateScopeKey = `${courseTitle}:${bottleneckWeek?.weekNumber ?? ""}:${bottleneckWeek?.title ?? ""}`;
+  const [prevTemplateScopeKey, setPrevTemplateScopeKey] = useState(templateScopeKey);
   const [subject, setSubject] = useState(smartTemplates.subject);
   const [content, setContent] = useState(smartTemplates.body);
   const [isSending, setIsSending] = useState(false);
 
-  React.useEffect(() => {
+  if (prevTemplateScopeKey !== templateScopeKey) {
+    setPrevTemplateScopeKey(templateScopeKey);
     setSubject(smartTemplates.subject);
     setContent(smartTemplates.body);
-  }, [smartTemplates]);
+  }
 
   const handleResetSmartTemplate = () => {
     setSubject(smartTemplates.subject);
@@ -208,21 +179,10 @@ export function InstructorBulkReminderModal({
       }
 
       if (totalSent > 0) {
-        toast.success(
-          isSingle
-            ? isAhead
-              ? `Đã gửi lời khích lệ học tập tới học viên ${singleStudent?.userName}!`
-              : isOnTrack
-                ? `Đã gửi đôn đốc tiến độ tới học viên ${singleStudent?.userName}!`
-                : `Đã gửi thông báo nhắc nhở tới học viên ${singleStudent?.userName}!`
-            : `Đã gửi thông báo nhắc nhở tới ${totalSent} học viên!`,
-          {
-            description:
-              groups.size > 1
-                ? `Đã gửi trên ${groups.size} khóa học`
-                : `Môn: ${effectiveCourseTitle}`,
-          },
-        );
+        toast.success(`Đã gửi thông báo nhắc nhở tới ${totalSent} học viên!`, {
+          description:
+            groups.size > 1 ? `Đã gửi trên ${groups.size} khóa học` : `Môn: ${courseTitle}`,
+        });
 
         if (onSuccess) {
           onSuccess(sentStudentIds);
@@ -236,7 +196,7 @@ export function InstructorBulkReminderModal({
             description:
               groups.size > 1
                 ? "Vui lòng kiểm tra lại trạng thái học viên."
-                : `Môn: ${effectiveCourseTitle}`,
+                : `Môn: ${courseTitle}`,
           },
         );
       }
@@ -259,7 +219,7 @@ export function InstructorBulkReminderModal({
             </div>
             <div>
               <Dialog.Title className="text-base font-bold text-foreground">
-                Gửi thông báo học tập
+                Gửi thông báo học tập hàng loạt
               </Dialog.Title>
             </div>
           </div>
@@ -274,13 +234,7 @@ export function InstructorBulkReminderModal({
                 <span>Danh sách học viên nhận thông báo ({students.length} SV)</span>
               </span>
               <span className="text-[10px] text-muted-foreground font-mono">
-                {isSingle
-                  ? isAhead
-                    ? "Nhóm: Vượt tiến độ"
-                    : singleStudent?.pace === "ON_TRACK"
-                      ? "Nhóm: Đúng tiến độ"
-                      : "Nhóm: Chậm tiến độ"
-                  : "Nhóm: Chậm tiến độ"}
+                Nhóm: Chậm tiến độ
               </span>
             </div>
 
@@ -318,6 +272,19 @@ export function InstructorBulkReminderModal({
                   </div>
                 );
               })}
+            </div>
+
+            {/* Thông tin kênh chuyển phát */}
+            <div className="p-2.5 rounded-xl bg-info/10 border border-info/25 flex items-center gap-2 text-xs text-foreground">
+              <Info className="w-3.5 h-3.5 text-info shrink-0" aria-hidden="true" />
+              <p className="text-[11px] text-muted-foreground leading-normal">
+                Thông báo sẽ được gửi qua{" "}
+                <strong className="text-foreground font-semibold">
+                  Thông báo ứng dụng (In-app)
+                </strong>{" "}
+                kèm <strong className="text-foreground font-semibold">Email tự động</strong> tới học
+                viên.
+              </p>
             </div>
           </div>
 
@@ -389,11 +356,7 @@ export function InstructorBulkReminderModal({
               <Send className="w-3.5 h-3.5" aria-hidden="true" />
             )}
             <span>
-              {isSending
-                ? "Đang gửi thông báo..."
-                : isSingle
-                  ? "Xác nhận gửi thông báo"
-                  : `Xác nhận gửi cho ${students.length} học viên`}
+              {isSending ? "Đang gửi thông báo..." : `Xác nhận gửi cho ${students.length} học viên`}
             </span>
           </Button>
         </Dialog.Footer>

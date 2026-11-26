@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useInstructorCoursesQuery, useInstructorAnalyticsQuery } from "@/lib/query_hooks";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 import type { StudentDetailRecord } from "./InstructorStudentDetailModal";
+import { formatLastActiveLabel, isInactiveOver7Days } from "./student-dossier/dossier_helpers";
 import { InstructorExecutiveToolbar } from "./instructor/components/InstructorExecutiveToolbar";
 import { InstructorKpiRibbon } from "./instructor/components/InstructorKpiRibbon";
 import { InstructorOverviewView } from "./instructor/views/InstructorOverviewView";
@@ -36,8 +37,6 @@ const InstructorStudentDetailModal = dynamic(
   { ssr: false },
 );
 
-import type { BulkReminderStudent } from "./InstructorBulkReminderModal";
-
 const InstructorBulkReminderModal = dynamic(
   () => import("./InstructorBulkReminderModal").then((m) => m.InstructorBulkReminderModal),
   { ssr: false },
@@ -64,28 +63,18 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     useState<StudentDetailRecord | null>(null);
   const [isStudentDetailModalOpen, setIsStudentDetailModalOpen] = useState(false);
 
-  const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [currentTimeMs] = useState(() => Date.now());
 
-  useEffect(() => {
-    setCurrentTimeMs(Date.now());
-  }, []);
-
-  // Tự động gán khóa học đầu tiên làm active course dự phòng
-  useEffect(() => {
-    if (!selectedCourseId && courses.length > 0) {
-      setSelectedCourseId(courses[0].id);
-    }
-  }, [courses, selectedCourseId]);
-
-  // Môn học đang được chọn khi xem chi tiết
+  // Môn học đang được chọn khi xem chi tiết (suy xuất trực tiếp, tránh setState trong useEffect)
+  const effectiveSelectedCourseId = selectedCourseId || courses[0]?.id || "";
   const activeCourse = useMemo(() => {
-    return courses.find((c: Course) => c.id === selectedCourseId) || courses[0] || null;
-  }, [courses, selectedCourseId]);
+    return courses.find((c: Course) => c.id === effectiveSelectedCourseId) || courses[0] || null;
+  }, [courses, effectiveSelectedCourseId]);
 
   // Analytics của môn học đang chọn
   const { data: analytics, isLoading: loadingAnalytics } = useInstructorAnalyticsQuery(
-    selectedCourseId,
-    { enabled: !!selectedCourseId },
+    effectiveSelectedCourseId,
+    { enabled: !!effectiveSelectedCourseId },
   );
 
   // Hook dữ liệu cho Chế độ 1: Tổng quan tất cả khóa học
@@ -102,27 +91,100 @@ export function InstructorDashboard({ userName }: { userName: string }) {
     currentTimeMs,
   });
 
-  const [singleReminderStudent, setSingleReminderStudent] = useState<BulkReminderStudent | null>(
-    null,
-  );
-
+  // Chuyển chọn nhanh khóa học từ các widget con sang Chế độ 2
   const handleSelectCourse = (courseId: string) => {
     setSelectedCourseId(courseId);
     setViewMode("specific");
   };
 
-  const handleNudgeStudent = (student: StudentWithPacing) => {
-    setSingleReminderStudent({
-      userId: student.userId,
-      userName: student.userName,
-      userEmail: student.userEmail,
-      progressPercent: student.progressPercent,
-      pace: student.pace,
-      paceDesc: student.paceDesc,
-      courseId: activeCourse?.id,
-      courseTitle: activeCourse?.title,
+  // Ánh xạ itemId -> Tuần & tổng thời lượng ước tính do giảng viên cấu hình cho khóa học đang chọn
+  const { activeCourseItemWeekMap, activeCourseEstimatedMinutes } = useMemo(() => {
+    const map = new Map<string, number>();
+    let totalEstMinutes = 0;
+    for (const wk of activeCourse?.weekModules || []) {
+      const wkNum = wk.weekNumber || 1;
+      for (const lesson of wk.lessons || []) {
+        for (const item of lesson.items || []) {
+          map.set(item.id, wkNum);
+          totalEstMinutes +=
+            item.estimatedMinutes && item.estimatedMinutes > 0 ? item.estimatedMinutes : 10;
+        }
+      }
+    }
+    return { activeCourseItemWeekMap: map, activeCourseEstimatedMinutes: totalEstMinutes };
+  }, [activeCourse]);
+
+  // Chuẩn hóa danh sách học viên của khóa đang chọn cho bố cục 2 cột Master-Detail
+  const rosterDetailRecords = useMemo<StudentDetailRecord[]>(() => {
+    const weeks = courseData.calculatedWeeks;
+    const totalItems = courseData.totalItemsInActiveCourse;
+    return courseData.rawStudentsWithPacing.map((student) => {
+      const isDone = student.progressPercent >= 100;
+      const studentWeekNum = isDone
+        ? weeks.length || 1
+        : Math.min(
+            weeks.length || 1,
+            Math.floor((student.progressPercent / 100) * (weeks.length || 1)) + 1,
+          );
+      const currentWeekTitle =
+        weeks.find((w) => w.weekNumber === studentWeekNum)?.title || `Tuần ${studentWeekNum}`;
+
+      return {
+        userId: student.userId,
+        userName: student.userName,
+        userEmail: student.userEmail,
+        progressPercent: student.progressPercent,
+        pace: student.pace,
+        enrolledAt: student.enrolledAt,
+        enrollmentType: student.enrollmentType,
+        totalTimeSpentSeconds: student.totalTimeSpentSeconds,
+        currentWeekNumber: studentWeekNum,
+        currentWeekTitle,
+        currentLessonTitle: student.lastAccessedItemTitle || undefined,
+        quizScore:
+          student.quizAttemptsCount && student.quizAttemptsCount > 0
+            ? Number(student.averageQuizScore.toFixed(1))
+            : undefined,
+        quizAttemptsCount: student.quizAttemptsCount,
+        isInCooldown: student.isInCooldown,
+        cooldownUntil: student.cooldownUntil,
+        peerReviewDutyStatus: student.peerReviewDutyStatus,
+        isPeerReviewOverdue: student.isPeerReviewOverdue,
+        lastActiveTime: formatLastActiveLabel(student.lastAccessedAt, currentTimeMs),
+        isInactive: isInactiveOver7Days(student.lastAccessedAt, currentTimeMs),
+        isCompleted: isDone,
+        completedItemsCount:
+          student.totalCourseItems > 0
+            ? student.completedItemsCount
+            : totalItems > 0
+              ? Math.round((student.progressPercent / 100) * totalItems)
+              : 0,
+        totalCourseItems: student.totalCourseItems > 0 ? student.totalCourseItems : totalItems,
+        courseEstimatedMinutes: activeCourseEstimatedMinutes,
+        dailyActivities: student.dailyActivities,
+        currentStreak: student.currentStreak,
+        longestStreak: student.longestStreak,
+        courseId: activeCourse?.id,
+        courseTitle: activeCourse?.title,
+      };
     });
-    setIsBulkReminderModalOpen(true);
+  }, [
+    activeCourse?.id,
+    activeCourse?.title,
+    activeCourseEstimatedMinutes,
+    courseData.calculatedWeeks,
+    courseData.rawStudentsWithPacing,
+    courseData.totalItemsInActiveCourse,
+    currentTimeMs,
+  ]);
+
+  // Mở trực tiếp Modal Chi Tiết Học Viên (Master-Detail + Nudge Drawer)
+  const handleNudgeStudent = (student: StudentWithPacing) => {
+    const matched = rosterDetailRecords.find((r) => r.userId === student.userId);
+    if (matched) {
+      setSelectedStudentForDetail(matched);
+      setIsStudentDetailModalOpen(true);
+    }
   };
 
   return (
@@ -134,7 +196,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           viewMode={viewMode}
           onSelectViewMode={(mode) => setViewMode(mode)}
           courses={courses}
-          selectedCourseId={selectedCourseId}
+          selectedCourseId={effectiveSelectedCourseId}
           onSelectCourse={handleSelectCourse}
           onOpenOrgModal={() => setIsOrgModalOpen(true)}
           courseStudentCounts={overviewData.courseStudentCounts}
@@ -173,7 +235,31 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               ? overviewData.totalCertificatesAllCourses
               : courseData.completedStudents.length
           }
-          totalLearningHours={overviewData.totalLearningHoursAllCourses}
+          paidStudentsCount={
+            viewMode === "all"
+              ? overviewData.paidStudentsAllCourses
+              : (analytics?.paidStudentsCount ?? courseData.paidStudentsCount)
+          }
+          auditStudentsCount={
+            viewMode === "all"
+              ? overviewData.auditStudentsAllCourses
+              : (analytics?.auditStudentsCount ?? courseData.auditStudentsCount)
+          }
+          totalLearningHours={
+            viewMode === "all"
+              ? overviewData.totalLearningHoursAllCourses
+              : courseData.totalLearningHours
+          }
+          paidLearningHours={
+            viewMode === "all"
+              ? overviewData.paidLearningHoursAllCourses
+              : courseData.paidLearningHours
+          }
+          auditLearningHours={
+            viewMode === "all"
+              ? overviewData.auditLearningHoursAllCourses
+              : courseData.auditLearningHours
+          }
           loading={loadingAnalytics}
         />
 
@@ -207,9 +293,12 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             />
           ) : (
             <InstructorCourseDeepDiveView
+              key={activeCourse?.id || "none"}
               activeCourse={activeCourse}
               pendingQaCount={
-                activeCourse ? overviewData.pendingQaByCourseId.get(activeCourse.id) || 0 : 0
+                activeCourse && overviewData.pendingQaByCourseId.has(activeCourse.id)
+                  ? overviewData.pendingQaByCourseId.get(activeCourse.id)
+                  : undefined
               }
               rawStudents={courseData.rawStudents}
               rawStudentsWithPacing={courseData.rawStudentsWithPacing}
@@ -221,8 +310,11 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               currentTimeMs={currentTimeMs}
               nudgedSpecificStudentIds={nudgedSpecificStudentIds}
               onNudgeStudent={handleNudgeStudent}
+              weeklyCohortFilter={courseData.weeklyCohortFilter}
+              onSelectCohortFilter={courseData.setWeeklyCohortFilter}
+              paidStudentsCount={courseData.paidStudentsCount}
+              auditStudentsCount={courseData.auditStudentsCount}
               onNudgeAllBehind={() => {
-                setSingleReminderStudent(null);
                 setIsBulkReminderModalOpen(true);
               }}
               onSelectStudentForDetail={(record) => {
@@ -249,7 +341,6 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           open={isPacingModalOpen}
           onOpenChange={setIsPacingModalOpen}
           initialCategory={pacingModalCategory}
-          coursesList={courses.map((c) => ({ id: c.id, title: c.title }))}
           students={overviewData.allPacingStudents}
           bottleneckWeek={viewMode === "specific" ? courseData.bottleneckWeek : null}
         />
@@ -260,8 +351,12 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           open={isStudentDetailModalOpen}
           onOpenChange={setIsStudentDetailModalOpen}
           student={selectedStudentForDetail}
+          students={rosterDetailRecords}
+          onSelectStudent={setSelectedStudentForDetail}
+          itemWeekMap={activeCourseItemWeekMap}
           courseTitle={activeCourse?.title || "Khóa học"}
           courseId={activeCourse?.id}
+          nudgedStudentIds={nudgedSpecificStudentIds}
           isNudged={
             selectedStudentForDetail
               ? nudgedSpecificStudentIds.has(selectedStudentForDetail.userId)
@@ -275,35 +370,30 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
       {isBulkReminderModalOpen && activeCourse && (
         <InstructorBulkReminderModal
-          key={`${activeCourse.id}-${isBulkReminderModalOpen}-${singleReminderStudent?.userId || "all"}`}
+          key={`${activeCourse.id}-${isBulkReminderModalOpen}-bulk`}
           open={isBulkReminderModalOpen}
-          onOpenChange={(isOpen) => {
-            setIsBulkReminderModalOpen(isOpen);
-            if (!isOpen) setSingleReminderStudent(null);
-          }}
+          onOpenChange={setIsBulkReminderModalOpen}
           courseId={activeCourse.id}
           courseTitle={activeCourse.title}
-          students={
-            singleReminderStudent
-              ? [singleReminderStudent]
-              : courseData.rawStudentsWithPacing
-                  .filter((s) => s.pace === "BEHIND")
-                  .map((s) => ({
-                    userId: s.userId,
-                    userName: s.userName,
-                    userEmail: s.userEmail,
-                    progressPercent: s.progressPercent,
-                    pace: s.pace,
-                    paceDesc: s.paceDesc,
-                    courseId: activeCourse.id,
-                    courseTitle: activeCourse.title,
-                  }))
-          }
-          bottleneckWeek={singleReminderStudent ? null : courseData.bottleneckWeek}
+          students={courseData.rawStudentsWithPacing
+            .filter((s) => s.pace === "BEHIND")
+            .map((s) => ({
+              userId: s.userId,
+              userName: s.userName,
+              userEmail: s.userEmail,
+              progressPercent: s.progressPercent,
+              pace: s.pace,
+              paceDesc: s.paceDesc,
+              courseId: activeCourse.id,
+              courseTitle: activeCourse.title,
+            }))}
+          bottleneckWeek={courseData.bottleneckWeek}
           onSuccess={(studentIds) => {
-            studentIds.forEach((id) =>
-              setNudgedSpecificStudentIds((prev) => new Set(prev).add(id)),
-            );
+            setNudgedSpecificStudentIds((prev) => {
+              const next = new Set(prev);
+              studentIds.forEach((id) => next.add(id));
+              return next;
+            });
           }}
         />
       )}
