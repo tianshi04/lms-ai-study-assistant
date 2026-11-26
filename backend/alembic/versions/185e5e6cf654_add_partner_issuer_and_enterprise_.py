@@ -1,7 +1,7 @@
 """add partner issuer and enterprise license org links
 
 Revision ID: 185e5e6cf654
-Revises: 6ed40cb6003e
+Revises: 0d3341671506
 Create Date: 2026-11-11 14:37:46.150407
 
 """
@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "185e5e6cf654"
-down_revision: str | Sequence[str] | None = "6ed40cb6003e"
+down_revision: str | Sequence[str] | None = "0d3341671506"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
