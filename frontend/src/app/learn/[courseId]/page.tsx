@@ -1117,14 +1117,14 @@ function CoursePlayerContent() {
             {/* Mobile Backdrop Overlay for Course Syllabus Drawer */}
             {isSidebarOpen && (
               <div
-                className="fixed inset-0 bg-scrim backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-200"
+                className="fixed inset-0 bg-scrim backdrop-blur-xs z-[60] lg:hidden animate-in fade-in duration-200"
                 onClick={() => setIsSidebarOpen(false)}
                 aria-hidden="true"
               />
             )}
 
             <aside
-              className={`fixed top-14 bottom-0 left-0 z-50 w-80 max-w-[85vw] rounded-r-3xl rounded-l-none shadow-2xl lg:relative lg:inset-auto lg:z-auto lg:h-full lg:rounded-3xl lg:shadow-xs bg-surface-container-lowest text-on-surface overflow-hidden shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
+              className={`fixed top-14 bottom-0 left-0 z-[70] w-80 max-w-[85vw] rounded-r-3xl rounded-l-none shadow-2xl lg:relative lg:inset-auto lg:z-auto lg:h-full lg:rounded-3xl lg:shadow-xs bg-surface-container-lowest text-on-surface overflow-hidden shrink-0 flex flex-col transition-all duration-300 ease-m3-emphasized ${
                 isSidebarOpen
                   ? "translate-x-0 visible lg:w-80 xl:w-90 lg:max-w-[calc(100vw-24px)]"
                   : "-translate-x-full max-lg:invisible pointer-events-none lg:pointer-events-auto lg:translate-x-0 lg:w-14"
@@ -1174,7 +1174,7 @@ function CoursePlayerContent() {
         )}
 
         {/* Center Workspace & Bottom Panels */}
-        <main className="flex-1 flex flex-col overflow-hidden relative text-on-surface min-w-0 h-full">
+        <main className="flex-1 flex flex-col overflow-hidden relative z-0 isolate text-on-surface min-w-0 h-full">
           {/* Lock Notice Banner */}
           {lockNotice && !isQuizActive && (
             <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-4 sm:px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate gap-3 rounded-2xl mb-2">
