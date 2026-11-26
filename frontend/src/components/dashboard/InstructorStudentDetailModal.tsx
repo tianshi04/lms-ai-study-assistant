@@ -440,13 +440,13 @@ export function InstructorStudentDetailModal({
         {/* CỘT PHẢI: KHÔNG GIAN ĐỌC HỒ SƠ CHI TIẾT (100% TẬP TRUNG QUAN SÁT) */}
         <div className="flex-1 min-w-0 flex flex-col bg-surface">
           {/* 1. Header sạch, trung thực, đầy đủ tên khóa học */}
-          <Dialog.Header className="px-6 py-4 border-b border-border pb-4 shrink-0">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3 min-w-0">
+          <Dialog.Header className="px-4 sm:px-6 py-4 border-b border-border pb-4 shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 relative">
+              <div className="flex items-start gap-3 min-w-0 pr-9 sm:pr-0">
                 <Avatar name={student.userName} size="md" className="shrink-0 mt-0.5" />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <Dialog.Title className="text-base font-bold text-foreground flex items-center gap-2 flex-wrap">
-                    <span>{student.userName}</span>
+                    <span className="break-words">{student.userName}</span>
                     <Badge variant={risk.badgeVariant} size="sm">
                       {risk.statusLabel}
                     </Badge>
@@ -457,22 +457,22 @@ export function InstructorStudentDetailModal({
                       </span>
                     )}
                   </Dialog.Title>
-                  <Dialog.Description className="text-xs text-muted-foreground mt-0.5">
+                  <Dialog.Description className="text-xs text-muted-foreground mt-0.5 break-words">
                     {metaParts.join(" · ")}
                   </Dialog.Description>
-                  <div className="text-xs text-muted-foreground font-medium leading-snug mt-1">
+                  <div className="text-xs text-muted-foreground font-medium leading-snug mt-1 break-words">
                     {effectiveCourseTitle}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 pl-13 sm:pl-0">
                 <Button
                   type="button"
                   size="xs"
                   shape="square"
                   onClick={() => openNudgeDrawer(risk.primaryActionTemplate)}
-                  className="text-xs font-semibold px-3"
+                  className="text-xs font-semibold px-3 whitespace-nowrap"
                 >
                   <Send className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
                   Gửi thông báo
@@ -483,7 +483,7 @@ export function InstructorStudentDetailModal({
                   size="xs"
                   onClick={() => onOpenChange(false)}
                   aria-label="Đóng cửa sổ"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground absolute right-0 top-0 sm:static"
                 >
                   <X className="w-4 h-4" aria-hidden="true" />
                 </IconButton>
