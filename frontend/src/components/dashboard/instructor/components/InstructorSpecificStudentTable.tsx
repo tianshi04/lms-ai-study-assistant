@@ -202,11 +202,11 @@ export function InstructorSpecificStudentTable({
       {/* Header Danh Sách Học Viên */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             <h2 className="text-sm font-bold text-foreground">
               Danh Sách Học Viên &amp; Nhịp Độ Học Tập
             </h2>
-            <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-muted text-muted-foreground">
+            <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-muted text-muted-foreground whitespace-nowrap shrink-0">
               {filteredStudents.length}/{rawStudentsWithPacing.length} SV
             </span>
           </div>

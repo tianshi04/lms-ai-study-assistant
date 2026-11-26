@@ -120,7 +120,7 @@ export function InstructorActivityHeatmap({
 
       {/* MA TRẬN SƠ ĐỒ NHIỆT (7 NGÀY X 5 KHUNG GIỜ: PHỦ TRỌN 24H) */}
       <div className="overflow-x-auto">
-        <div className="min-w-[560px]">
+        <div className="min-w-[620px]">
           {/* Hàng tiêu đề khung giờ */}
           <div className="grid grid-cols-6 gap-2 text-center text-xs font-semibold text-muted-foreground pb-2 border-b border-border">
             <div className="text-left pl-2 flex items-center gap-1">
