@@ -2,31 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { Search, Check, X, Share2, Download, FileDown } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { useToast } from "@/components/ui/Toast";
+import {
+  CertificateDocument,
+  type CertificateDocumentData,
+} from "@/components/certificate/CertificateDocument";
 import { shareContent } from "@/lib/share";
 import { useDownloadCertificatePdf } from "@/lib/hooks/useDownloadCertificatePdf";
 
 interface VerifiedCertPayload {
   isValid: boolean;
   statusMessage: string;
-  certificate: {
-    certificateId: string;
-    learnerName: string;
-    courseTitle: string;
-    issueDate: string;
-    partnerName: string;
-    partnerLogoUrl: string;
-    signerName?: string;
-    signerTitle?: string;
-    signatureImageUrl?: string;
-    qrCodeUrl: string;
-    openBadgesJsonLd?: string;
-  } | null;
+  certificate: CertificateDocumentData | null;
 }
 
 export function VerifyDetailClient({
@@ -42,7 +32,6 @@ export function VerifyDetailClient({
   const [searchCertId, setSearchCertId] = useState(certId);
   const { downloadingCertId, downloadPdf } = useDownloadCertificatePdf();
   const downloadingPdf = downloadingCertId !== null;
-  const [logoError, setLogoError] = useState(false);
 
   const cert = initialData.certificate;
   const isValid = initialData.isValid;
@@ -93,16 +82,14 @@ export function VerifyDetailClient({
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10 w-full flex-1">
+    <main className="max-w-5xl mx-auto px-4 py-10 w-full flex-1">
       {/* Interactive Search Bar */}
       <div className="bg-card border border-border rounded-3xl p-6 mb-8 shadow-sm">
         <h1 className="text-xl font-extrabold text-foreground mb-2 text-balance">
-          {"Xác minh & Tra cứu Chứng chỉ"}
+          Xác minh &amp; Tra cứu Chứng chỉ
         </h1>
         <p className="text-xs text-muted-foreground mb-4">
-          {
-            "Nhập Mã chứng chỉ (Certificate ID) để tra cứu tính hợp lệ và chi tiết bằng cấp trực tuyến."
-          }
+          Nhập Mã chứng chỉ (Certificate ID) để tra cứu tính hợp lệ và chi tiết bằng cấp trực tuyến.
         </p>
 
         <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-end gap-3">
@@ -114,7 +101,7 @@ export function VerifyDetailClient({
               aria-label="Nhập mã chứng chỉ"
               value={searchCertId}
               onChange={(e) => setSearchCertId(e.target.value)}
-              placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"}
+              placeholder="Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"
               spellCheck={false}
               autoComplete="off"
               className="font-mono"
@@ -122,172 +109,50 @@ export function VerifyDetailClient({
           </div>
           <Button type="submit" size="md">
             <Search aria-hidden="true" className="w-4 h-4 mr-1.5" />
-            <span>{"Tra cứu Chứng chỉ"}</span>
+            <span>Tra cứu Chứng chỉ</span>
           </Button>
         </form>
       </div>
 
       {isValid && cert ? (
-        <div className="space-y-8">
-          {/* Status Verification Badge */}
-          <div className="bg-success/10 border border-success/20 rounded-2xl p-4 flex items-center gap-3 text-success">
-            <div className="w-8 h-8 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold shrink-0">
-              <Check aria-hidden="true" className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="font-bold text-sm">{"Chứng chỉ Xác minh Chính thức"}</div>
-              <p className="text-xs opacity-90">
-                {
-                  "Chứng chỉ này hoàn toàn hợp lệ và được lưu trữ trên hệ thống cơ sở dữ liệu LMS AI Platform."
-                }{" "}
-                (#{cert.certificateId})
-              </p>
+        <div className="space-y-6">
+          {/* Status Verification Banner */}
+          <div className="bg-success/10 border border-success/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-success">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold shrink-0">
+                <Check aria-hidden="true" className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-bold text-sm">Chứng chỉ Xác minh Chính thức</div>
+                <p className="text-xs opacity-90">
+                  Chứng chỉ này hoàn toàn hợp lệ và được lưu trữ trên hệ thống LMS AI Platform. (#
+                  {cert.certificateId})
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Certificate Presentation Document */}
-          <div className="bg-card border-8 border-border rounded-3xl p-5 sm:p-12 shadow-2xl relative overflow-hidden">
-            <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+          {/* Synchronized Diploma Canvas */}
+          <CertificateDocument cert={cert} />
 
-            {/* Top Partner Branding */}
-            <div className="flex items-center justify-between gap-3 border-b border-border pb-6 sm:pb-8 mb-6 sm:mb-8">
-              <div className="min-w-0 flex-1">
-                <Badge
-                  variant="primary"
-                  className="font-mono uppercase tracking-wider sm:tracking-widest mb-1 max-w-full whitespace-normal text-left"
-                >
-                  LMS AI PLATFORM VERIFIED CERTIFICATE
-                </Badge>
-                <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight mt-1 break-words">
-                  {cert.partnerName}
-                </h2>
-              </div>
-              {cert.partnerLogoUrl && !logoError ? (
-                <Image
-                  src={cert.partnerLogoUrl}
-                  alt={cert.partnerName}
-                  width={140}
-                  height={48}
-                  unoptimized
-                  onError={() => setLogoError(true)}
-                  className="h-12 w-auto object-contain"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center font-extrabold text-lg text-primary shrink-0">
-                  {cert.partnerName.substring(0, 2).toUpperCase()}
-                </div>
-              )}
-            </div>
-
-            {/* Recipient & Course Detail */}
-            <div className="space-y-6 text-center sm:text-left">
-              <div>
-                <span className="text-xs text-muted-foreground uppercase font-semibold tracking-wider block mb-1">
-                  {"Học viên nhận chứng chỉ"}
-                </span>
-                <h3 className="text-3xl font-extrabold text-primary tracking-tight">
-                  {cert.learnerName}
-                </h3>
-              </div>
-
-              <div>
-                <span className="text-xs text-muted-foreground uppercase font-semibold tracking-wider block mb-1">
-                  {"Khóa học hoàn thành"}
-                </span>
-                <h4 className="text-xl font-bold text-foreground leading-snug">
-                  {cert.courseTitle}
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border text-xs">
-                <div>
-                  <span className="text-muted-foreground block font-medium">{"Ngày cấp"}:</span>
-                  <span className="font-bold text-foreground font-mono">{cert.issueDate}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground block font-medium">{"Mã xác thực"}:</span>
-                  <span className="font-bold text-primary font-mono">{cert.certificateId}</span>
-                </div>
-              </div>
-
-              {/* Official Signer & Handwritten Signature Section */}
-              {(cert.signerName || cert.signatureImageUrl) && (
-                <div className="pt-6 border-t border-border flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold block mb-0.5">
-                      {"Xác nhận bảo chứng bởi"}
-                    </span>
-                    <p className="text-xs font-bold text-foreground">{cert.partnerName}</p>
-                  </div>
-
-                  <div className="text-right">
-                    {cert.signatureImageUrl ? (
-                      <Image
-                        src={cert.signatureImageUrl}
-                        alt={cert.signerName || "Chữ ký người bảo chứng"}
-                        width={140}
-                        height={48}
-                        unoptimized
-                        className="h-12 w-auto object-contain ml-auto mb-1 dark:invert"
-                      />
-                    ) : (
-                      <div className="h-10 border-b border-border w-32 ml-auto mb-1 font-serif italic text-sm text-muted-foreground flex items-end justify-end">
-                        {cert.signerName}
-                      </div>
-                    )}
-                    <p className="text-sm font-extrabold text-foreground">{cert.signerName}</p>
-                    {cert.signerTitle && (
-                      <p className="text-xs text-muted-foreground font-medium">
-                        {cert.signerTitle}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Verification Seal & QR Code */}
-            <div className="mt-10 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                {cert.qrCodeUrl && (
-                  <Image
-                    src={cert.qrCodeUrl}
-                    alt="Certificate Verification QR Code"
-                    width={80}
-                    height={80}
-                    unoptimized
-                    className="w-20 h-20 rounded-xl border p-1 bg-white"
-                  />
-                )}
-                <div className="text-left text-xs text-muted-foreground space-y-1">
-                  <p className="font-semibold text-foreground">
-                    {"Được xác thực bởi LMS AI Platform"}
-                  </p>
-                  <p className="text-[11px]">
-                    {"Quét mã QR để kiểm tra tính toàn vẹn của chữ ký số."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <Button type="button" variant="outlined" size="sm" onClick={handleShareCertificate}>
-                  <Share2 aria-hidden="true" className="w-4 h-4 mr-1.5" />
-                  <span>{"Chia sẻ Chứng chỉ"}</span>
-                </Button>
-                <Button type="button" variant="outlined" size="sm" onClick={handleDownloadBadge}>
-                  <Download aria-hidden="true" className="w-4 h-4 mr-1.5" />
-                  <span>{"Tải huy hiệu (JSON)"}</span>
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleDownloadPdf}
-                  disabled={downloadingPdf}
-                >
-                  <FileDown aria-hidden="true" className="w-4 h-4 mr-1.5" />
-                  <span>{downloadingPdf ? "Đang tạo PDF…" : "Tải chứng chỉ (PDF)"}</span>
-                </Button>
-              </div>
+          {/* Clean Export & Share Actions Bar */}
+          <div className="bg-card border border-border rounded-2xl px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+            <p className="text-xs text-muted-foreground text-center sm:text-left">
+              Xuất bản in khổ ngang chuẩn A4 hoặc tải chứng thực OpenBadges 3.0 để đính kèm hồ sơ.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0">
+              <Button type="button" variant="outlined" size="sm" onClick={handleShareCertificate}>
+                <Share2 aria-hidden="true" className="w-4 h-4 mr-1.5" />
+                <span>Chia sẻ Chứng chỉ</span>
+              </Button>
+              <Button type="button" variant="outlined" size="sm" onClick={handleDownloadBadge}>
+                <Download aria-hidden="true" className="w-4 h-4 mr-1.5" />
+                <span>Tải huy hiệu (JSON)</span>
+              </Button>
+              <Button type="button" size="sm" onClick={handleDownloadPdf} disabled={downloadingPdf}>
+                <FileDown aria-hidden="true" className="w-4 h-4 mr-1.5" />
+                <span>{downloadingPdf ? "Đang tạo PDF…" : "Tải chứng chỉ (PDF)"}</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -296,9 +161,9 @@ export function VerifyDetailClient({
           <div className="w-12 h-12 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center font-bold text-xl mx-auto">
             <X aria-hidden="true" className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-destructive">{"Không thể Xác minh Chứng chỉ"}</h2>
+          <h2 className="text-xl font-bold text-destructive">Không thể Xác minh Chứng chỉ</h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            {statusMsg || `${"Không tìm thấy chứng chỉ với mã đã nhập"} #${certId}`}
+            {statusMsg || `Không tìm thấy chứng chỉ với mã đã nhập #${certId}`}
           </p>
           <Button
             type="button"

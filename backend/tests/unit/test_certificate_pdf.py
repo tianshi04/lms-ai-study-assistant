@@ -193,6 +193,15 @@ async def test_asset_loader_loads_internal_s3_png() -> None:
 
 
 @pytest.mark.asyncio
+async def test_asset_loader_loads_bundled_partner_logo_and_blocks_traversal() -> None:
+    loader = CertificateAssetLoader()
+    ptit = await loader.load_image_bytes("/images/partners/ptit-logo.png")
+    assert ptit is not None
+    assert ptit.startswith(b"\x89PNG")
+    assert await loader.load_image_bytes("/images/partners/../../etc/passwd") is None
+
+
+@pytest.mark.asyncio
 async def test_generate_certificate_pdf_validation_and_revocation() -> None:
     repo = AsyncMock()
     renderer = ReportLabCertificatePdfRenderer()

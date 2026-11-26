@@ -6,7 +6,9 @@ import re
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import quote
 
+import segno
 from uuid6 import uuid7
 
 from src.modules.catalog.domain import ICatalogRepository
@@ -47,6 +49,33 @@ from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
+
+
+def build_certificate_verification_url(certificate_id: str) -> str:
+    """Return the canonical public verification URL for a certificate."""
+    verify_base = settings.CERTIFICATE_VERIFY_BASE_URL.rstrip("/")
+    return f"{verify_base}/verify/{certificate_id.strip()}"
+
+
+def build_stored_qr_url(verification_url: str) -> str:
+    """Return a compact URL-encoded QR image link safe for VARCHAR(512) storage."""
+    return (
+        "https://api.qrserver.com/v1/create-qr-code/"
+        f"?size=150x150&data={quote(verification_url, safe='')}"
+    )
+
+
+def build_certificate_qr_data_uri(verification_url: str) -> str:
+    """Render a self-contained Retina PNG QR code encoding ``verification_url``."""
+    qr = segno.make(verification_url, error="m")
+    return qr.png_data_uri(dark="#0F172A", light="#FFFFFF", scale=6, border=2)
+
+
+def _attach_runtime_qr(cert: VerifiedCertificate) -> VerifiedCertificate:
+    """Attach an offline-safe local QR data URI encoding the full verification URL."""
+    full_verify_url = build_certificate_verification_url(cert.certificate_id)
+    cert.qr_code_url = build_certificate_qr_data_uri(full_verify_url)
+    return cert
 
 
 class CertificateUseCase:
@@ -279,7 +308,7 @@ class CertificateUseCase:
 
             cert = await repo.get_certificate(user_id, real_course_id)
             if cert:
-                return cert, ""
+                return _attach_runtime_qr(cert), ""
 
             # BR_CERT_001: Check if user has reached 100% progress in course
             current_percent = await repo.get_learning_progress_percent(
@@ -333,13 +362,15 @@ class CertificateUseCase:
             # Generate new certificate dynamically with REAL database metadata
             cert_id = f"CERT-{uuid7().hex[-10:].upper()}"
             issue_date = datetime.now(UTC).strftime("%d/%m/%Y")
+            verify_base = settings.CERTIFICATE_VERIFY_BASE_URL.rstrip("/")
+            full_verify_url = build_certificate_verification_url(cert_id)
             verification_url = f"/verify/{cert_id}"
-            qr_code_url = f"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'><rect width='150' height='150' fill='%23ffffff'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='12' fill='%230056D2'>QR:{cert_id}</text></svg>"
+            qr_code_url = build_stored_qr_url(full_verify_url)
 
             open_badges = {
                 "@context": "https://w3id.org/openbadges/v2",
                 "type": "Assertion",
-                "id": f"https://coursera.org/verify/{cert_id}",
+                "id": full_verify_url,
                 "recipient": {
                     "type": "email",
                     "hashed": True,
@@ -348,16 +379,16 @@ class CertificateUseCase:
                 "issuedOn": datetime.now(UTC).isoformat(),
                 "badge": {
                     "type": "BadgeClass",
-                    "id": f"https://coursera.org/courses/{course_id}",
+                    "id": f"{verify_base}/courses/{course_id}",
                     "name": f"Verified Certificate: {course_title}",
                     "description": f"Chứng nhận xác thực hoàn thành khóa học {course_title}",
                     "image": qr_code_url,
-                    "criteria": f"https://coursera.org/courses/{course_id}",
+                    "criteria": f"{verify_base}/courses/{course_id}",
                     "issuer": {
                         "type": "Issuer",
-                        "id": "https://coursera.org",
-                        "name": f"{partner_name} & Coursera Partner",
-                        "url": "https://coursera.org",
+                        "id": verify_base,
+                        "name": f"{partner_name} · LMS AI Platform",
+                        "url": verify_base,
                         "email": "verify@coursera.org",
                     },
                 },
@@ -406,7 +437,7 @@ class CertificateUseCase:
                 )
             )
 
-            return saved_cert, ""
+            return _attach_runtime_qr(saved_cert), ""
 
     async def revoke_certificate(
         self,
@@ -444,10 +475,14 @@ class CertificateUseCase:
             if cert.is_revoked:
                 return (
                     False,
-                    cert,
+                    _attach_runtime_qr(cert),
                     "Chứng chỉ này đã bị thu hồi do vi phạm quy chế liêm chính học thuật của nền tảng (Certificate Revoked).",
                 )
-            return True, cert, "Chứng chỉ hợp lệ và đã được xác minh thành công."
+            return (
+                True,
+                _attach_runtime_qr(cert),
+                "Chứng chỉ hợp lệ và đã được xác minh thành công.",
+            )
 
     async def issue_specialization_certificate(
         self, user_id: str, specialization_id: str
@@ -488,7 +523,7 @@ class CertificateUseCase:
                 user_id, f"spec:{specialization_id}"
             )
             if existing_spec_cert:
-                return existing_spec_cert, ""
+                return _attach_runtime_qr(existing_spec_cert), ""
 
             # 4. Load user info for cert metadata
             _, full_name, _ = await repo.get_user_kyc_info(user_id)
@@ -497,8 +532,9 @@ class CertificateUseCase:
             # 5. Build and save specialization certificate
             cert_id = f"CERT-SPEC-{uuid7().hex[-8:].upper()}"
             issue_date = datetime.now(UTC).strftime("%Y-%m-%d")
+            full_verify_url = build_certificate_verification_url(cert_id)
             verification_url = f"/verify/{cert_id}"
-            qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}"
+            qr_code_url = build_stored_qr_url(full_verify_url)
 
             open_badges = {
                 "@context": "https://w3id.org/openbadges/v2",
@@ -544,13 +580,14 @@ class CertificateUseCase:
                 cert_id,
                 specialization_id,
             )
-            return saved, ""
+            return _attach_runtime_qr(saved), ""
 
     async def list_my_certificates(self, user_id: str) -> list[VerifiedCertificate]:
         """Lists all verified certificates for the given user."""
         async with async_session_scope() as session:
             repo = self._get_repo(session)
-            return await repo.get_certificates_by_user(user_id)
+            certs = await repo.get_certificates_by_user(user_id)
+            return [_attach_runtime_qr(cert) for cert in certs]
 
     async def generate_certificate_pdf(self, certificate_id: str) -> tuple[bytes, str]:
         """Validate and render an official PDF document for a non-revoked certificate."""
@@ -593,9 +630,7 @@ class CertificateUseCase:
             elif load_signature:
                 signature_bytes = await self._asset_loader.load_image_bytes(sig_url)
 
-        verification_url = (
-            f"{settings.FRONTEND_URL.rstrip('/')}/verify/{cert.certificate_id}"
-        )
+        verification_url = build_certificate_verification_url(cert.certificate_id)
         payload = CertificatePdfRenderInput(
             certificate=cert,
             verification_url=verification_url,

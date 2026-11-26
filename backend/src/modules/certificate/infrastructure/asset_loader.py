@@ -4,6 +4,7 @@ import logging
 import posixpath
 import socket
 from io import BytesIO
+from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
@@ -19,6 +20,8 @@ from src.shared.infrastructure.s3_storage import get_s3_storage_service
 logger = logging.getLogger(__name__)
 
 _INTERNAL_ASSET_PREFIX = "/coursera-assets/"
+_LOCAL_PARTNER_IMAGES_PREFIX = "/images/partners/"
+_LOCAL_PARTNER_ASSETS_DIR = Path(__file__).resolve().parent / "assets" / "partners"
 _MAX_IMAGE_PIXELS = 25_000_000
 _STREAM_CHUNK_BYTES = 64 * 1024
 
@@ -105,6 +108,11 @@ class CertificateAssetLoader(ICertificateAssetLoader):
         if cleaned.startswith(_INTERNAL_ASSET_PREFIX):
             return await self._load_from_s3(cleaned[len(_INTERNAL_ASSET_PREFIX) :])
 
+        if cleaned.startswith(_LOCAL_PARTNER_IMAGES_PREFIX):
+            return await self._load_local_partner_asset(
+                cleaned[len(_LOCAL_PARTNER_IMAGES_PREFIX) :]
+            )
+
         if cleaned.lower().split("?", 1)[0].endswith(".svg"):
             return None
 
@@ -113,6 +121,17 @@ class CertificateAssetLoader(ICertificateAssetLoader):
             return None
 
         return await self._fetch_public_image(cleaned)
+
+    async def _load_local_partner_asset(self, raw_name: str) -> bytes | None:
+        safe_name = raw_name.split("?", 1)[0].strip()
+        if not safe_name or "/" in safe_name or "\\" in safe_name or ".." in safe_name:
+            return None
+        base_dir = _LOCAL_PARTNER_ASSETS_DIR.resolve()
+        candidate = (base_dir / safe_name).resolve()
+        if not candidate.is_relative_to(base_dir) or not candidate.is_file():
+            return None
+        raw_bytes = await asyncio.to_thread(candidate.read_bytes)
+        return await asyncio.to_thread(_normalize_raster_to_png, raw_bytes)
 
     async def _load_from_s3(self, raw_key: str) -> bytes | None:
         normalized = posixpath.normpath(raw_key).lstrip("/")

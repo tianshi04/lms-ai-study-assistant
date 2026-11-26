@@ -23,6 +23,10 @@ class Settings(BaseSettings):
         default="http://localhost:3000",
         description="Public URL of the frontend application",
     )
+    CERTIFICATE_VERIFY_BASE_URL: str = Field(
+        default="https://110-172-29-145.sslip.io",
+        description="Public base URL printed on verified certificates and QR codes",
+    )
     CORS_ORIGINS: str = Field(
         default="http://localhost:3000,http://127.0.0.1:3000",
         description="Comma-separated list of allowed CORS origins",

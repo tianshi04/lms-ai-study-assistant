@@ -1,3 +1,4 @@
+import base64
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -5,6 +6,9 @@ import pytest
 from src.modules.certificate.application import (
     CertificateUseCase,
     count_words,
+)
+from src.modules.certificate.application.certificate_usecase import (
+    build_certificate_qr_data_uri,
 )
 from src.modules.certificate.domain import (
     FinancialAidApplication,
@@ -434,3 +438,91 @@ async def test_issue_specialization_certificate(
     assert spec_cert is not None
     assert spec_cert.specialization_id == "spec_1"
     assert spec_cert.learner_name == "Alice"
+
+
+@pytest.mark.asyncio
+@patch("src.modules.certificate.application.certificate_usecase.CertificateRepository")
+@patch("src.modules.certificate.application.certificate_usecase.async_session_scope")
+async def test_qr_encodes_full_verification_url(
+    mock_session_scope, mock_repo_class, usecase
+):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+    mock_repo = mock_repo_class.return_value
+
+    existing_cert = VerifiedCertificate(
+        certificate_id="CERT-PTIT-2026-N158",
+        user_id="u1",
+        course_id="c1",
+        learner_name="Nguyễn Thanh Phong",
+        course_title="Supervised Machine Learning",
+        partner_name="PTIT",
+        partner_logo_url="/images/partners/ptit-logo.png",
+        issue_date="18/08/2026",
+        verification_url="/verify/CERT-PTIT-2026-N158",
+        qr_code_url="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CERT-PTIT-2026-N158",
+        open_badges_json_ld={},
+    )
+    mock_repo.get_certificate_by_id = AsyncMock(return_value=existing_cert)
+
+    valid, cert, _msg = await usecase.verify_certificate_public("CERT-PTIT-2026-N158")
+    assert valid is True
+    assert cert is not None
+    expected_uri = build_certificate_qr_data_uri(
+        "https://110-172-29-145.sslip.io/verify/CERT-PTIT-2026-N158"
+    )
+    assert cert.qr_code_url == expected_uri
+    assert cert.qr_code_url.startswith("data:image/png;base64,")
+    assert cert.qr_code_url != build_certificate_qr_data_uri("CERT-PTIT-2026-N158")
+    raw_png = base64.b64decode(cert.qr_code_url.split(",", 1)[1])
+    assert raw_png.startswith(b"\x89PNG\r\n\x1a\n")
+
+    # Verify newly issued course certificate persists compact URL <= 512 chars & returns runtime PNG
+    persisted_urls: list[str] = []
+
+    def capture_save(c):
+        persisted_urls.append(c.qr_code_url)
+        return c
+
+    mock_repo.get_course_details_by_id_or_slug = AsyncMock(
+        return_value=("c1", "Python Basics", "PTIT", "/images/partners/ptit-logo.png")
+    )
+    mock_repo.get_certificate = AsyncMock(return_value=None)
+    mock_repo.get_learning_progress_percent = AsyncMock(return_value=100.0)
+    mock_repo.check_graded_items_and_appeals_eligibility = AsyncMock(
+        return_value=(True, "")
+    )
+    mock_repo.get_user_kyc_info = AsyncMock(
+        return_value=("alice@example.com", "Alice", True)
+    )
+    mock_repo.get_course_signer_info = AsyncMock(return_value=("", "", ""))
+    mock_repo.save_certificate = AsyncMock(side_effect=capture_save)
+
+    new_cert, err = await usecase.get_verified_certificate("u1", "c1")
+    assert err == ""
+    assert new_cert is not None
+    assert len(persisted_urls) == 1
+    assert len(persisted_urls[0]) <= 512
+    assert "https%3A%2F%2F110-172-29-145.sslip.io%2Fverify%2F" in persisted_urls[0]
+    assert new_cert.qr_code_url.startswith("data:image/png;base64,")
+
+    # Verify newly issued specialization certificate persists compact URL <= 512 chars & returns runtime PNG
+    persisted_spec_urls: list[str] = []
+
+    def capture_spec_save(c):
+        persisted_spec_urls.append(c.qr_code_url)
+        return c
+
+    mock_repo.get_specialization_details = AsyncMock(
+        return_value=("Deep Learning Spec", "DeepLearning.AI", "logo", ["c1"])
+    )
+    mock_repo.get_certificates_by_user = AsyncMock(return_value=[new_cert])
+    mock_repo.save_certificate = AsyncMock(side_effect=capture_spec_save)
+
+    spec_cert, err = await usecase.issue_specialization_certificate("u1", "spec_1")
+    assert err == ""
+    assert spec_cert is not None
+    assert len(persisted_spec_urls) == 1
+    assert len(persisted_spec_urls[0]) <= 512
+    assert "https%3A%2F%2F110-172-29-145.sslip.io%2Fverify%2F" in persisted_spec_urls[0]
+    assert spec_cert.qr_code_url.startswith("data:image/png;base64,")

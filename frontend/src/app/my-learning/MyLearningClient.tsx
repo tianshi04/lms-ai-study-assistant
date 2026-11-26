@@ -45,6 +45,45 @@ const TAB_TO_PARAM: Record<Tab, string> = {
   BOOKMARKS: "bookmarks",
 };
 
+function getPartnerInitials(partnerName: string): string {
+  const words = partnerName
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+  if (words.length >= 2) {
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }
+  return (partnerName.trim().slice(0, 2) || "LA").toUpperCase();
+}
+
+function CertificatePartnerLogo({
+  logoUrl,
+  partnerName,
+}: {
+  logoUrl?: string;
+  partnerName: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+  if (logoUrl && !hasError) {
+    return (
+      <Image
+        src={logoUrl}
+        alt={partnerName}
+        width={28}
+        height={28}
+        unoptimized
+        onError={() => setHasError(true)}
+        className="w-7 h-7 object-contain rounded shrink-0"
+      />
+    );
+  }
+  return (
+    <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+      {getPartnerInitials(partnerName)}
+    </div>
+  );
+}
+
 function TabSkeletonGrid() {
   return (
     <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -225,7 +264,7 @@ export function MyLearningClient() {
                     <Link
                       href={
                         course.lastAccessedItemId
-                          ? `/learn/${course.courseId}?itemId=${course.lastAccessedItemId}`
+                          ? `/learn/${course.courseId}?item=${course.lastAccessedItemId}`
                           : `/learn/${course.courseId}`
                       }
                       prefetch={true}
@@ -330,27 +369,20 @@ export function MyLearningClient() {
               {certificates.map((cert) => (
                 <div
                   key={cert.certificateId}
-                  className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between"
+                  className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between min-w-0 overflow-hidden"
                 >
                   <div className="p-6 rounded-t-3xl">
                     {/* Header Badge & Partner */}
                     <div className="flex items-center justify-between gap-3 mb-4">
-                      <div className="flex items-center gap-2">
-                        {cert.partnerLogoUrl ? (
-                          <Image
-                            src={cert.partnerLogoUrl}
-                            alt={cert.partnerName}
-                            width={28}
-                            height={28}
-                            unoptimized
-                            className="w-7 h-7 object-contain rounded"
-                          />
-                        ) : (
-                          <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                            {cert.partnerName.slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <CertificatePartnerLogo
+                          logoUrl={cert.partnerLogoUrl}
+                          partnerName={cert.partnerName}
+                        />
+                        <span
+                          title={cert.partnerName}
+                          className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate"
+                        >
                           {cert.partnerName}
                         </span>
                       </div>
