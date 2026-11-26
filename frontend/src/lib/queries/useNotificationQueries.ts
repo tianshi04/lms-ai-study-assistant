@@ -12,6 +12,8 @@ import {
   type NotificationItem,
   type NotificationCategory,
   type NotificationPreferences,
+  type SystemAnnouncement,
+  type AnnouncementSeverity,
 } from "@/gen/notification/v1/notification_pb";
 
 /**
@@ -163,6 +165,127 @@ export function useUpdateNotificationPreferencesMutation(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notificationPreferences"] });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Public query: active system-wide banner announcements.
+ */
+export function useActiveAnnouncementsQuery(
+  options?: Partial<UseQueryOptions<SystemAnnouncement[], Error>>,
+) {
+  return useQuery<SystemAnnouncement[], Error>({
+    queryKey: ["activeSystemAnnouncements"],
+    queryFn: async () => {
+      const client = getRpcClient(NotificationService);
+      const res = await client.getActiveAnnouncements({});
+      return res.announcements || [];
+    },
+    refetchInterval: 60000,
+    ...options,
+  });
+}
+
+/**
+ * Admin query: paginated history of system announcements.
+ */
+export function useSystemAnnouncementsQuery(
+  page = 1,
+  pageSize = 20,
+  options?: Partial<UseQueryOptions<{ announcements: SystemAnnouncement[]; total: number }, Error>>,
+) {
+  const { isSuperAdmin } = useAuth();
+  return useQuery<{ announcements: SystemAnnouncement[]; total: number }, Error>({
+    queryKey: ["systemAnnouncements", page, pageSize],
+    queryFn: async () => {
+      const client = getRpcClient(NotificationService);
+      const res = await client.listSystemAnnouncements({ page, pageSize });
+      return {
+        announcements: res.announcements || [],
+        total: res.total || 0,
+      };
+    },
+    enabled: isSuperAdmin,
+    refetchInterval: 15000,
+    ...options,
+  });
+}
+
+export interface CreateSystemAnnouncementInput {
+  title: string;
+  content: string;
+  actionUrl: string;
+  severity: AnnouncementSeverity;
+  startsAt: string;
+  expiresAt: string;
+  alsoNotifyBell: boolean;
+  isCritical: boolean;
+}
+
+/**
+ * Admin mutation: create a new system announcement.
+ */
+export function useCreateSystemAnnouncementMutation(
+  options?: Partial<
+    UseMutationOptions<SystemAnnouncement | null, Error, CreateSystemAnnouncementInput>
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<SystemAnnouncement | null, Error, CreateSystemAnnouncementInput>({
+    mutationFn: async (input) => {
+      const client = getRpcClient(NotificationService);
+      const res = await client.createSystemAnnouncement(input);
+      return res.announcement ?? null;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["systemAnnouncements"] });
+      queryClient.invalidateQueries({ queryKey: ["activeSystemAnnouncements"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["unreadNotificationCount"] });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Admin mutation: cancel a scheduled system announcement.
+ */
+export function useCancelSystemAnnouncementMutation(
+  options?: Partial<UseMutationOptions<SystemAnnouncement | null, Error, string>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<SystemAnnouncement | null, Error, string>({
+    mutationFn: async (id: string) => {
+      const client = getRpcClient(NotificationService);
+      const res = await client.cancelSystemAnnouncement({ id });
+      return res.announcement ?? null;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["systemAnnouncements"] });
+      queryClient.invalidateQueries({ queryKey: ["activeSystemAnnouncements"] });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Admin mutation: end an active banner early while preserving history.
+ */
+export function useExpireSystemAnnouncementMutation(
+  options?: Partial<UseMutationOptions<SystemAnnouncement | null, Error, string>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<SystemAnnouncement | null, Error, string>({
+    mutationFn: async (id: string) => {
+      const client = getRpcClient(NotificationService);
+      const res = await client.expireSystemAnnouncement({ id });
+      return res.announcement ?? null;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["systemAnnouncements"] });
+      queryClient.invalidateQueries({ queryKey: ["activeSystemAnnouncements"] });
     },
     ...options,
   });

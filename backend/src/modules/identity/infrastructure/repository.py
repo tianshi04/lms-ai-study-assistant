@@ -832,3 +832,17 @@ class InvitationRepository(IInvitationRepository):
             created_at=model.created_at,
             responded_at=model.responded_at,
         )
+
+
+class PostgresUserDirectory:
+    """Implements identity.domain.IUserDirectory."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def list_user_ids_after(self, after_id: str, limit: int) -> list[str]:
+        stmt = select(UserModel.id).order_by(UserModel.id).limit(limit)
+        if after_id:
+            stmt = stmt.where(UserModel.id > after_id)
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())

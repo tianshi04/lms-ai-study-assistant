@@ -98,3 +98,9 @@ class IInvitationRepository(Protocol):
         user_id: str | None = None,
         status_filter: str | None = None,
     ) -> list[Invitation]: ...
+
+
+class IUserDirectory(Protocol):
+    """Public cross-module interface: iterate user ids in stable order (keyset)."""
+
+    async def list_user_ids_after(self, after_id: str, limit: int) -> list[str]: ...

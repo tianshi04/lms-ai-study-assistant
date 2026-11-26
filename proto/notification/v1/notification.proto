@@ -84,6 +84,87 @@ message UpdateNotificationPreferencesResponse {
   NotificationPreferences preferences = 1;
 }
 
+enum AnnouncementSeverity {
+  ANNOUNCEMENT_SEVERITY_UNSPECIFIED = 0;
+  ANNOUNCEMENT_SEVERITY_INFO = 1;
+  ANNOUNCEMENT_SEVERITY_WARNING = 2;
+  ANNOUNCEMENT_SEVERITY_CRITICAL = 3;
+}
+
+enum AnnouncementStatus {
+  ANNOUNCEMENT_STATUS_UNSPECIFIED = 0;
+  ANNOUNCEMENT_STATUS_SCHEDULED = 1;
+  ANNOUNCEMENT_STATUS_SENDING = 2;
+  ANNOUNCEMENT_STATUS_SENT = 3;
+  ANNOUNCEMENT_STATUS_CANCELLED = 4;
+}
+
+message SystemAnnouncement {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+  string action_url = 4;
+  AnnouncementSeverity severity = 5;
+  AnnouncementStatus status = 6;
+  string starts_at = 7;
+  string expires_at = 8;
+  bool also_notify_bell = 9;
+  bool is_critical = 10;
+  string created_by = 11;
+  string sent_at = 12;
+  int32 recipient_count = 13;
+  string created_at = 14;
+}
+
+message CreateSystemAnnouncementRequest {
+  string title = 1;
+  string content = 2;
+  string action_url = 3;
+  AnnouncementSeverity severity = 4;
+  // ISO-8601. Empty = start immediately.
+  string starts_at = 5;
+  // ISO-8601. Required.
+  string expires_at = 6;
+  bool also_notify_bell = 7;
+  bool is_critical = 8;
+}
+
+message CreateSystemAnnouncementResponse {
+  SystemAnnouncement announcement = 1;
+}
+
+message ListSystemAnnouncementsRequest {
+  int32 page_size = 1;
+  int32 page = 2;
+}
+
+message ListSystemAnnouncementsResponse {
+  repeated SystemAnnouncement announcements = 1;
+  int32 total = 2;
+}
+
+message CancelSystemAnnouncementRequest {
+  string id = 1;
+}
+
+message CancelSystemAnnouncementResponse {
+  SystemAnnouncement announcement = 1;
+}
+
+message ExpireSystemAnnouncementRequest {
+  string id = 1;
+}
+
+message ExpireSystemAnnouncementResponse {
+  SystemAnnouncement announcement = 1;
+}
+
+message GetActiveAnnouncementsRequest {}
+
+message GetActiveAnnouncementsResponse {
+  repeated SystemAnnouncement announcements = 1;
+}
+
 service NotificationService {
   rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -107,5 +188,25 @@ service NotificationService {
 
   rpc UpdateNotificationPreferences(UpdateNotificationPreferencesRequest) returns (UpdateNotificationPreferencesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc CreateSystemAnnouncement(CreateSystemAnnouncementRequest) returns (CreateSystemAnnouncementResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc ListSystemAnnouncements(ListSystemAnnouncementsRequest) returns (ListSystemAnnouncementsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc CancelSystemAnnouncement(CancelSystemAnnouncementRequest) returns (CancelSystemAnnouncementResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc ExpireSystemAnnouncement(ExpireSystemAnnouncementRequest) returns (ExpireSystemAnnouncementResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc GetActiveAnnouncements(GetActiveAnnouncementsRequest) returns (GetActiveAnnouncementsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
 }

@@ -46,6 +46,7 @@ from src.modules.learning.application import LearningUseCase
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.modules.learning.presentation.learning_handler import LearningHandler
 from src.modules.notification.application import (
+    AnnouncementUseCase,
     NotificationUseCase,
 )
 from src.modules.notification.presentation.notification_handler import (
@@ -76,6 +77,7 @@ logger = logging.getLogger("main")
 @asynccontextmanager
 async def lifespan(_app: Starlette):
     """Lifespan context manager for AuthPolicy and EventBus pre-initialization, plus graceful shutdown."""
+    scheduler_task: asyncio.Task[None] | None = None
     try:
         from src.modules.learning.application.learning_event_handler import (
             register_learning_event_handlers,
@@ -88,6 +90,22 @@ async def lifespan(_app: Starlette):
         register_notification_event_handlers()
         register_learning_event_handlers()
         AuthPolicyRegistry.initialize()
+
+        async def _announcement_scheduler_loop() -> None:
+            try:
+                await announcement_usecase.resume_interrupted()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("[SCHEDULER] Failed to resume announcements: %s", exc)
+            while True:
+                try:
+                    await announcement_usecase.dispatch_due()
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("[SCHEDULER] Announcement dispatch error: %s", exc)
+                await asyncio.sleep(60)
+
+        scheduler_task = asyncio.create_task(_announcement_scheduler_loop())
         logger.info(
             "[STARTUP] Pre-initialized AuthPolicyRegistry and EventBus handlers successfully."
         )
@@ -98,6 +116,12 @@ async def lifespan(_app: Starlette):
 
     # --- GRACEFUL SHUTDOWN ---
     logger.info("[SHUTDOWN] Initiating graceful shutdown...")
+    if scheduler_task is not None:
+        scheduler_task.cancel()
+        try:
+            await scheduler_task
+        except asyncio.CancelledError:
+            pass
 
     try:
         from src.shared.infrastructure.database import dispose_engine
@@ -192,7 +216,10 @@ payment_handler = PaymentHandler(use_case=payment_usecase)
 payment_app = PaymentServiceASGIApplication(payment_handler, interceptors=interceptors)
 
 notification_usecase = NotificationUseCase()
-notification_handler = NotificationHandler(use_case=notification_usecase)
+announcement_usecase = AnnouncementUseCase()
+notification_handler = NotificationHandler(
+    use_case=notification_usecase, announcement_use_case=announcement_usecase
+)
 notification_app = NotificationServiceASGIApplication(
     notification_handler, interceptors=interceptors
 )
