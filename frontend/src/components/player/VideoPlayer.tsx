@@ -251,11 +251,14 @@ export function VideoPlayer({
           <div className="max-w-3xl mx-auto space-y-6">
             {/* Reading Header */}
             <div className="pb-4 border-b border-border">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-                <FileText className="w-7 h-7 text-success" aria-hidden="true" />
-                <span>{activeItem.title}</span>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-start gap-3">
+                <FileText
+                  className="w-6 h-6 sm:w-7 sm:h-7 text-success shrink-0 mt-0.5"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">{activeItem.title}</span>
                 {isPreviewMode && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/15 text-warning border border-warning/30">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/15 text-warning border border-warning/30 shrink-0">
                     {"Xem trước"}
                   </span>
                 )}
@@ -354,7 +357,7 @@ export function VideoPlayer({
 
     return (
       <div className="w-full flex flex-col gap-3 min-h-0">
-        <div className="w-full aspect-video max-h-[min(54vh,calc(100vh-320px))] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-colors duration-m3-short-4 ease-m3-emphasized mx-auto">
+        <div className="w-full aspect-video shrink-0 lg:max-h-[min(54vh,calc(100vh-320px))] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-colors duration-m3-short-4 ease-m3-emphasized mx-auto">
           <UniversalVideoPlayer
             key={activeItem.id}
             ref={videoRef}
@@ -518,7 +521,7 @@ export function VideoPlayer({
           </div>
 
           {isExpanded && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
               {[
                 "Cho tôi câu hỏi thực hành",
                 "Giải thích chủ đề này bằng các thuật ngữ đơn giản",
@@ -531,7 +534,7 @@ export function VideoPlayer({
                   variant="outlined"
                   size="sm"
                   onClick={() => onSelectAiPrompt?.(text)}
-                  className="text-xs font-semibold px-4 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border-outline-variant/40 hover:border-primary/40 shadow-2xs leading-snug w-fit h-auto"
+                  className="text-xs font-semibold px-3.5 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border-outline-variant/40 hover:border-primary/40 shadow-2xs leading-snug w-full sm:w-fit h-auto justify-start text-left whitespace-normal"
                 >
                   <span>{text}</span>
                 </Button>
